@@ -885,6 +885,7 @@ function restartAll() {
 
 // ---------- modus: plan / fly ----------
 const cam = { yaw: 0.35, pitch: 0.3, dist: 5.5, cur: 5.5, target: new THREE.Vector3(...LEVEL.start) };
+let camLook = 0, camPitchBias = 0, camLift = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
 const planCam = { yaw: 0.6, pitch: 0.7, dist: 55, pivot: new THREE.Vector3(8, 15, 0) };
 if (levelName) {                                   // mindre rom: nærmere og mer ovenfra
@@ -1141,6 +1142,7 @@ function buildPanel() {
     ${helperCount ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning${key('X')}</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCompass"> Målkompass og pil på gulvet</label>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAssist"> Kameraet hjelper (over vegger, i fall og klatring)</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkFade"> Tone ut ting som står i veien for kameraet</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkGripHi"> Fremhev grep (oransje, pulserende)</label>
     ${labels.length ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkLabels"> Brukslapper ved ting${key('L')}</label>` : ''}
@@ -1166,6 +1168,7 @@ function buildPanel() {
   if ($('chkHelpers')) { $('chkHelpers').checked = helperMarks.visible; $('chkHelpers').onchange = (e) => { helperMarks.visible = e.target.checked; }; }
   if ($('chkLabels')) { $('chkLabels').checked = labelsOn; $('chkLabels').onchange = (e) => { labelsOn = e.target.checked; store.set('tlm.labels', labelsOn); }; }
   $('chkCompass').checked = compassOn; $('chkCompass').onchange = (e) => { compassOn = e.target.checked; store.set('tlm.compass', compassOn); };
+  $('chkAssist').checked = camAssist; $('chkAssist').onchange = (e) => { camAssist = e.target.checked; store.set('tlm.camassist', camAssist); };
   $('chkFade').checked = fadeOn; $('chkFade').onchange = (e) => { fadeOn = e.target.checked; store.set('tlm.fade', fadeOn); };
   $('chkGripHi').checked = gripHi; $('chkGripHi').onchange = (e) => { gripHi = e.target.checked; store.set('tlm.griphi', gripHi); };
   $('chkAutoCam').checked = autoCam; $('chkAutoCam').onchange = (e) => { autoCam = e.target.checked; store.set('tlm.autocam', autoCam); };
@@ -1425,8 +1428,22 @@ function render(now, dt) {
     else camFocusY = Math.min(player.y + 0.9, Math.max(player.y - 0.9, camFocusY));       // i lufta: ikke følg hvert hopp
     const kxz = 1 - Math.pow(0.04, dt);
     cam.target.x += (player.x - cam.target.x) * kxz; cam.target.z += (player.z - cam.target.z) * kxz;
-    cam.target.y = camFocusY + 0.62;
-    const cp = Math.cos(cam.pitch), dir = new THREE.Vector3(Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), Math.cos(cam.yaw) * cp);
+    // kameraassistanse: se der du lander (fall) og opp mot neste grep (klatring), og løft deg over vegger i stedet for å bli trukket tett inn
+    const falling = !player.onGround && player.vy < -6 && !['hang', 'mantle', 'swing', 'climb', 'zip'].includes(player.state);
+    const climbing = ['climb', 'hang'].includes(player.state);
+    const lookT = camAssist ? (falling ? -0.9 : climbing ? 0.8 : 0) : 0, pitchT = camAssist ? (falling ? 0.14 : climbing ? -0.08 : 0) : 0;
+    const ka = 1 - Math.pow(0.15, dt);
+    camLook += (lookT - camLook) * ka; camPitchBias += (pitchT - camPitchBias) * ka;
+    cam.target.y = camFocusY + 0.62 + camLook;
+    const dirAt = (pitch) => { const c = Math.cos(pitch); return new THREE.Vector3(Math.sin(cam.yaw) * c, Math.sin(pitch), Math.cos(cam.yaw) * c); };
+    const clearAt = (dv, dd) => !insideAny(cam.target.x + dv.x * dd, cam.target.y + dv.y * dd, cam.target.z + dv.z * dd, 0.25);
+    let liftT = 0;
+    if (camAssist && mode !== 'fly' && !clearAt(dirAt(cam.pitch + camPitchBias), cam.dist)) {         // noe i veien på full avstand: prøv en høyere vinkel
+      for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + o); if (clearAt(dirAt(pp), cam.dist)) { liftT = pp - cam.pitch - camPitchBias; break; } }
+    }
+    camLift += (liftT - camLift) * (liftT > camLift ? 1 - Math.pow(0.02, dt) : 1 - Math.pow(0.2, dt));
+    const pitchNow = Math.min(1.3, cam.pitch + camPitchBias + camLift);
+    const cp = Math.cos(pitchNow), dir = new THREE.Vector3(Math.sin(cam.yaw) * cp, Math.sin(pitchNow), Math.cos(cam.yaw) * cp);
     let d = cam.dist;
     for (; d > 1.1; d -= 0.2) { if (!insideAny(cam.target.x + dir.x * d, cam.target.y + dir.y * d, cam.target.z + dir.z * d, 0.25)) break; }
     cam.cur += (d - cam.cur) * (d < cam.cur ? 0.5 : 0.08);
@@ -1508,5 +1525,6 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
+window.__camDbg = () => ({ camLook, camPitchBias, camLift, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__game = { camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
