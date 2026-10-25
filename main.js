@@ -1,20 +1,34 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
-import { createAudio, surfaceOf } from './audio.js';
+import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget } from './physics.js';
-
-// ?level=bad laster levels/bad.level.json (generert fra bilder), ellers det håndlagde soverommet
-const levelName = new URLSearchParams(location.search).get('level');
-const LEVEL = levelName
-  ? await (await fetch(`./levels/${encodeURIComponent(levelName)}.level.json`)).json()
-  : (await import('./level.js')).LEVEL;
-const SUN = LEVEL.sun || [28, 60, -24];
 
 const $ = (id) => document.getElementById(id);
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* privat modus e.l. */ } },
 };
+
+// Brett: ?level=bad (eller soverom/poc). Uten parameter åpnes brettet du sist spilte.
+const LEVELS = [
+  { id: 'soverom', label: 'Soverom (håndlaget)', short: 'Soverom' },
+  { id: 'bad', label: 'Bad (tolket fra 3 bilder)', short: 'Bad' },
+  { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
+];
+const levelParam = new URLSearchParams(location.search).get('level');
+let levelId = levelParam === '' ? 'soverom' : (levelParam ?? store.get('tlm.level', 'soverom'));
+let LEVEL = null, levelName = '';
+if (levelId && levelId !== 'soverom') {
+  try {
+    const r = await fetch(`./levels/${encodeURIComponent(levelId)}.level.json`);
+    if (!r.ok) throw new Error(r.status);
+    LEVEL = await r.json(); levelName = levelId;
+  } catch { LEVEL = null; }
+}
+if (!LEVEL) { LEVEL = (await import('./level.js')).LEVEL; levelId = 'soverom'; }
+store.set('tlm.level', levelId);
+const levelLabel = LEVELS.find((l) => l.id === levelId)?.short || levelId;
+const SUN = LEVEL.sun || [28, 60, -24];
 
 // ---------- lyd ----------
 // Web Audio kan først startes etter en brukerhandling (nettleserregel), så den opprettes ved første tastetrykk/trykk.
@@ -24,7 +38,7 @@ function unlockAudio() {
   if (!audio) {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
-      audio = createAudio(new Ctx(), { volume: store.get('tlm.vol', 0.7), reverb: LEVEL.audio?.reverb ?? 0.12 });
+      audio = createAudio(new Ctx(), { volume: store.get('tlm.vol', 0.7), reverb: store.get('tlm.reverb', null) ?? LEVEL.audio?.reverb ?? 0.12, levels: store.get('tlm.mix2', {}) });
       audio.setMuted(soundMuted);
     } catch { audio = null; }
   }
@@ -645,6 +659,8 @@ bindBtn('btnJump', 'jump', () => { jumpEdge = true; });
 bindBtn('btnGrab', 'grab', () => { grabEdge = true; });
 bindBtn('btnCarry', 'carry', () => { carryEdge = true; });
 $('bThings').onclick = resetThings;
+$('bLevel').textContent = `Brett: ${levelLabel}`;
+$('bLevel').onclick = () => { const i = LEVELS.findIndex((l) => l.id === levelId), n = LEVELS[(i + 1) % LEVELS.length].id; store.set('tlm.level', n); location.search = `?level=${n}`; };
 $('bSound').onclick = toggleSound; $('bSound').textContent = soundMuted ? 'Lyd av' : 'Lyd'; $('bSound').classList.toggle('on', !soundMuted);
 $('bSave').onclick = doSave; $('bBack').onclick = goBack;
 $('bPlan').onclick = () => setMode('plan'); $('bFly').onclick = () => setMode('fly');
@@ -664,12 +680,47 @@ let presetName = store.get('tlm.preset2', 'prince');
 if (!PRESETS[presetName]) presetName = 'prince';
 applyPreset(presetName);
 Object.assign(P, store.get('tlm.custom2', {}));
+// ---------- lydmikser ----------
+function mixerHtml() {
+  const groups = {};
+  for (const sd of SOUND_LIST) (groups[sd.group] ||= []).push(sd);
+  return Object.entries(groups).map(([g, items]) => `<div class="mixg">${g}</div>` + items.map((sd) =>
+    `<div class="mixrow"><div class="mixh"><span>${sd.label}</span><span><b data-val="${sd.id}"></b> <button class="pl" data-play="${sd.id}">▶</button></span></div><input type="range" data-mix="${sd.id}" min="0" max="2" step="0.05"></div>`).join('')).join('');
+}
+const mixText = (v) => (v <= 0 ? 'av' : `${Math.round(v * 100)} %`);
+function wireMixer() {
+  const mix = store.get('tlm.mix2', {});
+  const setOne = (id, v, save = true) => {
+    const el = document.querySelector(`[data-mix="${id}"]`), lab = document.querySelector(`[data-val="${id}"]`);
+    if (el) el.value = v; if (lab) lab.textContent = mixText(v);
+    if (save) { mix[id] = v; store.set('tlm.mix2', mix); }
+    audio?.setLevel(id, v);
+  };
+  for (const sd of SOUND_LIST) {
+    const v = mix[sd.id] ?? 1, el = document.querySelector(`[data-mix="${sd.id}"]`);
+    el.value = v; document.querySelector(`[data-val="${sd.id}"]`).textContent = mixText(v);
+    el.oninput = () => setOne(sd.id, +el.value);
+  }
+  document.querySelectorAll('[data-play]').forEach((btn) => {
+    btn.onclick = () => { unlockAudio(); Promise.resolve(audio?.resume()).then(() => audio?.preview(btn.dataset.play)); };
+  });
+  $('mixAll100').onclick = () => SOUND_LIST.forEach((sd) => setOne(sd.id, 1));
+  $('mixAllOff').onclick = () => SOUND_LIST.forEach((sd) => setOne(sd.id, 0));
+  $('mixReset').onclick = () => { SOUND_LIST.forEach((sd) => setOne(sd.id, 1)); store.set('tlm.mix2', {}); store.set('tlm.reverb', null); $('s_rev').value = LEVEL.audio?.reverb ?? 0.12; $('v_rev').textContent = (+$('s_rev').value).toFixed(2); audio?.setReverb(LEVEL.audio?.reverb ?? 0.12); toast('Lyd nullstilt'); };
+  const rev0 = store.get('tlm.reverb', null) ?? LEVEL.audio?.reverb ?? 0.12;
+  $('s_rev').value = rev0; $('v_rev').textContent = (+rev0).toFixed(2);
+  $('s_rev').oninput = (e) => { const v = +e.target.value; store.set('tlm.reverb', v); audio?.setReverb(v); $('v_rev').textContent = v.toFixed(2); };
+}
+
 function buildPanel() {
   const p = $('panel');
   p.innerHTML = `<h3>Brett</h3>
-    <select id="levelSel"><option value="">Soverom (håndlaget)</option><option value="bad">Bad (tolket fra 3 bilder)</option><option value="poc">Prøverom: flytte ting</option></select>
+    <select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}</option>`).join('')}</select>
     <h3 style="margin-top:14px">Lyd</h3>
-    <label>Volum <span id="v_vol"></span></label><input type="range" id="s_vol" min="0" max="1" step="0.05">
+    <label>Hovedvolum <span id="v_vol"></span></label><input type="range" id="s_vol" min="0" max="1" step="0.05">
+    <label>Etterklang (rom) <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">
+    <details open><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary>${mixerHtml()}
+      <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
@@ -679,8 +730,9 @@ function buildPanel() {
     <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. Hold C for å gå forsiktig.<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke REKK UT (Shift/E) i riktig øyeblikk for å gripe kant eller tau.</small>`;
   $('s_vol').value = store.get('tlm.vol', 0.7); $('v_vol').textContent = (+$('s_vol').value).toFixed(2);
   $('s_vol').oninput = (e) => { const v = +e.target.value; store.set('tlm.vol', v); audio?.setVolume(v); $('v_vol').textContent = v.toFixed(2); };
-  $('levelSel').value = levelName || '';
-  $('levelSel').onchange = (e) => { location.search = e.target.value ? `?level=${e.target.value}` : ''; };
+  $('levelSel').value = levelId;
+  $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
+  wireMixer();
   $('presetSel').value = presetName;
   $('autoGrab').checked = P.autoGrab;
   $('autoGrab').onchange = (e) => { P.autoGrab = e.target.checked; saveCustom(); };
@@ -857,7 +909,7 @@ function render(now, dt) {
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   renderer.render(scene, camera);
   $('hud').textContent =
-    `${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · REKKER UT' : ''}\n` +
+    `${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · REKKER UT' : ''}\n` +
     `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s\nlagret ${stats.saves} · tilbake ${stats.respawns} · poeng ${points()}`;
 }
 

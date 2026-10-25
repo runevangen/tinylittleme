@@ -65,11 +65,23 @@ const base = process.argv[2] || 'http://localhost:8766';
     };
     out.breathing_rest_8s = await breathRun(0, 8);
     out.breathing_run_8s = await breathRun(1, 8);
+    // mikser: hver lyd kan forhåndsspilles, er stille ved 0 og tydelig sterkere ved 2
+    const { SOUND_LIST } = await import('./audio.js');
+    out.mixer = {};
+    for (const { id } of SOUND_LIST) {
+      const run = async (lv) => {
+        const ctx = new OfflineAudioContext(1, Math.floor(SR * 1.8), SR); const a = createAudio(ctx, { volume: 1, levels: lv === null ? {} : { [id]: lv } });
+        a.preview(id); const d = (await ctx.startRendering()).getChannelData(0); return stats(d, 0, d.length);
+      };
+      const base = await run(null), off = await run(0), loud = await run(2);
+      out.mixer[id] = { base: base.rms, off: off.rms, x2: loud.rms, nan: base.nan || off.nan || loud.nan, peak: Math.max(base.peak, loud.peak) };
+    }
     return out;
   });
   let fail = 0;
   const ok = (cond, msg) => { if (!cond) { fail++; console.log('  FEIL:', msg); } };
-  for (const [k, v] of Object.entries(res)) console.log(k.padEnd(20), JSON.stringify(v));
+  for (const [k, v] of Object.entries(res)) if (k !== 'mixer') console.log(k.padEnd(20), JSON.stringify(v));
+  const mx = res.mixer; delete res.mixer;
   for (const [k, v] of Object.entries(res)) { ok(!v.nan, k + ' har NaN'); ok(v.peak <= 1.0001, k + ' klipper'); ok(v.peak > 0.001 || k === 'fall_slow', k + ' er stille'); }
   ok(res.step_tile.centroid > res.step_wood.centroid, 'flis skal låte lysere enn tre');
   ok(res.step_wood.centroid > res.step_soft.centroid, 'tre skal låte lysere enn tekstil');
@@ -78,6 +90,13 @@ const base = process.argv[2] || 'http://localhost:8766';
   ok(res.fall_fast.rms > 0.02 && res.fall_slow.rms < 0.001, 'fallvind: stille ved lav fart, tydelig ved høy');
   ok(res.breathing_run_8s.rms > res.breathing_rest_8s.rms * 2, 'pust etter løping skal høres mer enn i ro');
   ok(res.breathing_run_8s.effort > 0.5 && res.breathing_rest_8s.effort < 0.05, 'anstrengelsesmodellen');
+  for (const [id, m] of Object.entries(mx)) {
+    ok(!m.nan && m.peak <= 1.0001, `mikser ${id}: NaN/klipping`);
+    ok(m.base > 0.0003, `mikser ${id}: forhåndsvisning er stille (${m.base})`);
+    ok(m.off < m.base * 0.02 + 1e-6, `mikser ${id}: 0 skal gi stille (${m.off} vs ${m.base})`);
+    ok(m.x2 > m.base * 1.4, `mikser ${id}: 200 % skal være tydelig sterkere (${m.x2} vs ${m.base})`);
+  }
+  console.log('mikser: ' + Object.keys(mx).length + ' lyder kontrollert');
   ok(errs.length === 0, 'sidefeil: ' + errs.join(' | '));
   console.log(fail ? `\n${fail} kontroll(er) feilet` : '\nalle lydkontroller OK');
   await b.close(); process.exit(fail ? 1 : 0);

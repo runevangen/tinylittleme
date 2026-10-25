@@ -21,6 +21,9 @@ Lyd starter etter første tastetrykk eller trykk (nettleserregel). Motoren ligge
 | **Knuses / klemt / skylles ned** | Skår, tung dunk med utpust, vann | Fare og ting som faller |
 | **Sjekkpunkt / mål** | Myk klokke / liten melodi | |
 
+## Lydmikser (innstillinger for alle lyder)
+⚙ → **Lyd**: hovedvolum, etterklang for rommet, og **volum for hver enkelt lyd** fra 0 (av) til 200 %. ▶ ved siden av hver lyd spiller den av, så du kan justere uten å spille. Det er 26 kontroller i seks grupper: bevegelse (skritt, landing, tar sats, avspark, fallvind, skrens), pust, klatring (gripe, hive seg opp, rekke ut), ting (ta opp, slippe, dytte, knuses), hendelser (klemt, kar/do, sjekkpunkt, mål) og skritt per underlag (tre, flis, matte, papir, plast, metall, glass, kurv). «Alle 100 %», «Alle av» og «Nullstill lyd» finnes også. Alt huskes i nettleseren. `M` skrur all lyd av og på.
+
 ## Underlag
 Lydunderlag velges fra brettobjektets materiale: tre, flis og porselen, tekstil og matter (myk), papir og bøker, plast, metall, glass, kurv. Standard er tre.
 | Underlag | Karakter | Målt tyngdepunkt |
@@ -37,7 +40,7 @@ Lydunderlag velges fra brettobjektets materiale: tre, flis og porselen, tekstil 
 Rommet har etterklang (`audio.reverb` i brettdata): bad 0,38 (flis), soverom 0,12.
 
 ## Slik er det kontrollert
-Jeg kan ikke høre, så det er målt, ikke vurdert. `tools/audio_check.cjs` rendrer hver lyd offline og sjekker: ingen NaN, ingen klipping, nok styrke, flis lysere enn tre lysere enn tekstil, hard landing tydelig sterkere enn myk, anstrengt pust sterkere enn rolig, fallvind stille ved lav fart og tydelig ved høy, pust etter løping hørbart mer enn i ro. Alt passerer. I det kjørende spillet ble det bekreftet at hendelsene utløser riktige lyder (skritt: «soft» på matta, så «tile» på gulvet).
+Jeg kan ikke høre, så det er målt, ikke vurdert. `tools/audio_check.cjs` rendrer hver lyd offline og sjekker: ingen NaN, ingen klipping, nok styrke, flis lysere enn tre lysere enn tekstil, hard landing tydelig sterkere enn myk, anstrengt pust sterkere enn rolig, fallvind stille ved lav fart og tydelig ved høy, pust etter løping hørbart mer enn i ro. Alt passerer. Mikseren er også kontrollert: alle 26 lydene kan forhåndsspilles, blir stille ved 0 og tydelig sterkere ved 200 %. I det kjørende spillet ble det bekreftet at hendelsene utløser riktige lyder (skritt: «soft» på matta, så «tile» på gulvet).
 
 ## Det jeg ikke vet
 - **Hvordan det låter.** Syntetiserte skritt og pust kan lyde kunstige. Tallene (styrke, tonehøyde, takt) er første gjetning. Justér etter ørene.

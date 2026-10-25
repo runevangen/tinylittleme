@@ -31,6 +31,7 @@ Gjenstår / til sparring:
 
 ## Lyd
 - [x] Første lydmotor (syntetisert): skritt per underlag, pust, tar sats, avspark, fall, landing, hendelser. Trenger lytting.
+- [x] Lydmikser: volum for hver lyd, forhåndsspilling, huskes.
 - [ ] Ekte lydopptak (foley) og flere varianter per underlag.
 - [ ] Romlyd/ambiens per rom (dryppende kran, vifte), og 3D-lyd.
 - [ ] Musikk, mikser, visuell støtte for hørselshemmede.

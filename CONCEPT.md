@@ -67,7 +67,10 @@ Veggsprang utløses bare når spilleren faller og styrer inn mot veggen, ellers 
 Dytte, bære, stable, knuse, klemt: se [docs/FLYTTBARE_TING.md](docs/FLYTTBARE_TING.md). Prøverom: `?level=poc`.
 
 ## Lyd
-Syntetisert lyd: skritt per underlag, pust som følger anstrengelse, tar sats, avspark, falle og landing, og hendelser. Se [docs/LYD.md](docs/LYD.md). `M` skrur av/på.
+Syntetisert lyd: skritt per underlag, pust som følger anstrengelse, tar sats, avspark, falle og landing, og hendelser. Mikser med volum for hver enkelt lyd (0–200 %, ▶ for prøvespilling) i ⚙. Se [docs/LYD.md](docs/LYD.md). `M` skrur av/på.
+
+## Brett
+Knappen **Brett** i bunnen bytter mellom soverom, bad (tolket fra 3 bilder) og prøverom for å flytte ting. Spillet husker brettet du sist spilte (`?level=soverom|bad|poc` åpner et bestemt).
 
 ## Lagring og poeng
 `K` lagrer punkt (må stå støtt), `R` går tilbake dit, `T` starter på nytt. Sjekkpunkt på nattbord og hylle er gratis.
