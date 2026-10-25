@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.46** – (1) Autolagring: fremgangen (sist trygge sted, sjekkpunkt, poeng, tid) huskes per brett og gjenopptas når du åpner siden igjen; «Start på nytt» i ⚙. (2) Ting som forsvinner (hull, vann) kommer gratis tilbake etter 3 s, og «Ting ↺» koster ingenting når alt står på plass. (3) Kast med dra og slipp: hold TA og dra ned (sling) for å sikte og bestemme kraft. (4) Etter 3 fall på samme sted: tips om neste hinder og kompasset vises i 15 s. (5) ⚙: glidebryter for gjennomsiktighet på utoningen.
 - **0.45** – Kameraet hjelper mer: løfter seg over vegger i stedet for å bli trukket tett inn, ser litt nedover i fall (du ser hvor du lander) og litt oppover når du klatrer eller henger. Av/på i ⚙ («Kameraet hjelper»).
 - **0.44** – Kamerahjelp: ting som står mellom kamera og figur tones ut (ca. 16 % synlighet) og kommer tilbake når det er fritt (av/på i ⚙), og en liten pil ved skjermkanten viser hvor figuren er når den er utenfor skjermen.
 - **0.43** – Soverom (hovedbrettet) har en rute: pilen følger bøkene → nattbordet → kabelen (svinge) → bokhylla → mellom bøkene (veggsprang) → øverste hylle. Før pekte pilen rett mot målet gjennom veggene.

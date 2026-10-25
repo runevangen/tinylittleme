@@ -4,7 +4,7 @@ import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo } from './props.js';
 import { createVoice } from './voice.js';
-import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
+import { returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
 // mobil (berøring) er hovedplattformen: tekst som nevner taster skal si knappene i stedet
@@ -241,6 +241,7 @@ function updateLabels() {
   }
 }
 
+const THROWTXT = TOUCH ? `hold ${TA} og dra ned: sikt og kast` : `hold ${TA}: kast`;
 const nice = (id) => (id && (LEVEL.hints || []).find((h) => h.id === id)?.text.split('\n')[0]) || id || 'flaten';   // pent navn til hint-linja når brettet har en lapp for tingen
 
 // grep-kode: alt som kan klatres i har en varm oransje kant (alltid litt synlig); «Fremhev grep» i ⚙ gjør dem tydeligere og pulserende
@@ -860,10 +861,33 @@ const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.
 function placeFlag() { flag.position.set(save.pos[0], save.pos[1], save.pos[2]); }
 placeFlag();
 
+// ---------- autolagring: fremgangen huskes per brett, så en kort mobiløkt kan fortsette der du var ----------
+const progKey = `tlm.progress.${levelId}`;
+let autoPos = null, autoT = 0, resumed = false;
+function saveProgress() { if (won) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells] }); }
+function clearProgress() { autoPos = null; store.set(progKey, null); }
+const failCells = new Map();
+let compassForce = 0;
+function failAt() {
+  const k = `${Math.round(player.x / 6)}|${Math.round(player.y / 6)}|${Math.round(player.z / 6)}`, n = (failCells.get(k) || 0) + 1; failCells.set(k, n);
+  if (n >= 3 && n % 3 === 0) setTimeout(() => { const t = nextTarget(); compassForce = performance.now() + 15000; toast(`Tips: prøv ${t.final ? 'målet' : t.label}${t.act ? ` (${t.act})` : ''}. Pilen viser veien.`); }, 1800);
+}
+{
+  const pr = store.get(progKey, null), okAt = (p) => Array.isArray(p) && p.length === 3 && freeAt(LEVEL, p[0], p[1] + 0.05, p[2]);
+  if (pr && pr.clock > 4 && okAt(pr.save)) {
+    save.pos = pr.save; Object.assign(stats, pr.stats || {}); clock = pr.clock; autoPos = okAt(pr.auto) ? pr.auto : null;
+    for (const [k, v] of pr.fails || []) failCells.set(k, v);
+    resetPlayer(player, ...(autoPos || save.pos)); placeFlag(); resumed = true;
+  }
+}
+addEventListener('pagehide', saveProgress);
+if (resumed) setTimeout(() => toast('Fortsetter der du var · ⚙ → Start på nytt for å begynne på nytt'), 1500);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveProgress(); });
+
 function doSave() {
   if (mode !== 'play') return toast('Gå ut av plan-/flymodus først');
   if (!player.onGround) return toast('Stå støtt for å lagre');
-  save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag(); audio?.checkpoint();
+  save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag(); audio?.checkpoint(); saveProgress();
   toast(`Lagringspunkt satt  −${SCORE.save} poeng`);
 }
 function goBack() {
@@ -871,12 +895,21 @@ function goBack() {
   resetPlayer(player, ...save.pos); stats.respawns++;
   toast(`Tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
 }
+const lostQueue = [];
+function stepLost(dt) {
+  for (let i = lostQueue.length - 1; i >= 0; i--) {
+    const q = lostQueue[i]; q.t -= dt; if (q.t > 0) continue;
+    if (returnBody(LEVEL, q.id, player)) { toast(`${q.id} er tilbake på plassen sin`); lostQueue.splice(i, 1); } else q.t = 1;
+  }
+}
 function resetThings() {
   if (mode !== 'play') return;
+  if (!(LEVEL.bodies || []).some((b) => !b.alive || b.min.some((v, i) => Math.abs(v - b.home.min[i]) > 0.05))) return toast('Alt står på plass');
   resetBodies(LEVEL, player); stats.resets++; say('reset');
   toast(`Ting satt tilbake  −${SCORE.resetThings} poeng`);
 }
 function restartAll() {
+  clearProgress(); failCells.clear();
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player);
   save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = 0; stats.flew = false;
@@ -969,7 +1002,7 @@ goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visibl
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
 function compassFrame(now) {
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
-  const show = compassOn && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6);
+  const show = (compassOn || performance.now() < compassForce) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6);
   compEl.style.display = show ? 'flex' : 'none';
   goalArrow.visible = show && player.onGround; goalArrowG.visible = goalArrow.visible;
   if (!show) return;
@@ -1055,12 +1088,29 @@ function bindBtn(id, key, edge) {
 bindBtn('btnJump', 'jump', () => { jumpEdge = true; });
 bindBtn('btnGrab', 'grab', () => { grabEdge = true; });
 bindBtn('btnCarry', 'carry', () => { carryEdge = true; });
+// kast med dra og slipp: hold TA, dra fingeren bakover (som en slynge), slipp. Retning og kraft følger draget; uten drag er det som før (hold lenge = langt kast).
+const aimPt = { id: null, x0: 0, y0: 0, x: 0, y: 0 };
+{
+  const el = $('btnCarry');
+  el.addEventListener('pointerdown', (e) => { aimPt.id = e.pointerId; aimPt.x0 = aimPt.x = e.clientX; aimPt.y0 = aimPt.y = e.clientY; });
+  el.addEventListener('pointermove', (e) => { if (e.pointerId === aimPt.id) { aimPt.x = e.clientX; aimPt.y = e.clientY; } });
+  const end = (e) => { if (e.pointerId === aimPt.id) aimPt.id = null; };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
+function aimInput(fx, fz, rx, rz) {
+  if (aimPt.id === null || !touch.carry || !player.carry) return undefined;
+  const dx = aimPt.x - aimPt.x0, dy = aimPt.y - aimPt.y0, len = Math.hypot(dx, dy);
+  if (len < 22) return undefined;
+  const ux = dx / len, uy = dy / len;                               // trekk ned = kast fremover, trekk til venstre = kast til høyre
+  let wx = fx * uy + rx * -ux, wz = fz * uy + rz * -ux; const wl = Math.hypot(wx, wz) || 1;
+  return { dx: wx / wl, dz: wz / wl, k: Math.min(1, (len - 22) / 110) };
+}
 // knapper som koster poeng må trykkes to ganger (første trykk «armerer» i 2,5 s), så de ikke utløses ved et uhell
 function confirmed(btn, label, cost, fn) {
   let t = null; const orig = btn.textContent;
   btn.onclick = () => {
     if (t) { clearTimeout(t); t = null; btn.classList.remove('armed'); btn.textContent = orig; fn(); return; }
-    btn.classList.add('armed'); btn.textContent = `Sikker? −${cost}`;
+    btn.classList.add('armed'); btn.textContent = cost ? `Sikker? −${cost}` : 'Trykk igjen';
     t = setTimeout(() => { t = null; btn.classList.remove('armed'); btn.textContent = orig; }, 2500);
   };
 }
@@ -1144,9 +1194,10 @@ function buildPanel() {
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCompass"> Målkompass og pil på gulvet</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAssist"> Kameraet hjelper (over vegger, i fall og klatring)</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkFade"> Tone ut ting som står i veien for kameraet</label>
+    <label>Gjennomsiktighet <span id="v_fadeop"></span> <small>(lavere = mer gjennomsiktig)</small></label><input type="range" id="s_fadeop" min="0.04" max="0.7" step="0.02">
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkGripHi"> Fremhev grep (oransje, pulserende)</label>
     ${labels.length ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkLabels"> Brukslapper ved ting${key('L')}</label>` : ''}
-    <div class="row" style="margin-top:10px"><button id="pSound">Lyd av/på</button><button id="pPlan">Plan</button><button id="pFly">Fly</button></div>
+    <div class="row" style="margin-top:10px"><button id="pSound">Lyd av/på</button><button id="pPlan">Plan</button><button id="pFly">Fly</button><button id="pRestart">Start på nytt</button></div>
     <label>Kamerafølsomhet (dra) <span id="v_camsens"></span></label><input type="range" id="s_camsens" min="0.4" max="2" step="0.1">
     ${navigator.vibrate ? '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkVib"> Vibrasjon</label>' : ''}
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
@@ -1161,6 +1212,7 @@ function buildPanel() {
   $('levelSel').value = levelId;
   $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
   wireMixer();
+  confirmed($('pRestart'), 'Start på nytt', 0, () => { restartAll(); $('panel').classList.add('hide'); toast('Startet på nytt'); });
   $('pSound').onclick = toggleSound; $('pPlan').onclick = () => { setMode('plan'); $('panel').classList.add('hide'); }; $('pFly').onclick = () => { setMode('fly'); $('panel').classList.add('hide'); };
   $('s_camsens').value = camSens; $('v_camsens').textContent = (+camSens).toFixed(1);
   $('s_camsens').oninput = (e) => { camSens = +e.target.value; store.set('tlm.camsens', camSens); $('v_camsens').textContent = camSens.toFixed(1); };
@@ -1169,6 +1221,7 @@ function buildPanel() {
   if ($('chkLabels')) { $('chkLabels').checked = labelsOn; $('chkLabels').onchange = (e) => { labelsOn = e.target.checked; store.set('tlm.labels', labelsOn); }; }
   $('chkCompass').checked = compassOn; $('chkCompass').onchange = (e) => { compassOn = e.target.checked; store.set('tlm.compass', compassOn); };
   $('chkAssist').checked = camAssist; $('chkAssist').onchange = (e) => { camAssist = e.target.checked; store.set('tlm.camassist', camAssist); };
+  $('s_fadeop').value = fadeOp; $('v_fadeop').textContent = Math.round(fadeOp * 100) + ' %'; $('s_fadeop').oninput = (e) => { fadeOp = +e.target.value; store.set('tlm.fadeop', fadeOp); $('v_fadeop').textContent = Math.round(fadeOp * 100) + ' %'; };
   $('chkFade').checked = fadeOn; $('chkFade').onchange = (e) => { fadeOn = e.target.checked; store.set('tlm.fade', fadeOn); };
   $('chkGripHi').checked = gripHi; $('chkGripHi').onchange = (e) => { gripHi = e.target.checked; store.set('tlm.griphi', gripHi); };
   $('chkAutoCam').checked = autoCam; $('chkAutoCam').onchange = (e) => { autoCam = e.target.checked; store.set('tlm.autocam', autoCam); };
@@ -1233,11 +1286,17 @@ function update(dt) {
   }
 
   if (!won) clock += dt;
+  stepLost(dt);
+  autoT += dt;
+  if (autoT > 5 && mode === 'play' && !won) {                         // trygg autolagring: en rolig stund på fast grunn
+    autoT = 0;
+    if (player.onGround && player.state === 'ground' && !player.carry && player.recover <= 0 && player.groundBox && !player.groundBox.dyn && !player.groundBox.owner && player.y > LEVEL.deathY + 5 && !inHazard(LEVEL, player)) { autoPos = [player.x, player.y, player.z]; saveProgress(); }
+  }
   const inp = {
     mx: rx * ix + fx * iz, mz: rz * ix + fz * iz,
     jumpPressed: jumpEdge, jumpHeld: held('Space') || touch.jump,
     grabPressed: grabEdge, grabHeld: held('ShiftLeft', 'ShiftRight', 'KeyE') || touch.grab,
-    carryPressed: carryEdge, carryHeld: held('KeyF') || touch.carry,
+    carryPressed: carryEdge, carryHeld: held('KeyF') || touch.carry, aim: aimInput(fx, fz, rx, rz),
     walk: held('KeyC', 'AltLeft', 'AltRight'),
   };
   jumpEdge = grabEdge = carryEdge = false;
@@ -1252,11 +1311,11 @@ function update(dt) {
   }
   audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
-  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
-  if (player.y < LEVEL.deathY) { resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
+  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); saveProgress(); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
+  if (player.y < LEVEL.deathY) { failAt(); resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
-    else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant`); }
+    else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant – kommer tilbake om litt`); lostQueue.push({ id: ev.id, t: 3 }); }
     else if (ev.type === 'exhausted') { setMood('hurt', 0.6); buzz(30); cue('puster tungt'); }
     else if (ev.type === 'use') {
       audio?.pickup(); buzz(20); setMood('happy', 0.9);
@@ -1270,7 +1329,7 @@ function update(dt) {
   }
   if (player.hardLands > pre.hard) { setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
   if (player.knockout) {
-    player.knockout = false; audio?.crush(); buzz(90); say('knockout');
+    player.knockout = false; audio?.crush(); buzz(90); say('knockout'); failAt();
     resetPlayer(player, ...save.pos); stats.respawns++;
     toast(`Landet for hardt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
   }
@@ -1281,6 +1340,7 @@ function update(dt) {
   }
   const hz = inHazard(LEVEL, player);
   if (hz) {
+    failAt();
     audio?.splash(hz.type === 'flush' ? 'flush' : 'pit'); cue(hz.type === 'flush' ? 'skylling' : 'plask'); say(hz.type === 'flush' ? 'flush' : 'pit');
     resetPlayer(player, ...(hz.type === 'flush' ? LEVEL.start : save.pos)); stats.respawns++;
     toast(`${hz.message || 'Fare!'}  −${SCORE.respawn} poeng`);
@@ -1291,7 +1351,7 @@ function update(dt) {
     won = true; audio?.win(); setMood('happy', 6); say('goal', true);
     $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
-    $('win').classList.remove('hide');
+    $('win').classList.remove('hide'); clearProgress();
   }
 }
 
@@ -1406,7 +1466,7 @@ function render(now, dt) {
       thread: `${TA}: træ nålen med tråden`, 'need-thread': 'Finn en trådsnelle å træ nålen med', 'need-needle': 'Finn en nål å træ tråden i',
       'zip-a': `${TA}: fest tråden her (høyt oppe)`, 'zip-b': `Gå dit tråden skal ende (lavere), så fester ${TA} den` }[th];
     const zn = !player.carry && zipNear(player, LEVEL);
-    hint.textContent = player.carry ? (player.charge >= P.throwMin ? `Slipp ${TA}: KAST` : toolText ? `${toolText} · hold ${TA}: kast` : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `${TA}: sett på ${nice(sp.c.id)}` : `${TA}: slipp`) + ` · hold ${TA}: kast`; })()) : zn ? `${GREP}: heng deg i tråden og skli ned` : t ? `${TA}: ta ${nice(t.id)}` : '';
+    hint.textContent = player.carry ? (player.charge >= P.throwMin ? `Slipp ${TA}: KAST` : toolText ? `${toolText} · ${THROWTXT}` : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `${TA}: sett på ${nice(sp.c.id)}` : `${TA}: slipp`) + ` · ${THROWTXT}`; })()) : zn ? `${GREP}: heng deg i tråden og skli ned` : t ? `${TA}: ta ${nice(t.id)}` : '';
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;
@@ -1461,7 +1521,7 @@ function render(now, dt) {
 
 // ---------- kamerahjelp: tone ut det som står i veien, og vis hvor figuren er når den er utenfor skjermen ----------
 let fadeOn = store.get('tlm.fade', true);
-const FADE_OP = 0.16;
+let fadeOp = store.get('tlm.fadeop', 0.16);
 function segHitsBox(a, d, b, pad) {                              // linjestykke a→a+d mot boks (utvidet med pad): slab-metoden
   let t0 = 0, t1 = 1;
   for (let i = 0; i < 3; i++) {
@@ -1491,7 +1551,7 @@ function updateFades(dt) {
     e.t = Math.max(0, Math.min(1, e.t + (hit ? 1 : -1) * dt * 6));
     if (e.t > 0 && was === 0) setFadeMats(e, true);
     if (e.t > 0) {
-      const op = 1 - (1 - FADE_OP) * e.t;
+      const op = 1 - (1 - fadeOp) * e.t;
       for (const o of e.clone.keys()) for (const mt of [].concat(e.clone.get(o))) { mt.opacity = op; mt.depthWrite = e.t < 0.5; }
     }
     if (e.t === 0 && was > 0) setFadeMats(e, false);

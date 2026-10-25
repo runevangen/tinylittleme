@@ -7,11 +7,11 @@ Rangert etter verdi/innsats i rapporten. Kildegrunnlaget er svakt (søkesammendr
 - [~] **Grep-kode (v0.28):** oransje kant på grep-flater, valgfri fremheving, og figuren rekker ut en arm når noe kan gripes. Gjenstår: tydelig negativ markering av glatte flater.
 - [~] **Tilgivelse for mobilinput (v0.28):** coyote 0,14 s, hoppbuffer holdes under hurk/landing, REKK UT snapper (0,45 enheter). Gjenstår: bredere auto-kantgrep uten knapp, spilletest av verdiene.
 - [x] **Stamina i figuren (v0.38):** stripe over hodet, skjelving og svette fra 30 %, tom stamina = kontrollert skli (0,45 s), papirbånd koster lite. Trenger spilletest av tallene.
-- [ ] **Billig utvei:** auto-respawn av ting som havner utilgjengelig, nullstill (N) gratis når en ting er fysisk fastlåst, og trygg autolagring av grunnfremgang (lagring til 25 poeng er risikabelt for korte mobiløkter).
+- [~] **Billig utvei (v0.46):** autolagring per brett, forsvunne ting kommer tilbake gratis, «Ting ↺» koster ikke når alt står på plass. Gjenstår: oppdage ting som er fysisk fastlåst (ikke bare forsvunnet) og sette dem tilbake gratis.
 - [ ] **Fallgrenser varslet:** landingsmarkør/kontaktskygge, vindlyd og FOV-økning mot terskelen, tre tydelige landingsklasser.
 - [ ] **Bot begrenset til menneskelige evner**, to-nivå validering (streng/løs), viser ruten, og feil på lange ruter går til menneskelig gjennomgang. Avgjør om veggsprang skal være et tillatt verktøy eller blokkeres.
-- [ ] **Ett verktøy per rom** og hint etter 3 feil på samme sted; første rom per mekanikk uten poengtap.
-- [ ] **Touch:** kast med dra–slipp og snap, kameraassistanse, kontroller minst 44 pt, presets for tilgjengelighet.
+- [~] **Hint etter 3 feil på samme sted (v0.46):** tips om neste hinder og kompasset vises. Gjenstår: ett verktøy per rom, første rom per mekanikk uten poengtap.
+- [~] **Touch:** kast med dra–slipp er på plass fra v0.46 (snap til flate gjenstår), kameraassistanse (v0.44–0.45), kontroller minst 44 pt, presets for tilgjengelighet.
 - [ ] **Personvern:** del bare geometri/objektliste, slett bilder etter generering, private brett som standard, overlay av AI-tolkningen på originalbildet før publisering.
 - [~] **Kombineringsmotor** (v0.40): nål + trådsnelle → taubane er hardkodet i `physics.js` (`useTool`, `useZip`). Gjenstår: en tabell over egenskaper og regler (BotW/Scribblenauts) når det kommer flere kombinasjoner.
 - [ ] **Verifiser** hullene i kapittel 5 av rapporten (staminatall, fallterskler, coyote-verdier, single-slot) mot primærkilder når nettilgang finnes.

@@ -1,7 +1,7 @@
 // node tinylittleme/test_physics.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, resetBodies, drainEvents, toolHint } from './physics.js';
+import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, returnBody, resetBodies, drainEvents, toolHint } from './physics.js';
 import { LEVEL } from './level.js';
 
 applyPreset('klassisk');
@@ -802,6 +802,26 @@ const fwd = { ...idle, mz: 1 };
   assert.notEqual(p.state, 'zip', 'kom til enden');
   go(120, {}); assert.ok(p.onGround && p.y < 0.05 && Math.abs(p.x - L.zips[0].b[0]) < 2.5, `landet nede ved enden (x=${p.x.toFixed(1)}, y=${p.y.toFixed(2)})`);
   assert.equal(p.hardLands, 0, 'ingen hard landing');
+  applyPreset('klassisk');
+}
+
+// 34. kast med dra og slipp: retning og kraft fra aim; ting som forsvant kommer tilbake gratis
+{
+  applyPreset('prince');
+  const L = { boxes: [floor], ropes: [], movables: [{ id: 'k', kind: 'cup', material: 'plastic', color: 0xffffff, min: [0.6, 0, 0], max: [1.2, 0.6, 0.6], weight: 'light' }] }; initBodies(L);
+  const p = newPlayer(0, 0, 0); p.fx = 0; p.fz = 1;
+  const go = (n, inp) => { for (let i = 0; i < n; i++) step(p, { ...idle, ...(typeof inp === 'function' ? inp(i) : inp) }, 1 / 60, L); };
+  go(10, {}); go(1, { carryPressed: true, carryHeld: true }); go(2, { carryHeld: false });
+  assert.ok(p.carry, 'tok tingen');
+  go(1, { carryHeld: true, aim: { dx: -1, dz: 0, k: 1 } }); go(5, { carryHeld: true, aim: { dx: -1, dz: 0, k: 1 } });
+  assert.ok(p.charge >= P.throwMin, 'ladet av draget'); assert.ok(Math.abs(p.fx + 1) < 1e-6, 'snur mot siktet');
+  go(1, { carryHeld: false });
+  assert.ok(!p.carry, 'kastet'); const b = L.bodies[0]; assert.ok(b.vx < -3, `kastet mot siktet (vx=${b.vx.toFixed(1)})`);
+  // forsvunnet ting kommer tilbake
+  b.alive = false; L.boxes.splice(L.boxes.indexOf(b), 1);
+  assert.ok(returnBody(L, 'k', { x: 20, y: 0, z: 20 }), 'kommer tilbake'); assert.ok(b.alive && L.boxes.includes(b));
+  b.alive = false; L.boxes.splice(L.boxes.indexOf(b), 1);
+  assert.equal(returnBody(L, 'k', { x: 0.9, y: 0, z: 0.3 }), false, 'ikke oppå figuren');
   applyPreset('klassisk');
 }
 

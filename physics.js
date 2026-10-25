@@ -168,6 +168,17 @@ export function resetBodies(L, p) {
   }
 }
 
+// En ting som forsvant (hull, vann) settes tilbake på plassen sin, gratis. Returnerer false hvis du står der (prøv igjen senere).
+export function returnBody(L, id, p) {
+  const b = (L.bodies || []).find((x) => x.id === id); if (!b) return true;
+  if (b.alive) return true;
+  b.min = [...b.home.min]; b.max = [...b.home.max]; b.vy = 0; b.vx = b.vz = 0; b.carried = false;
+  if (p && overlaps(b, p.x, p.y, p.z)) return false;
+  if (blockedBodyAt(b, L)) return false;
+  b.alive = true; L.boxes.push(b); return true;
+}
+const blockedBodyAt = (b, L) => { for (const c of L.boxes) if (c !== b && !c.carried && boxOverlap(b, c)) return true; return false; };
+
 export function drainEvents(L) { const e = L.events || []; L.events = []; return e; }
 
 function removeBody(L, b, type) {
@@ -290,7 +301,12 @@ function carryControl(p, inp, dt, L) {
     return;
   }
   if (p.carryLatch) { if (!inp.carryHeld) p.carryLatch = false; return; }
-  if (inp.carryHeld) { p.charge += dt; return; }
+  if (inp.carryHeld) {
+    if (inp.aim) { p.fx = inp.aim.dx; p.fz = inp.aim.dz; p.charge = P.throwMin + Math.max(0.02, inp.aim.k) * P.throwFull; p.aiming = true; return; }   // dra-og-slipp: retning og kraft fra fingeren
+    if (p.aiming) { p.aiming = false; p.charge = 0; }
+    p.charge += dt; return;
+  }
+  p.aiming = false;
   const c = p.charge; p.charge = 0;
   if (c <= 0) return;
   if (c < P.throwMin) {
