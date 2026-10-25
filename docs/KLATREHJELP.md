@@ -19,7 +19,7 @@ Status: første versjon (v0.20). Verdiene står i `physics.js` (`P`) og er ment 
 |---|---|
 | **Feste** | Stå inntil en flate merket `grip` (scene: `"grip": true`) eller hopp mot den, og trykk GREP mens du styrer mot den. Du kan ikke klatre mens du bærer noe. |
 | **Styre** | Mot flaten = opp, bort = ned, sidelengs = langs flaten (innenfor flatens bredde). Opp 1,6 enheter/s, ned 2,6, sidelengs 1,3. |
-| **Stamina** | 10 enheter. Går ned 1/s mens du henger, +0,5 når du klatrer opp, +0,3 sidelengs. På bakken fylles den 2,5/s. Tom stamina = du mister taket og faller. Vises i HUD som «grep ▮▮▮▯». Det rekker til ca. 10 enheter opp i ett strekk. |
+| **Stamina** | 10 enheter. Går ned 1/s mens du henger, +0,5 når du klatrer opp, +0,3 sidelengs. På bakken fylles den 2,5/s. Tom stamina = du glir ned ca. 0,45 s (3 enheter/s) og mister så taket. En stripe over hodet viser kreftene (rød og blinkende under 15 %). Papirbånd koster bare ca. 0,2–0,7/s. Vises i HUD som «grep ▮▮▮▯». Det rekker til ca. 10 enheter opp i ett strekk. |
 | **Av** | Hopp = spark deg løs fra flaten. Ned til bakken = stå. Opp til kanten = kantgrep (hang), så hopp = hiv deg over (som før). |
 
 Prøverommet har en rute fra papirhaugen til toppen av tårnet med to håndklær og en hvilehylle midt i (for lang til ett strekk). Gå inn under det øvre håndkleet, hopp mot det og trykk GREP i hoppet.

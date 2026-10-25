@@ -6,7 +6,7 @@ Status: `[ ]` ikke startet · `[~]` påbegynt · `[x]` ferdig. Nyeste idéer øv
 Rangert etter verdi/innsats i rapporten. Kildegrunnlaget er svakt (søkesammendrag), så tallverdier er startverdier for tuning.
 - [~] **Grep-kode (v0.28):** oransje kant på grep-flater, valgfri fremheving, og figuren rekker ut en arm når noe kan gripes. Gjenstår: tydelig negativ markering av glatte flater.
 - [~] **Tilgivelse for mobilinput (v0.28):** coyote 0,14 s, hoppbuffer holdes under hurk/landing, REKK UT snapper (0,45 enheter). Gjenstår: bredere auto-kantgrep uten knapp, spilletest av verdiene.
-- [ ] **Stamina i figuren:** skjelving/farge ved lite igjen (fra ca. 25–30 %), tom stamina = kontrollert skli (0,3–0,5 s), tau/bånd uten stamina-kostnad.
+- [x] **Stamina i figuren (v0.38):** stripe over hodet, skjelving og svette fra 30 %, tom stamina = kontrollert skli (0,45 s), papirbånd koster lite. Trenger spilletest av tallene.
 - [ ] **Billig utvei:** auto-respawn av ting som havner utilgjengelig, nullstill (N) gratis når en ting er fysisk fastlåst, og trygg autolagring av grunnfremgang (lagring til 25 poeng er risikabelt for korte mobiløkter).
 - [ ] **Fallgrenser varslet:** landingsmarkør/kontaktskygge, vindlyd og FOV-økning mot terskelen, tre tydelige landingsklasser.
 - [ ] **Bot begrenset til menneskelige evner**, to-nivå validering (streng/løs), viser ruten, og feil på lange ruter går til menneskelig gjennomgang. Avgjør om veggsprang skal være et tillatt verktøy eller blokkeres.

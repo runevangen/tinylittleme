@@ -732,6 +732,14 @@ function updateBubble(now) {
   const x = Math.max(80, Math.min(innerWidth - 80, (_v3.x * 0.5 + 0.5) * innerWidth)), y = Math.max(70, (-_v3.y * 0.5 + 0.5) * innerHeight);
   bubbleEl.style.left = `${x}px`; bubbleEl.style.top = `${y}px`;
 }
+const stamEl = $('stam'), stamFill = stamEl.firstElementChild;
+function updateStam() {                                   // krefter-stripe over hodet mens du klatrer eller er sliten
+  const f = clampN(player.stam / P.stamina, 0, 1), show = mode === 'play' && (player.state === 'climb' || f < 0.97);
+  stamEl.style.display = show ? 'block' : 'none'; if (!show) return;
+  hero.head.getWorldPosition(_v3); _v3.y += 0.18; _v3.project(camera);
+  stamEl.style.left = `${(_v3.x * 0.5 + 0.5) * innerWidth}px`; stamEl.style.top = `${(-_v3.y * 0.5 + 0.5) * innerHeight}px`;
+  stamFill.style.transform = `scaleX(${f})`; stamEl.className = f < 0.15 ? 'crit' : f < 0.3 ? 'low' : '';
+}
 const F = { sm: 0.35, op: 0, bw: 0, bl: 0, eyeY: 1, pup: 1, blush: 0, sweat: 0 };       // glattede uttrykksverdier
 function animateHero(p, now, dt) {
   const sec = now / 1000, h = hero, f = h.face, st = p.state, sp = Math.hypot(p.vx, p.vz);
@@ -1211,6 +1219,7 @@ function update(dt) {
   for (const ev of drainEvents(LEVEL)) {
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant`); }
+    else if (ev.type === 'exhausted') { setMood('hurt', 0.6); buzz(30); cue('puster tungt'); }
     else if (ev.type === 'use') { audio?.pickup(); buzz(20); setMood('happy', 0.9); say(ev.tool === 'gel' ? 'gel' : 'roll'); }
     else if (ev.type === 'toolhint') toast(ev.tool === 'gel' ? `Gå helt inntil en vegg og trykk ${TA} for å smøre. ${TA} igjen legger fra seg.` : `Gå helt ut til en kant og trykk ${TA} for å rulle ut. ${TA} igjen legger fra seg.`);
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
@@ -1319,7 +1328,7 @@ function insideAny(x, y, z, m) {
 function render(now, dt) {
   { const tb = document.getElementById('btnCarry'); const lab = player.carry && player.charge >= P.throwMin ? 'KAST' : 'TA'; if (tb && tb.textContent !== lab) { tb.textContent = lab; tb.style.background = lab === 'KAST' ? '#c77d12cc' : ''; } }   // knappen sier KAST når holdetiden er nådd
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
-  poseHero(player, now, dt, mode); animateHero(player, now, dt); updateBubble(now);
+  poseHero(player, now, dt, mode); animateHero(player, now, dt); updateBubble(now); updateStam();
   updateArc(); syncMade(); updateLabels();
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }

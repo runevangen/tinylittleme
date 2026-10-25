@@ -730,6 +730,22 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// 31. tom for krefter: først et kontrollert skli (ikke et brått fall), så slipper du; bånd koster lite stamina
+{
+  applyPreset('prince');
+  const tower = box('grip', 0, 1, 0, 9, -3, 3, { grip: true });
+  const L = { boxes: [floor, tower], ropes: [] }; const p = newPlayer(-0.3, 0, 0); p.fx = 1; p.fz = 0;
+  const go = (n, inp) => { for (let i = 0; i < n; i++) step(p, { ...idle, ...(typeof inp === 'function' ? inp(i) : inp) }, 1 / 60, L); };
+  go(10, {}); go(2, (i) => ({ mx: 1, grabPressed: i === 0 })); go(60, { mx: 1 });
+  const y0 = p.y; p.stam = 0.05; go(10, { mx: 1 });
+  assert.equal(p.state, 'climb', 'fortsatt festet rett etter at kreftene tok slutt');
+  assert.ok(p.stam === 0 && p.exhaust > 0, 'utmattet');
+  go(5, { mx: 1 }); assert.ok(p.y < y0 + 0.1, 'glir nedover, klatrer ikke');
+  go(40, {}); assert.notEqual(p.state, 'climb', 'slipper etter skliet');
+  assert.ok(drainEvents(L).some((e) => e.type === 'exhausted'), 'melder utmattelse');
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 

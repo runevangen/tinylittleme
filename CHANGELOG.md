@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.38** – Krefter: stripe over hodet (grønn → oransje → rød og blinkende) når du klatrer eller er sliten, kontrollert skli (0,45 s) i stedet for brått fall når kreftene tar slutt, og papirbånd koster lite stamina.
 - **0.37** – Orienteringshjelp: målkompass (pil + avstand, trykk for å snu kamera mot målet), ◎-knapp og dobbelttrykk for å sentrere kamera bak figuren, oransje pil på gulvet mot målet. Av/på i ⚙.
 - **0.36** – Hjelpeteksten er en skuff som sklir inn fra høyre når du første gang kommer nær noe som kan gjøre noe (treningsrommet), og sklir ut igjen etter noen sekunder. «i»-fliken blir stående ved kanten: trykk for å hente teksten frem igjen (for tingen nær deg, ellers den siste). Trykk på teksten for å lukke den; åpnet med fliken blir den stående til du går bort eller trykker igjen.
 - **0.35** – Stemme: figuren sier korte norske replikker (au, hjelp, sjekkpunkt, «Armene mine!», «Klissete!» …) med nettleserens talesyntese i høy tone, og i en snakkeboble over hodet (også uten lyd). Munnen beveger seg mens han snakker. ⚙: snakkebobler, stemme og stemmevolum. Egen modul `voice.js` med pauser og sannsynlighet (test_voice.mjs). `docs/FIGUREN.md`.

@@ -79,7 +79,7 @@ export const P = {
   throwFull: 0.7,    // ytterligere holdetid til full kraft (s)
   throwV0: 3.5, throwV1: 9.5, throwUp0: 3, throwUp1: 7.5,   // kastefart fremover og opp (svak … full)
   vaultH: 7, vaultMin: 0.55,   // stavhopp: høyde over bakken ved full fart for en stav på 1,5 enheter, og laveste fartsandel for å stavhoppe
-  stamina: 10, staminaRegen: 2.5,   // klatring: sekunder du orker å henge på en flate, og hvor fort det kommer tilbake på bakken (s/s)
+  stamina: 10, staminaRegen: 2.5, exhaustT: 0.45, exhaustSlide: 3,   // klatring: sekunder du orker å henge på en flate, og hvor fort det kommer tilbake på bakken (s/s)
   climbUp: 1.6, climbDown: 2.6, climbSide: 1.3,   // fart opp, ned og sidelengs på en grep-flate
   gelH: 6, gelW: 1.6, gelDry: 20, gelWetDrain: 1.2, gelSlide: 0.5,   // hårgelé: felt (høyde, bredde), tørketid (s), ekstra stamina-forbruk og sakte skli mens det er vått
   stripMax: 14, stripW: 0.5, stripTear: 7,   // dopapirbånd: lengste fall, bredde, og hvor lenge det tåler et tak (s) før det revner
@@ -117,7 +117,7 @@ export function newPlayer(x, y, z) {
     gait: 0, stepLen: 0.4,         // skrittfase (rad, π per skritt) og gjeldende skrittlengde
     carry: null, crushed: null, charge: 0, carryLatch: false,   // kast: hold-tid, og «ventet til F ble sluppet etter at noe ble tatt»
     hardLands: 0, knockout: false, vaulting: false, jumpSp: 0, toolWarn: 0,
-    stam: P.stamina, climb: null, climbPh: 0, climbMove: 0,        // klatring: stamina, flaten du henger på, og armtak-fase til animasjon
+    stam: P.stamina, exhaust: 0, climb: null, climbPh: 0, climbMove: 0,        // klatring: stamina, flaten du henger på, og armtak-fase til animasjon
     t: 0,
   };
 }
@@ -368,7 +368,7 @@ function useTool(p, L) {
     const t = 0.12, lo = [0, y0, 0], hi = [0, top, 0];
     lo[o] = cen - P.stripW / 2; hi[o] = cen + P.stripW / 2;
     if (sgn > 0) { lo[ax] = plane; hi[ax] = plane + t; } else { lo[ax] = plane - t; hi[ax] = plane; }
-    makeBox(L, { type: 'paper', kind: 'paper_strip', id: `bånd_${c.id}`, owner: c.id, material: 'paper', color: 0xfbfaf6, min: lo, max: hi, grip: true, gripDrain: 0.4, tear: P.stripTear, parent: gb });
+    makeBox(L, { type: 'paper', kind: 'paper_strip', id: `bånd_${c.id}`, owner: c.id, material: 'paper', color: 0xfbfaf6, min: lo, max: hi, grip: true, gripDrain: -0.8, tear: P.stripTear, parent: gb });
     L.events.push({ type: 'use', tool: 'roll' });
     return true;
   }
@@ -714,9 +714,16 @@ function tryClimb(p, hit) {
   return true;
 }
 function leaveClimb(p, vx, vz, vy, cd) {
-  p.state = 'air'; p.climb = null; p.vx = vx; p.vz = vz; p.vy = vy; p.cd = cd; p.onGround = false;
+  p.state = 'air'; p.climb = null; p.exhaust = 0; p.vx = vx; p.vz = vz; p.vy = vy; p.cd = cd; p.onGround = false;
 }
 function climbStep(p, inp, wx, wz, dt, L) {
+  if (p.exhaust > 0) {                                               // tom for krefter: du glir ned langs flaten en kort stund, så slipper du
+    const c = p.climb; p.exhaust -= dt; p.climbMove = 0;
+    p.onGround = false; moveY(p, -P.exhaustSlide * dt, L);
+    if (p.onGround) { p.state = 'ground'; p.climb = null; p.vy = 0; p.exhaust = 0; return; }
+    if (p.exhaust <= 0) { p.exhaust = 0; return leaveClimb(p, c.nx * 1.2, c.nz * 1.2, 0, 0.6); }
+    return;
+  }
   const c = p.climb, b = c.box, clampN = (v, a, z) => Math.max(a, Math.min(z, v));
   if (!b || L.boxes.indexOf(b) < 0) return leaveClimb(p, 0, 0, 0, 0.2);
   const into = -(wx * c.nx + wz * c.nz);                          // mot flaten = opp, bort = ned
@@ -731,8 +738,8 @@ function climbStep(p, inp, wx, wz, dt, L) {
     b.tear -= dt;
     if (b.tear <= 0) { const i = L.boxes.indexOf(b); if (i >= 0) L.boxes.splice(i, 1); L.made = (L.made || []).filter((m) => m !== b); L.events.push({ type: 'tore', id: b.id }); return leaveClimb(p, c.nx * 0.8, c.nz * 0.8, 0, 0.5); }
   }
-  p.stam -= dt * (1 + (vy > 0 ? 0.5 : 0) + (vs ? 0.3 : 0) + (b.gripDrain || 0));
-  if (p.stam <= 0) { p.stam = 0; return leaveClimb(p, c.nx * 1.2, c.nz * 1.2, 0, 0.6); }   // armene gir etter
+  p.stam -= dt * Math.max(0.1, 1 + (vy > 0 ? 0.5 : 0) + (vs ? 0.3 : 0) + (b.gripDrain || 0));
+  if (p.stam <= 0) { p.stam = 0; p.exhaust = P.exhaustT; (L.events ||= []).push({ type: 'exhausted' }); return climbStep(p, inp, wx, wz, dt, L); }   // armene gir etter: kontrollert skli før du slipper
   if (vs) {
     const ox = p.x, oz = p.z;
     p.x += tx * vs * dt; p.z += tz * vs * dt;
