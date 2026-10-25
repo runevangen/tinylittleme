@@ -49,8 +49,12 @@
   #btnGrab{right:max(30px,env(safe-area-inset-right));bottom:10px;width:76px;height:76px;background:#1d2433cc}
   #btnCarry{right:max(30px,env(safe-area-inset-right));bottom:196px;width:66px;height:66px;background:#2a7f62cc}
   @media (max-width:560px){#bar{gap:4px}#bar button{padding:7px 9px;font-size:11.5px}}
+  .tbtn::after{content:'';position:absolute;inset:-9px;border-radius:50%}
+  #stick{touch-action:none}
+  #bar button.armed{background:#ffd23f;color:#1d2433}
   @media (pointer:coarse){#stick{display:block;bottom:120px}.tbtn{display:flex}#help{display:none}
-    #btnJump{bottom:140px}#btnGrab{bottom:52px}#btnCarry{bottom:240px}#hint{bottom:112px}}
+    #bar #bLevel,#bar #bPlan,#bar #bFly,#bar #bSound{display:none}#bar{bottom:max(14px,env(safe-area-inset-bottom))}#bar button{padding:11px 16px;font-size:14px}
+    #btnJump{bottom:140px}#btnGrab{bottom:52px}#btnCarry{bottom:236px;width:76px;height:76px}#hint{bottom:112px}}
 </style>
 <script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
 </head>

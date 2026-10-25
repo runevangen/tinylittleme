@@ -55,6 +55,9 @@ addEventListener('pointerdown', unlockAudio); addEventListener('keydown', unlock
 let autoCam = store.get('tlm.autocam', false), lastDrag = -99;
 function toggleAutoCam() { autoCam = !autoCam; store.set('tlm.autocam', autoCam); toast(autoCam ? 'Kamera følger retning' : 'Kamera følger ikke'); const c = document.getElementById('chkAutoCam'); if (c) c.checked = autoCam; }
 
+let vibOn = store.get('tlm.vib', true);
+const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(ms); } catch { /* ikke støttet */ } };   // Android; iOS Safari støtter ikke vibrasjon
+
 // lydtekst: viser korte tekster for viktige lyder (for hørselshemmede, og når lyden er av). Skritt og pust er utelatt.
 let cuesOn = store.get('tlm.cues', false);
 function cue(text, pan = 0) {
@@ -741,14 +744,20 @@ addEventListener('keyup', (e) => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
 const held = (...codes) => codes.some((c) => keys.has(c));
 
+let camSens = store.get('tlm.camsens', 1);
 const pointers = new Map();
 let pinch0 = 0;
 function activeCam() { return mode === 'plan' ? planCam : cam; }
 canvas.addEventListener('pointerdown', (e) => {
-  canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  canvas.setPointerCapture(e.pointerId);
+  if (TOUCH && mode !== 'fly' && stickId === null && e.clientX < innerWidth * 0.5 && e.clientY > innerHeight * 0.2) {      // venstre halvdel: stikken dukker opp der tommelen treffer
+    stickId = e.pointerId; setStickCenter(e.clientX, e.clientY); stick.classList.add('float'); stickMove(e); return;
+  }
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); }
 });
 canvas.addEventListener('pointermove', (e) => {
+  if (e.pointerId === stickId) { stickMove(e); return; }            // fingeren styrer stikken (flytende), ikke kameraet
   const p = pointers.get(e.pointerId); if (!p) return;
   const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
   const c = activeCam();
@@ -756,8 +765,8 @@ canvas.addEventListener('pointermove', (e) => {
     const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
     if (pinch0) zoom(pinch0 / d); pinch0 = d; return;
   }
-  c.yaw -= dx * 0.006; lastDrag = performance.now() / 1000;
-  c.pitch += dy * 0.005;
+  c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000;
+  c.pitch += dy * 0.005 * camSens;
   const lim = mode === 'plan' ? [-0.3, 1.5] : [-0.35, 1.35];
   c.pitch = Math.min(lim[1], Math.max(lim[0], c.pitch));
 });
@@ -770,17 +779,26 @@ function zoom(f) {
 canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
 
 const stick = $('stick'), knob = $('knob');
-let stickId = null;
+let stickId = null, stickC = null;                                   // pekerid og midtpunkt (px) mens stikken er i bruk
+function setStickCenter(x, y) { stickC = [x, y]; stick.style.left = `${x - 65}px`; stick.style.top = `${y - 65}px`; stick.style.bottom = 'auto'; stick.style.display = 'block'; }
 function stickMove(e) {
-  const r = stick.getBoundingClientRect();
-  let dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2), dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
-  const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; }
+  if (!stickC) { const r = stick.getBoundingClientRect(); stickC = [r.left + r.width / 2, r.top + r.height / 2]; }
+  let dx = (e.clientX - stickC[0]) / 65, dy = (e.clientY - stickC[1]) / 65;
+  const l = Math.hypot(dx, dy);
+  if (l > 1) {                                                        // dras utenfor kanten: stikken følger etter, så tommelen aldri «går tom»
+    setStickCenter(stickC[0] + (dx / l) * (l - 1) * 65, stickC[1] + (dy / l) * (l - 1) * 65); stick.classList.add('float');
+    dx /= l; dy /= l;
+  }
   touch.x = dx; touch.y = -dy; knob.style.transform = `translate(${dx * 40}px, ${dy * 40}px)`;
 }
-stick.addEventListener('pointerdown', (e) => { stickId = e.pointerId; stick.setPointerCapture(e.pointerId); stickMove(e); });
+stick.addEventListener('pointerdown', (e) => { stickId = e.pointerId; stick.setPointerCapture(e.pointerId); stickC = null; stickMove(e); });
 stick.addEventListener('pointermove', (e) => { if (e.pointerId === stickId) stickMove(e); });
-const stickEnd = (e) => { if (e.pointerId !== stickId) return; stickId = null; touch.x = touch.y = 0; knob.style.transform = ''; };
+const stickEnd = (e) => {
+  if (e.pointerId !== stickId) return; stickId = null; stickC = null; touch.x = touch.y = 0; knob.style.transform = '';
+  if (stick.classList.contains('float')) { stick.classList.remove('float'); stick.style.left = stick.style.top = stick.style.bottom = ''; stick.style.display = ''; }   // tilbake til hvilestilling (flyttet eller flytende)
+};
 stick.addEventListener('pointerup', stickEnd); stick.addEventListener('pointercancel', stickEnd);
+canvas.addEventListener('pointerup', (e) => { if (e.pointerId === stickId) stickEnd(e); }); canvas.addEventListener('pointercancel', (e) => { if (e.pointerId === stickId) stickEnd(e); });
 function bindBtn(id, key, edge) {
   const el = $(id);
   el.addEventListener('pointerdown', (e) => { el.setPointerCapture(e.pointerId); touch[key] = true; edge(); });
@@ -790,11 +808,20 @@ function bindBtn(id, key, edge) {
 bindBtn('btnJump', 'jump', () => { jumpEdge = true; });
 bindBtn('btnGrab', 'grab', () => { grabEdge = true; });
 bindBtn('btnCarry', 'carry', () => { carryEdge = true; });
-$('bThings').onclick = resetThings;
+// knapper som koster poeng må trykkes to ganger (første trykk «armerer» i 2,5 s), så de ikke utløses ved et uhell
+function confirmed(btn, label, cost, fn) {
+  let t = null; const orig = btn.textContent;
+  btn.onclick = () => {
+    if (t) { clearTimeout(t); t = null; btn.classList.remove('armed'); btn.textContent = orig; fn(); return; }
+    btn.classList.add('armed'); btn.textContent = `Sikker? −${cost}`;
+    t = setTimeout(() => { t = null; btn.classList.remove('armed'); btn.textContent = orig; }, 2500);
+  };
+}
+confirmed($('bThings'), 'Ting', SCORE.resetThings, resetThings);
 $('bLevel').textContent = `Brett: ${levelLabel}`;
 $('bLevel').onclick = () => { const i = LEVELS.findIndex((l) => l.id === levelId), n = LEVELS[(i + 1) % LEVELS.length].id; store.set('tlm.level', n); location.search = `?level=${n}`; };
 $('bSound').onclick = toggleSound; $('bSound').textContent = soundMuted ? 'Lyd av' : 'Lyd'; $('bSound').classList.toggle('on', !soundMuted);
-$('bSave').onclick = doSave; $('bBack').onclick = goBack;
+confirmed($('bSave'), 'Lagre', SCORE.save, doSave); confirmed($('bBack'), 'Tilbake', SCORE.respawn, goBack);
 $('bPlan').onclick = () => setMode('plan'); $('bFly').onclick = () => setMode('fly');
 $('again').onclick = restartAll;
 
@@ -867,6 +894,9 @@ function buildPanel() {
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning${key('X')}</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkGripHi"> Fremhev grep (oransje, pulserende)</label>
     ${labels.length ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkLabels"> Brukslapper ved ting${key('L')}</label>` : ''}
+    <div class="row" style="margin-top:10px"><button id="pSound">Lyd av/på</button><button id="pPlan">Plan</button><button id="pFly">Fly</button></div>
+    <label>Kamerafølsomhet (dra) <span id="v_camsens"></span></label><input type="range" id="s_camsens" min="0.4" max="2" step="0.1">
+    ${navigator.vibrate ? '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkVib"> Vibrasjon</label>' : ''}
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
@@ -879,6 +909,10 @@ function buildPanel() {
   $('levelSel').value = levelId;
   $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
   wireMixer();
+  $('pSound').onclick = toggleSound; $('pPlan').onclick = () => { setMode('plan'); $('panel').classList.add('hide'); }; $('pFly').onclick = () => { setMode('fly'); $('panel').classList.add('hide'); };
+  $('s_camsens').value = camSens; $('v_camsens').textContent = (+camSens).toFixed(1);
+  $('s_camsens').oninput = (e) => { camSens = +e.target.value; store.set('tlm.camsens', camSens); $('v_camsens').textContent = camSens.toFixed(1); };
+  if ($('chkVib')) { $('chkVib').checked = vibOn; $('chkVib').onchange = (e) => { vibOn = e.target.checked; store.set('tlm.vib', vibOn); if (vibOn) buzz(30); }; }
   if ($('chkHelpers')) { $('chkHelpers').checked = helperMarks.visible; $('chkHelpers').onchange = (e) => { helperMarks.visible = e.target.checked; }; }
   if ($('chkLabels')) { $('chkLabels').checked = labelsOn; $('chkLabels').onchange = (e) => { labelsOn = e.target.checked; store.set('tlm.labels', labelsOn); }; }
   $('chkGripHi').checked = gripHi; $('chkGripHi').onchange = (e) => { gripHi = e.target.checked; store.set('tlm.griphi', gripHi); };
@@ -902,7 +936,7 @@ setTimeout(() => $('help').classList.add('hide'), 15000);   // H henter den tilb
 const V = new THREE.Vector3();
 function axes() {
   // dødsone på stikken: en tommel som bare hviler der skal ikke gi bevegelse (ga skjelvende armer og mikroskritt)
-  const mag = Math.hypot(touch.x, touch.y), DZ = 0.22, tk = mag < DZ ? 0 : (mag - DZ) / (1 - DZ) / mag;
+  const mag = Math.hypot(touch.x, touch.y), DZ = 0.22, tk = mag < DZ ? 0 : Math.pow((mag - DZ) / (1 - DZ), 1.35) / mag;   // myk kurve: finere kontroll nær midten
   const ix = (held('KeyD', 'ArrowRight') ? 1 : 0) - (held('KeyA', 'ArrowLeft') ? 1 : 0) + touch.x * tk;
   const iz = (held('KeyW', 'ArrowUp') ? 1 : 0) - (held('KeyS', 'ArrowDown') ? 1 : 0) + touch.y * tk;
   return [Math.max(-1, Math.min(1, ix)), Math.max(-1, Math.min(1, iz))];
@@ -962,12 +996,12 @@ function update(dt) {
   for (const ev of drainEvents(LEVEL)) {
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant`); }
-    else if (ev.type === 'use') audio?.pickup();
+    else if (ev.type === 'use') { audio?.pickup(); buzz(20); }
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); }
   }
   if (player.hardLands > pre.hard) { stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
   if (player.knockout) {
-    player.knockout = false; audio?.crush();
+    player.knockout = false; audio?.crush(); buzz(90);
     resetPlayer(player, ...save.pos); stats.respawns++;
     toast(`Landet for hardt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
   }
@@ -1016,6 +1050,8 @@ function ambientTick(dt) {
 function cueFrame(pre) {
   const p = player;
   if (!pre.onGround && p.onGround && pre.vy < -9) cue(p.landImpact >= P.hardLand ? 'hard landing' : 'landing');
+  if (p.landImpact >= P.hardLand && !pre.onGround && p.onGround) buzz(45);
+  if ((pre.state !== 'hang' && p.state === 'hang') || (pre.state !== 'climb' && p.state === 'climb')) buzz(14);
   if (pre.state !== 'hang' && p.state === 'hang') cue('tak i kanten');
   if (!pre.carry && p.carry) cue('tok tingen');
   if (pre.carry && !p.carry) cue('slapp / kastet');

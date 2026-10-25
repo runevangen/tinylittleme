@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.31** – Skjermstyring: flytende stikke på venstre halvdel (følger tommelen), dra for kamera på høyre halvdel, myk stikkekurve, kamerafølsomhet, større TA-knapp og større treffflater, kompakt bunnlinje på mobil (Lagre, Tilbake, Ting ↺, ⚙), poengkoblede knapper må trykkes to ganger, «Brett» byttet ut av bunnlinjen (lastet siden på nytt ved uhell), Lyd/Plan/Fly flyttet til ⚙, vibrasjon på Android. Se `docs/STYRING.md`.
 - **0.30** – Mobil først: hint-linjen og ⚙ sier TA/GREP (ikke F/E og tastene V/X/L) på berøringsskjerm; «gå forsiktig» på mobil = skyv stikken forsiktig; pene navn i hint (f.eks. «TA: ta Ørepinne (stav)»); hjelpeteksten på PC forklarer at TA = F, GREP = E/Shift, HOPP = mellomrom. Arbeidsregel i `CLAUDE.md`.
 - **0.29** – Knappene på mobil: GREP (tidligere REKK UT) ligger nå under HOPP, med TA over (stablet langs høyre kant). Treningsrommet har brukslapper: en liten «i» over ting som kan gjøre noe, og et fast kort øverst med bruksanvisning for den nærmeste (tast L eller ⚙ slår av/på). Scener kan ha `help` per ting.
 - **0.28** – Tilgivelse og grep-kode (fra spill-research): REKK UT griper det som er innenfor 0,45 enheter (grep-flate eller kant i lufta) uten at du styrer mot det; coyote-tid 0,14 s; hopp trykket under hurk/landing huskes til hurken er over; grep-flater har oransje kant (valgfritt tydeligere og pulserende i ⚙ «Fremhev grep»); figuren løfter en arm når noe kan gripes. Test 29.
