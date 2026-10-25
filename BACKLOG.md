@@ -18,7 +18,7 @@ Gjenstår / til sparring:
 
 ## Bevegelse og spillfølelse
 - [~] **Klatrehjelp (v0.20):** kast, hard landing/myke flater og stavhopp er på plass i prøverommet `?level=klatring` (`docs/KLATREHJELP.md`). Gjenstår: kombinering av ting (nål + tråd, svamp + vann, håndkle + håndkle), taubane, papirhaug som presses sammen, stavhopp-animasjon, bot som bruker stav/kast. Trenger spilletest av verdiene.
-- [~] **Klatring (B):** første versjon fra v0.21: `grip`-flater, stamina, opp/ned/sidelengs, kantgrep over toppen (`docs/KLATREHJELP.md`, prøverom `?level=klatring`). Gjenstår: bruke den i badet (hvilke fotograferte ting er grep: knotter, dusjkurv, håndkle?), `slick`/klistrete flater (hårgelé), sidelengs langs stang, boten som klatrer. Se `docs/BADET.md`.
+- [~] **Klatring (B):** første versjon fra v0.21: `grip`-flater, stamina, opp/ned/sidelengs, kantgrep over toppen (`docs/KLATREHJELP.md`, prøverom `?level=klatring`). Hårgelé og dopapirbånd er med fra v0.22. Gjenstår: bruke klatring i badet (hvilke fotograferte ting er grep: knotter, dusjkurv, håndkle?), `slick`-flater, sidelengs langs stang, boten som klatrer. Se `docs/BADET.md`.
 - [ ] Spilletest av «Spenning» vs «Klassisk» med ekte hender, og justering av verdiene.
 - [ ] Mobil-test av touch-kontrollene (stikke, HOPP, REKK UT).
 - [x] «Prince»-følelse (treghet, vekt, hurk, oppstigning som tar tid, roligere kamera). Første versjon. Trenger spilletest.

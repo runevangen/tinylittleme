@@ -22,13 +22,24 @@ Status: første versjon (v0.20). Verdiene står i `physics.js` (`P`) og er ment 
 
 Prøverommet har en rute fra papirhaugen til toppen av tårnet med to håndklær og en hvilehylle midt i (for lang til ett strekk). Gå inn under det øvre håndkleet, hopp mot det og trykk REKK UT i hoppet.
 
+## Verktøy du bærer og bruker (v0.22)
+Ting med `tool` gjør noe når du trykker F (kort) mens du bærer dem på riktig sted. Trykker du igjen samme sted, slippes tingen (bak eller ved siden av deg). Hold F = kast som før. Ubegrenset bruk; nytt smør/bånd fra en annen vegg/kant flytter det forrige.
+
+| Verktøy | Hva F gjør | Pris |
+|---|---|---|
+| **Hårgelé** (`tool: gel`) | Smører et grep-felt (1,6 bredt, 6 høyt) på veggen foran deg, fra brysthøyde og oppover. Du kan klatre i det (REKK UT), og kanten på veggen over er kantgrep. | Våt i 20 s: du sklir sakte og stamina koster +1,2/s. Etter det er den fast (+0,15/s). Du må legge fra deg flasken før du klatrer (du kan ikke klatre mens du bærer). |
+| **Dopapirrull** (`tool: roll`) | Rull ut et bånd (0,5 bredt) som henger ned over kanten foran deg, ned til gulvet eller høyst 14 enheter. Du kan klatre i det både opp og ned, f.eks. for å komme ned uten hard landing. | Revner etter 7 s i bruk (summert). Revnet bånd = du faller. Nytt trykk lager et nytt. |
+
+Kjeden i prøverommet: kast gelflasken opp på hylla (hold F, slipp), vault opp med ørepinnen, ta flasken og smør veggen (skap bak hylla), legg fra deg flasken, klatre i gelen. Dopapirrullen står øverst på tårnet. Bær den til kanten og rull ut et bånd, hopp av og grip det (REKK UT i fallet).
+
 ## Prøverommet
 - **Hylle (28 cm):** for høy for vanlig hopp. Ta ørepinnen (F), løp, hopp.
 - **Tårn (90 cm)** med fem trinn: fall fra toppen på gulvet er for hardt (tilbake). Hopp ned på **dopapirhaugen** (vest) eller bær **svampen** opp og slipp den nede før du hopper.
 - Flagget (målet) står øverst på tårnet.
 
 ## Det som ikke er med ennå
-- Grep-flater i badet fra bildene: hvilke gjenstander som er klatrbare er ikke bestemt (se backlogg). Hårgelé (klistrete felt) og `slick` (glatt) finnes ikke som flatetyper ennå.
+- Verktøy er ikke merket i bildene: bare prøverommet har dem foreløpig.
+- Grep-flater i badet fra bildene: hvilke gjenstander som er klatrbare er ikke bestemt (se backlogg). Flatetypen `slick` (glatt, kan ikke klatres) finnes ikke som grep-type ennå.
 - Kombinering av ting (nål + tråd, svamp + vann, håndkle + håndkle …), taubane.
 - Stavhopp-animasjon (kroppen bruker vanlig hoppose).
 - Dopapirhaugen presses ikke sammen når du lander i den.

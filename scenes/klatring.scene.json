@@ -4,7 +4,7 @@
   "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
   "validate": false,
   "source": {
-    "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet, og klatring i håndkle (grep, stamina, hvile). Ikke fra bilder."
+    "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet, klatring i håndkle (grep, stamina, hvile), hårgelé (klistret grep) og dopapirbånd. Ikke fra bilder."
   },
   "room": {
     "width": 400,
@@ -258,6 +258,59 @@
       "grip": true,
       "confidence": 1,
       "note": "Øvre del av klatringen opp til toppen av tårnet. Start fra hvilehylla (gå inn under det)."
+    },
+    {
+      "id": "skap_hoyt",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#a97c50",
+      "box": [
+        20,
+        130,
+        0,
+        58,
+        120,
+        150
+      ],
+      "cp": true,
+      "confidence": 1,
+      "note": "Høyt skap (58 cm) bak hylla. Smør gel på veggen fra hylla og klatre opp."
+    },
+    {
+      "id": "haargele",
+      "kind": "gel_bottle",
+      "material": "plastic",
+      "color": "#8fd8ee",
+      "box": [
+        60,
+        64,
+        0,
+        10,
+        235,
+        239
+      ],
+      "movable": "light",
+      "tool": "gel",
+      "confidence": 1,
+      "note": "Kast den opp på hylla (hold F og slipp), vault opp med ørepinnen, ta den og smør (F) mot skapveggen. Gelen er våt i 20 s (sklir og koster stamina), så fast."
+    },
+    {
+      "id": "dopapirrull",
+      "kind": "roll",
+      "material": "paper",
+      "color": "#fbfaf6",
+      "box": [
+        230,
+        240,
+        90,
+        100,
+        110,
+        120
+      ],
+      "movable": "light",
+      "tool": "roll",
+      "confidence": 1,
+      "note": "Står øverst på tårnet. Bær den til kanten og trykk F: et bånd ruller ned. Det tåler et tak i ca. 7 s."
     }
   ],
   "look": {

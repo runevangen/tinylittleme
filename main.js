@@ -3,7 +3,7 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle } from './props.js';
-import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity } from './physics.js';
+import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -564,6 +564,22 @@ const bodyMeshes = LEVEL.bodies.map((b) => {
   mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh);
   return { b, mesh, size: [sx, sy, sz] };
 });
+// laget grep (hårgelé, papirbånd) opprettes av fysikken mens du spiller: tegnes her
+const madeMeshes = new Map();
+function syncMade() {
+  const alive = new Set(LEVEL.made || []);
+  for (const b of alive) {
+    if (!madeMeshes.has(b)) {
+      const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
+      const g = buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material });
+      if (!g) continue;
+      g.position.set(b.min[0] + sx / 2, b.min[1] + sy / 2, b.min[2] + sz / 2); scene.add(g); madeMeshes.set(b, { g, dry: false });
+    }
+    const m = madeMeshes.get(b);
+    if (m && b.kind === 'gel' && !b.wet && !m.dry) { m.dry = true; m.g.userData.dry?.(); }
+  }
+  for (const [b, m] of madeMeshes) if (!alive.has(b)) { scene.remove(m.g); madeMeshes.delete(b); }
+}
 const shards = [];
 function spawnShards(pos, color) {
   for (let i = 0; i < 14; i++) {
@@ -854,6 +870,8 @@ function update(dt) {
   for (const ev of drainEvents(LEVEL)) {
     if (ev.type === 'broke') { audio?.shatter(); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); toast(`${ev.id} forsvant`); }
+    else if (ev.type === 'use') audio?.pickup();
+    else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); }
   }
   if (player.hardLands > pre.hard) { stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
   if (player.knockout) {
@@ -911,7 +929,7 @@ function insideAny(x, y, z, m) {
 
 function render(now, dt) {
   poseHero(player, now, dt, mode);
-  updateArc();
+  updateArc(); syncMade();
   hero.root.position.set(player.x, player.y, player.z);
   hero.root.scale.set(1, 1, 1);                                  // ingen strekk/klem: det ga «puls» og sjøsyke
 
@@ -935,7 +953,7 @@ function render(now, dt) {
   const hint = $('hint');
   if (mode === 'play' && !won) {
     const t = player.carry ? null : findCarryTarget(player, LEVEL);
-    hint.textContent = player.carry ? (player.charge >= P.throwMin ? 'Slipp F: KAST' : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `F: sett på ${sp.c.id || 'flaten'}` : 'F: slipp') + ' · hold F: kast'; })()) : t ? `F: ta ${t.id}` : '';
+    hint.textContent = player.carry ? (player.charge >= P.throwMin ? 'Slipp F: KAST' : toolHint(player, LEVEL) === 'gel' ? 'F: smør gel på veggen · hold F: kast' : toolHint(player, LEVEL) === 'roll' ? 'F: rull ut et bånd over kanten · hold F: kast' : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `F: sett på ${sp.c.id || 'flaten'}` : 'F: slipp') + ' · hold F: kast'; })()) : t ? `F: ta ${t.id}` : '';
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;

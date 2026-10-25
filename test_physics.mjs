@@ -625,6 +625,61 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// 27. hårgelé: smør et grep-felt på veggen, slipp flasken, klatre opp (vått gel koster mer stamina og sklir), gelen tørker
+{
+  applyPreset('prince');
+  const hylle = box('hylle', 0, 12, 0, 5.6, -4, 4), skap = box('skap', 12, 16, 0, 12, -4, 4);
+  const flaske = { id: 'gele', kind: 'gel_bottle', tool: 'gel', material: 'plastic', weight: 'light', min: [10.4, 5.6, -0.2], max: [11.0, 7.0, 0.2] };
+  const L = world([flaske], [hylle, skap]);
+  const p = newPlayer(9.5, 5.6, 0); p.fx = 1; p.fz = 0;
+  const tap = (n = 3) => { step(p, { ...idle, carryHeld: true, carryPressed: true }, 1 / 60, L); for (let i = 0; i < n; i++) step(p, { ...idle, carryHeld: true }, 1 / 60, L); step(p, { ...idle, carryHeld: false }, 1 / 60, L); };
+  run(L, p, 20, () => idle);
+  tap(); assert.equal(p.carry?.id, 'gele', 'tok flasken');
+  run(L, p, 100, () => ({ ...idle, mx: 1 }));                                  // gå inntil veggen
+  tap(); assert.equal(L.made.length, 1, 'smurte et felt');
+  const g = L.made[0];
+  assert.ok(g.grip && g.wet && g.max[1] - g.min[1] > 5, `felt ${g.min[1].toFixed(1)}–${g.max[1].toFixed(1)}`);
+  tap(); assert.equal(p.carry, null, 'neste trykk ved samme vegg slipper flasken');
+  run(L, p, 30, () => idle);
+  // klatre opp
+  step(p, { ...idle, mx: 1, grabPressed: true }, 1 / 60, L); run(L, p, 20, () => ({ ...idle, mx: 1 }));
+  assert.equal(p.state, 'climb', `festet i gelen (${p.state})`);
+  let top = false; for (let i = 0; i < 60 * 8 && !top; i++) { step(p, { ...idle, mx: 1, jumpPressed: p.state === 'hang' && i % 30 === 0 }, 1 / 60, L); if (p.state === 'ground' && p.y > 11.9) top = true; }
+  assert.ok(top, `kom opp på skapet (${p.state}, y=${p.y.toFixed(1)}, stam ${p.stam.toFixed(1)})`);
+  // tørker
+  run(L, p, 60 * 21, () => idle);
+  assert.ok(!g.wet && g.gripDrain < 0.5 && !g.gripSlide, 'gelen har tørket til et fast grep');
+  // nullstilling fjerner feltet
+  resetBodies(L, p); assert.equal(L.made.length, 0); assert.ok(!L.boxes.includes(g));
+  applyPreset('klassisk');
+}
+
+// 28. dopapirrull: ruller ut et bånd ned over kanten; du kan klatre i det, men det revner
+{
+  applyPreset('prince');
+  const tarn = box('tarn', 0, 10, 0, 10, -4, 4);
+  const rull = { id: 'rull', kind: 'roll', tool: 'roll', material: 'paper', weight: 'light', min: [7.0, 10, -0.5], max: [8.0, 12, 0.5] };
+  const L = world([rull], [tarn]);
+  const p = newPlayer(6, 10, 0); p.fx = 1; p.fz = 0;
+  const tap = () => { step(p, { ...idle, carryHeld: true, carryPressed: true }, 1 / 60, L); run(L, p, 3, () => ({ ...idle, carryHeld: true })); step(p, { ...idle, carryHeld: false }, 1 / 60, L); };
+  run(L, p, 20, () => idle);
+  tap(); assert.equal(p.carry?.id, 'rull');
+  run(L, p, 100, () => ({ ...idle, mx: 1 }));                                   // frem til kanten (x≈9.7)
+  assert.ok(p.x > 9.3 && p.y === 10, `ved kanten (${p.x.toFixed(2)}, ${p.y})`);
+  tap(); assert.equal(L.made.length, 1, 'bånd rullet ut');
+  const b = L.made[0]; assert.ok(b.min[1] === 0 && b.max[1] === 10 && b.grip && b.max[0] > 10, 'henger fra kanten ned til gulvet');
+  tap(); assert.equal(p.carry, null, 'neste trykk slipper rullen');
+  // hopp av kanten og grip båndet, klatre ned
+  p.x = 10.4; p.y = 9.5; p.vx = p.vy = 0; p.onGround = false; p.state = 'air'; p.fx = -1; p.fz = 0;         // hoppet av kanten og faller forbi båndet
+  let attached = false; for (let i = 0; i < 60 && !attached; i++) { step(p, { ...idle, mx: -1, grabPressed: i === 0 }, 1 / 60, L); if (p.state === 'climb') attached = true; }
+  assert.ok(attached, `grep båndet (${p.state}, y=${p.y.toFixed(1)}, x=${p.x.toFixed(2)})`);
+  // henger du for lenge, revner det
+  run(L, p, 60 * 10, () => idle);
+  assert.equal(L.made.length, 0, 'båndet revnet');
+  assert.notEqual(p.state, 'climb');
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 

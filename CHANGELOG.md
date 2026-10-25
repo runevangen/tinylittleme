@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.22** – Verktøy du bærer og bruker med F: **hårgelé** (smør et klistrete grep-felt på veggen: vått i 20 s = sklir og koster stamina, så fast) og **dopapirrull** (ruller ut et bånd over en kant: klatrbart, men revner etter ca. 7 s i bruk). Nytt trykk samme sted slipper tingen; nullstill (N) fjerner felt og bånd. Prøverommet har gelflaske (kast den opp på hylla!) og rull øverst på tårnet. Tester 27–28.
 - **0.21** – Klatring på grep-flater (første versjon): fest med REKK UT mot en flate merket `grip`, styr opp/ned/sidelengs, stamina (10 s, vises som «grep ▮▮▮▯» i HUD), hiv deg over kanten, hopp løs. Klatreanimasjon. Håndkle-rute i prøverommet `?level=klatring` (nedre håndkle, hvilehylle, hopp-og-grip, øvre håndkle). Tester 25–26.
 - **0.20** – Klatrehjelp (første versjon): kast (hold F og slipp, med bue), hard landing i Prince (bedøvet / tilbake til lagringspunkt) og myke flater, stavhopp med ørepinne, svamp og dopapirhaug. Nytt prøverom `?level=klatring`. Se `docs/KLATREHJELP.md`.
 - **0.19** – Småting med ekte former og tekstur: såpepumpe, tannkrem, tannglass med børste, kran, barbermaskin, dopapir, vaskeskap med dører og knotter, vask med sluk og vann, speil med ramme, dusjkurver av krom, flettet kurv, frottéhåndklær, vevd matte, glasshylle, doskrubb. Teksturer tegnes i nettleseren (frotté, flett, tre, etikett, krom).

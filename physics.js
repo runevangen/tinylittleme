@@ -80,6 +80,8 @@ export const P = {
   vaultH: 7, vaultMin: 0.55,   // stavhopp: høyde over bakken ved full fart for en stav på 1,5 enheter, og laveste fartsandel for å stavhoppe
   stamina: 10, staminaRegen: 2.5,   // klatring: sekunder du orker å henge på en flate, og hvor fort det kommer tilbake på bakken (s/s)
   climbUp: 1.6, climbDown: 2.6, climbSide: 1.3,   // fart opp, ned og sidelengs på en grep-flate
+  gelH: 6, gelW: 1.6, gelDry: 20, gelWetDrain: 1.2, gelSlide: 0.5,   // hårgelé: felt (høyde, bredde), tørketid (s), ekstra stamina-forbruk og sakte skli mens det er vått
+  stripMax: 14, stripW: 0.5, stripTear: 7,   // dopapirbånd: lengste fall, bredde, og hvor lenge det tåler et tak (s) før det revner
   throwFriction: 6,  // en kastet ting bremses på bakken
   supportMin: 0.45,  // minste andel av fotavtrykket som må hvile på noe, ellers glir tingen av
 };
@@ -140,10 +142,10 @@ const boxOverlap = (a, b) =>
   a.min[0] < b.max[0] - TOL && a.max[0] > b.min[0] + TOL && a.min[1] < b.max[1] - TOL && a.max[1] > b.min[1] + TOL && a.min[2] < b.max[2] - TOL && a.max[2] > b.min[2] + TOL;
 
 export function initBodies(L) {
-  L.bodies = []; L.events = [];
+  L.bodies = []; L.events = []; L.made = [];
   for (const m of L.movables || []) {
     const b = {
-      id: m.id, kind: m.kind, pole: m.pole || 0, soft: !!m.soft, vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
+      id: m.id, kind: m.kind, pole: m.pole || 0, tool: m.tool || '', soft: !!m.soft, vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
       min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
       vy: 0, alive: true, carried: false, home: { min: [...m.min], max: [...m.max] },
     };
@@ -154,6 +156,8 @@ export function initBodies(L) {
 
 export function resetBodies(L, p) {
   if (p?.carry) { p.carry = null; }
+  for (const m of L.made || []) { const i = L.boxes.indexOf(m); if (i >= 0) L.boxes.splice(i, 1); }
+  L.made = [];
   for (const b of L.bodies || []) {
     b.min = [...b.home.min]; b.max = [...b.home.max]; b.vy = 0; b.vx = b.vz = 0; b.carried = false;
     if (!b.alive) { b.alive = true; L.boxes.push(b); }
@@ -285,11 +289,93 @@ function carryControl(p, inp, dt, L) {
   if (inp.carryHeld) { p.charge += dt; return; }
   const c = p.charge; p.charge = 0;
   if (c <= 0) return;
-  if (c < P.throwMin) dropCarry(p, L); else throwCarry(p, L, Math.min(1, (c - P.throwMin) / P.throwFull));
+  if (c < P.throwMin) { if (!useTool(p, L)) dropCarry(p, L); } else throwCarry(p, L, Math.min(1, (c - P.throwMin) / P.throwFull));
+}
+
+// Hva trykk på F gjør nå (til hint-linjen): 'gel' | 'roll' | null
+export function toolHint(p, L) {
+  const c = p.carry; if (!c?.tool || !p.onGround) return null;
+  const made = L.made || [];
+  if (c.tool === 'gel') { const f = faceAhead(p, L, HW + 0.9); return f && !made.some((m) => m.owner === c.id && m.parent === f.b) ? 'gel' : null; }
+  if (c.tool === 'roll') {
+    const gb = p.groundBox; if (!gb || made.some((m) => m.owner === c.id && m.parent === gb)) return null;
+    const ax = Math.abs(p.fx) >= Math.abs(p.fz) ? 0 : 2, sgn = Math.sign(ax === 0 ? p.fx : p.fz) || 1;
+    return (((sgn > 0 ? gb.max[ax] : gb.min[ax]) - (ax === 0 ? p.x : p.z)) * sgn <= HW + 0.7) ? 'roll' : null;
+  }
+  return null;
+}
+
+// ---- Verktøy du bærer: hårgelé (smør et klistrete grep-felt på veggen) og dopapirrull (rull ut et bånd over en kant) ----
+function faceAhead(p, L, reach) {                              // nærmeste loddrette flate rett foran deg
+  const ax = Math.abs(p.fx) >= Math.abs(p.fz) ? 0 : 2, sgn = Math.sign(ax === 0 ? p.fx : p.fz) || 1;
+  const yy = p.y + 0.5; let best = null;
+  for (const b of L.boxes) {
+    if (b.carried || b === p.carry || b.type === 'floor' || b.dyn || b.owner) continue;
+    if (yy < b.min[1] || yy > b.max[1]) continue;
+    const o = 2 - ax;                                            // tvers
+    if ((ax === 0 ? p.z : p.x) < b.min[o] - 0.1 || (ax === 0 ? p.z : p.x) > b.max[o] + 0.1) continue;
+    const plane = sgn > 0 ? b.min[ax] : b.max[ax], d = (plane - (ax === 0 ? p.x : p.z)) * sgn;
+    if (d < -0.05 || d > reach) continue;
+    if (!best || d < best.d) best = { b, ax, sgn, plane, d };
+  }
+  return best;
+}
+function makeBox(L, spec) { L.made.push(spec); L.boxes.push(spec); return spec; }
+function useTool(p, L) {
+  const c = p.carry; if (!c?.tool || !p.onGround) return false;
+  L.made = L.made || [];
+  if (c.tool === 'gel') {
+    const f = faceAhead(p, L, HW + 0.9); if (!f) return false;
+    if (L.made.some((m) => m.owner === c.id && m.parent === f.b)) return false;      // allerede smurt her: neste trykk slipper flasken
+    for (const m of L.made) if (m.owner === c.id) { const i = L.boxes.indexOf(m); if (i >= 0) L.boxes.splice(i, 1); }
+    L.made = L.made.filter((m) => m.owner !== c.id);              // ett felt per flaske: nytt smør flytter det
+    const o = 2 - f.ax, t = 0.12, y0 = p.y + 0.3, y1 = Math.min(y0 + P.gelH, f.b.max[1] + 0.3), cen = o === 0 ? p.x : p.z;
+    const lo = [0, y0, 0], hi = [0, y1, 0];
+    lo[o] = cen - P.gelW / 2; hi[o] = cen + P.gelW / 2;
+    if (f.sgn > 0) { lo[f.ax] = f.plane - t; hi[f.ax] = f.plane; } else { lo[f.ax] = f.plane; hi[f.ax] = f.plane + t; }   // tynn plate foran flaten, mot deg
+    const key = f.ax === 0 ? 'x' : 'z';
+    if (f.sgn > 0) p[key] = Math.min(p[key], f.plane - t - HW); else p[key] = Math.max(p[key], f.plane + t + HW);   // plata skal ikke havne inni deg
+    makeBox(L, { type: 'gel', kind: 'gel', id: `gel_${c.id}`, owner: c.id, material: 'gel', color: 0x8fd8ee, min: lo, max: hi, grip: true, gripDrain: P.gelWetDrain, gripSlide: P.gelSlide, wet: true, wetT: P.gelDry, parent: f.b });
+    L.events.push({ type: 'use', tool: 'gel' });
+    return true;
+  }
+  if (c.tool === 'roll') {                                       // rull ut et bånd som henger ned over kanten foran deg
+    const gb = p.groundBox; if (!gb) return false;
+    if (L.made.some((m) => m.owner === c.id && m.parent === gb)) return false;       // bandet henger allerede herfra: neste trykk slipper rullen
+    const ax = Math.abs(p.fx) >= Math.abs(p.fz) ? 0 : 2, sgn = Math.sign(ax === 0 ? p.fx : p.fz) || 1, o = 2 - ax;
+    const plane = sgn > 0 ? gb.max[ax] : gb.min[ax];
+    if ((plane - (ax === 0 ? p.x : p.z)) * sgn > HW + 0.7) return false;     // ikke ved kanten
+    const cen = o === 0 ? p.x : p.z, top = gb.max[1];
+    const sx = ax === 0 ? plane + sgn * 0.06 : cen, sz = ax === 2 ? plane + sgn * 0.06 : cen;     // der bandet henger
+    let floorY = -Infinity;                                       // hva bandet henger ned til
+    for (const b of L.boxes) {
+      if (b === gb || b.carried || b.type === 'wall' || b.dyn || b.owner) continue;
+      if (sx < b.min[0] || sx > b.max[0] || sz < b.min[2] || sz > b.max[2]) continue;
+      if (b.max[1] < top - 0.5 && b.max[1] > floorY) floorY = b.max[1];
+    }
+    if (floorY === -Infinity) floorY = 0;
+    const y0 = Math.max(floorY, top - P.stripMax); if (top - y0 < 2) return false;
+    for (const m of L.made) if (m.owner === c.id) { const i = L.boxes.indexOf(m); if (i >= 0) L.boxes.splice(i, 1); }
+    L.made = L.made.filter((m) => m.owner !== c.id);
+    const t = 0.12, lo = [0, y0, 0], hi = [0, top, 0];
+    lo[o] = cen - P.stripW / 2; hi[o] = cen + P.stripW / 2;
+    if (sgn > 0) { lo[ax] = plane; hi[ax] = plane + t; } else { lo[ax] = plane - t; hi[ax] = plane; }
+    makeBox(L, { type: 'paper', kind: 'paper_strip', id: `bånd_${c.id}`, owner: c.id, material: 'paper', color: 0xfbfaf6, min: lo, max: hi, grip: true, gripDrain: 0.4, tear: P.stripTear, parent: gb });
+    L.events.push({ type: 'use', tool: 'roll' });
+    return true;
+  }
+  return false;
 }
 
 export function dropCarry(p, L) {
   const b = p.carry; if (!b) return;
+  if (b.tool) {                                                   // verktøy settes ned bak eller ved siden av deg, ikke mellom deg og det du jobber mot
+    const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2], r = HW + Math.max(sx, sz) / 2 + 0.1;
+    for (const [dx, dz] of [[-p.fx, -p.fz], [-p.fz, p.fx], [p.fz, -p.fx]]) {
+      const cx = p.x + dx * r, cz = p.z + dz * r, lo = [cx - sx / 2, p.y + 0.02, cz - sz / 2], hi = [cx + sx / 2, p.y + 0.02 + sy, cz + sz / 2];
+      if (!L.boxes.some((o) => o !== b && !o.carried && boxOverlap({ min: lo, max: hi }, o))) { b.carried = false; p.carry = null; b.vy = 0; b.min = lo; b.max = hi; return; }
+    }
+  }
   const spot = findPlaceSpot(p, L);
   b.carried = false; p.carry = null; b.vy = 0;
   if (spot) { b.min = spot.min; b.max = spot.max; return; }
@@ -396,6 +482,7 @@ function sub(p, inp, dt, L) {
   if (wl > 1) { wx /= wl; wz /= wl; }
 
   if (L.bodies?.length) stepBodies(L, p, dt);
+  for (const m of L.made || []) if (m.wet) { m.wetT -= dt; if (m.wetT <= 0) { m.wet = false; m.gripDrain = 0.15; m.gripSlide = 0; } }   // gelen tørker til et fast grep
 
   if (p.state !== 'climb') p.stam = Math.min(P.stamina, p.stam + (p.onGround ? P.staminaRegen * dt : 0));
   if (p.state === 'climb') return climbStep(p, inp, wx, wz, dt, L);
@@ -604,6 +691,10 @@ function climbStep(p, inp, wx, wz, dt, L) {
   }
   const vy = into > 0.25 ? P.climbUp * Math.min(1, into) : into < -0.25 ? -P.climbDown * Math.min(1, -into) : 0;
   const vs = Math.abs(side) > 0.25 ? P.climbSide * Math.min(1, side * 1.0) : 0;
+  if (b.tear !== undefined) {                                        // papirbånd: tåler et tak en stund, så revner det
+    b.tear -= dt;
+    if (b.tear <= 0) { const i = L.boxes.indexOf(b); if (i >= 0) L.boxes.splice(i, 1); L.made = (L.made || []).filter((m) => m !== b); L.events.push({ type: 'tore', id: b.id }); return leaveClimb(p, c.nx * 0.8, c.nz * 0.8, 0, 0.5); }
+  }
   p.stam -= dt * (1 + (vy > 0 ? 0.5 : 0) + (vs ? 0.3 : 0) + (b.gripDrain || 0));
   if (p.stam <= 0) { p.stam = 0; return leaveClimb(p, c.nx * 1.2, c.nz * 1.2, 0, 0.6); }   // armene gir etter
   if (vs) {
@@ -613,6 +704,7 @@ function climbStep(p, inp, wx, wz, dt, L) {
     else { p.x = clampN(p.x, b.min[0] + 0.15, b.max[0] - 0.15); p.z = c.nz > 0 ? b.max[2] + HW : b.min[2] - HW; }
     for (const o of L.boxes) if (o !== b && o !== p.carry && overlaps(o, p.x, p.y, p.z)) { p.x = ox; p.z = oz; break; }
   }
+  if (!vy && b.gripSlide) { p.onGround = false; moveY(p, -b.gripSlide * dt, L); if (p.onGround) { p.state = 'ground'; p.climb = null; p.vy = 0; return; } }   // vått gel: du sklir sakte
   p.climbPh += (Math.abs(vy) + Math.abs(vs)) * dt * 3;
   if (vy) {
     p.onGround = false; moveY(p, vy * dt, L);
@@ -620,7 +712,7 @@ function climbStep(p, inp, wx, wz, dt, L) {
   }
   if (p.y + H < b.min[1] + 0.2) return leaveClimb(p, c.nx * 0.5, c.nz * 0.5, 0, 0.3);   // under nederste grep
   if (into > 0.25 && p.y + H >= b.max[1] - 0.05) {                                    // helt opp: hiv deg over kanten
-    if (tryLedge(p, { box: b, nx: c.nx, nz: c.nz }, L)) { p.climb = null; return; }
+    if (tryLedge(p, { box: b.parent || b, nx: c.nx, nz: c.nz }, L)) { p.climb = null; return; }   // gel/bånd: kanten er veggen bak
     p.y = Math.min(p.y, b.max[1] - H);
   }
 }

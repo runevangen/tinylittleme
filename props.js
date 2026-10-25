@@ -349,6 +349,27 @@ const SINGLE = {
     for (const f of [0.12, 0.88]) { const b = mesh(new THREE.BoxGeometry(sx * 1.04, sy * 0.05, sz * 1.0), band, false); b.position.y = -sy / 2 + sy * f; g.add(b); }
     return g;
   },
+  gel_bottle(sx, sy, sz, o) {                                        // hårgelé: bred, lav boks med blått lokk
+    const g = new THREE.Group(), r = Math.min(sx, sz) / 2, y0 = -sy / 2;
+    g.add(mesh(lathe([[0.001, y0], [r * 0.95, y0], [r, y0 + 0.1], [r, y0 + sy * 0.72], [r * 0.82, y0 + sy * 0.8]]), new THREE.MeshPhysicalMaterial({ color: o.color, roughness: 0.08, clearcoat: 1, transparent: true, opacity: 0.85 })));
+    const lab = mesh(new THREE.CylinderGeometry(r * 1.01, r * 1.01, sy * 0.38, 28, 1, true), new THREE.MeshStandardMaterial({ map: labelTex('#e8f6fb'), roughness: 0.6, side: THREE.DoubleSide }), false); lab.position.y = y0 + sy * 0.38; g.add(lab);
+    const cap = mesh(new THREE.CylinderGeometry(r * 0.62, r * 0.7, sy * 0.24, 20), plasticMat(0x1d6fb8)); cap.position.y = y0 + sy * 0.88; g.add(cap);
+    return g;
+  },
+  gel(sx, sy, sz, o) {                                               // klistrete felt på veggen: blankt og blått mens det er vått, matt og stivt når det har tørket
+    const g = new THREE.Group();
+    const wet = new THREE.MeshPhysicalMaterial({ color: 0x8fd8ee, roughness: 0.05, clearcoat: 1, transparent: true, opacity: 0.78 });
+    const m = mesh(roundedBoxGeo(sx, sy, sz, Math.min(sx, sz) * 0.45, Math.min(sx, sy, sz) * 0.3), wet);
+    m.position.y = -sy / 2; g.add(m);
+    g.userData.dry = () => { m.material = new THREE.MeshStandardMaterial({ color: 0xcfe9ef, roughness: 0.55, transparent: true, opacity: 0.92 }); };
+    return g;
+  },
+  paper_strip(sx, sy, sz, o) {                                       // dopapirbånd: ark med perforering
+    const g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: 0xfbfaf6, roughness: 0.95, map: terryTex(), bumpMap: terryTex(), bumpScale: 0.25 });
+    const n = Math.max(1, Math.round(sy / 0.9)), h = sy / n;
+    for (let i = 0; i < n; i++) { const m = mesh(roundedBoxGeo(sx, h * 0.93, sz, Math.min(sx, sz) * 0.2, Math.min(0.03, sx * 0.2)), mat); m.position.y = -sy / 2 + i * h + h * 0.035; g.add(m); }
+    return g;
+  },
   mirror(sx, sy, sz) {
     const g = new THREE.Group(), cr = chrome(), f = 0.35;
     g.add(mesh(new THREE.BoxGeometry(sx - 0.2, sy - 0.2, 0.1), new THREE.MeshStandardMaterial({ color: 0xdfe9ee, metalness: 0.85, roughness: 0.04, emissive: 0x6d7f88, emissiveIntensity: 0.35 }), false));

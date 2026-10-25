@@ -292,6 +292,25 @@
    "cp": false,
    "soft": false,
    "grip": true
+  },
+  {
+   "type": "wood",
+   "min": [
+    -36,
+    0,
+    -6
+   ],
+   "max": [
+    -14,
+    11.6,
+    0
+   ],
+   "id": "skap_hoyt",
+   "kind": "chest",
+   "color": 11107408,
+   "material": "wood",
+   "cp": true,
+   "soft": false
   }
  ],
  "movables": [
@@ -332,6 +351,44 @@
    "weight": "light",
    "breakable": false,
    "soft": true
+  },
+  {
+   "id": "haargele",
+   "kind": "gel_bottle",
+   "material": "plastic",
+   "color": 9427182,
+   "min": [
+    -28,
+    0,
+    17
+   ],
+   "max": [
+    -27.2,
+    2,
+    17.8
+   ],
+   "weight": "light",
+   "breakable": false,
+   "tool": "gel"
+  },
+  {
+   "id": "dopapirrull",
+   "kind": "roll",
+   "material": "paper",
+   "color": 16513782,
+   "min": [
+    6,
+    18,
+    -8
+   ],
+   "max": [
+    8,
+    20,
+    -6
+   ],
+   "weight": "light",
+   "breakable": false,
+   "tool": "roll"
   }
  ],
  "decor": [],
@@ -397,11 +454,11 @@
  },
  "report": {
   "source": {
-   "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet, og klatring i håndkle (grep, stamina, hvile). Ikke fra bilder."
+   "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet, klatring i håndkle (grep, stamina, hvile), hårgelé (klistret grep) og dopapirbånd. Ikke fra bilder."
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 12,
+  "nodes": 13,
   "reachable": 12
  }
 }
