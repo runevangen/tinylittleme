@@ -17,6 +17,7 @@ Gjenstår / til sparring:
 7. Bedre skår/effekter.
 
 ## Bevegelse og spillfølelse
+- [~] **Klatrehjelp (v0.20):** kast, hard landing/myke flater og stavhopp er på plass i prøverommet `?level=klatring` (`docs/KLATREHJELP.md`). Gjenstår: kombinering av ting (nål + tråd, svamp + vann, håndkle + håndkle), taubane, papirhaug som presses sammen, stavhopp-animasjon, bot som bruker stav/kast. Trenger spilletest av verdiene.
 - [ ] **Klatring (B):** `grip`/`slick`/`soft`-overflater, stamina, sidelengs bevegelse langs stang, tak fra bildene (knotter, håndkle, dusjkurv, tannbørste). Brettet merker allerede `holds`. Se `docs/BADET.md`.
 - [ ] Spilletest av «Spenning» vs «Klassisk» med ekte hender, og justering av verdiene.
 - [ ] Mobil-test av touch-kontrollene (stikke, HOPP, REKK UT).

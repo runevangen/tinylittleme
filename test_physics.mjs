@@ -486,6 +486,79 @@ const fwd = { ...idle, mz: 1 };
   assert.ok(Math.abs(body(L3, 'lett').min[1]) < 1e-6, 'for smal støtte: på gulvet');
 }
 
+// 22. kast: kort trykk slipper, hold + slipp kaster; lengre hold gir lengre kast
+{
+  const held = (h, pressed = false) => ({ ...idle, carryHeld: h, carryPressed: pressed });
+  const throwWith = (frames) => {
+    const L = world([mv('lett', 'light', 0.5, 1.2, 0, 0.7, -0.3, 0.3)]);
+    const p = newPlayer(0, 0, 0); p.fx = 1; p.fz = 0;
+    run(L, p, 10, () => held(false));
+    step(p, held(true, true), 1 / 60, L);                       // ta
+    run(L, p, 6, () => held(true)); run(L, p, 2, () => held(false));
+    assert.equal(p.carry?.id, 'lett', 'tatt');
+    step(p, held(true, true), 1 / 60, L);                       // trykk igjen: begynner å lade
+    run(L, p, frames, () => held(true));
+    step(p, held(false), 1 / 60, L);                            // slipp
+    run(L, p, 120, () => held(false));
+    return { L, p, b: body(L, 'lett') };
+  };
+  const tap = throwWith(3);
+  assert.equal(tap.p.carry, null);
+  assert.ok(tap.b.min[0] < 1.6, `kort trykk = slipp foran deg (x=${tap.b.min[0]})`);
+  const weak = throwWith(18), strong = throwWith(60);
+  assert.ok(weak.b.min[0] > tap.b.min[0] + 1, 'hold = kast');
+  assert.ok(strong.b.min[0] > weak.b.min[0] + 1.5, `sterkere kast går lenger (${weak.b.min[0].toFixed(1)} vs ${strong.b.min[0].toFixed(1)})`);
+  assert.ok(Math.abs(strong.b.min[1]) < 1e-6 && strong.b.vx === 0, 'stopper og blir liggende');
+}
+
+// 23. harde landinger (Prince): moderat fall = ok, høyt fall = bedøvet, veldig høyt = tilbake; myk flate demper
+{
+  applyPreset('prince');
+  const fall = (h, boxes = []) => {
+    const L = { boxes: [floor, ...boxes], ropes: [] };
+    const p = newPlayer(0, h, 0);
+    run(L, p, 200, () => idle);
+    return p;
+  };
+  const low = fall(3), mid = fall(10), high = fall(25);
+  assert.equal(low.hardLands, 0, 'lite fall: ingen straff');
+  assert.equal(mid.hardLands, 1, 'middels fall: bedøvet');
+  assert.ok(!mid.knockout && !low.knockout);
+  assert.ok(high.knockout, 'høyt fall: tilbake til lagringspunktet');
+  const soft = box('soft', -3, 3, 0, 2, -3, 3, { soft: true });
+  const pad = fall(25 + 2, [soft]);
+  assert.ok(!pad.knockout && pad.hardLands === 0, `myk flate fra 27: ${pad.knockout} ${pad.hardLands}`);
+  applyPreset('klassisk');
+  const kl = fall(25);
+  assert.ok(!kl.knockout && kl.hardLands === 0, 'klassisk har ikke harde landinger');
+}
+
+// 24. stavhopp: med stav og fart kommer du opp på en hylle som er for høy for vanlig hopp
+{
+  applyPreset('prince');
+  const hylle = box('hylle', 0, 12, 0, 5.6, -3, 3);
+  const attempt = (withPole, lead) => {
+    const L = world(withPole ? [{ id: 'stav', kind: 'qtip', pole: 1.5, material: 'plastic', weight: 'light', min: [-9.4, 0, -0.07], max: [-7.9, 0.14, 0.07] }] : [], [hylle]);
+    const p = newPlayer(-9, 0, 0); p.fx = 1; p.fz = 0;
+    run(L, p, 10, () => idle);
+    if (withPole) { step(p, { ...idle, carryPressed: true, carryHeld: true }, 1 / 60, L); run(L, p, 6, () => ({ ...idle, carryHeld: true })); run(L, p, 4, () => ({ ...idle, carryHeld: false })); assert.equal(p.carry?.id, 'stav'); }
+    let jumped = false, ij = 0;
+    for (let i = 0; i < 500; i++) {
+      const j = !jumped && p.x > -lead;
+      if (j) { jumped = true; ij = i; }
+      step(p, { ...idle, mx: 1, carryHeld: false, jumpPressed: j, jumpHeld: jumped && i - ij < 60 }, 1 / 60, L);
+      if (p.onGround && p.y > 5.5 && p.x > 0 && p.x < 12) p.top = true;      // stod på hyllen
+    }
+    return p;
+  };
+  let ok = 0; for (const lead of [2.0, 3.0, 3.8]) { const p = attempt(true, lead); if (p.top) ok++; }
+  assert.ok(ok >= 2, `med stav og fart kommer du opp på 5,6 (${ok}/3)`);
+  assert.equal(ok, 3, 'alle tre anløp');
+  const no = attempt(false, 3.4);
+  assert.ok(!no.top, 'uten stav kommer du ikke opp');
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 

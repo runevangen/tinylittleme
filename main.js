@@ -3,7 +3,7 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle } from './props.js';
-import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot } from './physics.js';
+import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -16,6 +16,7 @@ const LEVELS = [
   { id: 'soverom', label: 'Soverom (håndlaget)', short: 'Soverom' },
   { id: 'bad', label: 'Bad (tolket fra 3 bilder)', short: 'Bad' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
+  { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
 ];
 const levelParam = new URLSearchParams(location.search).get('level');
 let levelId = levelParam === '' ? 'soverom' : (levelParam ?? store.get('tlm.level', 'soverom'));
@@ -54,7 +55,7 @@ function toggleSound() {
 }
 
 // ---------- poeng ----------
-const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2 };
+const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2, hardLand: 3 };
 
 // ---------- renderer / scene ----------
 const canvas = $('c');
@@ -274,6 +275,24 @@ const ropes = LEVEL.ropes.map((r) => {
   end.castShadow = true; scene.add(end);
   return { r, line, end };
 });
+
+// kastebue: vises mens du lader opp et kast (hold F)
+const ARC_N = 28;
+const arcGeo = new THREE.BufferGeometry(); arcGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ARC_N * 3), 3));
+const arc = new THREE.Line(arcGeo, new THREE.LineBasicMaterial({ color: 0xffd23f }));
+arc.frustumCulled = false; arc.visible = false; scene.add(arc);
+function updateArc() {
+  const p = player, b = p.carry;
+  if (!b || p.charge < P.throwMin || mode !== 'play') { arc.visible = false; return; }
+  const k = Math.min(1, (p.charge - P.throwMin) / P.throwFull), v = throwVelocity(p, k), a = arcGeo.attributes.position, h = 0.05;
+  let x = (b.min[0] + b.max[0]) / 2, y = (b.min[1] + b.max[1]) / 2, z = (b.min[2] + b.max[2]) / 2, vy = v.vy, n = 0;
+  for (; n < ARC_N; n++) {
+    a.setXYZ(n, x, y, z);
+    vy += P.gravity * h; x += v.vx * h; y += vy * h; z += v.vz * h;
+    if (insideAny(x, y, z, 0)) { n++; break; }
+  }
+  a.needsUpdate = true; arcGeo.setDrawRange(0, Math.max(2, n)); arc.visible = true;
+}
 
 // mål: flaske
 const goal = new THREE.Group();
@@ -548,7 +567,7 @@ function spawnShards(pos, color) {
 
 const player = newPlayer(...LEVEL.start);
 const save = { pos: [...LEVEL.start] };
-const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, flew: false };
+const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 
@@ -556,7 +575,7 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
-const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - Math.floor(clock / 10) * SCORE.perTenSeconds);
+const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - Math.floor(clock / 10) * SCORE.perTenSeconds);
 function placeFlag() { flag.position.set(save.pos[0], save.pos[1], save.pos[2]); }
 placeFlag();
 
@@ -814,11 +833,11 @@ function update(dt) {
     mx: rx * ix + fx * iz, mz: rz * ix + fz * iz,
     jumpPressed: jumpEdge, jumpHeld: held('Space') || touch.jump,
     grabPressed: grabEdge, grabHeld: held('ShiftLeft', 'ShiftRight', 'KeyE') || touch.grab,
-    carryPressed: carryEdge,
+    carryPressed: carryEdge, carryHeld: held('KeyF') || touch.carry,
     walk: held('KeyC', 'AltLeft', 'AltRight'),
   };
   jumpEdge = grabEdge = carryEdge = false;
-  const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
+  const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
   step(player, inp, dt, LEVEL);
   audioFrame(pre, dt);
 
@@ -827,6 +846,12 @@ function update(dt) {
   for (const ev of drainEvents(LEVEL)) {
     if (ev.type === 'broke') { audio?.shatter(); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); toast(`${ev.id} forsvant`); }
+  }
+  if (player.hardLands > pre.hard) { stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
+  if (player.knockout) {
+    player.knockout = false; audio?.crush();
+    resetPlayer(player, ...save.pos); stats.respawns++;
+    toast(`Landet for hardt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
   }
   if (player.crushed) {
     const id = player.crushed; player.crushed = null; audio?.crush();
@@ -877,6 +902,7 @@ function insideAny(x, y, z, m) {
 
 function render(now, dt) {
   poseHero(player, now, dt, mode);
+  updateArc();
   hero.root.position.set(player.x, player.y, player.z);
   hero.root.scale.set(1, 1, 1);                                  // ingen strekk/klem: det ga «puls» og sjøsyke
 
@@ -887,7 +913,9 @@ function render(now, dt) {
   }
   for (const { b, mesh, size } of bodyMeshes) {
     mesh.visible = b.alive;
-    mesh.position.set(b.min[0] + size[0] / 2, b.min[1] + size[1] / 2, b.min[2] + size[2] / 2);
+    const bx = b.max[0] - b.min[0], by = b.max[1] - b.min[1], bz = b.max[2] - b.min[2];
+    mesh.position.set(b.min[0] + bx / 2, b.min[1] + by / 2, b.min[2] + bz / 2);
+    if (b.pole) mesh.rotation.y = b.carried ? Math.atan2(-player.fz, player.fx) : (bz > bx ? Math.PI / 2 : 0);   // staven peker fremover når du bærer den
   }
   for (let i = shards.length - 1; i >= 0; i--) {
     const s = shards[i]; s.t -= dt; s.v.y -= 22 * dt;
@@ -898,7 +926,7 @@ function render(now, dt) {
   const hint = $('hint');
   if (mode === 'play' && !won) {
     const t = player.carry ? null : findCarryTarget(player, LEVEL);
-    hint.textContent = player.carry ? (() => { const sp = findPlaceSpot(player, LEVEL); return sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `F: sett på ${sp.c.id || 'flaten'}` : 'F: slipp'; })() : t ? `F: ta ${t.id}` : '';
+    hint.textContent = player.carry ? (player.charge >= P.throwMin ? 'Slipp F: KAST' : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `F: sett på ${sp.c.id || 'flaten'}` : 'F: slipp') + ' · hold F: kast'; })()) : t ? `F: ta ${t.id}` : '';
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;

@@ -42,7 +42,7 @@ for (const o of scene.objects) {
   const lo = [ux(a), uy(c), uz(e)], hi = [ux(b), uy(d), uz(f)];
   if (o.hold) holds.push({ id: o.id, kind: o.kind, min: lo, max: hi });
   if (o.movable) {                                         // løse ting: egne legemer i spillet, ikke faste flater
-    movables.push({ id: o.id, kind: o.kind, material: o.material, color: hex(o.color), min: lo, max: hi, weight: o.movable, breakable: !!o.breakable });
+    movables.push({ id: o.id, kind: o.kind, material: o.material, color: hex(o.color), min: lo, max: hi, weight: o.movable, breakable: !!o.breakable, ...(o.soft ? { soft: true } : {}), ...(o.pole ? { pole: o.pole } : {}) });
     continue;
   }
   if (o.decor) {

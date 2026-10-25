@@ -1,0 +1,219 @@
+{
+  "name": "Prøverom: klatrehjelp",
+  "units": "cm",
+  "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
+  "validate": false,
+  "source": {
+    "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet. Ikke fra bilder."
+  },
+  "room": {
+    "width": 400,
+    "depth": 300,
+    "height": 220,
+    "floor": {
+      "material": "wood",
+      "color": "#d9b382",
+      "slick": false
+    },
+    "walls": {
+      "material": "plaster",
+      "color": "#e9e1d3"
+    },
+    "ceiling": {
+      "material": "plaster",
+      "color": "#f5f1e8"
+    }
+  },
+  "start": {
+    "x": 40,
+    "z": 270
+  },
+  "goal": {
+    "x": 240,
+    "y": 90,
+    "z": 130,
+    "on": "tarn",
+    "note": "Flagget står øverst på tårnet (90 cm)."
+  },
+  "windows": [
+    {
+      "wall": "N",
+      "z": 200,
+      "y": 130,
+      "w": 90,
+      "h": 70
+    }
+  ],
+  "hazards": [],
+  "objects": [
+    {
+      "id": "hylle",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b9845a",
+      "box": [
+        20,
+        140,
+        0,
+        28,
+        150,
+        210
+      ],
+      "cp": true,
+      "confidence": 1,
+      "note": "28 cm: for høy for vanlig hopp (4,2). Stavhopp med ørepinnen."
+    },
+    {
+      "id": "orepinne",
+      "kind": "qtip",
+      "material": "plastic",
+      "color": "#f2f1ec",
+      "box": [
+        80,
+        87.5,
+        0,
+        0.7,
+        262,
+        262.7
+      ],
+      "movable": "light",
+      "pole": 1.5,
+      "confidence": 1,
+      "note": "Bær den (F) og løp. Hopp = stavhopp."
+    },
+    {
+      "id": "tarn",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#9a6b45",
+      "box": [
+        200,
+        280,
+        0,
+        90,
+        80,
+        180
+      ],
+      "cp": true,
+      "confidence": 1,
+      "note": "90 cm: fall herfra uten pute er for hardt."
+    },
+    {
+      "id": "trinn_1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b08052",
+      "box": [
+        376,
+        400,
+        0,
+        15,
+        100,
+        160
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "trinn_2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b08052",
+      "box": [
+        352,
+        376,
+        0,
+        30,
+        100,
+        160
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "trinn_3",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b08052",
+      "box": [
+        328,
+        352,
+        0,
+        45,
+        100,
+        160
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "trinn_4",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b08052",
+      "box": [
+        304,
+        328,
+        0,
+        60,
+        100,
+        160
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "trinn_5",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b08052",
+      "box": [
+        280,
+        304,
+        0,
+        75,
+        100,
+        160
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "dopapirhaug",
+      "kind": "paper_pile",
+      "material": "paper",
+      "color": "#fbfaf6",
+      "box": [
+        135,
+        195,
+        0,
+        10,
+        100,
+        160
+      ],
+      "soft": true,
+      "confidence": 1,
+      "note": "Myk landing vest for tårnet."
+    },
+    {
+      "id": "svamp",
+      "kind": "sponge",
+      "material": "fabric",
+      "color": "#f4d24a",
+      "box": [
+        330,
+        342,
+        0,
+        4,
+        200,
+        212
+      ],
+      "movable": "light",
+      "soft": true,
+      "confidence": 1,
+      "note": "Bær den opp, slipp den ned en annen vei, og hopp på den."
+    }
+  ],
+  "look": {
+    "exposure": 1.0,
+    "sun": 2.0
+  },
+  "audio": {
+    "reverb": 0.15
+  }
+}

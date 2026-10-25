@@ -311,6 +311,36 @@ const SINGLE = {
     const head = mesh(lathe([[0.001, -sy / 2], [r * 0.8, -sy / 2 + 0.1], [r, -sy * 0.38], [r * 0.7, -sy * 0.26], [r * 0.35, -sy * 0.2]]), new THREE.MeshStandardMaterial({ color: 0x3b3f46, roughness: 0.9 })); g.add(head);
     return g;
   },
+  qtip(sx, sy, sz) {                                                // ørepinne: stav med bomullstipper; bygges langs x
+    const g = new THREE.Group(), L = Math.max(sx, sy, sz), t = Math.min(sx, sy, sz), r = Math.max(0.035, t * 0.32);
+    const stick = mesh(new THREE.CylinderGeometry(r, r, L, 10), new THREE.MeshStandardMaterial({ color: 0xf2f1ec, roughness: 0.5 })); stick.rotation.z = Math.PI / 2; g.add(stick);
+    const cotton = new THREE.MeshStandardMaterial({ color: 0xfffefb, roughness: 1, map: terryTex(), bumpMap: terryTex(), bumpScale: 0.6 });
+    for (const sgn of [-1, 1]) {
+      const tip = mesh(new THREE.CapsuleGeometry(Math.min(t / 2, r * 2.1), t * 0.9, 4, 10), cotton); tip.rotation.z = Math.PI / 2; tip.position.x = sgn * (L / 2 - t * 0.55); g.add(tip);
+    }
+    return g;
+  },
+  sponge(sx, sy, sz, o) {
+    const g = new THREE.Group(), tex = canvasTex(128, (c, S) => {
+      const r = rng(9); c.fillStyle = '#f4d24a'; c.fillRect(0, 0, S, S);
+      for (let i = 0; i < 260; i++) { const rr = 1.5 + r() * 4; c.fillStyle = `rgba(150,100,0,${0.15 + r() * 0.3})`; c.beginPath(); c.arc(r() * S, r() * S, rr, 0, 7); c.fill(); c.fillStyle = 'rgba(255,240,170,.5)'; c.beginPath(); c.arc(r() * S - 1, r() * S - 1, rr * 0.5, 0, 7); c.fill(); }
+    });
+    const body = mesh(roundedBoxGeo(sx, sy * 0.68, sz, Math.min(sx, sz) * 0.16, Math.min(0.22, sy * 0.2)), new THREE.MeshStandardMaterial({ color: 0xffffff, map: tex, bumpMap: tex, bumpScale: 2.5, roughness: 1 }));
+    body.position.y = -sy / 2; g.add(body);
+    const pad = mesh(roundedBoxGeo(sx, sy * 0.3, sz, Math.min(sx, sz) * 0.16, Math.min(0.14, sy * 0.1)), new THREE.MeshStandardMaterial({ color: 0x3f8f4f, map: weaveTex(), roughness: 1 }));
+    pad.position.y = -sy / 2 + sy * 0.7; g.add(pad);
+    return g;
+  },
+  paper_pile(sx, sy, sz) {                                          // haug av utrullet dopapir
+    const g = new THREE.Group(), r = rng(31), mat = new THREE.MeshStandardMaterial({ color: 0xfbfaf6, roughness: 0.95, map: terryTex(), bumpMap: terryTex(), bumpScale: 0.3 });
+    const n = 14;
+    for (let i = 0; i < n; i++) {
+      const f = 1 - (i / n) * 0.55, w = sx * f * (0.7 + r() * 0.3), d = sz * f * (0.7 + r() * 0.3), h = sy / n * 1.7;
+      const m = mesh(roundedBoxGeo(w, h, d, Math.min(w, d) * 0.3, h * 0.45), mat);
+      m.position.set((r() - 0.5) * sx * 0.15, -sy / 2 + (i / n) * sy * 0.88, (r() - 0.5) * sz * 0.15); m.rotation.y = r() * Math.PI; g.add(m);
+    }
+    return g;
+  },
   mirror(sx, sy, sz) {
     const g = new THREE.Group(), cr = chrome(), f = 0.35;
     g.add(mesh(new THREE.BoxGeometry(sx - 0.2, sy - 0.2, 0.1), new THREE.MeshStandardMaterial({ color: 0xdfe9ee, metalness: 0.85, roughness: 0.04, emissive: 0x6d7f88, emissiveIntensity: 0.35 }), false));

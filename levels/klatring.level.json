@@ -1,0 +1,348 @@
+{
+ "name": "Prøverom: klatrehjelp",
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -40,
+    -2,
+    -30
+   ],
+   "max": [
+    40,
+    0,
+    30
+   ],
+   "id": "gulv",
+   "color": 14267266,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -41,
+    0,
+    -30
+   ],
+   "max": [
+    -40,
+    44,
+    30
+   ],
+   "id": "vegg_v",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    40,
+    0,
+    -30
+   ],
+   "max": [
+    41,
+    44,
+    30
+   ],
+   "id": "vegg_o",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -40,
+    0,
+    -31
+   ],
+   "max": [
+    40,
+    44,
+    -30
+   ],
+   "id": "vegg_n",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -40,
+    0,
+    30
+   ],
+   "max": [
+    40,
+    44,
+    31
+   ],
+   "id": "vegg_s",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    -36,
+    0,
+    0
+   ],
+   "max": [
+    -12,
+    5.6,
+    12
+   ],
+   "id": "hylle",
+   "kind": "chest",
+   "color": 12158042,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    0,
+    0,
+    -14
+   ],
+   "max": [
+    16,
+    18,
+    6
+   ],
+   "id": "tarn",
+   "kind": "chest",
+   "color": 10120005,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    35.2,
+    0,
+    -10
+   ],
+   "max": [
+    40,
+    3,
+    2
+   ],
+   "id": "trinn_1",
+   "kind": "chest",
+   "color": 11567186,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    30.4,
+    0,
+    -10
+   ],
+   "max": [
+    35.2,
+    6,
+    2
+   ],
+   "id": "trinn_2",
+   "kind": "chest",
+   "color": 11567186,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    25.6,
+    0,
+    -10
+   ],
+   "max": [
+    30.4,
+    9,
+    2
+   ],
+   "id": "trinn_3",
+   "kind": "chest",
+   "color": 11567186,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    20.8,
+    0,
+    -10
+   ],
+   "max": [
+    25.6,
+    12,
+    2
+   ],
+   "id": "trinn_4",
+   "kind": "chest",
+   "color": 11567186,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    16,
+    0,
+    -10
+   ],
+   "max": [
+    20.8,
+    15,
+    2
+   ],
+   "id": "trinn_5",
+   "kind": "chest",
+   "color": 11567186,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "paper",
+   "min": [
+    -13,
+    0,
+    -10
+   ],
+   "max": [
+    -1,
+    2,
+    2
+   ],
+   "id": "dopapirhaug",
+   "kind": "paper_pile",
+   "color": 16513782,
+   "material": "paper",
+   "cp": false,
+   "soft": true
+  }
+ ],
+ "movables": [
+  {
+   "id": "orepinne",
+   "kind": "qtip",
+   "material": "plastic",
+   "color": 15921644,
+   "min": [
+    -24,
+    0,
+    22.4
+   ],
+   "max": [
+    -22.5,
+    0.14,
+    22.54
+   ],
+   "weight": "light",
+   "breakable": false,
+   "pole": 1.5
+  },
+  {
+   "id": "svamp",
+   "kind": "sponge",
+   "material": "fabric",
+   "color": 16044618,
+   "min": [
+    26,
+    0,
+    10
+   ],
+   "max": [
+    28.4,
+    0.8,
+    12.4
+   ],
+   "weight": "light",
+   "breakable": false,
+   "soft": true
+  }
+ ],
+ "decor": [],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    0,
+    26,
+    -29.95
+   ],
+   "size": [
+    18,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ropes": [],
+ "start": [
+  -32,
+  0,
+  24
+ ],
+ "goal": [
+  8,
+  18,
+  -4
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -40,
+  "x1": 40,
+  "z0": -30,
+  "z1": 30,
+  "height": 44,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b382",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#e9e1d3"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet. Ikke fra bilder."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 9,
+  "reachable": 9
+ }
+}

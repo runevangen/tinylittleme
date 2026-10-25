@@ -3,7 +3,7 @@
 // Verden: akse-justerte bokser. x/z er gulvplanet, y er opp. Enhet ≈ «spillerhøyde» (1.0).
 
 // Felles bevegelsesvekt: klassisk og spenning er «umiddelbare» (som før); prince har treghet, oppbygging og tidsbruk.
-const SNAPPY = { gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4 };
+const SNAPPY = { gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4, hardLand: Infinity, knockV: Infinity };
 
 export const PRESETS = {
   // Slik det var først: raskt, to hopp, kanten grips av seg selv.
@@ -26,6 +26,7 @@ export const PRESETS = {
     autoGrab: false, reachTime: 0.45, reachCooldown: 0.6, ledgeAbove: 0.3, reachAbove: 0.75,
     ropeReach: 2.0, wallKick: 7, wallUp: 11, slide: -3.5, swingPush: 14, ropeJump: 10,
     jumpWindup: 0.1, mantleTime: 0.8, landMin: 10, landK: 0.022, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4,
+    hardLand: 18, knockV: 27,     // landingsfart (enheter/s): hard landing (bedøvet) og så hard at du må tilbake til lagringspunktet
   },
 };
 
@@ -70,6 +71,14 @@ export const P = {
   placeUp: 0.7,      // høyeste flate (over hodet) du kan sette noe på
   placeDown: 1.6,    // laveste flate under føttene du kan sette noe på
   carrySpeed: 0.8,   // fartsfaktor når du bærer
+  hardLand: Infinity, knockV: Infinity,   // se PRESETS (bare Prince har harde landinger)
+  stunTime: 1.1,     // hvor lenge du er bedøvet etter en hard landing (s)
+  softFactor: 0.35,  // myke flater (svamp, matte, håndkle, papirhaug) tar denne andelen av landingsfarten
+  throwMin: 0.2,     // hold F kortere enn dette = slipp/sett på; lenger = kast
+  throwFull: 0.7,    // ytterligere holdetid til full kraft (s)
+  throwV0: 3.5, throwV1: 9.5, throwUp0: 3, throwUp1: 7.5,   // kastefart fremover og opp (svak … full)
+  vaultH: 7, vaultMin: 0.55,   // stavhopp: høyde over bakken ved full fart for en stav på 1,5 enheter, og laveste fartsandel for å stavhoppe
+  throwFriction: 6,  // en kastet ting bremses på bakken
   supportMin: 0.45,  // minste andel av fotavtrykket som må hvile på noe, ellers glir tingen av
 };
 
@@ -101,7 +110,8 @@ export function newPlayer(x, y, z) {
     windup: 0, recover: 0, skid: false,
     airT: 0, landT: 9, landImpact: 0, pushT: 0, hadIn: false,   // til animasjon: tid i lufta, tid siden landing, dytting, input-hysterese
     gait: 0, stepLen: 0.4,         // skrittfase (rad, π per skritt) og gjeldende skrittlengde
-    carry: null, crushed: null,
+    carry: null, crushed: null, charge: 0, carryLatch: false,   // kast: hold-tid, og «ventet til F ble sluppet etter at noe ble tatt»
+    hardLands: 0, knockout: false, vaulting: false, jumpSp: 0,
     t: 0,
   };
 }
@@ -130,7 +140,7 @@ export function initBodies(L) {
   L.bodies = []; L.events = [];
   for (const m of L.movables || []) {
     const b = {
-      id: m.id, kind: m.kind, type: m.material || 'plastic', material: m.material, color: m.color,
+      id: m.id, kind: m.kind, pole: m.pole || 0, soft: !!m.soft, vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
       min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
       vy: 0, alive: true, carried: false, home: { min: [...m.min], max: [...m.max] },
     };
@@ -142,7 +152,7 @@ export function initBodies(L) {
 export function resetBodies(L, p) {
   if (p?.carry) { p.carry = null; }
   for (const b of L.bodies || []) {
-    b.min = [...b.home.min]; b.max = [...b.home.max]; b.vy = 0; b.carried = false;
+    b.min = [...b.home.min]; b.max = [...b.home.max]; b.vy = 0; b.vx = b.vz = 0; b.carried = false;
     if (!b.alive) { b.alive = true; L.boxes.push(b); }
   }
 }
@@ -179,6 +189,16 @@ function pushForPlayer(p, b, d, axis, L) {
 function stepBodies(L, p, dt) {
   for (const b of L.bodies) {
     if (!b.alive || b.carried) continue;
+    for (const [axis, key] of [[0, 'vx'], [2, 'vz']]) {                 // kastet: flyr videre til noe stopper den
+      if (!b[key]) continue;
+      const want = b[key] * dt, got = pushBody(b, axis, want, L);
+      if (Math.abs(got) < Math.abs(want) - 1e-6) b[key] = 0;
+    }
+    if (b.grounded && (b.vx || b.vz)) {                                  // friksjon mot underlaget
+      const k = Math.exp(-P.throwFriction * dt); b.vx *= k; b.vz *= k;
+      if (Math.hypot(b.vx, b.vz) < 0.05) b.vx = b.vz = 0;
+    }
+    b.grounded = false;
     b.vy = Math.max(P.maxFall, b.vy + P.gravity * dt);
     const dy = b.vy * dt, h = b.max[1] - b.min[1];
     b.min[1] += dy; b.max[1] += dy;
@@ -195,8 +215,9 @@ function stepBodies(L, p, dt) {
           continue;
         }
         const impact = -b.vy;
+        b.grounded = true;
         b.min[1] = c.max[1]; b.max[1] = c.max[1] + h;
-        if (b.breakable && impact > P.breakSpeed) { removeBody(L, b, 'broke'); break; }
+        if (b.breakable && impact * (c.soft ? P.softFactor : 1) > P.breakSpeed) { removeBody(L, b, 'broke'); break; }
         b.vy = 0;
       } else { b.max[1] = c.min[1]; b.min[1] = c.min[1] - h; b.vy = 0; }
     }
@@ -236,6 +257,34 @@ export function findPlaceSpot(p, L) {
   return best;
 }
 
+// Kastefart for en ladning k (0..1): fremover i blikkretningen (litt av egen fart med), og opp.
+export function throwVelocity(p, k) {
+  const sp = P.throwV0 + (P.throwV1 - P.throwV0) * k;
+  return { vx: p.fx * sp + p.vx * 0.5, vy: P.throwUp0 + (P.throwUp1 - P.throwUp0) * k, vz: p.fz * sp + p.vz * 0.5 };
+}
+export function throwCarry(p, L, k) {
+  const b = p.carry; if (!b) return;
+  const v = throwVelocity(p, k);
+  b.carried = false; p.carry = null;
+  b.vx = v.vx; b.vy = v.vy; b.vz = v.vz;
+}
+
+// F: ta tak i en ting. Når du bærer: kort trykk = slipp/sett på, hold = lad opp kast og slipp for å kaste.
+function carryControl(p, inp, dt, L) {
+  if (!L.bodies?.length) return;
+  if (inp.carryHeld === undefined) { if (inp.carryPressed) tryCarry(p, L); return; }       // enkel tolkning (tester/bot): trykk = ta/slipp
+  if (!p.carry) {
+    p.charge = 0;
+    if (inp.carryPressed && tryCarry(p, L) === 'pick') p.carryLatch = true;
+    return;
+  }
+  if (p.carryLatch) { if (!inp.carryHeld) p.carryLatch = false; return; }
+  if (inp.carryHeld) { p.charge += dt; return; }
+  const c = p.charge; p.charge = 0;
+  if (c <= 0) return;
+  if (c < P.throwMin) dropCarry(p, L); else throwCarry(p, L, Math.min(1, (c - P.throwMin) / P.throwFull));
+}
+
 export function dropCarry(p, L) {
   const b = p.carry; if (!b) return;
   const spot = findPlaceSpot(p, L);
@@ -271,7 +320,8 @@ export function tryCarry(p, L) {
 
 function updateCarried(p, L) {
   const b = p.carry; if (!b) return;
-  const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
+  let sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
+  if (b.pole) { const along = Math.abs(p.fx) >= Math.abs(p.fz); const L = Math.max(sx, sz), t = Math.min(sx, sz); sx = along ? L : t; sz = along ? t : L; }   // staven peker fremover
   const r = HW + Math.max(sx, sz) / 2 + 0.06, cx = p.x + p.fx * r, cz = p.z + p.fz * r, y0 = p.y + 0.35;
   const oldMin = b.min, oldMax = b.max;
   b.min = [cx - sx / 2, y0, cz - sz / 2]; b.max = [cx + sx / 2, y0 + sy, cz + sz / 2];
@@ -297,6 +347,18 @@ export function stepLength(speed) {
   return Math.max(P.stepMin, speed / (P.cadence0 + P.cadenceK * speed));
 }
 
+// Avsparkfart: vanlig hopp, eller stavhopp når du løper med en stav (farten gjøres om til høyde).
+function launchVy(p) {
+  const b = p.carry, sp = Math.max(Math.hypot(p.vx, p.vz), p.jumpSp || 0);   // farten du hadde før forberedelsen (hurken bremser)
+  p.jumpSp = 0; p.vaulting = false;
+  if (b?.pole && sp >= P.vaultMin * P.speed) {
+    const hv = P.vaultH * (b.pole / 1.5) * (0.45 + 0.55 * Math.min(1, sp / P.speed));
+    const vy = Math.sqrt(2 * -P.gravity * hv);
+    if (vy > P.jump) { p.vaulting = true; return vy; }
+  }
+  return P.jump;
+}
+
 function boostJump(p) {                                       // løpehopp går lengre enn stående hopp
   const sp = Math.hypot(p.vx, p.vz);
   if (P.jumpBoost > 1 && sp > 0.5) { p.vx *= P.jumpBoost; p.vz *= P.jumpBoost; }
@@ -309,7 +371,7 @@ function approach(v, target, d) {
 
 // inp: { mx, mz (-1..1, verdensretning), jumpPressed, jumpHeld, grabPressed, grabHeld }
 export function step(p, inp, dt, L) {
-  if (inp.carryPressed && L.bodies?.length) tryCarry(p, L);
+  carryControl(p, inp, dt, L);
   if (inp.jumpPressed) p.buffer = P.jumpBuffer;
   if (inp.grabPressed && p.reachCd <= 0) { p.reach = P.reachTime; p.reachCd = P.reachTime + P.reachCooldown; }
   if (dt <= 1e-6) return;
@@ -394,13 +456,13 @@ function sub(p, inp, dt, L) {
 
   if (p.windup > 0) {                                      // forberedelse (hurk) før avsparket
     p.windup -= dt;
-    if (p.windup <= 0) { p.windup = 0; p.vy = P.jump; p.jumping = true; p.onGround = false; boostJump(p); }
+    if (p.windup <= 0) { p.windup = 0; p.vy = launchVy(p); p.jumping = true; p.onGround = false; boostJump(p); }
   }
   if (p.buffer > 0) {
     if (p.coyote > 0) {
       if (p.recover > 0 || p.windup > 0) { /* i hurk: ikke hopp ennå (hoppet blir stående i bufferen) */ }
-      else if (P.jumpWindup > 0) { p.windup = P.jumpWindup; p.coyote = 0; p.buffer = 0; }
-      else { p.vy = P.jump; p.coyote = 0; p.buffer = 0; p.onGround = false; p.jumping = true; boostJump(p); }
+      else if (P.jumpWindup > 0) { p.windup = P.jumpWindup; p.jumpSp = Math.hypot(p.vx, p.vz); p.coyote = 0; p.buffer = 0; }
+      else { p.vy = launchVy(p); p.coyote = 0; p.buffer = 0; p.onGround = false; p.jumping = true; boostJump(p); }
     } else if (pushWall && p.vy <= 0) {   // veggsprang: faller + styrer inn mot veggen
       p.vx = p.wallN.nx * P.wallKick; p.vz = p.wallN.nz * P.wallKick;
       p.vy = P.wallUp; p.lock = P.wallLock; p.jumps = P.airJumps;
@@ -429,8 +491,13 @@ function sub(p, inp, dt, L) {
     p.gait = (p.gait + Math.PI * Math.hypot(p.x - px0, p.z - pz0) / p.stepLen) % (Math.PI * 2);
     if (spd < 0.01 && wl < 0.1) p.gait = Math.round(p.gait / Math.PI) * Math.PI % (Math.PI * 2);
   }
-  if (!wasGrounded && p.onGround && vyBefore < -3) { p.landImpact = -vyBefore; p.landT = 0; }
-  if (!wasGrounded && p.onGround && P.landK > 0 && vyBefore < -P.landMin) p.recover = Math.min(P.landMax, (-vyBefore - P.landMin) * P.landK);
+  if (!wasGrounded && p.onGround && vyBefore < -3) {
+    const eff = -vyBefore * (p.groundBox?.soft ? P.softFactor : 1);          // myke flater tar av for fallet
+    p.landImpact = eff; p.landT = 0; p.vaulting = false;
+    if (P.landK > 0 && eff > P.landMin) p.recover = Math.min(P.landMax, (eff - P.landMin) * P.landK);
+    if (eff >= P.knockV) p.knockout = true;                                   // for hardt: tilbake til lagringspunktet
+    else if (eff >= P.hardLand) { p.recover = Math.max(p.recover, P.stunTime); p.hardLands++; }   // bedøvet en stund
+  }
 
   updateCarried(p, L);
 
