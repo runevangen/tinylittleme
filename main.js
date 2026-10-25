@@ -4,6 +4,7 @@ import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo } from './props.js';
 import { createVoice } from './voice.js';
+import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -60,6 +61,20 @@ function toggleAutoCam() { autoCam = !autoCam; store.set('tlm.autocam', autoCam)
 
 let vibOn = store.get('tlm.vib', true);
 const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(ms); } catch { /* ikke støttet */ } };   // Android; iOS Safari støtter ikke vibrasjon
+
+// ---------- innstillinger som flagg (selve lista og panelet står lenger ned: SETTINGS) ----------
+let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
+let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
+let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
+let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', true), fpsOn = store.get('tlm.fps', false);
+let compassMode = store.get('tlm.compassmode', store.get('tlm.compass', true) === false ? 'off' : 'both');   // both | compass | arrow | off
+const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; };
+
+// ---------- hendelseslogg og FPS: brukes i testrapporten ----------
+const evLog = store.get('tlm.evlog', []);
+const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION }); if (evLog.length > 120) evLog.shift(); };
+const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
+addEventListener('pagehide', () => store.set('tlm.evlog', evLog.slice(-120)));
 
 // lydtekst: viser korte tekster for viktige lyder (for hørselshemmede, og når lyden er av). Skritt og pust er utelatt.
 let cuesOn = store.get('tlm.cues', false);
@@ -864,23 +879,25 @@ placeFlag();
 // ---------- autolagring: fremgangen huskes per brett, så en kort mobiløkt kan fortsette der du var ----------
 const progKey = `tlm.progress.${levelId}`;
 let autoPos = null, autoT = 0, resumed = false;
-function saveProgress() { if (won) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells] }); }
+function saveProgress() { if (won || !autosaveOn) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells] }); }
 function clearProgress() { autoPos = null; store.set(progKey, null); }
 const failCells = new Map();
 let compassForce = 0;
-function failAt() {
+function failAt(why = 'fall') {
+  logEv('tilbake', why);
   const k = `${Math.round(player.x / 6)}|${Math.round(player.y / 6)}|${Math.round(player.z / 6)}`, n = (failCells.get(k) || 0) + 1; failCells.set(k, n);
-  if (n >= 3 && n % 3 === 0) setTimeout(() => { const t = nextTarget(); compassForce = performance.now() + 15000; toast(`Tips: prøv ${t.final ? 'målet' : t.label}${t.act ? ` (${t.act})` : ''}. Pilen viser veien.`); }, 1800);
+  if (failHintOn && n >= 3 && n % 3 === 0) setTimeout(() => { const t = nextTarget(); compassForce = performance.now() + 15000; toast(`Tips: prøv ${t.final ? 'målet' : t.label}${t.act ? ` (${t.act})` : ''}. Pilen viser veien.`); }, 1800);
 }
 {
   const pr = store.get(progKey, null), okAt = (p) => Array.isArray(p) && p.length === 3 && freeAt(LEVEL, p[0], p[1] + 0.05, p[2]);
-  if (pr && pr.clock > 4 && okAt(pr.save)) {
+  if (autosaveOn && pr && pr.clock > 4 && okAt(pr.save)) {
     save.pos = pr.save; Object.assign(stats, pr.stats || {}); clock = pr.clock; autoPos = okAt(pr.auto) ? pr.auto : null;
     for (const [k, v] of pr.fails || []) failCells.set(k, v);
     resetPlayer(player, ...(autoPos || save.pos)); placeFlag(); resumed = true;
   }
 }
 addEventListener('pagehide', saveProgress);
+if (resumed) logEv('gjenopptatt');
 if (resumed) setTimeout(() => toast('Fortsetter der du var · ⚙ → Start på nytt for å begynne på nytt'), 1500);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveProgress(); });
 
@@ -888,11 +905,11 @@ function doSave() {
   if (mode !== 'play') return toast('Gå ut av plan-/flymodus først');
   if (!player.onGround) return toast('Stå støtt for å lagre');
   save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag(); audio?.checkpoint(); saveProgress();
-  toast(`Lagringspunkt satt  −${SCORE.save} poeng`);
+  logEv('lagret'); toast(`Lagringspunkt satt  −${SCORE.save} poeng`);
 }
 function goBack() {
   if (mode !== 'play') return;
-  resetPlayer(player, ...save.pos); stats.respawns++;
+  logEv('tilbake', 'knapp'); resetPlayer(player, ...save.pos); stats.respawns++;
   toast(`Tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
 }
 const lostQueue = [];
@@ -905,7 +922,7 @@ function stepLost(dt) {
 function resetThings() {
   if (mode !== 'play') return;
   if (!(LEVEL.bodies || []).some((b) => !b.alive || b.min.some((v, i) => Math.abs(v - b.home.min[i]) > 0.05))) return toast('Alt står på plass');
-  resetBodies(LEVEL, player); stats.resets++; say('reset');
+  logEv('ting nullstilt'); resetBodies(LEVEL, player); stats.resets++; say('reset');
   toast(`Ting satt tilbake  −${SCORE.resetThings} poeng`);
 }
 function restartAll() {
@@ -917,7 +934,7 @@ function restartAll() {
 }
 
 // ---------- modus: plan / fly ----------
-const cam = { yaw: 0.35, pitch: 0.3, dist: 5.5, cur: 5.5, target: new THREE.Vector3(...LEVEL.start) };
+const cam = { yaw: 0.35, pitch: 0.3, dist: camDistSet, cur: camDistSet, target: new THREE.Vector3(...LEVEL.start) };
 let camLook = 0, camPitchBias = 0, camLift = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
 const planCam = { yaw: 0.6, pitch: 0.7, dist: 55, pivot: new THREE.Vector3(8, 15, 0) };
@@ -994,7 +1011,6 @@ function stepCamAnim(dt) {
   if (!camAnim) return; camAnim.t = Math.min(1, camAnim.t + dt / 0.4); const k = 1 - Math.pow(1 - camAnim.t, 3);
   cam.yaw = camAnim.from + camAnim.d * k; cam.pitch = camAnim.pf + (camAnim.pt - camAnim.pf) * k; if (camAnim.t >= 1) camAnim = null;
 }
-let compassOn = store.get('tlm.compass', true);
 const compEl = $('compass'), compArrow = $('compArrow'), compTxt = $('compTxt');
 const goalArrow = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([[0, 0.5], [0.3, -0.25], [0, -0.1], [-0.3, -0.25]].map(([x, y]) => new THREE.Vector2(x, y)))),
   new THREE.MeshBasicMaterial({ color: 0xffa940, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false }));
@@ -1002,10 +1018,10 @@ goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visibl
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
 function compassFrame(now) {
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
-  const show = (compassOn || performance.now() < compassForce) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6);
-  compEl.style.display = show ? 'flex' : 'none';
-  goalArrow.visible = show && player.onGround; goalArrowG.visible = goalArrow.visible;
-  if (!show) return;
+  const forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6);
+  compEl.style.display = show && (compassMode === 'both' || compassMode === 'compass' || forced) ? 'flex' : 'none';
+  goalArrow.visible = show && player.onGround && (compassMode === 'both' || compassMode === 'arrow' || forced); goalArrowG.visible = goalArrow.visible;
+  if (!show) { goalArrowG.visible = false; return; }
   const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
   compArrow.style.transform = `rotate(${ang}rad)`;
@@ -1047,7 +1063,7 @@ const endPtr = (e) => {
   const p = pointers.get(e.pointerId);
   if (p && pointers.size === 1 && mode === 'play' && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 10 && performance.now() - p.t0 < 280) {      // kort trykk
     const now = performance.now();
-    if (now - lastTap.t < 330 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 45) { camBehind(); lastTap.t = 0; } else lastTap = { t: now, x: e.clientX, y: e.clientY };
+    if (dblTapOn && now - lastTap.t < 330 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 45) { camBehind(); lastTap.t = 0; } else lastTap = { t: now, x: e.clientX, y: e.clientY };
   }
   pointers.delete(e.pointerId); pinch0 = 0;
 };
@@ -1098,7 +1114,7 @@ const aimPt = { id: null, x0: 0, y0: 0, x: 0, y: 0 };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
 }
 function aimInput(fx, fz, rx, rz) {
-  if (aimPt.id === null || !touch.carry || !player.carry) return undefined;
+  if (!aimThrowOn || aimPt.id === null || !touch.carry || !player.carry) return undefined;
   const dx = aimPt.x - aimPt.x0, dy = aimPt.y - aimPt.y0, len = Math.hypot(dx, dy);
   if (len < 22) return undefined;
   const ux = dx / len, uy = dy / len;                               // trekk ned = kast fremover, trekk til venstre = kast til høyre
@@ -1109,6 +1125,7 @@ function aimInput(fx, fz, rx, rz) {
 function confirmed(btn, label, cost, fn) {
   let t = null; const orig = btn.textContent;
   btn.onclick = () => {
+    if (!confirm2On) { fn(); return; }
     if (t) { clearTimeout(t); t = null; btn.classList.remove('armed'); btn.textContent = orig; fn(); return; }
     btn.classList.add('armed'); btn.textContent = cost ? `Sikker? −${cost}` : 'Trykk igjen';
     t = setTimeout(() => { t = null; btn.classList.remove('armed'); btn.textContent = orig; }, 2500);
@@ -1132,6 +1149,7 @@ const TUNE = [
   ['reachTime', 'Grep: varighet (s)', 0.1, 1, 0.05], ['reachCooldown', 'Grep: pause (s)', 0, 1.5, 0.05],
   ['reachAbove', 'Grep: ekstra rekkevidde opp', 0, 1.5, 0.05], ['ropeReach', 'Tau-rekkevidde', 0.8, 3.5, 0.1],
 ];
+const P0_SNAPSHOT = { ...P };
 let presetName = store.get('tlm.preset2', 'prince');
 if (!PRESETS[presetName]) presetName = 'prince';
 applyPreset(presetName);
@@ -1177,80 +1195,185 @@ for (const b of helperBoxes) {
   l.position.set((b.min[0] + b.max[0]) / 2, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2); helperMarks.add(l);
 }
 
-function buildPanel() {
-  const p = $('panel');
-  p.innerHTML = `<h3>Brett</h3>
-    <select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}</option>`).join('')}</select>
-    <h3 style="margin-top:14px">Lyd</h3>
-    <label>Hovedvolum <span id="v_vol"></span></label><input type="range" id="s_vol" min="0" max="1" step="0.05">
-    <label>Etterklang (rom) <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">
-    <details open><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary>${mixerHtml()}
-      <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkBubbles"> Snakkebobler</label>
-    ${hasTTS ? '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkVoice"> Stemme (figuren snakker)</label><label>Stemmevolum <span id="v_vvol"></span></label><input type="range" id="s_vvol" min="0.2" max="1" step="0.1"><small id="voiceNote"></small>' : ''}
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCues"> Lydtekst: vis tekst for lyder${key('V')}</label>
-    ${helperCount ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning${key('X')}</label>
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCompass"> Målkompass og pil på gulvet</label>
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAssist"> Kameraet hjelper (over vegger, i fall og klatring)</label>
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkFade"> Tone ut ting som står i veien for kameraet</label>
-    <label>Gjennomsiktighet <span id="v_fadeop"></span> <small>(lavere = mer gjennomsiktig)</small></label><input type="range" id="s_fadeop" min="0.04" max="0.7" step="0.02">
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkGripHi"> Fremhev grep (oransje, pulserende)</label>
-    ${labels.length ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkLabels"> Brukslapper ved ting${key('L')}</label>` : ''}
-    <div class="row" style="margin-top:10px"><button id="pSound">Lyd av/på</button><button id="pPlan">Plan</button><button id="pFly">Fly</button><button id="pRestart">Start på nytt</button></div>
-    <label>Kamerafølsomhet (dra) <span id="v_camsens"></span></label><input type="range" id="s_camsens" min="0.4" max="2" step="0.1">
-    ${navigator.vibrate ? '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkVib"> Vibrasjon</label>' : ''}
-    <h3 style="margin-top:14px">Hoppinnstillinger</h3>
-    <label>Forhåndsinnstilling</label>
-    <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="autoGrab"> Grip kanten automatisk</label>
-    <div id="sliders"></div>
-    <div class="row"><button id="resetPreset">Nullstill</button><button id="closePanel">Lukk</button></div>
-    <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. ${TOUCH ? 'Skyv stikken forsiktig for å gå forsiktig.' : 'Hold C for å gå forsiktig.'}<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke GREP${key('Shift/E')} i riktig øyeblikk for å gripe kant eller tau.</small>`;
-  $('s_vol').value = store.get('tlm.vol', 0.7); $('v_vol').textContent = (+$('s_vol').value).toFixed(2);
-  $('s_vol').oninput = (e) => { const v = +e.target.value; store.set('tlm.vol', v); audio?.setVolume(v); $('v_vol').textContent = v.toFixed(2); };
-  $('levelSel').value = levelId;
-  $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
-  wireMixer();
-  confirmed($('pRestart'), 'Start på nytt', 0, () => { restartAll(); $('panel').classList.add('hide'); toast('Startet på nytt'); });
-  $('pSound').onclick = toggleSound; $('pPlan').onclick = () => { setMode('plan'); $('panel').classList.add('hide'); }; $('pFly').onclick = () => { setMode('fly'); $('panel').classList.add('hide'); };
-  $('s_camsens').value = camSens; $('v_camsens').textContent = (+camSens).toFixed(1);
-  $('s_camsens').oninput = (e) => { camSens = +e.target.value; store.set('tlm.camsens', camSens); $('v_camsens').textContent = camSens.toFixed(1); };
-  if ($('chkVib')) { $('chkVib').checked = vibOn; $('chkVib').onchange = (e) => { vibOn = e.target.checked; store.set('tlm.vib', vibOn); if (vibOn) buzz(30); }; }
-  if ($('chkHelpers')) { $('chkHelpers').checked = helperMarks.visible; $('chkHelpers').onchange = (e) => { helperMarks.visible = e.target.checked; }; }
-  if ($('chkLabels')) { $('chkLabels').checked = labelsOn; $('chkLabels').onchange = (e) => { labelsOn = e.target.checked; store.set('tlm.labels', labelsOn); }; }
-  $('chkCompass').checked = compassOn; $('chkCompass').onchange = (e) => { compassOn = e.target.checked; store.set('tlm.compass', compassOn); };
-  $('chkAssist').checked = camAssist; $('chkAssist').onchange = (e) => { camAssist = e.target.checked; store.set('tlm.camassist', camAssist); };
-  $('s_fadeop').value = fadeOp; $('v_fadeop').textContent = Math.round(fadeOp * 100) + ' %'; $('s_fadeop').oninput = (e) => { fadeOp = +e.target.value; store.set('tlm.fadeop', fadeOp); $('v_fadeop').textContent = Math.round(fadeOp * 100) + ' %'; };
-  $('chkFade').checked = fadeOn; $('chkFade').onchange = (e) => { fadeOn = e.target.checked; store.set('tlm.fade', fadeOn); };
-  $('chkGripHi').checked = gripHi; $('chkGripHi').onchange = (e) => { gripHi = e.target.checked; store.set('tlm.griphi', gripHi); };
-  $('chkAutoCam').checked = autoCam; $('chkAutoCam').onchange = (e) => { autoCam = e.target.checked; store.set('tlm.autocam', autoCam); };
-  $('chkBubbles').checked = bubblesOn; $('chkBubbles').onchange = (e) => { bubblesOn = e.target.checked; store.set('tlm.bubbles', bubblesOn); };
-  if ($('chkVoice')) {
-    $('chkVoice').checked = voiceOn; $('chkVoice').onchange = (e) => { voiceOn = e.target.checked; store.set('tlm.voice', voiceOn); if (voiceOn) { primeVoice(); say('checkpoint', true); } };
-    $('s_vvol').value = voiceVol; $('v_vvol').textContent = (+voiceVol).toFixed(1); $('s_vvol').oninput = (e) => { voiceVol = +e.target.value; store.set('tlm.voicevol', voiceVol); $('v_vvol').textContent = voiceVol.toFixed(1); };
-    $('voiceNote').textContent = ttsVoice ? `Stemme: ${ttsVoice.name} (${ttsVoice.lang}). Lyden kommer fra telefonen.` : 'Fant ingen norsk stemme på denne enheten: da vises bare snakkebobler.';
-  }
-  $('chkCues').checked = cuesOn; $('chkCues').onchange = (e) => { cuesOn = e.target.checked; store.set('tlm.cues', cuesOn); };
-  $('presetSel').value = presetName;
-  $('autoGrab').checked = P.autoGrab;
-  $('autoGrab').onchange = (e) => { P.autoGrab = e.target.checked; saveCustom(); };
-  $('sliders').innerHTML = TUNE.map(([k, label, min, max, st]) =>
-    `<label>${label}<span id="v_${k}">${(+P[k]).toFixed(2)}</span></label><input type="range" id="s_${k}" min="${min}" max="${max}" step="${st}" value="${P[k]}">`).join('');
-  for (const [k] of TUNE) $('s_' + k).oninput = (e) => { P[k] = +e.target.value; $('v_' + k).textContent = (+P[k]).toFixed(2); saveCustom(); };
-  $('presetSel').onchange = (e) => { presetName = e.target.value; store.set('tlm.preset2', presetName); applyPreset(presetName); store.set('tlm.custom2', {}); buildPanel(); };
-  $('resetPreset').onclick = () => { applyPreset(presetName); store.set('tlm.custom2', {}); buildPanel(); toast('Nullstilt'); };
-  $('closePanel').onclick = () => $('panel').classList.add('hide');
+// ---------- innstillinger: ÉN liste (SETTINGS) styrer panelet, «endret fra standard», eksport/import, nullstilling og testrapporten ----------
+// Regler: nye valg legges inn her så lenge det er mulig. `admin: true` = bare synlig for admin (tåler å gjøre feil, eller er for finjustering).
+const P0 = { ...P0_SNAPSHOT };
+const defOf = (k) => PRESETS[presetName]?.[k] ?? P0[k];
+let adminOn = store.get('tlm.admin', false);
+{ const a = new URLSearchParams(location.search).get('admin'); if (a === '1') { adminOn = true; store.set('tlm.admin', true); } if (a === '0') { adminOn = false; store.set('tlm.admin', false); } }
+const fl = (id, group, label, def, get, set, o = {}) => ({ id, group, type: 'bool', label, def, get, set, ...o });
+const rg = (id, group, label, def, min, max, step, get, set, o = {}) => ({ id, group, type: 'range', label, def, min, max, step, get, set, ...o });
+const sl = (id, group, label, def, options, get, set, o = {}) => ({ id, group, type: 'select', label, def, options, get, set, ...o });
+const kp = (key, fn) => (v) => { fn(v); store.set(key, v); };
+const GROUPS = [['spill', 'Spill'], ['styring', 'Styring'], ['kamera', 'Kamera'], ['hjelp', 'Hjelp og tekst'], ['lyd', 'Lyd og stemme'], ['test', 'Test'], ['admin', 'Admin']];
+
+const ADMIN_TUNE = [
+  ['stamina', 'Krefter: sekunder', 3, 20, 0.5], ['staminaRegen', 'Krefter: påfyll på bakken (s/s)', 0.5, 8, 0.1], ['exhaustT', 'Utmattet: skli-tid (s)', 0, 1.5, 0.05],
+  ['climbUp', 'Klatring: fart opp', 0.5, 4, 0.1], ['climbDown', 'Klatring: fart ned', 0.5, 5, 0.1], ['climbSide', 'Klatring: fart sidelengs', 0.3, 3, 0.1],
+  ['coyote', 'Tilgivelse: tid etter kanten (s)', 0, 0.3, 0.01], ['jumpBuffer', 'Tilgivelse: hoppbuffer (s)', 0, 0.3, 0.01], ['reachSnap', 'Grep: snap-avstand', 0, 1, 0.05],
+  ['throwMin', 'Kast: minste holdetid (s)', 0.1, 0.8, 0.02], ['throwFull', 'Kast: tid til full kraft (s)', 0.3, 2, 0.05],
+  ['hardLand', 'Hard landing fra (fart)', 8, 30, 1], ['knockV', 'Tilbake til lagring fra (fart)', 14, 40, 1], ['softFactor', 'Myk flate: andel av fallfart', 0.1, 1, 0.05],
+  ['gelDry', 'Hårgelé: tørketid (s)', 5, 60, 1], ['stripTear', 'Dopapirbånd: holder (s)', 2, 30, 1],
+  ['zipMax', 'Taubane: lengste tråd', 8, 40, 1], ['zipMinDrop', 'Taubane: minste fall', 0.5, 4, 0.1], ['zipVmax', 'Taubane: toppfart', 3, 16, 0.5], ['zipAcc', 'Taubane: akselerasjon', 1, 12, 0.5],
+];
+const PSET = (k) => (v) => { P[k] = v; saveCustom(); };
+const SETTINGS = [
+  // Spill
+  fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
+  fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
+  fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
+  fl('hudtech', 'spill', 'Vis tekniske tall (høyde, tid, poeng)', true, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
+  // Styring
+  rg('camsens', 'styring', 'Kamerafølsomhet (dra)', 1, 0.4, 2, 0.1, () => camSens, kp('tlm.camsens', (v) => { camSens = v; })),
+  rg('stickdead', 'styring', 'Stikke: dødsone (mot skjelving)', 0.22, 0, 0.4, 0.02, () => stickDead, kp('tlm.stickdead', (v) => { stickDead = v; })),
+  rg('btnscale', 'styring', 'Knappestørrelse', 1, 0.8, 1.3, 0.05, () => btnScale, kp('tlm.btnscale', (v) => { btnScale = v; applyUiFlags(); })),
+  fl('aimthrow', 'styring', 'Kast med dra og slipp (hold TA, dra ned)', true, () => aimThrowOn, kp('tlm.aimthrow', (v) => { aimThrowOn = v; })),
+  fl('dbltap', 'styring', 'Dobbelttrykk på skjermen sentrerer kameraet', true, () => dblTapOn, kp('tlm.dbltap', (v) => { dblTapOn = v; })),
+  fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', true, () => showCenter, kp('tlm.showcenter', (v) => { showCenter = v; applyUiFlags(); })),
+  { id: 'autograb', group: 'styring', type: 'bool', label: 'Grip kanten automatisk', get def() { return !!PRESETS[presetName]?.autoGrab; }, get: () => P.autoGrab, set: (v) => { P.autoGrab = v; saveCustom(); } },
+  ...(navigator.vibrate ? [fl('vib', 'styring', 'Vibrasjon', true, () => vibOn, kp('tlm.vib', (v) => { vibOn = v; if (v) buzz(30); }))] : []),
+  // Kamera
+  fl('autocam', 'kamera', `Kamera følger retning${key('X')}`, false, () => autoCam, kp('tlm.autocam', (v) => { autoCam = v; })),
+  fl('camassist', 'kamera', 'Kameraet hjelper (over vegger, i fall og klatring)', true, () => camAssist, kp('tlm.camassist', (v) => { camAssist = v; })),
+  fl('fade', 'kamera', 'Tone ut ting som står i veien for kameraet', true, () => fadeOn, kp('tlm.fade', (v) => { fadeOn = v; })),
+  rg('fadeop', 'kamera', 'Utoning: synlighet (lavt = gjennomsiktig)', 0.16, 0.04, 0.7, 0.02, () => fadeOp, kp('tlm.fadeop', (v) => { fadeOp = v; }), { pct: true }),
+  rg('camdist', 'kamera', 'Kameraavstand', 5.5, 3, 9, 0.1, () => cam.dist, kp('tlm.camdist', (v) => { cam.dist = v; camDistSet = v; })),
+  // Hjelp og tekst
+  sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
+  fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
+  fl('griphi', 'hjelp', 'Fremhev grep (oransje, pulserende)', false, () => gripHi, kp('tlm.griphi', (v) => { gripHi = v; })),
+  ...(labels.length ? [fl('labels', 'hjelp', `Brukslapper ved ting${key('L')}`, true, () => labelsOn, kp('tlm.labels', (v) => { labelsOn = v; }))] : []),
+  fl('cues', 'hjelp', `Lydtekst: vis tekst for lyder${key('V')}`, false, () => cuesOn, kp('tlm.cues', (v) => { cuesOn = v; })),
+  fl('bubbles', 'hjelp', 'Snakkebobler', true, () => bubblesOn, kp('tlm.bubbles', (v) => { bubblesOn = v; })),
+  // Lyd og stemme
+  rg('vol', 'lyd', 'Hovedvolum', 0.7, 0, 1, 0.05, () => store.get('tlm.vol', 0.7), kp('tlm.vol', (v) => audio?.setVolume(v)), { pct: true }),
+  fl('sound', 'lyd', 'Lyd på', true, () => !soundMuted, (v) => { if (v === soundMuted) toggleSound(); }),
+  ...(hasTTS ? [
+    fl('voice', 'lyd', 'Stemme (figuren snakker)', true, () => voiceOn, kp('tlm.voice', (v) => { voiceOn = v; if (v) { primeVoice(); say('checkpoint', true); } })),
+    rg('voicevol', 'lyd', 'Stemmevolum', 0.9, 0.2, 1, 0.1, () => voiceVol, kp('tlm.voicevol', (v) => { voiceVol = v; })),
+  ] : []),
+  // Test
+  sl('preset', 'test', 'Hoppfølelse', 'prince', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset2', v); applyPreset(v); store.set('tlm.custom2', {}); }),
+  fl('fps', 'test', 'Vis bilder per sekund (FPS)', false, () => fpsOn, kp('tlm.fps', (v) => { fpsOn = v; applyUiFlags(); })),
+  // Admin: hoppinnstillinger og fininnstilling av mekanikker (verdiene lagres som egen «custom»)
+  ...[...TUNE, ...ADMIN_TUNE].map(([k, label, min, max, st]) => ({ id: 'p_' + k, group: 'admin', type: 'range', label, min, max, step: st, get def() { return defOf(k); }, get: () => P[k], set: PSET(k), digits: 2 })),
+];
+const visible = (d) => d.group !== 'admin' || adminOn;
+
+function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of [...TUNE, ...ADMIN_TUNE]) o[k] = P[k]; store.set('tlm.custom2', o); }
+function resetAllSettings() {
+  presetName = 'prince'; store.set('tlm.preset2', presetName); applyPreset(presetName); store.set('tlm.custom2', {});
+  for (const [k] of ADMIN_TUNE) P[k] = P0[k];
+  for (const d of SETTINGS) if (d.group !== 'admin' && d.id !== 'preset' && d.id !== 'autograb') d.set(d.def);
+  store.set('tlm.mix2', {}); store.set('tlm.reverb', null);
 }
-function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of TUNE) o[k] = P[k]; store.set('tlm.custom2', o); }
+const fmtVal = (d, v) => (d.pct ? `${Math.round(v * 100)} %` : typeof v === 'number' ? (+v).toFixed(d.digits ?? (d.step < 0.1 ? 2 : 1)) : v);
+
+// ---------- testrapport ----------
+const marks = [];
+function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); toast('Markert. Husk å sende rapporten etterpå.'); }
+function buildReportInfo() {
+  const t = nextTarget();
+  return {
+    version: VERSION, level: levelLabel, when: new Date().toLocaleString('nb-NO'), device: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 90),
+    screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
+    fps: perf.n ? `${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms` : 'fps ukjent',
+    pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), state: player.state, target: t.final ? 'målet' : t.label, stats: { ...stats },
+    changed: changedSettings(SETTINGS.filter((d) => d.group !== 'admin' || true).map((d) => ({ id: d.id, label: d.label, def: d.def, get: d.get }))),
+    marks: evLog.filter((e) => e.type === 'MARKERT').slice(-10), events: evLog.slice(-30),
+  };
+}
+const reportText = () => formatReport(buildReportInfo());
+async function shareText(text, title) {
+  try { if (navigator.share) { await navigator.share({ title, text }); return 'delt'; } } catch (e) { if (e?.name === 'AbortError') return 'avbrutt'; }
+  try { await navigator.clipboard.writeText(text); return 'kopiert'; } catch { return 'vis'; }
+}
+
+function buildPanel() {
+  const p = $('panel'), open = store.get('tlm.panelopen', { spill: true });
+  const nChanged = changedSettings(SETTINGS.filter(visible)).length;
+  const row = (d) => {
+    if (d.type === 'bool') return `<label class="chk"><input type="checkbox" data-s="${d.id}"> ${d.label}</label>`;
+    if (d.type === 'range') return `<label>${d.label}<span data-v="${d.id}"></span></label><input type="range" data-s="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}">`;
+    return `<label>${d.label}</label><select data-s="${d.id}">${d.options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
+  };
+  const groupHtml = (g, title) => {
+    const items = SETTINGS.filter((d) => d.group === g && visible(d));
+    let extra = '';
+    if (g === 'spill') extra = `<label>Brett</label><select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}</option>`).join('')}</select><div class="row"><button id="pRestart">Start på nytt</button></div>`;
+    if (g === 'test') extra = `
+      <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
+      <div class="row"><button id="bMark">⚑ Marker her</button><button id="bReport">Del rapport</button></div>
+      <details><summary>Vis rapporten</summary><textarea id="reportBox" readonly rows="9"></textarea></details>
+      <div class="row"><button id="bExport">Kopier innstillinger</button><button id="bImport">Lim inn innstillinger</button></div>
+      <div class="row"><button id="bResetAll">Alt til standard</button></div>
+      <small>Rapporten har versjon, enhet, endrede innstillinger, markeringer og siste hendelser. Send den som melding.</small>`;
+    if (g === 'lyd') extra = `<small id="voiceNote"></small>`;
+    if (g === 'admin') extra = `<div class="row"><button id="pPlan">Plan</button><button id="pFly">Fly (ugyldig resultat)</button></div>
+      <details><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary><label>Etterklang (rom) <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">${mixerHtml()}
+        <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
+      ${helperCount ? `<label class="chk"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
+      <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. ${TOUCH ? 'Skyv stikken forsiktig for å gå forsiktig.' : 'Hold C for å gå forsiktig.'}<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke ${GREP}${key('Shift/E')} i riktig øyeblikk for å gripe kant eller tau.</small>
+      <div class="row"><button id="lockAdmin">Lås admin</button></div>`;
+    const n = changedSettings(items).length;
+    return `<details data-g="${g}" ${open[g] ? 'open' : ''}${g === 'admin' ? ' class="adm"' : ''}><summary>${title}${n ? ` <em>${n} endret</em>` : ''}</summary>${items.map(row).join('')}${extra}</details>`;
+  };
+  p.innerHTML = `<div class="phead"><h3 id="pTitle">Innstillinger</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
+    ${nChanged ? `<div class="pchg">${nChanged} innstilling${nChanged > 1 ? 'er' : ''} endret fra standard</div>` : ''}
+    ${GROUPS.filter(([g]) => g !== 'admin' || adminOn).map(([g, t]) => groupHtml(g, t)).join('')}
+    <div class="row"><button id="closePanel">Lukk</button></div>`;
+
+  // koble hver rad til registeret
+  const refresh = (d) => { const v = d.get(), el = p.querySelector(`[data-s="${d.id}"]`); if (!el) return; if (d.type === 'bool') el.checked = !!v; else el.value = v; const lab = p.querySelector(`[data-v="${d.id}"]`); if (lab) lab.textContent = fmtVal(d, v); };
+  for (const d of SETTINGS.filter(visible)) {
+    const el = p.querySelector(`[data-s="${d.id}"]`); if (!el) continue;
+    refresh(d);
+    el.oninput = el.onchange = (e) => {
+      const v = d.type === 'bool' ? e.target.checked : d.type === 'range' ? +e.target.value : e.target.value;
+      d.set(v); refresh(d); logEv('innstilling', `${d.id}=${v}`);
+      if (d.id === 'preset') buildPanel();
+    };
+  }
+  p.querySelectorAll('details[data-g]').forEach((el) => el.addEventListener('toggle', () => { open[el.dataset.g] = el.open; store.set('tlm.panelopen', open); }));
+  $('levelSel').value = levelId; $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
+  confirmed($('pRestart'), 'Start på nytt', 0, () => { restartAll(); $('panel').classList.add('hide'); toast('Startet på nytt'); });
+  $('closePanel').onclick = () => $('panel').classList.add('hide');
+  // admin skjules bak 7 trykk på tittelen (eller ?admin=1)
+  let taps = 0, tapT = 0;
+  $('pTitle').onclick = () => { const n = performance.now(); taps = n - tapT < 900 ? taps + 1 : 1; tapT = n; if (taps >= 7) { taps = 0; adminOn = !adminOn; store.set('tlm.admin', adminOn); toast(adminOn ? 'Admin på' : 'Admin av'); buildPanel(); } };
+  if ($('lockAdmin')) $('lockAdmin').onclick = () => { adminOn = false; store.set('tlm.admin', false); buildPanel(); toast('Admin låst'); };
+  // test
+  $('bMark').onclick = () => { markHere($('markText').value.trim()); $('markText').value = ''; $('reportBox').value = reportText(); };
+  $('bReport').onclick = async () => { const t = reportText(); $('reportBox').value = t; const r = await shareText(t, `tinylittleme v${VERSION} testrapport`); toast(r === 'vis' ? 'Kunne ikke dele: åpne «Vis rapporten» og kopier teksten' : r === 'kopiert' ? 'Rapporten er kopiert' : r === 'delt' ? 'Delt' : 'Avbrutt'); if (r === 'vis') $('reportBox').closest('details').open = true; };
+  $('reportBox').closest('details').addEventListener('toggle', () => { $('reportBox').value = reportText(); });
+  $('bExport').onclick = async () => { const t = exportSettings(SETTINGS.filter((d) => d.group !== 'admin' || adminOn).map((d) => ({ id: d.id, get: d.get })), { v: VERSION }); const r = await shareText(t, 'tinylittleme innstillinger'); toast(r === 'vis' ? 'Kunne ikke kopiere' : 'Innstillingene er kopiert'); };
+  $('bImport').onclick = async () => {
+    let text = ''; try { text = await navigator.clipboard.readText(); } catch { text = prompt('Lim inn innstillinger her:') || ''; }
+    if (!text) return;
+    const r = parseSettings(text, SETTINGS.filter((d) => d.group !== 'admin' || adminOn).map((d) => ({ id: d.id, type: d.type, min: d.min, max: d.max, options: d.options })));
+    if (r.error) return toast(r.error);
+    for (const [k, v] of Object.entries(r.values)) SETTINGS.find((d) => d.id === k)?.set(v);
+    logEv('importerte innstillinger', `${Object.keys(r.values).length} verdier`); buildPanel(); toast(`${Object.keys(r.values).length} innstillinger importert`);
+  };
+  confirmed($('bResetAll'), 'Alt til standard', 0, () => { resetAllSettings(); logEv('alt til standard'); buildPanel(); applyUiFlags(); toast('Alt er satt til standard'); });
+  // lyd
+  if ($('voiceNote')) $('voiceNote').textContent = hasTTS ? (ttsVoice ? `Stemme: ${ttsVoice.name} (${ttsVoice.lang}). Lyden kommer fra telefonen.` : 'Fant ingen norsk stemme på denne enheten: da vises bare snakkebobler.') : '';
+  // admin
+  if (adminOn) {
+    $('pPlan').onclick = () => { setMode('plan'); $('panel').classList.add('hide'); }; $('pFly').onclick = () => { setMode('fly'); $('panel').classList.add('hide'); };
+    wireMixer();
+    if ($('chkHelpers')) { $('chkHelpers').checked = helperMarks.visible; $('chkHelpers').onchange = (e) => { helperMarks.visible = e.target.checked; }; }
+  }
+}
 $('bSet').onclick = () => { buildPanel(); $('help').classList.add('hide'); $('panel').classList.toggle('hide'); };
+applyUiFlags();
 setTimeout(() => $('help').classList.add('hide'), 15000);   // H henter den tilbake
 
 // ---------- oppdatering ----------
 const V = new THREE.Vector3();
 function axes() {
   // dødsone på stikken: en tommel som bare hviler der skal ikke gi bevegelse (ga skjelvende armer og mikroskritt)
-  const mag = Math.hypot(touch.x, touch.y), DZ = 0.22, tk = mag < DZ ? 0 : Math.pow((mag - DZ) / (1 - DZ), 1.35) / mag;   // myk kurve: finere kontroll nær midten
+  const mag = Math.hypot(touch.x, touch.y), DZ = stickDead, tk = mag < DZ ? 0 : Math.pow((mag - DZ) / (1 - DZ), 1.35) / mag;   // myk kurve: finere kontroll nær midten
   const ix = (held('KeyD', 'ArrowRight') ? 1 : 0) - (held('KeyA', 'ArrowLeft') ? 1 : 0) + touch.x * tk;
   const iz = (held('KeyW', 'ArrowUp') ? 1 : 0) - (held('KeyS', 'ArrowDown') ? 1 : 0) + touch.y * tk;
   return [Math.max(-1, Math.min(1, ix)), Math.max(-1, Math.min(1, iz))];
@@ -1311,11 +1434,12 @@ function update(dt) {
   }
   audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
-  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); saveProgress(); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
-  if (player.y < LEVEL.deathY) { failAt(); resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
+  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); saveProgress(); logEv('sjekkpunkt'); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
+  if (player.y < LEVEL.deathY) { failAt('falt'); resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
+    logEv(ev.type, ev.id || ev.tool || ev.why || '');
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
-    else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant – kommer tilbake om litt`); lostQueue.push({ id: ev.id, t: 3 }); }
+    else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(lostReturnOn ? `${ev.id} forsvant – kommer tilbake om litt` : `${ev.id} forsvant`); if (lostReturnOn) lostQueue.push({ id: ev.id, t: 3 }); }
     else if (ev.type === 'exhausted') { setMood('hurt', 0.6); buzz(30); cue('puster tungt'); }
     else if (ev.type === 'use') {
       audio?.pickup(); buzz(20); setMood('happy', 0.9);
@@ -1327,20 +1451,20 @@ function update(dt) {
     else if (ev.type === 'toolhint') toast(ev.tool === 'needle' ? `Gå bort til en trådsnelle og trykk ${TA} for å træ nålen.` : ev.tool === 'spool' ? `Gå bort til en nål og trykk ${TA} for å træ den.` : ev.tool === 'zip' ? ({ 'zip-flat': 'For flatt: tråden må ende minst 8 cm lavere enn der den starter.', 'zip-far': 'For langt: tråden rekker høyst ca. 1,2 m.', 'zip-blocked': 'Noe er i veien for tråden.' }[ev.why] || `Stå på bakken og trykk ${TA} for å feste tråden.`) : ev.tool === 'gel' ? `Gå helt inntil en vegg og trykk ${TA} for å smøre. ${TA} igjen legger fra seg.` : `Gå helt ut til en kant og trykk ${TA} for å rulle ut. ${TA} igjen legger fra seg.`);
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
   }
-  if (player.hardLands > pre.hard) { setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
+  if (player.hardLands > pre.hard) { logEv('hard landing'); setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
   if (player.knockout) {
-    player.knockout = false; audio?.crush(); buzz(90); say('knockout'); failAt();
+    player.knockout = false; audio?.crush(); buzz(90); say('knockout'); failAt('hardt fall');
     resetPlayer(player, ...save.pos); stats.respawns++;
     toast(`Landet for hardt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
   }
   if (player.crushed) {
-    const id = player.crushed; player.crushed = null; audio?.crush(); cue('dunk: klemt');
+    const id = player.crushed; player.crushed = null; failAt('klemt'); audio?.crush(); cue('dunk: klemt');
     resetPlayer(player, ...save.pos); stats.respawns++;
     toast(`Klemt av ${id}!  −${SCORE.respawn} poeng`);
   }
   const hz = inHazard(LEVEL, player);
   if (hz) {
-    failAt();
+    failAt(hz.type || 'fare');
     audio?.splash(hz.type === 'flush' ? 'flush' : 'pit'); cue(hz.type === 'flush' ? 'skylling' : 'plask'); say(hz.type === 'flush' ? 'flush' : 'pit');
     resetPlayer(player, ...(hz.type === 'flush' ? LEVEL.start : save.pos)); stats.respawns++;
     toast(`${hz.message || 'Fare!'}  −${SCORE.respawn} poeng`);
@@ -1348,7 +1472,7 @@ function update(dt) {
 
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
-    won = true; audio?.win(); setMood('happy', 6); say('goal', true);
+    won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); setMood('happy', 6); say('goal', true);
     $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
     $('win').classList.remove('hide'); clearProgress();
@@ -1514,7 +1638,7 @@ function render(now, dt) {
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   renderer.render(scene, camera);
-  $('hud').textContent =
+  $('hud').textContent = !hudTech ? `v${VERSION} · ${levelLabel}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
     `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns} · poeng ${points()}`;
 }
@@ -1577,7 +1701,8 @@ addEventListener('resize', resize); resize();
 
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const raw = now - last, dt = Math.min(0.05, raw / 1000); last = now;
+  if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps`; perf.win = perf.winN = 0; } }
   if (!window.__paused) update(dt);
   stepCamAnim(dt); compassFrame(now);
   render(now, dt);

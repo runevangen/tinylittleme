@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.47** – Innstillingene er ryddet og samlet i én liste (SETTINGS) med grupper: Spill, Styring, Kamera, Hjelp og tekst, Lyd og stemme, Test og skjult Admin (7 trykk på tittelen eller ?admin=1). Mange nye valg (kompassmodus, stikke-dødsone, knappestørrelse, kameraavstand, kast med dra, autolagring m.fl.). For testing: «Marker her», «Del rapport» (versjon, enhet, FPS, endrede valg, hendelseslogg), kopier/lim inn innstillinger, «Alt til standard», FPS-visning. Se docs/INNSTILLINGER.md.
 - **0.46** – (1) Autolagring: fremgangen (sist trygge sted, sjekkpunkt, poeng, tid) huskes per brett og gjenopptas når du åpner siden igjen; «Start på nytt» i ⚙. (2) Ting som forsvinner (hull, vann) kommer gratis tilbake etter 3 s, og «Ting ↺» koster ingenting når alt står på plass. (3) Kast med dra og slipp: hold TA og dra ned (sling) for å sikte og bestemme kraft. (4) Etter 3 fall på samme sted: tips om neste hinder og kompasset vises i 15 s. (5) ⚙: glidebryter for gjennomsiktighet på utoningen.
 - **0.45** – Kameraet hjelper mer: løfter seg over vegger i stedet for å bli trukket tett inn, ser litt nedover i fall (du ser hvor du lander) og litt oppover når du klatrer eller henger. Av/på i ⚙ («Kameraet hjelper»).
 - **0.44** – Kamerahjelp: ting som står mellom kamera og figur tones ut (ca. 16 % synlighet) og kommer tilbake når det er fritt (av/på i ⚙), og en liten pil ved skjermkanten viser hvor figuren er når den er utenfor skjermen.
