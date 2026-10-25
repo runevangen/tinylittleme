@@ -350,7 +350,10 @@ function footPath(u, s, A, lift) {
   const v = (um - s) / (1 - s), e = smooth3(v);
   // tåen peker litt ned når foten løftes og litt opp rett før hælen treffer
   const pitch = 0.35 * smooth3(clampN(v / 0.2, 0, 1)) * (1 - smooth3(clampN((v - 0.2) / 0.4, 0, 1))) - 0.3 * smooth3(clampN((v - 0.7) / 0.3, 0, 1));
-  return { z: -A + 2 * A * e, y: lift * Math.sin(Math.PI * v), pitch };
+  // svingen starter og slutter med samme fart som foten har mot gulvet (Hermite) → ingen knekk ved tåavspark og hælstrøk
+  const T = -2 * A * (1 - s) / s, v2 = v * v, v3 = v2 * v;
+  const z = A * (-1 + 6 * v2 - 4 * v3) + T * (2 * v3 - 3 * v2 + v);
+  return { z, y: lift * Math.sin(Math.PI * v), pitch };
 }
 
 function footstep(side, sp) {
@@ -473,8 +476,10 @@ function poseHero(p, now, dt, mode) {
   // bein: bland mellom FK-posene og IK (fast fot) etter om vi går/står
   hero.ikW += ((gaitOn ? 1 : 0) - hero.ikW) * (1 - Math.exp(-(gaitOn ? (p.landT < 0.12 ? 25 : 10) : 12) * dt));
   const w = hero.ikW, Lmax = hero.legL.l1 + hero.legL.l2;
-  const zStance = Math.max(pathL.y < 0.002 ? Math.abs(pathL.z) : 0, pathR.y < 0.002 ? Math.abs(pathR.z) : 0);
-  const ikHip = ANKLE_H + 0.985 * Math.sqrt(Math.max(1e-4, Lmax * Lmax - zStance * zStance)) - 0.02 * kSp - DIP_MAX * df;
+  // hoftehøyde = laveste av de to føttenes rekkevidde (jevn funksjon; en av/på-test på «stående fot» ga et hopp i hoften ved hvert skritt)
+  const Lc = 0.985 * Lmax, reach = (f) => ANKLE_H + f.y + Math.sqrt(Math.max(1e-4, Lc * Lc - f.z * f.z));
+  const rA = reach(pathL), rB = reach(pathR), sh = Math.max(0, 0.05 - Math.abs(rA - rB)) / 0.05;   // myk min: ingen knekk der foten som begrenser hoften byttes
+  const ikHip = Math.min(rA, rB) - sh * sh * 0.0125 - 0.02 * kSp - DIP_MAX * df;
   hero.bob += (bob - hero.bob) * (1 - Math.exp(-dt / 0.06));
   const hipY = 0.46 + hero.bob + (ikHip - (0.46 + hero.bob)) * w;
   const ikL = solveLeg(hero.legL, hipY, pathL.z, ANKLE_H + pathL.y), ikR = solveLeg(hero.legR, hipY, pathR.z, ANKLE_H + pathR.y);
