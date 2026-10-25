@@ -38,6 +38,7 @@ Gjenstår / til sparring:
 - [x] «Prince»-følelse (treghet, vekt, hurk, oppstigning som tar tid, roligere kamera). Første versjon. Trenger spilletest.
 - [x] Gange med skritt og fast fot (IK): første versjon. Trenger spilletest.
 - [ ] Finpuss av Prince: kant-shimmy (gå sidelengs i hengende), rulle/ta imot ved landing, forsiktig gange som aldri faller av kanten, tau-sving som føles tyngre.
+- [~] Kamerahjelp (v0.44): utoning av ting i veien og pil når figuren er utenfor skjermen er på plass. Gjenstår: silhuett gjennom ting som ikke kan tones ut (løse ting, tak), kameraet løfter seg over vegger i stedet for å trekkes tett inn, bedre kameraføring i fall og klatring.
 - [~] Kamera: valgfri automatisk dreining etter bevegelsesretning (v0.25, tast X, trenger spilletest: holder du stikken til siden går figuren i en sving). Gjenstår: fastere kameravinkler per brett.
 - [x] Figur med bøyelig overkropp, hopp/fall/landing som bevegelse, levende hvile. Første versjon. Trenger spilletest.
 - [~] Figur (v0.34): ansikt med blunking/blikk/uttrykk og skjerf/sekk som fjærer er på plass. Gjenstår: fingre som tar tak, hår/jakke som beveger seg, tilbehør å samle (hatter m.m.), valg av utseende, stemme (neste).

@@ -255,6 +255,10 @@ function gripMark(b) {
   const m = { g, edges, glow }; gripMarks.push(m); return m;
 }
 
+// synlige objekter per kollisjonsboks: brukes til å tone ut ting som står mellom kamera og figur
+const fadeEntries = [];
+const regFade = (obj, boxes, extra = []) => { if (boxes.some((b) => b.type !== 'floor')) fadeEntries.push({ obj: [obj, ...extra], boxes: boxes.filter((b) => b.type !== 'floor'), t: 0, orig: new Map(), clone: new Map() }); };
+
 // ting som består av flere bokser (do, badekar …) tegnes som én ekte form; kollisjonen er fortsatt boksene
 const drawn = new Set(); let hasToilet = false;
 {
@@ -262,7 +266,7 @@ const drawn = new Set(); let hasToilet = false;
   for (const b of LEVEL.boxes) if (b.group) { if (!groups.has(b.group)) groups.set(b.group, []); groups.get(b.group).push(b); }
   for (const [, members] of groups) {
     const o = buildGroup(members); if (!o) continue;
-    scene.add(o); members.forEach((m) => drawn.add(m));
+    scene.add(o); members.forEach((m) => drawn.add(m)); regFade(o, members);
     if (members.some((m) => m.kind === 'toilet_tank')) hasToilet = true;
   }
 }
@@ -272,7 +276,7 @@ for (const b of LEVEL.boxes) {
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
   const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material }) : null;
   if (b.grip) gripMark(b);
-  if (shaped) { shaped.position.set(cx, cy, cz); scene.add(shaped); continue; }
+  if (shaped) { shaped.position.set(cx, cy, cz); scene.add(shaped); regFade(shaped, [b]); continue; }
   const mat = material(b);
   const tiled = b.material === 'tile';
   if (b.type === 'floor') {
@@ -289,12 +293,14 @@ for (const b of LEVEL.boxes) {
   m.position.set(cx, cy, cz);
   m.castShadow = b.type !== 'floor' && b.type !== 'wall' && b.material !== 'glass'; m.receiveShadow = true;
   scene.add(m);
+  const fadeExtra = [];
 
   if (b.type === 'book' && sy > 1 && Math.min(sx, sz) > 1.5) {
     // liggende bok: sider synlige på tre sider, rygg mot -x
     const pm = new THREE.Mesh(new THREE.BoxGeometry(sx - 0.3, Math.max(0.2, sy - 0.24), sz + 0.04), pageMat);
-    pm.position.set(cx + 0.17, cy, cz); pm.castShadow = false; pm.receiveShadow = true; scene.add(pm);
+    pm.position.set(cx + 0.17, cy, cz); pm.castShadow = false; pm.receiveShadow = true; scene.add(pm); fadeExtra.push(pm);
   }
+  regFade(m, [b], fadeExtra);
 }
 
 // sokkellist (kun med malte vegger), tak og vinduer
@@ -1135,6 +1141,7 @@ function buildPanel() {
     ${helperCount ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning${key('X')}</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCompass"> Målkompass og pil på gulvet</label>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkFade"> Tone ut ting som står i veien for kameraet</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkGripHi"> Fremhev grep (oransje, pulserende)</label>
     ${labels.length ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkLabels"> Brukslapper ved ting${key('L')}</label>` : ''}
     <div class="row" style="margin-top:10px"><button id="pSound">Lyd av/på</button><button id="pPlan">Plan</button><button id="pFly">Fly</button></div>
@@ -1159,6 +1166,7 @@ function buildPanel() {
   if ($('chkHelpers')) { $('chkHelpers').checked = helperMarks.visible; $('chkHelpers').onchange = (e) => { helperMarks.visible = e.target.checked; }; }
   if ($('chkLabels')) { $('chkLabels').checked = labelsOn; $('chkLabels').onchange = (e) => { labelsOn = e.target.checked; store.set('tlm.labels', labelsOn); }; }
   $('chkCompass').checked = compassOn; $('chkCompass').onchange = (e) => { compassOn = e.target.checked; store.set('tlm.compass', compassOn); };
+  $('chkFade').checked = fadeOn; $('chkFade').onchange = (e) => { fadeOn = e.target.checked; store.set('tlm.fade', fadeOn); };
   $('chkGripHi').checked = gripHi; $('chkGripHi').onchange = (e) => { gripHi = e.target.checked; store.set('tlm.griphi', gripHi); };
   $('chkAutoCam').checked = autoCam; $('chkAutoCam').onchange = (e) => { autoCam = e.target.checked; store.set('tlm.autocam', autoCam); };
   $('chkBubbles').checked = bubblesOn; $('chkBubbles').onchange = (e) => { bubblesOn = e.target.checked; store.set('tlm.bubbles', bubblesOn); };
@@ -1425,12 +1433,63 @@ function render(now, dt) {
     if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur);
     camera.lookAt(cam.target); }
   }
+  camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   renderer.render(scene, camera);
   $('hud').textContent =
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
     `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns} · poeng ${points()}`;
+}
+
+// ---------- kamerahjelp: tone ut det som står i veien, og vis hvor figuren er når den er utenfor skjermen ----------
+let fadeOn = store.get('tlm.fade', true);
+const FADE_OP = 0.16;
+function segHitsBox(a, d, b, pad) {                              // linjestykke a→a+d mot boks (utvidet med pad): slab-metoden
+  let t0 = 0, t1 = 1;
+  for (let i = 0; i < 3; i++) {
+    const lo = b.min[i] - pad, hi = b.max[i] + pad;
+    if (Math.abs(d[i]) < 1e-9) { if (a[i] < lo || a[i] > hi) return false; continue; }
+    let u = (lo - a[i]) / d[i], v = (hi - a[i]) / d[i]; if (u > v) [u, v] = [v, u];
+    t0 = Math.max(t0, u); t1 = Math.min(t1, v); if (t0 > t1) return false;
+  }
+  return true;
+}
+function setFadeMats(e, on) {
+  for (const root of e.obj) root.traverse((o) => {
+    if (!o.isMesh) return;
+    if (on) {
+      if (!e.orig.has(o)) e.orig.set(o, o.material);
+      if (!e.clone.has(o)) { const cl = (x) => { const c = x.clone(); c.transparent = true; return c; }; e.clone.set(o, Array.isArray(o.material) ? o.material.map(cl) : cl(o.material)); }
+      o.material = e.clone.get(o);
+    } else if (e.orig.has(o)) o.material = e.orig.get(o);
+  });
+}
+function updateFades(dt) {
+  const on = fadeOn && mode !== 'plan' && cam.cur > 0.6;
+  const a = [camera.position.x, camera.position.y, camera.position.z], d = [cam.target.x - a[0], cam.target.y - a[1], cam.target.z - a[2]];
+  for (const e of fadeEntries) {
+    const hit = on && e.boxes.some((b) => !b.carried && segHitsBox(a, d, b, 0.12));
+    const was = e.t;
+    e.t = Math.max(0, Math.min(1, e.t + (hit ? 1 : -1) * dt * 6));
+    if (e.t > 0 && was === 0) setFadeMats(e, true);
+    if (e.t > 0) {
+      const op = 1 - (1 - FADE_OP) * e.t;
+      for (const o of e.clone.keys()) for (const mt of [].concat(e.clone.get(o))) { mt.opacity = op; mt.depthWrite = e.t < 0.5; }
+    }
+    if (e.t === 0 && was > 0) setFadeMats(e, false);
+  }
+}
+const offEl = $('offscreen');
+function updateOffscreen() {
+  hero.head.getWorldPosition(_v3); _v3.project(camera);
+  const behind = _v3.z > 1, x = behind ? -_v3.x : _v3.x, y = behind ? -_v3.y : _v3.y;
+  const out = behind || Math.abs(_v3.x) > 1.02 || _v3.y > 1.02 || _v3.y < -1.02;
+  offEl.style.display = out && mode === 'play' ? 'flex' : 'none';
+  if (!out || mode !== 'play') return;
+  const k = 1 / Math.max(Math.abs(x) / 0.86, Math.abs(y) / 0.72, 1e-3);
+  offEl.style.left = `${(x * k * 0.5 + 0.5) * innerWidth}px`; offEl.style.top = `${(-y * k * 0.5 + 0.5) * innerHeight}px`;
+  offEl.firstElementChild.style.transform = `rotate(${Math.atan2(x, y)}rad)`;
 }
 
 function resize() {
@@ -1449,4 +1508,5 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
+window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__game = { camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
