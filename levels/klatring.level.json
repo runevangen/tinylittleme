@@ -392,6 +392,116 @@
   }
  ],
  "decor": [],
+ "hints": [
+  {
+   "id": "hylle",
+   "text": "Hylle, 28 cm\nFor høy for vanlig hopp. Bruk ørepinnen.",
+   "pos": [
+    -24,
+    6.5,
+    6
+   ]
+  },
+  {
+   "id": "orepinne",
+   "text": "Ørepinne (stav)\nTa den (TA), løp og trykk HOPP: stavhopp. Jo mer fart, jo høyere.",
+   "pos": [
+    -23.25,
+    1.04,
+    22.47
+   ]
+  },
+  {
+   "id": "tarn",
+   "text": "Tårn, 90 cm\nFall herfra på gulvet er for hardt. Land på noe mykt.",
+   "pos": [
+    8,
+    18.9,
+    -4
+   ]
+  },
+  {
+   "id": "trinn_1",
+   "text": "Trapp\nDen vanlige veien opp til tårnet.",
+   "pos": [
+    37.6,
+    3.9,
+    -4
+   ]
+  },
+  {
+   "id": "dopapirhaug",
+   "text": "Dopapirhaug\nMyk landing: hopp ned på den fra tårnet.",
+   "pos": [
+    -6.5,
+    2.9,
+    -4
+   ]
+  },
+  {
+   "id": "svamp",
+   "text": "Svamp\nMyk. Bær den (TA) og slipp den der du skal lande.",
+   "pos": [
+    27.2,
+    1.7,
+    11.2
+   ]
+  },
+  {
+   "id": "handkle_nede",
+   "text": "Håndkle\nGå inntil, trykk GREP og styr opp. Stamina (grep ▮▮▮) tømmes.",
+   "pos": [
+    -0.4,
+    9.9,
+    -4
+   ]
+  },
+  {
+   "id": "sims",
+   "text": "Hvilehylle\nStå her så fylles stamina igjen.",
+   "pos": [
+    -1,
+    9.9,
+    4
+   ]
+  },
+  {
+   "id": "handkle_oppe",
+   "text": "Øvre håndkle\nGå inn under, hopp mot det og trykk GREP i hoppet.",
+   "pos": [
+    -0.4,
+    18.9,
+    4
+   ]
+  },
+  {
+   "id": "skap_hoyt",
+   "text": "Høyt skap\nSmør gel på veggen fra hylla, og klatre opp.",
+   "pos": [
+    -25,
+    12.5,
+    -3
+   ]
+  },
+  {
+   "id": "haargele",
+   "text": "Hårgelé\nKast den opp på hylla (hold TA). Ta den, smør veggen (TA), legg den fra deg, klatre (GREP). Våt i 20 s: sklir.",
+   "pos": [
+    -27.6,
+    2.9,
+    17.4
+   ]
+  },
+  {
+   "id": "dopapirrull",
+   "text": "Dopapirrull\nBær den til en kant og trykk TA: et bånd ruller ned. Klatre i det, men det revner etter ca. 7 s.",
+   "pos": [
+    7,
+    20.9,
+    -7
+   ]
+  }
+ ],
  "hazards": [],
  "holds": [],
  "windows": [

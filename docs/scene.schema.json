@@ -4,43 +4,336 @@
   "title": "Scene tolket fra bilder",
   "description": "Strukturert utdata fra bildetolkningen. Kontrolleres videre av tools/validate_scene.mjs (overlapp, kjente kinds, gruppekrav).",
   "type": "object",
-  "required": ["name", "units", "room", "start", "goal", "objects"],
+  "required": [
+    "name",
+    "units",
+    "room",
+    "start",
+    "goal",
+    "objects"
+  ],
   "additionalProperties": true,
   "properties": {
-    "name": { "type": "string" },
-    "units": { "const": "cm" },
-    "frame": { "type": "string" },
-    "source": { "type": "object", "properties": { "photos": { "type": "integer" }, "views": { "type": "array", "items": { "type": "string" } }, "scale_anchors": { "type": "array", "items": { "type": "string" } }, "uncertainty": { "type": "string" } } },
-    "room": {
+    "name": {
+      "type": "string"
+    },
+    "units": {
+      "const": "cm"
+    },
+    "frame": {
+      "type": "string"
+    },
+    "source": {
       "type": "object",
-      "required": ["width", "depth", "height", "floor", "walls", "ceiling"],
       "properties": {
-        "width": { "type": "number", "exclusiveMinimum": 0 }, "depth": { "type": "number", "exclusiveMinimum": 0 }, "height": { "type": "number", "exclusiveMinimum": 0 },
-        "floor": { "$ref": "#/$defs/surface" }, "walls": { "$ref": "#/$defs/surface" }, "ceiling": { "$ref": "#/$defs/surface" }
+        "photos": {
+          "type": "integer"
+        },
+        "views": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scale_anchors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "uncertainty": {
+          "type": "string"
+        }
       }
     },
-    "start": { "type": "object", "required": ["x", "z"], "properties": { "x": { "type": "number" }, "z": { "type": "number" } } },
-    "goal": { "type": "object", "required": ["x", "y", "z"], "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" }, "on": { "type": "string" } } },
-    "windows": { "type": "array", "items": { "type": "object", "required": ["wall", "z", "y", "w", "h"], "properties": { "wall": { "enum": ["N", "S", "E", "W"] }, "z": { "type": "number" }, "y": { "type": "number" }, "w": { "type": "number" }, "h": { "type": "number" } } } },
-    "hazards": { "type": "array", "items": { "type": "object", "required": ["id", "type", "box"], "properties": { "id": { "type": "string" }, "type": { "enum": ["pit", "flush"] }, "box": { "$ref": "#/$defs/box" }, "message": { "type": "string" } } } },
-    "look": { "type": "object", "properties": { "exposure": { "type": "number" }, "sun": { "type": "number" } } },
-    "audio": { "type": "object", "properties": { "reverb": { "type": "number", "minimum": 0, "maximum": 0.8 }, "ambience": { "type": "array", "items": { "enum": ["drip", "fan"] } } } },
-    "objects": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/object" } }
+    "room": {
+      "type": "object",
+      "required": [
+        "width",
+        "depth",
+        "height",
+        "floor",
+        "walls",
+        "ceiling"
+      ],
+      "properties": {
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "depth": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "floor": {
+          "$ref": "#/$defs/surface"
+        },
+        "walls": {
+          "$ref": "#/$defs/surface"
+        },
+        "ceiling": {
+          "$ref": "#/$defs/surface"
+        }
+      }
+    },
+    "start": {
+      "type": "object",
+      "required": [
+        "x",
+        "z"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        }
+      }
+    },
+    "goal": {
+      "type": "object",
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        },
+        "on": {
+          "type": "string"
+        }
+      }
+    },
+    "windows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "wall",
+          "z",
+          "y",
+          "w",
+          "h"
+        ],
+        "properties": {
+          "wall": {
+            "enum": [
+              "N",
+              "S",
+              "E",
+              "W"
+            ]
+          },
+          "z": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "w": {
+            "type": "number"
+          },
+          "h": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "hazards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "box"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "pit",
+              "flush"
+            ]
+          },
+          "box": {
+            "$ref": "#/$defs/box"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "look": {
+      "type": "object",
+      "properties": {
+        "exposure": {
+          "type": "number"
+        },
+        "sun": {
+          "type": "number"
+        }
+      }
+    },
+    "audio": {
+      "type": "object",
+      "properties": {
+        "reverb": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.8
+        },
+        "ambience": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "drip",
+              "fan"
+            ]
+          }
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/object"
+      }
+    }
   },
   "$defs": {
-    "surface": { "type": "object", "required": ["material"], "properties": { "material": { "type": "string" }, "color": { "$ref": "#/$defs/color" }, "slick": { "type": "boolean" }, "tile_cm": { "type": "number" } } },
-    "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
-    "box": { "type": "array", "minItems": 6, "maxItems": 6, "items": { "type": "number" }, "description": "[x0, x1, y0, y1, z0, z1] i cm, min før maks" },
+    "surface": {
+      "type": "object",
+      "required": [
+        "material"
+      ],
+      "properties": {
+        "material": {
+          "type": "string"
+        },
+        "color": {
+          "$ref": "#/$defs/color"
+        },
+        "slick": {
+          "type": "boolean"
+        },
+        "tile_cm": {
+          "type": "number"
+        }
+      }
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "box": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "number"
+      },
+      "description": "[x0, x1, y0, y1, z0, z1] i cm, min før maks"
+    },
     "object": {
       "type": "object",
-      "required": ["id", "kind", "material", "color", "box"],
+      "required": [
+        "id",
+        "kind",
+        "material",
+        "color",
+        "box"
+      ],
       "properties": {
-        "id": { "type": "string" }, "kind": { "type": "string", "description": "se docs/VISJON_PROMPT.md for kjente kinds" },
-        "material": { "type": "string" }, "color": { "$ref": "#/$defs/color" }, "box": { "$ref": "#/$defs/box" },
-        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }, "photos": { "type": "array", "items": { "type": "integer" } }, "note": { "type": "string" },
-        "cp": { "type": "boolean" }, "soft": { "type": "boolean" }, "grip": { "type": "boolean" }, "hold": { "type": "boolean" }, "decor": { "type": "boolean" },
-        "group": { "type": "string" }, "movable": { "enum": ["light", "medium", "heavy"] }, "breakable": { "type": "boolean" },
-        "tool": { "enum": ["gel", "roll"] }, "pole": { "type": "number", "exclusiveMinimum": 0 }
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "description": "se docs/VISJON_PROMPT.md for kjente kinds"
+        },
+        "material": {
+          "type": "string"
+        },
+        "color": {
+          "$ref": "#/$defs/color"
+        },
+        "box": {
+          "$ref": "#/$defs/box"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "photos": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "note": {
+          "type": "string"
+        },
+        "cp": {
+          "type": "boolean"
+        },
+        "soft": {
+          "type": "boolean"
+        },
+        "grip": {
+          "type": "boolean"
+        },
+        "hold": {
+          "type": "boolean"
+        },
+        "decor": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "string"
+        },
+        "movable": {
+          "enum": [
+            "light",
+            "medium",
+            "heavy"
+          ]
+        },
+        "breakable": {
+          "type": "boolean"
+        },
+        "tool": {
+          "enum": [
+            "gel",
+            "roll"
+          ]
+        },
+        "pole": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "help": {
+          "type": "string",
+          "description": "kort bruksanvisning som vises på en lapp ved tingen (prøverom)"
+        }
       }
     }
   }

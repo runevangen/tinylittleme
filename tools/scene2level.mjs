@@ -36,11 +36,12 @@ boxes.push(mk('wall', [x1, 0, z0], [x1 + 1, H, z1], { id: 'vegg_o', ...wallExtra
 boxes.push(mk('wall', [x0, 0, z0 - 1], [x1, H, z0], { id: 'vegg_n', ...wallExtra }));
 boxes.push(mk('wall', [x0, 0, z1], [x1, H, z1 + 1], { id: 'vegg_s', ...wallExtra }));
 
-const decor = [], holds = [], movables = [];
+const decor = [], holds = [], movables = [], hints = [];
 for (const o of scene.objects) {
   const [a, b, c, d, e, f] = o.box;
   const lo = [ux(a), uy(c), uz(e)], hi = [ux(b), uy(d), uz(f)];
   if (o.hold) holds.push({ id: o.id, kind: o.kind, min: lo, max: hi });
+  if (o.help) hints.push({ id: o.id, text: o.help, pos: [round((lo[0] + hi[0]) / 2), round(hi[1] + 0.9), round((lo[2] + hi[2]) / 2)] });   // liten lapp over tingen
   if (o.movable) {                                         // løse ting: egne legemer i spillet, ikke faste flater
     movables.push({ id: o.id, kind: o.kind, material: o.material, color: hex(o.color), min: lo, max: hi, weight: o.movable, breakable: !!o.breakable, ...(o.soft ? { soft: true } : {}), ...(o.pole ? { pole: o.pole } : {}), ...(o.tool ? { tool: o.tool } : {}) });
     continue;
@@ -241,7 +242,7 @@ const solvable = finalSeen.has(goalIdx());
 // ---- 4. skriv ---------------------------------------------------------------
 const level = {
   name: scene.name,
-  boxes, movables, decor, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
+  boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ropes: [],
   start, goal,
   deathY: -15,

@@ -61,7 +61,8 @@
       ],
       "cp": true,
       "confidence": 1,
-      "note": "28 cm: for høy for vanlig hopp (4,2). Stavhopp med ørepinnen."
+      "note": "28 cm: for høy for vanlig hopp (4,2). Stavhopp med ørepinnen.",
+      "help": "Hylle, 28 cm\nFor høy for vanlig hopp. Bruk ørepinnen."
     },
     {
       "id": "orepinne",
@@ -79,7 +80,8 @@
       "movable": "light",
       "pole": 1.5,
       "confidence": 1,
-      "note": "Bær den (F) og løp. Hopp = stavhopp."
+      "note": "Bær den (F) og løp. Hopp = stavhopp.",
+      "help": "Ørepinne (stav)\nTa den (TA), løp og trykk HOPP: stavhopp. Jo mer fart, jo høyere."
     },
     {
       "id": "tarn",
@@ -96,7 +98,8 @@
       ],
       "cp": true,
       "confidence": 1,
-      "note": "90 cm: fall herfra uten pute er for hardt."
+      "note": "90 cm: fall herfra uten pute er for hardt.",
+      "help": "Tårn, 90 cm\nFall herfra på gulvet er for hardt. Land på noe mykt."
     },
     {
       "id": "trinn_1",
@@ -111,7 +114,8 @@
         100,
         160
       ],
-      "confidence": 1
+      "confidence": 1,
+      "help": "Trapp\nDen vanlige veien opp til tårnet."
     },
     {
       "id": "trinn_2",
@@ -188,7 +192,8 @@
       ],
       "soft": true,
       "confidence": 1,
-      "note": "Myk landing vest for tårnet."
+      "note": "Myk landing vest for tårnet.",
+      "help": "Dopapirhaug\nMyk landing: hopp ned på den fra tårnet."
     },
     {
       "id": "svamp",
@@ -206,7 +211,8 @@
       "movable": "light",
       "soft": true,
       "confidence": 1,
-      "note": "Bær den opp, slipp den ned en annen vei, og hopp på den."
+      "note": "Bær den opp, slipp den ned en annen vei, og hopp på den.",
+      "help": "Svamp\nMyk. Bær den (TA) og slipp den der du skal lande."
     },
     {
       "id": "handkle_nede",
@@ -223,7 +229,8 @@
       ],
       "grip": true,
       "confidence": 1,
-      "note": "Klatrbart (grep). Fest deg med REKK UT, styr opp. Stamina tømmes."
+      "note": "Klatrbart (grep). Fest deg med REKK UT, styr opp. Stamina tømmes.",
+      "help": "Håndkle\nGå inntil, trykk GREP og styr opp. Stamina (grep ▮▮▮) tømmes."
     },
     {
       "id": "sims",
@@ -240,7 +247,8 @@
       ],
       "cp": true,
       "confidence": 1,
-      "note": "Hvile ved siden av håndkleet: stamina fylles på mens du står her. Gå dit langs kanten av nedre håndkle."
+      "note": "Hvile ved siden av håndkleet: stamina fylles på mens du står her. Gå dit langs kanten av nedre håndkle.",
+      "help": "Hvilehylle\nStå her så fylles stamina igjen."
     },
     {
       "id": "handkle_oppe",
@@ -257,7 +265,8 @@
       ],
       "grip": true,
       "confidence": 1,
-      "note": "Øvre del av klatringen opp til toppen av tårnet. Start fra hvilehylla (gå inn under det)."
+      "note": "Øvre del av klatringen opp til toppen av tårnet. Start fra hvilehylla (gå inn under det).",
+      "help": "Øvre håndkle\nGå inn under, hopp mot det og trykk GREP i hoppet."
     },
     {
       "id": "skap_hoyt",
@@ -274,7 +283,8 @@
       ],
       "cp": true,
       "confidence": 1,
-      "note": "Høyt skap (58 cm) bak hylla. Smør gel på veggen fra hylla og klatre opp."
+      "note": "Høyt skap (58 cm) bak hylla. Smør gel på veggen fra hylla og klatre opp.",
+      "help": "Høyt skap\nSmør gel på veggen fra hylla, og klatre opp."
     },
     {
       "id": "haargele",
@@ -292,7 +302,8 @@
       "movable": "light",
       "tool": "gel",
       "confidence": 1,
-      "note": "Kast den opp på hylla (hold F og slipp), vault opp med ørepinnen, ta den og smør (F) mot skapveggen. Gelen er våt i 20 s (sklir og koster stamina), så fast."
+      "note": "Kast den opp på hylla (hold F og slipp), vault opp med ørepinnen, ta den og smør (F) mot skapveggen. Gelen er våt i 20 s (sklir og koster stamina), så fast.",
+      "help": "Hårgelé\nKast den opp på hylla (hold TA). Ta den, smør veggen (TA), legg den fra deg, klatre (GREP). Våt i 20 s: sklir."
     },
     {
       "id": "dopapirrull",
@@ -310,7 +321,8 @@
       "movable": "light",
       "tool": "roll",
       "confidence": 1,
-      "note": "Står øverst på tårnet. Bær den til kanten og trykk F: et bånd ruller ned. Det tåler et tak i ca. 7 s."
+      "note": "Står øverst på tårnet. Bær den til kanten og trykk F: et bånd ruller ned. Det tåler et tak i ca. 7 s.",
+      "help": "Dopapirrull\nBær den til en kant og trykk TA: et bånd ruller ned. Klatre i det, men det revner etter ca. 7 s."
     }
   ],
   "look": {

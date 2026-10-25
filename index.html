@@ -16,6 +16,8 @@
   #hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#fffe;color:var(--ink);padding:6px 12px;border-radius:999px;font:600 13px system-ui;pointer-events:none}
   #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
   #toast.show{opacity:1}
+  #infocard{position:fixed;left:50%;top:max(92px,calc(env(safe-area-inset-top) + 82px));transform:translateX(-50%);width:min(92vw,420px);box-sizing:border-box;background:#121a2cdd;border:2px solid #ffa940;border-radius:14px;padding:9px 13px;color:#eef2fa;font:500 14px/1.35 system-ui;pointer-events:none;opacity:0;transition:opacity .25s;z-index:3}
+  #infocard.show{opacity:1}#infocard b{display:block;color:#ffd9a0;font-size:15px;margin-bottom:2px}#infocard span{display:block}
   #cues{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none}
   .cue{background:#000a;color:#fff;font:600 13px system-ui;padding:5px 11px;border-radius:999px;animation:cuein .15s ease-out;transition:opacity .4s}
   .cue.out{opacity:0}@keyframes cuein{from{transform:translateX(14px);opacity:0}}
@@ -44,11 +46,11 @@
   #knob{position:absolute;left:35px;top:35px;width:60px;height:60px;border-radius:50%;background:#1d2433aa}
   .tbtn{position:fixed;border-radius:50%;border:0;color:#fff;font:700 13px system-ui;display:none;align-items:center;justify-content:center}
   #btnJump{right:max(24px,env(safe-area-inset-right));bottom:96px;width:88px;height:88px;background:#c1121fcc}
-  #btnGrab{right:130px;bottom:74px;width:76px;height:76px;background:#1d2433cc}
+  #btnGrab{right:max(30px,env(safe-area-inset-right));bottom:10px;width:76px;height:76px;background:#1d2433cc}
   #btnCarry{right:max(30px,env(safe-area-inset-right));bottom:196px;width:66px;height:66px;background:#2a7f62cc}
   @media (max-width:560px){#bar{gap:4px}#bar button{padding:7px 9px;font-size:11.5px}}
   @media (pointer:coarse){#stick{display:block;bottom:120px}.tbtn{display:flex}#help{display:none}
-    #btnJump{bottom:140px}#btnGrab{bottom:118px}#btnCarry{bottom:240px}#hint{bottom:112px}}
+    #btnJump{bottom:140px}#btnGrab{bottom:52px}#btnCarry{bottom:240px}#hint{bottom:112px}}
 </style>
 <script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
 </head>
@@ -60,10 +62,10 @@
 <div id="hint" class="hide"></div>
 <div id="help"><b>tinylittleme – testbrett</b>
   <kbd>WASD</kbd> gå (fart bygges opp) · <kbd>C</kbd> gå forsiktig · <kbd>Mellomrom</kbd> hopp<br>
-  <kbd>Shift</kbd>/<kbd>E</kbd> <b style="display:inline">rekk ut</b> – grip kant eller tau (tidspunkt teller!)<br>
+  <kbd>Shift</kbd>/<kbd>E</kbd> <b style="display:inline">grep</b> – grip kant, tau eller klatre-flater (tidspunkt teller!)<br>
   Hold <kbd>Shift</kbd> i tauet for å henge. Hopp slipper.<br>
   Mot vegg i fall + hopp = veggsprang<br>
-  <b style="display:inline">Ting:</b> gå mot dem for å dytte (tunge går tregt). <kbd>F</kbd> ta lette ting; trykk = slipp/sett på, <b style="display:inline">hold og slipp = kast</b>. Hard landing (Prince) bedøver deg; svamp, matte og håndkle tar av for fallet. Faller noe på deg, eller knuses, koster det poeng. <kbd>N</kbd> nullstill ting · <kbd>M</kbd> lyd av/på · <kbd>V</kbd> lydtekst · <kbd>X</kbd> kamera følger retning<br>
+  <b style="display:inline">Ting:</b> gå mot dem for å dytte (tunge går tregt). <kbd>F</kbd> ta lette ting; trykk = slipp/sett på, <b style="display:inline">hold og slipp = kast</b>. Hard landing (Prince) bedøver deg; svamp, matte og håndkle tar av for fallet. Faller noe på deg, eller knuses, koster det poeng. <kbd>N</kbd> nullstill ting · <kbd>M</kbd> lyd av/på · <kbd>V</kbd> lydtekst · <kbd>X</kbd> kamera følger retning · <kbd>L</kbd> brukslapper<br>
   <kbd>K</kbd> lagre punkt · <kbd>R</kbd> tilbake til punkt · <kbd>T</kbd> start på nytt<br>
   <kbd>P</kbd> plan-modus (se hele brettet, WASD flytter, dra for å snurre)<br>
   <kbd>G</kbd> flymodus (brettbygging): Mellomrom opp, <kbd>C</kbd> ned, Shift fort<br>
@@ -71,7 +73,7 @@
 <div id="panel" class="hide"></div>
 <div id="win" class="hide"><h1>Du kom opp!</h1><div id="winStats"></div><button id="again">Spill igjen</button></div>
 <div id="stick"><div id="knob"></div></div>
-<button class="tbtn" id="btnGrab">REKK UT</button>
+<button class="tbtn" id="btnGrab">GREP</button>
 <button class="tbtn" id="btnCarry">TA</button>
 <button class="tbtn" id="btnJump">HOPP</button>
 <div id="bar">
