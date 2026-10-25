@@ -47,8 +47,8 @@ Gjenstår / til sparring:
 
 ## Foto → brett
 - [ ] Bedre fangstprotokoll (hjørnebilder, gulvhøyde, A4-referanse). Se `docs/FOTO_TIL_BRETT.md`.
-- [ ] Gjøre tolkningen til et strukturert API-kall (i dag gjort for hånd i samtale).
-- [ ] Brukergjennomgang av hjelpeobjekter og feilplasserte ting før spilling.
+- [~] Strukturert tolkning: skjema, validator, tingliste og instruks er på plass (v0.24, `docs/VISJON_PROMPT.md`). Gjenstår selve API-kallet (bilder inn, scene ut) og at det kjøres med en nøkkel; i dag gjøres steget fortsatt for hånd i en samtale.
+- [~] Brukergjennomgang: hjelpeobjekter kan merkes og listes i ⚙ (v0.24). Gjenstår: en visning der man kan flytte/fjerne feilplasserte ting før spilling.
 - [ ] Personvern: behandle på enhet eller slett umiddelbart etter tolkning.
 
 ## Teknisk

@@ -790,6 +790,15 @@ function wireMixer() {
   $('s_rev').oninput = (e) => { const v = +e.target.value; store.set('tlm.reverb', v); audio?.setReverb(v); $('v_rev').textContent = v.toFixed(2); };
 }
 
+// hjelpeobjekter (trappetrinn o.l. som brettlageren la inn for at ruten skal gå) kan merkes med gule kanter, så et menneske kan se over dem
+const helperBoxes = LEVEL.boxes.filter((b) => b.helper), helperCount = helperBoxes.length;
+const helperMarks = new THREE.Group(); helperMarks.visible = false; scene.add(helperMarks);
+for (const b of helperBoxes) {
+  const g = new THREE.BoxGeometry(b.max[0] - b.min[0] + 0.06, b.max[1] - b.min[1] + 0.06, b.max[2] - b.min[2] + 0.06);
+  const l = new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({ color: 0xffd23f }));
+  l.position.set((b.min[0] + b.max[0]) / 2, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2); helperMarks.add(l);
+}
+
 function buildPanel() {
   const p = $('panel');
   p.innerHTML = `<h3>Brett</h3>
@@ -800,6 +809,7 @@ function buildPanel() {
     <details open><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary>${mixerHtml()}
       <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCues"> Lydtekst: vis tekst for lyder (V)</label>
+    ${helperCount ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
@@ -812,6 +822,7 @@ function buildPanel() {
   $('levelSel').value = levelId;
   $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
   wireMixer();
+  if ($('chkHelpers')) { $('chkHelpers').checked = helperMarks.visible; $('chkHelpers').onchange = (e) => { helperMarks.visible = e.target.checked; }; }
   $('chkCues').checked = cuesOn; $('chkCues').onchange = (e) => { cuesOn = e.target.checked; store.set('tlm.cues', cuesOn); };
   $('presetSel').value = presetName;
   $('autoGrab').checked = P.autoGrab;

@@ -47,3 +47,15 @@ Mer pålitelig brett krever mer pålitelig input. Forslag til fangst for 3–4 b
 
 ## Personvern
 Bilder av hjemmet er sensitive. Prototypen bruker dem bare i samtalen; `.gitignore` hindrer at bilder legges i repoet. I et produkt: behandle på enheten eller slett umiddelbart etter tolkning, og aldri lagre dem.
+
+## Strukturert tolkning (v0.24)
+Tolkningssteget har nå en kontrakt, så det kan gjøres som ett API-kall (bilder inn, scene ut) og sjekkes automatisk:
+
+```
+bilder ──(visjonsmodell + docs/VISJON_PROMPT.md, utdata etter docs/scene.schema.json)──▶ scene.json
+scene.json ──(tools/validate_scene.mjs)──▶ feil/advarsler ──▶ (menneske ser over) ──▶ tools/scene2level.mjs ──▶ level.json ──▶ boten
+```
+- `docs/scene.schema.json`: JSON-skjema for utdata (bruk som «structured output»).
+- `kinds.js`: tinglisten spillet kjenner og hvordan hver tegnes. `node tools/make_prompt.mjs` lager instruksen (`--check` i testene sørger for at den ikke blir utdatert).
+- `npm run validate -- scenes/bad.scene.json`: feil (kan ikke bygges) og advarsler (sannsynlig tolkningsfeil: overlapp, utenfor rommet, lav sikkerhet, lette ting for store til å bæres, ukjent kind).
+- Selve API-kallet er ikke bygd (krever nøkkel). Det er det neste steget; resten er klart.
