@@ -3,6 +3,7 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo } from './props.js';
+import { createVoice } from './voice.js';
 import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -40,7 +41,9 @@ const SUN = LEVEL.sun || [28, 60, -24];
 // Web Audio kan først startes etter en brukerhandling (nettleserregel), så den opprettes ved første tastetrykk/trykk.
 let audio = null;
 let soundMuted = store.get('tlm.muted', false);
+function primeVoice() { try { if (hasTTS) speechSynthesis.speak(Object.assign(new SpeechSynthesisUtterance(' '), { volume: 0 })); } catch { /* ok */ } }
 function unlockAudio() {
+  primeVoice();
   if (!audio) {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -480,7 +483,7 @@ function buildHero() {
   const L = { armL: arm(-1), armR: arm(1), legL: leg(-1), legR: leg(1) };
   const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0 };
   return { root, body, chest, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null, ikW: 0, hipY: 0.46,
-    face, tailA, tailB, packG, helmet, sec: { a: 0, av: 0, b: 0, bv: 0, pk: 0, pkv: 0 }, mood: { name: '', t: 0 }, look: { x: 0, y: 0, tx: 0, ty: 0, t: 0 }, blink: { t: 2, v: 0 }, idleT: 0 };
+    face, tailA, tailB, packG, helmet, sec: { a: 0, av: 0, b: 0, bv: 0, pk: 0, pkv: 0 }, mood: { name: '', t: 0 }, look: { x: 0, y: 0, tx: 0, ty: 0, t: 0 }, blink: { t: 2, v: 0 }, idleT: 0, talkT: 0 };
 }
 const hero = buildHero();
 hero.root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
@@ -684,6 +687,32 @@ function lerpN(a, b, t) { return a + (b - a) * t; }
 
 // ---------- sjarm: ansikt (blunking, blikk, uttrykk) og ting som henger etter (skjerf, sekk) ----------
 const setMood = (name, secs) => { hero.mood.name = name; hero.mood.t = secs; };
+
+// stemmen: korte replikker (voice.js) sies med nettleserens talesyntese (høy tone, norsk stemme om den finnes) og vises i en snakkeboble over hodet
+const hasTTS = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
+let voiceOn = store.get('tlm.voice', true), bubblesOn = store.get('tlm.bubbles', true), voiceVol = store.get('tlm.voicevol', 0.9), ttsVoice = null;
+function pickVoice() { const vs = hasTTS ? speechSynthesis.getVoices() : []; ttsVoice = vs.find((v) => /^nb/i.test(v.lang)) || vs.find((v) => /^no/i.test(v.lang)) || vs.find((v) => /^nn/i.test(v.lang)) || null; }
+if (hasTTS) { pickVoice(); speechSynthesis.addEventListener?.('voiceschanged', pickVoice); }
+function speakTTS(text) {
+  if (!hasTTS || !voiceOn || soundMuted || !ttsVoice) return;                       // uten norsk stemme: bare snakkebobler
+  try {
+    const u = new SpeechSynthesisUtterance(text); u.voice = ttsVoice; u.lang = ttsVoice.lang; u.pitch = 1.9; u.rate = 1.12; u.volume = voiceVol;
+    if (speechSynthesis.speaking) speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  } catch { /* ikke støttet */ }
+}
+const bubbleEl = document.getElementById('bubble'); let bubbleUntil = 0;
+function showBubble(text, secs) { if (!bubblesOn) return; bubbleEl.textContent = text; bubbleEl.classList.add('show'); bubbleUntil = performance.now() / 1000 + secs; hero.talkT = secs; }
+const voice = createVoice({ speak: speakTTS, show: showBubble, now: () => performance.now() / 1000, enabled: () => (voiceOn || bubblesOn) && mode === 'play' });
+const say = (key, force) => voice.say(key, force);
+const _v3 = new THREE.Vector3();
+function updateBubble(now) {
+  if (now / 1000 > bubbleUntil) { bubbleEl.classList.remove('show'); return; }
+  hero.head.getWorldPosition(_v3); _v3.y += 0.22; _v3.project(camera);
+  if (_v3.z > 1) { bubbleEl.classList.remove('show'); return; }
+  const x = Math.max(80, Math.min(innerWidth - 80, (_v3.x * 0.5 + 0.5) * innerWidth)), y = Math.max(70, (-_v3.y * 0.5 + 0.5) * innerHeight);
+  bubbleEl.style.left = `${x}px`; bubbleEl.style.top = `${y}px`;
+}
 const F = { sm: 0.35, op: 0, bw: 0, bl: 0, eyeY: 1, pup: 1, blush: 0, sweat: 0 };       // glattede uttrykksverdier
 function animateHero(p, now, dt) {
   const sec = now / 1000, h = hero, f = h.face, st = p.state, sp = Math.hypot(p.vx, p.vz);
@@ -692,7 +721,9 @@ function animateHero(p, now, dt) {
   const stunned = (p.recover > 0.35 && p.landImpact >= P.hardLand && p.onGround) || mood === 'hurt', tired = Math.max(0, 1 - p.stam / (P.stamina * 0.3));
   // idle: gjesp etter lang tid i ro
   h.idleT = (sp < 0.15 && p.onGround && !p.carry && mode === 'play') ? h.idleT + dt : 0;
-  if (h.idleT > 22 && !mood) { setMood('yawn', 2.2); h.idleT = 0; }
+  if (h.idleT > 26 && !mood) { setMood('yawn', 2.2); say('yawn'); h.idleT = 0; }
+  if (h.idleT > 14 && h.idleT - dt <= 14) say('idle');
+  h.talkT = Math.max(0, h.talkT - dt);
   // mål for uttrykk
   let sm = 0.35, op = 0, bw = 0, bl = 0, eyeY = 1, pup = 1, blush = 0, sweat = 0;
   if (climbing) { sm = -0.25; bw = -0.25; eyeY = 0.8; if (tired > 0.1) { bw = 0.3 * tired - 0.25 * (1 - tired); blush = 0.5 * tired; sweat = tired > 0.5 ? 1 : 0; sm = -0.5; } }
@@ -703,6 +734,7 @@ function animateHero(p, now, dt) {
   if (mood === 'happy') { sm = 1; eyeY = 0.55; bl = 0.008; blush = 0.6; op = 0; bw = 0; }
   if (mood === 'worry') { bw = 0.4; bl = 0.008; sm = -0.3; eyeY = 1.1; }
   if (mood === 'yawn') { op = 1.3; eyeY = 0.1; sm = 0; bl = 0.01; }
+  if (h.talkT > 0 && !stunned) { op = Math.max(op, 0.55 + 0.45 * Math.sin(sec * 17)); sm = Math.max(sm, 0.2); }          // munnen beveger seg mens han snakker
   const k = 1 - Math.exp(-dt / 0.07);
   F.sm += (sm - F.sm) * k; F.op += (op - F.op) * k; F.bw += (bw - F.bw) * k; F.bl += (bl - F.bl) * k; F.eyeY += (eyeY - F.eyeY) * k; F.pup += (pup - F.pup) * k; F.blush += (blush - F.blush) * k; F.sweat += (sweat - F.sweat) * k;
   // blunking
@@ -796,7 +828,7 @@ function goBack() {
 }
 function resetThings() {
   if (mode !== 'play') return;
-  resetBodies(LEVEL, player); stats.resets++;
+  resetBodies(LEVEL, player); stats.resets++; say('reset');
   toast(`Ting satt tilbake  −${SCORE.resetThings} poeng`);
 }
 function restartAll() {
@@ -1003,6 +1035,8 @@ function buildPanel() {
     <label>Etterklang (rom) <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">
     <details open><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary>${mixerHtml()}
       <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkBubbles"> Snakkebobler</label>
+    ${hasTTS ? '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkVoice"> Stemme (figuren snakker)</label><label>Stemmevolum <span id="v_vvol"></span></label><input type="range" id="s_vvol" min="0.2" max="1" step="0.1"><small id="voiceNote"></small>' : ''}
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCues"> Lydtekst: vis tekst for lyder${key('V')}</label>
     ${helperCount ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning${key('X')}</label>
@@ -1031,6 +1065,12 @@ function buildPanel() {
   if ($('chkLabels')) { $('chkLabels').checked = labelsOn; $('chkLabels').onchange = (e) => { labelsOn = e.target.checked; store.set('tlm.labels', labelsOn); }; }
   $('chkGripHi').checked = gripHi; $('chkGripHi').onchange = (e) => { gripHi = e.target.checked; store.set('tlm.griphi', gripHi); };
   $('chkAutoCam').checked = autoCam; $('chkAutoCam').onchange = (e) => { autoCam = e.target.checked; store.set('tlm.autocam', autoCam); };
+  $('chkBubbles').checked = bubblesOn; $('chkBubbles').onchange = (e) => { bubblesOn = e.target.checked; store.set('tlm.bubbles', bubblesOn); };
+  if ($('chkVoice')) {
+    $('chkVoice').checked = voiceOn; $('chkVoice').onchange = (e) => { voiceOn = e.target.checked; store.set('tlm.voice', voiceOn); if (voiceOn) { primeVoice(); say('checkpoint', true); } };
+    $('s_vvol').value = voiceVol; $('v_vvol').textContent = (+voiceVol).toFixed(1); $('s_vvol').oninput = (e) => { voiceVol = +e.target.value; store.set('tlm.voicevol', voiceVol); $('v_vvol').textContent = voiceVol.toFixed(1); };
+    $('voiceNote').textContent = ttsVoice ? `Stemme: ${ttsVoice.name} (${ttsVoice.lang}). Lyden kommer fra telefonen.` : 'Fant ingen norsk stemme på denne enheten: da vises bare snakkebobler.';
+  }
   $('chkCues').checked = cuesOn; $('chkCues').onchange = (e) => { cuesOn = e.target.checked; store.set('tlm.cues', cuesOn); };
   $('presetSel').value = presetName;
   $('autoGrab').checked = P.autoGrab;
@@ -1105,18 +1145,18 @@ function update(dt) {
   }
   audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
-  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); }
+  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
   if (player.y < LEVEL.deathY) { resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant`); }
-    else if (ev.type === 'use') { audio?.pickup(); buzz(20); setMood('happy', 0.9); }
+    else if (ev.type === 'use') { audio?.pickup(); buzz(20); setMood('happy', 0.9); say(ev.tool === 'gel' ? 'gel' : 'roll'); }
     else if (ev.type === 'toolhint') toast(ev.tool === 'gel' ? `Gå helt inntil en vegg og trykk ${TA} for å smøre. ${TA} igjen legger fra seg.` : `Gå helt ut til en kant og trykk ${TA} for å rulle ut. ${TA} igjen legger fra seg.`);
-    else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); }
+    else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
   }
-  if (player.hardLands > pre.hard) { setMood('hurt', 1.3); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
+  if (player.hardLands > pre.hard) { setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
   if (player.knockout) {
-    player.knockout = false; audio?.crush(); buzz(90);
+    player.knockout = false; audio?.crush(); buzz(90); say('knockout');
     resetPlayer(player, ...save.pos); stats.respawns++;
     toast(`Landet for hardt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
   }
@@ -1127,14 +1167,14 @@ function update(dt) {
   }
   const hz = inHazard(LEVEL, player);
   if (hz) {
-    audio?.splash(hz.type === 'flush' ? 'flush' : 'pit'); cue(hz.type === 'flush' ? 'skylling' : 'plask');
+    audio?.splash(hz.type === 'flush' ? 'flush' : 'pit'); cue(hz.type === 'flush' ? 'skylling' : 'plask'); say(hz.type === 'flush' ? 'flush' : 'pit');
     resetPlayer(player, ...(hz.type === 'flush' ? LEVEL.start : save.pos)); stats.respawns++;
     toast(`${hz.message || 'Fare!'}  −${SCORE.respawn} poeng`);
   }
 
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
-    won = true; audio?.win(); setMood('happy', 6);
+    won = true; audio?.win(); setMood('happy', 6); say('goal', true);
     $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
     $('win').classList.remove('hide');
@@ -1162,8 +1202,24 @@ function ambientTick(dt) {
   }
 }
 // lydtekst for det som skjer (uavhengig av om lyden er på)
+let sayFell = false, sayTired = false;
+function voiceFrame(pre) {
+  const p = player;
+  if (mode !== 'play') return;
+  if (!p.onGround && p.vy < -13 && !sayFell && p.state === 'air') { sayFell = true; say('fall'); }
+  if (p.onGround) sayFell = false;
+  if (!pre.onGround && p.onGround && pre.vy < -16 && p.landImpact < P.hardLand && !p.knockout) say('softland');
+  if (pre.onGround && !p.onGround && p.vaulting) say('vault');
+  if (pre.state === 'mantle' && p.state !== 'mantle') say('top');
+  const climbingNow = p.state === 'climb' || p.state === 'hang';
+  if (climbingNow && p.stam < 2.6 && !sayTired) { sayTired = true; say('tired'); }
+  if (!climbingNow && p.stam > 5) sayTired = false;
+  if (!pre.carry && p.carry) say('pickup');
+  if (pre.carry && !p.carry) say((LEVEL.bodies || []).some((b) => !b.carried && Math.hypot(b.vx || 0, b.vz || 0) > 1) ? 'throw' : 'drop');
+}
 function cueFrame(pre) {
   const p = player;
+  voiceFrame(pre);
   if (!pre.onGround && p.onGround && pre.vy < -9) cue(p.landImpact >= P.hardLand ? 'hard landing' : 'landing');
   if (p.landImpact >= P.hardLand && !pre.onGround && p.onGround) buzz(45);
   if ((pre.state !== 'hang' && p.state === 'hang') || (pre.state !== 'climb' && p.state === 'climb')) buzz(14);
@@ -1202,7 +1258,7 @@ function insideAny(x, y, z, m) {
 function render(now, dt) {
   { const tb = document.getElementById('btnCarry'); const lab = player.carry && player.charge >= P.throwMin ? 'KAST' : 'TA'; if (tb && tb.textContent !== lab) { tb.textContent = lab; tb.style.background = lab === 'KAST' ? '#c77d12cc' : ''; } }   // knappen sier KAST når holdetiden er nådd
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
-  poseHero(player, now, dt, mode); animateHero(player, now, dt);
+  poseHero(player, now, dt, mode); animateHero(player, now, dt); updateBubble(now);
   updateArc(); syncMade(); updateLabels();
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
@@ -1282,4 +1338,4 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-window.__game = { camera, touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { camera, say, setMood, touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

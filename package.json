@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "serve": "python3 -m http.server 8000",
-    "test": "node test_physics.mjs && node test_scene.mjs",
+    "test": "node test_physics.mjs && node test_scene.mjs && node test_voice.mjs",
     "solve": "node tools/solve.mjs",
     "validate": "node tools/validate_scene.mjs"
   }
