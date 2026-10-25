@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
+import { VERSION } from './version.js';
 import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -914,7 +915,7 @@ function render(now, dt) {
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   renderer.render(scene, camera);
   $('hud').textContent =
-    `${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · REKKER UT' : ''}\n` +
+    `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · REKKER UT' : ''}\n` +
     `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s\nlagret ${stats.saves} · tilbake ${stats.respawns} · poeng ${points()}`;
 }
 
