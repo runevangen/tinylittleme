@@ -86,7 +86,8 @@
         1,
         3
       ],
-      "cp": true
+      "cp": true,
+      "group": "badekar"
     },
     {
       "id": "badekar_ost",
@@ -105,7 +106,8 @@
       "photos": [
         1,
         3
-      ]
+      ],
+      "group": "badekar"
     },
     {
       "id": "badekar_nord",
@@ -124,7 +126,8 @@
       "photos": [
         1,
         3
-      ]
+      ],
+      "group": "badekar"
     },
     {
       "id": "badekar_sor",
@@ -143,11 +146,12 @@
       "photos": [
         1,
         3
-      ]
+      ],
+      "group": "badekar"
     },
     {
       "id": "do_tank",
-      "kind": "toilet",
+      "kind": "toilet_tank",
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
@@ -162,11 +166,12 @@
       "photos": [
         1
       ],
-      "cp": true
+      "cp": true,
+      "group": "do"
     },
     {
       "id": "do_skal_fram",
-      "kind": "toilet",
+      "kind": "toilet_bowl",
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
@@ -180,11 +185,12 @@
       "confidence": 0.8,
       "photos": [
         1
-      ]
+      ],
+      "group": "do"
     },
     {
       "id": "do_skal_bak",
-      "kind": "toilet",
+      "kind": "toilet_bowl",
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
@@ -198,11 +204,12 @@
       "confidence": 0.8,
       "photos": [
         1
-      ]
+      ],
+      "group": "do"
     },
     {
       "id": "do_skal_venstre",
-      "kind": "toilet",
+      "kind": "toilet_bowl",
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
@@ -216,11 +223,12 @@
       "confidence": 0.8,
       "photos": [
         1
-      ]
+      ],
+      "group": "do"
     },
     {
       "id": "do_skal_hoyre",
-      "kind": "toilet",
+      "kind": "toilet_bowl",
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
@@ -234,7 +242,8 @@
       "confidence": 0.8,
       "photos": [
         1
-      ]
+      ],
+      "group": "do"
     },
     {
       "id": "do_lokk_oppe",
@@ -253,7 +262,8 @@
       "photos": [
         1
       ],
-      "note": "Lokket står opp mot tanken: en tynn vegg"
+      "note": "Lokket står opp mot tanken: en tynn vegg",
+      "group": "do"
     },
     {
       "id": "do_kost",

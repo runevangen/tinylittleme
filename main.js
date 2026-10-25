@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
+import { buildGroup } from './props.js';
 import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -168,7 +169,19 @@ function material(b) {
 const pageMat = std({ map: pagesTex, roughness: 0.9 });
 const woodKinds = new Set(['wood', 'woodpanel']);
 
+// ting som består av flere bokser (do, badekar …) tegnes som én ekte form; kollisjonen er fortsatt boksene
+const drawn = new Set(); let hasToilet = false;
+{
+  const groups = new Map();
+  for (const b of LEVEL.boxes) if (b.group) { if (!groups.has(b.group)) groups.set(b.group, []); groups.get(b.group).push(b); }
+  for (const [, members] of groups) {
+    const o = buildGroup(members); if (!o) continue;
+    scene.add(o); members.forEach((m) => drawn.add(m));
+    if (members.some((m) => m.kind === 'toilet_tank')) hasToilet = true;
+  }
+}
 for (const b of LEVEL.boxes) {
+  if (drawn.has(b)) continue;
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
   const mat = material(b);
@@ -235,7 +248,7 @@ for (const d of LEVEL.decor || []) {
 }
 
 for (const h of LEVEL.hazards || []) {   // litt synlig vann i do-skålen
-  if (h.type !== 'flush') continue;
+  if (h.type !== 'flush' || hasToilet) continue;
   const r = Math.min(h.max[0] - h.min[0], h.max[2] - h.min[2]) / 2 - 0.3;
   const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.05, 24), new THREE.MeshStandardMaterial({ color: 0x5a8fa8, roughness: 0.05, transparent: true, opacity: 0.8 }));
   disc.position.set((h.min[0] + h.max[0]) / 2, 2.2, (h.min[2] + h.max[2]) / 2); scene.add(disc);

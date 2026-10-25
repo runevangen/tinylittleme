@@ -95,6 +95,8 @@
     10
    ],
    "id": "badekar_vest",
+   "kind": "tub",
+   "group": "badekar",
    "color": 15460575,
    "material": "porcelain",
    "cp": true,
@@ -113,6 +115,8 @@
     10
    ],
    "id": "badekar_ost",
+   "kind": "tub",
+   "group": "badekar",
    "color": 15460575,
    "material": "porcelain",
    "cp": false,
@@ -131,6 +135,8 @@
     -22.6
    ],
    "id": "badekar_nord",
+   "kind": "tub",
+   "group": "badekar",
    "color": 15460575,
    "material": "porcelain",
    "cp": false,
@@ -149,6 +155,8 @@
     10
    ],
    "id": "badekar_sor",
+   "kind": "tub",
+   "group": "badekar",
    "color": 15460575,
    "material": "porcelain",
    "cp": false,
@@ -167,6 +175,8 @@
     18
    ],
    "id": "do_tank",
+   "kind": "toilet_tank",
+   "group": "do",
    "color": 15460575,
    "material": "porcelain",
    "cp": true,
@@ -185,6 +195,8 @@
     12
    ],
    "id": "do_skal_fram",
+   "kind": "toilet_bowl",
+   "group": "do",
    "color": 15460575,
    "material": "porcelain",
    "cp": false,
@@ -203,6 +215,8 @@
     18
    ],
    "id": "do_skal_bak",
+   "kind": "toilet_bowl",
+   "group": "do",
    "color": 15460575,
    "material": "porcelain",
    "cp": false,
@@ -221,6 +235,8 @@
     16
    ],
    "id": "do_skal_venstre",
+   "kind": "toilet_bowl",
+   "group": "do",
    "color": 15460575,
    "material": "porcelain",
    "cp": false,
@@ -239,6 +255,8 @@
     16
    ],
    "id": "do_skal_hoyre",
+   "kind": "toilet_bowl",
+   "group": "do",
    "color": 15460575,
    "material": "porcelain",
    "cp": false,
@@ -257,6 +275,8 @@
     17.4
    ],
    "id": "do_lokk_oppe",
+   "kind": "toilet_lid",
+   "group": "do",
    "color": 15460575,
    "material": "porcelain",
    "cp": false,
@@ -275,6 +295,7 @@
     20
    ],
    "id": "do_kost",
+   "kind": "pole",
    "color": 1842204,
    "material": "plastic",
    "cp": false,
@@ -293,6 +314,7 @@
     -17
    ],
    "id": "vaskeskap",
+   "kind": "vanity",
    "color": 14933195,
    "material": "wood",
    "cp": false,
@@ -311,6 +333,7 @@
     -16.6
    ],
    "id": "vask_plate",
+   "kind": "vanity_top",
    "color": 15460575,
    "material": "porcelain",
    "cp": true,
@@ -329,6 +352,7 @@
     -22
    ],
    "id": "kran",
+   "kind": "faucet",
    "color": 12567496,
    "material": "metal",
    "cp": false,
@@ -347,6 +371,7 @@
     -23.6
    ],
    "id": "tannglass",
+   "kind": "cup",
    "color": 9417627,
    "material": "ceramic",
    "cp": false,
@@ -365,6 +390,7 @@
     -24.4
    ],
    "id": "tannborste",
+   "kind": "toothbrush",
    "color": 3900100,
    "material": "plastic",
    "cp": false,
@@ -383,6 +409,7 @@
     -23.2
    ],
    "id": "lampeboks",
+   "kind": "light_box",
    "color": 15987178,
    "material": "plastic",
    "cp": false,
@@ -401,6 +428,7 @@
     -23
    ],
    "id": "speilskap",
+   "kind": "wall_cabinet",
    "color": 15130832,
    "material": "wood",
    "cp": false,
@@ -419,6 +447,7 @@
     -18
    ],
    "id": "speilskap_dor_aapen",
+   "kind": "door",
    "color": 15987178,
    "material": "wood",
    "cp": false,
@@ -437,6 +466,7 @@
     -1.6
    ],
    "id": "vindu_karm",
+   "kind": "sill",
    "color": 15261640,
    "material": "wood",
    "cp": false,
@@ -455,6 +485,7 @@
     -2.4
    ],
    "id": "glasshylle",
+   "kind": "shelf",
    "color": 13625571,
    "material": "glass",
    "cp": true,
@@ -473,6 +504,7 @@
     -6
    ],
    "id": "dusjkurv_ovre",
+   "kind": "caddy",
    "color": 2236962,
    "material": "metal",
    "cp": false,
@@ -491,6 +523,7 @@
     -6
    ],
    "id": "dusjkurv_nedre",
+   "kind": "caddy",
    "color": 2236962,
    "material": "metal",
    "cp": false,
@@ -509,6 +542,7 @@
     24
    ],
    "id": "dormatte",
+   "kind": "mat",
    "color": 8092794,
    "material": "fabric",
    "cp": false,
@@ -603,6 +637,7 @@
  "movables": [
   {
    "id": "vaskekurv",
+   "kind": "basket",
    "material": "wicker",
    "color": 11106634,
    "min": [
@@ -620,6 +655,7 @@
   },
   {
    "id": "saapepumpe",
+   "kind": "bottle",
    "material": "plastic",
    "color": 7304055,
    "min": [
@@ -637,6 +673,7 @@
   },
   {
    "id": "tannkrem",
+   "kind": "tube",
    "material": "plastic",
    "color": 15265525,
    "min": [
@@ -654,6 +691,7 @@
   },
   {
    "id": "barbermaskin",
+   "kind": "shaver",
    "material": "plastic",
    "color": 1776930,
    "min": [
@@ -671,6 +709,7 @@
   },
   {
    "id": "dopapir",
+   "kind": "roll",
    "material": "paper",
    "color": 16448250,
    "min": [
@@ -688,6 +727,7 @@
   },
   {
    "id": "toalettveske",
+   "kind": "bag",
    "material": "fabric",
    "color": 1908519,
    "min": [
@@ -705,6 +745,7 @@
   },
   {
    "id": "flaske_gronn",
+   "kind": "bottle",
    "material": "plastic",
    "color": 5208658,
    "min": [
@@ -722,6 +763,7 @@
   },
   {
    "id": "flaske_hvit",
+   "kind": "bottle",
    "material": "plastic",
    "color": 15856108,
    "min": [
@@ -739,6 +781,7 @@
   },
   {
    "id": "handkle_gulv_1",
+   "kind": "towel",
    "material": "fabric",
    "color": 7236196,
    "min": [
@@ -756,6 +799,7 @@
   },
   {
    "id": "handkle_gulv_2",
+   "kind": "towel",
    "material": "fabric",
    "color": 7236196,
    "min": [
@@ -776,6 +820,7 @@
   {
    "shape": "box",
    "id": "skapknott_1",
+   "kind": "knob",
    "pos": [
     -9.7,
     15.5,
@@ -792,6 +837,7 @@
   {
    "shape": "box",
    "id": "skapknott_2",
+   "kind": "knob",
    "pos": [
     -3.1,
     15.5,
@@ -808,6 +854,7 @@
   {
    "shape": "box",
    "id": "skapknott_3",
+   "kind": "knob",
    "pos": [
     1.9,
     15.5,
@@ -824,6 +871,7 @@
   {
    "shape": "box",
    "id": "speil",
+   "kind": "mirror",
    "pos": [
     -4,
     28,

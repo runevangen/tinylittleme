@@ -95,6 +95,7 @@
     -6
    ],
    "id": "kommode",
+   "kind": "chest",
    "color": 10120005,
    "material": "wood",
    "cp": true,
@@ -113,6 +114,7 @@
     -16
    ],
    "id": "bord",
+   "kind": "table",
    "color": 12158042,
    "material": "wood",
    "cp": false,
@@ -122,6 +124,7 @@
  "movables": [
   {
    "id": "vase",
+   "kind": "vase",
    "material": "ceramic",
    "color": 4884168,
    "min": [
@@ -139,6 +142,7 @@
   },
   {
    "id": "eske_1",
+   "kind": "box",
    "material": "fabric",
    "color": 14248799,
    "min": [
@@ -156,6 +160,7 @@
   },
   {
    "id": "eske_2",
+   "kind": "box",
    "material": "fabric",
    "color": 6269145,
    "min": [
@@ -173,6 +178,7 @@
   },
   {
    "id": "kasse_medium",
+   "kind": "crate",
    "material": "wood",
    "color": 13212268,
    "min": [
@@ -190,6 +196,7 @@
   },
   {
    "id": "kasse_tung",
+   "kind": "crate",
    "material": "wood",
    "color": 9067066,
    "min": [
@@ -207,6 +214,7 @@
   },
   {
    "id": "stabel_ned",
+   "kind": "crate",
    "material": "wood",
    "color": 8015669,
    "min": [
@@ -224,6 +232,7 @@
   },
   {
    "id": "stabel_opp",
+   "kind": "box",
    "material": "fabric",
    "color": 14926671,
    "min": [

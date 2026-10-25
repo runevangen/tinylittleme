@@ -42,14 +42,14 @@ for (const o of scene.objects) {
   const lo = [ux(a), uy(c), uz(e)], hi = [ux(b), uy(d), uz(f)];
   if (o.hold) holds.push({ id: o.id, kind: o.kind, min: lo, max: hi });
   if (o.movable) {                                         // løse ting: egne legemer i spillet, ikke faste flater
-    movables.push({ id: o.id, material: o.material, color: hex(o.color), min: lo, max: hi, weight: o.movable, breakable: !!o.breakable });
+    movables.push({ id: o.id, kind: o.kind, material: o.material, color: hex(o.color), min: lo, max: hi, weight: o.movable, breakable: !!o.breakable });
     continue;
   }
   if (o.decor) {
-    decor.push({ shape: 'box', id: o.id, pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
+    decor.push({ shape: 'box', id: o.id, kind: o.kind, pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
     continue;
   }
-  boxes.push(mk(o.material, lo, hi, { id: o.id, color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft }));
+  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft }));
 }
 const hazards = (scene.hazards || []).map((h) => {
   const [a, b, c, d, e, f] = h.box;
