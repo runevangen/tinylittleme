@@ -16,9 +16,9 @@ Spilleren har krympet og må komme seg fra gulvet til toppen. Brettet bygges av 
 ```
 python3 -m http.server 8000     # åpne http://localhost:8000   (npm run serve)
 node test_physics.mjs           # fysikktester                  (npm test)
-node tools/solve.mjs            # er brettet løsbart? ca. 1 min (npm run solve)
+node tools/solve.mjs [klassisk|spenning]   # er brettet løsbart? 1–3 min (npm run solve)
 ```
-Mobil: venstre stikke, HOPP og GRIP-knapper, dra for kamera.
+Mobil: venstre stikke, HOPP og REKK UT, dra for kamera, klyp for zoom.
 
 ## Arkitektur (portabel)
 - `physics.js` – ren JS, ingen DOM. Akse-justerte bokser, fast tidssteg (1/120 s). Tilstander: ground / air / hang / swing.
@@ -27,12 +27,31 @@ Mobil: venstre stikke, HOPP og GRIP-knapper, dra for kamera.
 - `main.js` / `index.html` – rendering, input og UI. Eneste del som er nettleserspesifikk.
 - `tools/solve.mjs` – løsbarhetsvalidator (Go-Explore med tilfeldige handlinger over den ekte fysikken).
 
-## Bevegelse (første verb)
-Løp, hopp (variabel høyde), dobbelthopp, gli langs vegg + veggsprang, kantgrep + hiv opp, tau/kabel-sving.
-Rekkevidde: enkelthopp ≈ 2,4 enheter, dobbelthopp ≈ 4,8, med kantgrep litt over det. Spillerhøyde = 1.
+## Bevegelse
+Løp, hopp (variabel høyde), gli langs vegg + veggsprang, kantgrep + hiv opp, tau/kabel-sving.
+To innstillinger (⚙ i spillet, alle verdier kan justeres live og huskes i nettleseren):
 
-Kjent skjevhet i veggsprang: utløses bare når spilleren faller og styrer inn mot veggen. Ellers stjeler det dobbelthoppet
-(oppdaget i test).
+| | Klassisk | Spenning (standard) |
+|---|---|---|
+| Hopp | raskt, ≈2,4 enheter | tyngre og tregere, ≈3,4 enheter, lang luftsvev |
+| Dobbelthopp | ja | nei |
+| Styring i lufta | mye | lite (du forplikter deg) |
+| Kant/tau | grips automatisk | du må **rekke ut** (Shift/E/REKK UT) i riktig øyeblikk. Vinduet varer 0,4 s, deretter 0,6 s pause. |
+
+Hvorfor «Spenning»: dobbelthoppet føltes tilfeldig. Nå avgjør timing og planlegging, og et bomskudd koster.
+Veggsprang utløses bare når spilleren faller og styrer inn mot veggen, ellers stjeler det hoppet (oppdaget i test).
+
+## Lagring og poeng
+`K` lagrer punkt (må stå støtt), `R` går tilbake dit, `T` starter på nytt. Sjekkpunkt på nattbord og hylle er gratis.
+Poeng: 1000 − 25 per lagring − 10 per tilbakeføring (også ved fall) − 2 per 10 s.
+
+## Moduser for planlegging og brettbygging
+- **Plan (P):** fri 360°-kamera rundt valgfritt punkt, WASD flytter, dra snurrer, hjul/klyp zoomer. Klokka står stille.
+- **Fly (G):** støtfri flyging for rask navigering (Mellomrom opp, C ned, Shift fort). Bruk av flymodus markeres som ugyldig tid.
+
+## Grafikk
+PBR-materialer, prosedyre-teksturer (tre, gulvplanker, bokssider, puss), refleksjonsmiljø, soft skygge som følger spilleren,
+vindu med sollys, nært kamera med kollisjon mot brettet. Figuren har menneskelige proporsjoner og egne poser (gå, hopp, fall, rekke ut, henge, sving).
 
 ## Fra bilde til brett (neste steg)
 Claude får 1–6 bilder og skal returnere JSON etter dette skjemaet; en generator gjør det om til bokser:
@@ -59,6 +78,6 @@ Skala fra ett bilde, ventetid/kostnad per brett (trenger kuraterte reservebrett)
 skal ikke lagres), fysiske sikkerhet ved skanning.
 
 ## Ikke gjort / vet vi ikke
-- Ikke spilletestet av et menneske – bevegelsen er bare enhetstestet og bot-løst. «Føles det bra?» er åpent.
+- «Spenning» er ikke spilletestet av et menneske, bare enhetstestet og bot-løst. Bot-løsningen krever mange flere forsøk enn «Klassisk»: sannsynligvis tøffere, men må kjennes.
 - Boten kan finne veier et menneske ikke ville klart (eller glitcher). Bruk den som nedre grense for løsbarhet.
 - Ingen lyd, ingen kamerakollisjon, ingen skråplan/ikke-akse-justerte former.

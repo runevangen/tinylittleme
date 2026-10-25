@@ -1,8 +1,9 @@
 // node tinylittleme/test_physics.mjs
 import assert from 'node:assert/strict';
-import { P, box, newPlayer, step, freeAt } from './physics.js';
+import { P, box, newPlayer, step, freeAt, applyPreset } from './physics.js';
 import { LEVEL } from './level.js';
 
+applyPreset('klassisk');
 const floor = box('floor', -50, 50, -2, 0, -50, 50);
 const run = (L, p, frames, inpFn) => {
   for (let i = 0; i < frames; i++) step(p, inpFn(i, p), 1 / 60, L);
@@ -96,4 +97,47 @@ const idle = { mx: 0, mz: 0, jumpPressed: false, jumpHeld: false, grabPressed: f
   assert.notEqual(p.state, 'swing');
 }
 
+// ---- «Spenning»-innstillingen ------------------------------------------
+applyPreset('spenning');
+
+// 8. enkelthopp, og et ekstra trykk i lufta gjør ingenting (ingen dobbelthopp)
+{
+  const L = { boxes: [floor], ropes: [] };
+  const p = newPlayer(0, 0, 0);
+  run(L, p, 10, () => idle);
+  let max = 0;
+  run(L, p, 150, (i) => { max = Math.max(max, p.y); return { ...idle, jumpPressed: i === 0 || i === 20, jumpHeld: true }; });
+  const expect = P.jump ** 2 / (2 * -P.gravity);
+  assert.ok(Math.abs(max - expect) < 0.2, `spenning hopp ${max} vs ${expect}`);
+}
+
+// 9. kant grips bare når man rekker ut (GRIP) – ellers faller man
+{
+  const L = { boxes: [floor, box('wood', 3, 45, 0, 4.5, -5, 5)], ropes: [] };
+  const trial = (reachAt) => {
+    const p = newPlayer(2, 0, 0);
+    run(L, p, 10, () => idle);
+    let hung = false;
+    run(L, p, 120, (i) => {
+      if (p.state === 'hang') hung = true;
+      return { ...idle, mx: 1, jumpPressed: i === 0, jumpHeld: true, grabPressed: i === reachAt, grabHeld: false };
+    });
+    return hung;
+  };
+  assert.equal(trial(-1), false, 'uten utrekning skal man ikke gripe kanten');
+  assert.equal(trial(15), true, 'med utrekning i riktig øyeblikk skal man gripe kanten');
+  assert.equal(trial(0), false, 'for tidlig utrekning (vinduet er over før kanten) skal bomme');
+}
+
+// 10. utrekning har pause: to trykk rett etter hverandre gir bare ett vindu
+{
+  const p = newPlayer(0, 5, 0);
+  step(p, { ...idle, grabPressed: true }, 1 / 60, { boxes: [floor], ropes: [] });
+  const first = p.reach;
+  for (let i = 0; i < 40; i++) step(p, idle, 1 / 60, { boxes: [floor], ropes: [] });
+  step(p, { ...idle, grabPressed: true }, 1 / 60, { boxes: [floor], ropes: [] });
+  assert.ok(first > 0 && p.reach === 0, 'andre utrekning under pausen skal ignoreres');
+}
+
 console.log('alle fysikktester grønne');
+

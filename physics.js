@@ -2,29 +2,45 @@
 // Ren JS uten DOM/three, slik at den kan testes i Node og porteres (Unity/Godot) senere.
 // Verden: akse-justerte bokser. x/z er gulvplanet, y er opp. Enhet ≈ «spillerhøyde» (1.0).
 
+export const PRESETS = {
+  // Slik det var: raskt, to hopp, kanten grips av seg selv.
+  klassisk: {
+    label: 'Klassisk', speed: 7, gravity: -32, jump: 12.5, airJump: 11.5, airJumps: 1, airAccel: 28,
+    autoGrab: true, reachTime: 0.35, reachCooldown: 0.3, ledgeAbove: 0.4, reachAbove: 0,
+    ropeReach: 1.4, wallKick: 8.5, wallUp: 11.5, slide: -4, swingPush: 22, ropeJump: 11,
+  },
+  // Tyngre og tregere hopp. Ingen dobbelthopp: du må gripe aktivt (GRIP) mot kant eller tau.
+  spenning: {
+    label: 'Spenning', speed: 6.5, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 10,
+    autoGrab: false, reachTime: 0.4, reachCooldown: 0.6, ledgeAbove: 0.3, reachAbove: 0.7,
+    ropeReach: 2.0, wallKick: 7, wallUp: 11, slide: -3.5, swingPush: 16, ropeJump: 10,
+  },
+};
+
 export const P = {
   w: 0.6,
   h: 1.0,
-  speed: 7,
   accel: 60,
-  airAccel: 28,
-  gravity: -32,
   maxFall: -30,
-  jump: 12.5,        // enkelthopp ≈ 2.4 enheter
-  airJump: 11.5,     // dobbelthopp
   cutVy: 4,          // slipper du hopp-knappen tidlig kappes farten til dette
   coyote: 0.1,
   jumpBuffer: 0.12,
-  slide: -4,         // maks falltempo langs vegg
-  wallKick: 8.5,
-  wallUp: 11.5,
   wallLock: 0.2,     // kort tid uten styring etter veggsprang
   ledgeBelow: 0.5,   // hvor langt under hendene kanten kan ligge
-  ledgeAbove: 0.4,   // ... og over
-  ropeReach: 1.4,
-  swingPush: 22,
-  ropeJump: 11,
+  // Variabler under overstyres av en forhåndsinnstilling (se PRESETS):
+  speed: 7, airAccel: 28, gravity: -32, jump: 12.5, airJump: 11.5, airJumps: 1,
+  autoGrab: true,    // false: kant/tau grips bare mens du «rekker ut» (GRIP)
+  reachTime: 0.35,   // hvor lenge en utrekning varer
+  reachCooldown: 0.3,// pause før du kan rekke ut igjen
+  reachAbove: 0,     // ekstra rekkevidde over hodet mens du rekker ut
+  ledgeAbove: 0.4, slide: -4, wallKick: 8.5, wallUp: 11.5,
+  ropeReach: 1.4, swingPush: 22, ropeJump: 11,
 };
+
+export function applyPreset(name) {
+  const { label, ...vals } = PRESETS[name];
+  Object.assign(P, vals);
+}
 
 const HW = P.w / 2;
 const H = P.h;
@@ -42,7 +58,8 @@ export function newPlayer(x, y, z) {
     state: 'air',                 // ground | air | hang | swing
     onGround: false, groundBox: null,
     jumps: 0, jumping: false,
-    coyote: 0, buffer: 0, grabBuf: 0, cd: 0, lock: 0,
+    coyote: 0, buffer: 0, cd: 0, lock: 0,
+    reach: 0, reachCd: 0,         // «rekker ut»-vindu og pause
     wallT: 0, wallN: null, sliding: false,
     hang: null, rope: null, swing: null,
     t: 0,
@@ -72,7 +89,7 @@ function approach(v, target, d) {
 // inp: { mx, mz (-1..1, verdensretning), jumpPressed, jumpHeld, grabPressed, grabHeld }
 export function step(p, inp, dt, L) {
   if (inp.jumpPressed) p.buffer = P.jumpBuffer;
-  if (inp.grabPressed) p.grabBuf = 0.15;
+  if (inp.grabPressed && p.reachCd <= 0) { p.reach = P.reachTime; p.reachCd = P.reachTime + P.reachCooldown; }
   let left = dt;
   while (left > 1e-6) {
     const h = Math.min(left, SUBSTEP);
@@ -85,7 +102,8 @@ function sub(p, inp, dt, L) {
   p.t += dt;
   p.cd = Math.max(0, p.cd - dt);
   p.lock = Math.max(0, p.lock - dt);
-  p.buffer -= dt; p.grabBuf -= dt; p.coyote -= dt; p.wallT -= dt;
+  p.buffer -= dt; p.coyote -= dt; p.wallT -= dt;
+  p.reach = Math.max(0, p.reach - dt); p.reachCd = Math.max(0, p.reachCd - dt);
 
   let wx = inp.mx, wz = inp.mz;
   const wl = Math.hypot(wx, wz);
@@ -107,14 +125,14 @@ function sub(p, inp, dt, L) {
   p.sliding = !p.onGround && !!pushWall && p.vy < P.slide;
   if (p.sliding) p.vy = P.slide;
 
-  if (p.onGround) { p.coyote = P.coyote; p.jumps = 1; }
+  if (p.onGround) { p.coyote = P.coyote; p.jumps = P.airJumps; }
 
   if (p.buffer > 0) {
     if (p.coyote > 0) {
       p.vy = P.jump; p.coyote = 0; p.buffer = 0; p.onGround = false; p.jumping = true;
     } else if (pushWall && p.vy <= 0) {   // veggsprang: faller + styrer inn mot veggen
       p.vx = p.wallN.nx * P.wallKick; p.vz = p.wallN.nz * P.wallKick;
-      p.vy = P.wallUp; p.lock = P.wallLock; p.jumps = 1;
+      p.vy = P.wallUp; p.lock = P.wallLock; p.jumps = P.airJumps;
       p.fx = p.wallN.nx; p.fz = p.wallN.nz;
       p.wallT = 0; p.buffer = 0; p.jumping = true;
     } else if (p.jumps > 0) {
@@ -124,7 +142,7 @@ function sub(p, inp, dt, L) {
   if (p.jumping && !inp.jumpHeld && p.vy > P.cutVy) { p.vy = P.cutVy; p.jumping = false; }
   if (p.vy <= 0) p.jumping = false;
 
-  if (p.grabBuf > 0 && p.cd <= 0 && !p.onGround && tryRope(p, L)) return;
+  if (p.reach > 0 && p.cd <= 0 && !p.onGround && tryRope(p, L)) return;
 
   p.onGround = false; p.groundBox = null;
   const hx = moveX(p, p.vx * dt, L);
@@ -136,7 +154,7 @@ function sub(p, inp, dt, L) {
   if (p.onGround) p.state = 'ground';
   else {
     p.state = 'air';
-    if (hit && p.vy <= 2 && p.cd <= 0 && (wx * hit.nx + wz * hit.nz) < -0.3) tryLedge(p, hit, L);
+    if (hit && p.vy <= 2 && p.cd <= 0 && (P.autoGrab || p.reach > 0) && (wx * hit.nx + wz * hit.nz) < -0.3) tryLedge(p, hit, L);
   }
 }
 
@@ -181,7 +199,7 @@ function tryLedge(p, hit, L) {
   const b = hit.box;
   const top = b.max[1];
   const dh = top - (p.y + H);
-  if (dh > P.ledgeAbove || dh < -P.ledgeBelow) return false;
+  if (dh > P.ledgeAbove + (p.reach > 0 ? P.reachAbove : 0) || dh < -P.ledgeBelow) return false;
   const tx = p.x - hit.nx * (HW + 0.35);
   const tz = p.z - hit.nz * (HW + 0.35);
   if (!freeAt(L, tx, top + 0.02, tz)) return false;
@@ -206,7 +224,7 @@ function hangStep(p, wx, wz) {
   }
   if (wx * h.nx + wz * h.nz > 0.5) {   // styr bort fra veggen: slipp
     p.state = 'air'; p.hang = null; p.cd = 0.35;
-    p.vx = h.nx * 2; p.vz = h.nz * 2; p.jumps = 1;
+    p.vx = h.nx * 2; p.vz = h.nz * 2; p.jumps = Math.min(1, P.airJumps);
   }
 }
 
@@ -218,7 +236,7 @@ function tryRope(p, L) {
     if (d < P.ropeReach && hy < r.y - 1.2 && hy > r.y - r.len) {
       const R = Math.max(1.5, Math.hypot(p.x - r.x, hy - r.y, p.z - r.z));
       p.state = 'swing'; p.rope = r; p.swing = { R };
-      p.grabBuf = 0; p.jumping = false;
+      p.reach = 0; p.jumping = false;
       return true;
     }
   }
@@ -231,7 +249,7 @@ function swingStep(p, inp, wx, wz, dt) {
     const jumped = p.buffer > 0;
     if (jumped) p.vy += P.ropeJump * 0.6;
     p.state = 'air'; p.rope = null; p.swing = null;
-    p.cd = 0.3; p.jumps = 1; p.buffer = 0;
+    p.cd = 0.3; p.jumps = Math.min(1, P.airJumps); p.buffer = 0;
     return;
   }
   p.vy += P.gravity * dt;
