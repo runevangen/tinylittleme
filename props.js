@@ -108,6 +108,223 @@ function tub(members) {
   return g;
 }
 
+
+// ---------- teksturer (tegnes i nettleseren, ingen bildefiler) ----------
+function rng(seed) { let a = seed; return () => { a = (a * 1664525 + 1013904223) % 4294967296; return a / 4294967296; }; }
+function canvasTex(size, draw, { repeat = [1, 1], srgb = true } = {}) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  draw(c.getContext('2d'), size);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat); t.anisotropy = 4;
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const cache = {};
+const once = (k, f) => cache[k] ?? (cache[k] = f());
+// frotté: tette løkker (lyse/mørke prikker) – brukes både som farge og relieff
+const terryTex = () => once('terry', () => canvasTex(256, (g, S) => {
+  const r = rng(5); g.fillStyle = '#d9d9d9'; g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 5200; i++) { const v = 150 + r() * 105; g.fillStyle = `rgb(${v},${v},${v})`; g.beginPath(); g.arc(r() * S, r() * S, 1.2 + r() * 1.6, 0, 7); g.fill(); }
+}));
+// flettet tøy (matte) og kurvfletting
+const weaveTex = () => once('weave', () => canvasTex(128, (g, S) => {
+  g.fillStyle = '#bdbdbd'; g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) { const v = (i + j) % 2 ? 235 : 150; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(i * 8 + 1, j * 8 + 1, 6, 6); }
+}));
+const wickerTex = () => once('wicker', () => canvasTex(128, (g, S) => {
+  g.fillStyle = '#9a8f80'; g.fillRect(0, 0, S, S);                       // mørke mellomrom mellom flettene
+  for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) {
+    const v = 214 + ((i + j) % 2) * 34; g.fillStyle = `rgb(${v},${v},${v})`;
+    if ((i + j) % 2) g.fillRect(i * 16, j * 16 + 2, 16, 12); else g.fillRect(i * 16 + 2, j * 16, 12, 16);
+  }
+}));
+const woodishTex = () => once('wood', () => canvasTex(256, (g, S) => {
+  const r = rng(11); g.fillStyle = '#e6d3b2'; g.fillRect(0, 0, S, S);
+  for (let y = 0; y < S; y += 3) { g.strokeStyle = `rgba(110,75,35,${0.08 + r() * 0.16})`; g.lineWidth = 0.6 + r() * 1.4; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= S; x += 16) g.lineTo(x, y + (r() - 0.5) * 2 + Math.sin(x * 0.03 + y) * 0.7); g.stroke(); }
+}));
+const brushedTex = () => once('brushed', () => canvasTex(128, (g, S) => {
+  const r = rng(2); g.fillStyle = '#c9ccd0'; g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 700; i++) { const v = 150 + r() * 100; g.strokeStyle = `rgba(${v},${v},${v + 5},.5)`; g.lineWidth = 0.5; const y = r() * S; g.beginPath(); g.moveTo(0, y); g.lineTo(S, y + (r() - 0.5)); g.stroke(); }
+}));
+const labelTex = (hue = '#e8eef2') => canvasTex(128, (g, S) => {
+  g.fillStyle = hue; g.fillRect(0, 0, S, S);
+  g.fillStyle = 'rgba(20,50,90,.65)'; g.fillRect(0, S * 0.12, S, S * 0.1); g.fillRect(0, S * 0.78, S, S * 0.05);
+  for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(30,30,30,.35)'; g.fillRect(S * 0.14, S * (0.3 + i * 0.07), S * (0.72 - (i % 3) * 0.14), 3); }
+});
+const stripeTex = (c1, c2) => canvasTex(128, (g, S) => { g.fillStyle = c1; g.fillRect(0, 0, S, S); g.fillStyle = c2; g.fillRect(0, S * 0.08, S, S * 0.07); g.fillRect(0, S * 0.85, S, S * 0.07); });
+
+const hexStr = (c) => '#' + (typeof c === 'number' ? c : parseInt(String(c).replace('#', ''), 16)).toString(16).padStart(6, '0');
+const plasticMat = (color) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.28, clearcoat: 0.6, clearcoatRoughness: 0.2 });
+const bar = (a, b, r, mat) => {                                         // tynn stang mellom to punkter
+  const d = new THREE.Vector3().subVectors(b, a), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), mat);
+  m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); m.castShadow = true; return m;
+};
+const lathe = (pts, seg = 28) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(Math.max(0.0005, r), y)), seg);
+
+// ---------- enkeltting: bygges rundt midten av boksen (sx, sy, sz) ----------
+const SINGLE = {
+  bottle(sx, sy, sz, o) {
+    const g = new THREE.Group(), r = Math.min(sx, sz) / 2, y0 = -sy / 2, bh = sy * 0.6;
+    const bodyMat = plasticMat(o.color);
+    g.add(mesh(lathe([[0.001, y0], [r * 0.9, y0], [r, y0 + 0.12], [r, y0 + bh], [r * 0.5, y0 + bh + sy * 0.12], [r * 0.42, y0 + sy * 0.84]]), bodyMat));
+    const lab = mesh(new THREE.CylinderGeometry(r * 1.01, r * 1.01, bh * 0.55, 28, 1, true), new THREE.MeshStandardMaterial({ map: labelTex(), roughness: 0.6, side: THREE.DoubleSide }), false);
+    lab.position.y = y0 + bh * 0.5; g.add(lab);
+    if (/pump/i.test(o.id)) {                                           // pumpehode
+      const stem = mesh(new THREE.CylinderGeometry(r * 0.16, r * 0.16, sy * 0.12, 10), plasticMat(0xf2f2f2)); stem.position.y = y0 + sy * 0.9; g.add(stem);
+      const head = mesh(roundedBoxGeo(r * 1.0, r * 0.4, r * 0.5, 0.1, 0.06), plasticMat(0xf2f2f2)); head.position.set(r * 0.25, y0 + sy * 0.96, 0); g.add(head);
+    } else {
+      const cap = mesh(new THREE.CylinderGeometry(r * 0.46, r * 0.5, sy * 0.16, 18), plasticMat(0xf4f4f4)); cap.position.y = y0 + sy * 0.92; g.add(cap);
+    }
+    return g;
+  },
+  tube(sx, sy, sz, o) {
+    const g = new THREE.Group(), r = sx / 2;
+    const body = mesh(new THREE.CylinderGeometry(r * 0.78, r, sy * 0.82, 20, 1), new THREE.MeshStandardMaterial({ map: stripeTex('#f3f3f3', '#2a6fb8'), roughness: 0.4 }));
+    body.scale.z = Math.min(1, (sz / 2) / r) * 0.62; body.position.y = -sy * 0.09; g.add(body);
+    const crimp = mesh(new THREE.BoxGeometry(r * 1.9, sy * 0.1, Math.max(0.05, sz * 0.18)), plasticMat(0xeeeeee)); crimp.position.y = -sy / 2 + sy * 0.05; g.add(crimp);
+    const neck = mesh(new THREE.CylinderGeometry(r * 0.3, r * 0.5, sy * 0.1, 14), plasticMat(0xf4f4f4)); neck.position.y = sy * 0.37; g.add(neck);
+    const cap = mesh(new THREE.CylinderGeometry(r * 0.38, r * 0.38, sy * 0.1, 14), plasticMat(0x2a6fb8)); cap.position.y = sy * 0.46; g.add(cap);
+    return g;
+  },
+  faucet(sx, sy, sz) {
+    const g = new THREE.Group(), cr = chrome(), r = Math.min(sx, sz) * 0.32, y0 = -sy / 2;
+    const base = mesh(new THREE.CylinderGeometry(r * 1.15, r * 1.3, sy * 0.16, 22), cr); base.position.y = y0 + sy * 0.08; g.add(base);
+    const post = mesh(new THREE.CylinderGeometry(r * 0.7, r * 0.8, sy * 0.45, 18), cr); post.position.y = y0 + sy * 0.38; g.add(post);
+    const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, y0 + sy * 0.55, 0), new THREE.Vector3(0, y0 + sy * 0.86, 0.02), new THREE.Vector3(0, y0 + sy * 0.97, sz * 0.2), new THREE.Vector3(0, y0 + sy * 0.9, sz * 0.4)]);
+    g.add(mesh(new THREE.TubeGeometry(curve, 16, r * 0.45, 10), cr));
+    const lever = mesh(roundedBoxGeo(sx * 0.9, r * 0.5, r * 0.6, 0.1, 0.06), cr); lever.position.set(sx * 0.35, y0 + sy * 0.62, 0); lever.rotation.z = 0.25; g.add(lever);
+    return g;
+  },
+  shaver(sx, sy, sz, o) {
+    const g = new THREE.Group();
+    const body = mesh(roundedBoxGeo(sx, sy * 0.82, sz * 0.8, Math.min(sx, sz) * 0.4, 0.12), plasticMat(o.color)); body.position.y = -sy / 2; g.add(body);
+    const head = mesh(roundedBoxGeo(sx * 1.05, sy * 0.2, sz, 0.3, 0.1), plasticMat(0x2e3238)); head.position.y = sy * 0.32; g.add(head);
+    const foil = mesh(new THREE.BoxGeometry(sx * 0.8, 0.05, sz * 0.7), chrome(), false); foil.position.y = sy * 0.5; g.add(foil);
+    return g;
+  },
+  roll(sx, sy, sz, o) {
+    const g = new THREE.Group(), r = Math.min(sx, sz) / 2;
+    const paper = mesh(new THREE.CylinderGeometry(r, r, sy, 32, 1, true), new THREE.MeshStandardMaterial({ color: 0xfbfaf6, roughness: 0.95, side: THREE.DoubleSide })); g.add(paper);
+    for (const sgn of [-1, 1]) { const ring = mesh(new THREE.RingGeometry(r * 0.32, r, 32), new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: 0.95 }), false); ring.rotation.x = sgn * Math.PI / 2; ring.position.y = sgn * sy / 2; g.add(ring); }
+    const core = mesh(new THREE.CylinderGeometry(r * 0.32, r * 0.32, sy * 1.002, 18, 1, true), new THREE.MeshStandardMaterial({ color: 0xb59a74, roughness: 0.9, side: THREE.DoubleSide })); g.add(core);
+    return g;
+  },
+  cup(sx, sy, sz, o) {
+    const g = new THREE.Group(), r = Math.min(sx, sz) / 2, t = 0.12, y0 = -sy / 2;
+    const mat = new THREE.MeshPhysicalMaterial({ color: o.color, roughness: 0.1, clearcoat: 1, side: THREE.DoubleSide });
+    g.add(mesh(lathe([[0.001, y0], [r * 0.78, y0], [r * 0.82, y0 + 0.05], [r, y0 + sy], [r - t, y0 + sy], [r * 0.78 - t, y0 + t * 1.4], [0.001, y0 + t * 1.4]], 30), mat));
+    return g;
+  },
+  toothbrush(sx, sy, sz, o) {
+    const g = new THREE.Group();
+    const handle = mesh(roundedBoxGeo(sx, sy * 0.78, sz, Math.min(sx, sz) * 0.45, 0.04), plasticMat(o.color)); handle.position.y = -sy / 2; g.add(handle);
+    const head = mesh(roundedBoxGeo(sx * 1.1, sy * 0.2, sz * 1.5, 0.08, 0.03), plasticMat(o.color)); head.position.y = sy * 0.3; g.add(head);
+    const bristle = mesh(new THREE.BoxGeometry(sx * 0.9, sy * 0.06, sz * 1.2), new THREE.MeshStandardMaterial({ color: 0xf6f6f0, roughness: 1 }), false); bristle.position.y = sy * 0.46; g.add(bristle);
+    return g;
+  },
+  knob(sx, sy, sz, o) {
+    const g = new THREE.Group(), cr = chrome(), r = Math.min(sx, sy) / 2;
+    const ball = mesh(new THREE.SphereGeometry(r, 18, 12), cr); ball.scale.z = Math.min(1.2, (sz / 2) / r) * 0.9; ball.position.z = sz * 0.1; g.add(ball);
+    return g;
+  },
+  towel(sx, sy, sz, o) {
+    const g = new THREE.Group(), tt = terryTex().clone(); tt.repeat.set(Math.max(1, sx / 4), Math.max(1, sz / 4)); tt.needsUpdate = true;
+    const mat = new THREE.MeshStandardMaterial({ color: o.color, map: tt, bumpMap: tt, bumpScale: 1.2, roughness: 1 });
+    const n = Math.max(1, Math.round(sy / 1.3));                           // brettede lag
+    for (let i = 0; i < n; i++) {
+      const lh = sy / n, m = mesh(roundedBoxGeo(sx - (i % 2) * 0.15, lh * 1.04, sz - ((i + 1) % 2) * 0.15, Math.min(sx, sz) * 0.12, Math.min(0.25, lh * 0.35)), mat);
+      m.position.y = -sy / 2 + i * lh; g.add(m);
+    }
+    const band = mesh(new THREE.BoxGeometry(sx * 1.003, sy * 0.12, sz * 0.12), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }), false); band.position.set(0, sy * 0.1, sz * 0.5); g.add(band);
+    return g;
+  },
+  mat(sx, sy, sz, o) {
+    const g = new THREE.Group(), wt = weaveTex().clone(); wt.repeat.set(sx / 3, sz / 3); wt.needsUpdate = true;
+    const m = mesh(roundedBoxGeo(sx, sy, sz, Math.min(sx, sz) * 0.08, Math.min(0.18, sy * 0.4)), new THREE.MeshStandardMaterial({ color: o.color, map: wt, bumpMap: wt, bumpScale: 0.8, roughness: 1 }));
+    m.position.y = -sy / 2; g.add(m);
+    return g;
+  },
+  basket(sx, sy, sz, o) {
+    const g = new THREE.Group(), wt = wickerTex().clone(); wt.repeat.set(3, 2); wt.needsUpdate = true;
+    const mat = new THREE.MeshStandardMaterial({ color: o.color, map: wt, bumpMap: wt, bumpScale: 1.5, roughness: 0.95, side: THREE.DoubleSide });
+    const body = mesh(lathe([[0.001, -sy / 2], [0.86, -sy / 2], [0.88, -sy / 2 + 0.2], [0.98, sy * 0.28], [1, sy * 0.36], [0.93, sy * 0.36], [0.91, -sy / 2 + 0.3], [0.001, -sy / 2 + 0.3]], 32), mat);
+    body.scale.set(sx / 2, 1, sz / 2); g.add(body);
+    const lid = mesh(lathe([[0.001, sy * 0.46], [0.9, sy * 0.46], [1.03, sy * 0.38], [1.03, sy * 0.34], [0.001, sy * 0.34]], 32), mat); lid.scale.set(sx / 2, 1, sz / 2); g.add(lid);
+    const knobM = mesh(new THREE.SphereGeometry(Math.min(sx, sz) * 0.07, 12, 8), mat); knobM.position.y = sy * 0.48; g.add(knobM);
+    return g;
+  },
+  bag(sx, sy, sz, o) {
+    const g = new THREE.Group(), wt = weaveTex().clone(); wt.repeat.set(2, 2); wt.needsUpdate = true;
+    const body = mesh(new THREE.SphereGeometry(0.5, 20, 14), new THREE.MeshStandardMaterial({ color: o.color, map: wt, bumpMap: wt, bumpScale: 0.6, roughness: 1 }));
+    body.scale.set(sx, sy * 0.86, sz); body.position.y = -sy * 0.07; g.add(body);
+    const strap = mesh(new THREE.TorusGeometry(Math.min(sx, sz) * 0.2, 0.06, 8, 18), new THREE.MeshStandardMaterial({ color: 0xcfc6b0, roughness: 1 })); strap.position.y = sy * 0.44; g.add(strap);
+    return g;
+  },
+  caddy(sx, sy, sz) {
+    const g = new THREE.Group(), cr = chrome(), r = 0.045, x = sx / 2, y = sy / 2, z = sz / 2;
+    const P = (a, b, c) => new THREE.Vector3(a, b, c);
+    for (const yy of [-y, y]) for (const [a, b] of [[[-x, -z], [x, -z]], [[x, -z], [x, z]], [[x, z], [-x, z]], [[-x, z], [-x, -z]]]) g.add(bar(P(a[0], yy, a[1]), P(b[0], yy, b[1]), r * 1.5, cr));
+    for (const [px, pz] of [[-x, -z], [x, -z], [x, z], [-x, z]]) g.add(bar(P(px, -y, pz), P(px, y, pz), r * 1.5, cr));
+    for (let i = 1; i < 6; i++) { const t = -x + (2 * x * i) / 6; g.add(bar(P(t, -y, -z), P(t, -y, z), r, cr)); }
+    for (let i = 1; i < 4; i++) { const t = -z + (2 * z * i) / 4; g.add(bar(P(-x, -y, t), P(x, -y, t), r, cr)); }
+    for (let i = 1; i < 6; i++) { const t = -x + (2 * x * i) / 6; g.add(bar(P(t, -y, z), P(t, y, z), r, cr)); g.add(bar(P(t, -y, -z), P(t, y, -z), r, cr)); }
+    return g;
+  },
+  vanity(sx, sy, sz, o) {
+    const g = new THREE.Group(), wt = woodishTex().clone(); wt.repeat.set(2, 1); wt.needsUpdate = true;
+    const wood = new THREE.MeshStandardMaterial({ color: o.color, map: wt, roughness: 0.55 });
+    g.add(mesh(new THREE.BoxGeometry(sx, sy, sz), wood));
+    const dark = new THREE.MeshStandardMaterial({ color: new THREE.Color(o.color).multiplyScalar(0.55), roughness: 0.6 });
+    const front = sz / 2 + 0.01, pw = sx / 2 - 0.5;
+    for (const cx of [-sx / 4, sx / 4]) {                                       // to dører med innfelt panel og fuge
+      for (const [dx, dy, w, h] of [[0, sy * 0.4, pw, 0.1], [0, -sy * 0.4, pw, 0.1], [-pw / 2, 0, 0.1, sy * 0.8], [pw / 2, 0, 0.1, sy * 0.8]]) {
+        const l = mesh(new THREE.BoxGeometry(w, h, 0.06), dark, false); l.position.set(cx + dx, dy, front); g.add(l);
+      }
+    }
+    const seam = mesh(new THREE.BoxGeometry(0.1, sy * 0.96, 0.07), dark, false); seam.position.set(0, 0, front); g.add(seam);
+    return g;
+  },
+  vanity_top(sx, sy, sz, o) {
+    const g = new THREE.Group(), pw = porcelain(o.color);
+    g.add(mesh(roundedBoxGeo(sx, sy, sz, 0.8, 0.18), pw)); g.children[0].position.y = -sy / 2;
+    // vask: forsenket utseende (selve flaten er flat i fysikken)
+    const rx = sx * 0.2, rz = sz * 0.32, cx = -sx * 0.05, cz = sz * 0.08;
+    const rim = mesh(new THREE.TorusGeometry(1, 0.06, 8, 40), pw); rim.rotation.x = Math.PI / 2; rim.scale.set(rx, rz, 1); rim.position.set(cx, sy / 2 + 0.03, cz); g.add(rim);
+    const bas = mesh(new THREE.CircleGeometry(1, 40), new THREE.MeshPhysicalMaterial({ color: 0xcfd3d4, roughness: 0.2, clearcoat: 0.8 }), false); bas.rotation.x = -Math.PI / 2; bas.scale.set(rx * 0.97, rz * 0.97, 1); bas.position.set(cx, sy / 2 + 0.02, cz); g.add(bas);
+    const dr = mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 16), chrome(), false); dr.position.set(cx, sy / 2 + 0.05, cz - rz * 0.35); g.add(dr);
+    const wat = mesh(new THREE.CircleGeometry(1, 28), new THREE.MeshPhysicalMaterial({ color: 0x7fb9d2, roughness: 0.04, transparent: true, opacity: 0.5 }), false); wat.rotation.x = -Math.PI / 2; wat.scale.set(rx * 0.35, rz * 0.3, 1); wat.position.set(cx, sy / 2 + 0.06, cz - rz * 0.3); g.add(wat);
+    return g;
+  },
+  shelf(sx, sy, sz, o) {
+    const g = new THREE.Group(), cr = chrome();
+    g.add(mesh(new THREE.BoxGeometry(sx, sy, sz), new THREE.MeshPhysicalMaterial({ color: 0xbfe0dc, roughness: 0.05, transparent: true, opacity: 0.45, transmission: 0.5 }), false));
+    for (const sgn of [-1, 1]) { const b = mesh(new THREE.BoxGeometry(0.25, 1.2, 0.25), cr); b.position.set(sgn * (sx / 2 - 0.5), -sy / 2 - 0.6, sz / 2 - 0.4); g.add(b); }
+    return g;
+  },
+  light_box(sx, sy, sz, o) {
+    const g = new THREE.Group();
+    g.add(mesh(roundedBoxGeo(sx, sy, sz, 1.2, 0.3), new THREE.MeshStandardMaterial({ color: 0xfff7e0, emissive: 0xfff0c0, emissiveIntensity: 0.55, roughness: 0.4 }))); g.children[0].position.y = -sy / 2;
+    return g;
+  },
+  pole(sx, sy, sz, o) {
+    const g = new THREE.Group(), r = Math.min(sx, sz) / 2;
+    const h = mesh(new THREE.CylinderGeometry(r * 0.35, r * 0.35, sy * 0.78, 10), plasticMat(0x2e3238)); h.position.y = sy * 0.09; g.add(h);
+    const head = mesh(lathe([[0.001, -sy / 2], [r * 0.8, -sy / 2 + 0.1], [r, -sy * 0.38], [r * 0.7, -sy * 0.26], [r * 0.35, -sy * 0.2]]), new THREE.MeshStandardMaterial({ color: 0x3b3f46, roughness: 0.9 })); g.add(head);
+    return g;
+  },
+  mirror(sx, sy, sz) {
+    const g = new THREE.Group(), cr = chrome(), f = 0.35;
+    g.add(mesh(new THREE.BoxGeometry(sx - 0.2, sy - 0.2, 0.1), new THREE.MeshStandardMaterial({ color: 0xdfe9ee, metalness: 0.85, roughness: 0.04, emissive: 0x6d7f88, emissiveIntensity: 0.35 }), false));
+    for (const [x, y, w, h] of [[0, sy / 2, sx + f, f], [0, -sy / 2, sx + f, f], [-sx / 2, 0, f, sy], [sx / 2, 0, f, sy]]) { const b = mesh(new THREE.BoxGeometry(w, h, sz + 0.25), cr); b.position.set(x, y, 0); g.add(b); }
+    return g;
+  },
+};
+// ting fra scene: bruk det vi har (kind, ellers materialet). Returnerer en gruppe sentrert i boksen, eller null.
+export function buildSingle(kind, size, opts = {}) {
+  const fn = SINGLE[kind]; if (!fn) return null;
+  const [sx, sy, sz] = size, o = { color: opts.color ?? 0xcccccc, id: opts.id || '', material: opts.material };
+  const g = fn(sx, sy, sz, o); return g;
+}
+
 const BUILDERS = [
   [(ms) => ms.some((m) => m.kind === 'toilet_tank'), toilet],
   [(ms) => ms.every((m) => m.kind === 'tub'), tub],

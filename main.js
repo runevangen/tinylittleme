@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
-import { buildGroup } from './props.js';
+import { buildGroup, buildSingle } from './props.js';
 import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -184,6 +184,8 @@ for (const b of LEVEL.boxes) {
   if (drawn.has(b)) continue;
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
+  const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material }) : null;
+  if (shaped) { shaped.position.set(cx, cy, cz); scene.add(shaped); continue; }
   const mat = material(b);
   const tiled = b.material === 'tile';
   if (b.type === 'floor') {
@@ -239,6 +241,8 @@ for (const b of LEVEL.boxes) {
 function hexNum(h) { return typeof h === 'number' ? h : parseInt(String(h).replace('#', ''), 16); }
 
 for (const d of LEVEL.decor || []) {
+  const sg = d.kind && buildSingle(d.kind, d.size, { color: d.color, id: d.id, material: d.material });
+  if (sg) { sg.position.set(...d.pos); scene.add(sg); continue; }
   const geo = d.shape === 'sphere' ? new THREE.SphereGeometry(d.size[0], 16, 12) : new THREE.BoxGeometry(...d.size);
   const mat = d.emissive !== undefined || d.metal !== undefined
     ? std({ color: d.color, emissive: d.emissive ?? 0, roughness: d.rough ?? 0.5, metalness: d.metal ?? 0 })
@@ -529,7 +533,7 @@ function lerpN(a, b, t) { return a + (b - a) * t; }
 initBodies(LEVEL);
 const bodyMeshes = LEVEL.bodies.map((b) => {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
+  const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
   mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh);
   return { b, mesh, size: [sx, sy, sz] };
 });

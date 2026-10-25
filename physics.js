@@ -130,7 +130,7 @@ export function initBodies(L) {
   L.bodies = []; L.events = [];
   for (const m of L.movables || []) {
     const b = {
-      id: m.id, type: m.material || 'plastic', material: m.material, color: m.color,
+      id: m.id, kind: m.kind, type: m.material || 'plastic', material: m.material, color: m.color,
       min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
       vy: 0, alive: true, carried: false, home: { min: [...m.min], max: [...m.max] },
     };

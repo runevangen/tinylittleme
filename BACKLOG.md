@@ -39,7 +39,7 @@ Gjenstår / til sparring:
 ## Brett og innhold
 - [ ] Flytte motgiften til toppen av speilskapet når klatring finnes.
 - [ ] Motgift-varianter: A) bit = ferdig kapittel, B) vann stiger, rømme til døra.
-- [ ] Modellere vask (forsenkning), karets avrundede ende og skråtak.
+- [~] Vask (forsenkning), karets avrundede ende og skråtak: *utseendet* er på plass fra v0.18–0.19 (`props.js`: do, kar, vask, småting). Kollisjonen er fortsatt bokser: vasken er flat å gå på, karet har rettvinklede vegger. Skråtak mangler. Venter på bildene for å rette formene (hvilken ende er rund osv.).
 - [ ] Neste rom: lekerom (legoknotter som tak), stue, kjøkken.
 - [ ] Åpne spørsmål om motgift-biter: bæres mellom rom? antall? bonusting? (`docs/BADET.md`)
 

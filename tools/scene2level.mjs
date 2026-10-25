@@ -127,7 +127,7 @@ const overlap3 = (lo, hi) => [...boxes, ...movables].some((b) => b.type !== 'flo
 const inRoom = (lo, hi) => lo[0] >= x0 && hi[0] <= x1 && lo[2] >= z0 && hi[2] <= z1;
 function addHelper(kind, lo, hi, note) {
   const id = `hjelp_${kind}_${++hc}`;
-  boxes.push(mk('fabric', lo, hi, { id, color: hex(helperColors[hc % helperColors.length]), material: 'fabric', helper: true }));
+  boxes.push(mk('fabric', lo, hi, { id, kind: 'towel', color: hex(helperColors[hc % helperColors.length]), material: 'fabric', helper: true }));
   nodes.push({ id, x0: lo[0], x1: hi[0], z0: lo[2], z1: hi[2], top: hi[1] });
   helpers.push({ id, kind, note, size_cm: lo.map((v, i) => Math.round((hi[i] - v) * U)), at_cm: [Math.round((lo[0] + hi[0]) / 2 * U + cx), Math.round((lo[2] + hi[2]) / 2 * U + cz)], top_cm: Math.round(hi[1] * U) });
   return nodes.length - 1;

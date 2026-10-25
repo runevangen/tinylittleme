@@ -561,6 +561,7 @@
     -5.5
    ],
    "id": "hjelp_trapp_1",
+   "kind": "towel",
    "color": 14205369,
    "material": "fabric",
    "helper": true
@@ -578,6 +579,7 @@
     -5
    ],
    "id": "hjelp_trapp_5",
+   "kind": "towel",
    "color": 14205369,
    "material": "fabric",
    "helper": true
@@ -595,6 +597,7 @@
     -8
    ],
    "id": "hjelp_trapp_6",
+   "kind": "towel",
    "color": 12900537,
    "material": "fabric",
    "helper": true
@@ -612,6 +615,7 @@
     -11
    ],
    "id": "hjelp_trapp_7",
+   "kind": "towel",
    "color": 14209721,
    "material": "fabric",
    "helper": true
@@ -629,6 +633,7 @@
     -14
    ],
    "id": "hjelp_trapp_8",
+   "kind": "towel",
    "color": 12175320,
    "material": "fabric",
    "helper": true
