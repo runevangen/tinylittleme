@@ -9,6 +9,9 @@ Spilleren har krympet og må komme seg fra gulvet til toppen. Brettet bygges av 
 | Plattform | Nettleser først (Three.js). Fysikk og brettformat er skilt fra rendering for å kunne portes (Unity/Godot). |
 | Stil | Leketøysaktig, stilisert. Tåler unøyaktig generering. |
 | Brett nå | Håndlaget standardbrett (nattbord + bokhylle). Bevegelse er viktigere enn generering. |
+| Retning | Hybrid: plattformer (A) + klatring på tak med hender (B). Ikke ragdoll-fysikk. Referanser: A Difficult Game About Climbing, realistisk klatring. |
+| Kapitler | Ett rom om gangen, **badet først** → se [docs/BADET.md](docs/BADET.md). Videre: stue, lekerom, kjøkken. |
+| Mål | Motgiften ligger i biter, en på toppen av hvert rom. |
 | Spillere | Alene først. Flerspiller senere. |
 | AI | Prototype: Claude via Claude Code. Hvis ideen virker: eget API. |
 
