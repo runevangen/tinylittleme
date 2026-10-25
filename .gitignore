@@ -6,3 +6,7 @@ bilder/
 *.heic
 *.png
 !docs/*.png
+
+# Rå research-notater og rapporter fra research-kjøringer (den ferdige rapporten kopieres til docs/)
+research_notes/
+reports/

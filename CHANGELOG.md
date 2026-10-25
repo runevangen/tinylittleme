@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.26** – Rå research-mapper (`research_notes/`, `reports/`) holdes utenfor git; ferdige rapporter kopieres til `docs/`.
 - **0.25** – Valgfri kamerafølging (tast X eller ⚙): kameraet dreier seg langsomt bak figuren når den går på bakken, og slutter i 1,5 s etter at du selv drar i kameraet. Av som standard.
 - **0.24** – Foto → brett, strukturert: JSON-skjema (`docs/scene.schema.json`), validator (`npm run validate -- scenes/x.scene.json`: feil og advarsler om overlapp, ukjente kinds, lette ting som er for store …), tinglisten (`kinds.js`) og en generert instruks til tolkningssteget (`docs/VISJON_PROMPT.md`). `npm test` kjører nå også scene-testene. I ⚙ kan hjelpeobjektene fra brettlageren merkes med gule kanter og listes, så et menneske kan se over dem.
 - **0.23** – Romlyd: dryppende kran og vifte i badet (`audio.ambience` i scenen; mikser-kanaler «Rom»). Lydtekst for hørselshemmede (tast V eller ⚙): korte tekster med retning (◀ ▶) for landing, drypp, knusing, klemt, plask, sjekkpunkt, ta/slipp; virker også med lyden av. Boten (`tools/solve.mjs`) viser nå hvilke bevegelser løsningen bruker og kan prøve uten veggsprang (`--nowalljump`).
