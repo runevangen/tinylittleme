@@ -48,6 +48,10 @@ function unlockAudio() {
   audio?.resume();
 }
 addEventListener('pointerdown', unlockAudio); addEventListener('keydown', unlockAudio);
+// valgfri kamerafølging: kameraet dreier seg langsomt bak figuren når den går (av etter at du selv har dratt i kameraet)
+let autoCam = store.get('tlm.autocam', false), lastDrag = -99;
+function toggleAutoCam() { autoCam = !autoCam; store.set('tlm.autocam', autoCam); toast(autoCam ? 'Kamera følger retning' : 'Kamera følger ikke'); const c = document.getElementById('chkAutoCam'); if (c) c.checked = autoCam; }
+
 // lydtekst: viser korte tekster for viktige lyder (for hørselshemmede, og når lyden er av). Skritt og pust er utelatt.
 let cuesOn = store.get('tlm.cues', false);
 function cue(text, pan = 0) {
@@ -678,6 +682,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyN') resetThings();
   if (e.code === 'KeyM') toggleSound();
   if (e.code === 'KeyV') toggleCues();
+  if (e.code === 'KeyX') toggleAutoCam();
   if (e.code === 'KeyP' || e.code === 'Tab') setMode('plan');
   if (e.code === 'KeyG') setMode('fly');
   if (e.code === 'KeyH') $('help').classList.toggle('hide');
@@ -702,7 +707,7 @@ canvas.addEventListener('pointermove', (e) => {
     const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
     if (pinch0) zoom(pinch0 / d); pinch0 = d; return;
   }
-  c.yaw -= dx * 0.006;
+  c.yaw -= dx * 0.006; lastDrag = performance.now() / 1000;
   c.pitch += dy * 0.005;
   const lim = mode === 'plan' ? [-0.3, 1.5] : [-0.35, 1.35];
   c.pitch = Math.min(lim[1], Math.max(lim[0], c.pitch));
@@ -810,6 +815,7 @@ function buildPanel() {
       <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCues"> Lydtekst: vis tekst for lyder (V)</label>
     ${helperCount ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning (X)</label>
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
@@ -823,6 +829,7 @@ function buildPanel() {
   $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
   wireMixer();
   if ($('chkHelpers')) { $('chkHelpers').checked = helperMarks.visible; $('chkHelpers').onchange = (e) => { helperMarks.visible = e.target.checked; }; }
+  $('chkAutoCam').checked = autoCam; $('chkAutoCam').onchange = (e) => { autoCam = e.target.checked; store.set('tlm.autocam', autoCam); };
   $('chkCues').checked = cuesOn; $('chkCues').onchange = (e) => { cuesOn = e.target.checked; store.set('tlm.cues', cuesOn); };
   $('presetSel').value = presetName;
   $('autoGrab').checked = P.autoGrab;
@@ -888,6 +895,13 @@ function update(dt) {
   jumpEdge = grabEdge = carryEdge = false;
   const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
   step(player, inp, dt, LEVEL);
+  if (autoCam && mode === 'play' && player.onGround && !player.carry && performance.now() / 1000 - lastDrag > 1.5) {       // sving kameraet bak figuren
+    const sp = Math.hypot(player.vx, player.vz);
+    if (sp > 0.8) {
+      const want = Math.atan2(-player.fx, -player.fz), d = ((want - cam.yaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+      cam.yaw += Math.max(-1, Math.min(1, d)) * Math.min(1, 0.6 * Math.min(1, sp / P.speed) * dt * Math.min(1, Math.abs(d) * 1.5 + 0.2));
+    }
+  }
   audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
   if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); }
