@@ -36,14 +36,22 @@ Tre innstillinger (⚙ i spillet; alle verdier kan justeres live og huskes i net
 
 | | Klassisk | Spenning | **Prince** (standard) |
 |---|---|---|---|
-| Fart opp / bremse / snu | umiddelbart | umiddelbart | **bygges opp (0,5 s), bremser jevnt, snur ikke på stedet** |
-| Hopp | raskt, 2 hopp | tungt, 1 hopp | tungt, 1 hopp, **0,1 s forberedelse (hurk)** |
+| Gange | glir med konstant fart | glir med konstant fart | **skrittene styrer bevegelsen** (se under) |
+| Fart opp / bremse / snu | umiddelbart | umiddelbart | **bygges opp, bremser, snur på stedet** |
+| Hopp | raskt, 2 hopp | tungt, 1 hopp | tungt, 1 hopp, **0,1 s hurk før avspark**, **løpehopp går lengre** |
 | Landing etter høyt fall | ingen | ingen | **hurk (opptil 0,5 s), langsom og kan ikke hoppe** |
 | Hiv deg opp på kant | øyeblikkelig | øyeblikkelig | **0,8 s, jevn bevegelse** |
 | Kant/tau | grips automatisk | rekk ut (REKK UT) i riktig øyeblikk | som Spenning |
 | Gå forsiktig | | | hold **C** |
 
-Hvorfor «Prince»: referansen er Prince of Persia: vekt, tid og forpliktelse. Du kan ikke snu på stedet, hopp må planlegges, og feil koster tid. Tilbakemeldingen var at figuren «reagerte for fort fram og tilbake» og ga sjøsyke. Årsakene som ble funnet: nesten umiddelbar fart per akse, blikkretningen som snudde med en gang, kameraet som fulgte hvert hopp, strekk/klem av figuren, og en hektisk gangsyklus som gikk i fast takt.
+**Prince: gange med skritt.** Tilbakemeldingen var at figuren «sklir/flyr over gulvet» i stedet for å gå, og at ett skritt skulle gi ett skritt.
+- *Fysikken eier skrittene:* en skrittfase teller opp av tilbakelagt distanse. Du går bare langs blikkretningen (ingen sideveis gliding), og kroppen snur gradvis. Står du stille og trykker mot en annen retning, snur du deg først.
+- *Ett trykk = ett skritt:* slipper du tasten, fullføres skrittet du er i, og du stopper først på skrittgrensen (to føtter ved siden av hverandre). Et kort trykk gir ett skritt.
+- *Snu i fart:* skli og bremse først, så snu på stedet, så gå.
+- *Foten står fast:* beina bruker to-ledds IK. Standfoten ligger i ro i gulvet mens kroppen går forbi (målt drift ved jevn gange: 0,001–0,004 enheter, under 0,5 % av kroppshøyden), svingfoten løftes. Hoftehøyden følger beina, så det blir en naturlig vertikal gange.
+- *Fart og skrittlengde følger menneskelige proporsjoner:* bena rekker ikke lengre enn ca. ±0,25 enheter, så tempoet er 2,8 enheter/s (ikke 5–6 som før, som ga feilen). Til gjengjeld er løpehoppet kraftigere (fartsfaktor 2), så hoppeavstandene og brettene er uendret.
+
+Hvorfor «Prince»: referansen er Prince of Persia: vekt, tid og forpliktelse (og ikke en figur som flyter). Du kan ikke snu på stedet, hopp må planlegges, og feil koster tid. Tilbakemeldingen var at figuren «reagerte for fort fram og tilbake» og ga sjøsyke. Årsakene som ble funnet: nesten umiddelbar fart per akse, blikkretningen som snudde med en gang, kameraet som fulgte hvert hopp, strekk/klem av figuren, og en hektisk gangsyklus som gikk i fast takt.
 Veggsprang utløses bare når spilleren faller og styrer inn mot veggen, ellers stjeler det hoppet (oppdaget i test).
 
 **Animasjon og kamera (gjelder alle innstillinger):** gangsyklusen følger farten, kroppen lener seg ved akselerasjon og bremsing, skrider bakoverlent når du snur, snur gradvis, har hurk før hopp og ved landing. Kameraet følger rolig og holder høyden stabil under hopp (figuren holdes alltid i bildet). Ingen strekk/klem.

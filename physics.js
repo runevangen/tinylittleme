@@ -3,7 +3,7 @@
 // Verden: akse-justerte bokser. x/z er gulvplanet, y er opp. Enhet ≈ «spillerhøyde» (1.0).
 
 // Felles bevegelsesvekt: klassisk og spenning er «umiddelbare» (som før); prince har treghet, oppbygging og tidsbruk.
-const SNAPPY = { accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4 };
+const SNAPPY = { gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4 };
 
 export const PRESETS = {
   // Slik det var først: raskt, to hopp, kanten grips av seg selv.
@@ -21,7 +21,8 @@ export const PRESETS = {
   // Prince of Persia-følelse: du bygger opp fart, snur ikke på stedet, hopp har forberedelse,
   // landing etter høyt fall tar tid, og å hive seg opp på en kant er en bevegelse som tar tid.
   prince: {
-    label: 'Prince', speed: 5.6, accel: 12, decel: 18, turnDecel: 15, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 8,
+    label: 'Prince', speed: 2.8, accel: 7, decel: 12, turnDecel: 10, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 8,
+    gaitMode: true, jumpBoost: 2.0, turnRate: 8, stepMin: 0.25, cadence0: 1.8, cadenceK: 0.6, creep: 0.45,
     autoGrab: false, reachTime: 0.45, reachCooldown: 0.6, ledgeAbove: 0.3, reachAbove: 0.75,
     ropeReach: 2.0, wallKick: 7, wallUp: 11, slide: -3.5, swingPush: 14, ropeJump: 10,
     jumpWindup: 0.1, mantleTime: 0.8, landMin: 10, landK: 0.022, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4,
@@ -46,7 +47,13 @@ export const P = {
   mantleTime: 0,     // hvor lenge det tar å hive seg opp på en kant (s). 0 = øyeblikkelig
   landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3,   // landing etter fall: tid i hurk
   walkFactor: 0.4,   // fartsfaktor når du går forsiktig (C)
-  turnRate: 8,       // hvor fort figuren snur kroppen (rad/s), brukes i tegningen
+  turnRate: 8,       // hvor fort figuren snur kroppen (rad/s)
+  // gange med skritt (gaitMode): bevegelsen styres av skrittene, ikke omvendt
+  gaitMode: false,   // true: du går i blikkretningen, snur kroppen først, og stopper ved skrittgrensen
+  stepMin: 0.25,     // korteste skrittlengde
+  cadence0: 1.8, cadenceK: 0.6,   // skritt per sekund = cadence0 + cadenceK * fart
+  jumpBoost: 1,      // løpehopp: fart i lufta = bakkefart × dette
+  creep: 0.55,       // laveste fart mens et påbegynt skritt fullføres
   autoGrab: true,    // false: kant/tau grips bare mens du «rekker ut» (GRIP)
   reachTime: 0.35,   // hvor lenge en utrekning varer
   reachCooldown: 0.3,// pause før du kan rekke ut igjen
@@ -89,6 +96,7 @@ export function newPlayer(x, y, z) {
     wallT: 0, wallN: null, sliding: false,
     hang: null, rope: null, swing: null, mantle: null,
     windup: 0, recover: 0, skid: false,
+    gait: 0, stepLen: 0.4,         // skrittfase (rad, π per skritt) og gjeldende skrittlengde
     carry: null, crushed: null,
     t: 0,
   };
@@ -247,6 +255,18 @@ export function freeAt(L, x, y, z) {
   return true;
 }
 
+const wrapAngle = (a) => ((a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+
+// Skrittlengde ved en gitt fart: tilsvarer en naturlig frekvens (skritt/s vokser med farten).
+export function stepLength(speed) {
+  return Math.max(P.stepMin, speed / (P.cadence0 + P.cadenceK * speed));
+}
+
+function boostJump(p) {                                       // løpehopp går lengre enn stående hopp
+  const sp = Math.hypot(p.vx, p.vz);
+  if (P.jumpBoost > 1 && sp > 0.5) { p.vx *= P.jumpBoost; p.vz *= P.jumpBoost; }
+}
+
 function approach(v, target, d) {
   if (v < target) return Math.min(v + d, target);
   return Math.max(v - d, target);
@@ -283,21 +303,52 @@ function sub(p, inp, dt, L) {
   if (p.state === 'hang') return hangStep(p, wx, wz);
   if (p.state === 'swing') return swingStep(p, inp, wx, wz, dt);
 
+  let handled = false;
+  if (P.gaitMode && p.onGround && !p.groundBox?.slick && p.lock <= 0) {
+    // Gange med skritt: fart bare langs blikkretningen, kroppen snur gradvis, skrittet fullføres før du stopper.
+    handled = true;
+    const hasIn = wl > 0.1;
+    let s = p.vx * p.fx + p.vz * p.fz;                           // fart langs blikkretningen
+    let target = 0, diff = 0;
+    if (hasIn) {
+      const fa = Math.atan2(p.fx, p.fz);
+      diff = wrapAngle(Math.atan2(wx, wz) - fa);
+      const rate = P.turnRate * (1 - 0.55 * Math.min(1, Math.abs(s) / P.speed)) * (Math.abs(diff) > 1.6 && s > 1.2 ? 0.15 : 1);   // snu 180° i fart: bremse først, så snu
+      const fa2 = fa + Math.max(-rate * dt, Math.min(rate * dt, diff));
+      p.fx = Math.sin(fa2); p.fz = Math.cos(fa2);
+      const aligned = Math.abs(diff) < 0.9 || Math.abs(s) > 1.2;   // snu først hvis du står stille og input er langt fra blikket
+      const speedCap = P.speed * (p.carry ? P.carrySpeed : 1) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
+      target = aligned ? speedCap * Math.min(1, wl) * Math.max(0, Math.cos(diff)) : 0;
+    }
+    p.skid = hasIn && s > 1.8 && Math.abs(diff) > 1.8;
+    let a = !hasIn ? P.decel : target < s ? (Math.abs(diff) > 1.6 ? P.turnDecel : P.decel) : P.accel;
+    if (target < 0.05 && s > 0 && s < 2.6) {                     // stopp bare ved skrittgrensen: fullfør skrittet
+      const rem = (Math.PI - (p.gait % Math.PI)) % Math.PI;       // rad til neste grense
+      if (rem < 0.04 || rem > Math.PI - 0.04) { s = 0; p.gait = Math.round(p.gait / Math.PI) * Math.PI; }
+      else { target = Math.max(P.creep, Math.min(s, Math.sqrt(2 * P.decel * (rem / Math.PI) * p.stepLen))); a = P.decel * 3; }
+    }
+    if (s !== 0 || target > 0) s += Math.max(-a * dt, Math.min(a * dt, target - s));
+    p.vx = p.fx * s; p.vz = p.fz * s;
+  }
+  if (!handled) {
   const speed0 = Math.hypot(p.vx, p.vz);
-  const rev = wl > 0.1 && speed0 > 0.1 && (p.vx * wx + p.vz * wz) / (speed0 * Math.hypot(wx, wz)) < -0.5;   // du styrer mot bevegelsen
-  p.skid = p.onGround && rev && speed0 > 2;
-  // blikkretningen følger inputen først når du faktisk er på vei den veien (ikke mens du sklir motsatt)
-  if (wl > 0.1 && p.lock <= 0 && (!rev || speed0 < 1.5)) { p.fx = wx / wl; p.fz = wz / wl; }
-
-  if (p.lock <= 0) {
-    let a;
-    if (!p.onGround) a = P.airAccel;
-    else if (p.groundBox?.slick) a = P.slickAccel;
-    else if (wl < 0.1) a = P.decel;
-    else a = rev ? P.turnDecel : P.accel;
-    const sp = P.speed * (p.carry ? P.carrySpeed : 1) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
-    const tx = wx * sp, tz = wz * sp, dx = tx - p.vx, dz = tz - p.vz, dl = Math.hypot(dx, dz), m = a * dt;
-    if (dl <= m) { p.vx = tx; p.vz = tz; } else { p.vx += dx / dl * m; p.vz += dz / dl * m; }   // som vektor: gir buer, ikke akse-hopp
+    const rev = wl > 0.1 && speed0 > 0.1 && (p.vx * wx + p.vz * wz) / (speed0 * Math.hypot(wx, wz)) < -0.5;   // du styrer mot bevegelsen
+    p.skid = p.onGround && rev && speed0 > 2;
+    // blikkretningen følger inputen først når du faktisk er på vei den veien (ikke mens du sklir motsatt)
+    if (P.gaitMode && !p.onGround) { if (speed0 > 0.5) { p.fx = p.vx / speed0; p.fz = p.vz / speed0; } }   // i lufta: blikk = fartsretning
+    else if (wl > 0.1 && p.lock <= 0 && (!rev || speed0 < 1.5)) { p.fx = wx / wl; p.fz = wz / wl; }
+  
+    if (p.lock <= 0) {
+      let a;
+      if (!p.onGround) a = P.airAccel;
+      else if (p.groundBox?.slick) a = P.slickAccel;
+      else if (wl < 0.1) a = P.decel;
+      else a = rev ? P.turnDecel : P.accel;
+      let sp = P.speed * (p.carry ? P.carrySpeed : 1) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
+      if (P.gaitMode && !p.onGround) sp = Math.max(P.speed * P.jumpBoost, speed0);   // løpehopp: behold farten i lufta
+      const tx = wx * sp, tz = wz * sp, dx = tx - p.vx, dz = tz - p.vz, dl = Math.hypot(dx, dz), m = a * dt;
+      if (dl <= m) { p.vx = tx; p.vz = tz; } else { p.vx += dx / dl * m; p.vz += dz / dl * m; }   // som vektor: gir buer, ikke akse-hopp
+    }
   }
 
   p.vy = Math.max(P.maxFall, p.vy + P.gravity * dt);
@@ -309,13 +360,13 @@ function sub(p, inp, dt, L) {
 
   if (p.windup > 0) {                                      // forberedelse (hurk) før avsparket
     p.windup -= dt;
-    if (p.windup <= 0) { p.windup = 0; p.vy = P.jump; p.jumping = true; p.onGround = false; }
+    if (p.windup <= 0) { p.windup = 0; p.vy = P.jump; p.jumping = true; p.onGround = false; boostJump(p); }
   }
   if (p.buffer > 0) {
     if (p.coyote > 0) {
       if (p.recover > 0 || p.windup > 0) { /* i hurk: ikke hopp ennå (hoppet blir stående i bufferen) */ }
       else if (P.jumpWindup > 0) { p.windup = P.jumpWindup; p.coyote = 0; p.buffer = 0; }
-      else { p.vy = P.jump; p.coyote = 0; p.buffer = 0; p.onGround = false; p.jumping = true; }
+      else { p.vy = P.jump; p.coyote = 0; p.buffer = 0; p.onGround = false; p.jumping = true; boostJump(p); }
     } else if (pushWall && p.vy <= 0) {   // veggsprang: faller + styrer inn mot veggen
       p.vx = p.wallN.nx * P.wallKick; p.vz = p.wallN.nz * P.wallKick;
       p.vy = P.wallUp; p.lock = P.wallLock; p.jumps = P.airJumps;
@@ -330,7 +381,7 @@ function sub(p, inp, dt, L) {
 
   if (p.reach > 0 && p.cd <= 0 && !p.onGround && tryRope(p, L)) return;
 
-  const wasGrounded = p.onGround, vyBefore = p.vy;
+  const wasGrounded = p.onGround, vyBefore = p.vy, px0 = p.x, pz0 = p.z;
   p.onGround = false; p.groundBox = null;
   const hx = moveX(p, p.vx * dt, L);
   const hz = moveZ(p, p.vz * dt, L);
@@ -338,6 +389,12 @@ function sub(p, inp, dt, L) {
   const hit = hx || hz;
   if (hit) { p.wallN = { nx: hit.nx, nz: hit.nz }; p.wallT = 0.12; }
 
+  if (P.gaitMode && p.onGround) {                              // fasen følger tilbakelagt distanse, så foten kan stå fast i gulvet
+    const spd = Math.hypot(p.vx, p.vz);
+    p.stepLen = stepLength(spd);
+    p.gait = (p.gait + Math.PI * Math.hypot(p.x - px0, p.z - pz0) / p.stepLen) % (Math.PI * 2);
+    if (spd < 0.01 && wl < 0.1) p.gait = Math.round(p.gait / Math.PI) * Math.PI % (Math.PI * 2);
+  }
   if (!wasGrounded && p.onGround && P.landK > 0 && vyBefore < -P.landMin) p.recover = Math.min(P.landMax, (-vyBefore - P.landMin) * P.landK);
 
   updateCarried(p, L);

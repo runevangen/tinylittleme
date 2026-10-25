@@ -1,6 +1,6 @@
 // node tinylittleme/test_physics.mjs
 import assert from 'node:assert/strict';
-import { P, box, newPlayer, step, freeAt, applyPreset, inHazard, initBodies, resetBodies, drainEvents } from './physics.js';
+import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, resetBodies, drainEvents } from './physics.js';
 import { LEVEL } from './level.js';
 
 applyPreset('klassisk');
@@ -263,53 +263,116 @@ const body = (L, id) => L.bodies.find((b) => b.id === id);
   assert.equal(crushed, 'opp', 'du ble stående under og klemt');
 }
 
-// ---- «Prince»-følelsen ---------------------------------------------------
+// ---- «Prince»: gange med skritt ------------------------------------------
 applyPreset('prince');
 const emptyL = () => ({ boxes: [floor], ropes: [] });
+const stand = (x = 0, z = 0) => { const p = newPlayer(x, 0, z); return p; };      // blikk mot +z
+const fwd = { ...idle, mz: 1 };
 
-// 21. retningsskifte tar tid: mye tregere enn «klassisk», og blikket snur ikke mens du sklir
+// 21. fart bygges opp, forsiktig gange, og full fart nås
 {
-  const timeToReverse = (preset) => {
-    applyPreset(preset);
-    const L = emptyL(), p = newPlayer(0, 0, 0);
-    run(L, p, 10, () => idle);
-    run(L, p, 120, () => ({ ...idle, mx: 1 }));
-    let t = 0, faceHeld = true;
-    for (; t < 200 && p.vx > 0; t++) { step(p, { ...idle, mx: -1 }, 1 / 60, L); if (p.vx > 1.6 && p.fx < 0.9) faceHeld = false; }
-    return { t, faceHeld };
-  };
-  const classic = timeToReverse('klassisk'), prince = timeToReverse('prince');
-  assert.ok(prince.t > classic.t * 3, `retningsskifte prince ${prince.t} vs klassisk ${classic.t} bilder`);
-  assert.ok(prince.faceHeld, 'blikket skal ikke snu mens du fortsatt farer motsatt vei');
-  applyPreset('prince');
-}
-
-// 22. oppbygging av fart og forsiktig gange
-{
-  const L = emptyL(), p = newPlayer(0, 0, 0);
+  const L = emptyL(), p = stand();
   run(L, p, 10, () => idle);
-  run(L, p, 6, () => ({ ...idle, mx: 1 }));                      // 0,1 s
-  assert.ok(p.vx > 0.5 && p.vx < P.speed * 0.5, `fart etter 0,1 s: ${p.vx.toFixed(2)}`);
-  run(L, p, 90, () => ({ ...idle, mx: 1 }));
-  assert.ok(Math.abs(p.vx - P.speed) < 0.01, 'når full fart');
-  const q = newPlayer(0, 0, 10);
-  run(L, q, 120, () => ({ ...idle, mz: 1, walk: true }));
+  run(L, p, 6, () => fwd);                                              // 0,1 s
+  assert.ok(p.vz > 0.3 && p.vz < P.speed * 0.5, `fart etter 0,1 s: ${p.vz.toFixed(2)}`);
+  run(L, p, 120, () => fwd);
+  assert.ok(Math.abs(p.vz - P.speed) < 0.01, `full fart (${p.vz.toFixed(2)})`);
+  const q = stand(10, 0);
+  run(L, q, 120, () => ({ ...fwd, walk: true }));
   assert.ok(Math.abs(q.vz - P.speed * P.walkFactor) < 0.01, `gå forsiktig: ${q.vz.toFixed(2)}`);
 }
 
-// 23. hopp har forberedelse: ingen fart opp rett etter trykket, men hopper like etter
+// 22. snu på stedet: du går ikke før kroppen peker riktig vei
 {
-  const L = emptyL(), p = newPlayer(0, 0, 0);
+  const L = emptyL(), p = stand();                                      // blikk +z
+  run(L, p, 10, () => idle);
+  run(L, p, 6, () => ({ ...idle, mz: -1 }));                            // 0,1 s mot motsatt vei
+  assert.ok(Math.abs(p.z) < 0.02 && p.fz > -0.9, `snur først (z=${p.z.toFixed(3)}, blikk ${p.fz.toFixed(2)})`);
+  run(L, p, 60, () => ({ ...idle, mz: -1 }));
+  assert.ok(p.fz < -0.95, 'kroppen har snudd');
+  run(L, p, 120, () => ({ ...idle, mz: -1 }));
+  assert.ok(p.vz < -1, 'går nå i den nye retningen');
+}
+
+// 23. retningsskifte i fart tar tid: bremser og svinger, mye tregere enn «klassisk»
+{
+  const timeToReverse = (preset) => {
+    applyPreset(preset);
+    const L = emptyL(), p = stand();
+    run(L, p, 10, () => idle);
+    run(L, p, 150, () => fwd);
+    let t = 0;
+    for (; t < 600 && p.vz > -0.5; t++) step(p, { ...idle, mz: -1 }, 1 / 60, L);   // til du går motsatt vei
+    return t;
+  };
+  const classic = timeToReverse('klassisk'), prince = timeToReverse('prince');
+  assert.ok(prince > classic * 3 && prince > 30, `prince ${prince} vs klassisk ${classic} bilder`);
+  applyPreset('prince');
+}
+
+// 24. ingen sideveis gliding: farten er alltid langs blikkretningen mens du går
+{
+  const L = emptyL(), p = stand();
+  run(L, p, 10, () => idle);
+  run(L, p, 120, () => fwd);
+  let maxSlip = 0;
+  run(L, p, 120, () => { maxSlip = Math.max(maxSlip, Math.abs(p.vx * p.fz - p.vz * p.fx)); return { ...idle, mx: 1 }; });   // 90° sving
+  assert.ok(maxSlip < 1e-6, `sideveis fart ${maxSlip}`);
+  assert.ok(p.fx > 0.9, 'svingte');
+}
+
+// 25. ett trykk = ett skritt: et kort trykk gir en liten, avsluttet bevegelse som stopper på skrittgrensen
+{
+  const L = emptyL();
+  const tap = (frames) => {
+    const p = stand();
+    run(L, p, 10, () => idle);
+    run(L, p, frames, () => fwd);
+    run(L, p, 150, () => idle);
+    return p;
+  };
+  const p1 = tap(3), p2 = tap(30);
+  assert.ok(p1.z > 0.1 && p1.z < 0.9, `et kort trykk gir ett skritt (z=${p1.z.toFixed(2)})`);
+  assert.ok(p2.z > p1.z + 0.3, `et lengre trykk går lengre (z=${p2.z.toFixed(2)})`);
+  for (const p of [p1, p2]) {
+    const r = p.gait % Math.PI;
+    assert.ok(Math.hypot(p.vx, p.vz) < 0.01 && (r < 0.06 || r > Math.PI - 0.06), `stopper på skrittgrensen (fase ${p.gait.toFixed(2)})`);
+  }
+}
+
+// 26. skrittlengde vokser med farten
+{
+  assert.ok(stepLength(3.6) > stepLength(1.5) && stepLength(1.5) > stepLength(0.2) - 1e-9 && stepLength(0.2) >= P.stepMin);
+}
+
+// 27. løpehopp går lengre enn stående hopp
+{
+  const jumpDist = (run0) => {
+    const L = emptyL(), p = stand();
+    run(L, p, 10, () => idle);
+    run(L, p, run0, () => fwd);
+    const z0 = p.z;
+    step(p, { ...fwd, jumpPressed: true, jumpHeld: true }, 1 / 60, L);
+    run(L, p, 150, (i) => ({ ...(run0 ? fwd : idle), jumpHeld: i < 60 }));
+    return p.z - z0;
+  };
+  const standing = jumpDist(0), running = jumpDist(150);
+  assert.ok(running > standing + 3 && running > 5, `løpehopp ${running.toFixed(2)} vs stående ${standing.toFixed(2)}`);
+}
+
+// 28. hopp har forberedelse: ingen fart opp rett etter trykket, men hopper like etter
+{
+  const L = emptyL(), p = stand();
   run(L, p, 10, () => idle);
   step(p, { ...idle, jumpPressed: true, jumpHeld: true }, 1 / 60, L);
-  run(L, p, 2, () => ({ ...idle, jumpHeld: true }));             // ca. 0,05 s
+  run(L, p, 2, () => ({ ...idle, jumpHeld: true }));
   assert.ok(p.windup > 0 && p.y === 0, 'i hurk, ikke løftet ennå');
   let max = 0;
   run(L, p, 90, () => { max = Math.max(max, p.y); return { ...idle, jumpHeld: true }; });
   assert.ok(max > 3, `hoppet tar av etter forberedelsen (${max.toFixed(2)})`);
 }
 
-// 24. landing etter høyt fall tar tid (hurk): lav fart og ingen hopp, men lavt fall gjør ingenting
+// 29. landing etter høyt fall tar tid (hurk), men lavt fall gjør ingenting
 {
   const fall = (y0) => {
     const L = emptyL(), p = newPlayer(0, y0, 0);
@@ -321,21 +384,20 @@ const emptyL = () => ({ boxes: [floor], ropes: [] });
   assert.equal(fall(2), 0, 'lavt fall gir ingen hurk');
   const L = emptyL(), p = newPlayer(0, 12, 0);
   for (let i = 0; i < 200 && !p.onGround; i++) step(p, idle, 1 / 60, L);
-  step(p, { ...idle, mx: 1 }, 1 / 60, L);
-  run(L, p, 12, () => ({ ...idle, mx: 1 }));
-  assert.ok(p.vx <= P.speed * P.landSlow + 0.01, `i hurk går du tregt (${p.vx.toFixed(2)})`);
+  run(L, p, 14, () => fwd);
+  assert.ok(p.vz <= P.speed * P.landSlow + 0.01, `i hurk går du tregt (${p.vz.toFixed(2)})`);
 }
 
-// 25. å hive seg opp på en kant tar tid og er en jevn bevegelse
+// 30. å hive seg opp på en kant tar tid og er en jevn bevegelse
 {
   const L = { boxes: [floor, box('wood', 3, 45, 0, 4.5, -5, 5)], ropes: [] };
-  const p = newPlayer(2, 0, 0);
+  const p = newPlayer(0.3, 0, 0); p.fx = 1; p.fz = 0;
   run(L, p, 10, () => idle);
   let hungAt = -1, mantleFrames = 0, lastY = -1, monotone = true;
-  run(L, p, 260, (i) => {
+  run(L, p, 420, (i) => {
     if (p.state === 'hang' && hungAt < 0) hungAt = i;
     if (p.state === 'mantle') { mantleFrames++; if (p.y < lastY - 1e-9) monotone = false; lastY = p.y; }
-    return { ...idle, mx: 1, jumpPressed: i === 0 || (p.state === 'hang' && i > hungAt + 8), jumpHeld: true, grabPressed: i === 15 };
+    return { ...idle, mx: 1, jumpPressed: i === 30 || (p.state === 'hang' && i > hungAt + 8), jumpHeld: true, grabPressed: i === 50 };
   });
   assert.ok(hungAt > 0, 'grep kanten');
   assert.ok(mantleFrames > 40 && mantleFrames < 60, `oppstigning ca. ${P.mantleTime} s (${mantleFrames} bilder)`);

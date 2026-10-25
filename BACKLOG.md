@@ -21,7 +21,8 @@ Gjenstår / til sparring:
 - [ ] Spilletest av «Spenning» vs «Klassisk» med ekte hender, og justering av verdiene.
 - [ ] Mobil-test av touch-kontrollene (stikke, HOPP, REKK UT).
 - [x] «Prince»-følelse (treghet, vekt, hurk, oppstigning som tar tid, roligere kamera). Første versjon. Trenger spilletest.
-- [ ] Finpuss av Prince: animasjon som styrer bevegelsen (root motion), fot-IK, kant-shimmy (gå sidelengs i hengende), rulle/ta imot ved landing, forsiktig gange som aldri faller av kanten, tau-sving som føles tyngre.
+- [x] Gange med skritt og fast fot (IK): første versjon. Trenger spilletest.
+- [ ] Finpuss av Prince: kant-shimmy (gå sidelengs i hengende), rulle/ta imot ved landing, forsiktig gange som aldri faller av kanten, tau-sving som føles tyngre.
 - [ ] Kamera: valgfri automatisk dreining etter bevegelsesretning, evt. fastere kameravinkler per brett.
 - [ ] Bedre gåanimasjon (sett bare på stillbilder).
 

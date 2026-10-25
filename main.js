@@ -241,9 +241,10 @@ const flag = new THREE.Group();
 }
 
 // ---------- figur ----------
+const RIG_S = 1.07;   // figuren tegnes litt større enn animasjonsrommet (så den blir ~1,0 høy)
 function buildHero() {
   const root = new THREE.Group();
-  const rig = new THREE.Group(); rig.scale.setScalar(1.07); root.add(rig);
+  const rig = new THREE.Group(); rig.scale.setScalar(RIG_S); root.add(rig);
   const M = {
     skin: new THREE.MeshStandardMaterial({ color: 0xe6b392, roughness: 0.65 }),
     shirt: new THREE.MeshStandardMaterial({ color: 0x2f5d7c, roughness: 0.8 }),
@@ -258,7 +259,7 @@ function buildHero() {
     const top = new THREE.Group(), u = cap(r, up, mat); u.position.y = -(up / 2 + r * 0.6); top.add(u);
     const mid = new THREE.Group(); mid.position.y = -(up + r * 1.2); top.add(mid);
     const l = cap(r * 0.9, lo, mat); l.position.y = -(lo / 2 + r * 0.6); mid.add(l);
-    return { top, mid, end: -(lo + r * 1.2), };
+    return { top, mid, end: -(lo + r * 1.2), l1: up + r * 1.2, l2: lo + r * 1.2 };
   };
 
   const body = new THREE.Group(); body.position.y = 0.46; rig.add(body);
@@ -276,19 +277,39 @@ function buildHero() {
   };
   const leg = (s) => {
     const l = limb(0.15, 0.15, 0.045, M.pants); l.top.position.set(s * 0.055, 0.46, 0); rig.add(l.top);
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.045, 0.16), M.shoe); foot.position.set(0, l.end - 0.005, 0.035); foot.castShadow = true; l.mid.add(foot);
-    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.077, 0.014, 0.162), M.sole); sole.position.set(0, l.end - 0.03, 0.035); l.mid.add(sole);
+    const footG = new THREE.Group(); footG.position.y = l.end; l.mid.add(footG); l.footG = footG;      // ankelen
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.045, 0.16), M.shoe); foot.position.set(0, -0.005, 0.035); foot.castShadow = true; footG.add(foot);
+    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.077, 0.014, 0.162), M.sole); sole.position.set(0, -0.03, 0.035); footG.add(sole);
     return l;
   };
   const L = { armL: arm(-1), armR: arm(1), legL: leg(-1), legR: leg(1) };
   const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, hy: 0 };
-  return { root, body, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null };
+  return { root, body, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null, ikW: 0, hipY: 0.46 };
 }
 const hero = buildHero();
 hero.root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 scene.add(hero.root);
 
 function lerpAngle(a, b, k) { let d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * k; }
+
+// To-ledds bein-IK i sagittalplanet: gitt hoftehøyde og ankelens posisjon (z fremover, y opp) → hofte- og kneledd.
+const ANKLE_H = 0.037;                       // ankel over såle (rig-lokalt)
+function solveLeg(leg, hipY, z, ankleY) {
+  const l1 = leg.l1, l2 = leg.l2, dy = ankleY - hipY;
+  const d = Math.min(Math.hypot(z, dy), l1 + l2 - 1e-4);
+  const clamp1 = (v) => Math.max(-1, Math.min(1, v));
+  const kappa = Math.PI - Math.acos(clamp1((l1 * l1 + l2 * l2 - d * d) / (2 * l1 * l2)));   // knebøy
+  const beta = Math.acos(clamp1((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d)));
+  const theta = Math.atan2(-z, -dy) - beta;                                                  // lår (negativ = fremover)
+  return { theta, kappa };
+}
+// Fotbane over ett skrittløp (u = 0..1). Standfasen går bakover like fort som kroppen går fremover, så foten står fast.
+function footPath(u, s, A, lift) {
+  const um = (u + s / 2) % 1;
+  if (um < s) return { z: A - 2 * A * (um / s), y: 0 };
+  const v = (um - s) / (1 - s), e = v * v * (3 - 2 * v);
+  return { z: -A + 2 * A * e, y: lift * Math.sin(Math.PI * v) };
+}
 
 function poseHero(p, now, dt, mode) {
   const c = hero.cur, sp = Math.hypot(p.vx, p.vz), sec = now / 1000;
@@ -301,6 +322,17 @@ function poseHero(p, now, dt, mode) {
   hero.pv = [p.vx, p.vz];
   hero.accLean += (Math.max(-0.3, Math.min(0.3, acc * 0.012)) - hero.accLean) * (1 - Math.pow(0.02, dt));
   const smooth = (x) => x * x * (3 - 2 * x);
+
+  // fotbaner fra fysikkens skrittfase (samme distanse som kroppen faktisk har gått → ingen gliding)
+  // standfasen kan ikke strekke seg lengre enn bena rekker: A_MAX bestemmer hvor mye av løpet foten er i bakken
+  const A_MAX = 0.25, kSp = Math.min(1, sp / P.speed), SL = 2 * p.stepLen;
+  const sFrac = Math.max(0.28, Math.min(0.64, 2 * A_MAX / SL)), A = sFrac * SL / 2, lift = 0.025 + 0.06 * kSp;
+  const u = (p.gait / (Math.PI * 2)) % 1, idleW = Math.max(0, Math.min(1, 1 - sp / 0.35));
+  const pathL = footPath(u, sFrac, A, lift), pathR = footPath((u + 0.5) % 1, sFrac, A, lift);
+  for (const f of [pathL, pathR]) { f.z *= 1 - idleW; f.y *= 1 - idleW; }
+  const gaitN = { L: pathL.z / (A + 1e-6), R: pathR.z / (A + 1e-6) };
+  pathL.z /= RIG_S; pathR.z /= RIG_S;          // rig-lokalt: figuren er skalert, så foten må flyttes tilsvarende mindre
+  const gaitOn = P.gaitMode && mode !== 'fly' && p.state === 'ground' && p.onGround && !p.windup && !p.recover && !p.skid;
 
   if (mode === 'fly') {
     Object.assign(T, { lean: 0.9, aL: -2.6, aR: -2.6, eL: 0, eR: 0, hL: 0.3, hR: 0.1, kL: 0.2, kR: 0.5 });
@@ -331,7 +363,10 @@ function poseHero(p, now, dt, mode) {
     bob = -0.14;
   } else if (p.skid) {                                          // du skrider mens du snur: lent bakover, bein foran
     Object.assign(T, { aL: -0.9, aR: -0.4, zL: 0.5, zR: -0.5, eL: -0.3, eR: -0.3, hL: -0.55, hR: 0.45, kL: 0.2, kR: 0.6, lean: -0.3 });
-  } else if (sp > 0.4) {
+  } else if (P.gaitMode && sp > 0.15) {
+    const k = Math.min(1, sp / P.speed), amp = 0.3 + 0.45 * k;
+    Object.assign(T, { aL: -amp * gaitN.R, aR: -amp * gaitN.L, eL: -0.25 - 0.45 * k, eR: -0.25 - 0.45 * k, lean: 0.04 + 0.1 * k });
+  } else if (sp > 0.4 && !P.gaitMode) {
     const k = Math.min(1, sp / 5.6);
     hero.ph += dt * (2.2 + sp * 1.0);                           // takten følger farten (ikke en fast frekvens)
     const ph = hero.ph, s = Math.sin(ph), amp = 0.5 + 0.45 * k;
@@ -350,18 +385,31 @@ function poseHero(p, now, dt, mode) {
   for (const key in T) c[key] += (T[key] - c[key]) * k;
   hero.armL.top.rotation.set(c.aL, 0, -c.zL); hero.armR.top.rotation.set(c.aR, 0, -c.zR);
   hero.armL.mid.rotation.x = c.eL; hero.armR.mid.rotation.x = c.eR;
-  hero.legL.top.rotation.x = c.hL; hero.legR.top.rotation.x = c.hR;
-  hero.legL.mid.rotation.x = c.kL; hero.legR.mid.rotation.x = c.kR;
-  hero.body.rotation.x = c.lean;
+  // bein: bland mellom FK-posene og IK (fast fot) etter om vi går
+  hero.ikW += ((gaitOn ? 1 : 0) - hero.ikW) * (1 - Math.pow(0.0003, dt));
+  const w = hero.ikW, Lmax = hero.legL.l1 + hero.legL.l2;
+  const zStance = Math.max(pathL.y < 0.002 ? Math.abs(pathL.z) : 0, pathR.y < 0.002 ? Math.abs(pathR.z) : 0);
+  const ikHip = ANKLE_H + 0.985 * Math.sqrt(Math.max(1e-4, Lmax * Lmax - zStance * zStance)) - 0.02 * kSp;
   hero.bob += (bob - hero.bob) * (1 - Math.pow(0.0005, dt));
-  hero.body.position.y = 0.46 + hero.bob;
+  const hipY = 0.46 + hero.bob + (ikHip - (0.46 + hero.bob)) * w;
+  const ikL = solveLeg(hero.legL, hipY, pathL.z, ANKLE_H + pathL.y), ikR = solveLeg(hero.legR, hipY, pathR.z, ANKLE_H + pathR.y);
+  const mix = (fk, ik) => fk + (ik - fk) * w;
+  hero.legL.top.rotation.x = mix(c.hL, ikL.theta); hero.legR.top.rotation.x = mix(c.hR, ikR.theta);
+  hero.legL.mid.rotation.x = mix(c.kL, ikL.kappa); hero.legR.mid.rotation.x = mix(c.kR, ikR.kappa);
+  hero.legL.footG.rotation.x = -(ikL.theta + ikL.kappa) * w; hero.legR.footG.rotation.x = -(ikR.theta + ikR.kappa) * w;
+  hero.legL.top.position.y = hero.legR.top.position.y = hipY;
+  hero.body.rotation.x = c.lean;
+  hero.body.position.y = hipY;
   hero.head.rotation.x = -c.lean * 0.6;
 
-  // kroppen snur gradvis (ikke øyeblikkelig)
+  // kroppen: i gange-modus snur fysikken gradvis; ellers begrenses snuhastigheten her
   const target = Math.atan2(p.fx, p.fz);
-  const d = ((target - hero.yaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
-  const maxStep = P.turnRate * dt;
-  hero.yaw += Math.max(-maxStep, Math.min(maxStep, d));
+  if (P.gaitMode) hero.yaw = target;
+  else {
+    const d = ((target - hero.yaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+    const maxStep = P.turnRate * dt;
+    hero.yaw += Math.max(-maxStep, Math.min(maxStep, d));
+  }
   hero.root.rotation.y = hero.yaw;
 }
 
@@ -526,6 +574,7 @@ const TUNE = [
   ['airAccel', 'Styring i lufta', 2, 40, 1], ['speed', 'Løpefart', 3, 10, 0.1],
   ['accel', 'Akselerasjon', 4, 60, 1], ['decel', 'Bremsing', 4, 60, 1], ['turnDecel', 'Retningsskifte (lavt = tregt)', 4, 60, 1],
   ['jumpWindup', 'Hopp: forberedelse (s)', 0, 0.3, 0.01], ['mantleTime', 'Hiv deg opp: tid (s)', 0, 1.5, 0.05], ['landK', 'Landing: hurk per fallfart', 0, 0.05, 0.002],
+  ['jumpBoost', 'Løpehopp: fartsfaktor', 1, 2, 0.05], ['turnRate', 'Snu-hastighet (rad/s)', 2, 16, 0.5],
   ['reachTime', 'Rekk-ut: varighet (s)', 0.1, 1, 0.05], ['reachCooldown', 'Rekk-ut: pause (s)', 0, 1.5, 0.05],
   ['reachAbove', 'Rekk-ut: ekstra rekkevidde opp', 0, 1.5, 0.05], ['ropeReach', 'Tau-rekkevidde', 0.8, 3.5, 0.1],
 ];
@@ -715,4 +764,4 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-window.__game = { player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
