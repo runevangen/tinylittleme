@@ -25,7 +25,7 @@ Status: første versjon (v0.20). Verdiene står i `physics.js` (`P`) og er ment 
 Prøverommet har en rute fra papirhaugen til toppen av tårnet med to håndklær og en hvilehylle midt i (for lang til ett strekk). Gå inn under det øvre håndkleet, hopp mot det og trykk GREP i hoppet.
 
 ## Verktøy du bærer og bruker (v0.22)
-Ting med `tool` gjør noe når du trykker F (kort) mens du bærer dem på riktig sted. Trykker du igjen samme sted, slippes tingen (bak eller ved siden av deg). Hold F = kast som før. Ubegrenset bruk; nytt smør/bånd fra en annen vegg/kant flytter det forrige.
+Ting med `tool` gjør noe når du trykker F (kort) mens du bærer dem på riktig sted. Trykker du igjen samme sted, slippes tingen (bak eller ved siden av deg). Hold TA i minst 0,32 s = kast (knappen sier KAST når den er klar). Står du ikke på riktig sted for verktøyet (ikke inntil en vegg for gel, ikke ved en kant for rull), forklarer første trykk hva du skal gjøre og beholder tingen; neste trykk legger den fra seg. Ubegrenset bruk; nytt smør/bånd fra en annen vegg/kant flytter det forrige.
 
 | Verktøy | Hva F gjør | Pris |
 |---|---|---|

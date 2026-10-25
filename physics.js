@@ -75,7 +75,7 @@ export const P = {
   hardLand: Infinity, knockV: Infinity,   // se PRESETS (bare Prince har harde landinger)
   stunTime: 1.1,     // hvor lenge du er bedøvet etter en hard landing (s)
   softFactor: 0.35,  // myke flater (svamp, matte, håndkle, papirhaug) tar denne andelen av landingsfarten
-  throwMin: 0.2,     // hold F kortere enn dette = slipp/sett på; lenger = kast
+  throwMin: 0.32,    // hold TA kortere enn dette = slipp/sett på/bruk; lenger = kast (et avslappet trykk på mobil varer ofte 0,2 s)
   throwFull: 0.7,    // ytterligere holdetid til full kraft (s)
   throwV0: 3.5, throwV1: 9.5, throwUp0: 3, throwUp1: 7.5,   // kastefart fremover og opp (svak … full)
   vaultH: 7, vaultMin: 0.55,   // stavhopp: høyde over bakken ved full fart for en stav på 1,5 enheter, og laveste fartsandel for å stavhoppe
@@ -116,7 +116,7 @@ export function newPlayer(x, y, z) {
     airT: 0, landT: 9, landImpact: 0, pushT: 0, hadIn: false,   // til animasjon: tid i lufta, tid siden landing, dytting, input-hysterese
     gait: 0, stepLen: 0.4,         // skrittfase (rad, π per skritt) og gjeldende skrittlengde
     carry: null, crushed: null, charge: 0, carryLatch: false,   // kast: hold-tid, og «ventet til F ble sluppet etter at noe ble tatt»
-    hardLands: 0, knockout: false, vaulting: false, jumpSp: 0,
+    hardLands: 0, knockout: false, vaulting: false, jumpSp: 0, toolWarn: 0,
     stam: P.stamina, climb: null, climbPh: 0,        // klatring: stamina, flaten du henger på, og armtak-fase til animasjon
     t: 0,
   };
@@ -290,18 +290,25 @@ function carryControl(p, inp, dt, L) {
   if (inp.carryHeld) { p.charge += dt; return; }
   const c = p.charge; p.charge = 0;
   if (c <= 0) return;
-  if (c < P.throwMin) { if (!useTool(p, L)) dropCarry(p, L); } else throwCarry(p, L, Math.min(1, (c - P.throwMin) / P.throwFull));
+  if (c < P.throwMin) {
+    const r = useTool(p, L);
+    if (r === true) return;
+    if (p.carry?.tool && r === false && p.toolWarn <= 0) { p.toolWarn = 2; L.events.push({ type: 'toolhint', tool: p.carry.tool }); return; }   // ikke på riktig sted: forklar først, neste trykk slipper
+    dropCarry(p, L);
+  } else throwCarry(p, L, Math.min(1, (c - P.throwMin) / P.throwFull));
 }
 
-// Hva trykk på F gjør nå (til hint-linjen): 'gel' | 'roll' | null
+// Hva trykk på TA gjør nå for et verktøy du bærer (til hint-linjen): 'gel' | 'roll' (kan brukes her), 'again' (allerede brukt her: neste trykk slipper), 'need-gel' | 'need-roll' (ikke på riktig sted), eller null (ikke et verktøy)
 export function toolHint(p, L) {
-  const c = p.carry; if (!c?.tool || !p.onGround) return null;
+  const c = p.carry; if (!c?.tool) return null;
   const made = L.made || [];
-  if (c.tool === 'gel') { const f = faceAhead(p, L, HW + 0.9); return f && !made.some((m) => m.owner === c.id && m.parent === f.b) ? 'gel' : null; }
+  if (!p.onGround) return 'need-' + c.tool;
+  if (c.tool === 'gel') { const f = faceAhead(p, L, HW + 0.9); if (!f) return 'need-gel'; return made.some((m) => m.owner === c.id && m.parent === f.b) ? 'again' : 'gel'; }
   if (c.tool === 'roll') {
-    const gb = p.groundBox; if (!gb || made.some((m) => m.owner === c.id && m.parent === gb)) return null;
+    const gb = p.groundBox; if (!gb) return 'need-roll';
+    if (made.some((m) => m.owner === c.id && m.parent === gb)) return 'again';
     const ax = Math.abs(p.fx) >= Math.abs(p.fz) ? 0 : 2, sgn = Math.sign(ax === 0 ? p.fx : p.fz) || 1;
-    return (((sgn > 0 ? gb.max[ax] : gb.min[ax]) - (ax === 0 ? p.x : p.z)) * sgn <= HW + 0.7) ? 'roll' : null;
+    return (((sgn > 0 ? gb.max[ax] : gb.min[ax]) - (ax === 0 ? p.x : p.z)) * sgn <= HW + 0.7) ? 'roll' : 'need-roll';
   }
   return null;
 }
@@ -327,7 +334,7 @@ function useTool(p, L) {
   L.made = L.made || [];
   if (c.tool === 'gel') {
     const f = faceAhead(p, L, HW + 0.9); if (!f) return false;
-    if (L.made.some((m) => m.owner === c.id && m.parent === f.b)) return false;      // allerede smurt her: neste trykk slipper flasken
+    if (L.made.some((m) => m.owner === c.id && m.parent === f.b)) return 'again';    // allerede smurt her: neste trykk slipper flasken
     for (const m of L.made) if (m.owner === c.id) { const i = L.boxes.indexOf(m); if (i >= 0) L.boxes.splice(i, 1); }
     L.made = L.made.filter((m) => m.owner !== c.id);              // ett felt per flaske: nytt smør flytter det
     const o = 2 - f.ax, t = 0.12, y0 = p.y + 0.3, y1 = Math.min(y0 + P.gelH, f.b.max[1] + 0.3), cen = o === 0 ? p.x : p.z;
@@ -342,7 +349,7 @@ function useTool(p, L) {
   }
   if (c.tool === 'roll') {                                       // rull ut et bånd som henger ned over kanten foran deg
     const gb = p.groundBox; if (!gb) return false;
-    if (L.made.some((m) => m.owner === c.id && m.parent === gb)) return false;       // bandet henger allerede herfra: neste trykk slipper rullen
+    if (L.made.some((m) => m.owner === c.id && m.parent === gb)) return 'again';     // bandet henger allerede herfra: neste trykk slipper rullen
     const ax = Math.abs(p.fx) >= Math.abs(p.fz) ? 0 : 2, sgn = Math.sign(ax === 0 ? p.fx : p.fz) || 1, o = 2 - ax;
     const plane = sgn > 0 ? gb.max[ax] : gb.min[ax];
     if ((plane - (ax === 0 ? p.x : p.z)) * sgn > HW + 0.7) return false;     // ikke ved kanten
@@ -502,7 +509,7 @@ function sub(p, inp, dt, L) {
   p.lock = Math.max(0, p.lock - dt);
   p.buffer -= dt; p.coyote -= dt; p.wallT -= dt;
   p.reach = Math.max(0, p.reach - dt); p.reachCd = Math.max(0, p.reachCd - dt);
-  p.recover = Math.max(0, p.recover - dt);
+  p.recover = Math.max(0, p.recover - dt); p.toolWarn = Math.max(0, p.toolWarn - dt);
   p.landT += dt; p.pushT = Math.max(0, p.pushT - dt); p.airT = p.onGround ? 0 : p.airT + dt;
 
   let wx = inp.mx, wz = inp.mz;

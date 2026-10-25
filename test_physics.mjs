@@ -1,7 +1,7 @@
 // node tinylittleme/test_physics.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, resetBodies, drainEvents } from './physics.js';
+import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, resetBodies, drainEvents, toolHint } from './physics.js';
 import { LEVEL } from './level.js';
 
 applyPreset('klassisk');
@@ -506,7 +506,7 @@ const fwd = { ...idle, mz: 1 };
   const tap = throwWith(3);
   assert.equal(tap.p.carry, null);
   assert.ok(tap.b.min[0] < 1.6, `kort trykk = slipp foran deg (x=${tap.b.min[0]})`);
-  const weak = throwWith(18), strong = throwWith(60);
+  const weak = throwWith(26), strong = throwWith(60);
   assert.ok(weak.b.min[0] > tap.b.min[0] + 1, 'hold = kast');
   assert.ok(strong.b.min[0] > weak.b.min[0] + 1.5, `sterkere kast går lenger (${weak.b.min[0].toFixed(1)} vs ${strong.b.min[0].toFixed(1)})`);
   assert.ok(Math.abs(strong.b.min[1]) < 1e-6 && strong.b.vx === 0, 'stopper og blir liggende');
@@ -708,6 +708,25 @@ const fwd = { ...idle, mz: 1 };
   }
   assert.ok(pressedAt >= 0, 'hurk etter landing oppstod');
   assert.ok(maxY > 2, `hoppet huskes og utføres når hurken er over (maks høyde ${maxY.toFixed(2)})`);
+  applyPreset('klassisk');
+}
+
+// 30. verktøy uten riktig sted: første trykk veileder (flasken beholdes), neste trykk legger den fra seg; kort trykk (under throwMin) kaster ikke
+{
+  applyPreset('prince');
+  const flaske = { id: 'gele', kind: 'gel_bottle', tool: 'gel', material: 'plastic', weight: 'light', min: [1.0, 0, -0.2], max: [1.6, 1.4, 0.2] };
+  const L = world([flaske]);
+  const p = newPlayer(0, 0, 0); p.fx = 1; p.fz = 0;
+  const tap = (frames = 6) => { step(p, { ...idle, carryHeld: true, carryPressed: true }, 1 / 60, L); for (let i = 0; i < frames; i++) step(p, { ...idle, carryHeld: true }, 1 / 60, L); step(p, { ...idle, carryHeld: false }, 1 / 60, L); };
+  run(L, p, 10, () => idle);
+  tap(); assert.equal(p.carry?.id, 'gele', 'tok flasken');
+  run(L, p, 12, () => idle);
+  tap(10);                                                         // 10 bilder = 0,17 s: et avslappet trykk, ikke et kast
+  assert.equal(p.carry?.id, 'gele', 'ikke ved en vegg: flasken beholdes (veiledning i stedet for å slippe)');
+  assert.ok(L.events.some((e) => e.type === 'toolhint'), 'veiledning sendt');
+  assert.equal(toolHint(p, L), 'need-gel');
+  tap(10);
+  assert.equal(p.carry, null, 'neste trykk legger den fra seg');
   applyPreset('klassisk');
 }
 

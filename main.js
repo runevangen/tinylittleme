@@ -997,6 +997,7 @@ function update(dt) {
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant`); }
     else if (ev.type === 'use') { audio?.pickup(); buzz(20); }
+    else if (ev.type === 'toolhint') toast(ev.tool === 'gel' ? `Gå helt inntil en vegg og trykk ${TA} for å smøre. ${TA} igjen legger fra seg.` : `Gå helt ut til en kant og trykk ${TA} for å rulle ut. ${TA} igjen legger fra seg.`);
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); }
   }
   if (player.hardLands > pre.hard) { stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
@@ -1085,6 +1086,7 @@ function insideAny(x, y, z, m) {
 }
 
 function render(now, dt) {
+  { const tb = document.getElementById('btnCarry'); const lab = player.carry && player.charge >= P.throwMin ? 'KAST' : 'TA'; if (tb && tb.textContent !== lab) { tb.textContent = lab; tb.style.background = lab === 'KAST' ? '#c77d12cc' : ''; } }   // knappen sier KAST når holdetiden er nådd
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
   poseHero(player, now, dt, mode);
   updateArc(); syncMade(); updateLabels();
@@ -1113,7 +1115,7 @@ function render(now, dt) {
   const hint = $('hint');
   if (mode === 'play' && !won) {
     const t = player.carry ? null : findCarryTarget(player, LEVEL);
-    hint.textContent = player.carry ? (player.charge >= P.throwMin ? `Slipp ${TA}: KAST` : toolHint(player, LEVEL) === 'gel' ? `${TA}: smør gel på veggen · hold ${TA}: kast` : toolHint(player, LEVEL) === 'roll' ? `${TA}: rull ut et bånd over kanten · hold ${TA}: kast` : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `${TA}: sett på ${nice(sp.c.id)}` : `${TA}: slipp`) + ` · hold ${TA}: kast`; })()) : t ? `${TA}: ta ${nice(t.id)}` : '';
+    hint.textContent = player.carry ? (player.charge >= P.throwMin ? `Slipp ${TA}: KAST` : toolHint(player, LEVEL) === 'gel' ? `${TA}: smør gel på veggen · hold ${TA}: kast` : toolHint(player, LEVEL) === 'roll' ? `${TA}: rull ut et bånd over kanten · hold ${TA}: kast` : toolHint(player, LEVEL) === 'need-gel' ? `Gå helt inntil en vegg, så smører ${TA} gel` : toolHint(player, LEVEL) === 'need-roll' ? `Gå helt ut til en kant, så ruller ${TA} ut et bånd` : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `${TA}: sett på ${nice(sp.c.id)}` : `${TA}: slipp`) + ` · hold ${TA}: kast`; })()) : t ? `${TA}: ta ${nice(t.id)}` : '';
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;
