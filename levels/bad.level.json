@@ -1008,6 +1008,10 @@
   "sun": 2,
   "note": "Bildene er nesten helt hvite; dempet lys og litt mer nyanse gir lesbarhet i spillet"
  },
+ "audio": {
+  "reverb": 0.38,
+  "note": "Flis og porselen: mye etterklang"
+ },
  "ropes": [],
  "start": [
   3,

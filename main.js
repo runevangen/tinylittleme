@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
+import { createAudio, surfaceOf } from './audio.js';
 import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget } from './physics.js';
 
 // ?level=bad laster levels/bad.level.json (generert fra bilder), ellers det håndlagde soverommet
@@ -14,6 +15,27 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* privat modus e.l. */ } },
 };
+
+// ---------- lyd ----------
+// Web Audio kan først startes etter en brukerhandling (nettleserregel), så den opprettes ved første tastetrykk/trykk.
+let audio = null;
+let soundMuted = store.get('tlm.muted', false);
+function unlockAudio() {
+  if (!audio) {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      audio = createAudio(new Ctx(), { volume: store.get('tlm.vol', 0.7), reverb: LEVEL.audio?.reverb ?? 0.12 });
+      audio.setMuted(soundMuted);
+    } catch { audio = null; }
+  }
+  audio?.resume();
+}
+addEventListener('pointerdown', unlockAudio); addEventListener('keydown', unlockAudio);
+function toggleSound() {
+  soundMuted = !soundMuted; store.set('tlm.muted', soundMuted);
+  audio?.setMuted(soundMuted);
+  const b = document.getElementById('bSound'); if (b) { b.textContent = soundMuted ? 'Lyd av' : 'Lyd'; b.classList.toggle('on', !soundMuted); }
+}
 
 // ---------- poeng ----------
 const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2 };
@@ -311,6 +333,11 @@ function footPath(u, s, A, lift) {
   return { z: -A + 2 * A * e, y: lift * Math.sin(Math.PI * v) };
 }
 
+function footstep(side, sp) {
+  if (!audio) return;
+  audio.step(surfaceOf(player.groundBox), Math.max(0.2, Math.min(1, 0.3 + 0.7 * sp / P.speed)), side);
+}
+
 function poseHero(p, now, dt, mode) {
   const c = hero.cur, sp = Math.hypot(p.vx, p.vz), sec = now / 1000;
   const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0 };
@@ -369,6 +396,8 @@ function poseHero(p, now, dt, mode) {
   } else if (sp > 0.4 && !P.gaitMode) {
     const k = Math.min(1, sp / 5.6);
     hero.ph += dt * (2.2 + sp * 1.0);                           // takten følger farten (ikke en fast frekvens)
+    const stepIdx = Math.floor(hero.ph / Math.PI);
+    if (stepIdx !== hero.lastStep) { hero.lastStep = stepIdx; if (audio && mode === 'play') footstep(stepIdx % 2 ? 1 : -1, sp); }
     const ph = hero.ph, s = Math.sin(ph), amp = 0.5 + 0.45 * k;
     Object.assign(T, {
       hL: -s * amp, hR: s * amp,
@@ -394,6 +423,10 @@ function poseHero(p, now, dt, mode) {
   const hipY = 0.46 + hero.bob + (ikHip - (0.46 + hero.bob)) * w;
   const ikL = solveLeg(hero.legL, hipY, pathL.z, ANKLE_H + pathL.y), ikR = solveLeg(hero.legR, hipY, pathR.z, ANKLE_H + pathR.y);
   const mix = (fk, ik) => fk + (ik - fk) * w;
+  // skritt-lyd: lyd når en fot treffer gulvet (samme øyeblikk som animasjonen)
+  const plL = pathL.y < 0.002, plR = pathR.y < 0.002;
+  if (audio && mode === 'play' && gaitOn && hero.gaitWas) { if (plL && !hero.plL) footstep(-1, sp); if (plR && !hero.plR) footstep(1, sp); }
+  hero.plL = plL; hero.plR = plR; hero.gaitWas = gaitOn;
   hero.legL.top.rotation.x = mix(c.hL, ikL.theta); hero.legR.top.rotation.x = mix(c.hR, ikR.theta);
   hero.legL.mid.rotation.x = mix(c.kL, ikL.kappa); hero.legR.mid.rotation.x = mix(c.kR, ikR.kappa);
   hero.legL.footG.rotation.x = -(ikL.theta + ikL.kappa) * w; hero.legR.footG.rotation.x = -(ikR.theta + ikR.kappa) * w;
@@ -447,7 +480,7 @@ placeFlag();
 function doSave() {
   if (mode !== 'play') return toast('Gå ut av plan-/flymodus først');
   if (!player.onGround) return toast('Stå støtt for å lagre');
-  save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag();
+  save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag(); audio?.checkpoint();
   toast(`Lagringspunkt satt  −${SCORE.save} poeng`);
 }
 function goBack() {
@@ -477,6 +510,7 @@ if (levelName) {                                   // mindre rom: nærmere og me
 }
 
 function setMode(m) {
+  audio?.quietLoops();
   if (m === mode) m = 'play';
   if (mode === 'fly' && m !== 'fly') {      // lande: ikke fast inni noe
     player.vx = player.vy = player.vz = 0; player.state = 'air';
@@ -505,6 +539,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyT') restartAll();
   if (e.code === 'KeyF') carryEdge = true;
   if (e.code === 'KeyN') resetThings();
+  if (e.code === 'KeyM') toggleSound();
   if (e.code === 'KeyP' || e.code === 'Tab') setMode('plan');
   if (e.code === 'KeyG') setMode('fly');
   if (e.code === 'KeyH') $('help').classList.toggle('hide');
@@ -564,6 +599,7 @@ bindBtn('btnJump', 'jump', () => { jumpEdge = true; });
 bindBtn('btnGrab', 'grab', () => { grabEdge = true; });
 bindBtn('btnCarry', 'carry', () => { carryEdge = true; });
 $('bThings').onclick = resetThings;
+$('bSound').onclick = toggleSound; $('bSound').textContent = soundMuted ? 'Lyd av' : 'Lyd'; $('bSound').classList.toggle('on', !soundMuted);
 $('bSave').onclick = doSave; $('bBack').onclick = goBack;
 $('bPlan').onclick = () => setMode('plan'); $('bFly').onclick = () => setMode('fly');
 $('again').onclick = restartAll;
@@ -586,6 +622,8 @@ function buildPanel() {
   const p = $('panel');
   p.innerHTML = `<h3>Brett</h3>
     <select id="levelSel"><option value="">Soverom (håndlaget)</option><option value="bad">Bad (tolket fra 3 bilder)</option><option value="poc">Prøverom: flytte ting</option></select>
+    <h3 style="margin-top:14px">Lyd</h3>
+    <label>Volum <span id="v_vol"></span></label><input type="range" id="s_vol" min="0" max="1" step="0.05">
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
@@ -593,6 +631,8 @@ function buildPanel() {
     <div id="sliders"></div>
     <div class="row"><button id="resetPreset">Nullstill</button><button id="closePanel">Lukk</button></div>
     <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. Hold C for å gå forsiktig.<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke REKK UT (Shift/E) i riktig øyeblikk for å gripe kant eller tau.</small>`;
+  $('s_vol').value = store.get('tlm.vol', 0.7); $('v_vol').textContent = (+$('s_vol').value).toFixed(2);
+  $('s_vol').oninput = (e) => { const v = +e.target.value; store.set('tlm.vol', v); audio?.setVolume(v); $('v_vol').textContent = v.toFixed(2); };
   $('levelSel').value = levelName || '';
   $('levelSel').onchange = (e) => { location.search = e.target.value ? `?level=${e.target.value}` : ''; };
   $('presetSel').value = presetName;
@@ -655,32 +695,55 @@ function update(dt) {
     walk: held('KeyC', 'AltLeft', 'AltRight'),
   };
   jumpEdge = grabEdge = carryEdge = false;
+  const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
   step(player, inp, dt, LEVEL);
+  audioFrame(pre, dt);
 
-  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); }
+  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); audio?.checkpoint(); }
   if (player.y < LEVEL.deathY) { resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
-    if (ev.type === 'broke') { stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
-    else if (ev.type === 'lost') toast(`${ev.id} forsvant`);
+    if (ev.type === 'broke') { audio?.shatter(); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
+    else if (ev.type === 'lost') { audio?.splash('pit'); toast(`${ev.id} forsvant`); }
   }
   if (player.crushed) {
-    const id = player.crushed; player.crushed = null;
+    const id = player.crushed; player.crushed = null; audio?.crush();
     resetPlayer(player, ...save.pos); stats.respawns++;
     toast(`Klemt av ${id}!  −${SCORE.respawn} poeng`);
   }
   const hz = inHazard(LEVEL, player);
   if (hz) {
+    audio?.splash(hz.type === 'flush' ? 'flush' : 'pit');
     resetPlayer(player, ...(hz.type === 'flush' ? LEVEL.start : save.pos)); stats.respawns++;
     toast(`${hz.message || 'Fare!'}  −${SCORE.respawn} poeng`);
   }
 
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
-    won = true;
+    won = true; audio?.win();
     $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
     $('win').classList.remove('hide');
   }
+}
+
+// lyder som følger av hva som skjedde i dette bildet
+function audioFrame(pre, dt) {
+  if (!audio) return;
+  const p = player, sp = Math.hypot(p.vx, p.vz), surf = surfaceOf(p.groundBox);
+  if (pre.windup === 0 && p.windup > 0) audio.windup();                                       // tar sats
+  if (pre.onGround && !p.onGround && p.vy > 5) audio.jump();                                  // avspark
+  if (!pre.onGround && p.onGround && pre.vy < -3) audio.land(surf, -pre.vy);                  // landing
+  if (pre.state !== 'hang' && p.state === 'hang') audio.grab();
+  if (pre.state !== 'swing' && p.state === 'swing') audio.grab();
+  if (pre.state !== 'mantle' && p.state === 'mantle') audio.mantle();
+  if (!pre.reach && p.reach > 0) audio.reach();
+  if (!pre.carry && p.carry) audio.pickup();
+  if (pre.carry && !p.carry) audio.drop(surf);
+  audio.fall(p.state === 'air' && p.vy < 0 ? -p.vy : 0);                                      // fallvind
+  audio.skid(p.skid ? Math.min(1, sp / P.speed) : 0);
+  let moved = 0; (LEVEL.bodies || []).forEach((b, i) => { if (b.alive && !b.carried) moved += Math.abs(b.min[0] + b.min[2] - pre.bodies[i]); });
+  audio.scrape(Math.min(1, moved / (dt * 3)));                                               // dytting
+  audio.tick(dt, { active: true, speed01: sp / P.speed, climbing: ['hang', 'mantle', 'swing'].includes(p.state) });
 }
 
 // ---------- tegning ----------
@@ -764,4 +827,4 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-window.__game = { player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

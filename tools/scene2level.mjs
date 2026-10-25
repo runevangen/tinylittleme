@@ -241,7 +241,7 @@ const solvable = finalSeen.has(goalIdx());
 // ---- 4. skriv ---------------------------------------------------------------
 const level = {
   name: scene.name,
-  boxes, movables, decor, hazards, holds, windows, sun, look: scene.look,
+  boxes, movables, decor, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ropes: [],
   start, goal,
   deathY: -15,

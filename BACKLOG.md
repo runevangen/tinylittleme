@@ -14,7 +14,7 @@ Gjenstår / til sparring:
 4. **Boten og puslespill:** boten flytter ikke ting. Hvordan validere at et brett er løsbart *ved å flytte ting*? Forslag: egne «lovlige plasseringer» per ting.
 5. **Friksjon:** en ting på en annen følger ikke med når du dytter. Skal den det (realistisk, men fjerner fall-fellen)?
 6. **Tipping og rotasjon** (ikke bare bokser).
-7. **Lyd** og bedre skår/effekter.
+7. Bedre skår/effekter.
 
 ## Bevegelse og spillfølelse
 - [ ] **Klatring (B):** `grip`/`slick`/`soft`-overflater, stamina, sidelengs bevegelse langs stang, tak fra bildene (knotter, håndkle, dusjkurv, tannbørste). Brettet merker allerede `holds`. Se `docs/BADET.md`.
@@ -25,6 +25,12 @@ Gjenstår / til sparring:
 - [ ] Finpuss av Prince: kant-shimmy (gå sidelengs i hengende), rulle/ta imot ved landing, forsiktig gange som aldri faller av kanten, tau-sving som føles tyngre.
 - [ ] Kamera: valgfri automatisk dreining etter bevegelsesretning, evt. fastere kameravinkler per brett.
 - [ ] Bedre gåanimasjon (sett bare på stillbilder).
+
+## Lyd
+- [x] Første lydmotor (syntetisert): skritt per underlag, pust, tar sats, avspark, fall, landing, hendelser. Trenger lytting.
+- [ ] Ekte lydopptak (foley) og flere varianter per underlag.
+- [ ] Romlyd/ambiens per rom (dryppende kran, vifte), og 3D-lyd.
+- [ ] Musikk, mikser, visuell støtte for hørselshemmede.
 
 ## Brett og innhold
 - [ ] Flytte motgiften til toppen av speilskapet når klatring finnes.
