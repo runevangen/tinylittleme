@@ -2,6 +2,20 @@
 
 Status: `[ ]` ikke startet · `[~]` påbegynt · `[x]` ferdig. Nyeste idéer øverst i hver gruppe.
 
+## Fra spill-research (`docs/DESIGNLAERDOM.md`, v0.27)
+Rangert etter verdi/innsats i rapporten. Kildegrunnlaget er svakt (søkesammendrag), så tallverdier er startverdier for tuning.
+- [ ] **Grep-kode:** én konsekvent visuell kode for grep-flater, tydelig markering av glatte flater, og figuren rekker ut hånden når grep er innen rekkevidde.
+- [ ] **Tilgivelse for mobilinput:** sjekk/legg til coyote-tid (ca. 0,10–0,18 s) og hoppbuffer (ca. 0,12–0,20 s) også under hurk/landing, bredere auto-kantgrep, REKK UT snapper til nærmeste grepspunkt.
+- [ ] **Stamina i figuren:** skjelving/farge ved lite igjen (fra ca. 25–30 %), tom stamina = kontrollert skli (0,3–0,5 s), tau/bånd uten stamina-kostnad.
+- [ ] **Billig utvei:** auto-respawn av ting som havner utilgjengelig, nullstill (N) gratis når en ting er fysisk fastlåst, og trygg autolagring av grunnfremgang (lagring til 25 poeng er risikabelt for korte mobiløkter).
+- [ ] **Fallgrenser varslet:** landingsmarkør/kontaktskygge, vindlyd og FOV-økning mot terskelen, tre tydelige landingsklasser.
+- [ ] **Bot begrenset til menneskelige evner**, to-nivå validering (streng/løs), viser ruten, og feil på lange ruter går til menneskelig gjennomgang. Avgjør om veggsprang skal være et tillatt verktøy eller blokkeres.
+- [ ] **Ett verktøy per rom** og hint etter 3 feil på samme sted; første rom per mekanikk uten poengtap.
+- [ ] **Touch:** kast med dra–slipp og snap, kameraassistanse, kontroller minst 44 pt, presets for tilgjengelighet.
+- [ ] **Personvern:** del bare geometri/objektliste, slett bilder etter generering, private brett som standard, overlay av AI-tolkningen på originalbildet før publisering.
+- [ ] **Kombineringsmotor** som tabell over egenskaper og regler (BotW/Scribblenauts), testet i ett rom først; taubane som forhåndsdefinert bane.
+- [ ] **Verifiser** hullene i kapittel 5 av rapporten (staminatall, fallterskler, coyote-verdier, single-slot) mot primærkilder når nettilgang finnes.
+
 ## Idéer til sparring
 
 ### [~] Flytte objekter som hjelpemiddel (og risikoen for at de faller)
