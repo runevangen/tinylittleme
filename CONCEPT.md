@@ -54,7 +54,14 @@ Tre innstillinger (⚙ i spillet; alle verdier kan justeres live og huskes i net
 Hvorfor «Prince»: referansen er Prince of Persia: vekt, tid og forpliktelse (og ikke en figur som flyter). Du kan ikke snu på stedet, hopp må planlegges, og feil koster tid. Tilbakemeldingen var at figuren «reagerte for fort fram og tilbake» og ga sjøsyke. Årsakene som ble funnet: nesten umiddelbar fart per akse, blikkretningen som snudde med en gang, kameraet som fulgte hvert hopp, strekk/klem av figuren, og en hektisk gangsyklus som gikk i fast takt.
 Veggsprang utløses bare når spilleren faller og styrer inn mot veggen, ellers stjeler det hoppet (oppdaget i test).
 
-**Animasjon og kamera (gjelder alle innstillinger):** gangsyklusen følger farten, kroppen lener seg ved akselerasjon og bremsing, skrider bakoverlent når du snur, snur gradvis, har hurk før hopp og ved landing. Kameraet følger rolig og holder høyden stabil under hopp (figuren holdes alltid i bildet). Ingen strekk/klem.
+**Figur og animasjon (andre runde med tilbakemelding: «armene skjelver», «stiv pinne»):**
+- *Skjelvingen:* kom fra pekeskjermen. En tommel som bare hviler på stikken ga verdier rundt 0,1–0,3, som igjen ga stadige mikroskritt og armsving. Rettet med dødsone på stikken (0,22), hysterese på gange-input (starter ved 0,3, fortsetter ned til 0,12), og armsving som vokser jevnt med farten i stedet for å slå inn ved en terskel. Målt: en urolig tommel gir null bevegelse og ca. 3° armsvev.
+- *Stiv pinne:* kroppen var ett stykke. Nå har den bekken og bryst som kan bøye og vri seg, skuldre og hender, overkroppen vrir seg motsatt hoftene i gange, og hodet ser seg litt rundt i hvile (pust i brystet).
+- *Hopp som en bevegelse (ikke statiske poser):* hurk (hoftene synker 0,17) med armene bak → avspark med strakt kropp og armene opp → knærne trekkes opp mot toppen (løpehopp: ett bein frem, ett bak) → bena strekkes ned mot landing, armene ut for balanse.
+- *Landing:* hoftene synker og kneet bøyes etter fallstyrke (liten landing 0,03, hard 0,14 og kne 1,7 rad), overkroppen lener seg frem, armene frem, og han reiser seg igjen. Samme IK som i gange, så føttene blir stående.
+- *Andre situasjoner:* bærer med armene foran seg, lener seg inn når han dytter, hang og sving med litt pendelbevegelse.
+
+**Kamera og gjenstående animasjon (gjelder alle innstillinger):** gangsyklusen følger farten, kroppen lener seg ved akselerasjon og bremsing, skrider bakoverlent når du snur, snur gradvis, har hurk før hopp og ved landing. Kameraet følger rolig og holder høyden stabil under hopp (figuren holdes alltid i bildet). Ingen strekk/klem.
 
 ## Løse ting
 Dytte, bære, stable, knuse, klemt: se [docs/FLYTTBARE_TING.md](docs/FLYTTBARE_TING.md). Prøverom: `?level=poc`.

@@ -405,7 +405,43 @@ const fwd = { ...idle, mz: 1 };
   assert.ok(Math.abs(p.y - 4.5) < 0.01 && p.state === 'ground', `oppe (y=${p.y.toFixed(2)}, ${p.state})`);
 }
 
+// 31. landing registreres med styrke og tid (brukes til å animere demping)
+{
+  const L = emptyL(), p = newPlayer(0, 8, 0);
+  for (let i = 0; i < 200 && !p.onGround; i++) step(p, idle, 1 / 60, L);
+  const expect = Math.sqrt(2 * -P.gravity * 8);
+  assert.ok(Math.abs(p.landImpact - expect) < 1.5 && p.landT < 0.05, `landing ${p.landImpact.toFixed(1)} vs ${expect.toFixed(1)}`);
+  run(L, p, 30, () => idle);
+  assert.ok(p.landT > 0.45, 'tid siden landing teller opp');
+  assert.ok(p.airT === 0, 'tid i lufta nullstilles på bakken');
+}
+
+// 32. dytting registreres (animasjon: lener seg inn)
+{
+  const L = world([mv('k', 'medium', 1.5, 3.5, 0, 2, -1, 1)]);
+  const p = newPlayer(0, 0, 0); p.fx = 1; p.fz = 0;
+  run(L, p, 10, () => idle);
+  assert.ok(p.pushT === 0, 'ikke dyttet ennå');
+  run(L, p, 40, () => ({ ...idle, mx: 1 }));
+  assert.ok(p.pushT > 0, 'dytter');
+}
+
+// 33. en tommel som hviler på stikken gir ingen mikroskritt; en tydelig retning starter gange, og svak retning holder den gående
+{
+  const L = emptyL();
+  const p = stand();
+  run(L, p, 10, () => idle);
+  run(L, p, 120, () => ({ ...idle, mz: 0.2 }));
+  assert.ok(Math.abs(p.z) < 0.01, `lett berøring flytter ikke (z=${p.z.toFixed(3)})`);
+  run(L, p, 40, () => ({ ...idle, mz: 0.6 }));
+  assert.ok(p.z > 0.1, 'tydelig retning starter gange');
+  const z1 = p.z;
+  run(L, p, 40, () => ({ ...idle, mz: 0.2 }));
+  assert.ok(p.z > z1 + 0.1, 'holder seg i gang når input faller til svak verdi (hysterese)');
+}
+
 console.log('alle fysikktester grønne');
+
 
 
 

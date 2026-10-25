@@ -24,7 +24,10 @@ Gjenstår / til sparring:
 - [x] Gange med skritt og fast fot (IK): første versjon. Trenger spilletest.
 - [ ] Finpuss av Prince: kant-shimmy (gå sidelengs i hengende), rulle/ta imot ved landing, forsiktig gange som aldri faller av kanten, tau-sving som føles tyngre.
 - [ ] Kamera: valgfri automatisk dreining etter bevegelsesretning, evt. fastere kameravinkler per brett.
-- [ ] Bedre gåanimasjon (sett bare på stillbilder).
+- [x] Figur med bøyelig overkropp, hopp/fall/landing som bevegelse, levende hvile. Første versjon. Trenger spilletest.
+- [ ] Fingre og hender som tar tak, ansikt (øyne som ser og blunker), klær som beveger seg (hår, jakke).
+- [ ] Snu på stedet med små skritt (nå roterer bare kroppen), og tråkke over små hindre.
+- [ ] Bedre hang/sving/veggglid (ofte bare enkle poser ennå).
 
 ## Lyd
 - [x] Første lydmotor (syntetisert): skritt per underlag, pust, tar sats, avspark, fall, landing, hendelser. Trenger lytting.

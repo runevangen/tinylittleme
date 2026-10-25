@@ -277,24 +277,28 @@ function buildHero() {
     eye: new THREE.MeshBasicMaterial({ color: 0x151515 }),
   };
   const cap = (r, l, mat) => { const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, l, 6, 12), mat); m.castShadow = true; return m; };
-  const limb = (up, lo, r, mat, hand) => {
+  const limb = (up, lo, r, mat) => {
     const top = new THREE.Group(), u = cap(r, up, mat); u.position.y = -(up / 2 + r * 0.6); top.add(u);
     const mid = new THREE.Group(); mid.position.y = -(up + r * 1.2); top.add(mid);
     const l = cap(r * 0.9, lo, mat); l.position.y = -(lo / 2 + r * 0.6); mid.add(l);
     return { top, mid, end: -(lo + r * 1.2), l1: up + r * 1.2, l2: lo + r * 1.2 };
   };
 
+  // ryggrad i to deler: bekken (følger hoftene) og bryst (kan bøye og vri seg), så kroppen ikke er én stiv pinne
   const body = new THREE.Group(); body.position.y = 0.46; rig.add(body);
-  const torso = cap(0.085, 0.2, M.shirt); torso.scale.set(1.25, 1, 0.8); torso.position.y = 0.14; body.add(torso);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.05, 10), M.skin); neck.position.y = 0.285; body.add(neck);
-  const head = new THREE.Group(); head.position.y = 0.37; body.add(head);
+  const pelvis = cap(0.08, 0.05, M.pants); pelvis.scale.set(1.4, 1, 0.9); pelvis.position.y = 0.0; body.add(pelvis);
+  const chest = new THREE.Group(); chest.position.y = 0.09; body.add(chest);
+  const torso = cap(0.088, 0.17, M.shirt); torso.scale.set(1.25, 1, 0.8); torso.position.y = 0.09; chest.add(torso);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.05, 10), M.skin); neck.position.y = 0.195; chest.add(neck);
+  const head = new THREE.Group(); head.position.y = 0.28; chest.add(head);
   const skull = new THREE.Mesh(new THREE.SphereGeometry(0.075, 20, 16), M.skin); skull.castShadow = true; head.add(skull);
   const hair = new THREE.Mesh(new THREE.SphereGeometry(0.081, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), M.hair); hair.rotation.x = -0.35; hair.position.y = 0.006; head.add(hair);
   for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.01, 8, 8), M.eye); e.position.set(s * 0.028, 0.01, 0.069); head.add(e); }
 
   const arm = (s) => {
-    const a = limb(0.09, 0.09, 0.03, M.shirt); a.top.position.set(s * 0.125, 0.25, 0); body.add(a.top);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 8), M.skin); hand.position.y = a.end - 0.01; a.mid.add(hand);
+    const a = limb(0.09, 0.09, 0.03, M.shirt); a.top.position.set(s * 0.125, 0.16, 0); chest.add(a.top);
+    const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 10), M.shirt); shoulder.castShadow = true; a.top.add(shoulder);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 8), M.skin); hand.scale.set(0.9, 1.15, 0.75); hand.position.y = a.end - 0.012; a.mid.add(hand);
     return a;
   };
   const leg = (s) => {
@@ -305,32 +309,34 @@ function buildHero() {
     return l;
   };
   const L = { armL: arm(-1), armR: arm(1), legL: leg(-1), legR: leg(1) };
-  const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, hy: 0 };
-  return { root, body, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null, ikW: 0, hipY: 0.46 };
+  const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0 };
+  return { root, body, chest, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null, ikW: 0, hipY: 0.46 };
 }
 const hero = buildHero();
 hero.root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 scene.add(hero.root);
 
-function lerpAngle(a, b, k) { let d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * k; }
-
 // To-ledds bein-IK i sagittalplanet: gitt hoftehøyde og ankelens posisjon (z fremover, y opp) → hofte- og kneledd.
 const ANKLE_H = 0.037;                       // ankel over såle (rig-lokalt)
 function solveLeg(leg, hipY, z, ankleY) {
   const l1 = leg.l1, l2 = leg.l2, dy = ankleY - hipY;
-  const d = Math.min(Math.hypot(z, dy), l1 + l2 - 1e-4);
+  const d = Math.min(Math.max(Math.hypot(z, dy), Math.abs(l1 - l2) + 1e-3), l1 + l2 - 1e-4);
   const clamp1 = (v) => Math.max(-1, Math.min(1, v));
   const kappa = Math.PI - Math.acos(clamp1((l1 * l1 + l2 * l2 - d * d) / (2 * l1 * l2)));   // knebøy
   const beta = Math.acos(clamp1((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d)));
   const theta = Math.atan2(-z, -dy) - beta;                                                  // lår (negativ = fremover)
   return { theta, kappa };
 }
+const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+const smooth3 = (x) => x * x * (3 - 2 * x);
 // Fotbane over ett skrittløp (u = 0..1). Standfasen går bakover like fort som kroppen går fremover, så foten står fast.
 function footPath(u, s, A, lift) {
   const um = (u + s / 2) % 1;
-  if (um < s) return { z: A - 2 * A * (um / s), y: 0 };
-  const v = (um - s) / (1 - s), e = v * v * (3 - 2 * v);
-  return { z: -A + 2 * A * e, y: lift * Math.sin(Math.PI * v) };
+  if (um < s) return { z: A - 2 * A * (um / s), y: 0, pitch: 0 };
+  const v = (um - s) / (1 - s), e = smooth3(v);
+  // tåen peker litt ned når foten løftes og litt opp rett før hælen treffer
+  const pitch = 0.35 * smooth3(clampN(v / 0.2, 0, 1)) * (1 - smooth3(clampN((v - 0.2) / 0.4, 0, 1))) - 0.3 * smooth3(clampN((v - 0.7) / 0.3, 0, 1));
+  return { z: -A + 2 * A * e, y: lift * Math.sin(Math.PI * v), pitch };
 }
 
 function footstep(side, sp) {
@@ -338,102 +344,141 @@ function footstep(side, sp) {
   audio.step(surfaceOf(player.groundBox), Math.max(0.2, Math.min(1, 0.3 + 0.7 * sp / P.speed)), side);
 }
 
+const DIP_MAX = 0.17;   // hvor mye hoftene kan synke i hurk (landing/forberedelse)
+
 function poseHero(p, now, dt, mode) {
   const c = hero.cur, sp = Math.hypot(p.vx, p.vz), sec = now / 1000;
-  const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0 };
+  const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0 };
   let bob = 0;
 
   // akselerasjon langs blikkretningen: fremover når du setter fart, bakover når du bremser
   if (!hero.pv) hero.pv = [p.vx, p.vz];
   const acc = ((p.vx - hero.pv[0]) * p.fx + (p.vz - hero.pv[1]) * p.fz) / Math.max(dt, 1e-3);
   hero.pv = [p.vx, p.vz];
-  hero.accLean += (Math.max(-0.3, Math.min(0.3, acc * 0.012)) - hero.accLean) * (1 - Math.pow(0.02, dt));
-  const smooth = (x) => x * x * (3 - 2 * x);
+  hero.accLean += (clampN(acc * 0.012, -0.3, 0.3) - hero.accLean) * (1 - Math.exp(-dt / 0.15));
 
   // fotbaner fra fysikkens skrittfase (samme distanse som kroppen faktisk har gått → ingen gliding)
-  // standfasen kan ikke strekke seg lengre enn bena rekker: A_MAX bestemmer hvor mye av løpet foten er i bakken
-  const A_MAX = 0.25, kSp = Math.min(1, sp / P.speed), SL = 2 * p.stepLen;
+  const A_MAX = 0.25, kSp = clampN(sp / P.speed, 0, 1), SL = 2 * p.stepLen;
   const sFrac = Math.max(0.28, Math.min(0.64, 2 * A_MAX / SL)), A = sFrac * SL / 2, lift = 0.025 + 0.06 * kSp;
-  const u = (p.gait / (Math.PI * 2)) % 1, idleW = Math.max(0, Math.min(1, 1 - sp / 0.35));
+  const u = (p.gait / (Math.PI * 2)) % 1, idleW = clampN(1 - sp / 0.35, 0, 1);
   const pathL = footPath(u, sFrac, A, lift), pathR = footPath((u + 0.5) % 1, sFrac, A, lift);
-  for (const f of [pathL, pathR]) { f.z *= 1 - idleW; f.y *= 1 - idleW; }
+  for (const f of [pathL, pathR]) { f.z *= 1 - idleW; f.y *= 1 - idleW; f.pitch *= 1 - idleW; }
   const gaitN = { L: pathL.z / (A + 1e-6), R: pathR.z / (A + 1e-6) };
   pathL.z /= RIG_S; pathR.z /= RIG_S;          // rig-lokalt: figuren er skalert, så foten må flyttes tilsvarende mindre
-  const gaitOn = P.gaitMode && mode !== 'fly' && p.state === 'ground' && p.onGround && !p.windup && !p.recover && !p.skid;
+  const gaitOn = P.gaitMode && mode !== 'fly' && p.state === 'ground' && p.onGround && !p.skid;
+
+  // hurk: forberedelse før hopp (armene bak) og demping etter landing (armene frem). 0 = oppreist, 1 = dypt.
+  const wDF = p.windup > 0 ? smooth3(clampN((P.jumpWindup - p.windup) / 0.07, 0, 1)) : 0;
+  const li = clampN((p.landImpact - 3) / 18, 0, 1);
+  const lDF = li * (p.landT < 0.06 ? p.landT / 0.06 : Math.exp(-(p.landT - 0.06) * 5.5));
+  const rDF = p.recover > 0 ? 0.9 * smooth3(clampN(p.recover / 0.15, 0, 1)) : 0;
+  const df = p.onGround ? Math.max(wDF, lDF, rDF) : 0;
+  const idleNow = sp < 0.15 && p.onGround && !p.windup && df < 0.05;
 
   if (mode === 'fly') {
-    Object.assign(T, { lean: 0.9, aL: -2.6, aR: -2.6, eL: 0, eR: 0, hL: 0.3, hR: 0.1, kL: 0.2, kR: 0.5 });
+    Object.assign(T, { lean: 0.9, aL: -2.6, aR: -2.6, eL: 0, eR: 0, hL: 0.3, hR: 0.1, kL: 0.2, kR: 0.5, chest: 0.1 });
   } else if (p.state === 'mantle' && p.mantle) {
-    const u = Math.min(1, p.mantle.t / p.mantle.dur), pull = smooth(Math.min(1, u / 0.6));
+    const uu = Math.min(1, p.mantle.t / p.mantle.dur), pull = smooth3(Math.min(1, uu / 0.6)), over = smooth3(Math.max(0, (uu - 0.6) / 0.4));
     Object.assign(T, {
       aL: -3.05 + 2.3 * pull, aR: -3.05 + 2.3 * pull, eL: -0.1 - 0.7 * pull, eR: -0.1 - 0.7 * pull,
-      hL: -0.2 - 0.9 * Math.sin(pull * Math.PI), hR: 0.1, kL: 0.4 + 0.9 * Math.sin(pull * Math.PI), kR: 0.3, lean: 0.1 + 0.3 * pull * (1 - smooth(Math.max(0, (u - 0.6) / 0.4))),
+      hL: -0.2 - 0.9 * Math.sin(pull * Math.PI), hR: 0.1, kL: 0.4 + 0.9 * Math.sin(pull * Math.PI), kR: 0.3,
+      lean: 0.1 + 0.3 * pull * (1 - over), chest: 0.15 * pull * (1 - over), hp: -0.25 * (1 - over), twist: 0.08 * Math.sin(pull * Math.PI),
     });
     bob = -0.06 * pull;
   } else if (p.state === 'hang') {
-    const sway = Math.sin(sec * 1.6) * 0.1;
-    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.1, eR: -0.1, hL: 0.1 + sway, hR: 0.2 - sway, kL: 0.3, kR: 0.15 });
+    const sway = Math.sin(sec * 1.5);
+    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: 0.12 + sway * 0.1, hR: 0.22 - sway * 0.1, kL: 0.3, kR: 0.15, lean: sway * 0.03, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
   } else if (p.state === 'swing') {
-    const k = Math.max(-0.8, Math.min(0.8, (p.vx * p.fx + p.vz * p.fz) * 0.1));
-    Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: -0.5 * k + 0.2, hR: -0.5 * k + 0.4, kL: 0.5, kR: 0.8, lean: -0.25 * k });
+    const k = clampN((p.vx * p.fx + p.vz * p.fz) * 0.1, -0.8, 0.8);
+    Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: -0.5 * k + 0.2, hR: -0.5 * k + 0.4, kL: 0.5, kR: 0.8, lean: -0.25 * k, chest: -0.1 * k, hp: -0.15 });
   } else if (p.reach > 0) {
-    Object.assign(T, { aL: -2.75, aR: -3.1, eL: -0.05, eR: -0.05, hL: -0.6, hR: 0.3, kL: 1.0, kR: 0.2, lean: 0.15 });
-  } else if (p.windup > 0) {                                    // hurk før avspark
-    Object.assign(T, { aL: 0.6, aR: 0.6, zL: 0.2, zR: -0.2, eL: -0.3, eR: -0.3, hL: -0.7, hR: -0.65, kL: 1.3, kR: 1.25, lean: 0.35 });
-    bob = -0.16;
+    Object.assign(T, { aL: -2.75, aR: -3.1, eL: -0.05, eR: -0.05, hL: -0.6, hR: 0.3, kL: 1.0, kR: 0.2, lean: 0.15, chest: 0.12, hp: -0.2 });
   } else if (!p.onGround) {
-    if (p.sliding) Object.assign(T, { aL: -2.8, aR: -2.8, eL: -0.3, eR: -0.3, hL: -0.2, hR: 0.1, kL: 0.6, kR: 0.7 });
-    else if (p.vy > 0) Object.assign(T, { aL: -1.2, aR: -0.5, zL: 0.35, zR: -0.35, eL: -0.6, eR: -0.4, hL: -0.9, hR: 0.2, kL: 1.2, kR: 0.5, lean: 0.12 });
-    else Object.assign(T, { aL: -0.4, aR: -0.4, zL: 0.95, zR: -0.95, eL: -0.2, eR: -0.2, hL: -0.35, hR: 0.2, kL: 0.5, kR: 0.3, lean: 0.05 });
-  } else if (p.recover > 0) {                                   // hurk etter høyt fall
-    Object.assign(T, { aL: -0.5, aR: -0.5, zL: 0.4, zR: -0.4, eL: -0.4, eR: -0.4, hL: -0.65, hR: -0.55, kL: 1.25, kR: 1.1, lean: 0.4 });
-    bob = -0.14;
+    if (p.sliding) {
+      Object.assign(T, { aL: -2.8, aR: -2.8, eL: -0.3, eR: -0.3, hL: -0.2, hR: 0.1, kL: 0.6, kR: 0.7, lean: 0.05, hp: -0.15 });
+    } else {
+      // hopp/fall som en bevegelse: strekk ved avspark → trekke opp til toppen → strekke bena ned mot landing
+      const r = clampN(p.vy / P.jump, -1.6, 1);                                   // 1 = avspark, 0 = toppunkt, <0 = faller
+      const run = clampN(sp / (P.speed * 1.3), 0, 1);                              // løpehopp (skritt) vs stående hopp
+      const e = p.vy > 0 && p.airT < 0.22 ? 1 - p.airT / 0.22 : 0;                // avsparkets strekk
+      const fallK = smooth3(clampN(-r / 1.1, 0, 1));
+      const tuck = smooth3(1 - clampN(r, 0, 1)) * (1 - fallK) * (1 - e);
+      const fast = clampN((-p.vy - 8) / 14, 0, 1);                                // hardt fall: armene opp
+      const hL = lerpN(-0.95, -1.05, run) * tuck, hR = lerpN(-0.95, 0.55, run) * tuck;
+      const kL = lerpN(1.35, 0.45, run) * tuck, kR = lerpN(1.35, 1.2, run) * tuck;
+      T.hL = hL + 0.08 * e - (0.3 + 0.15 * run) * fallK; T.hR = hR + 0.08 * e - 0.08 * fallK;
+      T.kL = kL * (1 - fallK) + 0.3 * fallK; T.kR = kR * (1 - fallK) + 0.22 * fallK; T.fp = 0.75 * e + 0.2 * tuck;
+      T.aL = -3.0 * e - 0.9 * tuck - 1.2 * fallK - 0.9 * fast; T.aR = T.aL * lerpN(0.9, 0.75, run);
+      T.zL = 0.2 + 0.55 * tuck + 0.5 * fallK; T.zR = -(0.2 + 0.5 * tuck + 0.55 * fallK);
+      T.eL = T.eR = -0.35 - 0.5 * tuck - 0.2 * fallK;
+      T.lean = 0.06 + 0.12 * run * (1 - fallK) - 0.04 * e; T.chest = 0.05 + 0.1 * tuck; T.hp = -0.1 - 0.1 * fast;
+      T.twist = 0.12 * run * tuck;
+    }
   } else if (p.skid) {                                          // du skrider mens du snur: lent bakover, bein foran
-    Object.assign(T, { aL: -0.9, aR: -0.4, zL: 0.5, zR: -0.5, eL: -0.3, eR: -0.3, hL: -0.55, hR: 0.45, kL: 0.2, kR: 0.6, lean: -0.3 });
-  } else if (P.gaitMode && sp > 0.15) {
-    const k = Math.min(1, sp / P.speed), amp = 0.3 + 0.45 * k;
-    Object.assign(T, { aL: -amp * gaitN.R, aR: -amp * gaitN.L, eL: -0.25 - 0.45 * k, eR: -0.25 - 0.45 * k, lean: 0.04 + 0.1 * k });
-  } else if (sp > 0.4 && !P.gaitMode) {
-    const k = Math.min(1, sp / 5.6);
-    hero.ph += dt * (2.2 + sp * 1.0);                           // takten følger farten (ikke en fast frekvens)
-    const stepIdx = Math.floor(hero.ph / Math.PI);
-    if (stepIdx !== hero.lastStep) { hero.lastStep = stepIdx; if (audio && mode === 'play') footstep(stepIdx % 2 ? 1 : -1, sp); }
-    const ph = hero.ph, s = Math.sin(ph), amp = 0.5 + 0.45 * k;
-    Object.assign(T, {
-      hL: -s * amp, hR: s * amp,
-      kL: Math.max(0, Math.sin(ph + 1.6)) * (0.5 + 0.7 * k), kR: Math.max(0, Math.sin(ph + 1.6 + Math.PI)) * (0.5 + 0.7 * k),
-      aL: s * (0.35 + 0.5 * k), aR: -s * (0.35 + 0.5 * k), eL: -0.25 - 0.45 * k, eR: -0.25 - 0.45 * k, lean: 0.06 + 0.1 * k,
-    });
-    bob = Math.abs(Math.cos(ph)) * 0.02 * k;
+    Object.assign(T, { aL: -0.9, aR: -0.4, zL: 0.5, zR: -0.5, eL: -0.3, eR: -0.3, hL: -0.55, hR: 0.45, kL: 0.2, kR: 0.6, lean: -0.3, chest: -0.08 });
   } else {
-    const br = Math.sin(sec * 1.6) * 0.012; T.aL = br; T.aR = -br; T.lean = br;
+    if (P.gaitMode && sp > 0.15) {
+      const k = kSp, amp = (0.3 + 0.45 * k) * smooth3(clampN(sp / 0.8, 0, 1));    // armsving vokser jevnt med farten (ikke en terskel)
+      Object.assign(T, { aL: -amp * gaitN.R, aR: -amp * gaitN.L, eL: -0.25 - 0.45 * k, eR: -0.25 - 0.45 * k, lean: 0.04 + 0.1 * k, chest: 0.03 + 0.07 * k, hp: -0.04 * k });
+      T.twist = -0.14 * k * (gaitN.L - gaitN.R) / 2;                                // overkroppen vrir seg motsatt hoftene
+    } else if (sp > 0.4 && !P.gaitMode) {
+      const k = Math.min(1, sp / 5.6);
+      hero.ph += dt * (2.2 + sp * 1.0);                         // takten følger farten (ikke en fast frekvens)
+      const stepIdx = Math.floor(hero.ph / Math.PI);
+      if (stepIdx !== hero.lastStep) { hero.lastStep = stepIdx; if (audio && mode === 'play') footstep(stepIdx % 2 ? 1 : -1, sp); }
+      const ph = hero.ph, sn = Math.sin(ph), amp = 0.5 + 0.45 * k;
+      Object.assign(T, {
+        hL: -sn * amp, hR: sn * amp,
+        kL: Math.max(0, Math.sin(ph + 1.6)) * (0.5 + 0.7 * k), kR: Math.max(0, Math.sin(ph + 1.6 + Math.PI)) * (0.5 + 0.7 * k),
+        aL: sn * (0.35 + 0.5 * k), aR: -sn * (0.35 + 0.5 * k), eL: -0.25 - 0.45 * k, eR: -0.25 - 0.45 * k, lean: 0.06 + 0.1 * k, chest: 0.04, twist: -0.1 * sn * k,
+      });
+      bob = Math.abs(Math.cos(ph)) * 0.02 * k;
+    } else if (idleNow) {                                       // hvile: pust i brystet, litt armsvev, hodet ser seg rundt
+      const br = Math.sin(sec * 1.7);
+      T.chest = br * 0.02; T.lean = br * 0.008;
+      T.aL = Math.sin(sec * 0.9) * 0.025 + br * 0.01; T.aR = Math.sin(sec * 0.9 + 1.3) * 0.025 - br * 0.01;
+      T.hy = Math.sin(sec * 0.43) * 0.28 + Math.sin(sec * 0.17) * 0.18; T.hp = Math.sin(sec * 0.29) * 0.07;
+    }
+    if (df > 0.01) {                                            // hurk: lent frem, armene bak (forberedelse) eller frem (landing)
+      T.lean += 0.42 * df; T.chest += 0.14 * df; T.zL += 0.15 * df; T.zR -= 0.15 * df;
+      T.aL += 0.6 * wDF - 0.85 * Math.max(0, df - wDF); T.aR += 0.6 * wDF - 0.85 * Math.max(0, df - wDF);
+      if (!P.gaitMode) { T.hL += -0.65 * df; T.hR += -0.65 * df; T.kL += 1.3 * df; T.kR += 1.3 * df; bob = -DIP_MAX * 0.8 * df; }
+    }
+    if (p.carry) { T.aL = T.aR = -1.25; T.eL = T.eR = -0.95; T.zL = 0.1; T.zR = -0.1; T.lean -= 0.04; }       // holder tingen foran seg
+    else if (p.pushT > 0) { T.lean += 0.22; T.chest += 0.1; T.aL = T.aR = -1.4; T.eL = T.eR = -0.2; }          // lener seg inn i det han dytter
   }
-  if (!p.skid && p.state !== 'mantle' && p.state !== 'hang' && p.state !== 'swing' && mode !== 'fly') T.lean += hero.accLean;
+  if (!p.skid && p.state !== 'mantle' && p.state !== 'hang' && p.state !== 'swing' && mode !== 'fly' && p.onGround) T.lean += hero.accLean;
 
-  const k = 1 - Math.pow(0.00002, dt);                          // jevn overgang uavhengig av bilderate
-  for (const key in T) c[key] += (T[key] - c[key]) * k;
+  // jevn overgang: armer/overkropp rolig, ben raskere; alt raskere i lufta og i hurk
+  const quick = !p.onGround || p.windup > 0 || df > 0.2;
+  const slowKeys = new Set(['aL', 'aR', 'zL', 'zR', 'eL', 'eR', 'lean', 'chest', 'twist', 'hy', 'hp']);
+  for (const key in T) c[key] += (T[key] - c[key]) * (1 - Math.exp(-dt / (slowKeys.has(key) ? (quick ? (!p.onGround && p.airT < 0.25 ? 0.04 : 0.06) : 0.14) : (!p.onGround ? 0.05 : 0.08))));
   hero.armL.top.rotation.set(c.aL, 0, -c.zL); hero.armR.top.rotation.set(c.aR, 0, -c.zR);
   hero.armL.mid.rotation.x = c.eL; hero.armR.mid.rotation.x = c.eR;
-  // bein: bland mellom FK-posene og IK (fast fot) etter om vi går
-  hero.ikW += ((gaitOn ? 1 : 0) - hero.ikW) * (1 - Math.pow(0.0003, dt));
+
+  // bein: bland mellom FK-posene og IK (fast fot) etter om vi går/står
+  hero.ikW += ((gaitOn ? 1 : 0) - hero.ikW) * (1 - Math.exp(-(gaitOn ? (p.landT < 0.12 ? 25 : 10) : 12) * dt));
   const w = hero.ikW, Lmax = hero.legL.l1 + hero.legL.l2;
   const zStance = Math.max(pathL.y < 0.002 ? Math.abs(pathL.z) : 0, pathR.y < 0.002 ? Math.abs(pathR.z) : 0);
-  const ikHip = ANKLE_H + 0.985 * Math.sqrt(Math.max(1e-4, Lmax * Lmax - zStance * zStance)) - 0.02 * kSp;
-  hero.bob += (bob - hero.bob) * (1 - Math.pow(0.0005, dt));
+  const ikHip = ANKLE_H + 0.985 * Math.sqrt(Math.max(1e-4, Lmax * Lmax - zStance * zStance)) - 0.02 * kSp - DIP_MAX * df;
+  hero.bob += (bob - hero.bob) * (1 - Math.exp(-dt / 0.06));
   const hipY = 0.46 + hero.bob + (ikHip - (0.46 + hero.bob)) * w;
   const ikL = solveLeg(hero.legL, hipY, pathL.z, ANKLE_H + pathL.y), ikR = solveLeg(hero.legR, hipY, pathR.z, ANKLE_H + pathR.y);
-  const mix = (fk, ik) => fk + (ik - fk) * w;
   // skritt-lyd: lyd når en fot treffer gulvet (samme øyeblikk som animasjonen)
   const plL = pathL.y < 0.002, plR = pathR.y < 0.002;
   if (audio && mode === 'play' && gaitOn && hero.gaitWas) { if (plL && !hero.plL) footstep(-1, sp); if (plR && !hero.plR) footstep(1, sp); }
   hero.plL = plL; hero.plR = plR; hero.gaitWas = gaitOn;
+  const mix = (fk, ik) => fk + (ik - fk) * w;
   hero.legL.top.rotation.x = mix(c.hL, ikL.theta); hero.legR.top.rotation.x = mix(c.hR, ikR.theta);
   hero.legL.mid.rotation.x = mix(c.kL, ikL.kappa); hero.legR.mid.rotation.x = mix(c.kR, ikR.kappa);
-  hero.legL.footG.rotation.x = -(ikL.theta + ikL.kappa) * w; hero.legR.footG.rotation.x = -(ikR.theta + ikR.kappa) * w;
+  hero.legL.footG.rotation.x = mix(c.fp, -(ikL.theta + ikL.kappa) + pathL.pitch); hero.legR.footG.rotation.x = mix(c.fp, -(ikR.theta + ikR.kappa) + pathR.pitch);
   hero.legL.top.position.y = hero.legR.top.position.y = hipY;
-  hero.body.rotation.x = c.lean;
+
+  // overkropp: bekken bærer lean, bryst bøyer og vrir mer, hodet ser dit kroppen går (pluss litt omkringsyn i hvile)
   hero.body.position.y = hipY;
-  hero.head.rotation.x = -c.lean * 0.6;
+  hero.body.rotation.x = c.lean; hero.body.rotation.y = -c.twist * 0.4;
+  hero.chest.rotation.x = c.chest; hero.chest.rotation.y = c.twist;
+  hero.head.rotation.x = c.hp - (c.lean + c.chest) * 0.7; hero.head.rotation.y = c.hy - c.twist * 0.6;
 
   // kroppen: i gange-modus snur fysikken gradvis; ellers begrenses snuhastigheten her
   const target = Math.atan2(p.fx, p.fz);
@@ -445,6 +490,7 @@ function poseHero(p, now, dt, mode) {
   }
   hero.root.rotation.y = hero.yaw;
 }
+function lerpN(a, b, t) { return a + (b - a) * t; }
 
 // ---------- tilstand ----------
 initBodies(LEVEL);
@@ -652,8 +698,10 @@ setTimeout(() => $('help').classList.add('hide'), 15000);   // H henter den tilb
 // ---------- oppdatering ----------
 const V = new THREE.Vector3();
 function axes() {
-  const ix = (held('KeyD', 'ArrowRight') ? 1 : 0) - (held('KeyA', 'ArrowLeft') ? 1 : 0) + touch.x;
-  const iz = (held('KeyW', 'ArrowUp') ? 1 : 0) - (held('KeyS', 'ArrowDown') ? 1 : 0) + touch.y;
+  // dødsone på stikken: en tommel som bare hviler der skal ikke gi bevegelse (ga skjelvende armer og mikroskritt)
+  const mag = Math.hypot(touch.x, touch.y), DZ = 0.22, tk = mag < DZ ? 0 : (mag - DZ) / (1 - DZ) / mag;
+  const ix = (held('KeyD', 'ArrowRight') ? 1 : 0) - (held('KeyA', 'ArrowLeft') ? 1 : 0) + touch.x * tk;
+  const iz = (held('KeyW', 'ArrowUp') ? 1 : 0) - (held('KeyS', 'ArrowDown') ? 1 : 0) + touch.y * tk;
   return [Math.max(-1, Math.min(1, ix)), Math.max(-1, Math.min(1, iz))];
 }
 const upKey = () => held('Space') || touch.jump;
@@ -822,9 +870,10 @@ addEventListener('resize', resize); resize();
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  update(dt); render(now, dt);
+  if (!window.__paused) update(dt);
+  render(now, dt);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
-window.__game = { get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

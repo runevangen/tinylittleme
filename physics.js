@@ -96,6 +96,7 @@ export function newPlayer(x, y, z) {
     wallT: 0, wallN: null, sliding: false,
     hang: null, rope: null, swing: null, mantle: null,
     windup: 0, recover: 0, skid: false,
+    airT: 0, landT: 9, landImpact: 0, pushT: 0, hadIn: false,   // til animasjon: tid i lufta, tid siden landing, dytting, input-hysterese
     gait: 0, stepLen: 0.4,         // skrittfase (rad, π per skritt) og gjeldende skrittlengde
     carry: null, crushed: null,
     t: 0,
@@ -169,7 +170,7 @@ function pushForPlayer(p, b, d, axis, L) {
   const vo = Math.min(p.y + H, b.max[1]) - Math.max(p.y, b.min[1]);
   if (vo < 0.2) return;                                     // bare så vidt oppå: behandles som fast
   const depth = axis === 0 ? (d > 0 ? p.x + HW - b.min[0] : b.max[0] - (p.x - HW)) : (d > 0 ? p.z + HW - b.min[2] : b.max[2] - (p.z - HW));
-  if (depth > 0) pushBody(b, axis, Math.sign(d) * depth * b.pushFactor, L);
+  if (depth > 0) { pushBody(b, axis, Math.sign(d) * depth * b.pushFactor, L); p.pushT = 0.15; }
 }
 
 function stepBodies(L, p, dt) {
@@ -292,6 +293,7 @@ function sub(p, inp, dt, L) {
   p.buffer -= dt; p.coyote -= dt; p.wallT -= dt;
   p.reach = Math.max(0, p.reach - dt); p.reachCd = Math.max(0, p.reachCd - dt);
   p.recover = Math.max(0, p.recover - dt);
+  p.landT += dt; p.pushT = Math.max(0, p.pushT - dt); p.airT = p.onGround ? 0 : p.airT + dt;
 
   let wx = inp.mx, wz = inp.mz;
   const wl = Math.hypot(wx, wz);
@@ -307,7 +309,8 @@ function sub(p, inp, dt, L) {
   if (P.gaitMode && p.onGround && !p.groundBox?.slick && p.lock <= 0) {
     // Gange med skritt: fart bare langs blikkretningen, kroppen snur gradvis, skrittet fullføres før du stopper.
     handled = true;
-    const hasIn = wl > 0.1;
+    const hasIn = wl > (p.hadIn ? 0.12 : 0.3);               // hysterese: en tommel som hviler på stikken skal ikke gi mikroskritt
+    p.hadIn = hasIn;
     let s = p.vx * p.fx + p.vz * p.fz;                           // fart langs blikkretningen
     let target = 0, diff = 0;
     if (hasIn) {
@@ -395,6 +398,7 @@ function sub(p, inp, dt, L) {
     p.gait = (p.gait + Math.PI * Math.hypot(p.x - px0, p.z - pz0) / p.stepLen) % (Math.PI * 2);
     if (spd < 0.01 && wl < 0.1) p.gait = Math.round(p.gait / Math.PI) * Math.PI % (Math.PI * 2);
   }
+  if (!wasGrounded && p.onGround && vyBefore < -3) { p.landImpact = -vyBefore; p.landT = 0; }
   if (!wasGrounded && p.onGround && P.landK > 0 && vyBefore < -P.landMin) p.recover = Math.min(P.landMax, (-vyBefore - P.landMin) * P.landK);
 
   updateCarried(p, L);
