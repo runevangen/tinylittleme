@@ -47,6 +47,18 @@ export const LEVEL = {
   ropes: [{ x: 13.5, y: 22, z: 0, len: 10 }],
   start: [-16, 0, 8],
   goal: [25.5, 29, 0],
+  // ruta pilen følger (flater i rekkefølge; `via` = ikke noe du står på, men noe du bruker: `act` sier hva)
+  route: [
+    { id: 'gulv', label: 'gulvet', x0: -W, x1: W, z0: -W, z1: W, top: 0 },
+    { id: 'bok1', label: 'første bok', x0: -14.5, x1: -9.5, z0: 6, z1: 10, top: 1.6 },
+    { id: 'bok2', label: 'andre bok', x0: -11, x1: -6, z0: 6, z1: 10, top: 3.2 },
+    { id: 'bok3', label: 'tredje bok', x0: -5.5, x1: -0.5, z0: 6, z1: 10, top: 5 },
+    { id: 'nattbord', label: 'nattbordet', x0: 0, x1: 10, z0: -6, z1: 4, top: 11 },
+    { id: 'kabel', label: 'kabelen', x0: 13, x1: 14, z0: -0.5, z1: 0.5, top: 12, via: true, act: 'svinge' },
+    { id: 'hylle1', label: 'bokhylla', x0: 17, x1: 26, z0: -8, z1: 2, top: 16 },
+    { id: 'skorstein', label: 'mellom bøkene', x0: 18, x1: 21, z0: -2, z1: 2, top: 16, via: true, act: 'veggsprang' },
+    { id: 'maalhylle', label: 'øverste hylle', x0: 21, x1: 29, z0: -4, z1: 4, top: 29 },
+  ],
   deathY: -15,
   room: { x0: -W, x1: W, z0: -W, z1: W, height: 100, floor: { material: 'wood' }, walls: { material: 'plaster' }, ceiling: { material: 'plaster' } },
   windows: [{ wall: 'N', pos: [8, 46, -W + 0.05], size: [26, 34] }],

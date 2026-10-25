@@ -941,11 +941,11 @@ function nextTarget() {
   const R = LEVEL.route, g = LEVEL.goal;
   if (R?.length > 1) {
     let i = -1;
-    if (player.state === 'climb') i = R.findIndex((w) => w.grip && w.id === player.climb?.box?.id);
-    else if (player.onGround) R.forEach((w, k) => { if (!w.grip && player.y - w.top > -0.3 && player.y - w.top < 3.5 && player.x >= w.x0 - 0.3 && player.x <= w.x1 + 0.3 && player.z >= w.z0 - 0.3 && player.z <= w.z1 + 0.3) i = k; });   // flaten du står på (også når du står på en løs ting oppå)
+    if (player.state === 'climb') i = R.findIndex((w) => (w.grip || w.via) && w.id === player.climb?.box?.id);
+    else if (player.onGround) R.forEach((w, k) => { if (!w.grip && !w.via && player.y - w.top > -0.3 && player.y - w.top < 3.5 && player.x >= w.x0 - 0.3 && player.x <= w.x1 + 0.3 && player.z >= w.z0 - 0.3 && player.z <= w.z1 + 0.3) i = k; });   // flaten du står på (også når du står på en løs ting oppå)
     if (i >= 0) routeCur = i;
     const w = R[Math.min(routeCur + 1, R.length - 1)];
-    if (w !== R[R.length - 1]) return { x: Math.max(w.x0, Math.min(w.x1, player.x)), y: w.top, z: Math.max(w.z0, Math.min(w.z1, player.z)), label: nice(w.id).replace(/_/g, ' '), final: false, grip: !!w.grip };
+    if (w !== R[R.length - 1]) return { x: Math.max(w.x0, Math.min(w.x1, player.x)), y: w.top, z: Math.max(w.z0, Math.min(w.z1, player.z)), label: w.label || nice(w.id).replace(/_/g, ' '), final: false, act: w.act || (w.grip ? 'klatre' : '') };
   }
   return { x: g[0], y: g[1], z: g[2], label: 'MÅL', final: true };
 }
@@ -971,7 +971,7 @@ function compassFrame(now) {
   compArrow.style.transform = `rotate(${ang}rad)`;
   const dy = t.y - player.y;
   $('compLbl').textContent = t.final ? 'MÅL' : `NESTE: ${t.label}`.toUpperCase();
-  compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.grip ? ' · ▲ klatre' : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
+  compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.act ? ` · ▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
   goalArrowG.position.set(player.x + dx / dist * 1.4, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * 1.4);
   goalArrowG.rotation.y = Math.atan2(-dx, -dz);
 }
