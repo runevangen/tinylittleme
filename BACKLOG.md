@@ -40,7 +40,7 @@ Gjenstår / til sparring:
 - [ ] Finpuss av Prince: kant-shimmy (gå sidelengs i hengende), rulle/ta imot ved landing, forsiktig gange som aldri faller av kanten, tau-sving som føles tyngre.
 - [~] Kamera: valgfri automatisk dreining etter bevegelsesretning (v0.25, tast X, trenger spilletest: holder du stikken til siden går figuren i en sving). Gjenstår: fastere kameravinkler per brett.
 - [x] Figur med bøyelig overkropp, hopp/fall/landing som bevegelse, levende hvile. Første versjon. Trenger spilletest.
-- [ ] Fingre og hender som tar tak, ansikt (øyne som ser og blunker), klær som beveger seg (hår, jakke).
+- [~] Figur (v0.34): ansikt med blunking/blikk/uttrykk og skjerf/sekk som fjærer er på plass. Gjenstår: fingre som tar tak, hår/jakke som beveger seg, tilbehør å samle (hatter m.m.), valg av utseende, stemme (neste).
 - [ ] Snu på stedet med små skritt (nå roterer bare kroppen), og tråkke over små hindre.
 - [ ] Bedre hang/sving/veggglid (ofte bare enkle poser ennå).
 

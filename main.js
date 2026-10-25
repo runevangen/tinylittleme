@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
-import { buildGroup, buildSingle } from './props.js';
+import { buildGroup, buildSingle, roundedBoxGeo } from './props.js';
 import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -382,50 +382,105 @@ const RIG_S = 1.07;   // figuren tegnes litt større enn animasjonsrommet (så d
 function buildHero() {
   const root = new THREE.Group();
   const rig = new THREE.Group(); rig.scale.setScalar(RIG_S); root.add(rig);
+  // liten utforsker: oransje jakke, grønnblått skjerf, gul hjelm med lykt og briller, sekk og verktøybelte (kontrast mot det hvite badet)
+  const mat = (color, rough = 0.75, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, ...extra });
   const M = {
-    skin: new THREE.MeshStandardMaterial({ color: 0xe6b392, roughness: 0.65 }),
-    shirt: new THREE.MeshStandardMaterial({ color: 0x2f5d7c, roughness: 0.8 }),
-    pants: new THREE.MeshStandardMaterial({ color: 0x353b48, roughness: 0.85 }),
-    shoe: new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.6 }),
-    sole: new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.9 }),
-    hair: new THREE.MeshStandardMaterial({ color: 0x3b2a1c, roughness: 0.8 }),
-    eye: new THREE.MeshBasicMaterial({ color: 0x151515 }),
+    skin: mat(0xf0c09e, 0.6), jacket: mat(0xe8742a, 0.8), jacketD: mat(0xc4561a, 0.85), scarf: mat(0x23a6a0, 0.9), pants: mat(0x3a4a5a, 0.85),
+    boot: mat(0x7a5236, 0.7), sole: mat(0xe9e0cf, 0.8), glove: mat(0x5a3d28, 0.8), hair: mat(0x4a2f1c, 0.8), helmet: mat(0xf3b938, 0.45),
+    strap: mat(0x5a3d28, 0.85), lens: new THREE.MeshPhysicalMaterial({ color: 0xffe27a, roughness: 0.1, transparent: true, opacity: 0.7 }),
+    lamp: new THREE.MeshStandardMaterial({ color: 0xfff6c8, emissive: 0xffe9a0, emissiveIntensity: 0.9 }), pack: mat(0x6f7a3a, 0.9), roll: mat(0x4d6d82, 0.9),
+    pouch: mat(0x8a6a46, 0.85), gold: mat(0xd8b24a, 0.35, { metalness: 0.8 }), white: new THREE.MeshBasicMaterial({ color: 0xffffff }), pupil: new THREE.MeshBasicMaterial({ color: 0x1b1b1b }),
+    brow: mat(0x3a2418, 0.9), mouth: new THREE.MeshBasicMaterial({ color: 0x8a3030 }), blush: new THREE.MeshBasicMaterial({ color: 0xf08080, transparent: true, opacity: 0 }),
+    sweat: new THREE.MeshStandardMaterial({ color: 0x9fd8f0, roughness: 0.1, transparent: true, opacity: 0.85 }), line: new THREE.MeshBasicMaterial({ color: 0x241d20, side: THREE.BackSide }),
   };
-  const cap = (r, l, mat) => { const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, l, 6, 12), mat); m.castShadow = true; return m; };
-  const limb = (up, lo, r, mat) => {
+  const shadow = (m) => { m.castShadow = true; return m; };
+  const outline = (m, k = 1.07) => { const o = new THREE.Mesh(m.geometry, M.line); o.scale.setScalar(k); m.add(o); return m; };      // tegneserie-kant (omvendt skall)
+  const cap = (r, l, mat, ol = true) => { const m = shadow(new THREE.Mesh(new THREE.CapsuleGeometry(r, l, 6, 12), mat)); return ol ? outline(m, 1.08) : m; };
+  const limb = (up, lo, r, mat, matLo = mat) => {
     const top = new THREE.Group(), u = cap(r, up, mat); u.position.y = -(up / 2 + r * 0.6); top.add(u);
     const mid = new THREE.Group(); mid.position.y = -(up + r * 1.2); top.add(mid);
-    const l = cap(r * 0.9, lo, mat); l.position.y = -(lo / 2 + r * 0.6); mid.add(l);
+    const l = cap(r * 0.9, lo, matLo); l.position.y = -(lo / 2 + r * 0.6); mid.add(l);
     return { top, mid, end: -(lo + r * 1.2), l1: up + r * 1.2, l2: lo + r * 1.2 };
   };
 
-  // ryggrad i to deler: bekken (følger hoftene) og bryst (kan bøye og vri seg), så kroppen ikke er én stiv pinne
+  // ryggrad i to deler: bekken (følger hoftene) og bryst (kan bøye og vri seg)
   const body = new THREE.Group(); body.position.y = 0.46; rig.add(body);
-  const pelvis = cap(0.08, 0.05, M.pants); pelvis.scale.set(1.4, 1, 0.9); pelvis.position.y = 0.0; body.add(pelvis);
+  const pelvis = cap(0.08, 0.05, M.pants); pelvis.scale.set(1.4, 1, 0.9); body.add(pelvis);
+  const belt = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.014, 8, 24), M.strap)); belt.rotation.x = Math.PI / 2; belt.scale.set(1.35, 0.95, 1); belt.position.y = 0.045; body.add(belt);
+  const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.026, 0.012), M.gold); buckle.position.set(0, 0.045, 0.098); body.add(buckle);
+  for (const sx of [-1, 1]) { const po = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.03), M.pouch)); po.position.set(sx * 0.1, 0.03, 0.055); po.rotation.y = sx * 0.5; body.add(po); }
   const chest = new THREE.Group(); chest.position.y = 0.09; body.add(chest);
-  const torso = cap(0.088, 0.17, M.shirt); torso.scale.set(1.25, 1, 0.8); torso.position.y = 0.09; chest.add(torso);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.05, 10), M.skin); neck.position.y = 0.195; chest.add(neck);
-  const head = new THREE.Group(); head.position.y = 0.28; chest.add(head);
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.075, 20, 16), M.skin); skull.castShadow = true; head.add(skull);
-  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.081, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), M.hair); hair.rotation.x = -0.35; hair.position.y = 0.006; head.add(hair);
-  for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.01, 8, 8), M.eye); e.position.set(s * 0.028, 0.01, 0.069); head.add(e); }
+  const torso = cap(0.088, 0.17, M.jacket); torso.scale.set(1.25, 1, 0.8); torso.position.y = 0.09; chest.add(torso);
+  const zip = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.17, 0.006), M.jacketD); zip.position.set(0, 0.1, 0.0775); chest.add(zip);
+  const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.035, 0.01), M.jacketD); pocket.position.set(0.055, 0.12, 0.074); pocket.rotation.y = 0.35; chest.add(pocket);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.05, 10), M.skin); neck.position.y = 0.2; chest.add(neck);
+  const scarfRing = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.024, 8, 18), M.scarf)); scarfRing.rotation.x = Math.PI / 2; scarfRing.position.y = 0.195; scarfRing.scale.set(1.15, 1, 1); chest.add(scarfRing);
+  const knot = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), M.scarf)); knot.position.set(0.04, 0.185, 0.06); chest.add(knot);
+  // skjerfhaler (to ledd) som flagrer bakover med farten
+  const tailA = new THREE.Group(); tailA.position.set(0.02, 0.19, -0.058); chest.add(tailA);
+  const tA = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.1, 0.012), M.scarf)); tA.position.y = -0.05; tailA.add(tA);
+  const tailB = new THREE.Group(); tailB.position.y = -0.1; tailA.add(tailB);
+  const tB = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.085, 0.012), M.scarf)); tB.position.y = -0.0425; tailB.add(tB);
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.012, 0.014), M.jacket); stripe.position.y = -0.07; tailB.add(stripe);
+  // sekk med sovepose
+  const packG = new THREE.Group(); packG.position.set(0, 0.09, -0.1); chest.add(packG);
+  const pk = shadow(new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.1, 5, 10), M.pack)); pk.scale.set(1.3, 1, 0.8); packG.add(pk);
+  const rollM = shadow(new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.1, 5, 10), M.roll)); rollM.rotation.z = Math.PI / 2; rollM.position.y = 0.105; packG.add(rollM);
+  const flap = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.02), M.pouch); flap.position.set(0, 0.0, -0.03); packG.add(flap);
+
+  // hode (stort og tydelig): hjelm, lykt, briller, hår under hjelmen og et ansikt som kan uttrykke seg
+  const HS = 1.38;
+  const head = new THREE.Group(); head.position.y = 0.265; chest.add(head);
+  const headS = new THREE.Group(); headS.scale.setScalar(HS); head.add(headS);
+  const skull = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.075, 24, 18), M.skin)); outline(skull, 1.05); headS.add(skull);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.0125, 8, 8), M.skin); nose.position.set(0, -0.008, 0.077); nose.scale.set(1, 0.9, 1.1); headS.add(nose);
+  for (const sx of [-1, 1]) { const ear = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.017, 8, 8), M.skin)); ear.position.set(sx * 0.076, -0.005, 0); ear.scale.set(0.6, 1, 0.9); headS.add(ear); }
+  const helmet = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.084, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), M.helmet)); outline(helmet, 1.05); helmet.rotation.x = -0.12; helmet.position.y = 0.012; headS.add(helmet);
+  const visor = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.008, 20, 1, false, -Math.PI * 0.45, Math.PI * 0.9), M.helmet)); visor.rotation.set(0.15, 0, 0); visor.position.set(0, 0.034, 0.045); visor.rotation.y = Math.PI * 0.5 * 0; headS.add(visor);
+  const hStrap = new THREE.Mesh(new THREE.TorusGeometry(0.081, 0.0055, 6, 28), M.strap); hStrap.rotation.x = Math.PI / 2 + 0.12; hStrap.position.y = 0.047; headS.add(hStrap);
+  for (const sx of [-1, 1]) {                                              // briller skjøvet opp på hjelmen
+    const ring = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.005, 6, 14), M.strap)); ring.position.set(sx * 0.03, 0.062, 0.062); ring.rotation.x = -0.6; headS.add(ring);
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(0.019, 14), M.lens); lens.position.set(sx * 0.03, 0.0625, 0.0635); lens.rotation.x = -0.6; headS.add(lens);
+  }
+  const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.016, 0.02, 10), M.lamp); lamp.rotation.x = Math.PI / 2 - 0.5; lamp.position.set(0, 0.083, 0.035); headS.add(lamp);
+  for (const [x, y, z, r] of [[0, 0.0, -0.074, 0.02], [-0.04, -0.005, -0.066, 0.017], [0.04, -0.005, -0.066, 0.017], [0.07, 0.005, -0.03, 0.014], [-0.07, 0.005, -0.03, 0.014]]) {
+    const h = shadow(new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), M.hair)); h.position.set(x, y, z); headS.add(h);       // hår som titter ut under hjelmen
+  }
+  // ansikt
+  const face = { eyes: [], pupils: [], brows: [], blush: [] };
+  for (const sx of [-1, 1]) {
+    const eye = new THREE.Group(); eye.position.set(sx * 0.03, 0.006, 0.0655); headS.add(eye);
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.0215, 14, 12), M.white); white.scale.set(1, 1.15, 0.45); eye.add(white);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.0125, 12, 10), M.pupil); pupil.scale.set(1, 1.1, 0.5); pupil.position.z = 0.0065; eye.add(pupil);
+    const glint = new THREE.Mesh(new THREE.SphereGeometry(0.0042, 6, 6), M.white); glint.position.set(0.004, 0.005, 0.0105); pupil.add(glint);
+    face.eyes.push(eye); face.pupils.push(pupil);
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.0075, 0.008), M.brow); brow.position.set(sx * 0.031, 0.04, 0.064); headS.add(brow); face.brows.push(brow);
+    const bl = new THREE.Mesh(new THREE.CircleGeometry(0.014, 12), M.blush); bl.position.set(sx * 0.047, -0.02, 0.06); bl.rotation.y = sx * 0.55; headS.add(bl); face.blush.push(bl);
+  }
+  face.smile = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.0042, 6, 14, Math.PI), M.mouth); face.smile.position.set(0, -0.03, 0.0715); headS.add(face.smile);
+  face.open = new THREE.Mesh(new THREE.SphereGeometry(0.012, 10, 8), M.mouth); face.open.position.set(0, -0.034, 0.07); face.open.scale.set(1, 1, 0.4); face.open.visible = false; headS.add(face.open);
+  face.sweat = new THREE.Group(); { const d = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 8), M.sweat); const c = new THREE.Mesh(new THREE.ConeGeometry(0.0085, 0.02, 8), M.sweat); c.position.y = 0.014; face.sweat.add(d, c); face.sweat.position.set(0.062, 0.035, 0.045); face.sweat.visible = false; headS.add(face.sweat); }
 
   const arm = (s) => {
-    const a = limb(0.09, 0.09, 0.03, M.shirt); a.top.position.set(s * 0.125, 0.16, 0); chest.add(a.top);
-    const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 10), M.shirt); shoulder.castShadow = true; a.top.add(shoulder);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 8), M.skin); hand.scale.set(0.9, 1.15, 0.75); hand.position.y = a.end - 0.012; a.mid.add(hand);
+    const a = limb(0.09, 0.09, 0.034, M.jacket); a.top.position.set(s * 0.127, 0.16, 0); chest.add(a.top);
+    const shoulder = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.043, 12, 10), M.jacket)); a.top.add(shoulder);
+    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.016, 10), M.jacketD); cuff.position.y = a.end + 0.012; a.mid.add(cuff);
+    const hand = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 10), M.glove)); hand.scale.set(0.95, 1.15, 0.85); hand.position.y = a.end - 0.016; a.mid.add(hand);
+    const thumb = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.0165, 8, 8), M.glove)); thumb.position.set(-s * 0.03, a.end - 0.005, 0.014); a.mid.add(thumb);
     return a;
   };
   const leg = (s) => {
-    const l = limb(0.15, 0.15, 0.045, M.pants); l.top.position.set(s * 0.055, 0.46, 0); rig.add(l.top);
+    const l = limb(0.15, 0.15, 0.047, M.pants); l.top.position.set(s * 0.058, 0.46, 0); rig.add(l.top);
     const footG = new THREE.Group(); footG.position.y = l.end; l.mid.add(footG); l.footG = footG;      // ankelen
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.045, 0.16), M.shoe); foot.position.set(0, -0.005, 0.035); foot.castShadow = true; footG.add(foot);
-    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.077, 0.014, 0.162), M.sole); sole.position.set(0, -0.03, 0.035); footG.add(sole);
+    const boot = shadow(new THREE.Mesh(roundedBoxGeo(0.088, 0.062, 0.175, 0.03, 0.014), M.boot)); boot.geometry.translate(0, -0.031, 0); boot.position.set(0, 0.018, 0.036); outline(boot, 1.05); footG.add(boot);
+    const sole = shadow(new THREE.Mesh(roundedBoxGeo(0.092, 0.02, 0.18, 0.032, 0.008), M.sole)); sole.geometry.translate(0, -0.01, 0); sole.position.set(0, -0.026, 0.036); footG.add(sole);
+    const cuffB = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.05, 0.024, 10), M.boot); cuffB.position.y = 0.02; footG.add(cuffB);
     return l;
   };
   const L = { armL: arm(-1), armR: arm(1), legL: leg(-1), legR: leg(1) };
   const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0 };
-  return { root, body, chest, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null, ikW: 0, hipY: 0.46 };
+  return { root, body, chest, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null, ikW: 0, hipY: 0.46,
+    face, tailA, tailB, packG, helmet, sec: { a: 0, av: 0, b: 0, bv: 0, pk: 0, pkv: 0 }, mood: { name: '', t: 0 }, look: { x: 0, y: 0, tx: 0, ty: 0, t: 0 }, blink: { t: 2, v: 0 }, idleT: 0 };
 }
 const hero = buildHero();
 hero.root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
@@ -626,6 +681,60 @@ function poseHero(p, now, dt, mode) {
   hero.root.rotation.y = hero.yaw;
 }
 function lerpN(a, b, t) { return a + (b - a) * t; }
+
+// ---------- sjarm: ansikt (blunking, blikk, uttrykk) og ting som henger etter (skjerf, sekk) ----------
+const setMood = (name, secs) => { hero.mood.name = name; hero.mood.t = secs; };
+const F = { sm: 0.35, op: 0, bw: 0, bl: 0, eyeY: 1, pup: 1, blush: 0, sweat: 0 };       // glattede uttrykksverdier
+function animateHero(p, now, dt) {
+  const sec = now / 1000, h = hero, f = h.face, st = p.state, sp = Math.hypot(p.vx, p.vz);
+  h.mood.t = Math.max(0, h.mood.t - dt); const mood = h.mood.t > 0 ? h.mood.name : '';
+  const climbing = st === 'climb' || st === 'hang' || st === 'mantle', falling = !p.onGround && p.vy < -7 && !climbing, rising = !p.onGround && p.vy > 3 && !climbing;
+  const stunned = (p.recover > 0.35 && p.landImpact >= P.hardLand && p.onGround) || mood === 'hurt', tired = Math.max(0, 1 - p.stam / (P.stamina * 0.3));
+  // idle: gjesp etter lang tid i ro
+  h.idleT = (sp < 0.15 && p.onGround && !p.carry && mode === 'play') ? h.idleT + dt : 0;
+  if (h.idleT > 22 && !mood) { setMood('yawn', 2.2); h.idleT = 0; }
+  // mål for uttrykk
+  let sm = 0.35, op = 0, bw = 0, bl = 0, eyeY = 1, pup = 1, blush = 0, sweat = 0;
+  if (climbing) { sm = -0.25; bw = -0.25; eyeY = 0.8; if (tired > 0.1) { bw = 0.3 * tired - 0.25 * (1 - tired); blush = 0.5 * tired; sweat = tired > 0.5 ? 1 : 0; sm = -0.5; } }
+  if (rising) { sm = 0.8; bl = 0.004; }
+  if (falling) { eyeY = 1.2; pup = 0.75; bw = 0.3; bl = 0.012; op = 0.9; sm = 0; }
+  if (p.carry && p.onGround) { bw = -0.1; sm = 0.1; }
+  if (stunned) { eyeY = 0.12; bw = 0.35; op = 0.4; sm = -0.4; blush = 0.4; }
+  if (mood === 'happy') { sm = 1; eyeY = 0.55; bl = 0.008; blush = 0.6; op = 0; bw = 0; }
+  if (mood === 'worry') { bw = 0.4; bl = 0.008; sm = -0.3; eyeY = 1.1; }
+  if (mood === 'yawn') { op = 1.3; eyeY = 0.1; sm = 0; bl = 0.01; }
+  const k = 1 - Math.exp(-dt / 0.07);
+  F.sm += (sm - F.sm) * k; F.op += (op - F.op) * k; F.bw += (bw - F.bw) * k; F.bl += (bl - F.bl) * k; F.eyeY += (eyeY - F.eyeY) * k; F.pup += (pup - F.pup) * k; F.blush += (blush - F.blush) * k; F.sweat += (sweat - F.sweat) * k;
+  // blunking
+  h.blink.t -= dt; if (h.blink.t <= 0 && h.blink.v === 0) { h.blink.v = 1; h.blink.ph = 0; }
+  let bAmt = 0; if (h.blink.v) { h.blink.ph += dt / 0.16; bAmt = Math.sin(Math.min(1, h.blink.ph) * Math.PI); if (h.blink.ph >= 1) { h.blink.v = 0; h.blink.t = 1.8 + Math.random() * 3.6; } }
+  // blikk: ser dit han går/hopper, ellers lett rundt i hvile
+  h.look.t -= dt;
+  if (h.look.t <= 0) { h.look.t = 1.2 + Math.random() * 2.2; if (sp < 0.2 && p.onGround) { h.look.tx = (Math.random() - 0.5) * 1.6; h.look.ty = (Math.random() - 0.4) * 1.0; } else { h.look.tx = 0; h.look.ty = 0; } }
+  let ty = h.look.ty, tx = h.look.tx; if (falling) ty = -0.7; else if (rising || climbing) ty = 0.7; if (stunned) { tx = 0; ty = 0; }
+  h.look.x += (tx - h.look.x) * (1 - Math.exp(-dt / 0.09)); h.look.y += (ty - h.look.y) * (1 - Math.exp(-dt / 0.09));
+  for (let i = 0; i < 2; i++) {
+    const e = f.eyes[i], pu = f.pupils[i];
+    e.scale.y = Math.max(0.07, F.eyeY * (1 - 0.93 * bAmt)); e.scale.x = 1 + (F.eyeY > 1 ? 0.08 : 0);
+    pu.scale.set(F.pup, 1.1 * F.pup, 0.5); pu.position.set(h.look.x * 0.0075, h.look.y * 0.006, 0.0065);
+    f.brows[i].rotation.z = (i === 0 ? 1 : -1) * F.bw; f.brows[i].position.y = 0.04 + F.bl + (F.eyeY < 0.4 ? -0.006 : 0);
+    f.blush[i].material.opacity = F.blush;
+  }
+  f.smile.visible = F.op < 0.5; f.smile.rotation.z = F.sm >= 0 ? Math.PI : 0; f.smile.scale.set(1 + 0.25 * Math.abs(F.sm), Math.max(0.12, Math.abs(F.sm)), 1);
+  f.smile.position.y = -0.03 + (F.sm >= 0 ? 0.004 : -0.004);
+  f.open.visible = F.op >= 0.5; f.open.scale.set(1 + 0.3 * F.op, 0.5 + 0.9 * F.op, 0.4);
+  f.sweat.visible = F.sweat > 0.5; f.sweat.position.y = 0.035 - 0.012 * ((sec * 1.2) % 1);
+  // skjerf: to ledd som fjærer. Flyr bakover med fart, løftes i fall, henger ned i ro
+  const sf = p.vx * p.fx + p.vz * p.fz, S = h.sec;
+  const tA = clampN(sf * 0.16, -0.2, 1.0) + clampN(-p.vy * 0.045, 0, 1.2) - clampN(p.vy * 0.02, 0, 0.35) + (climbing ? 0.05 : 0);
+  S.av += ((tA - S.a) * 70 - S.av * 7) * dt; S.a += S.av * dt;
+  S.bv += (((S.a * 0.9 + (tA - S.a) * 0.4) - S.b) * 90 - S.bv * 8) * dt; S.b += S.bv * dt;
+  h.tailA.rotation.x = 0.12 + S.a; h.tailB.rotation.x = S.b * 0.7; h.tailA.rotation.z = Math.sin(sec * 3 + S.a * 4) * 0.05 * Math.min(1, Math.abs(S.a) * 2);
+  // sekk: slenger med akselerasjon og fjærer ved landing
+  if (p.landT < dt * 2.5 && p.landImpact > 3) S.pkv -= p.landImpact * 0.012;
+  S.pkv += ((-S.pk) * 120 - S.pkv * 9) * dt; S.pk += S.pkv * dt;
+  h.packG.position.y = 0.09 + S.pk; h.packG.rotation.x = -h.accLean * 0.9 - S.pk * 2;
+}
 
 // ---------- tilstand ----------
 initBodies(LEVEL);
@@ -996,16 +1105,16 @@ function update(dt) {
   }
   audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
-  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); }
+  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); }
   if (player.y < LEVEL.deathY) { resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant`); }
-    else if (ev.type === 'use') { audio?.pickup(); buzz(20); }
+    else if (ev.type === 'use') { audio?.pickup(); buzz(20); setMood('happy', 0.9); }
     else if (ev.type === 'toolhint') toast(ev.tool === 'gel' ? `Gå helt inntil en vegg og trykk ${TA} for å smøre. ${TA} igjen legger fra seg.` : `Gå helt ut til en kant og trykk ${TA} for å rulle ut. ${TA} igjen legger fra seg.`);
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); }
   }
-  if (player.hardLands > pre.hard) { stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
+  if (player.hardLands > pre.hard) { setMood('hurt', 1.3); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
   if (player.knockout) {
     player.knockout = false; audio?.crush(); buzz(90);
     resetPlayer(player, ...save.pos); stats.respawns++;
@@ -1025,7 +1134,7 @@ function update(dt) {
 
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
-    won = true; audio?.win();
+    won = true; audio?.win(); setMood('happy', 6);
     $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
     $('win').classList.remove('hide');
@@ -1093,7 +1202,7 @@ function insideAny(x, y, z, m) {
 function render(now, dt) {
   { const tb = document.getElementById('btnCarry'); const lab = player.carry && player.charge >= P.throwMin ? 'KAST' : 'TA'; if (tb && tb.textContent !== lab) { tb.textContent = lab; tb.style.background = lab === 'KAST' ? '#c77d12cc' : ''; } }   // knappen sier KAST når holdetiden er nådd
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
-  poseHero(player, now, dt, mode);
+  poseHero(player, now, dt, mode); animateHero(player, now, dt);
   updateArc(); syncMade(); updateLabels();
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
