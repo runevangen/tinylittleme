@@ -34,6 +34,8 @@ export function validateScene(scene) {
     if (o.movable !== undefined && !WEIGHTS.includes(o.movable)) err(`${w}: movable må være ${WEIGHTS.join('|')}`);
     if (o.movable === 'light' && Math.max(x1 - x0, y1 - y0, z1 - z0) > 17) warn(`${w}: lett ting større enn 17 cm kan ikke bæres (grense 3,4 enheter)`);
     if (o.tool !== undefined && !TOOLS.includes(o.tool)) err(`${w}: tool må være ${TOOLS.join('|')}`);
+    if (o.onto && !scene.objects.some((x) => x.id === o.onto)) err(`${w}: onto «${o.onto}» finnes ikke`);
+    if (o.onto && !o.grip) warn(`${w}: onto gir bare mening sammen med grip: true`);
     if (o.tool && !o.movable) err(`${w}: tool krever movable: "light"`);
     if (o.pole !== undefined && !(num(o.pole) && o.pole > 0)) err(`${w}: pole må være et positivt tall (stavlengde i enheter)`);
     if (o.confidence !== undefined && !(o.confidence >= 0 && o.confidence <= 1)) err(`${w}: confidence må være 0–1`);

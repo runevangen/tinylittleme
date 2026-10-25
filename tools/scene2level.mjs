@@ -50,7 +50,7 @@ for (const o of scene.objects) {
     decor.push({ shape: 'box', id: o.id, kind: o.kind, pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
     continue;
   }
-  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.grip ? { grip: true } : {}) }));
+  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.grip ? { grip: true } : {}), ...(o.onto ? { onto: o.onto } : {}), ...(o.grip_drain !== undefined ? { gripDrain: o.grip_drain } : {}) }));
 }
 const hazards = (scene.hazards || []).map((h) => {
   const [a, b, c, d, e, f] = h.box;
@@ -81,7 +81,15 @@ const gapOf = (A, B) => {
   const dz = Math.max(0, Math.max(A.z0, B.z0) - Math.min(A.z1, B.z1));
   return Math.hypot(dx, dz);
 };
+// klatrekanter: en grep-flate med `onto` lar deg gå fra noe ved foten av flaten til toppen av `onto` (hvis kreftene rekker: stamina 10, 1,6 enheter/s opp)
+const climbs = scene.objects.filter((o) => o.grip && o.onto).map((o) => {
+  const [a, b, c, d, e, f] = o.box, base = uy(c), top = uy(d);
+  const secs = (top - base) / 1.6, drain = secs * Math.max(0.1, 1.5 + (o.grip_drain || 0));
+  return { onto: o.onto, base, ok: drain <= 8.5, fp: { x0: ux(a), x1: ux(b), z0: uz(e), z1: uz(f) } };
+});
+const climbOK = (A, B) => climbs.some((k) => k.ok && B.id === k.onto && Math.abs(A.top - k.base) < 0.3 && gapOf(A, k.fp) <= 1.6);
 const edgeOK = (A, B) => {
+  if (climbOK(A, B)) return true;
   const g = gapOf(A, B), rise = B.top - A.top;
   if (rise > 0.25) return g <= GAP_MAX && rise <= RISE_MAX - RISE_GAP_K * g;
   return g <= DROP_GAP_MAX;

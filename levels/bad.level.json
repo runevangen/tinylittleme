@@ -340,6 +340,28 @@
    "soft": false
   },
   {
+   "type": "fabric",
+   "min": [
+    -2,
+    0,
+    -16.6
+   ],
+   "max": [
+    1.2,
+    17.2,
+    -16
+   ],
+   "id": "handkle_hang",
+   "kind": "towel_hang",
+   "color": 8365764,
+   "material": "fabric",
+   "cp": false,
+   "soft": false,
+   "grip": true,
+   "onto": "vask_plate",
+   "gripDrain": -0.9
+  },
+  {
    "type": "metal",
    "min": [
     -6,
@@ -547,96 +569,6 @@
    "material": "fabric",
    "cp": false,
    "soft": true
-  },
-  {
-   "type": "fabric",
-   "min": [
-    -1,
-    0,
-    -8.5
-   ],
-   "max": [
-    2,
-    3.2,
-    -5.5
-   ],
-   "id": "hjelp_trapp_1",
-   "kind": "towel",
-   "color": 14205369,
-   "material": "fabric",
-   "helper": true
-  },
-  {
-   "type": "fabric",
-   "min": [
-    -5.5,
-    0,
-    -8
-   ],
-   "max": [
-    -2.5,
-    6.4,
-    -5
-   ],
-   "id": "hjelp_trapp_5",
-   "kind": "towel",
-   "color": 14205369,
-   "material": "fabric",
-   "helper": true
-  },
-  {
-   "type": "fabric",
-   "min": [
-    -5.5,
-    0,
-    -11
-   ],
-   "max": [
-    -2.5,
-    9.6,
-    -8
-   ],
-   "id": "hjelp_trapp_6",
-   "kind": "towel",
-   "color": 12900537,
-   "material": "fabric",
-   "helper": true
-  },
-  {
-   "type": "fabric",
-   "min": [
-    -5.5,
-    0,
-    -14
-   ],
-   "max": [
-    -2.5,
-    12.8,
-    -11
-   ],
-   "id": "hjelp_trapp_7",
-   "kind": "towel",
-   "color": 14209721,
-   "material": "fabric",
-   "helper": true
-  },
-  {
-   "type": "fabric",
-   "min": [
-    -5.5,
-    0,
-    -17
-   ],
-   "max": [
-    -2.5,
-    16,
-    -14
-   ],
-   "id": "hjelp_trapp_8",
-   "kind": "towel",
-   "color": 12175320,
-   "material": "fabric",
-   "helper": true
   }
  ],
  "movables": [
@@ -891,6 +823,17 @@
    "material": "mirror"
   }
  ],
+ "hints": [
+  {
+   "id": "handkle_hang",
+   "text": "Håndkle\nHopp mot det og trykk GREP, styr opp. Ved toppen hiver du deg over kanten.",
+   "pos": [
+    -0.4,
+    18.1,
+    -16.3
+   ]
+  }
+ ],
  "hazards": [
   {
    "id": "kar_inni",
@@ -1121,84 +1064,8 @@
    "uncertainty": "Tre bilder gir ikke eksakt plassering. Avstander ±15 cm, høyder ±5 cm. Døras plassering og baksiden av do er gjettet."
   },
   "solvable_by_graph": true,
-  "helpers": [
-   {
-    "id": "hjelp_trapp_1",
-    "kind": "trapp",
-    "note": "trinn 1/3 (brettede håndklær / esker)",
-    "size_cm": [
-     15,
-     16,
-     15
-    ],
-    "at_cm": [
-     113,
-     95
-    ],
-    "top_cm": 16
-   },
-   {
-    "id": "hjelp_trapp_5",
-    "kind": "trapp",
-    "note": "trinn 2/5 (brettede håndklær / esker)",
-    "size_cm": [
-     15,
-     32,
-     15
-    ],
-    "at_cm": [
-     90,
-     98
-    ],
-    "top_cm": 32
-   },
-   {
-    "id": "hjelp_trapp_6",
-    "kind": "trapp",
-    "note": "trinn 3/5 (brettede håndklær / esker)",
-    "size_cm": [
-     15,
-     48,
-     15
-    ],
-    "at_cm": [
-     90,
-     83
-    ],
-    "top_cm": 48
-   },
-   {
-    "id": "hjelp_trapp_7",
-    "kind": "trapp",
-    "note": "trinn 4/5 (brettede håndklær / esker)",
-    "size_cm": [
-     15,
-     64,
-     15
-    ],
-    "at_cm": [
-     90,
-     68
-    ],
-    "top_cm": 64
-   },
-   {
-    "id": "hjelp_trapp_8",
-    "kind": "trapp",
-    "note": "trinn 5/5 (brettede håndklær / esker)",
-    "size_cm": [
-     15,
-     80,
-     15
-    ],
-    "at_cm": [
-     90,
-     53
-    ],
-    "top_cm": 80
-   }
-  ],
-  "nodes": 27,
-  "reachable": 17
+  "helpers": [],
+  "nodes": 22,
+  "reachable": 12
  }
 }

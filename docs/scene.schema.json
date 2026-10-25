@@ -301,6 +301,14 @@
         "grip": {
           "type": "boolean"
         },
+        "onto": {
+          "type": "string",
+          "description": "Id til tingen du hiver deg opp på når du klatrer til toppen av denne grep-flaten (f.eks. servanten bak et hengende håndkle)."
+        },
+        "grip_drain": {
+          "type": "number",
+          "description": "Ekstra stamina-forbruk per sekund på grep-flaten (negativ = billigere, f.eks. -0.9 for et håndkle)."
+        },
         "hold": {
           "type": "boolean"
         },

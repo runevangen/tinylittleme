@@ -347,6 +347,26 @@
       "note": "Selve vasken (forsenkning) ikke modellert enda"
     },
     {
+      "id": "handkle_hang",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#7fa6c4",
+      "box": [
+        100,
+        116,
+        0,
+        86,
+        47,
+        50
+      ],
+      "grip": true,
+      "onto": "vask_plate",
+      "grip_drain": -0.9,
+      "confidence": 0.5,
+      "note": "Oppfunnet: et håndkle som henger over servantkanten ned til gulvet (ikke på bildene). Gjør det mulig å klatre opp til servanten.",
+      "help": "Håndkle\nHopp mot det og trykk GREP, styr opp. Ved toppen hiver du deg over kanten."
+    },
+    {
       "id": "saapepumpe",
       "kind": "bottle",
       "material": "plastic",

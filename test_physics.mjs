@@ -746,6 +746,25 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// 32. badet: håndkleet over servantkanten lar deg klatre opp på servanten (og målet ligger der)
+{
+  applyPreset('prince');
+  const LV = JSON.parse(fs.readFileSync(new URL('./levels/bad.level.json', import.meta.url), 'utf8'));
+  const L = { boxes: LV.boxes, ropes: LV.ropes || [] }; initBodies?.(L, LV);
+  const tw = LV.boxes.find((b) => b.id === 'handkle_hang'), top = LV.boxes.find((b) => b.id === 'vask_plate');
+  assert.ok(tw?.grip && tw.onto === 'vask_plate', 'håndkleet er grep og peker på servanten');
+  const p = newPlayer((tw.min[0] + tw.max[0]) / 2, 0, tw.max[2] + 0.6); p.fx = 0; p.fz = -1;
+  const go = (n, inp) => { for (let i = 0; i < n; i++) step(p, { ...idle, ...(typeof inp === 'function' ? inp(i) : inp) }, 1 / 60, L); };
+  go(20, {}); go(3, (i) => ({ mz: -1, grabPressed: i === 0 }));
+  assert.equal(p.state, 'climb', `festet i håndkleet (${p.state})`);
+  let minStam = 99; for (let i = 0; i < 60 * 14 && p.state === 'climb'; i++) { go(1, { mz: -1 }); minStam = Math.min(minStam, p.stam); }
+  go(200, (i) => ({ mz: i < 4 ? -1 : 0, jumpPressed: p.state === 'hang' && i % 30 === 5 }));
+  assert.equal(p.state, 'ground', `oppe (${p.state}, y=${p.y.toFixed(2)})`);
+  assert.ok(Math.abs(p.y - top.max[1]) < 0.1, `står på servanten (y=${p.y.toFixed(2)} vs ${top.max[1]})`);
+  assert.ok(minStam > 1, `kreftene rekker (laveste ${minStam.toFixed(1)})`);
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 

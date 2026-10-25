@@ -39,6 +39,9 @@ Kjeden i prøverommet: kast gelflasken opp på hylla (hold F, slipp), vault opp 
 - **Tårn (90 cm)** med fem trinn: fall fra toppen på gulvet er for hardt (tilbake). Hopp ned på **dopapirhaugen** (vest) eller bær **svampen** opp og slipp den nede før du hopper.
 - Flagget (målet) står øverst på tårnet.
 
+## Klatring i badet (v0.39)
+Et håndkle (`handkle_hang`) henger over servantkanten ned til gulvet (x 100–116 cm, rett under vasken). Hopp mot det, trykk GREP og styr opp; ved toppen hiver du deg over kanten og står på servanten (der målet ligger). Håndkleet er billig å klatre i (`grip_drain: -0.9`), så kreftene rekker hele veien (ca. 17 enheter). Scenefeltene `onto` (flaten du hiver deg opp på) og `grip_drain` er nye; rute-grafen i `scene2level` bruker dem som klatrekanter, så brettet er løsbart uten hjelpetrapper.
+
 ## Det som ikke er med ennå
 - Verktøy er ikke merket i bildene: bare prøverommet har dem foreløpig.
 - Grep-flater i badet fra bildene: hvilke gjenstander som er klatrbare er ikke bestemt (se backlogg). Flatetypen `slick` (glatt, kan ikke klatres) finnes ikke som grep-type ennå.

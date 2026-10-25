@@ -755,7 +755,7 @@ function climbStep(p, inp, wx, wz, dt, L) {
   }
   if (p.y + H < b.min[1] + 0.2) return leaveClimb(p, c.nx * 0.5, c.nz * 0.5, 0, 0.3);   // under nederste grep
   if (into > 0.25 && p.y + H >= b.max[1] - 0.05) {                                    // helt opp: hiv deg over kanten
-    if (tryLedge(p, { box: b.parent || b, nx: c.nx, nz: c.nz }, L)) { p.climb = null; return; }   // gel/bånd: kanten er veggen bak
+    if (tryLedge(p, { box: b.parent || (b.onto && L.boxes.find((x) => x.id === b.onto)) || b, nx: c.nx, nz: c.nz }, L)) { p.climb = null; return; }   // gel/bånd: kanten er veggen bak
     p.y = Math.min(p.y, b.max[1] - H);
   }
 }
