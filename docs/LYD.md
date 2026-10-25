@@ -52,3 +52,7 @@ Jeg kan ikke høre, så det er målt, ikke vurdert. `tools/audio_check.cjs` rend
 - Ting i rommet gir lyd (dytting av ulike materialer, glass som ringer).
 - Lyd med posisjon (3D) og visuell støtte for hørselshemmede.
 - Musikk, og tydeligere mikser (egne volum for skritt, pust, miljø).
+
+## Romlyd og lydtekst (v0.23)
+- **Romlyd:** brettets `audio.ambience` (liste) styrer: `drip` = dryppende kran (en dråpe hvert 2,4–6 s, plassert ved første boks med `kind: faucet`, panorert etter kameraet) og `fan` = vifte/lav romtone. Begge har egne kanaler i mikseren (gruppe «Rom»).
+- **Lydtekst (V eller ⚙):** korte tekster øverst til høyre for viktige lyder, med ◀ ▶ for retning: landing / hard landing, drypp, noe knuses, klemt, plask/skylling, sjekkpunkt, tak i kanten, tok/slapp ting. Skritt og pust er utelatt. Lagres i nettleseren; virker også når lyden er av.

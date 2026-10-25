@@ -16,6 +16,9 @@
   #hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#fffe;color:var(--ink);padding:6px 12px;border-radius:999px;font:600 13px system-ui;pointer-events:none}
   #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
   #toast.show{opacity:1}
+  #cues{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none}
+  .cue{background:#000a;color:#fff;font:600 13px system-ui;padding:5px 11px;border-radius:999px;animation:cuein .15s ease-out;transition:opacity .4s}
+  .cue.out{opacity:0}@keyframes cuein{from{transform:translateX(14px);opacity:0}}
   #help{position:fixed;right:10px;top:10px;max-width:300px;background:var(--panel);color:var(--ink);padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.5}
   #help b{display:block;margin-bottom:3px}
   #help kbd{background:#e7e9ee;border-radius:4px;padding:0 4px;font:600 11px ui-monospace,monospace}
@@ -53,13 +56,14 @@
 <canvas id="c"></canvas>
 <div id="hud"></div>
 <div id="toast"></div>
+<div id="cues"></div>
 <div id="hint" class="hide"></div>
 <div id="help"><b>tinylittleme – testbrett</b>
   <kbd>WASD</kbd> gå (fart bygges opp) · <kbd>C</kbd> gå forsiktig · <kbd>Mellomrom</kbd> hopp<br>
   <kbd>Shift</kbd>/<kbd>E</kbd> <b style="display:inline">rekk ut</b> – grip kant eller tau (tidspunkt teller!)<br>
   Hold <kbd>Shift</kbd> i tauet for å henge. Hopp slipper.<br>
   Mot vegg i fall + hopp = veggsprang<br>
-  <b style="display:inline">Ting:</b> gå mot dem for å dytte (tunge går tregt). <kbd>F</kbd> ta lette ting; trykk = slipp/sett på, <b style="display:inline">hold og slipp = kast</b>. Hard landing (Prince) bedøver deg; svamp, matte og håndkle tar av for fallet. Faller noe på deg, eller knuses, koster det poeng. <kbd>N</kbd> nullstill ting · <kbd>M</kbd> lyd av/på<br>
+  <b style="display:inline">Ting:</b> gå mot dem for å dytte (tunge går tregt). <kbd>F</kbd> ta lette ting; trykk = slipp/sett på, <b style="display:inline">hold og slipp = kast</b>. Hard landing (Prince) bedøver deg; svamp, matte og håndkle tar av for fallet. Faller noe på deg, eller knuses, koster det poeng. <kbd>N</kbd> nullstill ting · <kbd>M</kbd> lyd av/på · <kbd>V</kbd> lydtekst (viser tekst for lyder)<br>
   <kbd>K</kbd> lagre punkt · <kbd>R</kbd> tilbake til punkt · <kbd>T</kbd> start på nytt<br>
   <kbd>P</kbd> plan-modus (se hele brettet, WASD flytter, dra for å snurre)<br>
   <kbd>G</kbd> flymodus (brettbygging): Mellomrom opp, <kbd>C</kbd> ned, Shift fort<br>

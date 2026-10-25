@@ -3,12 +3,13 @@
 // Finner boten målet, er brettet løsbart (og vi har en vei). Finner den det ikke, er brettet
 // enten umulig eller bare vanskelig – ikke et bevis, men et godt signal.
 import fs from 'node:fs';
-import { newPlayer, step, applyPreset, PRESETS, inHazard } from '../physics.js';
+import { P, newPlayer, step, applyPreset, PRESETS, inHazard } from '../physics.js';
 import { LEVEL as DEFAULT_LEVEL } from '../level.js';
 
 const args = process.argv.slice(2);
 const preset = args.find((a) => PRESETS[a]) || 'spenning';
 applyPreset(preset);
+if (args.includes('--nowalljump')) { P.wallKick = 0; P.wallUp = 0; }   // test: er brettet løsbart uten veggsprang? (da må klatring/stav/gel til)
 const levelArg = args.find((a) => a.startsWith('--level='));
 const LEVEL = levelArg ? JSON.parse(fs.readFileSync(levelArg.slice(8), 'utf8')) : DEFAULT_LEVEL;
 for (const m of LEVEL.movables || []) LEVEL.boxes.push({ type: m.material, min: m.min, max: m.max });   // boten flytter ikke ting: de regnes som faste
@@ -64,6 +65,14 @@ if (found) {
   while (c.parent) { path.push(c.act); c = c.parent; }
   const secs = path.reduce((s, a) => s + a.frames, 0) / 60;
   console.log(`LØSBART: mål nådd med ${path.length} handlinger (~${secs.toFixed(0)} s), celler=${archive.size}`);
+  // spill av løsningen og vis hvilke bevegelser den bruker (hopp, kantgrep, klatring, tau …)
+  const q = newPlayer(...LEVEL.start); for (let i = 0; i < 10; i++) step(q, { mx: 0, mz: 0 }, 1 / 60, LEVEL);
+  const used = {}; let last = '';
+  for (const a of path.reverse()) for (let f = 0; f < a.frames; f++) {
+    step(q, { mx: a.mx, mz: a.mz, jumpPressed: a.jump && f === a.jumpAt, jumpHeld: a.hold, grabPressed: a.grab && f === a.grabAt, grabHeld: a.grab && f >= a.grabAt && f < a.grabAt + a.grabLen }, 1 / 60, LEVEL);
+    if (q.state !== last) { used[q.state] = (used[q.state] || 0) + 1; last = q.state; }
+  }
+  console.log('tilstander i løsningen (antall ganger inn i):', JSON.stringify(used));
 } else {
   console.log(`IKKE FUNNET etter ${MAX} forsøk. høyest nådd y=${bestY.toFixed(1)} (mål y=${gy}), celler=${archive.size}`);
 }

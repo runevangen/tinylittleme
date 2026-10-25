@@ -34,8 +34,9 @@ Gjenstår / til sparring:
 - [x] Første lydmotor (syntetisert): skritt per underlag, pust, tar sats, avspark, fall, landing, hendelser. Trenger lytting.
 - [x] Lydmikser: volum for hver lyd, forhåndsspilling, huskes.
 - [ ] Ekte lydopptak (foley) og flere varianter per underlag.
-- [ ] Romlyd/ambiens per rom (dryppende kran, vifte), og 3D-lyd.
-- [ ] Musikk, mikser, visuell støtte for hørselshemmede.
+- [~] Romlyd/ambiens: dryppende kran og vifte i badet (v0.23, `audio.ambience`). Gjenstår: 3D-lyd, ambiens for flere rom.
+- [x] Mikser (v0.13) og visuell støtte for hørselshemmede: lydtekst med retning (v0.23, tast V).
+- [ ] Musikk.
 
 ## Brett og innhold
 - [ ] Flytte motgiften til toppen av speilskapet når klatring finnes.
@@ -54,4 +55,3 @@ Gjenstår / til sparring:
 - [ ] Boten forstår klatring og farer. I dag hopp, rekk ut, tau og hazards.
 - [ ] Portere fysikk til Unity/Godot (`physics.js` er uten DOM).
 - [ ] Flerspiller (langt frem).
-- [ ] Lyd.

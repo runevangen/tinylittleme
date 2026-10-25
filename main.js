@@ -48,6 +48,17 @@ function unlockAudio() {
   audio?.resume();
 }
 addEventListener('pointerdown', unlockAudio); addEventListener('keydown', unlockAudio);
+// lydtekst: viser korte tekster for viktige lyder (for hørselshemmede, og når lyden er av). Skritt og pust er utelatt.
+let cuesOn = store.get('tlm.cues', false);
+function cue(text, pan = 0) {
+  if (!cuesOn) return;
+  const box = document.getElementById('cues'); if (!box) return;
+  const el = document.createElement('div'); el.className = 'cue'; el.textContent = `${pan < -0.3 ? '◀ ' : ''}🔊 ${text}${pan > 0.3 ? ' ▶' : ''}`;
+  box.appendChild(el); while (box.children.length > 4) box.firstChild.remove();
+  setTimeout(() => el.classList.add('out'), 1500); setTimeout(() => el.remove(), 2000);
+}
+function toggleCues() { cuesOn = !cuesOn; store.set('tlm.cues', cuesOn); toast(cuesOn ? 'Lydtekst på' : 'Lydtekst av'); const c = document.getElementById('chkCues'); if (c) c.checked = cuesOn; }
+
 function toggleSound() {
   soundMuted = !soundMuted; store.set('tlm.muted', soundMuted);
   audio?.setMuted(soundMuted);
@@ -666,6 +677,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyF') carryEdge = true;
   if (e.code === 'KeyN') resetThings();
   if (e.code === 'KeyM') toggleSound();
+  if (e.code === 'KeyV') toggleCues();
   if (e.code === 'KeyP' || e.code === 'Tab') setMode('plan');
   if (e.code === 'KeyG') setMode('fly');
   if (e.code === 'KeyH') $('help').classList.toggle('hide');
@@ -787,6 +799,7 @@ function buildPanel() {
     <label>Etterklang (rom) <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">
     <details open><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary>${mixerHtml()}
       <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCues"> Lydtekst: vis tekst for lyder (V)</label>
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
@@ -799,6 +812,7 @@ function buildPanel() {
   $('levelSel').value = levelId;
   $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
   wireMixer();
+  $('chkCues').checked = cuesOn; $('chkCues').onchange = (e) => { cuesOn = e.target.checked; store.set('tlm.cues', cuesOn); };
   $('presetSel').value = presetName;
   $('autoGrab').checked = P.autoGrab;
   $('autoGrab').onchange = (e) => { P.autoGrab = e.target.checked; saveCustom(); };
@@ -863,13 +877,13 @@ function update(dt) {
   jumpEdge = grabEdge = carryEdge = false;
   const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
   step(player, inp, dt, LEVEL);
-  audioFrame(pre, dt);
+  audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
-  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); audio?.checkpoint(); }
+  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); }
   if (player.y < LEVEL.deathY) { resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
-    if (ev.type === 'broke') { audio?.shatter(); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
-    else if (ev.type === 'lost') { audio?.splash('pit'); toast(`${ev.id} forsvant`); }
+    if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
+    else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant`); }
     else if (ev.type === 'use') audio?.pickup();
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); }
   }
@@ -880,13 +894,13 @@ function update(dt) {
     toast(`Landet for hardt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
   }
   if (player.crushed) {
-    const id = player.crushed; player.crushed = null; audio?.crush();
+    const id = player.crushed; player.crushed = null; audio?.crush(); cue('dunk: klemt');
     resetPlayer(player, ...save.pos); stats.respawns++;
     toast(`Klemt av ${id}!  −${SCORE.respawn} poeng`);
   }
   const hz = inHazard(LEVEL, player);
   if (hz) {
-    audio?.splash(hz.type === 'flush' ? 'flush' : 'pit');
+    audio?.splash(hz.type === 'flush' ? 'flush' : 'pit'); cue(hz.type === 'flush' ? 'skylling' : 'plask');
     resetPlayer(player, ...(hz.type === 'flush' ? LEVEL.start : save.pos)); stats.respawns++;
     toast(`${hz.message || 'Fare!'}  −${SCORE.respawn} poeng`);
   }
@@ -898,6 +912,35 @@ function update(dt) {
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
     $('win').classList.remove('hide');
   }
+}
+
+// romlyd: dryppende kran m.m. fra brettets audio.ambience, planlagt her slik at lydtekst virker uten lyd
+const AMB = LEVEL.audio?.ambience || [];
+const dripSrc = LEVEL.boxes.find((b) => b.kind === 'faucet');
+let dripT = 1 + Math.random() * 2;
+function panOf(x, z) {                                       // -1 venstre … +1 høyre sett fra kameraet
+  const rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
+  return Math.max(-1, Math.min(1, ((x - player.x) * rx + (z - player.z) * rz) / 14));
+}
+function ambientTick(dt) {
+  if (mode === 'plan') return;
+  if (AMB.includes('fan')) audio?.hum(0.05);
+  if (AMB.includes('drip')) {
+    dripT -= dt;
+    if (dripT <= 0) {
+      dripT = 2.4 + Math.random() * 3.6;
+      const pan = dripSrc ? panOf((dripSrc.min[0] + dripSrc.max[0]) / 2, (dripSrc.min[2] + dripSrc.max[2]) / 2) : 0;
+      audio?.drip(pan); cue('drypp', pan);
+    }
+  }
+}
+// lydtekst for det som skjer (uavhengig av om lyden er på)
+function cueFrame(pre) {
+  const p = player;
+  if (!pre.onGround && p.onGround && pre.vy < -9) cue(p.landImpact >= P.hardLand ? 'hard landing' : 'landing');
+  if (pre.state !== 'hang' && p.state === 'hang') cue('tak i kanten');
+  if (!pre.carry && p.carry) cue('tok tingen');
+  if (pre.carry && !p.carry) cue('slapp / kastet');
 }
 
 // lyder som følger av hva som skjedde i dette bildet

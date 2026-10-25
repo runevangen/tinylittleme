@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.23** – Romlyd: dryppende kran og vifte i badet (`audio.ambience` i scenen; mikser-kanaler «Rom»). Lydtekst for hørselshemmede (tast V eller ⚙): korte tekster med retning (◀ ▶) for landing, drypp, knusing, klemt, plask, sjekkpunkt, ta/slipp; virker også med lyden av. Boten (`tools/solve.mjs`) viser nå hvilke bevegelser løsningen bruker og kan prøve uten veggsprang (`--nowalljump`).
 - **0.22** – Verktøy du bærer og bruker med F: **hårgelé** (smør et klistrete grep-felt på veggen: vått i 20 s = sklir og koster stamina, så fast) og **dopapirrull** (ruller ut et bånd over en kant: klatrbart, men revner etter ca. 7 s i bruk). Nytt trykk samme sted slipper tingen; nullstill (N) fjerner felt og bånd. Prøverommet har gelflaske (kast den opp på hylla!) og rull øverst på tårnet. Tester 27–28.
 - **0.21** – Klatring på grep-flater (første versjon): fest med REKK UT mot en flate merket `grip`, styr opp/ned/sidelengs, stamina (10 s, vises som «grep ▮▮▮▯» i HUD), hiv deg over kanten, hopp løs. Klatreanimasjon. Håndkle-rute i prøverommet `?level=klatring` (nedre håndkle, hvilehylle, hopp-og-grip, øvre håndkle). Tester 25–26.
 - **0.20** – Klatrehjelp (første versjon): kast (hold F og slipp, med bue), hard landing i Prince (bedøvet / tilbake til lagringspunkt) og myke flater, stavhopp med ørepinne, svamp og dopapirhaug. Nytt prøverom `?level=klatring`. Se `docs/KLATREHJELP.md`.

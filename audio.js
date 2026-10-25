@@ -40,6 +40,8 @@ export const SOUND_LIST = [
   { id: 'splash', label: 'Kar / skylles ned', group: 'Hendelser' },
   { id: 'checkpoint', label: 'Sjekkpunkt', group: 'Hendelser' },
   { id: 'win', label: 'Mål', group: 'Hendelser' },
+  { id: 'drip', label: 'Dryppende kran', group: 'Rom' },
+  { id: 'fan', label: 'Vifte / romtone', group: 'Rom' },
   { id: 'step:wood', label: 'Skritt: tre', group: 'Skritt per underlag' },
   { id: 'step:tile', label: 'Skritt: flis/porselen', group: 'Skritt per underlag' },
   { id: 'step:soft', label: 'Skritt: matte/tekstil', group: 'Skritt per underlag' },
@@ -185,7 +187,6 @@ export function createAudio(ctx, opts = {}) {
   const fall = (speed) => setLoop('wind', () => loopNoise(500, 0.7, 'bandpass'), clamp((speed - 5) / 18, 0, 1) * 0.22, 350 + speed * 45);
   const skid = (level) => setLoop('skid', () => loopNoise(2400, 8, 'bandpass'), clamp(level, 0, 1) * 0.1, 2000 + level * 700);
   const scrape = (level) => setLoop('scrape', () => loopNoise(700, 1, 'lowpass'), clamp(level, 0, 1) * 0.25, 500 + level * 500);
-  function quietLoops() { for (const k in loops) if (now() >= (hold[k] || 0)) loops[k].g.gain.setTargetAtTime(0, now(), 0.08); }
 
   // ---- ting og hendelser ---------------------------------------------------
   const pickup = () => use('pickup', () => burst({ freq: 1800, q: 0.9, gain: 0.16, attack: 0.02, decay: 0.12 }));
@@ -202,6 +203,15 @@ export function createAudio(ctx, opts = {}) {
   });
   const checkpoint = () => use('checkpoint', () => { tone({ freq: 880, type: 'triangle', gain: 0.1, decay: 0.35 }); tone({ freq: 1320, type: 'triangle', gain: 0.07, decay: 0.45, delay: 0.08 }); });
   const win = () => use('win', () => [523, 659, 784, 1047].forEach((f, k) => tone({ freq: f, type: 'triangle', gain: 0.12, decay: 0.5, delay: k * 0.11 })));
+
+  // ---- romlyd (kommer fra brettets audio.ambience) -------------------------------------
+  const drip = (pan = 0) => use('drip', () => {                // én dråpe: kort «plink» med litt tunk og klikk
+    tone({ freq: rnd(1900, 2500), freq2: rnd(850, 1150), gain: 0.14, attack: 0.001, decay: 0.07, pan });
+    tone({ freq: rnd(280, 340), freq2: 170, gain: 0.07, attack: 0.002, decay: 0.12, delay: 0.015, pan });
+    burst({ type: 'highpass', freq: 3600, gain: 0.05, decay: 0.02, pan });
+  });
+  const hum = (level = 0.05) => setLoop('fan', () => loopNoise(210, 0.9, 'lowpass'), clamp(level, 0, 1), 210);   // vifte / lav romtone
+  function quietLoops() { for (const k in loops) if (k !== 'fan' && now() >= (hold[k] || 0)) loops[k].g.gain.setTargetAtTime(0, now(), 0.08); }
 
   // ---- mikser ---------------------------------------------------------------
   const MAXLEVEL = 2;
@@ -230,6 +240,8 @@ export function createAudio(ctx, opts = {}) {
       case 'splash': splash('flush'); break;
       case 'checkpoint': checkpoint(); break;
       case 'win': win(); break;
+      case 'drip': drip(-0.3); drip(0.3); break;
+      case 'fan': hold.fan = now() + 1.4; setLoop2('fan', 'fan', () => loopNoise(210, 0.9, 'lowpass'), 0.06, 210); break;
       case 'fall': hold.wind = now() + 1.4; setLoop2('wind', 'fall', () => loopNoise(500, 0.7, 'bandpass'), 0.22, 1300); break;
       case 'skid': hold.skid = now() + 1.0; setLoop2('skid', 'skid', () => loopNoise(2400, 8, 'bandpass'), 0.1, 2700); break;
       case 'scrape': hold.scrape = now() + 1.0; setLoop2('scrape', 'scrape', () => loopNoise(700, 1, 'lowpass'), 0.25, 1000); break;
@@ -245,7 +257,7 @@ export function createAudio(ctx, opts = {}) {
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
     ctx, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
-    pickup, drop, shatter, crush, splash, checkpoint, win,
+    pickup, drop, shatter, crush, splash, checkpoint, win, drip, hum,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state === 'suspended' && ctx.resume ? ctx.resume() : Promise.resolve()),
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },

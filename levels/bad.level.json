@@ -1063,7 +1063,11 @@
  },
  "audio": {
   "reverb": 0.38,
-  "note": "Flis og porselen: mye etterklang"
+  "note": "Flis og porselen: mye etterklang",
+  "ambience": [
+   "drip",
+   "fan"
+  ]
  },
  "ropes": [],
  "start": [
