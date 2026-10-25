@@ -4,8 +4,8 @@ Status: `[ ]` ikke startet · `[~]` påbegynt · `[x]` ferdig. Nyeste idéer øv
 
 ## Fra spill-research (`docs/DESIGNLAERDOM.md`, v0.27)
 Rangert etter verdi/innsats i rapporten. Kildegrunnlaget er svakt (søkesammendrag), så tallverdier er startverdier for tuning.
-- [ ] **Grep-kode:** én konsekvent visuell kode for grep-flater, tydelig markering av glatte flater, og figuren rekker ut hånden når grep er innen rekkevidde.
-- [ ] **Tilgivelse for mobilinput:** sjekk/legg til coyote-tid (ca. 0,10–0,18 s) og hoppbuffer (ca. 0,12–0,20 s) også under hurk/landing, bredere auto-kantgrep, REKK UT snapper til nærmeste grepspunkt.
+- [~] **Grep-kode (v0.28):** oransje kant på grep-flater, valgfri fremheving, og figuren rekker ut en arm når noe kan gripes. Gjenstår: tydelig negativ markering av glatte flater.
+- [~] **Tilgivelse for mobilinput (v0.28):** coyote 0,14 s, hoppbuffer holdes under hurk/landing, REKK UT snapper (0,45 enheter). Gjenstår: bredere auto-kantgrep uten knapp, spilletest av verdiene.
 - [ ] **Stamina i figuren:** skjelving/farge ved lite igjen (fra ca. 25–30 %), tom stamina = kontrollert skli (0,3–0,5 s), tau/bånd uten stamina-kostnad.
 - [ ] **Billig utvei:** auto-respawn av ting som havner utilgjengelig, nullstill (N) gratis når en ting er fysisk fastlåst, og trygg autolagring av grunnfremgang (lagring til 25 poeng er risikabelt for korte mobiløkter).
 - [ ] **Fallgrenser varslet:** landingsmarkør/kontaktskygge, vindlyd og FOV-økning mot terskelen, tre tydelige landingsklasser.

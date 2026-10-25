@@ -3,7 +3,7 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle } from './props.js';
-import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint } from './physics.js';
+import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -185,6 +185,18 @@ function material(b) {
 const pageMat = std({ map: pagesTex, roughness: 0.9 });
 const woodKinds = new Set(['wood', 'woodpanel']);
 
+// grep-kode: alt som kan klatres i har en varm oransje kant (alltid litt synlig); «Fremhev grep» i ⚙ gjør dem tydeligere og pulserende
+let gripHi = store.get('tlm.griphi', false);
+const gripMarks = [];
+function gripMark(b) {
+  const sx = b.max[0] - b.min[0] + 0.08, sy = b.max[1] - b.min[1] + 0.08, sz = b.max[2] - b.min[2] + 0.08;
+  const g = new THREE.Group(), cx = (b.min[0] + b.max[0]) / 2, cy = (b.min[1] + b.max[1]) / 2, cz = (b.min[2] + b.max[2]) / 2;
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(sx, sy, sz)), new THREE.LineBasicMaterial({ color: 0xffa940, transparent: true, opacity: 0.6 }));
+  const glow = new THREE.Mesh(new THREE.BoxGeometry(sx + 0.06, sy + 0.06, sz + 0.06), new THREE.MeshBasicMaterial({ color: 0xffa940, transparent: true, opacity: 0.2, depthWrite: false }));
+  g.add(edges, glow); g.position.set(cx, cy, cz); scene.add(g);
+  const m = { g, edges, glow }; gripMarks.push(m); return m;
+}
+
 // ting som består av flere bokser (do, badekar …) tegnes som én ekte form; kollisjonen er fortsatt boksene
 const drawn = new Set(); let hasToilet = false;
 {
@@ -201,6 +213,7 @@ for (const b of LEVEL.boxes) {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
   const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material }) : null;
+  if (b.grip) gripMark(b);
   if (shaped) { shaped.position.set(cx, cy, cz); scene.add(shaped); continue; }
   const mat = material(b);
   const tiled = b.material === 'tile';
@@ -526,6 +539,8 @@ function poseHero(p, now, dt, mode) {
   }
   if (!p.skid && p.state !== 'mantle' && p.state !== 'hang' && p.state !== 'swing' && mode !== 'fly' && p.onGround) T.lean += hero.accLean;
 
+  if (hero.gripNear && (p.state === 'ground' || p.state === 'air') && !p.carry) { T.aR = Math.min(T.aR, -1.75); T.eR = -0.45; }   // rekker en arm mot grepet
+
   // jevn overgang: armer/overkropp rolig, ben raskere; alt raskere i lufta og i hurk
   const quick = !p.onGround || p.windup > 0 || df > 0.2;
   const slowKeys = new Set(['aL', 'aR', 'zL', 'zR', 'eL', 'eR', 'lean', 'chest', 'twist', 'hy', 'hp']);
@@ -588,12 +603,12 @@ function syncMade() {
       const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
       const g = buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material });
       if (!g) continue;
-      g.position.set(b.min[0] + sx / 2, b.min[1] + sy / 2, b.min[2] + sz / 2); scene.add(g); madeMeshes.set(b, { g, dry: false });
+      g.position.set(b.min[0] + sx / 2, b.min[1] + sy / 2, b.min[2] + sz / 2); scene.add(g); madeMeshes.set(b, { g, dry: false, mark: b.grip ? gripMark(b) : null });
     }
     const m = madeMeshes.get(b);
     if (m && b.kind === 'gel' && !b.wet && !m.dry) { m.dry = true; m.g.userData.dry?.(); }
   }
-  for (const [b, m] of madeMeshes) if (!alive.has(b)) { scene.remove(m.g); madeMeshes.delete(b); }
+  for (const [b, m] of madeMeshes) if (!alive.has(b)) { scene.remove(m.g); if (m.mark) { scene.remove(m.mark.g); gripMarks.splice(gripMarks.indexOf(m.mark), 1); } madeMeshes.delete(b); }
 }
 const shards = [];
 function spawnShards(pos, color) {
@@ -816,6 +831,7 @@ function buildPanel() {
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCues"> Lydtekst: vis tekst for lyder (V)</label>
     ${helperCount ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning (X)</label>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkGripHi"> Fremhev grep (oransje, pulserende)</label>
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
@@ -829,6 +845,7 @@ function buildPanel() {
   $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
   wireMixer();
   if ($('chkHelpers')) { $('chkHelpers').checked = helperMarks.visible; $('chkHelpers').onchange = (e) => { helperMarks.visible = e.target.checked; }; }
+  $('chkGripHi').checked = gripHi; $('chkGripHi').onchange = (e) => { gripHi = e.target.checked; store.set('tlm.griphi', gripHi); };
   $('chkAutoCam').checked = autoCam; $('chkAutoCam').onchange = (e) => { autoCam = e.target.checked; store.set('tlm.autocam', autoCam); };
   $('chkCues').checked = cuesOn; $('chkCues').onchange = (e) => { cuesOn = e.target.checked; store.set('tlm.cues', cuesOn); };
   $('presetSel').value = presetName;
@@ -996,8 +1013,11 @@ function insideAny(x, y, z, m) {
 }
 
 function render(now, dt) {
+  hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
   poseHero(player, now, dt, mode);
   updateArc(); syncMade();
+  const pulse = 0.5 + 0.5 * Math.sin(now / 260);
+  for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
   hero.root.position.set(player.x, player.y, player.z);
   hero.root.scale.set(1, 1, 1);                                  // ingen strekk/klem: det ga «puls» og sjøsyke
 

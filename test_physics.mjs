@@ -680,6 +680,37 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// 29. tilgivelse: REKK UT griper det som er innenfor rekkevidde (ikke bare det du allerede berører); hopp trykket under hurk huskes
+{
+  applyPreset('prince');
+  const go = (L, p, n, f) => { for (let i = 0; i < n; i++) step(p, { ...idle, ...(typeof f === 'function' ? f(i) : f) }, 1 / 60, L); };
+  // grep-flate 0,3 unna: REKK UT uten å styre mot den
+  const tower = box('grip', 0, 1, 0, 9, -3, 3, { grip: true });
+  let L = { boxes: [floor, tower], ropes: [] }, p = newPlayer(-0.6, 0, 0); p.fx = 1; p.fz = 0;
+  go(L, p, 10, {}); go(L, p, 3, (i) => ({ grabPressed: i === 0 }));
+  assert.equal(p.state, 'climb', `snapper til grep-flaten (${p.state})`);
+  // for langt unna (1,0): ingenting
+  ({ L, p } = { L, p: newPlayer(-1.4, 0, 0) }); p.fx = 1; p.fz = 0; go(L, p, 10, {}); go(L, p, 3, (i) => ({ grabPressed: i === 0 }));
+  assert.notEqual(p.state, 'climb', 'for langt unna');
+  // kant i lufta 0,3 unna uten at du styrer mot den
+  const ledge = box('hylle', 0, 6, 0, 5.4, -3, 3);
+  L = { boxes: [floor, ledge], ropes: [] }; p = newPlayer(-0.6, 3.6, 0); p.fx = 1; p.fz = 0; p.state = 'air';
+  go(L, p, 4, (i) => ({ grabPressed: i === 0 }));
+  assert.equal(p.state, 'hang', `kantgrep via snap (${p.state})`);
+  // hoppbuffer under hurk: hopp trykket mens du fortsatt er i hurk etter landing, utføres når hurken er over
+  L = { boxes: [floor], ropes: [] }; p = newPlayer(0, 9, 0);
+  let pressedAt = -1, maxY = 0;
+  for (let i = 0; i < 240; i++) {
+    const press = pressedAt < 0 && p.onGround && p.recover > 0.12;                      // trykker hopp midt i hurken
+    if (press) pressedAt = i;
+    step(p, { ...idle, jumpPressed: press, jumpHeld: pressedAt >= 0 && i - pressedAt < 120 }, 1 / 60, L);
+    if (pressedAt >= 0) maxY = Math.max(maxY, p.y);
+  }
+  assert.ok(pressedAt >= 0, 'hurk etter landing oppstod');
+  assert.ok(maxY > 2, `hoppet huskes og utføres når hurken er over (maks høyde ${maxY.toFixed(2)})`);
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 

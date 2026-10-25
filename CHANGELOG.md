@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.28** – Tilgivelse og grep-kode (fra spill-research): REKK UT griper det som er innenfor 0,45 enheter (grep-flate eller kant i lufta) uten at du styrer mot det; coyote-tid 0,14 s; hopp trykket under hurk/landing huskes til hurken er over; grep-flater har oransje kant (valgfritt tydeligere og pulserende i ⚙ «Fremhev grep»); figuren løfter en arm når noe kan gripes. Test 29.
 - **0.27** – Spill-research (LittleBigPlanet, Grounded, Pikmin, Celeste, Zelda, Portal 2, Mario Maker m.fl.): `docs/DESIGNLAERDOM.md` med lærdommer, forslag til verdier og hva som må verifiseres. Anbefalingene er lagt i backloggen.
 - **0.26** – Rå research-mapper (`research_notes/`, `reports/`) holdes utenfor git; ferdige rapporter kopieres til `docs/`.
 - **0.25** – Valgfri kamerafølging (tast X eller ⚙): kameraet dreier seg langsomt bak figuren når den går på bakken, og slutter i 1,5 s etter at du selv drar i kameraet. Av som standard.

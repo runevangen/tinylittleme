@@ -37,8 +37,9 @@ export const P = {
   slickAccel: 5,     // fart-endring på glatt underlag (fliser): du sklir
   maxFall: -30,
   cutVy: 4,          // slipper du hopp-knappen tidlig kappes farten til dette
-  coyote: 0.1,
-  jumpBuffer: 0.12,
+  coyote: 0.14,      // tid du fortsatt kan hoppe etter å ha gått av en kant (s)
+  jumpBuffer: 0.12,  // hopp trykket litt for tidlig huskes så lenge (s); under hurk/landing huskes det til hurken er over
+  reachSnap: 0.45,   // REKK UT griper en grep-flate eller kant som er så langt unna (enheter), ikke bare det du allerede berører
   wallLock: 0.2,     // kort tid uten styring etter veggsprang
   ledgeBelow: 0.5,   // hvor langt under hendene kanten kan ligge
   // Variabler under overstyres av en forhåndsinnstilling (se PRESETS):
@@ -453,6 +454,33 @@ function boostJump(p) {                                       // løpehopp går 
   if (P.jumpBoost > 1 && sp > 0.5) { p.vx *= P.jumpBoost; p.vz *= P.jumpBoost; }
 }
 
+// Nærmeste grep-flate eller kant foran deg innenfor rekkevidde (til REKK UT-snapping og til «hånden rekker ut»-animasjonen).
+export function findReachTarget(p, L, extra = 0) {
+  if (p.carry) return null;
+  const ax = Math.abs(p.fx) >= Math.abs(p.fz) ? 0 : 2, sgn = Math.sign(ax === 0 ? p.fx : p.fz) || 1, o = 2 - ax;
+  const pa = ax === 0 ? p.x : p.z, po = ax === 0 ? p.z : p.x;
+  let best = null;
+  for (const b of L.boxes) {
+    if (b.carried || b === p.carry || b.dyn || b.type === 'floor') continue;
+    if (po < b.min[o] - 0.05 || po > b.max[o] + 0.05) continue;
+    const gap = ((sgn > 0 ? b.min[ax] : b.max[ax]) - pa) * sgn - HW;
+    if (gap < 0.02 || gap > P.reachSnap + extra) continue;           // allerede inntil (da finnes vanlig treff), eller for langt unna
+    let kind = null;
+    if (b.grip && p.y + H >= b.min[1] && p.y <= b.max[1]) kind = 'grip';
+    else { const dh = b.max[1] - (p.y + H); if (!p.onGround && dh <= P.ledgeAbove + P.reachAbove && dh >= -P.ledgeBelow && b.min[1] <= p.y + H) kind = 'ledge'; }
+    if (kind && (!best || gap < best.gap - 1e-6 || (Math.abs(gap - best.gap) < 1e-6 && kind === 'grip'))) best = { b, kind, gap, ax, sgn };
+  }
+  return best;
+}
+function reachSnap(p, L) {
+  const t = findReachTarget(p, L); if (!t) return null;
+  const old = ax0(p, t.ax);
+  if (t.ax === 0) p.x += t.sgn * t.gap; else p.z += t.sgn * t.gap;
+  for (const o of L.boxes) if (o !== t.b && o !== p.carry && !o.carried && overlaps(o, p.x, p.y, p.z)) { if (t.ax === 0) p.x = old; else p.z = old; return null; }   // noe står i veien
+  return { box: t.b, nx: t.ax === 0 ? -t.sgn : 0, nz: t.ax === 2 ? -t.sgn : 0, snapped: true };
+}
+const ax0 = (p, ax) => (ax === 0 ? p.x : p.z);
+
 function approach(v, target, d) {
   if (v < target) return Math.min(v + d, target);
   return Math.max(v - d, target);
@@ -461,7 +489,7 @@ function approach(v, target, d) {
 // inp: { mx, mz (-1..1, verdensretning), jumpPressed, jumpHeld, grabPressed, grabHeld }
 export function step(p, inp, dt, L) {
   carryControl(p, inp, dt, L);
-  if (inp.jumpPressed) p.buffer = P.jumpBuffer;
+  if (inp.jumpPressed) p.buffer = Math.max(P.jumpBuffer, p.recover > 0 ? p.recover + 0.06 : 0);
   if (inp.grabPressed && p.reachCd <= 0) { p.reach = P.reachTime; p.reachCd = P.reachTime + P.reachCooldown; }
   if (dt <= 1e-6) return;
   const n = Math.max(1, Math.ceil(dt / SUBSTEP - 1e-6)), h = dt / n;      // like lange delsteg (en kort rest på <1 ms ga ikke nok fall til å oppdage gulvet → flimmer mellom «står» og «luft»)
@@ -593,11 +621,12 @@ function sub(p, inp, dt, L) {
 
   updateCarried(p, L);
 
-  if (hit?.box.grip && p.reach > 0 && p.state !== 'climb' && (wx * hit.nx + wz * hit.nz) < -0.3 && tryClimb(p, hit)) { /* festet seg på en grep-flate */ }
+  const hit2 = hit || (p.reach > 0 && p.cd <= 0 && p.state !== 'climb' ? reachSnap(p, L) : null);                 // REKK UT griper det som er innenfor rekkevidde
+  if (hit2?.box.grip && p.reach > 0 && p.state !== 'climb' && (hit2.snapped || (wx * hit2.nx + wz * hit2.nz) < -0.3) && tryClimb(p, hit2)) { /* festet seg på en grep-flate */ }
   else if (p.onGround) p.state = 'ground';
   else {
     p.state = 'air';
-    if (hit && p.vy <= 2 && p.cd <= 0 && (P.autoGrab || p.reach > 0) && (wx * hit.nx + wz * hit.nz) < -0.3) tryLedge(p, hit, L);
+    if (hit2 && p.vy <= 2 && p.cd <= 0 && (P.autoGrab || p.reach > 0) && (hit2.snapped || (wx * hit2.nx + wz * hit2.nz) < -0.3)) tryLedge(p, hit2, L);
   }
 }
 
