@@ -2,18 +2,29 @@
 // Ren JS uten DOM/three, slik at den kan testes i Node og porteres (Unity/Godot) senere.
 // Verden: akse-justerte bokser. x/z er gulvplanet, y er opp. Enhet ≈ «spillerhøyde» (1.0).
 
+// Felles bevegelsesvekt: klassisk og spenning er «umiddelbare» (som før); prince har treghet, oppbygging og tidsbruk.
+const SNAPPY = { accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4 };
+
 export const PRESETS = {
-  // Slik det var: raskt, to hopp, kanten grips av seg selv.
+  // Slik det var først: raskt, to hopp, kanten grips av seg selv.
   klassisk: {
-    label: 'Klassisk', speed: 7, gravity: -32, jump: 12.5, airJump: 11.5, airJumps: 1, airAccel: 28,
+    ...SNAPPY, label: 'Klassisk', speed: 7, gravity: -32, jump: 12.5, airJump: 11.5, airJumps: 1, airAccel: 28,
     autoGrab: true, reachTime: 0.35, reachCooldown: 0.3, ledgeAbove: 0.4, reachAbove: 0,
     ropeReach: 1.4, wallKick: 8.5, wallUp: 11.5, slide: -4, swingPush: 22, ropeJump: 11,
   },
-  // Tyngre og tregere hopp. Ingen dobbelthopp: du må gripe aktivt (GRIP) mot kant eller tau.
+  // Tyngre hopp, ingen dobbelthopp: du må gripe aktivt (REKK UT) mot kant eller tau.
   spenning: {
-    label: 'Spenning', speed: 6.5, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 10,
+    ...SNAPPY, label: 'Spenning', speed: 6.5, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 10,
     autoGrab: false, reachTime: 0.4, reachCooldown: 0.6, ledgeAbove: 0.3, reachAbove: 0.7,
     ropeReach: 2.0, wallKick: 7, wallUp: 11, slide: -3.5, swingPush: 16, ropeJump: 10,
+  },
+  // Prince of Persia-følelse: du bygger opp fart, snur ikke på stedet, hopp har forberedelse,
+  // landing etter høyt fall tar tid, og å hive seg opp på en kant er en bevegelse som tar tid.
+  prince: {
+    label: 'Prince', speed: 5.6, accel: 12, decel: 18, turnDecel: 15, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 8,
+    autoGrab: false, reachTime: 0.45, reachCooldown: 0.6, ledgeAbove: 0.3, reachAbove: 0.75,
+    ropeReach: 2.0, wallKick: 7, wallUp: 11, slide: -3.5, swingPush: 14, ropeJump: 10,
+    jumpWindup: 0.1, mantleTime: 0.8, landMin: 10, landK: 0.022, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4,
   },
 };
 
@@ -30,6 +41,12 @@ export const P = {
   ledgeBelow: 0.5,   // hvor langt under hendene kanten kan ligge
   // Variabler under overstyres av en forhåndsinnstilling (se PRESETS):
   speed: 7, airAccel: 28, gravity: -32, jump: 12.5, airJump: 11.5, airJumps: 1,
+  decel: 60, turnDecel: 60,   // bremsing uten input / ved retningsskifte (lavt = tregt og vektig)
+  jumpWindup: 0,     // forberedelse før et hopp tar av (s)
+  mantleTime: 0,     // hvor lenge det tar å hive seg opp på en kant (s). 0 = øyeblikkelig
+  landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3,   // landing etter fall: tid i hurk
+  walkFactor: 0.4,   // fartsfaktor når du går forsiktig (C)
+  turnRate: 8,       // hvor fort figuren snur kroppen (rad/s), brukes i tegningen
   autoGrab: true,    // false: kant/tau grips bare mens du «rekker ut» (GRIP)
   reachTime: 0.35,   // hvor lenge en utrekning varer
   reachCooldown: 0.3,// pause før du kan rekke ut igjen
@@ -64,13 +81,14 @@ export function newPlayer(x, y, z) {
   return {
     x, y, z, vx: 0, vy: 0, vz: 0,
     fx: 0, fz: 1,                 // blikkretning
-    state: 'air',                 // ground | air | hang | swing
+    state: 'air',                 // ground | air | hang | mantle | swing
     onGround: false, groundBox: null,
     jumps: 0, jumping: false,
     coyote: 0, buffer: 0, cd: 0, lock: 0,
     reach: 0, reachCd: 0,         // «rekker ut»-vindu og pause
     wallT: 0, wallN: null, sliding: false,
-    hang: null, rope: null, swing: null,
+    hang: null, rope: null, swing: null, mantle: null,
+    windup: 0, recover: 0, skid: false,
     carry: null, crushed: null,
     t: 0,
   };
@@ -253,6 +271,7 @@ function sub(p, inp, dt, L) {
   p.lock = Math.max(0, p.lock - dt);
   p.buffer -= dt; p.coyote -= dt; p.wallT -= dt;
   p.reach = Math.max(0, p.reach - dt); p.reachCd = Math.max(0, p.reachCd - dt);
+  p.recover = Math.max(0, p.recover - dt);
 
   let wx = inp.mx, wz = inp.mz;
   const wl = Math.hypot(wx, wz);
@@ -260,16 +279,25 @@ function sub(p, inp, dt, L) {
 
   if (L.bodies?.length) stepBodies(L, p, dt);
 
+  if (p.state === 'mantle') return mantleStep(p, dt);
   if (p.state === 'hang') return hangStep(p, wx, wz);
   if (p.state === 'swing') return swingStep(p, inp, wx, wz, dt);
 
-  if (wl > 0.1 && p.lock <= 0) { p.fx = wx / wl; p.fz = wz / wl; }
+  const speed0 = Math.hypot(p.vx, p.vz);
+  const rev = wl > 0.1 && speed0 > 0.1 && (p.vx * wx + p.vz * wz) / (speed0 * Math.hypot(wx, wz)) < -0.5;   // du styrer mot bevegelsen
+  p.skid = p.onGround && rev && speed0 > 2;
+  // blikkretningen følger inputen først når du faktisk er på vei den veien (ikke mens du sklir motsatt)
+  if (wl > 0.1 && p.lock <= 0 && (!rev || speed0 < 1.5)) { p.fx = wx / wl; p.fz = wz / wl; }
 
   if (p.lock <= 0) {
-    const a = (p.onGround ? (p.groundBox?.slick ? P.slickAccel : P.accel) : P.airAccel) * dt;
-    const sp = P.speed * (p.carry ? P.carrySpeed : 1);
-    p.vx = approach(p.vx, wx * sp, a);
-    p.vz = approach(p.vz, wz * sp, a);
+    let a;
+    if (!p.onGround) a = P.airAccel;
+    else if (p.groundBox?.slick) a = P.slickAccel;
+    else if (wl < 0.1) a = P.decel;
+    else a = rev ? P.turnDecel : P.accel;
+    const sp = P.speed * (p.carry ? P.carrySpeed : 1) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
+    const tx = wx * sp, tz = wz * sp, dx = tx - p.vx, dz = tz - p.vz, dl = Math.hypot(dx, dz), m = a * dt;
+    if (dl <= m) { p.vx = tx; p.vz = tz; } else { p.vx += dx / dl * m; p.vz += dz / dl * m; }   // som vektor: gir buer, ikke akse-hopp
   }
 
   p.vy = Math.max(P.maxFall, p.vy + P.gravity * dt);
@@ -279,9 +307,15 @@ function sub(p, inp, dt, L) {
 
   if (p.onGround) { p.coyote = P.coyote; p.jumps = P.airJumps; }
 
+  if (p.windup > 0) {                                      // forberedelse (hurk) før avsparket
+    p.windup -= dt;
+    if (p.windup <= 0) { p.windup = 0; p.vy = P.jump; p.jumping = true; p.onGround = false; }
+  }
   if (p.buffer > 0) {
     if (p.coyote > 0) {
-      p.vy = P.jump; p.coyote = 0; p.buffer = 0; p.onGround = false; p.jumping = true;
+      if (p.recover > 0 || p.windup > 0) { /* i hurk: ikke hopp ennå (hoppet blir stående i bufferen) */ }
+      else if (P.jumpWindup > 0) { p.windup = P.jumpWindup; p.coyote = 0; p.buffer = 0; }
+      else { p.vy = P.jump; p.coyote = 0; p.buffer = 0; p.onGround = false; p.jumping = true; }
     } else if (pushWall && p.vy <= 0) {   // veggsprang: faller + styrer inn mot veggen
       p.vx = p.wallN.nx * P.wallKick; p.vz = p.wallN.nz * P.wallKick;
       p.vy = P.wallUp; p.lock = P.wallLock; p.jumps = P.airJumps;
@@ -296,12 +330,15 @@ function sub(p, inp, dt, L) {
 
   if (p.reach > 0 && p.cd <= 0 && !p.onGround && tryRope(p, L)) return;
 
+  const wasGrounded = p.onGround, vyBefore = p.vy;
   p.onGround = false; p.groundBox = null;
   const hx = moveX(p, p.vx * dt, L);
   const hz = moveZ(p, p.vz * dt, L);
   moveY(p, p.vy * dt, L);
   const hit = hx || hz;
   if (hit) { p.wallN = { nx: hit.nx, nz: hit.nz }; p.wallT = 0.12; }
+
+  if (!wasGrounded && p.onGround && P.landK > 0 && vyBefore < -P.landMin) p.recover = Math.min(P.landMax, (-vyBefore - P.landMin) * P.landK);
 
   updateCarried(p, L);
 
@@ -373,7 +410,12 @@ function tryLedge(p, hit, L) {
 
 function hangStep(p, wx, wz) {
   const h = p.hang;
-  if (p.buffer > 0) {            // hiv deg opp
+  if (p.buffer > 0 && P.mantleTime > 0) {                  // hiv deg opp: tar tid, du er sårbar underveis
+    p.mantle = { t: 0, dur: P.mantleTime, fx: p.x, fy: p.y, fz: p.z, tx: h.tx, ty: h.top, tz: h.tz };
+    p.state = 'mantle'; p.hang = null; p.buffer = 0;
+    return;
+  }
+  if (p.buffer > 0) {            // hiv deg opp (øyeblikkelig)
     p.x = h.tx; p.z = h.tz; p.y = h.top;
     p.vx = p.vy = p.vz = 0;
     p.state = 'air'; p.hang = null; p.buffer = 0; p.cd = 0.15; p.onGround = false;
@@ -383,6 +425,16 @@ function hangStep(p, wx, wz) {
     p.state = 'air'; p.hang = null; p.cd = 0.35;
     p.vx = h.nx * 2; p.vz = h.nz * 2; p.jumps = Math.min(1, P.airJumps);
   }
+}
+
+function mantleStep(p, dt) {
+  const m = p.mantle; m.t += dt;
+  const u = Math.min(1, m.t / m.dur), ease = (x) => x * x * (3 - 2 * x);
+  const up = ease(Math.min(1, u / 0.6)), fwd = ease(Math.max(0, (u - 0.6) / 0.4));   // først opp, så inn over kanten
+  p.y = m.fy + (m.ty - m.fy) * up;
+  p.x = m.fx + (m.tx - m.fx) * fwd; p.z = m.fz + (m.tz - m.fz) * fwd;
+  p.vx = p.vy = p.vz = 0;
+  if (u >= 1) { p.state = 'air'; p.mantle = null; p.cd = 0.15; p.onGround = false; }
 }
 
 // ---- Tau / sving -------------------------------------------------------

@@ -263,6 +263,87 @@ const body = (L, id) => L.bodies.find((b) => b.id === id);
   assert.equal(crushed, 'opp', 'du ble stående under og klemt');
 }
 
+// ---- «Prince»-følelsen ---------------------------------------------------
+applyPreset('prince');
+const emptyL = () => ({ boxes: [floor], ropes: [] });
+
+// 21. retningsskifte tar tid: mye tregere enn «klassisk», og blikket snur ikke mens du sklir
+{
+  const timeToReverse = (preset) => {
+    applyPreset(preset);
+    const L = emptyL(), p = newPlayer(0, 0, 0);
+    run(L, p, 10, () => idle);
+    run(L, p, 120, () => ({ ...idle, mx: 1 }));
+    let t = 0, faceHeld = true;
+    for (; t < 200 && p.vx > 0; t++) { step(p, { ...idle, mx: -1 }, 1 / 60, L); if (p.vx > 1.6 && p.fx < 0.9) faceHeld = false; }
+    return { t, faceHeld };
+  };
+  const classic = timeToReverse('klassisk'), prince = timeToReverse('prince');
+  assert.ok(prince.t > classic.t * 3, `retningsskifte prince ${prince.t} vs klassisk ${classic.t} bilder`);
+  assert.ok(prince.faceHeld, 'blikket skal ikke snu mens du fortsatt farer motsatt vei');
+  applyPreset('prince');
+}
+
+// 22. oppbygging av fart og forsiktig gange
+{
+  const L = emptyL(), p = newPlayer(0, 0, 0);
+  run(L, p, 10, () => idle);
+  run(L, p, 6, () => ({ ...idle, mx: 1 }));                      // 0,1 s
+  assert.ok(p.vx > 0.5 && p.vx < P.speed * 0.5, `fart etter 0,1 s: ${p.vx.toFixed(2)}`);
+  run(L, p, 90, () => ({ ...idle, mx: 1 }));
+  assert.ok(Math.abs(p.vx - P.speed) < 0.01, 'når full fart');
+  const q = newPlayer(0, 0, 10);
+  run(L, q, 120, () => ({ ...idle, mz: 1, walk: true }));
+  assert.ok(Math.abs(q.vz - P.speed * P.walkFactor) < 0.01, `gå forsiktig: ${q.vz.toFixed(2)}`);
+}
+
+// 23. hopp har forberedelse: ingen fart opp rett etter trykket, men hopper like etter
+{
+  const L = emptyL(), p = newPlayer(0, 0, 0);
+  run(L, p, 10, () => idle);
+  step(p, { ...idle, jumpPressed: true, jumpHeld: true }, 1 / 60, L);
+  run(L, p, 2, () => ({ ...idle, jumpHeld: true }));             // ca. 0,05 s
+  assert.ok(p.windup > 0 && p.y === 0, 'i hurk, ikke løftet ennå');
+  let max = 0;
+  run(L, p, 90, () => { max = Math.max(max, p.y); return { ...idle, jumpHeld: true }; });
+  assert.ok(max > 3, `hoppet tar av etter forberedelsen (${max.toFixed(2)})`);
+}
+
+// 24. landing etter høyt fall tar tid (hurk): lav fart og ingen hopp, men lavt fall gjør ingenting
+{
+  const fall = (y0) => {
+    const L = emptyL(), p = newPlayer(0, y0, 0);
+    let recover = 0;
+    for (let i = 0; i < 200; i++) { step(p, idle, 1 / 60, L); recover = Math.max(recover, p.recover); if (p.onGround) break; }
+    return recover;
+  };
+  assert.ok(fall(12) > 0.1, 'høyt fall gir hurk');
+  assert.equal(fall(2), 0, 'lavt fall gir ingen hurk');
+  const L = emptyL(), p = newPlayer(0, 12, 0);
+  for (let i = 0; i < 200 && !p.onGround; i++) step(p, idle, 1 / 60, L);
+  step(p, { ...idle, mx: 1 }, 1 / 60, L);
+  run(L, p, 12, () => ({ ...idle, mx: 1 }));
+  assert.ok(p.vx <= P.speed * P.landSlow + 0.01, `i hurk går du tregt (${p.vx.toFixed(2)})`);
+}
+
+// 25. å hive seg opp på en kant tar tid og er en jevn bevegelse
+{
+  const L = { boxes: [floor, box('wood', 3, 45, 0, 4.5, -5, 5)], ropes: [] };
+  const p = newPlayer(2, 0, 0);
+  run(L, p, 10, () => idle);
+  let hungAt = -1, mantleFrames = 0, lastY = -1, monotone = true;
+  run(L, p, 260, (i) => {
+    if (p.state === 'hang' && hungAt < 0) hungAt = i;
+    if (p.state === 'mantle') { mantleFrames++; if (p.y < lastY - 1e-9) monotone = false; lastY = p.y; }
+    return { ...idle, mx: 1, jumpPressed: i === 0 || (p.state === 'hang' && i > hungAt + 8), jumpHeld: true, grabPressed: i === 15 };
+  });
+  assert.ok(hungAt > 0, 'grep kanten');
+  assert.ok(mantleFrames > 40 && mantleFrames < 60, `oppstigning ca. ${P.mantleTime} s (${mantleFrames} bilder)`);
+  assert.ok(monotone, 'jevn stigning');
+  assert.ok(Math.abs(p.y - 4.5) < 0.01 && p.state === 'ground', `oppe (y=${p.y.toFixed(2)}, ${p.state})`);
+}
+
 console.log('alle fysikktester grønne');
+
 
 

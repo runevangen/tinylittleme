@@ -34,7 +34,7 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 0.55;
 
-const camera = new THREE.PerspectiveCamera(55, 1, 0.05, 400);
+const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 400);
 
 const sun = new THREE.DirectionalLight(0xffe7c2, LEVEL.look?.sun ?? 3.0);
 sun.castShadow = true;
@@ -282,7 +282,7 @@ function buildHero() {
   };
   const L = { armL: arm(-1), armR: arm(1), legL: leg(-1), legR: leg(1) };
   const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, hy: 0 };
-  return { root, body, head, ...L, cur, yaw: 0, ph: 0 };
+  return { root, body, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null };
 }
 const hero = buildHero();
 hero.root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
@@ -294,42 +294,74 @@ function poseHero(p, now, dt, mode) {
   const c = hero.cur, sp = Math.hypot(p.vx, p.vz), sec = now / 1000;
   const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0 };
   let bob = 0;
+
+  // akselerasjon langs blikkretningen: fremover når du setter fart, bakover når du bremser
+  if (!hero.pv) hero.pv = [p.vx, p.vz];
+  const acc = ((p.vx - hero.pv[0]) * p.fx + (p.vz - hero.pv[1]) * p.fz) / Math.max(dt, 1e-3);
+  hero.pv = [p.vx, p.vz];
+  hero.accLean += (Math.max(-0.3, Math.min(0.3, acc * 0.012)) - hero.accLean) * (1 - Math.pow(0.02, dt));
+  const smooth = (x) => x * x * (3 - 2 * x);
+
   if (mode === 'fly') {
     Object.assign(T, { lean: 0.9, aL: -2.6, aR: -2.6, eL: 0, eR: 0, hL: 0.3, hR: 0.1, kL: 0.2, kR: 0.5 });
+  } else if (p.state === 'mantle' && p.mantle) {
+    const u = Math.min(1, p.mantle.t / p.mantle.dur), pull = smooth(Math.min(1, u / 0.6));
+    Object.assign(T, {
+      aL: -3.05 + 2.3 * pull, aR: -3.05 + 2.3 * pull, eL: -0.1 - 0.7 * pull, eR: -0.1 - 0.7 * pull,
+      hL: -0.2 - 0.9 * Math.sin(pull * Math.PI), hR: 0.1, kL: 0.4 + 0.9 * Math.sin(pull * Math.PI), kR: 0.3, lean: 0.1 + 0.3 * pull * (1 - smooth(Math.max(0, (u - 0.6) / 0.4))),
+    });
+    bob = -0.06 * pull;
   } else if (p.state === 'hang') {
-    const sway = Math.sin(sec * 2.2) * 0.12;
+    const sway = Math.sin(sec * 1.6) * 0.1;
     Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.1, eR: -0.1, hL: 0.1 + sway, hR: 0.2 - sway, kL: 0.3, kR: 0.15 });
   } else if (p.state === 'swing') {
     const k = Math.max(-0.8, Math.min(0.8, (p.vx * p.fx + p.vz * p.fz) * 0.1));
     Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: -0.5 * k + 0.2, hR: -0.5 * k + 0.4, kL: 0.5, kR: 0.8, lean: -0.25 * k });
   } else if (p.reach > 0) {
     Object.assign(T, { aL: -2.75, aR: -3.1, eL: -0.05, eR: -0.05, hL: -0.6, hR: 0.3, kL: 1.0, kR: 0.2, lean: 0.15 });
+  } else if (p.windup > 0) {                                    // hurk før avspark
+    Object.assign(T, { aL: 0.6, aR: 0.6, zL: 0.2, zR: -0.2, eL: -0.3, eR: -0.3, hL: -0.7, hR: -0.65, kL: 1.3, kR: 1.25, lean: 0.35 });
+    bob = -0.16;
   } else if (!p.onGround) {
     if (p.sliding) Object.assign(T, { aL: -2.8, aR: -2.8, eL: -0.3, eR: -0.3, hL: -0.2, hR: 0.1, kL: 0.6, kR: 0.7 });
     else if (p.vy > 0) Object.assign(T, { aL: -1.2, aR: -0.5, zL: 0.35, zR: -0.35, eL: -0.6, eR: -0.4, hL: -0.9, hR: 0.2, kL: 1.2, kR: 0.5, lean: 0.12 });
     else Object.assign(T, { aL: -0.4, aR: -0.4, zL: 0.95, zR: -0.95, eL: -0.2, eR: -0.2, hL: -0.35, hR: 0.2, kL: 0.5, kR: 0.3, lean: 0.05 });
+  } else if (p.recover > 0) {                                   // hurk etter høyt fall
+    Object.assign(T, { aL: -0.5, aR: -0.5, zL: 0.4, zR: -0.4, eL: -0.4, eR: -0.4, hL: -0.65, hR: -0.55, kL: 1.25, kR: 1.1, lean: 0.4 });
+    bob = -0.14;
+  } else if (p.skid) {                                          // du skrider mens du snur: lent bakover, bein foran
+    Object.assign(T, { aL: -0.9, aR: -0.4, zL: 0.5, zR: -0.5, eL: -0.3, eR: -0.3, hL: -0.55, hR: 0.45, kL: 0.2, kR: 0.6, lean: -0.3 });
   } else if (sp > 0.4) {
-    const k = Math.min(1, sp / 6.5);
-    hero.ph += dt * (6 + sp * 1.7);
-    const ph = hero.ph, s = Math.sin(ph);
+    const k = Math.min(1, sp / 5.6);
+    hero.ph += dt * (2.2 + sp * 1.0);                           // takten følger farten (ikke en fast frekvens)
+    const ph = hero.ph, s = Math.sin(ph), amp = 0.5 + 0.45 * k;
     Object.assign(T, {
-      hL: -s * 0.95 * k, hR: s * 0.95 * k,
-      kL: Math.max(0, Math.sin(ph + 1.6)) * 1.1 * k, kR: Math.max(0, Math.sin(ph + 1.6 + Math.PI)) * 1.1 * k,
-      aL: s * 0.8 * k, aR: -s * 0.8 * k, eL: -0.35 - 0.35 * k, eR: -0.35 - 0.35 * k, lean: 0.12 * k,
+      hL: -s * amp, hR: s * amp,
+      kL: Math.max(0, Math.sin(ph + 1.6)) * (0.5 + 0.7 * k), kR: Math.max(0, Math.sin(ph + 1.6 + Math.PI)) * (0.5 + 0.7 * k),
+      aL: s * (0.35 + 0.5 * k), aR: -s * (0.35 + 0.5 * k), eL: -0.25 - 0.45 * k, eR: -0.25 - 0.45 * k, lean: 0.06 + 0.1 * k,
     });
-    bob = Math.abs(Math.cos(ph)) * 0.025 * k;
+    bob = Math.abs(Math.cos(ph)) * 0.02 * k;
   } else {
-    const br = Math.sin(sec * 1.8) * 0.015; T.aL = br; T.aR = -br; T.lean = br;
+    const br = Math.sin(sec * 1.6) * 0.012; T.aL = br; T.aR = -br; T.lean = br;
   }
-  const k = 1 - Math.pow(0.0001, dt);   // ~ jevn overgang uavhengig av bilderate
+  if (!p.skid && p.state !== 'mantle' && p.state !== 'hang' && p.state !== 'swing' && mode !== 'fly') T.lean += hero.accLean;
+
+  const k = 1 - Math.pow(0.00002, dt);                          // jevn overgang uavhengig av bilderate
   for (const key in T) c[key] += (T[key] - c[key]) * k;
   hero.armL.top.rotation.set(c.aL, 0, -c.zL); hero.armR.top.rotation.set(c.aR, 0, -c.zR);
   hero.armL.mid.rotation.x = c.eL; hero.armR.mid.rotation.x = c.eR;
   hero.legL.top.rotation.x = c.hL; hero.legR.top.rotation.x = c.hR;
   hero.legL.mid.rotation.x = c.kL; hero.legR.mid.rotation.x = c.kR;
-  hero.body.rotation.x = c.lean; hero.body.position.y = 0.46 + bob;
+  hero.body.rotation.x = c.lean;
+  hero.bob += (bob - hero.bob) * (1 - Math.pow(0.0005, dt));
+  hero.body.position.y = 0.46 + hero.bob;
   hero.head.rotation.x = -c.lean * 0.6;
-  hero.yaw = lerpAngle(hero.yaw, Math.atan2(p.fx, p.fz), 1 - Math.pow(0.001, dt));
+
+  // kroppen snur gradvis (ikke øyeblikkelig)
+  const target = Math.atan2(p.fx, p.fz);
+  const d = ((target - hero.yaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+  const maxStep = P.turnRate * dt;
+  hero.yaw += Math.max(-maxStep, Math.min(maxStep, d));
   hero.root.rotation.y = hero.yaw;
 }
 
@@ -389,6 +421,7 @@ function restartAll() {
 
 // ---------- modus: plan / fly ----------
 const cam = { yaw: 0.35, pitch: 0.3, dist: 5.5, cur: 5.5, target: new THREE.Vector3(...LEVEL.start) };
+let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
 const planCam = { yaw: 0.6, pitch: 0.7, dist: 55, pivot: new THREE.Vector3(8, 15, 0) };
 if (levelName) {                                   // mindre rom: nærmere og mer ovenfra
   planCam.dist = Math.max(LEVEL.room.x1 - LEVEL.room.x0, LEVEL.room.z1 - LEVEL.room.z0) * 1.05;
@@ -491,13 +524,15 @@ $('again').onclick = restartAll;
 const TUNE = [
   ['gravity', 'Tyngdekraft', -45, -14, 1], ['jump', 'Hoppkraft', 8, 16, 0.1], ['airJumps', 'Dobbelthopp (0 = av)', 0, 1, 1],
   ['airAccel', 'Styring i lufta', 2, 40, 1], ['speed', 'Løpefart', 3, 10, 0.1],
+  ['accel', 'Akselerasjon', 4, 60, 1], ['decel', 'Bremsing', 4, 60, 1], ['turnDecel', 'Retningsskifte (lavt = tregt)', 4, 60, 1],
+  ['jumpWindup', 'Hopp: forberedelse (s)', 0, 0.3, 0.01], ['mantleTime', 'Hiv deg opp: tid (s)', 0, 1.5, 0.05], ['landK', 'Landing: hurk per fallfart', 0, 0.05, 0.002],
   ['reachTime', 'Rekk-ut: varighet (s)', 0.1, 1, 0.05], ['reachCooldown', 'Rekk-ut: pause (s)', 0, 1.5, 0.05],
   ['reachAbove', 'Rekk-ut: ekstra rekkevidde opp', 0, 1.5, 0.05], ['ropeReach', 'Tau-rekkevidde', 0.8, 3.5, 0.1],
 ];
-let presetName = store.get('tlm.preset', 'spenning');
-if (!PRESETS[presetName]) presetName = 'spenning';
+let presetName = store.get('tlm.preset2', 'prince');
+if (!PRESETS[presetName]) presetName = 'prince';
 applyPreset(presetName);
-Object.assign(P, store.get('tlm.custom', {}));
+Object.assign(P, store.get('tlm.custom2', {}));
 function buildPanel() {
   const p = $('panel');
   p.innerHTML = `<h3>Brett</h3>
@@ -508,7 +543,7 @@ function buildPanel() {
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="autoGrab"> Grip kanten automatisk</label>
     <div id="sliders"></div>
     <div class="row"><button id="resetPreset">Nullstill</button><button id="closePanel">Lukk</button></div>
-    <small><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke REKK UT (Shift/E) i riktig øyeblikk for å gripe kant eller tau.</small>`;
+    <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. Hold C for å gå forsiktig.<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke REKK UT (Shift/E) i riktig øyeblikk for å gripe kant eller tau.</small>`;
   $('levelSel').value = levelName || '';
   $('levelSel').onchange = (e) => { location.search = e.target.value ? `?level=${e.target.value}` : ''; };
   $('presetSel').value = presetName;
@@ -517,11 +552,11 @@ function buildPanel() {
   $('sliders').innerHTML = TUNE.map(([k, label, min, max, st]) =>
     `<label>${label}<span id="v_${k}">${(+P[k]).toFixed(2)}</span></label><input type="range" id="s_${k}" min="${min}" max="${max}" step="${st}" value="${P[k]}">`).join('');
   for (const [k] of TUNE) $('s_' + k).oninput = (e) => { P[k] = +e.target.value; $('v_' + k).textContent = (+P[k]).toFixed(2); saveCustom(); };
-  $('presetSel').onchange = (e) => { presetName = e.target.value; store.set('tlm.preset', presetName); applyPreset(presetName); store.set('tlm.custom', {}); buildPanel(); };
-  $('resetPreset').onclick = () => { applyPreset(presetName); store.set('tlm.custom', {}); buildPanel(); toast('Nullstilt'); };
+  $('presetSel').onchange = (e) => { presetName = e.target.value; store.set('tlm.preset2', presetName); applyPreset(presetName); store.set('tlm.custom2', {}); buildPanel(); };
+  $('resetPreset').onclick = () => { applyPreset(presetName); store.set('tlm.custom2', {}); buildPanel(); toast('Nullstilt'); };
   $('closePanel').onclick = () => $('panel').classList.add('hide');
 }
-function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of TUNE) o[k] = P[k]; store.set('tlm.custom', o); }
+function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of TUNE) o[k] = P[k]; store.set('tlm.custom2', o); }
 $('bSet').onclick = () => { buildPanel(); $('help').classList.add('hide'); $('panel').classList.toggle('hide'); };
 setTimeout(() => $('help').classList.add('hide'), 15000);   // H henter den tilbake
 
@@ -568,6 +603,7 @@ function update(dt) {
     jumpPressed: jumpEdge, jumpHeld: held('Space') || touch.jump,
     grabPressed: grabEdge, grabHeld: held('ShiftLeft', 'ShiftRight', 'KeyE') || touch.grab,
     carryPressed: carryEdge,
+    walk: held('KeyC', 'AltLeft', 'AltRight'),
   };
   jumpEdge = grabEdge = carryEdge = false;
   step(player, inp, dt, LEVEL);
@@ -607,8 +643,7 @@ function insideAny(x, y, z, m) {
 function render(now, dt) {
   poseHero(player, now, dt, mode);
   hero.root.position.set(player.x, player.y, player.z);
-  const sq = Math.max(-0.1, Math.min(0.14, player.vy * 0.008));
-  hero.root.scale.set(1 - sq * 0.4, 1 + sq, 1 - sq * 0.4);
+  hero.root.scale.set(1, 1, 1);                                  // ingen strekk/klem: det ga «puls» og sjøsyke
 
   for (const { r, line, end } of ropes) {
     const a = new THREE.Vector3(r.x, r.y, r.z);
@@ -642,7 +677,15 @@ function render(now, dt) {
     camera.position.lerp(desired, 1 - Math.pow(0.0005, dt));
     camera.lookAt(look);
   } else {
-    cam.target.lerp(V.set(player.x, player.y + 0.62, player.z), 1 - Math.pow(0.002, dt));
+    if (camFocusY === null || Math.hypot(player.x - cam.target.x, player.z - cam.target.z) > 12 || Math.abs(player.y - camFocusY) > 14) {
+      camFocusY = player.y; cam.target.set(player.x, player.y + 0.62, player.z);   // stor teleportering (respawn): hopp direkte
+    }
+    const settled = player.onGround || ['hang', 'mantle', 'swing'].includes(player.state) || mode === 'fly';
+    if (settled) camFocusY += (player.y - camFocusY) * (1 - Math.pow(0.08, dt));        // følg rolig når du står
+    else camFocusY = Math.min(player.y + 0.9, Math.max(player.y - 0.9, camFocusY));       // i lufta: ikke følg hvert hopp
+    const kxz = 1 - Math.pow(0.04, dt);
+    cam.target.x += (player.x - cam.target.x) * kxz; cam.target.z += (player.z - cam.target.z) * kxz;
+    cam.target.y = camFocusY + 0.62;
     const cp = Math.cos(cam.pitch), dir = new THREE.Vector3(Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), Math.cos(cam.yaw) * cp);
     let d = cam.dist;
     for (; d > 1.1; d -= 0.2) { if (!insideAny(cam.target.x + dir.x * d, cam.target.y + dir.y * d, cam.target.z + dir.z * d, 0.25)) break; }

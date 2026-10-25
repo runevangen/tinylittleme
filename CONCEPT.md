@@ -32,17 +32,21 @@ Mobil: venstre stikke, HOPP og REKK UT, dra for kamera, klyp for zoom.
 
 ## Bevegelse
 Løp, hopp (variabel høyde), gli langs vegg + veggsprang, kantgrep + hiv opp, tau/kabel-sving.
-To innstillinger (⚙ i spillet, alle verdier kan justeres live og huskes i nettleseren):
+Tre innstillinger (⚙ i spillet; alle verdier kan justeres live og huskes i nettleseren):
 
-| | Klassisk | Spenning (standard) |
-|---|---|---|
-| Hopp | raskt, ≈2,4 enheter | tyngre og tregere, ≈3,4 enheter, lang luftsvev |
-| Dobbelthopp | ja | nei |
-| Styring i lufta | mye | lite (du forplikter deg) |
-| Kant/tau | grips automatisk | du må **rekke ut** (Shift/E/REKK UT) i riktig øyeblikk. Vinduet varer 0,4 s, deretter 0,6 s pause. |
+| | Klassisk | Spenning | **Prince** (standard) |
+|---|---|---|---|
+| Fart opp / bremse / snu | umiddelbart | umiddelbart | **bygges opp (0,5 s), bremser jevnt, snur ikke på stedet** |
+| Hopp | raskt, 2 hopp | tungt, 1 hopp | tungt, 1 hopp, **0,1 s forberedelse (hurk)** |
+| Landing etter høyt fall | ingen | ingen | **hurk (opptil 0,5 s), langsom og kan ikke hoppe** |
+| Hiv deg opp på kant | øyeblikkelig | øyeblikkelig | **0,8 s, jevn bevegelse** |
+| Kant/tau | grips automatisk | rekk ut (REKK UT) i riktig øyeblikk | som Spenning |
+| Gå forsiktig | | | hold **C** |
 
-Hvorfor «Spenning»: dobbelthoppet føltes tilfeldig. Nå avgjør timing og planlegging, og et bomskudd koster.
+Hvorfor «Prince»: referansen er Prince of Persia: vekt, tid og forpliktelse. Du kan ikke snu på stedet, hopp må planlegges, og feil koster tid. Tilbakemeldingen var at figuren «reagerte for fort fram og tilbake» og ga sjøsyke. Årsakene som ble funnet: nesten umiddelbar fart per akse, blikkretningen som snudde med en gang, kameraet som fulgte hvert hopp, strekk/klem av figuren, og en hektisk gangsyklus som gikk i fast takt.
 Veggsprang utløses bare når spilleren faller og styrer inn mot veggen, ellers stjeler det hoppet (oppdaget i test).
+
+**Animasjon og kamera (gjelder alle innstillinger):** gangsyklusen følger farten, kroppen lener seg ved akselerasjon og bremsing, skrider bakoverlent når du snur, snur gradvis, har hurk før hopp og ved landing. Kameraet følger rolig og holder høyden stabil under hopp (figuren holdes alltid i bildet). Ingen strekk/klem.
 
 ## Løse ting
 Dytte, bære, stable, knuse, klemt: se [docs/FLYTTBARE_TING.md](docs/FLYTTBARE_TING.md). Prøverom: `?level=poc`.
