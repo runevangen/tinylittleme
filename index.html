@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>tinylittleme</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#bfe3ff;font-family:system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+  .hide{display:none!important}
+  #hud{position:fixed;left:12px;top:10px;color:#1d3557;font:600 13px/1.2 ui-monospace,monospace;background:#fff8;padding:4px 8px;border-radius:8px}
+  #help{position:fixed;right:12px;top:10px;max-width:290px;background:#fffc;color:#1d3557;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.45}
+  #help b{display:block;margin-bottom:4px}
+  #win{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1d3557cc;color:#fff;text-align:center;gap:10px}
+  #win h1{margin:0;font-size:34px}
+  button{font:inherit;padding:10px 20px;border:0;border-radius:999px;background:#ffd166;color:#1d3557;font-weight:700}
+  #stick{position:fixed;left:24px;bottom:28px;width:130px;height:130px;border-radius:50%;background:#fff6;border:2px solid #fff9;display:none}
+  #knob{position:absolute;left:35px;top:35px;width:60px;height:60px;border-radius:50%;background:#1d3557aa}
+  .tbtn{position:fixed;width:84px;height:84px;border-radius:50%;border:0;color:#fff;font-weight:700;display:none;align-items:center;justify-content:center}
+  #btnJump{right:28px;bottom:48px;background:#d62828cc}
+  #btnGrab{right:128px;bottom:28px;background:#1d3557cc;width:70px;height:70px}
+  @media (pointer:coarse){#stick{display:block}.tbtn{display:flex}#help{display:none}}
+</style>
+<script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<div id="help"><b>tinylittleme – testbrett</b>
+  WASD/piler: gå · Mellomrom: hopp (to ganger i lufta)<br>
+  Mot vegg i lufta: gli, og hopp = veggsprang<br>
+  Kant i hodehøyde: grip tak, hopp = hiv deg opp, bort fra veggen = slipp<br>
+  Hold Shift/E nær tauet: svev. Hopp slipper<br>
+  Dra med musa: kamera · R: start på nytt · H: skjul hjelp<br>
+  Mål: trylledrikken på toppen av bokhylla.</div>
+<div id="win" class="hide"><h1>Du kom opp!</h1><div>Tid: <span id="time"></span> s</div><button id="again">Igjen</button></div>
+<div id="stick"><div id="knob"></div></div>
+<button class="tbtn" id="btnGrab">GRIP</button>
+<button class="tbtn" id="btnJump">HOPP</button>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
