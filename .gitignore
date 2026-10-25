@@ -1,0 +1,8 @@
+# Rommebilder er private. Aldri legg dem i et offentlig repo.
+photos/
+bilder/
+*.jpg
+*.jpeg
+*.heic
+*.png
+!docs/*.png

@@ -1,0 +1,1151 @@
+{
+ "name": "Bad (tolket fra 3 bilder)",
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -22,
+    -2,
+    -26
+   ],
+   "max": [
+    22,
+    0,
+    26
+   ],
+   "id": "gulv",
+   "color": 13947335,
+   "slick": true,
+   "material": "tile"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -23,
+    0,
+    -26
+   ],
+   "max": [
+    -22,
+    46,
+    26
+   ],
+   "id": "vegg_v",
+   "color": 14868436,
+   "material": "tile"
+  },
+  {
+   "type": "wall",
+   "min": [
+    22,
+    0,
+    -26
+   ],
+   "max": [
+    23,
+    46,
+    26
+   ],
+   "id": "vegg_o",
+   "color": 14868436,
+   "material": "tile"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -22,
+    0,
+    -27
+   ],
+   "max": [
+    22,
+    46,
+    -26
+   ],
+   "id": "vegg_n",
+   "color": 14868436,
+   "material": "tile"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -22,
+    0,
+    26
+   ],
+   "max": [
+    22,
+    46,
+    27
+   ],
+   "id": "vegg_s",
+   "color": 14868436,
+   "material": "tile"
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    8,
+    0,
+    -24
+   ],
+   "max": [
+    9.4,
+    11,
+    10
+   ],
+   "id": "badekar_vest",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    20.6,
+    0,
+    -24
+   ],
+   "max": [
+    22,
+    11,
+    10
+   ],
+   "id": "badekar_ost",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    9.4,
+    0,
+    -24
+   ],
+   "max": [
+    20.6,
+    11,
+    -22.6
+   ],
+   "id": "badekar_nord",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    9.4,
+    0,
+    8.6
+   ],
+   "max": [
+    20.6,
+    11,
+    10
+   ],
+   "id": "badekar_sor",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -22,
+    0,
+    10
+   ],
+   "max": [
+    -18,
+    16,
+    18
+   ],
+   "id": "do_tank",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -18,
+    0,
+    10
+   ],
+   "max": [
+    -9,
+    8.4,
+    12
+   ],
+   "id": "do_skal_fram",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -18,
+    0,
+    16
+   ],
+   "max": [
+    -9,
+    8.4,
+    18
+   ],
+   "id": "do_skal_bak",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -18,
+    0,
+    12
+   ],
+   "max": [
+    -15.6,
+    8.4,
+    16
+   ],
+   "id": "do_skal_venstre",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -11,
+    0,
+    12
+   ],
+   "max": [
+    -9,
+    8.4,
+    16
+   ],
+   "id": "do_skal_hoyre",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -18,
+    8.4,
+    10.6
+   ],
+   "max": [
+    -17.2,
+    16,
+    17.4
+   ],
+   "id": "do_lokk_oppe",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -8.8,
+    0,
+    18.4
+   ],
+   "max": [
+    -7.2,
+    8,
+    20
+   ],
+   "id": "do_kost",
+   "color": 1842204,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wicker",
+   "min": [
+    -22,
+    0,
+    19
+   ],
+   "max": [
+    -14,
+    11,
+    26
+   ],
+   "id": "vaskekurv",
+   "color": 11106634,
+   "material": "wicker",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -12,
+    8,
+    -26
+   ],
+   "max": [
+    4,
+    16.6,
+    -17
+   ],
+   "id": "vaskeskap",
+   "color": 14933195,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -12.4,
+    16.6,
+    -26
+   ],
+   "max": [
+    4.4,
+    17.2,
+    -16.6
+   ],
+   "id": "vask_plate",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -11.6,
+    17.2,
+    -22.4
+   ],
+   "max": [
+    -10,
+    21.2,
+    -20.8
+   ],
+   "id": "saapepumpe",
+   "color": 7304055,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -9.6,
+    17.2,
+    -24.4
+   ],
+   "max": [
+    -8.6,
+    20.8,
+    -23.6
+   ],
+   "id": "tannkrem",
+   "color": 15265525,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    -6,
+    17.2,
+    -24
+   ],
+   "max": [
+    -4.4,
+    20.2,
+    -22
+   ],
+   "id": "kran",
+   "color": 12567496,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -3.6,
+    17.2,
+    -21.2
+   ],
+   "max": [
+    -2.4,
+    18.6,
+    -18.8
+   ],
+   "id": "barbermaskin",
+   "color": 1776930,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "paper",
+   "min": [
+    -2,
+    17.2,
+    -21.6
+   ],
+   "max": [
+    0,
+    19.2,
+    -19.6
+   ],
+   "id": "dopapir",
+   "color": 16448250,
+   "material": "paper",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "ceramic",
+   "min": [
+    1.6,
+    17.2,
+    -25.2
+   ],
+   "max": [
+    3.2,
+    19.6,
+    -23.6
+   ],
+   "id": "tannglass",
+   "color": 9417627,
+   "material": "ceramic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    2.2,
+    19.6,
+    -24.8
+   ],
+   "max": [
+    2.6,
+    21.6,
+    -24.4
+   ],
+   "id": "tannborste",
+   "color": 3900100,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -14,
+    35,
+    -26
+   ],
+   "max": [
+    6,
+    38,
+    -23.2
+   ],
+   "id": "lampeboks",
+   "color": 15987178,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    6,
+    25,
+    -26
+   ],
+   "max": [
+    11,
+    38,
+    -23
+   ],
+   "id": "speilskap",
+   "color": 15130832,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    10.6,
+    25,
+    -23
+   ],
+   "max": [
+    11,
+    38,
+    -18
+   ],
+   "id": "speilskap_dor_aapen",
+   "color": 15987178,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    19,
+    23.6,
+    -14.4
+   ],
+   "max": [
+    22,
+    24.8,
+    -1.6
+   ],
+   "id": "vindu_karm",
+   "color": 15261640,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "glass",
+   "min": [
+    19,
+    19.8,
+    -14.4
+   ],
+   "max": [
+    22,
+    20.2,
+    -2.4
+   ],
+   "id": "glasshylle",
+   "color": 13625571,
+   "material": "glass",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    19.4,
+    20.2,
+    -14
+   ],
+   "max": [
+    21.4,
+    23,
+    -9
+   ],
+   "id": "toalettveske",
+   "color": 1908519,
+   "material": "fabric",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    19.6,
+    20.2,
+    -6
+   ],
+   "max": [
+    20.8,
+    24.2,
+    -4.8
+   ],
+   "id": "flaske_gronn",
+   "color": 5208658,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    19.6,
+    20.2,
+    -4.4
+   ],
+   "max": [
+    21,
+    24.6,
+    -3.2
+   ],
+   "id": "flaske_hvit",
+   "color": 15856108,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    19.6,
+    16.8,
+    -8.4
+   ],
+   "max": [
+    21.6,
+    18.8,
+    -6
+   ],
+   "id": "dusjkurv_ovre",
+   "color": 2236962,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    19.6,
+    13.2,
+    -8.4
+   ],
+   "max": [
+    21.6,
+    15.2,
+    -6
+   ],
+   "id": "dusjkurv_nedre",
+   "color": 2236962,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    8,
+    0,
+    10.4
+   ],
+   "max": [
+    15,
+    1.8,
+    15
+   ],
+   "id": "handkle_gulv_1",
+   "color": 7236196,
+   "material": "fabric",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    9,
+    1.8,
+    11.2
+   ],
+   "max": [
+    13.6,
+    3.2,
+    14
+   ],
+   "id": "handkle_gulv_2",
+   "color": 7236196,
+   "material": "fabric",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -3,
+    0,
+    14
+   ],
+   "max": [
+    8,
+    0.3,
+    24
+   ],
+   "id": "dormatte",
+   "color": 8092794,
+   "material": "fabric",
+   "cp": false,
+   "soft": true
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -1,
+    0,
+    -8.5
+   ],
+   "max": [
+    2,
+    3.2,
+    -5.5
+   ],
+   "id": "hjelp_trapp_1",
+   "color": 14205369,
+   "material": "fabric",
+   "helper": true
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -5.5,
+    0,
+    -8
+   ],
+   "max": [
+    -2.5,
+    6.4,
+    -5
+   ],
+   "id": "hjelp_trapp_5",
+   "color": 14205369,
+   "material": "fabric",
+   "helper": true
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -5.5,
+    0,
+    -11
+   ],
+   "max": [
+    -2.5,
+    9.6,
+    -8
+   ],
+   "id": "hjelp_trapp_6",
+   "color": 12900537,
+   "material": "fabric",
+   "helper": true
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -5.5,
+    0,
+    -14
+   ],
+   "max": [
+    -2.5,
+    12.8,
+    -11
+   ],
+   "id": "hjelp_trapp_7",
+   "color": 14209721,
+   "material": "fabric",
+   "helper": true
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -5.5,
+    0,
+    -17
+   ],
+   "max": [
+    -2.5,
+    16,
+    -14
+   ],
+   "id": "hjelp_trapp_8",
+   "color": 12175320,
+   "material": "fabric",
+   "helper": true
+  }
+ ],
+ "decor": [
+  {
+   "shape": "box",
+   "id": "skapknott_1",
+   "pos": [
+    -9.7,
+    15.5,
+    -16.8
+   ],
+   "size": [
+    0.6,
+    0.6,
+    0.4
+   ],
+   "color": 10133670,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "skapknott_2",
+   "pos": [
+    -3.1,
+    15.5,
+    -16.8
+   ],
+   "size": [
+    0.6,
+    0.6,
+    0.4
+   ],
+   "color": 10133670,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "skapknott_3",
+   "pos": [
+    1.9,
+    15.5,
+    -16.8
+   ],
+   "size": [
+    0.6,
+    0.6,
+    0.4
+   ],
+   "color": 10133670,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "speil",
+   "pos": [
+    -4,
+    28,
+    -25.8
+   ],
+   "size": [
+    20,
+    16,
+    0.4
+   ],
+   "color": 14213866,
+   "material": "mirror"
+  }
+ ],
+ "hazards": [
+  {
+   "id": "kar_inni",
+   "type": "pit",
+   "message": "Fanget i badekaret",
+   "min": [
+    9.4,
+    0,
+    -22.6
+   ],
+   "max": [
+    20.6,
+    10.4,
+    8.6
+   ]
+  },
+  {
+   "id": "do_skal_hull",
+   "type": "flush",
+   "message": "Skylt ned!",
+   "min": [
+    -15.6,
+    0,
+    12
+   ],
+   "max": [
+    -11,
+    8,
+    16
+   ]
+  }
+ ],
+ "holds": [
+  {
+   "id": "do_kost",
+   "kind": "pole",
+   "min": [
+    -8.8,
+    0,
+    18.4
+   ],
+   "max": [
+    -7.2,
+    8,
+    20
+   ]
+  },
+  {
+   "id": "kran",
+   "kind": "faucet",
+   "min": [
+    -6,
+    17.2,
+    -24
+   ],
+   "max": [
+    -4.4,
+    20.2,
+    -22
+   ]
+  },
+  {
+   "id": "tannborste",
+   "kind": "toothbrush",
+   "min": [
+    2.2,
+    19.6,
+    -24.8
+   ],
+   "max": [
+    2.6,
+    21.6,
+    -24.4
+   ]
+  },
+  {
+   "id": "skapknott_1",
+   "kind": "knob",
+   "min": [
+    -10,
+    15.2,
+    -17
+   ],
+   "max": [
+    -9.4,
+    15.8,
+    -16.6
+   ]
+  },
+  {
+   "id": "skapknott_2",
+   "kind": "knob",
+   "min": [
+    -3.4,
+    15.2,
+    -17
+   ],
+   "max": [
+    -2.8,
+    15.8,
+    -16.6
+   ]
+  },
+  {
+   "id": "skapknott_3",
+   "kind": "knob",
+   "min": [
+    1.6,
+    15.2,
+    -17
+   ],
+   "max": [
+    2.2,
+    15.8,
+    -16.6
+   ]
+  },
+  {
+   "id": "dusjkurv_ovre",
+   "kind": "caddy",
+   "min": [
+    19.6,
+    16.8,
+    -8.4
+   ],
+   "max": [
+    21.6,
+    18.8,
+    -6
+   ]
+  },
+  {
+   "id": "dusjkurv_nedre",
+   "kind": "caddy",
+   "min": [
+    19.6,
+    13.2,
+    -8.4
+   ],
+   "max": [
+    21.6,
+    15.2,
+    -6
+   ]
+  }
+ ],
+ "windows": [
+  {
+   "wall": "E",
+   "pos": [
+    21.95,
+    30.4,
+    -8
+   ],
+   "size": [
+    12,
+    12
+   ]
+  }
+ ],
+ "sun": [
+  30,
+  60,
+  -8
+ ],
+ "look": {
+  "exposure": 0.78,
+  "sun": 2,
+  "note": "Bildene er nesten helt hvite; dempet lys og litt mer nyanse gir lesbarhet i spillet"
+ },
+ "ropes": [],
+ "start": [
+  3,
+  0,
+  21
+ ],
+ "goal": [
+  2.4,
+  19.6,
+  -24.4
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -22,
+  "x1": 22,
+  "z0": -26,
+  "z1": 26,
+  "height": 46,
+  "floor": {
+   "material": "tile",
+   "color": "#d4d1c7",
+   "slick": true,
+   "tile_cm": 20,
+   "diagonal": true
+  },
+  "walls": {
+   "material": "tile",
+   "color": "#e2dfd4",
+   "tile_cm": 20
+  },
+  "ceiling": {
+   "material": "woodpanel",
+   "color": "#c9a47a"
+  }
+ },
+ "report": {
+  "source": {
+   "photos": 3,
+   "views": [
+    "bredt fra døra: do, vask, kar",
+    "nærbilde vask",
+    "nærbilde kar + vindu"
+   ],
+   "interpreted_by": "Claude (visjon), manuelt gjennomgått av meg i denne prototypen",
+   "scale_anchors": [
+    "toalettrull på vasken ≈ 10 cm bred og 10 cm høy",
+    "veggfliser ≈ 20 × 20–25 cm",
+    "do-sete ≈ 40–42 cm over gulv"
+   ],
+   "uncertainty": "Tre bilder gir ikke eksakt plassering. Avstander ±15 cm, høyder ±5 cm. Døras plassering og baksiden av do er gjettet."
+  },
+  "solvable_by_graph": true,
+  "helpers": [
+   {
+    "id": "hjelp_trapp_1",
+    "kind": "trapp",
+    "note": "trinn 1/3 (brettede håndklær / esker)",
+    "size_cm": [
+     15,
+     16,
+     15
+    ],
+    "at_cm": [
+     113,
+     95
+    ],
+    "top_cm": 16
+   },
+   {
+    "id": "hjelp_trapp_5",
+    "kind": "trapp",
+    "note": "trinn 2/5 (brettede håndklær / esker)",
+    "size_cm": [
+     15,
+     32,
+     15
+    ],
+    "at_cm": [
+     90,
+     98
+    ],
+    "top_cm": 32
+   },
+   {
+    "id": "hjelp_trapp_6",
+    "kind": "trapp",
+    "note": "trinn 3/5 (brettede håndklær / esker)",
+    "size_cm": [
+     15,
+     48,
+     15
+    ],
+    "at_cm": [
+     90,
+     83
+    ],
+    "top_cm": 48
+   },
+   {
+    "id": "hjelp_trapp_7",
+    "kind": "trapp",
+    "note": "trinn 4/5 (brettede håndklær / esker)",
+    "size_cm": [
+     15,
+     64,
+     15
+    ],
+    "at_cm": [
+     90,
+     68
+    ],
+    "top_cm": 64
+   },
+   {
+    "id": "hjelp_trapp_8",
+    "kind": "trapp",
+    "note": "trinn 5/5 (brettede håndklær / esker)",
+    "size_cm": [
+     15,
+     80,
+     15
+    ],
+    "at_cm": [
+     90,
+     53
+    ],
+    "top_cm": 80
+   }
+  ],
+  "nodes": 36,
+  "reachable": 26
+ }
+}

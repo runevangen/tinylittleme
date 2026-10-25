@@ -1,0 +1,836 @@
+{
+  "name": "Bad (tolket fra 3 bilder)",
+  "units": "cm",
+  "frame": "Origo i nordvestre hjørne. x mot øst, z mot sør (døra), y opp.",
+  "source": {
+    "photos": 3,
+    "views": [
+      "bredt fra døra: do, vask, kar",
+      "nærbilde vask",
+      "nærbilde kar + vindu"
+    ],
+    "interpreted_by": "Claude (visjon), manuelt gjennomgått av meg i denne prototypen",
+    "scale_anchors": [
+      "toalettrull på vasken ≈ 10 cm bred og 10 cm høy",
+      "veggfliser ≈ 20 × 20–25 cm",
+      "do-sete ≈ 40–42 cm over gulv"
+    ],
+    "uncertainty": "Tre bilder gir ikke eksakt plassering. Avstander ±15 cm, høyder ±5 cm. Døras plassering og baksiden av do er gjettet."
+  },
+  "room": {
+    "width": 220,
+    "depth": 260,
+    "height": 230,
+    "floor": {
+      "material": "tile",
+      "color": "#d4d1c7",
+      "slick": true,
+      "tile_cm": 20,
+      "diagonal": true
+    },
+    "walls": {
+      "material": "tile",
+      "color": "#e2dfd4",
+      "tile_cm": 20
+    },
+    "ceiling": {
+      "material": "woodpanel",
+      "color": "#c9a47a"
+    },
+    "note": "Skråtak i virkeligheten, flatt her."
+  },
+  "start": {
+    "x": 125,
+    "z": 235,
+    "note": "På dørmatta, rett innenfor døra"
+  },
+  "goal": {
+    "x": 122,
+    "y": 98,
+    "z": 8,
+    "on": "tannglass",
+    "note": "Motgift-bit på tannglasset (kan nås uten klatring). Toppen av speilskapet (y=190) krever klatring og brukes når den mekanikken finnes.",
+    "future": {
+      "x": 152,
+      "y": 190,
+      "z": 7,
+      "on": "speilskap"
+    }
+  },
+  "windows": [
+    {
+      "wall": "E",
+      "z": 90,
+      "y": 152,
+      "w": 60,
+      "h": 60,
+      "note": "Matt glass, hvit karm"
+    }
+  ],
+  "objects": [
+    {
+      "id": "badekar_vest",
+      "kind": "tub",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        150,
+        157,
+        0,
+        55,
+        10,
+        180
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ],
+      "cp": true
+    },
+    {
+      "id": "badekar_ost",
+      "kind": "tub",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        213,
+        220,
+        0,
+        55,
+        10,
+        180
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "badekar_nord",
+      "kind": "tub",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        157,
+        213,
+        0,
+        55,
+        10,
+        17
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "badekar_sor",
+      "kind": "tub",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        157,
+        213,
+        0,
+        55,
+        173,
+        180
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "do_tank",
+      "kind": "toilet",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        0,
+        20,
+        0,
+        80,
+        180,
+        220
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1
+      ],
+      "cp": true
+    },
+    {
+      "id": "do_skal_fram",
+      "kind": "toilet",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        20,
+        65,
+        0,
+        42,
+        180,
+        190
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1
+      ]
+    },
+    {
+      "id": "do_skal_bak",
+      "kind": "toilet",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        20,
+        65,
+        0,
+        42,
+        210,
+        220
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1
+      ]
+    },
+    {
+      "id": "do_skal_venstre",
+      "kind": "toilet",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        20,
+        32,
+        0,
+        42,
+        190,
+        210
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1
+      ]
+    },
+    {
+      "id": "do_skal_hoyre",
+      "kind": "toilet",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        55,
+        65,
+        0,
+        42,
+        190,
+        210
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1
+      ]
+    },
+    {
+      "id": "do_lokk_oppe",
+      "kind": "toilet_lid",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        20,
+        24,
+        42,
+        80,
+        183,
+        217
+      ],
+      "confidence": 0.6,
+      "photos": [
+        1
+      ],
+      "note": "Lokket står opp mot tanken: en tynn vegg"
+    },
+    {
+      "id": "do_kost",
+      "kind": "pole",
+      "material": "plastic",
+      "color": "#1c1c1c",
+      "box": [
+        66,
+        74,
+        0,
+        40,
+        222,
+        230
+      ],
+      "confidence": 0.5,
+      "photos": [
+        1
+      ],
+      "hold": true,
+      "note": "Klatre-stolpe i fremtiden"
+    },
+    {
+      "id": "vaskekurv",
+      "kind": "basket",
+      "material": "wicker",
+      "color": "#a9794a",
+      "box": [
+        0,
+        40,
+        0,
+        55,
+        225,
+        260
+      ],
+      "confidence": 0.5,
+      "photos": [
+        1
+      ],
+      "note": "Skimtet nederst til venstre; størrelse usikker"
+    },
+    {
+      "id": "vaskeskap",
+      "kind": "vanity",
+      "material": "wood",
+      "color": "#e3dccb",
+      "box": [
+        50,
+        130,
+        40,
+        83,
+        0,
+        45
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1,
+        2
+      ],
+      "note": "Vegghengt: rom under (40 cm)"
+    },
+    {
+      "id": "vask_plate",
+      "kind": "vanity_top",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        48,
+        132,
+        83,
+        86,
+        0,
+        47
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1,
+        2
+      ],
+      "cp": true,
+      "note": "Selve vasken (forsenkning) ikke modellert enda"
+    },
+    {
+      "id": "saapepumpe",
+      "kind": "bottle",
+      "material": "plastic",
+      "color": "#6f7377",
+      "box": [
+        52,
+        60,
+        86,
+        106,
+        18,
+        26
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": "tannkrem",
+      "kind": "tube",
+      "material": "plastic",
+      "color": "#e8eef5",
+      "box": [
+        62,
+        67,
+        86,
+        104,
+        8,
+        12
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2
+      ]
+    },
+    {
+      "id": "kran",
+      "kind": "faucet",
+      "material": "metal",
+      "color": "#bfc3c8",
+      "box": [
+        80,
+        88,
+        86,
+        101,
+        10,
+        20
+      ],
+      "confidence": 0.9,
+      "photos": [
+        1,
+        2
+      ],
+      "hold": true
+    },
+    {
+      "id": "barbermaskin",
+      "kind": "shaver",
+      "material": "plastic",
+      "color": "#1b1d22",
+      "box": [
+        92,
+        98,
+        86,
+        93,
+        24,
+        36
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2
+      ]
+    },
+    {
+      "id": "dopapir",
+      "kind": "roll",
+      "material": "paper",
+      "color": "#fafafa",
+      "box": [
+        100,
+        110,
+        86,
+        96,
+        22,
+        32
+      ],
+      "confidence": 0.9,
+      "photos": [
+        1,
+        2
+      ],
+      "note": "Målestokk-anker"
+    },
+    {
+      "id": "tannglass",
+      "kind": "cup",
+      "material": "ceramic",
+      "color": "#8fb39b",
+      "box": [
+        118,
+        126,
+        86,
+        98,
+        4,
+        12
+      ],
+      "confidence": 0.8,
+      "photos": [
+        2
+      ]
+    },
+    {
+      "id": "tannborste",
+      "kind": "toothbrush",
+      "material": "plastic",
+      "color": "#3b82c4",
+      "box": [
+        121,
+        123,
+        98,
+        108,
+        6,
+        8
+      ],
+      "confidence": 0.8,
+      "photos": [
+        2
+      ],
+      "hold": true
+    },
+    {
+      "id": "skapknott_1",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#9aa0a6",
+      "box": [
+        60,
+        63,
+        76,
+        79,
+        45,
+        47
+      ],
+      "confidence": 0.8,
+      "photos": [
+        2
+      ],
+      "hold": true,
+      "decor": true
+    },
+    {
+      "id": "skapknott_2",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#9aa0a6",
+      "box": [
+        93,
+        96,
+        76,
+        79,
+        45,
+        47
+      ],
+      "confidence": 0.8,
+      "photos": [
+        2
+      ],
+      "hold": true,
+      "decor": true
+    },
+    {
+      "id": "skapknott_3",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#9aa0a6",
+      "box": [
+        118,
+        121,
+        76,
+        79,
+        45,
+        47
+      ],
+      "confidence": 0.8,
+      "photos": [
+        2
+      ],
+      "hold": true,
+      "decor": true
+    },
+    {
+      "id": "speil",
+      "kind": "mirror",
+      "material": "mirror",
+      "color": "#d8e2ea",
+      "box": [
+        40,
+        140,
+        100,
+        180,
+        0,
+        2
+      ],
+      "confidence": 0.9,
+      "photos": [
+        1,
+        2
+      ],
+      "decor": true
+    },
+    {
+      "id": "lampeboks",
+      "kind": "light_box",
+      "material": "plastic",
+      "color": "#f3f1ea",
+      "box": [
+        40,
+        140,
+        175,
+        190,
+        0,
+        14
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1
+      ]
+    },
+    {
+      "id": "speilskap",
+      "kind": "wall_cabinet",
+      "material": "wood",
+      "color": "#e6e0d0",
+      "box": [
+        140,
+        165,
+        125,
+        190,
+        0,
+        15
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1
+      ],
+      "cp": false,
+      "note": "Åpen dør, hyller med flasker"
+    },
+    {
+      "id": "speilskap_dor_aapen",
+      "kind": "door",
+      "material": "wood",
+      "color": "#f3f1ea",
+      "box": [
+        163,
+        165,
+        125,
+        190,
+        15,
+        40
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "note": "Stående dør: tynn vegg ut fra skapet"
+    },
+    {
+      "id": "vindu_karm",
+      "kind": "sill",
+      "material": "wood",
+      "color": "#e8dfc8",
+      "box": [
+        205,
+        220,
+        118,
+        124,
+        58,
+        122
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "glasshylle",
+      "kind": "shelf",
+      "material": "glass",
+      "color": "#cfe8e3",
+      "box": [
+        205,
+        220,
+        99,
+        101,
+        58,
+        118
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1,
+        3
+      ],
+      "cp": true
+    },
+    {
+      "id": "toalettveske",
+      "kind": "bag",
+      "material": "fabric",
+      "color": "#1d1f27",
+      "box": [
+        207,
+        217,
+        101,
+        115,
+        60,
+        85
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "flaske_gronn",
+      "kind": "bottle",
+      "material": "plastic",
+      "color": "#4f7a52",
+      "box": [
+        208,
+        214,
+        101,
+        121,
+        100,
+        106
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "flaske_hvit",
+      "kind": "bottle",
+      "material": "plastic",
+      "color": "#f1f1ec",
+      "box": [
+        208,
+        215,
+        101,
+        123,
+        108,
+        114
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "dusjkurv_ovre",
+      "kind": "caddy",
+      "material": "metal",
+      "color": "#222222",
+      "box": [
+        208,
+        218,
+        84,
+        94,
+        88,
+        100
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        2,
+        3
+      ],
+      "hold": true
+    },
+    {
+      "id": "dusjkurv_nedre",
+      "kind": "caddy",
+      "material": "metal",
+      "color": "#222222",
+      "box": [
+        208,
+        218,
+        66,
+        76,
+        88,
+        100
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        2,
+        3
+      ],
+      "hold": true
+    },
+    {
+      "id": "handkle_gulv_1",
+      "kind": "towel",
+      "material": "fabric",
+      "color": "#6e6a64",
+      "box": [
+        150,
+        185,
+        0,
+        9,
+        182,
+        205
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "note": "Sammenkrøllet håndkle ved karet"
+    },
+    {
+      "id": "handkle_gulv_2",
+      "kind": "towel",
+      "material": "fabric",
+      "color": "#6e6a64",
+      "box": [
+        155,
+        178,
+        9,
+        16,
+        186,
+        200
+      ],
+      "confidence": 0.6,
+      "photos": [
+        1
+      ]
+    },
+    {
+      "id": "dormatte",
+      "kind": "mat",
+      "material": "fabric",
+      "color": "#7b7c7a",
+      "box": [
+        95,
+        150,
+        0,
+        1.5,
+        200,
+        250
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1
+      ],
+      "soft": true
+    }
+  ],
+  "hazards": [
+    {
+      "id": "kar_inni",
+      "type": "pit",
+      "box": [
+        157,
+        213,
+        0,
+        52,
+        17,
+        173
+      ],
+      "message": "Fanget i badekaret",
+      "note": "Karet er tomt og glatt; veggene er for høye"
+    },
+    {
+      "id": "do_skal_hull",
+      "type": "flush",
+      "box": [
+        32,
+        55,
+        0,
+        40,
+        190,
+        210
+      ],
+      "message": "Skylt ned!"
+    }
+  ],
+  "look": {
+    "exposure": 0.78,
+    "sun": 2.0,
+    "note": "Bildene er nesten helt hvite; dempet lys og litt mer nyanse gir lesbarhet i spillet"
+  }
+}

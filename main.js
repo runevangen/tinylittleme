@@ -1,7 +1,13 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
-import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt } from './physics.js';
-import { LEVEL } from './level.js';
+import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard } from './physics.js';
+
+// ?level=bad laster levels/bad.level.json (generert fra bilder), ellers det håndlagde soverommet
+const levelName = new URLSearchParams(location.search).get('level');
+const LEVEL = levelName
+  ? await (await fetch(`./levels/${encodeURIComponent(levelName)}.level.json`)).json()
+  : (await import('./level.js')).LEVEL;
+const SUN = LEVEL.sun || [28, 60, -24];
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -19,7 +25,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = LEVEL.look?.exposure ?? 1.05;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xcbbfae);
@@ -30,7 +36,7 @@ scene.environmentIntensity = 0.55;
 
 const camera = new THREE.PerspectiveCamera(55, 1, 0.05, 400);
 
-const sun = new THREE.DirectionalLight(0xffe7c2, 3.0);
+const sun = new THREE.DirectionalLight(0xffe7c2, LEVEL.look?.sun ?? 3.0);
 sun.castShadow = true;
 const bigShadow = Math.min(renderer.capabilities.maxTextureSize, 4096);
 sun.shadow.mapSize.set(devicePixelRatio > 2 || innerWidth < 700 ? 2048 : bigShadow, devicePixelRatio > 2 || innerWidth < 700 ? 2048 : bigShadow);
@@ -92,29 +98,57 @@ const plasterTex = canvasTex(256, (g, S) => {
 });
 
 // ---------- brettet ----------
+const room = LEVEL.room;
+const tileTex = canvasTex(256, (g, S) => {
+  g.fillStyle = '#cfcfc8'; g.fillRect(0, 0, S, S);                       // fuge
+  const gr = g.createLinearGradient(0, 0, S, S);
+  gr.addColorStop(0, '#fbfbf8'); gr.addColorStop(1, '#eceae3');
+  g.fillStyle = gr; g.fillRect(5, 5, S - 10, S - 10);
+});
+const std = (o) => new THREE.MeshStandardMaterial(o);
+
 function material(b) {
   const col = b.color ?? 0xcccccc;
-  switch (b.type) {
-    case 'floor': { const m = new THREE.MeshStandardMaterial({ map: floorTex.clone(), roughness: 0.5, metalness: 0 }); m.map.needsUpdate = true; return m; }
-    case 'wood': return new THREE.MeshStandardMaterial({ map: woodTex, color: col, roughness: 0.55 });
-    case 'book': return new THREE.MeshStandardMaterial({ color: col, roughness: 0.78 });
-    case 'plastic': return new THREE.MeshStandardMaterial({ color: col, roughness: 0.3, metalness: 0.15 });
-    case 'wall': return new THREE.MeshStandardMaterial({ map: plasterTex, color: col, roughness: 0.95 });
-    default: return new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 });
+  const kind = b.type === 'floor' || b.type === 'wall' ? `${b.type}:${b.material || 'default'}` : (b.material || b.type);
+  switch (kind) {
+    case 'floor:default': return std({ map: floorTex.clone(), roughness: 0.5 });
+    case 'floor:tile': return std({ map: tileTex.clone(), color: col, roughness: 0.14 });
+    case 'wall:tile': return std({ map: tileTex.clone(), color: col, roughness: 0.2 });
+    case 'wall:default': case 'wall': return std({ map: plasterTex.clone(), color: col, roughness: 0.95 });
+    case 'wood': case 'woodpanel': return std({ map: woodTex.clone(), color: col, roughness: 0.55 });
+    case 'book': return std({ color: col, roughness: 0.78 });
+    case 'plastic': return std({ color: col, roughness: 0.3, metalness: 0.1 });
+    case 'porcelain': return std({ color: col, roughness: 0.07 });
+    case 'ceramic': return std({ color: col, roughness: 0.15 });
+    case 'glass': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.04, transparent: true, opacity: 0.4, transmission: 0.6 });
+    case 'metal': return std({ color: col, roughness: 0.22, metalness: 1 });
+    case 'mirror': return std({ color: 0xffffff, roughness: 0.02, metalness: 1 });
+    case 'fabric': return std({ color: col, roughness: 1 });
+    case 'wicker': case 'paper': return std({ color: col, roughness: 0.92 });
+    default: return std({ color: col, roughness: 0.7 });
   }
 }
-const pageMat = new THREE.MeshStandardMaterial({ map: pagesTex, roughness: 0.9 });
+const pageMat = std({ map: pagesTex, roughness: 0.9 });
+const woodKinds = new Set(['wood', 'woodpanel']);
 
 for (const b of LEVEL.boxes) {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
   const mat = material(b);
-  if (b.type === 'floor') mat.map.repeat.set(sx / 18, sz / 18);
-  else if (b.type === 'wood') { mat.map = woodTex.clone(); mat.map.needsUpdate = true; mat.map.repeat.set(Math.max(1, Math.max(sx, sz) / 8), Math.max(1, sy / 8)); }
-  else if (b.type === 'wall') { mat.map = plasterTex.clone(); mat.map.needsUpdate = true; mat.map.repeat.set(Math.max(sx, sz) / 10, 8); }
+  const tiled = b.material === 'tile';
+  if (b.type === 'floor') {
+    const rep = tiled ? 4 : 18;
+    mat.map.repeat.set(sx / rep, sz / rep);
+    if (tiled) { mat.map.center.set(0.5, 0.5); mat.map.rotation = room.floor?.diagonal ? Math.PI / 4 : 0; }
+  } else if (woodKinds.has(b.material || b.type)) {
+    mat.map.repeat.set(Math.max(1, Math.max(sx, sz) / 8), Math.max(1, sy / 8));
+  } else if (b.type === 'wall') {
+    if (tiled) mat.map.repeat.set(Math.max(sx, sz) / 4, Math.max(1, sy / 4));
+    else mat.map.repeat.set(Math.max(sx, sz) / 10, 8);
+  }
   const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat);
   m.position.set(cx, cy, cz);
-  m.castShadow = b.type !== 'floor' && b.type !== 'wall'; m.receiveShadow = true;
+  m.castShadow = b.type !== 'floor' && b.type !== 'wall' && b.material !== 'glass'; m.receiveShadow = true;
   scene.add(m);
 
   if (b.type === 'book' && sy > 1 && Math.min(sx, sz) > 1.5) {
@@ -124,27 +158,50 @@ for (const b of LEVEL.boxes) {
   }
 }
 
-// sokkellist rundt rommet
+// sokkellist (kun med malte vegger), tak og vinduer
 {
-  const H = LEVEL.room.half, mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
-  for (const [x, z, sx, sz] of [[0, -H + 0.3, 2 * H, 0.6], [0, H - 0.3, 2 * H, 0.6], [-H + 0.3, 0, 0.6, 2 * H], [H - 0.3, 0, 0.6, 2 * H]]) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, 3, sz), mat); m.position.set(x, 1.5, z); m.receiveShadow = true; scene.add(m);
+  const w = room.x1 - room.x0, d = room.z1 - room.z0, ox = (room.x0 + room.x1) / 2, oz = (room.z0 + room.z1) / 2;
+  if (room.walls?.material !== 'tile' && !levelName) {
+    const mat = std({ color: 0xffffff, roughness: 0.5 });
+    for (const [x, z, sx, sz] of [[ox, room.z0 + 0.3, w, 0.6], [ox, room.z1 - 0.3, w, 0.6], [room.x0 + 0.3, oz, 0.6, d], [room.x1 - 0.3, oz, 0.6, d]]) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(sx, 3, sz), mat); m.position.set(x, 1.5, z); m.receiveShadow = true; scene.add(m);
+    }
   }
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(2 * H, 2 * H), new THREE.MeshStandardMaterial({ color: 0xf5f1e8, roughness: 1 }));
-  ceil.rotation.x = Math.PI / 2; ceil.position.y = LEVEL.room.height; scene.add(ceil);
-  // vindu på nordveggen: lyset kommer derfra
-  const win = new THREE.Mesh(new THREE.PlaneGeometry(26, 34), new THREE.MeshBasicMaterial({ color: 0xfff6e0 }));
-  win.position.set(8, 46, -H + 0.05); scene.add(win);
-  const frame = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
-  for (const [x, y, sx, sy] of [[8, 63.5, 28, 1.5], [8, 28.5, 28, 1.5], [-5.2, 46, 1.5, 36], [21.2, 46, 1.5, 36], [8, 46, 1.2, 34]]) {
-    const f = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, 1), frame); f.position.set(x, y, -H + 0.3); scene.add(f);
+  const ceilMat = room.ceiling?.material === 'woodpanel'
+    ? std({ map: woodTex.clone(), color: hexNum(room.ceiling.color), roughness: 0.6 })
+    : std({ color: 0xf5f1e8, roughness: 1 });
+  if (ceilMat.map) ceilMat.map.repeat.set(w / 10, d / 10);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceilMat);
+  ceil.rotation.x = Math.PI / 2; ceil.position.set(ox, room.height, oz); ceil.receiveShadow = true; scene.add(ceil);
+
+  const frameMat = std({ color: 0xf0ead8, roughness: 0.5 });
+  for (const win of LEVEL.windows || []) {
+    const g = new THREE.Group(); g.position.set(...win.pos);
+    g.rotation.y = { N: 0, S: Math.PI, E: -Math.PI / 2, W: Math.PI / 2 }[win.wall] ?? 0;
+    const [ww, wh] = win.size;
+    g.add(new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ color: 0xfff6e0 })));
+    for (const [x, y, sx, sy] of [[0, wh / 2 + 0.4, ww + 1.6, 0.8], [0, -wh / 2 - 0.4, ww + 1.6, 0.8], [-ww / 2 - 0.4, 0, 0.8, wh], [ww / 2 + 0.4, 0, 0.8, wh], [0, 0, 0.4, wh]]) {
+      const f = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, 0.7), frameMat); f.position.set(x, y, 0.3); g.add(f);
+    }
+    scene.add(g);
   }
 }
+function hexNum(h) { return typeof h === 'number' ? h : parseInt(String(h).replace('#', ''), 16); }
 
 for (const d of LEVEL.decor || []) {
   const geo = d.shape === 'sphere' ? new THREE.SphereGeometry(d.size[0], 16, 12) : new THREE.BoxGeometry(...d.size);
-  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: d.color, emissive: d.emissive ?? 0x000000, roughness: d.rough ?? 0.5, metalness: d.metal ?? 0 }));
-  m.position.set(...d.pos); m.castShadow = true; scene.add(m);
+  const mat = d.emissive !== undefined || d.metal !== undefined
+    ? std({ color: d.color, emissive: d.emissive ?? 0, roughness: d.rough ?? 0.5, metalness: d.metal ?? 0 })
+    : material({ type: d.material || 'plastic', material: d.material, color: d.color });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(...d.pos); m.castShadow = d.material !== 'mirror'; scene.add(m);
+}
+
+for (const h of LEVEL.hazards || []) {   // litt synlig vann i do-skålen
+  if (h.type !== 'flush') continue;
+  const r = Math.min(h.max[0] - h.min[0], h.max[2] - h.min[2]) / 2 - 0.3;
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.05, 24), new THREE.MeshStandardMaterial({ color: 0x5a8fa8, roughness: 0.05, transparent: true, opacity: 0.8 }));
+  disc.position.set((h.min[0] + h.max[0]) / 2, 2.2, (h.min[2] + h.max[2]) / 2); scene.add(disc);
 }
 
 // tau
@@ -311,6 +368,10 @@ function restartAll() {
 // ---------- modus: plan / fly ----------
 const cam = { yaw: 0.35, pitch: 0.3, dist: 5.5, cur: 5.5, target: new THREE.Vector3(...LEVEL.start) };
 const planCam = { yaw: 0.6, pitch: 0.7, dist: 55, pivot: new THREE.Vector3(8, 15, 0) };
+if (levelName) {                                   // mindre rom: nærmere og mer ovenfra
+  planCam.dist = Math.max(LEVEL.room.x1 - LEVEL.room.x0, LEVEL.room.z1 - LEVEL.room.z0) * 1.05;
+  planCam.pitch = 1.15;
+}
 
 function setMode(m) {
   if (m === mode) m = 'play';
@@ -413,13 +474,17 @@ applyPreset(presetName);
 Object.assign(P, store.get('tlm.custom', {}));
 function buildPanel() {
   const p = $('panel');
-  p.innerHTML = `<h3>Hoppinnstillinger</h3>
+  p.innerHTML = `<h3>Brett</h3>
+    <select id="levelSel"><option value="">Soverom (håndlaget)</option><option value="bad">Bad (tolket fra 3 bilder)</option></select>
+    <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="autoGrab"> Grip kanten automatisk</label>
     <div id="sliders"></div>
     <div class="row"><button id="resetPreset">Nullstill</button><button id="closePanel">Lukk</button></div>
     <small><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke REKK UT (Shift/E) i riktig øyeblikk for å gripe kant eller tau.</small>`;
+  $('levelSel').value = levelName || '';
+  $('levelSel').onchange = (e) => { location.search = e.target.value ? `?level=${e.target.value}` : ''; };
   $('presetSel').value = presetName;
   $('autoGrab').checked = P.autoGrab;
   $('autoGrab').onchange = (e) => { P.autoGrab = e.target.checked; saveCustom(); };
@@ -482,6 +547,11 @@ function update(dt) {
 
   if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); }
   if (player.y < LEVEL.deathY) { resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
+  const hz = inHazard(LEVEL, player);
+  if (hz) {
+    resetPlayer(player, ...(hz.type === 'flush' ? LEVEL.start : save.pos)); stats.respawns++;
+    toast(`${hz.message || 'Fare!'}  −${SCORE.respawn} poeng`);
+  }
 
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
@@ -529,7 +599,7 @@ function render(now, dt) {
     camera.lookAt(cam.target);
   }
   sun.target.position.set(player.x, player.y, player.z);
-  sun.position.set(player.x + 28, player.y + 60, player.z - 24);
+  sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   renderer.render(scene, camera);
   $('hud').textContent =
     `${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · REKKER UT' : ''}\n` +

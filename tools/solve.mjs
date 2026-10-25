@@ -2,12 +2,15 @@
 // Bruk: node tools/solve.mjs [klassisk|spenning] [maks_iterasjoner]
 // Finner boten målet, er brettet løsbart (og vi har en vei). Finner den det ikke, er brettet
 // enten umulig eller bare vanskelig – ikke et bevis, men et godt signal.
-import { newPlayer, step, applyPreset, PRESETS } from '../physics.js';
-import { LEVEL } from '../level.js';
+import fs from 'node:fs';
+import { newPlayer, step, applyPreset, PRESETS, inHazard } from '../physics.js';
+import { LEVEL as DEFAULT_LEVEL } from '../level.js';
 
 const args = process.argv.slice(2);
 const preset = args.find((a) => PRESETS[a]) || 'spenning';
 applyPreset(preset);
+const levelArg = args.find((a) => a.startsWith('--level='));
+const LEVEL = levelArg ? JSON.parse(fs.readFileSync(levelArg.slice(8), 'utf8')) : DEFAULT_LEVEL;
 const MAX = Number(args.find((a) => /^\d+$/.test(a))) || 400000;
 console.log(`innstilling: ${preset}`);
 const [gx, gy, gz] = LEVEL.goal;
@@ -20,7 +23,7 @@ const pick = (a) => a[Math.floor(rnd() * a.length)];
 const key = (p) => `${Math.floor(p.x)}|${Math.floor(p.y)}|${Math.floor(p.z)}|${p.state}`;
 const score = (p) => p.y * 3 - Math.hypot(p.x - gx, p.z - gz) * 0.5;
 const clone = (p) => ({ ...p, wallN: p.wallN && { ...p.wallN }, hang: p.hang && { ...p.hang }, swing: p.swing && { ...p.swing } });
-const atGoal = (p) => Math.hypot(p.x - gx, p.z - gz) < 6 && Math.abs(p.y - gy) < 0.2; // på målhylla; resten er gange
+const atGoal = (p) => Math.hypot(p.x - gx, p.z - gz) < 6 && Math.abs(p.y - gy) < 0.2; // på samme flate som målet; resten er gange
 
 const start = newPlayer(...LEVEL.start);
 for (let i = 0; i < 10; i++) step(start, { mx: 0, mz: 0 }, 1 / 60, LEVEL);
@@ -45,7 +48,7 @@ for (let it = 0; it < MAX && !found; it++) {
       mx, mz, jumpPressed: act.jump && f === act.jumpAt, jumpHeld: act.hold,
       grabPressed: act.grab && f === act.grabAt, grabHeld: act.grab && f >= act.grabAt && f < act.grabAt + act.grabLen,
     }, 1 / 60, LEVEL);
-    if (p.y < LEVEL.deathY) break;
+    if (p.y < LEVEL.deathY || inHazard(LEVEL, p)) { p.y = -999; break; }
   }
   if (p.y < LEVEL.deathY) continue;
   bestY = Math.max(bestY, p.y);

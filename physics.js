@@ -21,6 +21,7 @@ export const P = {
   w: 0.6,
   h: 1.0,
   accel: 60,
+  slickAccel: 5,     // fart-endring på glatt underlag (fliser): du sklir
   maxFall: -30,
   cutVy: 4,          // slipper du hopp-knappen tidlig kappes farten til dette
   coyote: 0.1,
@@ -76,6 +77,12 @@ function overlaps(b, x, y, z) {
          z - HW < b.max[2] && z + HW > b.min[2];
 }
 
+// Fare-volum (vann, do-skål, kar): AABB som spilleren ikke skal berøre. Returnerer faren eller null.
+export function inHazard(L, p) {
+  for (const h of L.hazards || []) if (overlaps(h, p.x, p.y, p.z)) return h;
+  return null;
+}
+
 export function freeAt(L, x, y, z) {
   for (const b of L.boxes) if (overlaps(b, x, y, z)) return false;
   return true;
@@ -115,7 +122,7 @@ function sub(p, inp, dt, L) {
   if (wl > 0.1 && p.lock <= 0) { p.fx = wx / wl; p.fz = wz / wl; }
 
   if (p.lock <= 0) {
-    const a = (p.onGround ? P.accel : P.airAccel) * dt;
+    const a = (p.onGround ? (p.groundBox?.slick ? P.slickAccel : P.accel) : P.airAccel) * dt;
     p.vx = approach(p.vx, wx * P.speed, a);
     p.vz = approach(p.vz, wz * P.speed, a);
   }

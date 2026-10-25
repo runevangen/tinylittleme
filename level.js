@@ -48,5 +48,7 @@ export const LEVEL = {
   start: [-16, 0, 8],
   goal: [25.5, 29, 0],
   deathY: -15,
-  room: { half: W, height: 100 },
+  room: { x0: -W, x1: W, z0: -W, z1: W, height: 100, floor: { material: 'wood' }, walls: { material: 'plaster' }, ceiling: { material: 'plaster' } },
+  windows: [{ wall: 'N', pos: [8, 46, -W + 0.05], size: [26, 34] }],
+  sun: [28, 60, -24],
 };

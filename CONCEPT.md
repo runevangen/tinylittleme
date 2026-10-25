@@ -56,7 +56,10 @@ Poeng: 1000 − 25 per lagring − 10 per tilbakeføring (også ved fall) − 2 
 PBR-materialer, prosedyre-teksturer (tre, gulvplanker, bokssider, puss), refleksjonsmiljø, soft skygge som følger spilleren,
 vindu med sollys, nært kamera med kollisjon mot brettet. Figuren har menneskelige proporsjoner og egne poser (gå, hopp, fall, rekke ut, henge, sving).
 
-## Fra bilde til brett (neste steg)
+## Fra bilde til brett
+Testet på et bad med 3 bilder: se [docs/FOTO_TIL_BRETT.md](docs/FOTO_TIL_BRETT.md). Pipeline: bilder → `scenes/*.scene.json` → `tools/scene2level.mjs` → `levels/*.level.json` → bot.
+
+Opprinnelig skisse av skjemaet:
 Claude får 1–6 bilder og skal returnere JSON etter dette skjemaet; en generator gjør det om til bokser:
 ```json
 {

@@ -1,6 +1,6 @@
 // node tinylittleme/test_physics.mjs
 import assert from 'node:assert/strict';
-import { P, box, newPlayer, step, freeAt, applyPreset } from './physics.js';
+import { P, box, newPlayer, step, freeAt, applyPreset, inHazard } from './physics.js';
 import { LEVEL } from './level.js';
 
 applyPreset('klassisk');
@@ -137,6 +137,27 @@ applyPreset('spenning');
   for (let i = 0; i < 40; i++) step(p, idle, 1 / 60, { boxes: [floor], ropes: [] });
   step(p, { ...idle, grabPressed: true }, 1 / 60, { boxes: [floor], ropes: [] });
   assert.ok(first > 0 && p.reach === 0, 'andre utrekning under pausen skal ignoreres');
+}
+
+// 11. glatt underlag: du bruker lengre tid på å stoppe enn på vanlig gulv
+{
+  const stopDist = (slick) => {
+    const L = { boxes: [{ ...floor, slick }], ropes: [] };
+    const p = newPlayer(0, 0, 0);
+    run(L, p, 10, () => idle);
+    run(L, p, 40, () => ({ ...idle, mx: 1 }));
+    const x0 = p.x;
+    run(L, p, 90, () => idle);
+    return p.x - x0;
+  };
+  assert.ok(stopDist(true) > stopDist(false) * 3, 'glatt gulv skal gi lang bremselengde');
+}
+
+// 12. fare-volum oppdages
+{
+  const L = { boxes: [floor], ropes: [], hazards: [box('pit', 5, 10, 0, 6, -5, 5)] };
+  assert.equal(inHazard(L, { x: 0, y: 0, z: 0 }), null);
+  assert.ok(inHazard(L, { x: 7, y: 0, z: 0 }), 'burde treffe faren');
 }
 
 console.log('alle fysikktester grønne');
