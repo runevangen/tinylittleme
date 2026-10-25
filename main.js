@@ -893,6 +893,7 @@ addEventListener('keydown', (e) => {
   if (['ShiftLeft', 'ShiftRight', 'KeyE'].includes(e.code)) grabEdge = true;
   if (e.code === 'KeyK') doSave();
   if (e.code === 'KeyR') goBack();
+  if (e.code === 'KeyZ') camBehind();
   if (e.code === 'KeyT') restartAll();
   if (e.code === 'KeyF') carryEdge = true;
   if (e.code === 'KeyN') resetThings();
@@ -910,6 +911,37 @@ addEventListener('blur', () => keys.clear());
 const held = (...codes) => codes.some((c) => keys.has(c));
 
 let camSens = store.get('tlm.camsens', 1);
+let camAnim = null;                                                           // mykt kameraskift: {from, to, pf, pt, t}
+const angDiff = (a, b) => ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+function turnCamera(toYaw, toPitch) { camAnim = { from: cam.yaw, d: angDiff(cam.yaw, toYaw), pf: cam.pitch, pt: toPitch ?? cam.pitch, t: 0 }; lastDrag = -99; }
+const camBehind = () => turnCamera(Math.atan2(-player.fx, -player.fz), 0.32);                       // bak figuren, litt ovenfra
+const camToGoal = () => { const [gx,, gz] = LEVEL.goal; turnCamera(Math.atan2(-(gx - player.x), -(gz - player.z)), 0.32); };    // målet rett frem
+function stepCamAnim(dt) {
+  if (!camAnim) return; camAnim.t = Math.min(1, camAnim.t + dt / 0.4); const k = 1 - Math.pow(1 - camAnim.t, 3);
+  cam.yaw = camAnim.from + camAnim.d * k; cam.pitch = camAnim.pf + (camAnim.pt - camAnim.pf) * k; if (camAnim.t >= 1) camAnim = null;
+}
+let compassOn = store.get('tlm.compass', true);
+const compEl = $('compass'), compArrow = $('compArrow'), compTxt = $('compTxt');
+const goalArrow = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([[0, 0.5], [0.3, -0.25], [0, -0.1], [-0.3, -0.25]].map(([x, y]) => new THREE.Vector2(x, y)))),
+  new THREE.MeshBasicMaterial({ color: 0xffa940, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false }));
+goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visible = false;
+const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
+function compassFrame(now) {
+  const g = LEVEL.goal, dx = g[0] - player.x, dz = g[2] - player.z, dist = Math.hypot(dx, dz);
+  const show = compassOn && mode === 'play' && !won && dist > 2.5;
+  compEl.style.display = show ? 'flex' : 'none';
+  goalArrow.visible = show && player.onGround; goalArrowG.visible = goalArrow.visible;
+  if (!show) return;
+  const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
+  const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
+  compArrow.style.transform = `rotate(${ang}rad)`;
+  const dy = g[1] - player.y;
+  compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
+  goalArrowG.position.set(player.x + dx / dist * 1.4, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * 1.4);
+  goalArrowG.rotation.y = Math.atan2(dx, dz);
+}
+compEl.addEventListener('pointerdown', (e) => { e.stopPropagation(); camToGoal(); });
+$('btnCenter').addEventListener('pointerdown', (e) => { e.stopPropagation(); camBehind(); });
 const pointers = new Map();
 let pinch0 = 0;
 function activeCam() { return mode === 'plan' ? planCam : cam; }
@@ -918,7 +950,7 @@ canvas.addEventListener('pointerdown', (e) => {
   if (TOUCH && mode !== 'fly' && stickId === null && e.clientX < innerWidth * 0.5 && e.clientY > innerHeight * 0.2) {      // venstre halvdel: stikken dukker opp der tommelen treffer
     stickId = e.pointerId; setStickCenter(e.clientX, e.clientY); stick.classList.add('float'); stickMove(e); return;
   }
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
   if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); }
 });
 canvas.addEventListener('pointermove', (e) => {
@@ -930,12 +962,20 @@ canvas.addEventListener('pointermove', (e) => {
     const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
     if (pinch0) zoom(pinch0 / d); pinch0 = d; return;
   }
-  c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000;
+  camAnim = null; c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000;
   c.pitch += dy * 0.005 * camSens;
   const lim = mode === 'plan' ? [-0.3, 1.5] : [-0.35, 1.35];
   c.pitch = Math.min(lim[1], Math.max(lim[0], c.pitch));
 });
-const endPtr = (e) => { pointers.delete(e.pointerId); pinch0 = 0; };
+let lastTap = { t: 0, x: 0, y: 0 };
+const endPtr = (e) => {
+  const p = pointers.get(e.pointerId);
+  if (p && pointers.size === 1 && mode === 'play' && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 10 && performance.now() - p.t0 < 280) {      // kort trykk
+    const now = performance.now();
+    if (now - lastTap.t < 330 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 45) { camBehind(); lastTap.t = 0; } else lastTap = { t: now, x: e.clientX, y: e.clientY };
+  }
+  pointers.delete(e.pointerId); pinch0 = 0;
+};
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
 function zoom(f) {
   if (mode === 'plan') planCam.dist = Math.min(120, Math.max(8, planCam.dist * f));
@@ -1059,6 +1099,7 @@ function buildPanel() {
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCues"> Lydtekst: vis tekst for lyder${key('V')}</label>
     ${helperCount ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning${key('X')}</label>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCompass"> Målkompass og pil på gulvet</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkGripHi"> Fremhev grep (oransje, pulserende)</label>
     ${labels.length ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkLabels"> Brukslapper ved ting${key('L')}</label>` : ''}
     <div class="row" style="margin-top:10px"><button id="pSound">Lyd av/på</button><button id="pPlan">Plan</button><button id="pFly">Fly</button></div>
@@ -1082,6 +1123,7 @@ function buildPanel() {
   if ($('chkVib')) { $('chkVib').checked = vibOn; $('chkVib').onchange = (e) => { vibOn = e.target.checked; store.set('tlm.vib', vibOn); if (vibOn) buzz(30); }; }
   if ($('chkHelpers')) { $('chkHelpers').checked = helperMarks.visible; $('chkHelpers').onchange = (e) => { helperMarks.visible = e.target.checked; }; }
   if ($('chkLabels')) { $('chkLabels').checked = labelsOn; $('chkLabels').onchange = (e) => { labelsOn = e.target.checked; store.set('tlm.labels', labelsOn); }; }
+  $('chkCompass').checked = compassOn; $('chkCompass').onchange = (e) => { compassOn = e.target.checked; store.set('tlm.compass', compassOn); };
   $('chkGripHi').checked = gripHi; $('chkGripHi').onchange = (e) => { gripHi = e.target.checked; store.set('tlm.griphi', gripHi); };
   $('chkAutoCam').checked = autoCam; $('chkAutoCam').onchange = (e) => { autoCam = e.target.checked; store.set('tlm.autocam', autoCam); };
   $('chkBubbles').checked = bubblesOn; $('chkBubbles').onchange = (e) => { bubblesOn = e.target.checked; store.set('tlm.bubbles', bubblesOn); };
@@ -1352,6 +1394,7 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (!window.__paused) update(dt);
+  stepCamAnim(dt); compassFrame(now);
   render(now, dt);
   requestAnimationFrame(frame);
 }

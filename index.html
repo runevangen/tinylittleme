@@ -23,6 +23,10 @@
   #infobody{pointer-events:auto;flex:1;min-height:46px;box-sizing:border-box;background:#121a2cdd;border:2px solid #ffa940;border-right:0;border-radius:0 0 0 14px;padding:9px 13px;color:#eef2fa;font:500 14px/1.35 system-ui}
   #infocard:not(.show) #infobody{pointer-events:none}
   #infobody b{display:block;color:#ffd9a0;font-size:15px;margin-bottom:2px}#infobody span{display:block}
+  #compass{position:fixed;left:max(14px,env(safe-area-inset-left));top:max(104px,calc(env(safe-area-inset-top) + 94px));display:none;align-items:center;gap:8px;background:#121a2cdd;border:2px solid #ffa940;border-radius:999px;padding:5px 12px 5px 6px;color:#eef2fa;font:600 13px/1.2 system-ui;z-index:3;-webkit-tap-highlight-color:transparent}
+  #compass .ring{width:38px;height:38px;border-radius:50%;background:#ffffff14;display:flex;align-items:center;justify-content:center}
+  #compass svg{width:26px;height:26px;transition:transform .08s linear}
+  #compass small{display:block;color:#ffd9a0;font-weight:700;font-size:11px}
   #cues{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none}
   .cue{background:#000a;color:#fff;font:600 13px system-ui;padding:5px 11px;border-radius:999px;animation:cuein .15s ease-out;transition:opacity .4s}
   .cue.out{opacity:0}@keyframes cuein{from{transform:translateX(14px);opacity:0}}
@@ -54,12 +58,13 @@
   #btnGrab{right:max(30px,env(safe-area-inset-right));bottom:10px;width:76px;height:76px;background:#1d2433cc}
   #btnCarry{right:max(30px,env(safe-area-inset-right));bottom:196px;width:66px;height:66px;background:#2a7f62cc}
   @media (max-width:560px){#bar{gap:4px}#bar button{padding:7px 9px;font-size:11.5px}}
+  #btnCenter{right:max(118px,calc(env(safe-area-inset-right) + 118px));bottom:250px;width:54px;height:54px;background:#1d2433b0;font-size:24px;font-weight:600}
   .tbtn::after{content:'';position:absolute;inset:-9px;border-radius:50%}
   #stick{touch-action:none}
   #bar button.armed{background:#ffd23f;color:#1d2433}
   @media (pointer:coarse){#stick{display:block;bottom:120px}.tbtn{display:flex}#help{display:none}
     #bar #bLevel,#bar #bPlan,#bar #bFly,#bar #bSound{display:none}#bar{bottom:max(14px,env(safe-area-inset-bottom))}#bar button{padding:11px 16px;font-size:14px}
-    #btnJump{bottom:140px}#btnGrab{bottom:52px}#btnCarry{bottom:236px;width:76px;height:76px}#hint{bottom:112px}}
+    #btnJump{bottom:140px}#btnGrab{bottom:52px}#btnCarry{bottom:236px;width:76px;height:76px}#btnCenter{bottom:246px}#hint{bottom:112px}}
 </style>
 <script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
 </head>
@@ -69,6 +74,7 @@
 <div id="toast"></div>
 <div id="cues"></div>
 <div id="bubble"></div>
+<div id="compass"><span class="ring"><svg viewBox="-12 -12 24 24" id="compArrow"><path d="M0 -10 L7 7 L0 3 L-7 7 Z" fill="#ffa940" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg></span><span><small>MÅL</small><span id="compTxt"></span></span></div>
 <div id="hint" class="hide"></div>
 <div id="help"><b>tinylittleme – testbrett</b>
   <kbd>WASD</kbd> gå (fart bygges opp) · <kbd>C</kbd> gå forsiktig · <kbd>Mellomrom</kbd> hopp<br>
@@ -86,6 +92,7 @@
 <div id="stick"><div id="knob"></div></div>
 <button class="tbtn" id="btnGrab">GREP</button>
 <button class="tbtn" id="btnCarry">TA</button>
+<button class="tbtn" id="btnCenter" aria-label="Sentrer kamera">◎</button>
 <button class="tbtn" id="btnJump">HOPP</button>
 <div id="bar">
   <button id="bLevel">Brett</button>
