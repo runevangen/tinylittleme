@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.42** – Rettet: den oransje pilen på gulvet pekte 180° feil vei (bort fra målet). Kompasset oppe til venstre var riktig hele tiden.
 - **0.41** – Pilen og kompasset peker mot neste hinder (neste flate eller grep-flate på ruta, f.eks. «NESTE: HÅNDKLE · ▲ klatre»), og mot målet når det er siste steg. Ruta kommer fra rute-grafen i scene2level (`route` i level-filen); håndlagde brett uten rute peker fortsatt mot målet.
 - **0.40** – Nål og tråd: trådsnelle + nål kombineres (TA ved snella), så festes tråden to steder (TA øverst, TA lavere) og du henger deg i øvre ende (GREP) og sklir ned på en taubane. Prøverommet har nål og snelle.
 - **0.39** – Badet kan klatres: et håndkle henger over servantkanten ned til gulvet (grep, lett å klatre i), og rute-grafen kjenner klatrekanter (`onto`, `grip_drain`) så brettet er løsbart uten hjelpetrapper.

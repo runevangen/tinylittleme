@@ -973,7 +973,7 @@ function compassFrame(now) {
   $('compLbl').textContent = t.final ? 'MÅL' : `NESTE: ${t.label}`.toUpperCase();
   compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.grip ? ' · ▲ klatre' : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
   goalArrowG.position.set(player.x + dx / dist * 1.4, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * 1.4);
-  goalArrowG.rotation.y = Math.atan2(dx, dz);
+  goalArrowG.rotation.y = Math.atan2(-dx, -dz);
 }
 compEl.addEventListener('pointerdown', (e) => { e.stopPropagation(); camToGoal(); });
 $('btnCenter').addEventListener('pointerdown', (e) => { e.stopPropagation(); camBehind(); });
@@ -1449,4 +1449,4 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-window.__game = { camera, say, setMood, touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
