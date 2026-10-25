@@ -8,7 +8,7 @@ Status: `[ ]` ikke startet · `[~]` påbegynt · `[x]` ferdig. Nyeste idéer øv
 PoC er bygd: dytte (etter vekt), bære lette ting, stable, glir av ved dårlig støtte, knuses ved fall, klemt, fare-soner, nullstill. Se `docs/FLYTTBARE_TING.md` og prøverommet `?level=poc`.
 
 Gjenstår / til sparring:
-1. **Dra og løfte:** nå bare dytte og bære lette ting. Skal tunge kunne dras? Skal man kunne løfte noe oppå en hylle?
+1. **Dra og løfte:** nå bare dytte og bære lette ting. Skal tunge kunne dras? (Å sette en lett ting oppå en hylle/annen ting er på plass fra v0.17; gjenstår: medium ting, og å løfte over hodet.)
 2. **Straff:** nå klemt = tilbake til lagringspunkt (−10), knust = −5, nullstilling = −15. Riktig nivå?
 3. **Bildene bestemmer?** Nå markeres løse ting for hånd i `scene.json`. Kan visjonssteget gjette (løst/fast, tung/lett, skjør)?
 4. **Boten og puslespill:** boten flytter ikke ting. Hvordan validere at et brett er løsbart *ved å flytte ting*? Forslag: egne «lovlige plasseringer» per ting.

@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.17** – Sett på: bærer du en ting og står foran et bord, en hylle, en kasse eller en annen ting, setter F den trygt oppå (opp til litt over hodet). Ny test.
 - **0.16** – Figuren flimret mellom «står» og «luft» (armer og bein skalv) når bildetidene var ujevne, slik de er på telefon. Fikset i fysikken: like lange delsteg og gulvsondering. Ny test.
 - **0.15** – Versjonsnummer i spillet og endringslogg.
 - **0.14** – Bena skjelver ikke lenger: jevn hoftehøyde og myk svingfot.

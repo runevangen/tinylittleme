@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
-import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget } from './physics.js';
+import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -881,7 +881,7 @@ function render(now, dt) {
   const hint = $('hint');
   if (mode === 'play' && !won) {
     const t = player.carry ? null : findCarryTarget(player, LEVEL);
-    hint.textContent = player.carry ? 'F: slipp' : t ? `F: ta ${t.id}` : '';
+    hint.textContent = player.carry ? (() => { const sp = findPlaceSpot(player, LEVEL); return sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `F: sett på ${sp.c.id || 'flaten'}` : 'F: slipp'; })() : t ? `F: ta ${t.id}` : '';
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;

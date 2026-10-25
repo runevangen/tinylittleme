@@ -453,6 +453,39 @@ const fwd = { ...idle, mz: 1 };
   assert.equal(p.y, 0);
 }
 
+// 21. sett på: bære en ting og sette den på en hylle/bord foran deg, oppå en annen ting, men ikke på en flate som er for liten
+{
+  const table = box('table', 1.6, 4, 0, 1.2, -1.5, 1.5);
+  const L = world([mv('lett', 'light', 0.5, 1.5, 0, 1, -0.5, 0.5)], [table]);
+  const p = newPlayer(0, 0, 0); p.fx = 1; p.fz = 0;
+  run(L, p, 10, () => idle);
+  step(p, { ...idle, carryPressed: true }, 1 / 60, L);
+  assert.equal(p.carry?.id, 'lett');
+  step(p, { ...idle, carryPressed: true }, 1 / 60, L);
+  assert.equal(p.carry, null);
+  const b = body(L, 'lett');
+  assert.ok(Math.abs(b.min[1] - 1.2) < 1e-6, `skal stå på bordet (y=${b.min[1]})`);
+  assert.ok(b.min[0] >= 1.6 - 1e-6 && b.max[0] <= 4 + 1e-6, 'innenfor bordplaten');
+  run(L, p, 60, () => idle);
+  assert.ok(Math.abs(b.min[1] - 1.2) < 1e-6, 'blir stående');
+
+  // oppå en annen ting
+  const L2 = world([mv('lett', 'light', 0.4, 1.0, 0, 1, -0.3, 0.3), mv('kasse', 'medium', 1.3, 2.7, 0, 1.2, -0.7, 0.7)]);
+  const p2 = newPlayer(0, 0, 0); p2.fx = 1; p2.fz = 0;
+  run(L2, p2, 10, () => idle);
+  step(p2, { ...idle, carryPressed: true }, 1 / 60, L2); step(p2, { ...idle, carryPressed: true }, 1 / 60, L2);
+  assert.ok(Math.abs(body(L2, 'lett').min[1] - 1.2) < 1e-6, 'stables oppå kassen');
+
+  // for liten flate: faller til gulvet i stedet
+  const pole = box('pole', 1.6, 1.7, 0, 1.2, -0.1, 0.1);
+  const L3 = world([mv('lett', 'light', 0.5, 1.5, 0, 1, -0.5, 0.5)], [pole]);
+  const p3 = newPlayer(0, 0, 0); p3.fx = 1; p3.fz = 0;
+  run(L3, p3, 10, () => idle);
+  step(p3, { ...idle, carryPressed: true }, 1 / 60, L3); step(p3, { ...idle, carryPressed: true }, 1 / 60, L3);
+  run(L3, p3, 60, () => idle);
+  assert.ok(Math.abs(body(L3, 'lett').min[1]) < 1e-6, 'for smal støtte: på gulvet');
+}
+
 console.log('alle fysikktester grønne');
 
 

@@ -66,6 +66,9 @@ export const P = {
   crushSpeed: 3,     // ting som faller raskere enn dette skader deg
   carryReach: 1.4,   // hvor nær du må stå for å ta tak
   carryMax: 3.4,     // største mål på noe du kan bære (spilleren er 1 høy)
+  placeReach: 1.3,   // hvor langt foran deg du kan sette fra deg noe
+  placeUp: 0.7,      // høyeste flate (over hodet) du kan sette noe på
+  placeDown: 1.6,    // laveste flate under føttene du kan sette noe på
   carrySpeed: 0.8,   // fartsfaktor når du bærer
   supportMin: 0.45,  // minste andel av fotavtrykket som må hvile på noe, ellers glir tingen av
 };
@@ -204,9 +207,40 @@ function stepBodies(L, p, dt) {
   }
 }
 
+// «Sett på»: finn en flate foran deg (bord, hylle, kasse, en annen ting) der det du bærer kan stå trygt. Returnerer {c, min, max} eller null.
+export function findPlaceSpot(p, L) {
+  const b = p.carry; if (!b) return null;
+  const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
+  const r = HW + Math.max(sx, sz) / 2 + 0.06, wantX = p.x + p.fx * r, wantZ = p.z + p.fz * r;
+  const reach = HW + P.placeReach + Math.max(sx, sz) / 2;
+  let best = null, bs = Infinity;
+  for (const c of L.boxes) {
+    if (c === b || c.carried || c.type === 'wall') continue;
+    const top = c.max[1];
+    if (top > p.y + H + P.placeUp || top < p.y - P.placeDown) continue;
+    const cl = (v, lo, hi) => (hi < lo ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, v)));
+    const cx = cl(wantX, c.min[0] + sx / 2, c.max[0] - sx / 2), cz = cl(wantZ, c.min[2] + sz / 2, c.max[2] - sz / 2);
+    if (Math.hypot(cx - p.x, cz - p.z) > reach) continue;
+    const ox = Math.min(cx + sx / 2, c.max[0]) - Math.max(cx - sx / 2, c.min[0]), oz = Math.min(cz + sz / 2, c.max[2]) - Math.max(cz - sz / 2, c.min[2]);
+    if (ox * oz / (sx * sz) < 0.6) continue;                                   // for lite å stå på
+    const min = [cx - sx / 2, top, cz - sz / 2], max = [cx + sx / 2, top + sy, cz + sz / 2];
+    const probe = { min: [min[0], min[1] + 0.02, min[2]], max };
+    let clear = true;
+    for (const o of L.boxes) if (o !== b && o !== c && !o.carried && o.type !== 'floor' && boxOverlap(probe, o)) { clear = false; break; }
+    if (!clear) continue;
+    const disp = Math.hypot(cx - wantX, cz - wantZ);
+    if (disp > P.placeReach) continue;                                         // langt unna der du holder tingen
+    const score = disp + 0.04 * Math.abs(top - (p.y + 0.35)) - (top > p.y + 0.2 ? 10 : 0);   // en høyere flate foran deg går foran gulvet
+    if (score < bs) { bs = score; best = { c, min, max }; }
+  }
+  return best;
+}
+
 export function dropCarry(p, L) {
   const b = p.carry; if (!b) return;
+  const spot = findPlaceSpot(p, L);
   b.carried = false; p.carry = null; b.vy = 0;
+  if (spot) { b.min = spot.min; b.max = spot.max; return; }
   for (let i = 0; i < 40 && blockedBody(b, L); i++) { b.min[1] += 0.2; b.max[1] += 0.2; }
 }
 

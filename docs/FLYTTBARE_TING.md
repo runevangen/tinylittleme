@@ -7,6 +7,7 @@ Status: prøveversjon. Spill prøverommet med `?level=poc` (eller velg «Prøver
 |---|---|
 | **Dytte** | Gå inn i en ting. Den flytter seg en brøkdel av farten din etter vekt: lett 100 %, medium 55 %, tung 30 %. |
 | **Bære** | `F` tar og slipper en *lett* ting foran deg (maks ca. 3,4 enheter; spilleren er 1). Du går 20 % tregere og kan ikke gripe kant eller tau mens du bærer. |
+| **Sette på** | Bærer du noe og står foran en flate (bord, hylle, kasse, annen ting) mellom ca. 1,6 under og 1,7 over føttene, setter `F` tingen trygt oppå i stedet for å slippe den. Flaten må bære minst 60 % av fotavtrykket. Ellers slippes den vanlig. |
 | **Stable** | Ting faller, hviler på hverandre og på deg (du kan stå på dem). |
 | **Gli av** | En ting som ikke har minst 45 % av fotavtrykket sitt understøttet, glir av og faller. Dytter du en kasse ut under en annen, faller den øverste. |
 | **Knuse** | Skjøre ting går i stykker ved fall over ca. 3 enheter (−5 poeng). Skår spruter. |
