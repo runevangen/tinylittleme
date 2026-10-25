@@ -1,6 +1,6 @@
 # Klatrehjelp: kast, stavhopp, myke landinger (prøverom `?level=klatring`)
 
-Knappene på mobil: **TA** (ta/slipp/bruk/kast, hold = kast), **HOPP**, **GREP** (tidligere GREP: grip kant, tau og klatre-flater). Treningsrommet har brukslapper: en «i» over hver ting som kan gjøre noe, og et kort øverst med bruksanvisning for den nærmeste (L slår av/på).
+Knappene på mobil: **TA** (ta/slipp/bruk/kast, hold = kast), **HOPP**, **GREP** (tidligere GREP: grip kant, tau og klatre-flater). Treningsrommet har brukslapper: en «i» over hver ting som kan gjøre noe, og en hjelpeskuff som sklir inn fra høyre første gang du kommer nær en ting og ut igjen etter noen sekunder. «i»-fliken ved høyre kant henter teksten tilbake (L eller ⚙ slår lappene av/på).
 
 Status: første versjon (v0.20). Verdiene står i `physics.js` (`P`) og er ment å justeres etter spilletest.
 

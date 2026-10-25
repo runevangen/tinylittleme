@@ -16,11 +16,13 @@
   #hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#fffe;color:var(--ink);padding:6px 12px;border-radius:999px;font:600 13px system-ui;pointer-events:none}
   #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
   #toast.show{opacity:1}
-  #infocard{position:fixed;left:50%;top:max(92px,calc(env(safe-area-inset-top) + 82px));transform:translateX(-50%);width:min(92vw,420px);box-sizing:border-box;background:#121a2cdd;border:2px solid #ffa940;border-radius:14px;padding:9px 13px;color:#eef2fa;font:500 14px/1.35 system-ui;pointer-events:none;opacity:0;transition:opacity .25s;z-index:3}
-  #infocard.show{opacity:1}#infocard b{display:block;color:#ffd9a0;font-size:15px;margin-bottom:2px}#infocard span{display:block}
-  #bubble{position:fixed;left:0;top:0;transform:translate(-50%,-100%);max-width:min(70vw,230px);background:#fff;color:#1d2433;font:700 15px/1.25 system-ui;padding:7px 12px;border-radius:15px;box-shadow:0 2px 8px #0005;pointer-events:none;opacity:0;transition:opacity .15s;z-index:4;text-align:center}
-  #bubble::after{content:'';position:absolute;left:50%;bottom:-8px;margin-left:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0}
-  #bubble.show{opacity:1}
+  #infocard{position:fixed;right:0;top:max(120px,calc(env(safe-area-inset-top) + 110px));width:min(86vw,360px);box-sizing:border-box;display:flex;align-items:flex-start;transform:translateX(calc(100% - 38px));transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:3;pointer-events:none}
+  #infocard.show{transform:translateX(0)}
+  #infotab{pointer-events:auto;flex:none;width:38px;height:46px;border:0;border-radius:14px 0 0 14px;background:#121a2cdd;color:#ffd9a0;font:800 20px/1 Georgia,serif;font-style:italic;box-shadow:-2px 2px 6px #0004;border:2px solid #ffa940;border-right:0}
+  #infotab.dim{opacity:.4}
+  #infobody{pointer-events:auto;flex:1;min-height:46px;box-sizing:border-box;background:#121a2cdd;border:2px solid #ffa940;border-right:0;border-radius:0 0 0 14px;padding:9px 13px;color:#eef2fa;font:500 14px/1.35 system-ui}
+  #infocard:not(.show) #infobody{pointer-events:none}
+  #infobody b{display:block;color:#ffd9a0;font-size:15px;margin-bottom:2px}#infobody span{display:block}
   #cues{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none}
   .cue{background:#000a;color:#fff;font:600 13px system-ui;padding:5px 11px;border-radius:999px;animation:cuein .15s ease-out;transition:opacity .4s}
   .cue.out{opacity:0}@keyframes cuein{from{transform:translateX(14px);opacity:0}}

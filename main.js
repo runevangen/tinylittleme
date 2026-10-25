@@ -206,20 +206,39 @@ function makeBadge() {                                         // liten «i»-me
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, opacity: 0, sizeAttenuation: false }));
   sp.scale.set(0.045, 0.045, 1); sp.renderOrder = 20; sp.visible = false; return sp;
 }
-const infoCard = document.createElement('div'); infoCard.id = 'infocard'; document.body.appendChild(infoCard);
-let infoShown = null;
+// hjelpekort: en skuff som sklir inn fra høyre når du kommer nær noe du ikke har lest om, og sklir ut igjen etter noen sekunder.
+// Fliken («i») blir stående ved kanten: trykk på den for å hente teksten frem igjen (for tingen nær deg, ellers den siste).
+const infoCard = document.createElement('div'); infoCard.id = 'infocard';
+infoCard.innerHTML = '<button id="infotab" aria-label="Vis hjelp">i</button><div id="infobody"></div>'; document.body.appendChild(infoCard);
+const infoBody = infoCard.querySelector('#infobody'), infoTab = infoCard.querySelector('#infotab');
+const infoSeen = new Set(); let infoCur = null, infoOpen = false, infoPinned = false, infoT = 0, infoLast = null;
+function openInfo(l, pinned) {
+  if (!l) return;
+  infoCur = l; infoLast = l; infoBody.innerHTML = `<b>${l.title}</b>${l.body ? `<span>${l.body}</span>` : ''}`;
+  infoOpen = true; infoPinned = !!pinned; infoT = pinned ? 9 : 5.5; infoCard.classList.add('show'); infoSeen.add(l);
+}
+function closeInfo() { infoOpen = false; infoPinned = false; infoCard.classList.remove('show'); }
+infoTab.addEventListener('click', () => { if (infoOpen) closeInfo(); else { const n = labels.filter((l) => l.d < 13).sort((a, b) => a.d - b.d)[0] || infoLast; if (n) openInfo(n, true); } });
+infoBody.addEventListener('click', closeInfo);
 for (const h of LEVEL.hints || []) { const sp = makeBadge(); sp.position.set(...h.pos); scene.add(sp); const [title, ...rest] = h.text.split('\n'); labels.push({ sp, pos: h.pos, title, body: rest.join(' ') }); }
+let infoPrev = performance.now();
 function updateLabels() {
+  const now = performance.now(), dt = Math.min(0.1, (now - infoPrev) / 1000); infoPrev = now;
   let near = null;
   for (const l of labels) { l.d = Math.hypot(player.x - l.pos[0], player.z - l.pos[2], (player.y - l.pos[1]) * 0.5); if (!near || l.d < near.d) near = l; }
-  const on = labelsOn && mode === 'play';
+  const on = labelsOn && mode === 'play' && labels.length > 0;
   for (const l of labels) {
     const o = on ? Math.max(0, Math.min(1, (13 - l.d) / 4)) : 0;
     l.sp.material.opacity += (o - l.sp.material.opacity) * 0.2; l.sp.visible = l.sp.material.opacity > 0.03;
   }
-  const show = on && near && near.d < 6.5 ? near : null;                                              // teksten står i ett fast kort øverst for den nærmeste tingen
-  if (show !== infoShown) { infoShown = show; if (show) infoCard.innerHTML = `<b>${show.title}</b>${show.body ? `<span>${show.body}</span>` : ''}`; }
-  infoCard.classList.toggle('show', !!show);
+  infoCard.style.display = on ? '' : 'none';
+  if (!on) { if (infoOpen) closeInfo(); return; }
+  infoTab.classList.toggle('dim', !(near && near.d < 13) && !infoLast);
+  if (!infoOpen && near && near.d < 5.5 && !infoSeen.has(near)) openInfo(near, false);              // første gang du kommer nær: skyv inn
+  if (infoOpen) {
+    infoT -= dt;
+    if (infoPinned ? (infoCur && infoCur.d > 9) : infoT <= 0) closeInfo();                          // lest ferdig eller gått bort
+  }
 }
 
 const nice = (id) => (id && (LEVEL.hints || []).find((h) => h.id === id)?.text.split('\n')[0]) || id || 'flaten';   // pent navn til hint-linja når brettet har en lapp for tingen
