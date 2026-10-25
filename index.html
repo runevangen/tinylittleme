@@ -44,7 +44,7 @@
   #win button{font:700 15px system-ui;padding:11px 22px;border:0;border-radius:999px;background:var(--accent);color:var(--ink);margin-top:6px}
   #stick{position:fixed;left:max(22px,env(safe-area-inset-left));bottom:76px;width:130px;height:130px;border-radius:50%;background:#fff5;border:2px solid #fff8;display:none}
   #knob{position:absolute;left:35px;top:35px;width:60px;height:60px;border-radius:50%;background:#1d2433aa}
-  .tbtn{position:fixed;border-radius:50%;border:0;color:#fff;font:700 13px system-ui;display:none;align-items:center;justify-content:center}
+  .tbtn{position:fixed;border-radius:50%;border:0;color:#fff;font:700 13px system-ui;display:none;align-items:center;justify-content:center;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none}
   #btnJump{right:max(24px,env(safe-area-inset-right));bottom:96px;width:88px;height:88px;background:#c1121fcc}
   #btnGrab{right:max(30px,env(safe-area-inset-right));bottom:10px;width:76px;height:76px;background:#1d2433cc}
   #btnCarry{right:max(30px,env(safe-area-inset-right));bottom:196px;width:66px;height:66px;background:#2a7f62cc}
@@ -66,6 +66,7 @@
   Hold <kbd>Shift</kbd> i tauet for å henge. Hopp slipper.<br>
   Mot vegg i fall + hopp = veggsprang<br>
   <b style="display:inline">Ting:</b> gå mot dem for å dytte (tunge går tregt). <kbd>F</kbd> ta lette ting; trykk = slipp/sett på, <b style="display:inline">hold og slipp = kast</b>. Hard landing (Prince) bedøver deg; svamp, matte og håndkle tar av for fallet. Faller noe på deg, eller knuses, koster det poeng. <kbd>N</kbd> nullstill ting · <kbd>M</kbd> lyd av/på · <kbd>V</kbd> lydtekst · <kbd>X</kbd> kamera følger retning · <kbd>L</kbd> brukslapper<br>
+  <b style="display:inline">Knappene på mobil = taster:</b> TA = <kbd>F</kbd> (hold = kast) · GREP = <kbd>E</kbd>/<kbd>Shift</kbd> · HOPP = <kbd>Mellomrom</kbd><br>
   <kbd>K</kbd> lagre punkt · <kbd>R</kbd> tilbake til punkt · <kbd>T</kbd> start på nytt<br>
   <kbd>P</kbd> plan-modus (se hele brettet, WASD flytter, dra for å snurre)<br>
   <kbd>G</kbd> flymodus (brettbygging): Mellomrom opp, <kbd>C</kbd> ned, Shift fort<br>

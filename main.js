@@ -6,6 +6,9 @@ import { buildGroup, buildSingle } from './props.js';
 import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
+// mobil (berøring) er hovedplattformen: tekst som nevner taster skal si knappene i stedet
+const TOUCH = matchMedia('(pointer:coarse)').matches;
+const TA = TOUCH ? 'TA' : 'F', key = (k) => (TOUCH ? '' : ` (${k})`);
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* privat modus e.l. */ } },
@@ -212,6 +215,8 @@ function updateLabels() {
   if (show !== infoShown) { infoShown = show; if (show) infoCard.innerHTML = `<b>${show.title}</b>${show.body ? `<span>${show.body}</span>` : ''}`; }
   infoCard.classList.toggle('show', !!show);
 }
+
+const nice = (id) => (id && (LEVEL.hints || []).find((h) => h.id === id)?.text.split('\n')[0]) || id || 'flaten';   // pent navn til hint-linja når brettet har en lapp for tingen
 
 // grep-kode: alt som kan klatres i har en varm oransje kant (alltid litt synlig); «Fremhev grep» i ⚙ gjør dem tydeligere og pulserende
 let gripHi = store.get('tlm.griphi', false);
@@ -704,7 +709,7 @@ function setMode(m) {
   if (m === 'plan') planCam.pivot.set(player.x, player.y + 4, player.z);
   if (m === 'fly') { stats.flew = true; toast('Flymodus – tiden teller ikke som gyldig'); }
   $('bPlan').classList.toggle('on', m === 'plan'); $('bFly').classList.toggle('on', m === 'fly');
-  if (m === 'plan') toast('Plan: WASD flytter, dra for å snurre, hjul/klyp for zoom');
+  if (m === 'plan') toast(TOUCH ? 'Plan: stikken flytter, dra for å snurre, klyp for zoom' : 'Plan: WASD flytter, dra for å snurre, hjul/klyp for zoom');
 }
 
 // ---------- input ----------
@@ -857,18 +862,18 @@ function buildPanel() {
     <label>Etterklang (rom) <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">
     <details open><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary>${mixerHtml()}
       <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCues"> Lydtekst: vis tekst for lyder (V)</label>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkCues"> Lydtekst: vis tekst for lyder${key('V')}</label>
     ${helperCount ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
-    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning (X)</label>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkAutoCam"> Kamera følger retning${key('X')}</label>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkGripHi"> Fremhev grep (oransje, pulserende)</label>
-    ${labels.length ? '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkLabels"> Brukslapper ved ting (L)</label>' : ''}
+    ${labels.length ? `<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="chkLabels"> Brukslapper ved ting${key('L')}</label>` : ''}
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
     <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="autoGrab"> Grip kanten automatisk</label>
     <div id="sliders"></div>
     <div class="row"><button id="resetPreset">Nullstill</button><button id="closePanel">Lukk</button></div>
-    <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. Hold C for å gå forsiktig.<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke GREP (Shift/E) i riktig øyeblikk for å gripe kant eller tau.</small>`;
+    <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. ${TOUCH ? 'Skyv stikken forsiktig for å gå forsiktig.' : 'Hold C for å gå forsiktig.'}<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke GREP${key('Shift/E')} i riktig øyeblikk for å gripe kant eller tau.</small>`;
   $('s_vol').value = store.get('tlm.vol', 0.7); $('v_vol').textContent = (+$('s_vol').value).toFixed(2);
   $('s_vol').oninput = (e) => { const v = +e.target.value; store.set('tlm.vol', v); audio?.setVolume(v); $('v_vol').textContent = v.toFixed(2); };
   $('levelSel').value = levelId;
@@ -1072,7 +1077,7 @@ function render(now, dt) {
   const hint = $('hint');
   if (mode === 'play' && !won) {
     const t = player.carry ? null : findCarryTarget(player, LEVEL);
-    hint.textContent = player.carry ? (player.charge >= P.throwMin ? 'Slipp F: KAST' : toolHint(player, LEVEL) === 'gel' ? 'F: smør gel på veggen · hold F: kast' : toolHint(player, LEVEL) === 'roll' ? 'F: rull ut et bånd over kanten · hold F: kast' : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `F: sett på ${sp.c.id || 'flaten'}` : 'F: slipp') + ' · hold F: kast'; })()) : t ? `F: ta ${t.id}` : '';
+    hint.textContent = player.carry ? (player.charge >= P.throwMin ? `Slipp ${TA}: KAST` : toolHint(player, LEVEL) === 'gel' ? `${TA}: smør gel på veggen · hold ${TA}: kast` : toolHint(player, LEVEL) === 'roll' ? `${TA}: rull ut et bånd over kanten · hold ${TA}: kast` : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `${TA}: sett på ${nice(sp.c.id)}` : `${TA}: slipp`) + ` · hold ${TA}: kast`; })()) : t ? `${TA}: ta ${nice(t.id)}` : '';
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;
