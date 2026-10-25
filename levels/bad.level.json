@@ -281,24 +281,6 @@
    "soft": false
   },
   {
-   "type": "wicker",
-   "min": [
-    -22,
-    0,
-    19
-   ],
-   "max": [
-    -14,
-    11,
-    26
-   ],
-   "id": "vaskekurv",
-   "color": 11106634,
-   "material": "wicker",
-   "cp": false,
-   "soft": false
-  },
-  {
    "type": "wood",
    "min": [
     -12,
@@ -335,42 +317,6 @@
    "soft": false
   },
   {
-   "type": "plastic",
-   "min": [
-    -11.6,
-    17.2,
-    -22.4
-   ],
-   "max": [
-    -10,
-    21.2,
-    -20.8
-   ],
-   "id": "saapepumpe",
-   "color": 7304055,
-   "material": "plastic",
-   "cp": false,
-   "soft": false
-  },
-  {
-   "type": "plastic",
-   "min": [
-    -9.6,
-    17.2,
-    -24.4
-   ],
-   "max": [
-    -8.6,
-    20.8,
-    -23.6
-   ],
-   "id": "tannkrem",
-   "color": 15265525,
-   "material": "plastic",
-   "cp": false,
-   "soft": false
-  },
-  {
    "type": "metal",
    "min": [
     -6,
@@ -385,42 +331,6 @@
    "id": "kran",
    "color": 12567496,
    "material": "metal",
-   "cp": false,
-   "soft": false
-  },
-  {
-   "type": "plastic",
-   "min": [
-    -3.6,
-    17.2,
-    -21.2
-   ],
-   "max": [
-    -2.4,
-    18.6,
-    -18.8
-   ],
-   "id": "barbermaskin",
-   "color": 1776930,
-   "material": "plastic",
-   "cp": false,
-   "soft": false
-  },
-  {
-   "type": "paper",
-   "min": [
-    -2,
-    17.2,
-    -21.6
-   ],
-   "max": [
-    0,
-    19.2,
-    -19.6
-   ],
-   "id": "dopapir",
-   "color": 16448250,
-   "material": "paper",
    "cp": false,
    "soft": false
   },
@@ -551,60 +461,6 @@
    "soft": false
   },
   {
-   "type": "fabric",
-   "min": [
-    19.4,
-    20.2,
-    -14
-   ],
-   "max": [
-    21.4,
-    23,
-    -9
-   ],
-   "id": "toalettveske",
-   "color": 1908519,
-   "material": "fabric",
-   "cp": false,
-   "soft": false
-  },
-  {
-   "type": "plastic",
-   "min": [
-    19.6,
-    20.2,
-    -6
-   ],
-   "max": [
-    20.8,
-    24.2,
-    -4.8
-   ],
-   "id": "flaske_gronn",
-   "color": 5208658,
-   "material": "plastic",
-   "cp": false,
-   "soft": false
-  },
-  {
-   "type": "plastic",
-   "min": [
-    19.6,
-    20.2,
-    -4.4
-   ],
-   "max": [
-    21,
-    24.6,
-    -3.2
-   ],
-   "id": "flaske_hvit",
-   "color": 15856108,
-   "material": "plastic",
-   "cp": false,
-   "soft": false
-  },
-  {
    "type": "metal",
    "min": [
     19.6,
@@ -637,42 +493,6 @@
    "id": "dusjkurv_nedre",
    "color": 2236962,
    "material": "metal",
-   "cp": false,
-   "soft": false
-  },
-  {
-   "type": "fabric",
-   "min": [
-    8,
-    0,
-    10.4
-   ],
-   "max": [
-    15,
-    1.8,
-    15
-   ],
-   "id": "handkle_gulv_1",
-   "color": 7236196,
-   "material": "fabric",
-   "cp": false,
-   "soft": false
-  },
-  {
-   "type": "fabric",
-   "min": [
-    9,
-    1.8,
-    11.2
-   ],
-   "max": [
-    13.6,
-    3.2,
-    14
-   ],
-   "id": "handkle_gulv_2",
-   "color": 7236196,
-   "material": "fabric",
    "cp": false,
    "soft": false
   },
@@ -778,6 +598,178 @@
    "color": 12175320,
    "material": "fabric",
    "helper": true
+  }
+ ],
+ "movables": [
+  {
+   "id": "vaskekurv",
+   "material": "wicker",
+   "color": 11106634,
+   "min": [
+    -22,
+    0,
+    19
+   ],
+   "max": [
+    -14,
+    11,
+    26
+   ],
+   "weight": "heavy",
+   "breakable": false
+  },
+  {
+   "id": "saapepumpe",
+   "material": "plastic",
+   "color": 7304055,
+   "min": [
+    -11.6,
+    17.2,
+    -22.4
+   ],
+   "max": [
+    -10,
+    21.2,
+    -20.8
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "tannkrem",
+   "material": "plastic",
+   "color": 15265525,
+   "min": [
+    -9.6,
+    17.2,
+    -24.4
+   ],
+   "max": [
+    -8.6,
+    20.8,
+    -23.6
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "barbermaskin",
+   "material": "plastic",
+   "color": 1776930,
+   "min": [
+    -3.6,
+    17.2,
+    -21.2
+   ],
+   "max": [
+    -2.4,
+    18.6,
+    -18.8
+   ],
+   "weight": "light",
+   "breakable": true
+  },
+  {
+   "id": "dopapir",
+   "material": "paper",
+   "color": 16448250,
+   "min": [
+    -2,
+    17.2,
+    -21.6
+   ],
+   "max": [
+    0,
+    19.2,
+    -19.6
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "toalettveske",
+   "material": "fabric",
+   "color": 1908519,
+   "min": [
+    19.4,
+    20.2,
+    -14
+   ],
+   "max": [
+    21.4,
+    23,
+    -9
+   ],
+   "weight": "medium",
+   "breakable": false
+  },
+  {
+   "id": "flaske_gronn",
+   "material": "plastic",
+   "color": 5208658,
+   "min": [
+    19.6,
+    20.2,
+    -6
+   ],
+   "max": [
+    20.8,
+    24.2,
+    -4.8
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "flaske_hvit",
+   "material": "plastic",
+   "color": 15856108,
+   "min": [
+    19.6,
+    20.2,
+    -4.4
+   ],
+   "max": [
+    21,
+    24.6,
+    -3.2
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "handkle_gulv_1",
+   "material": "fabric",
+   "color": 7236196,
+   "min": [
+    8,
+    0,
+    10.4
+   ],
+   "max": [
+    15,
+    1.8,
+    15
+   ],
+   "weight": "medium",
+   "breakable": false
+  },
+  {
+   "id": "handkle_gulv_2",
+   "material": "fabric",
+   "color": 7236196,
+   "min": [
+    9,
+    1.8,
+    11.2
+   ],
+   "max": [
+    13.6,
+    3.2,
+    14
+   ],
+   "weight": "medium",
+   "breakable": false
   }
  ],
  "decor": [
@@ -1145,7 +1137,7 @@
     "top_cm": 80
    }
   ],
-  "nodes": 36,
-  "reachable": 26
+  "nodes": 27,
+  "reachable": 17
  }
 }

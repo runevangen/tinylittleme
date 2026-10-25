@@ -11,6 +11,7 @@ const preset = args.find((a) => PRESETS[a]) || 'spenning';
 applyPreset(preset);
 const levelArg = args.find((a) => a.startsWith('--level='));
 const LEVEL = levelArg ? JSON.parse(fs.readFileSync(levelArg.slice(8), 'utf8')) : DEFAULT_LEVEL;
+for (const m of LEVEL.movables || []) LEVEL.boxes.push({ type: m.material, min: m.min, max: m.max });   // boten flytter ikke ting: de regnes som faste
 const MAX = Number(args.find((a) => /^\d+$/.test(a))) || 400000;
 console.log(`innstilling: ${preset}`);
 const [gx, gy, gz] = LEVEL.goal;

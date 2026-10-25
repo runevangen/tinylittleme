@@ -13,6 +13,7 @@
   #bar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));display:flex;gap:6px;z-index:5}
   #bar button,.pill{font:600 13px system-ui;padding:9px 12px;border:0;border-radius:999px;background:#fffd;color:var(--ink);box-shadow:0 1px 4px #0004}
   #bar button.on{background:var(--accent)}
+  #hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#fffe;color:var(--ink);padding:6px 12px;border-radius:999px;font:600 13px system-ui;pointer-events:none}
   #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
   #toast.show{opacity:1}
   #help{position:fixed;right:10px;top:10px;max-width:300px;background:var(--panel);color:var(--ink);padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.5}
@@ -35,6 +36,7 @@
   .tbtn{position:fixed;border-radius:50%;border:0;color:#fff;font:700 13px system-ui;display:none;align-items:center;justify-content:center}
   #btnJump{right:max(24px,env(safe-area-inset-right));bottom:96px;width:88px;height:88px;background:#c1121fcc}
   #btnGrab{right:130px;bottom:74px;width:76px;height:76px;background:#1d2433cc}
+  #btnCarry{right:max(30px,env(safe-area-inset-right));bottom:196px;width:66px;height:66px;background:#2a7f62cc}
   @media (pointer:coarse){#stick{display:block}.tbtn{display:flex}#help{display:none}}
 </style>
 <script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
@@ -43,11 +45,13 @@
 <canvas id="c"></canvas>
 <div id="hud"></div>
 <div id="toast"></div>
+<div id="hint" class="hide"></div>
 <div id="help"><b>tinylittleme – testbrett</b>
   <kbd>WASD</kbd> gå · <kbd>Mellomrom</kbd> hopp<br>
   <kbd>Shift</kbd>/<kbd>E</kbd> <b style="display:inline">rekk ut</b> – grip kant eller tau (tidspunkt teller!)<br>
   Hold <kbd>Shift</kbd> i tauet for å henge. Hopp slipper.<br>
   Mot vegg i fall + hopp = veggsprang<br>
+  <b style="display:inline">Ting:</b> gå mot dem for å dytte (tunge går tregt). <kbd>F</kbd> ta/slipp lette ting. Faller noe på deg, eller knuses, koster det poeng. <kbd>N</kbd> nullstill ting<br>
   <kbd>K</kbd> lagre punkt · <kbd>R</kbd> tilbake til punkt · <kbd>T</kbd> start på nytt<br>
   <kbd>P</kbd> plan-modus (se hele brettet, WASD flytter, dra for å snurre)<br>
   <kbd>G</kbd> flymodus (brettbygging): Mellomrom opp, <kbd>C</kbd> ned, Shift fort<br>
@@ -56,12 +60,14 @@
 <div id="win" class="hide"><h1>Du kom opp!</h1><div id="winStats"></div><button id="again">Spill igjen</button></div>
 <div id="stick"><div id="knob"></div></div>
 <button class="tbtn" id="btnGrab">REKK UT</button>
+<button class="tbtn" id="btnCarry">TA</button>
 <button class="tbtn" id="btnJump">HOPP</button>
 <div id="bar">
   <button id="bSave">Lagre</button>
   <button id="bBack">Tilbake</button>
   <button id="bPlan">Plan</button>
   <button id="bFly">Fly</button>
+  <button id="bThings">Ting ↺</button>
   <button id="bSet">⚙</button>
 </div>
 <script type="module" src="./main.js"></script>

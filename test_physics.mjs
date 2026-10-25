@@ -1,6 +1,6 @@
 // node tinylittleme/test_physics.mjs
 import assert from 'node:assert/strict';
-import { P, box, newPlayer, step, freeAt, applyPreset, inHazard } from './physics.js';
+import { P, box, newPlayer, step, freeAt, applyPreset, inHazard, initBodies, resetBodies, drainEvents } from './physics.js';
 import { LEVEL } from './level.js';
 
 applyPreset('klassisk');
@@ -160,5 +160,109 @@ applyPreset('spenning');
   assert.ok(inHazard(L, { x: 7, y: 0, z: 0 }), 'burde treffe faren');
 }
 
+// ---- Bevegelige ting -----------------------------------------------------
+const mv = (id, weight, x0, x1, y0, y1, z0, z1, extra = {}) => ({ id, material: 'plastic', weight, min: [x0, y0, z0], max: [x1, y1, z1], ...extra });
+const world = (movables, boxes = [], hazards = []) => { const L = { boxes: [floor, ...boxes], ropes: [], movables, hazards }; initBodies(L); return L; };
+const body = (L, id) => L.bodies.find((b) => b.id === id);
+
+// 13. dytting: lett flytter seg mest, tung minst
+{
+  const dist = (w) => {
+    const L = world([mv('k', w, 3, 5, 0, 2, -1, 1)]);
+    const p = newPlayer(0, 0, 0);
+    run(L, p, 10, () => idle);
+    const x0 = body(L, 'k').min[0];
+    run(L, p, 90, () => ({ ...idle, mx: 1 }));
+    return body(L, 'k').min[0] - x0;
+  };
+  const l = dist('light'), m = dist('medium'), h = dist('heavy');
+  assert.ok(l > m * 1.4 && m > h * 1.4 && h > 0.3, `dytting lett ${l.toFixed(2)} medium ${m.toFixed(2)} tung ${h.toFixed(2)}`);
+}
+
+// 14. tyngdekraft og stabling
+{
+  const L = world([mv('a', 'medium', 0, 2, 5, 7, 0, 2), mv('b', 'medium', 0, 2, 9, 11, 0, 2)]);
+  const p = newPlayer(20, 0, 20);
+  run(L, p, 120, () => idle);
+  assert.ok(Math.abs(body(L, 'a').min[1]) < 1e-6 && Math.abs(body(L, 'b').min[1] - 2) < 1e-6, 'a på gulvet, b oppå a');
+}
+
+// 15. skjøre ting knuses ved fall, robuste ikke; lavt fall er trygt
+{
+  const L = world([mv('glass', 'light', 0, 1, 12, 13, 0, 1, { breakable: true }), mv('plast', 'light', 5, 6, 12, 13, 0, 1), mv('lavt', 'light', 9, 10, 2.5, 3.5, 0, 1, { breakable: true })]);
+  const p = newPlayer(20, 0, 20);
+  run(L, p, 120, () => idle);
+  assert.equal(body(L, 'glass').alive, false, 'glass skal knuses');
+  assert.equal(body(L, 'plast').alive, true, 'plast skal tåle fallet');
+  assert.equal(body(L, 'lavt').alive, true, 'lavt fall skal ikke knuse');
+  assert.ok(drainEvents(L).some((e) => e.type === 'broke' && e.id === 'glass'));
+  resetBodies(L, p);
+  assert.equal(body(L, 'glass').alive, true, 'nullstilling gjenoppretter');
+}
+
+// 16. ting som faller på deg: knust
+{
+  const L = world([mv('tung', 'heavy', -1, 1, 8, 10, -1, 1)]);
+  const p = newPlayer(0, 0, 0);
+  run(L, p, 90, () => idle);
+  assert.equal(p.crushed, 'tung', 'skal registrere klemt');
+}
+
+// 17. bæring: lett kan bæres og slippes, tung kan ikke
+{
+  const L = world([mv('lett', 'light', 1, 2.5, 0, 1.5, -0.7, 0.7), mv('tung', 'heavy', 6, 8, 0, 2, -1, 1)]);
+  const p = newPlayer(0, 0, 0); p.fx = 1; p.fz = 0;
+  run(L, p, 10, () => idle);
+  step(p, { ...idle, carryPressed: true }, 1 / 60, L);
+  assert.equal(p.carry?.id, 'lett', 'skal ta tak i den lette');
+  const x0 = body(L, 'lett').min[0];
+  run(L, p, 40, () => ({ ...idle, mx: 1 }));
+  assert.ok(body(L, 'lett').min[0] > x0 + 1.5, 'bæres med');
+  step(p, { ...idle, carryPressed: true }, 1 / 60, L);
+  assert.equal(p.carry, null, 'slippes');
+  run(L, p, 60, () => idle);
+  assert.ok(Math.abs(body(L, 'lett').min[1]) < 1e-6, 'lander på gulvet');
+  const L2 = world([mv('tung', 'heavy', 6, 8, 0, 2, -1, 1)]);
+  const p2 = newPlayer(4.5, 0, 0); p2.fx = 1; p2.fz = 0;
+  step(p2, { ...idle, carryPressed: true }, 1 / 60, L2);
+  assert.equal(p2.carry, null, 'tung kan ikke bæres');
+}
+
+// 18. ting som havner i en fare forsvinner
+{
+  const L = world([mv('k', 'light', 5, 6, 3, 4, 0, 1)], [], [box('pit', 4, 8, 0, 2, -2, 2)]);
+  const p = newPlayer(20, 0, 20);
+  run(L, p, 120, () => idle);
+  assert.equal(body(L, 'k').alive, false);
+  assert.ok(drainEvents(L).some((e) => e.type === 'lost'));
+}
+
+// 19. spiller kan stå på en dyttet kasse og komme opp på noe høyere
+{
+  const L = world([mv('kasse', 'medium', 4, 8, 0, 3, -2, 2)], [box('wood', 12, 20, 0, 7, -5, 5)]);
+  const p = newPlayer(0, 0, 0);
+  run(L, p, 10, () => idle);
+  run(L, p, 150, () => ({ ...idle, mx: 1 }));                   // dytt kassa inntil hylla
+  assert.ok(body(L, 'kasse').max[0] > 10.5, `kassa dyttet fram (${body(L, 'kasse').max[0].toFixed(2)})`);
+  // hopp opp på kassa
+  p.x = body(L, 'kasse').min[0] - 1.2; p.y = 0; p.vx = p.vy = 0;
+  run(L, p, 15, () => idle);
+  run(L, p, 60, (i) => ({ ...idle, mx: 1, jumpPressed: i === 0, jumpHeld: true }));
+  assert.ok(p.y >= 2.9, `på kassa (y=${p.y.toFixed(2)})`);
+}
+
+// 20. stabel: dytter du den nedre ut, glir den øvre av og faller; står du i veien blir du klemt
+{
+  const L = world([mv('ned', 'medium', 0, 4, 0, 3, -2, 2), mv('opp', 'light', 0.5, 3.5, 3, 5, -1.5, 1.5)]);
+  const p = newPlayer(-3, 0, 0);
+  run(L, p, 20, () => idle);
+  assert.ok(Math.abs(body(L, 'opp').min[1] - 3) < 1e-6, 'oppe på den nedre mens den står');
+  let crushed = null;
+  run(L, p, 400, () => { if (p.crushed) crushed = p.crushed; return { ...idle, mx: body(L, 'opp').min[1] < 2.99 ? 0 : 1 }; });   // blir stående når den begynner å falle
+  assert.ok(Math.abs(body(L, 'opp').min[1]) < 1e-6, 'øvre har falt ned');
+  assert.equal(crushed, 'opp', 'du ble stående under og klemt');
+}
+
 console.log('alle fysikktester grønne');
+
 

@@ -36,6 +36,14 @@ export const P = {
   reachAbove: 0,     // ekstra rekkevidde over hodet mens du rekker ut
   ledgeAbove: 0.4, slide: -4, wallKick: 8.5, wallUp: 11.5,
   ropeReach: 1.4, swingPush: 22, ropeJump: 11,
+  // bevegelige ting
+  push: { light: 1, medium: 0.55, heavy: 0.3 },   // hvor mye av farten din som overføres når du dytter
+  breakSpeed: 12,    // fallfart (enheter/s) over dette knuser skjøre ting
+  crushSpeed: 3,     // ting som faller raskere enn dette skader deg
+  carryReach: 1.4,   // hvor nær du må stå for å ta tak
+  carryMax: 3.4,     // største mål på noe du kan bære (spilleren er 1 høy)
+  carrySpeed: 0.8,   // fartsfaktor når du bærer
+  supportMin: 0.45,  // minste andel av fotavtrykket som må hvile på noe, ellers glir tingen av
 };
 
 export function applyPreset(name) {
@@ -63,18 +71,151 @@ export function newPlayer(x, y, z) {
     reach: 0, reachCd: 0,         // «rekker ut»-vindu og pause
     wallT: 0, wallN: null, sliding: false,
     hang: null, rope: null, swing: null,
+    carry: null, crushed: null,
     t: 0,
   };
 }
 
 export function resetPlayer(p, x, y, z) {
+  if (p.carry) p.carry.carried = false;
   Object.assign(p, newPlayer(x, y, z));
 }
 
+// Liten toleranse: å stå akkurat inntil en kant skal ikke telle som overlapp (flyttallsavvik ga «hopp opp på toppen»).
+const TOL = 1e-5;
 function overlaps(b, x, y, z) {
-  return x - HW < b.max[0] && x + HW > b.min[0] &&
-         y < b.max[1] && y + H > b.min[1] &&
-         z - HW < b.max[2] && z + HW > b.min[2];
+  return x - HW < b.max[0] - TOL && x + HW > b.min[0] + TOL &&
+         y < b.max[1] - TOL && y + H > b.min[1] + TOL &&
+         z - HW < b.max[2] - TOL && z + HW > b.min[2] + TOL;
+}
+
+
+// ---- Bevegelige ting -----------------------------------------------------
+// Brettets `movables` blir til legemer i L.boxes (så spilleren kolliderer med dem som med alt annet).
+// Legemer er akse-justerte bokser med tyngdekraft. De flyttes bare av at spilleren dytter eller bærer dem.
+const boxOverlap = (a, b) =>
+  a.min[0] < b.max[0] - TOL && a.max[0] > b.min[0] + TOL && a.min[1] < b.max[1] - TOL && a.max[1] > b.min[1] + TOL && a.min[2] < b.max[2] - TOL && a.max[2] > b.min[2] + TOL;
+
+export function initBodies(L) {
+  L.bodies = []; L.events = [];
+  for (const m of L.movables || []) {
+    const b = {
+      id: m.id, type: m.material || 'plastic', material: m.material, color: m.color,
+      min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
+      vy: 0, alive: true, carried: false, home: { min: [...m.min], max: [...m.max] },
+    };
+    b.pushFactor = P.push[b.weight] ?? 0.5;
+    L.bodies.push(b); L.boxes.push(b);
+  }
+}
+
+export function resetBodies(L, p) {
+  if (p?.carry) { p.carry = null; }
+  for (const b of L.bodies || []) {
+    b.min = [...b.home.min]; b.max = [...b.home.max]; b.vy = 0; b.carried = false;
+    if (!b.alive) { b.alive = true; L.boxes.push(b); }
+  }
+}
+
+export function drainEvents(L) { const e = L.events || []; L.events = []; return e; }
+
+function removeBody(L, b, type) {
+  b.alive = false; b.carried = false;
+  const i = L.boxes.indexOf(b); if (i >= 0) L.boxes.splice(i, 1);
+  L.events.push({ type, id: b.id, pos: [(b.min[0] + b.max[0]) / 2, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2], material: b.material });
+}
+
+const blockedBody = (b, L) => { for (const c of L.boxes) if (c !== b && !c.carried && boxOverlap(b, c)) return true; return false; };
+
+function pushBody(b, axis, delta, L) {
+  const sign = Math.sign(delta); let remaining = Math.abs(delta), moved = 0;
+  while (remaining > 1e-6) {
+    const st = Math.min(0.03, remaining);
+    b.min[axis] += sign * st; b.max[axis] += sign * st;
+    if (blockedBody(b, L)) { b.min[axis] -= sign * st; b.max[axis] -= sign * st; break; }
+    moved += st; remaining -= st;
+  }
+  return moved * sign;
+}
+
+// Spilleren går inn i et legeme: det flyttes en brøkdel (etter vekt), og spilleren bremses tilsvarende.
+function pushForPlayer(p, b, d, axis, L) {
+  const vo = Math.min(p.y + H, b.max[1]) - Math.max(p.y, b.min[1]);
+  if (vo < 0.2) return;                                     // bare så vidt oppå: behandles som fast
+  const depth = axis === 0 ? (d > 0 ? p.x + HW - b.min[0] : b.max[0] - (p.x - HW)) : (d > 0 ? p.z + HW - b.min[2] : b.max[2] - (p.z - HW));
+  if (depth > 0) pushBody(b, axis, Math.sign(d) * depth * b.pushFactor, L);
+}
+
+function stepBodies(L, p, dt) {
+  for (const b of L.bodies) {
+    if (!b.alive || b.carried) continue;
+    b.vy = Math.max(P.maxFall, b.vy + P.gravity * dt);
+    const dy = b.vy * dt, h = b.max[1] - b.min[1];
+    b.min[1] += dy; b.max[1] += dy;
+    for (const c of L.boxes) {
+      if (c === b || c.carried || !boxOverlap(b, c)) continue;
+      if (dy < 0) {
+        // for lite understøttet (tyngdepunktet utenfor kanten): gli av i stedet for å bli liggende
+        const ox = Math.min(b.max[0], c.max[0]) - Math.max(b.min[0], c.min[0]);
+        const oz = Math.min(b.max[2], c.max[2]) - Math.max(b.min[2], c.min[2]);
+        const frac = (ox * oz) / ((b.max[0] - b.min[0]) * (b.max[2] - b.min[2]));
+        if (frac < P.supportMin) {
+          if (ox < oz) { if ((b.min[0] + b.max[0]) / 2 > (c.min[0] + c.max[0]) / 2) { const w = b.max[0] - b.min[0]; b.min[0] = c.max[0]; b.max[0] = c.max[0] + w; } else { const w = b.max[0] - b.min[0]; b.max[0] = c.min[0]; b.min[0] = c.min[0] - w; } }
+          else { if ((b.min[2] + b.max[2]) / 2 > (c.min[2] + c.max[2]) / 2) { const w = b.max[2] - b.min[2]; b.min[2] = c.max[2]; b.max[2] = c.max[2] + w; } else { const w = b.max[2] - b.min[2]; b.max[2] = c.min[2]; b.min[2] = c.min[2] - w; } }
+          continue;
+        }
+        const impact = -b.vy;
+        b.min[1] = c.max[1]; b.max[1] = c.max[1] + h;
+        if (b.breakable && impact > P.breakSpeed) { removeBody(L, b, 'broke'); break; }
+        b.vy = 0;
+      } else { b.max[1] = c.min[1]; b.min[1] = c.min[1] - h; b.vy = 0; }
+    }
+    if (!b.alive) continue;
+    for (const hz of L.hazards || []) if (boxOverlap(b, hz)) { removeBody(L, b, 'lost'); break; }
+    if (!b.alive) continue;
+    if (b.vy < -P.crushSpeed && overlaps(b, p.x, p.y, p.z)) p.crushed = b.id;
+  }
+}
+
+export function dropCarry(p, L) {
+  const b = p.carry; if (!b) return;
+  b.carried = false; p.carry = null; b.vy = 0;
+  for (let i = 0; i < 40 && blockedBody(b, L); i++) { b.min[1] += 0.2; b.max[1] += 0.2; }
+}
+
+// Nærmeste lette gjenstand foran deg som kan tas (eller null).
+export function findCarryTarget(p, L) {
+  let best = null, bd = Infinity;
+  for (const b of L.bodies || []) {
+    if (!b.alive || b.weight !== 'light') continue;
+    if (Math.max(b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]) > P.carryMax) continue;   // for stort å bære
+    const dx = Math.max(b.min[0] - p.x, 0, p.x - b.max[0]), dz = Math.max(b.min[2] - p.z, 0, p.z - b.max[2]);
+    const d = Math.hypot(dx, dz);
+    if (d > P.carryReach || b.max[1] < p.y - 0.3 || b.min[1] > p.y + H + 0.3) continue;
+    const cx = (b.min[0] + b.max[0]) / 2 - p.x, cz = (b.min[2] + b.max[2]) / 2 - p.z, l = Math.hypot(cx, cz) || 1;
+    if (d > 0.15 && (cx * p.fx + cz * p.fz) / l < 0.2) continue;      // må være foran deg
+    if (d < bd) { bd = d; best = b; }
+  }
+  return best;
+}
+
+// Ta tak i / slipp en lett gjenstand foran deg. Returnerer 'pick', 'drop' eller null.
+export function tryCarry(p, L) {
+  if (p.carry) { dropCarry(p, L); return 'drop'; }
+  const best = findCarryTarget(p, L);
+  if (!best) return null;
+  p.carry = best; best.carried = true; best.vy = 0;
+  return 'pick';
+}
+
+function updateCarried(p, L) {
+  const b = p.carry; if (!b) return;
+  const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
+  const r = HW + Math.max(sx, sz) / 2 + 0.06, cx = p.x + p.fx * r, cz = p.z + p.fz * r, y0 = p.y + 0.35;
+  const oldMin = b.min, oldMax = b.max;
+  b.min = [cx - sx / 2, y0, cz - sz / 2]; b.max = [cx + sx / 2, y0 + sy, cz + sz / 2];
+  if (blockedBody(b, L)) { b.min = oldMin; b.max = oldMax; }
+  if (Math.hypot((b.min[0] + b.max[0]) / 2 - p.x, (b.min[2] + b.max[2]) / 2 - p.z) > 3) dropCarry(p, L);
 }
 
 // Fare-volum (vann, do-skål, kar): AABB som spilleren ikke skal berøre. Returnerer faren eller null.
@@ -95,6 +236,7 @@ function approach(v, target, d) {
 
 // inp: { mx, mz (-1..1, verdensretning), jumpPressed, jumpHeld, grabPressed, grabHeld }
 export function step(p, inp, dt, L) {
+  if (inp.carryPressed && L.bodies?.length) tryCarry(p, L);
   if (inp.jumpPressed) p.buffer = P.jumpBuffer;
   if (inp.grabPressed && p.reachCd <= 0) { p.reach = P.reachTime; p.reachCd = P.reachTime + P.reachCooldown; }
   let left = dt;
@@ -116,6 +258,8 @@ function sub(p, inp, dt, L) {
   const wl = Math.hypot(wx, wz);
   if (wl > 1) { wx /= wl; wz /= wl; }
 
+  if (L.bodies?.length) stepBodies(L, p, dt);
+
   if (p.state === 'hang') return hangStep(p, wx, wz);
   if (p.state === 'swing') return swingStep(p, inp, wx, wz, dt);
 
@@ -123,8 +267,9 @@ function sub(p, inp, dt, L) {
 
   if (p.lock <= 0) {
     const a = (p.onGround ? (p.groundBox?.slick ? P.slickAccel : P.accel) : P.airAccel) * dt;
-    p.vx = approach(p.vx, wx * P.speed, a);
-    p.vz = approach(p.vz, wz * P.speed, a);
+    const sp = P.speed * (p.carry ? P.carrySpeed : 1);
+    p.vx = approach(p.vx, wx * sp, a);
+    p.vz = approach(p.vz, wz * sp, a);
   }
 
   p.vy = Math.max(P.maxFall, p.vy + P.gravity * dt);
@@ -158,6 +303,8 @@ function sub(p, inp, dt, L) {
   const hit = hx || hz;
   if (hit) { p.wallN = { nx: hit.nx, nz: hit.nz }; p.wallT = 0.12; }
 
+  updateCarried(p, L);
+
   if (p.onGround) p.state = 'ground';
   else {
     p.state = 'air';
@@ -170,9 +317,10 @@ function moveX(p, d, L) {
   p.x += d;
   let hit = null;
   for (const b of L.boxes) {
-    if (!overlaps(b, p.x, p.y, p.z)) continue;
+    if (b === p.carry || !overlaps(b, p.x, p.y, p.z)) continue;
+    if (b.dyn) pushForPlayer(p, b, d, 0, L);
     p.x = d > 0 ? b.min[0] - HW : b.max[0] + HW;
-    p.vx = 0;
+    if (!b.dyn) p.vx = 0;                      // mot ting som kan dyttes beholder du farten
     hit = { box: b, nx: d > 0 ? -1 : 1, nz: 0 };
   }
   return hit;
@@ -183,9 +331,10 @@ function moveZ(p, d, L) {
   p.z += d;
   let hit = null;
   for (const b of L.boxes) {
-    if (!overlaps(b, p.x, p.y, p.z)) continue;
+    if (b === p.carry || !overlaps(b, p.x, p.y, p.z)) continue;
+    if (b.dyn) pushForPlayer(p, b, d, 2, L);
     p.z = d > 0 ? b.min[2] - HW : b.max[2] + HW;
-    p.vz = 0;
+    if (!b.dyn) p.vz = 0;
     hit = { box: b, nx: 0, nz: d > 0 ? -1 : 1 };
   }
   return hit;
@@ -194,7 +343,7 @@ function moveZ(p, d, L) {
 function moveY(p, d, L) {
   p.y += d;
   for (const b of L.boxes) {
-    if (!overlaps(b, p.x, p.y, p.z)) continue;
+    if (b === p.carry || !overlaps(b, p.x, p.y, p.z)) continue;
     if (d < 0) { p.y = b.max[1]; p.onGround = true; p.groundBox = b; }
     else p.y = b.min[1] - H;
     p.vy = 0;
@@ -203,6 +352,7 @@ function moveY(p, d, L) {
 
 // ---- Kantgrep ----------------------------------------------------------
 function tryLedge(p, hit, L) {
+  if (p.carry) return false;
   const b = hit.box;
   const top = b.max[1];
   const dh = top - (p.y + H);
@@ -237,6 +387,7 @@ function hangStep(p, wx, wz) {
 
 // ---- Tau / sving -------------------------------------------------------
 function tryRope(p, L) {
+  if (p.carry) return false;
   const hy = p.y + H * 0.85;
   for (const r of L.ropes || []) {
     const d = Math.hypot(p.x - r.x, p.z - r.z);

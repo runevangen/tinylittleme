@@ -4,24 +4,17 @@ Status: `[ ]` ikke startet · `[~]` påbegynt · `[x]` ferdig. Nyeste idéer øv
 
 ## Idéer til sparring
 
-### [ ] Flytte objekter som hjelpemiddel (og risikoen for at de faller)
-Spilleren skal kunne dytte/dra ting (brettede håndklær, toalettruller, flasker, esker) for å lage sine egne trinn og broer.
-Gjør du det feil, kan tingene velte eller falle over deg.
+### [~] Flytte objekter som hjelpemiddel (og risikoen for at de faller)
+PoC er bygd: dytte (etter vekt), bære lette ting, stable, glir av ved dårlig støtte, knuses ved fall, klemt, fare-soner, nullstill. Se `docs/FLYTTBARE_TING.md` og prøverommet `?level=poc`.
 
-Første tanker (ikke bestemt):
-- **Fysikk:** i dag er alt statiske, akse-justerte bokser. Dette krever bevegelige legemer: dytting, stabling, velting, fall. Enten en ekte fysikkmotor (f.eks. Rapier som WASM) eller en forenklet boks-fysikk med egne regler.
-- **Konsekvens:** objekt som treffer deg = skade? Konkret forslag å vurdere: tilbakeføring (−poeng) som ved fall, evt. «knust»-animasjon. Vekt-klasser: lett (dyttes), tung (flyttes bare med anstrengelse), fast (kan ikke flyttes).
-- **Hjelpeobjektene** som generatoren legger inn (trapp av «håndklær») kan bli flyttbare i stedet for faste. Da blir de en del av løsningen, ikke gratis trapp.
-- **Validering:** boten (`tools/solve.mjs`) antar statisk verden. Med flyttbare objekter eksploderer tilstandsrommet. Trenger sannsynligvis regler som «hvert objekt har noen lovlige plasseringer» i stedet for å simulere alt.
-- **Mobil:** trenger en «ta tak/dytt»-knapp som fungerer i tillegg til HOPP og REKK UT.
-- **Portabilitet og flerspiller:** fysikk på tvers av enheter må være deterministisk, hvis vi senere vil ha flerspiller.
-
-Spørsmål til neste sparring:
-1. Bare dytte og dra, eller også løfte og bære?
-2. Skal ting kunne gå i stykker (flaske knuses)?
-3. Hvor straffende skal «feil» være? Døden-ved-fall, eller bare tid/poeng?
-4. Skal bildene styre hva som er flyttbart (ting som er løse i virkeligheten), eller bestemmer vi det?
-5. Gjelder det alle rom, eller er det en egenskap ved visse kapitler (lekerommet først)?
+Gjenstår / til sparring:
+1. **Dra og løfte:** nå bare dytte og bære lette ting. Skal tunge kunne dras? Skal man kunne løfte noe oppå en hylle?
+2. **Straff:** nå klemt = tilbake til lagringspunkt (−10), knust = −5, nullstilling = −15. Riktig nivå?
+3. **Bildene bestemmer?** Nå markeres løse ting for hånd i `scene.json`. Kan visjonssteget gjette (løst/fast, tung/lett, skjør)?
+4. **Boten og puslespill:** boten flytter ikke ting. Hvordan validere at et brett er løsbart *ved å flytte ting*? Forslag: egne «lovlige plasseringer» per ting.
+5. **Friksjon:** en ting på en annen følger ikke med når du dytter. Skal den det (realistisk, men fjerner fall-fellen)?
+6. **Tipping og rotasjon** (ikke bare bokser).
+7. **Lyd** og bedre skår/effekter.
 
 ## Bevegelse og spillfølelse
 - [ ] **Klatring (B):** `grip`/`slick`/`soft`-overflater, stamina, sidelengs bevegelse langs stang, tak fra bildene (knotter, håndkle, dusjkurv, tannbørste). Brettet merker allerede `holds`. Se `docs/BADET.md`.

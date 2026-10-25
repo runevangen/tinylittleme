@@ -44,6 +44,9 @@ To innstillinger (⚙ i spillet, alle verdier kan justeres live og huskes i nett
 Hvorfor «Spenning»: dobbelthoppet føltes tilfeldig. Nå avgjør timing og planlegging, og et bomskudd koster.
 Veggsprang utløses bare når spilleren faller og styrer inn mot veggen, ellers stjeler det hoppet (oppdaget i test).
 
+## Løse ting
+Dytte, bære, stable, knuse, klemt: se [docs/FLYTTBARE_TING.md](docs/FLYTTBARE_TING.md). Prøverom: `?level=poc`.
+
 ## Lagring og poeng
 `K` lagrer punkt (må stå støtt), `R` går tilbake dit, `T` starter på nytt. Sjekkpunkt på nattbord og hylle er gratis.
 Poeng: 1000 − 25 per lagring − 10 per tilbakeføring (også ved fall) − 2 per 10 s.

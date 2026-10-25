@@ -36,11 +36,15 @@ boxes.push(mk('wall', [x1, 0, z0], [x1 + 1, H, z1], { id: 'vegg_o', ...wallExtra
 boxes.push(mk('wall', [x0, 0, z0 - 1], [x1, H, z0], { id: 'vegg_n', ...wallExtra }));
 boxes.push(mk('wall', [x0, 0, z1], [x1, H, z1 + 1], { id: 'vegg_s', ...wallExtra }));
 
-const decor = [], holds = [];
+const decor = [], holds = [], movables = [];
 for (const o of scene.objects) {
   const [a, b, c, d, e, f] = o.box;
   const lo = [ux(a), uy(c), uz(e)], hi = [ux(b), uy(d), uz(f)];
   if (o.hold) holds.push({ id: o.id, kind: o.kind, min: lo, max: hi });
+  if (o.movable) {                                         // løse ting: egne legemer i spillet, ikke faste flater
+    movables.push({ id: o.id, material: o.material, color: hex(o.color), min: lo, max: hi, weight: o.movable, breakable: !!o.breakable });
+    continue;
+  }
   if (o.decor) {
     decor.push({ shape: 'box', id: o.id, pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
     continue;
@@ -119,7 +123,7 @@ const helperColors = ['#b9c7d8', '#d8c1b9', '#c4d8b9', '#d8d2b9'];
 const helpers = [];
 const banned = new Set();
 let hc = 0;
-const overlap3 = (lo, hi) => boxes.some((b) => b.type !== 'floor' && lo[0] < b.max[0] && hi[0] > b.min[0] && lo[1] < b.max[1] - 0.001 && hi[1] > b.min[1] + 0.001 && lo[2] < b.max[2] && hi[2] > b.min[2]);
+const overlap3 = (lo, hi) => [...boxes, ...movables].some((b) => b.type !== 'floor' && lo[0] < b.max[0] && hi[0] > b.min[0] && lo[1] < b.max[1] - 0.001 && hi[1] > b.min[1] + 0.001 && lo[2] < b.max[2] && hi[2] > b.min[2]);
 const inRoom = (lo, hi) => lo[0] >= x0 && hi[0] <= x1 && lo[2] >= z0 && hi[2] <= z1;
 function addHelper(kind, lo, hi, note) {
   const id = `hjelp_${kind}_${++hc}`;
@@ -201,7 +205,7 @@ function fixEdge(iA, iB) {
   return true;
 }
 
-for (let iter = 0; iter < 120; iter++) {
+for (let iter = 0; iter < (scene.validate === false ? 0 : 120); iter++) {
   const seen = reachable();
   if (seen.has(goalIdx())) break;
   const path = idealPath();
@@ -237,7 +241,7 @@ const solvable = finalSeen.has(goalIdx());
 // ---- 4. skriv ---------------------------------------------------------------
 const level = {
   name: scene.name,
-  boxes, decor, hazards, holds, windows, sun, look: scene.look,
+  boxes, movables, decor, hazards, holds, windows, sun, look: scene.look,
   ropes: [],
   start, goal,
   deathY: -15,
@@ -247,6 +251,7 @@ const level = {
 fs.mkdirSync(outPath.replace(/[^/]+$/, '') || '.', { recursive: true });
 fs.writeFileSync(outPath, JSON.stringify(level, null, 1));
 console.log(`${scene.name}: ${boxes.length} bokser, ${hazards.length} farer, ${holds.length} klatretak (ennå ubrukt), ${decor.length} dekor`);
-console.log(`rute-graf: ${solvable ? 'MÅL NÅS' : 'MÅL IKKE NÅDD'}  |  hjelpeobjekter lagt inn: ${helpers.length}`);
+console.log(`løse ting (kan flyttes): ${movables.length}`);
+console.log(scene.validate === false ? 'rute-graf: hoppet over (validate:false, brettet er laget for å flytte ting)' : `rute-graf: ${solvable ? 'MÅL NÅS' : 'MÅL IKKE NÅDD'}  |  hjelpeobjekter lagt inn: ${helpers.length}`);
 for (const h of helpers) console.log(`  + ${h.id.padEnd(16)} ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm, ved (${h.at_cm.join(', ')})`);
-process.exit(solvable ? 0 : 2);
+process.exit(solvable || scene.validate === false ? 0 : 2);

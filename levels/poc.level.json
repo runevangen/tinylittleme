@@ -1,0 +1,322 @@
+{
+ "name": "Prøverom: flytte ting",
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -30,
+    -2,
+    -30
+   ],
+   "max": [
+    30,
+    0,
+    30
+   ],
+   "id": "gulv",
+   "color": 14267266,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -31,
+    0,
+    -30
+   ],
+   "max": [
+    -30,
+    40,
+    30
+   ],
+   "id": "vegg_v",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    30,
+    0,
+    -30
+   ],
+   "max": [
+    31,
+    40,
+    30
+   ],
+   "id": "vegg_o",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -30,
+    0,
+    -31
+   ],
+   "max": [
+    30,
+    40,
+    -30
+   ],
+   "id": "vegg_n",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -30,
+    0,
+    30
+   ],
+   "max": [
+    30,
+    40,
+    31
+   ],
+   "id": "vegg_s",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    10,
+    0,
+    -26
+   ],
+   "max": [
+    30,
+    12,
+    -6
+   ],
+   "id": "kommode",
+   "color": 10120005,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -26,
+    0,
+    -26
+   ],
+   "max": [
+    -16,
+    8,
+    -16
+   ],
+   "id": "bord",
+   "color": 12158042,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  }
+ ],
+ "movables": [
+  {
+   "id": "vase",
+   "material": "ceramic",
+   "color": 4884168,
+   "min": [
+    -18.4,
+    8,
+    -22
+   ],
+   "max": [
+    -16.8,
+    11.2,
+    -20.4
+   ],
+   "weight": "light",
+   "breakable": true
+  },
+  {
+   "id": "eske_1",
+   "material": "fabric",
+   "color": 14248799,
+   "min": [
+    -18,
+    0,
+    -2
+   ],
+   "max": [
+    -15.6,
+    2.4,
+    0.4
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "eske_2",
+   "material": "fabric",
+   "color": 6269145,
+   "min": [
+    -12,
+    0,
+    -2
+   ],
+   "max": [
+    -9.6,
+    2.4,
+    0.4
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "kasse_medium",
+   "material": "wood",
+   "color": 13212268,
+   "min": [
+    -4,
+    0,
+    10
+   ],
+   "max": [
+    2,
+    6,
+    16
+   ],
+   "weight": "medium",
+   "breakable": false
+  },
+  {
+   "id": "kasse_tung",
+   "material": "wood",
+   "color": 9067066,
+   "min": [
+    -14,
+    0,
+    6
+   ],
+   "max": [
+    -6,
+    8,
+    14
+   ],
+   "weight": "heavy",
+   "breakable": false
+  },
+  {
+   "id": "stabel_ned",
+   "material": "wood",
+   "color": 8015669,
+   "min": [
+    0,
+    0,
+    -6
+   ],
+   "max": [
+    8,
+    6,
+    2
+   ],
+   "weight": "heavy",
+   "breakable": false
+  },
+  {
+   "id": "stabel_opp",
+   "material": "fabric",
+   "color": 14926671,
+   "min": [
+    2,
+    6,
+    -4
+   ],
+   "max": [
+    6,
+    10,
+    0
+   ],
+   "weight": "light",
+   "breakable": false
+  }
+ ],
+ "decor": [],
+ "hazards": [
+  {
+   "id": "sluk",
+   "type": "pit",
+   "message": "Fanget i sluket",
+   "min": [
+    -10,
+    0,
+    -26
+   ],
+   "max": [
+    0,
+    5,
+    -16
+   ]
+  }
+ ],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    0,
+    24,
+    -29.95
+   ],
+   "size": [
+    16,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "ropes": [],
+ "start": [
+  -20,
+  0,
+  20
+ ],
+ "goal": [
+  21,
+  12,
+  -16
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -30,
+  "x1": 30,
+  "z0": -30,
+  "z1": 30,
+  "height": 40,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b382",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#e9e1d3"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "note": "Håndlaget prøverom for å teste dytting, bæring, knusing og fall. Ikke fra bilder."
+  },
+  "solvable_by_graph": false,
+  "helpers": [],
+  "nodes": 3,
+  "reachable": 1
+ }
+}

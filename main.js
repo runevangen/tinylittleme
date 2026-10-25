@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
-import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard } from './physics.js';
+import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget } from './physics.js';
 
 // ?level=bad laster levels/bad.level.json (generert fra bilder), ellers det håndlagde soverommet
 const levelName = new URLSearchParams(location.search).get('level');
@@ -16,7 +16,7 @@ const store = {
 };
 
 // ---------- poeng ----------
-const SCORE = { start: 1000, save: 25, respawn: 10, perTenSeconds: 2 };
+const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2 };
 
 // ---------- renderer / scene ----------
 const canvas = $('c');
@@ -111,10 +111,10 @@ function material(b) {
   const col = b.color ?? 0xcccccc;
   const kind = b.type === 'floor' || b.type === 'wall' ? `${b.type}:${b.material || 'default'}` : (b.material || b.type);
   switch (kind) {
-    case 'floor:default': return std({ map: floorTex.clone(), roughness: 0.5 });
+    case 'floor:default': case 'floor:wood': return std({ map: floorTex.clone(), roughness: 0.5 });
     case 'floor:tile': return std({ map: tileTex.clone(), color: col, roughness: 0.14 });
     case 'wall:tile': return std({ map: tileTex.clone(), color: col, roughness: 0.2 });
-    case 'wall:default': case 'wall': return std({ map: plasterTex.clone(), color: col, roughness: 0.95 });
+    case 'wall:default': case 'wall:plaster': case 'wall': return std({ map: plasterTex.clone(), color: col, roughness: 0.95 });
     case 'wood': case 'woodpanel': return std({ map: woodTex.clone(), color: col, roughness: 0.55 });
     case 'book': return std({ color: col, roughness: 0.78 });
     case 'plastic': return std({ color: col, roughness: 0.3, metalness: 0.1 });
@@ -334,9 +334,25 @@ function poseHero(p, now, dt, mode) {
 }
 
 // ---------- tilstand ----------
+initBodies(LEVEL);
+const bodyMeshes = LEVEL.bodies.map((b) => {
+  const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
+  mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh);
+  return { b, mesh, size: [sx, sy, sz] };
+});
+const shards = [];
+function spawnShards(pos, color) {
+  for (let i = 0; i < 14; i++) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), new THREE.MeshStandardMaterial({ color: color ?? 0xdddddd, roughness: 0.4 }));
+    m.position.set(...pos); m.castShadow = true; scene.add(m);
+    shards.push({ m, v: new THREE.Vector3((Math.random() - 0.5) * 8, 3 + Math.random() * 5, (Math.random() - 0.5) * 8), t: 1.6 });
+  }
+}
+
 const player = newPlayer(...LEVEL.start);
 const save = { pos: [...LEVEL.start] };
-const stats = { saves: 0, respawns: 0, flew: false };
+const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 
@@ -344,7 +360,7 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
-const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - Math.floor(clock / 10) * SCORE.perTenSeconds);
+const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - Math.floor(clock / 10) * SCORE.perTenSeconds);
 function placeFlag() { flag.position.set(save.pos[0], save.pos[1], save.pos[2]); }
 placeFlag();
 
@@ -359,9 +375,15 @@ function goBack() {
   resetPlayer(player, ...save.pos); stats.respawns++;
   toast(`Tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
 }
+function resetThings() {
+  if (mode !== 'play') return;
+  resetBodies(LEVEL, player); stats.resets++;
+  toast(`Ting satt tilbake  −${SCORE.resetThings} poeng`);
+}
 function restartAll() {
   resetPlayer(player, ...LEVEL.start);
-  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = 0; stats.flew = false;
+  resetBodies(LEVEL, player);
+  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = 0; stats.flew = false;
   won = false; clock = 0; placeFlag(); $('win').classList.add('hide'); setMode('play');
 }
 
@@ -388,8 +410,8 @@ function setMode(m) {
 
 // ---------- input ----------
 const keys = new Set();
-let jumpEdge = false, grabEdge = false;
-const touch = { x: 0, y: 0, jump: false, grab: false };
+let jumpEdge = false, grabEdge = false, carryEdge = false;
+const touch = { x: 0, y: 0, jump: false, grab: false, carry: false };
 addEventListener('keydown', (e) => {
   if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
@@ -400,6 +422,8 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyK') doSave();
   if (e.code === 'KeyR') goBack();
   if (e.code === 'KeyT') restartAll();
+  if (e.code === 'KeyF') carryEdge = true;
+  if (e.code === 'KeyN') resetThings();
   if (e.code === 'KeyP' || e.code === 'Tab') setMode('plan');
   if (e.code === 'KeyG') setMode('fly');
   if (e.code === 'KeyH') $('help').classList.toggle('hide');
@@ -457,6 +481,8 @@ function bindBtn(id, key, edge) {
 }
 bindBtn('btnJump', 'jump', () => { jumpEdge = true; });
 bindBtn('btnGrab', 'grab', () => { grabEdge = true; });
+bindBtn('btnCarry', 'carry', () => { carryEdge = true; });
+$('bThings').onclick = resetThings;
 $('bSave').onclick = doSave; $('bBack').onclick = goBack;
 $('bPlan').onclick = () => setMode('plan'); $('bFly').onclick = () => setMode('fly');
 $('again').onclick = restartAll;
@@ -475,7 +501,7 @@ Object.assign(P, store.get('tlm.custom', {}));
 function buildPanel() {
   const p = $('panel');
   p.innerHTML = `<h3>Brett</h3>
-    <select id="levelSel"><option value="">Soverom (håndlaget)</option><option value="bad">Bad (tolket fra 3 bilder)</option></select>
+    <select id="levelSel"><option value="">Soverom (håndlaget)</option><option value="bad">Bad (tolket fra 3 bilder)</option><option value="poc">Prøverom: flytte ting</option></select>
     <h3 style="margin-top:14px">Hoppinnstillinger</h3>
     <label>Forhåndsinnstilling</label>
     <select id="presetSel">${Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select>
@@ -541,12 +567,22 @@ function update(dt) {
     mx: rx * ix + fx * iz, mz: rz * ix + fz * iz,
     jumpPressed: jumpEdge, jumpHeld: held('Space') || touch.jump,
     grabPressed: grabEdge, grabHeld: held('ShiftLeft', 'ShiftRight', 'KeyE') || touch.grab,
+    carryPressed: carryEdge,
   };
-  jumpEdge = grabEdge = false;
+  jumpEdge = grabEdge = carryEdge = false;
   step(player, inp, dt, LEVEL);
 
   if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); toast('Sjekkpunkt'); }
   if (player.y < LEVEL.deathY) { resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
+  for (const ev of drainEvents(LEVEL)) {
+    if (ev.type === 'broke') { stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
+    else if (ev.type === 'lost') toast(`${ev.id} forsvant`);
+  }
+  if (player.crushed) {
+    const id = player.crushed; player.crushed = null;
+    resetPlayer(player, ...save.pos); stats.respawns++;
+    toast(`Klemt av ${id}!  −${SCORE.respawn} poeng`);
+  }
   const hz = inHazard(LEVEL, player);
   if (hz) {
     resetPlayer(player, ...(hz.type === 'flush' ? LEVEL.start : save.pos)); stats.respawns++;
@@ -556,7 +592,7 @@ function update(dt) {
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true;
-    $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
+    $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
     $('win').classList.remove('hide');
   }
@@ -564,7 +600,7 @@ function update(dt) {
 
 // ---------- tegning ----------
 function insideAny(x, y, z, m) {
-  for (const b of LEVEL.boxes) if (x > b.min[0] - m && x < b.max[0] + m && y > b.min[1] - m && y < b.max[1] + m && z > b.min[2] - m && z < b.max[2] + m) return true;
+  for (const b of LEVEL.boxes) if (!b.carried && x > b.min[0] - m && x < b.max[0] + m && y > b.min[1] - m && y < b.max[1] + m && z > b.min[2] - m && z < b.max[2] + m) return true;
   return false;
 }
 
@@ -579,6 +615,22 @@ function render(now, dt) {
     const b = player.rope === r ? new THREE.Vector3(player.x, player.y + 0.85, player.z) : new THREE.Vector3(r.x, r.y - r.len, r.z);
     setCyl(line, a, b); end.position.copy(b);
   }
+  for (const { b, mesh, size } of bodyMeshes) {
+    mesh.visible = b.alive;
+    mesh.position.set(b.min[0] + size[0] / 2, b.min[1] + size[1] / 2, b.min[2] + size[2] / 2);
+  }
+  for (let i = shards.length - 1; i >= 0; i--) {
+    const s = shards[i]; s.t -= dt; s.v.y -= 22 * dt;
+    s.m.position.addScaledVector(s.v, dt);
+    if (s.m.position.y < 0.12) { s.m.position.y = 0.12; s.v.set(0, 0, 0); }
+    if (s.t <= 0) { scene.remove(s.m); shards.splice(i, 1); }
+  }
+  const hint = $('hint');
+  if (mode === 'play' && !won) {
+    const t = player.carry ? null : findCarryTarget(player, LEVEL);
+    hint.textContent = player.carry ? 'F: slipp' : t ? `F: ta ${t.id}` : '';
+    hint.classList.toggle('hide', !hint.textContent);
+  } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;
   flag.children[1].rotation.y = Math.sin(now * 0.004) * 0.25;
 
@@ -620,4 +672,4 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-window.__game = { player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll };
+window.__game = { player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

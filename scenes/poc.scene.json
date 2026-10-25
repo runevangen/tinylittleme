@@ -1,0 +1,213 @@
+{
+  "name": "Prøverom: flytte ting",
+  "units": "cm",
+  "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
+  "validate": false,
+  "source": {
+    "note": "Håndlaget prøverom for å teste dytting, bæring, knusing og fall. Ikke fra bilder."
+  },
+  "room": {
+    "width": 300,
+    "depth": 300,
+    "height": 200,
+    "floor": {
+      "material": "wood",
+      "color": "#d9b382",
+      "slick": false
+    },
+    "walls": {
+      "material": "plaster",
+      "color": "#e9e1d3"
+    },
+    "ceiling": {
+      "material": "plaster",
+      "color": "#f5f1e8"
+    }
+  },
+  "start": {
+    "x": 50,
+    "z": 250
+  },
+  "goal": {
+    "x": 255,
+    "y": 60,
+    "z": 70,
+    "on": "kommode",
+    "note": "Trylledrikken står på kommoden (60 cm). For høyt til å hoppe opp på uten en kasse."
+  },
+  "windows": [
+    {
+      "wall": "N",
+      "z": 150,
+      "y": 120,
+      "w": 80,
+      "h": 70
+    }
+  ],
+  "objects": [
+    {
+      "id": "kommode",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#9a6b45",
+      "box": [
+        200,
+        300,
+        0,
+        60,
+        20,
+        120
+      ],
+      "cp": true,
+      "confidence": 1
+    },
+    {
+      "id": "bord",
+      "kind": "table",
+      "material": "wood",
+      "color": "#b9845a",
+      "box": [
+        20,
+        70,
+        0,
+        40,
+        20,
+        70
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "vase",
+      "kind": "vase",
+      "material": "ceramic",
+      "color": "#4a86c8",
+      "box": [
+        58,
+        66,
+        40,
+        56,
+        40,
+        48
+      ],
+      "movable": "light",
+      "breakable": true,
+      "confidence": 1,
+      "note": "Skjør og liten: bær den eller dytt den av bordet; den knuser"
+    },
+    {
+      "id": "eske_1",
+      "kind": "box",
+      "material": "fabric",
+      "color": "#d96b5f",
+      "box": [
+        60,
+        72,
+        0,
+        12,
+        140,
+        152
+      ],
+      "movable": "light",
+      "confidence": 1,
+      "note": "Lett og liten: kan bæres (F)"
+    },
+    {
+      "id": "eske_2",
+      "kind": "box",
+      "material": "fabric",
+      "color": "#5fa8d9",
+      "box": [
+        90,
+        102,
+        0,
+        12,
+        140,
+        152
+      ],
+      "movable": "light",
+      "confidence": 1
+    },
+    {
+      "id": "kasse_medium",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#c99a6c",
+      "box": [
+        130,
+        160,
+        0,
+        30,
+        200,
+        230
+      ],
+      "movable": "medium",
+      "confidence": 1,
+      "note": "Medium: dyttes i halv fart"
+    },
+    {
+      "id": "kasse_tung",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#8a5a3a",
+      "box": [
+        80,
+        120,
+        0,
+        40,
+        180,
+        220
+      ],
+      "movable": "heavy",
+      "confidence": 1,
+      "note": "Tung: dyttes sakte. Kan stables på"
+    },
+    {
+      "id": "stabel_ned",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#7a4f35",
+      "box": [
+        150,
+        190,
+        0,
+        30,
+        120,
+        160
+      ],
+      "movable": "heavy",
+      "confidence": 1,
+      "note": "Fallgruve: dytter du denne, faller eska over deg"
+    },
+    {
+      "id": "stabel_opp",
+      "kind": "box",
+      "material": "fabric",
+      "color": "#e3c34f",
+      "box": [
+        160,
+        180,
+        30,
+        50,
+        130,
+        150
+      ],
+      "movable": "light",
+      "confidence": 1
+    }
+  ],
+  "hazards": [
+    {
+      "id": "sluk",
+      "type": "pit",
+      "box": [
+        100,
+        150,
+        0,
+        25,
+        20,
+        70
+      ],
+      "message": "Fanget i sluket"
+    }
+  ]
+}

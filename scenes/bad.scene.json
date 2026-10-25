@@ -292,7 +292,8 @@
       "photos": [
         1
       ],
-      "note": "Skimtet nederst til venstre; størrelse usikker"
+      "note": "Skimtet nederst til venstre; størrelse usikker",
+      "movable": "heavy"
     },
     {
       "id": "vaskeskap",
@@ -352,7 +353,8 @@
       "photos": [
         1,
         2
-      ]
+      ],
+      "movable": "light"
     },
     {
       "id": "tannkrem",
@@ -370,7 +372,8 @@
       "confidence": 0.7,
       "photos": [
         2
-      ]
+      ],
+      "movable": "light"
     },
     {
       "id": "kran",
@@ -408,7 +411,9 @@
       "confidence": 0.7,
       "photos": [
         2
-      ]
+      ],
+      "movable": "light",
+      "breakable": true
     },
     {
       "id": "dopapir",
@@ -428,7 +433,8 @@
         1,
         2
       ],
-      "note": "Målestokk-anker"
+      "note": "Målestokk-anker",
+      "movable": "light"
     },
     {
       "id": "tannglass",
@@ -660,7 +666,8 @@
       "photos": [
         1,
         3
-      ]
+      ],
+      "movable": "medium"
     },
     {
       "id": "flaske_gronn",
@@ -679,7 +686,8 @@
       "photos": [
         1,
         3
-      ]
+      ],
+      "movable": "light"
     },
     {
       "id": "flaske_hvit",
@@ -698,7 +706,8 @@
       "photos": [
         1,
         3
-      ]
+      ],
+      "movable": "light"
     },
     {
       "id": "dusjkurv_ovre",
@@ -759,7 +768,8 @@
       "photos": [
         1
       ],
-      "note": "Sammenkrøllet håndkle ved karet"
+      "note": "Sammenkrøllet håndkle ved karet",
+      "movable": "medium"
     },
     {
       "id": "handkle_gulv_2",
@@ -777,7 +787,8 @@
       "confidence": 0.6,
       "photos": [
         1
-      ]
+      ],
+      "movable": "medium"
     },
     {
       "id": "dormatte",
