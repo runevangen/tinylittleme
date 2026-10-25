@@ -85,8 +85,9 @@ const gapOf = (A, B) => {
 const climbs = scene.objects.filter((o) => o.grip && o.onto).map((o) => {
   const [a, b, c, d, e, f] = o.box, base = uy(c), top = uy(d);
   const secs = (top - base) / 1.6, drain = secs * Math.max(0.1, 1.5 + (o.grip_drain || 0));
-  return { onto: o.onto, base, ok: drain <= 8.5, fp: { x0: ux(a), x1: ux(b), z0: uz(e), z1: uz(f) } };
+  return { gripId: o.id, onto: o.onto, base, ok: drain <= 8.5, fp: { x0: ux(a), x1: ux(b), z0: uz(e), z1: uz(f) } };
 });
+const climbVia = (A, B) => climbs.find((k) => k.ok && B.id === k.onto && Math.abs(A.top - k.base) < 0.3 && gapOf(A, k.fp) <= 1.6);
 const climbOK = (A, B) => climbs.some((k) => k.ok && B.id === k.onto && Math.abs(A.top - k.base) < 0.3 && gapOf(A, k.fp) <= 1.6);
 const edgeOK = (A, B) => {
   if (climbOK(A, B)) return true;
@@ -244,6 +245,19 @@ if (reachable().has(goalIdx())) {
     else { nodes.splice(ni, 0, nodeBak); boxes.splice(bi, 0, boxBak); }
   }
 }
+// ruta spilleren bør ta (færrest hopp fra start til mål), brukt av pilen i spillet: flater og grep-flater i rekkefølge
+const route = (() => {
+  const gi = goalIdx(), prev = new Map([[0, -1]]), q = [0];
+  while (q.length && !prev.has(gi)) { const a = q.shift(); for (let b = 0; b < nodes.length; b++) if (!prev.has(b) && edgeOK(nodes[a], nodes[b])) { prev.set(b, a); q.push(b); } }
+  if (!prev.has(gi)) return [];
+  const idx = []; for (let i = gi; i >= 0; i = prev.get(i)) idx.unshift(i);
+  const out = [], wp = (n, extra = {}) => ({ id: n.id, x0: round(n.x0), x1: round(n.x1), z0: round(n.z0), z1: round(n.z1), top: round(n.top), ...extra });
+  idx.forEach((ni, k) => {
+    if (k > 0) { const via = climbVia(nodes[idx[k - 1]], nodes[ni]); if (via) out.push({ id: via.gripId, x0: round(via.fp.x0), x1: round(via.fp.x1), z0: round(via.fp.z0), z1: round(via.fp.z1), top: round(via.base), grip: true }); }
+    out.push(wp(nodes[ni]));
+  });
+  return out;
+})();
 const finalSeen = reachable();
 const solvable = finalSeen.has(goalIdx());
 
@@ -252,6 +266,7 @@ const level = {
   name: scene.name,
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ropes: [],
+  route,
   start, goal,
   deathY: -15,
   room: { x0, x1, z0, z1, height: H, floor: R.floor, walls: R.walls, ceiling: R.ceiling },

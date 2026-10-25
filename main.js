@@ -935,7 +935,21 @@ let camAnim = null;                                                           //
 const angDiff = (a, b) => ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
 function turnCamera(toYaw, toPitch) { camAnim = { from: cam.yaw, d: angDiff(cam.yaw, toYaw), pf: cam.pitch, pt: toPitch ?? cam.pitch, t: 0 }; lastDrag = -99; }
 const camBehind = () => turnCamera(Math.atan2(-player.fx, -player.fz), 0.32);                       // bak figuren, litt ovenfra
-const camToGoal = () => { const [gx,, gz] = LEVEL.goal; turnCamera(Math.atan2(-(gx - player.x), -(gz - player.z)), 0.32); };    // målet rett frem
+// neste hinder: ruta fra rute-grafen (flater og grep-flater i rekkefølge); uten rute (håndlagde brett) er det målet
+let routeCur = 0;
+function nextTarget() {
+  const R = LEVEL.route, g = LEVEL.goal;
+  if (R?.length > 1) {
+    let i = -1;
+    if (player.state === 'climb') i = R.findIndex((w) => w.grip && w.id === player.climb?.box?.id);
+    else if (player.onGround) R.forEach((w, k) => { if (!w.grip && player.y - w.top > -0.3 && player.y - w.top < 3.5 && player.x >= w.x0 - 0.3 && player.x <= w.x1 + 0.3 && player.z >= w.z0 - 0.3 && player.z <= w.z1 + 0.3) i = k; });   // flaten du står på (også når du står på en løs ting oppå)
+    if (i >= 0) routeCur = i;
+    const w = R[Math.min(routeCur + 1, R.length - 1)];
+    if (w !== R[R.length - 1]) return { x: Math.max(w.x0, Math.min(w.x1, player.x)), y: w.top, z: Math.max(w.z0, Math.min(w.z1, player.z)), label: nice(w.id).replace(/_/g, ' '), final: false, grip: !!w.grip };
+  }
+  return { x: g[0], y: g[1], z: g[2], label: 'MÅL', final: true };
+}
+const camToGoal = () => { const t = nextTarget(); turnCamera(Math.atan2(-(t.x - player.x), -(t.z - player.z)), 0.32); };    // neste mål rett frem
 function stepCamAnim(dt) {
   if (!camAnim) return; camAnim.t = Math.min(1, camAnim.t + dt / 0.4); const k = 1 - Math.pow(1 - camAnim.t, 3);
   cam.yaw = camAnim.from + camAnim.d * k; cam.pitch = camAnim.pf + (camAnim.pt - camAnim.pf) * k; if (camAnim.t >= 1) camAnim = null;
@@ -947,16 +961,17 @@ const goalArrow = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([[0, 0.
 goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visible = false;
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
 function compassFrame(now) {
-  const g = LEVEL.goal, dx = g[0] - player.x, dz = g[2] - player.z, dist = Math.hypot(dx, dz);
-  const show = compassOn && mode === 'play' && !won && dist > 2.5;
+  const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
+  const show = compassOn && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6);
   compEl.style.display = show ? 'flex' : 'none';
   goalArrow.visible = show && player.onGround; goalArrowG.visible = goalArrow.visible;
   if (!show) return;
   const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
   compArrow.style.transform = `rotate(${ang}rad)`;
-  const dy = g[1] - player.y;
-  compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
+  const dy = t.y - player.y;
+  $('compLbl').textContent = t.final ? 'MÅL' : `NESTE: ${t.label}`.toUpperCase();
+  compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.grip ? ' · ▲ klatre' : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
   goalArrowG.position.set(player.x + dx / dist * 1.4, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * 1.4);
   goalArrowG.rotation.y = Math.atan2(dx, dz);
 }
