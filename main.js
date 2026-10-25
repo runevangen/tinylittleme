@@ -4,12 +4,12 @@ import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo } from './props.js';
 import { createVoice } from './voice.js';
-import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, findReachTarget } from './physics.js';
+import { P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
 // mobil (berøring) er hovedplattformen: tekst som nevner taster skal si knappene i stedet
 const TOUCH = matchMedia('(pointer:coarse)').matches;
-const TA = TOUCH ? 'TA' : 'F', key = (k) => (TOUCH ? '' : ` (${k})`);
+const GREP = TOUCH ? 'GREP' : 'Shift/E', TA = TOUCH ? 'TA' : 'F', key = (k) => (TOUCH ? '' : ` (${k})`);
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* privat modus e.l. */ } },
@@ -593,7 +593,7 @@ function poseHero(p, now, dt, mode) {
       lean: 0.2 + 0.05 * tired, chest: 0.1, hp: -0.28, twist: 0.12 * s1 * m,
     });
     bob = -0.05;
-  } else if (p.state === 'hang') {
+  } else if (p.state === 'hang' || p.state === 'zip') {
     const sway = Math.sin(sec * 1.5);
     Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: 0.12 + sway * 0.1, hR: 0.22 - sway * 0.1, kL: 0.3, kR: 0.15, lean: sway * 0.03, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
   } else if (p.state === 'swing') {
@@ -803,6 +803,18 @@ const bodyMeshes = LEVEL.bodies.map((b) => {
   mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh);
   return { b, mesh, size: [sx, sy, sz] };
 });
+// taubaner (nål + tråd) opprettes av fysikken: en tynn rød tråd mellom to knuter
+const zipMeshes = new Map();
+function syncZips() {
+  const alive = new Set(LEVEL.zips || []);
+  for (const z of alive) if (!zipMeshes.has(z)) {
+    const line = makeCyl(0.035), k1 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), line.material), k2 = k1.clone();
+    line.material = new THREE.MeshStandardMaterial({ color: 0xd04a4a, roughness: 0.8, emissive: 0x3a0c0c }); k1.material = k2.material = line.material;
+    k1.position.set(...z.a); k2.position.set(...z.b); setCyl(line, new THREE.Vector3(...z.a), new THREE.Vector3(...z.b));
+    scene.add(line, k1, k2); zipMeshes.set(z, [line, k1, k2]);
+  }
+  for (const [z, ms] of zipMeshes) if (!alive.has(z)) { scene.remove(...ms); zipMeshes.delete(z); }
+}
 // laget grep (hårgelé, papirbånd) opprettes av fysikken mens du spiller: tegnes her
 const madeMeshes = new Map();
 function syncMade() {
@@ -1220,8 +1232,14 @@ function update(dt) {
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(`${ev.id} forsvant`); }
     else if (ev.type === 'exhausted') { setMood('hurt', 0.6); buzz(30); cue('puster tungt'); }
-    else if (ev.type === 'use') { audio?.pickup(); buzz(20); setMood('happy', 0.9); say(ev.tool === 'gel' ? 'gel' : 'roll'); }
-    else if (ev.type === 'toolhint') toast(ev.tool === 'gel' ? `Gå helt inntil en vegg og trykk ${TA} for å smøre. ${TA} igjen legger fra seg.` : `Gå helt ut til en kant og trykk ${TA} for å rulle ut. ${TA} igjen legger fra seg.`);
+    else if (ev.type === 'use') {
+      audio?.pickup(); buzz(20); setMood('happy', 0.9);
+      if (ev.tool === 'thread') { toast(`Nålen er trædd. Fest tråden øverst med ${TA}, gå så ned og fest den med ${TA} igjen.`); say('thread'); }
+      else if (ev.tool === 'zipA') toast(`Tråden er festet her. Gå dit den skal ende (lavere) og trykk ${TA}.`);
+      else if (ev.tool === 'zip') { toast(`Taubane! Gå tilbake til øvre ende og trykk ${GREP} for å henge deg i den.`); say('zip'); }
+      else say(ev.tool === 'gel' ? 'gel' : 'roll');
+    }
+    else if (ev.type === 'toolhint') toast(ev.tool === 'needle' ? `Gå bort til en trådsnelle og trykk ${TA} for å træ nålen.` : ev.tool === 'spool' ? `Gå bort til en nål og trykk ${TA} for å træ den.` : ev.tool === 'zip' ? ({ 'zip-flat': 'For flatt: tråden må ende minst 8 cm lavere enn der den starter.', 'zip-far': 'For langt: tråden rekker høyst ca. 1,2 m.', 'zip-blocked': 'Noe er i veien for tråden.' }[ev.why] || `Stå på bakken og trykk ${TA} for å feste tråden.`) : ev.tool === 'gel' ? `Gå helt inntil en vegg og trykk ${TA} for å smøre. ${TA} igjen legger fra seg.` : `Gå helt ut til en kant og trykk ${TA} for å rulle ut. ${TA} igjen legger fra seg.`);
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
   }
   if (player.hardLands > pre.hard) { setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
@@ -1308,6 +1326,7 @@ function audioFrame(pre, dt) {
   if (pre.state !== 'hang' && p.state === 'hang') audio.grab();
   if (pre.state !== 'climb' && p.state === 'climb') audio.grab();
   if (pre.state !== 'swing' && p.state === 'swing') audio.grab();
+  if (pre.state !== 'zip' && p.state === 'zip') { audio.grab(); setMood('happy', 3); say('zipping', true); }
   if (pre.state !== 'mantle' && p.state === 'mantle') audio.mantle();
   if (!pre.reach && p.reach > 0) audio.reach();
   if (!pre.carry && p.carry) audio.pickup();
@@ -1329,7 +1348,7 @@ function render(now, dt) {
   { const tb = document.getElementById('btnCarry'); const lab = player.carry && player.charge >= P.throwMin ? 'KAST' : 'TA'; if (tb && tb.textContent !== lab) { tb.textContent = lab; tb.style.background = lab === 'KAST' ? '#c77d12cc' : ''; } }   // knappen sier KAST når holdetiden er nådd
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
   poseHero(player, now, dt, mode); animateHero(player, now, dt); updateBubble(now); updateStam();
-  updateArc(); syncMade(); updateLabels();
+  updateArc(); syncMade(); syncZips(); updateLabels();
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
   hero.root.position.set(player.x, player.y, player.z);
@@ -1342,6 +1361,7 @@ function render(now, dt) {
   }
   for (const { b, mesh, size } of bodyMeshes) {
     mesh.visible = b.alive;
+    if (b.kind === 'needle' && mesh.userData.thread && mesh.userData.on !== !!b.threaded) { mesh.userData.on = !!b.threaded; mesh.userData.thread(!!b.threaded); }
     const bx = b.max[0] - b.min[0], by = b.max[1] - b.min[1], bz = b.max[2] - b.min[2];
     mesh.position.set(b.min[0] + bx / 2, b.min[1] + by / 2, b.min[2] + bz / 2);
     if (b.pole) mesh.rotation.y = b.carried ? Math.atan2(-player.fz, player.fx) : (bz > bx ? Math.PI / 2 : 0);   // staven peker fremover når du bærer den
@@ -1355,7 +1375,12 @@ function render(now, dt) {
   const hint = $('hint');
   if (mode === 'play' && !won) {
     const t = player.carry ? null : findCarryTarget(player, LEVEL);
-    hint.textContent = player.carry ? (player.charge >= P.throwMin ? `Slipp ${TA}: KAST` : toolHint(player, LEVEL) === 'gel' ? `${TA}: smør gel på veggen · hold ${TA}: kast` : toolHint(player, LEVEL) === 'roll' ? `${TA}: rull ut et bånd over kanten · hold ${TA}: kast` : toolHint(player, LEVEL) === 'need-gel' ? `Gå helt inntil en vegg, så smører ${TA} gel` : toolHint(player, LEVEL) === 'need-roll' ? `Gå helt ut til en kant, så ruller ${TA} ut et bånd` : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `${TA}: sett på ${nice(sp.c.id)}` : `${TA}: slipp`) + ` · hold ${TA}: kast`; })()) : t ? `${TA}: ta ${nice(t.id)}` : '';
+    const th = player.carry ? toolHint(player, LEVEL) : null;
+    const toolText = { gel: `${TA}: smør gel på veggen`, roll: `${TA}: rull ut et bånd over kanten`, 'need-gel': `Gå helt inntil en vegg, så smører ${TA} gel`, 'need-roll': `Gå helt ut til en kant, så ruller ${TA} ut et bånd`,
+      thread: `${TA}: træ nålen med tråden`, 'need-thread': 'Finn en trådsnelle å træ nålen med', 'need-needle': 'Finn en nål å træ tråden i',
+      'zip-a': `${TA}: fest tråden her (høyt oppe)`, 'zip-b': `Gå dit tråden skal ende (lavere), så fester ${TA} den` }[th];
+    const zn = !player.carry && zipNear(player, LEVEL);
+    hint.textContent = player.carry ? (player.charge >= P.throwMin ? `Slipp ${TA}: KAST` : toolText ? `${toolText} · hold ${TA}: kast` : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `${TA}: sett på ${nice(sp.c.id)}` : `${TA}: slipp`) + ` · hold ${TA}: kast`; })()) : zn ? `${GREP}: heng deg i tråden og skli ned` : t ? `${TA}: ta ${nice(t.id)}` : '';
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;

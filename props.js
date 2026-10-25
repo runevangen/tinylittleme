@@ -349,6 +349,23 @@ const SINGLE = {
     for (const f of [0.12, 0.88]) { const b = mesh(new THREE.BoxGeometry(sx * 1.04, sy * 0.05, sz * 1.0), band, false); b.position.y = -sy / 2 + sy * f; g.add(b); }
     return g;
   },
+  needle(sx, sy, sz, o) {                                           // nål: lang, tynn og blank, med øye i den ene enden; får en rød tråd når den er trædd
+    const g = new THREE.Group(), r = Math.min(sy, sz) * 0.42, cr = chrome();
+    const body = mesh(new THREE.CylinderGeometry(r, r, sx * 0.86, 10), cr); body.rotation.z = Math.PI / 2; body.position.x = -sx * 0.07; g.add(body);
+    const tip = mesh(new THREE.ConeGeometry(r, sx * 0.14, 10), cr); tip.rotation.z = -Math.PI / 2; tip.position.x = sx * 0.43; g.add(tip);
+    const eye = mesh(new THREE.TorusGeometry(r * 1.1, r * 0.3, 6, 12), cr); eye.position.x = -sx * 0.4; g.add(eye);
+    const th = new THREE.Group(); th.visible = false;
+    const strand = mesh(new THREE.CylinderGeometry(r * 0.35, r * 0.35, sx * 1.1, 6), new THREE.MeshStandardMaterial({ color: 0xd04a4a, roughness: 0.9 }), false);
+    strand.rotation.z = Math.PI / 2; strand.position.set(-sx * 0.95, -r * 0.5, 0); th.add(strand); g.add(th);
+    g.userData.thread = (on) => { th.visible = on; };
+    return g;
+  },
+  spool(sx, sy, sz, o) {                                             // trådsnelle: rød tråd mellom to tre-skiver
+    const g = new THREE.Group(), r = Math.min(sx, sz) / 2, wood = new THREE.MeshStandardMaterial({ color: 0xc8a064, roughness: 0.7 });
+    const core = mesh(new THREE.CylinderGeometry(r * 0.7, r * 0.7, sy * 0.78, 20), new THREE.MeshStandardMaterial({ color: 0xd04a4a, roughness: 0.95, map: terryTex(), bumpMap: terryTex(), bumpScale: 0.4 })); g.add(core);
+    for (const sgn of [-1, 1]) { const d = mesh(new THREE.CylinderGeometry(r, r, sy * 0.11, 20), wood); d.position.y = sgn * sy * 0.445; g.add(d); }
+    return g;
+  },
   gel_bottle(sx, sy, sz, o) {                                        // hårgelé: bred, lav boks med blått lokk
     const g = new THREE.Group(), r = Math.min(sx, sz) / 2, y0 = -sy / 2;
     g.add(mesh(lathe([[0.001, y0], [r * 0.95, y0], [r, y0 + 0.1], [r, y0 + sy * 0.72], [r * 0.82, y0 + sy * 0.8]]), new THREE.MeshPhysicalMaterial({ color: o.color, roughness: 0.08, clearcoat: 1, transparent: true, opacity: 0.85 })));

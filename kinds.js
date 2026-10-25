@@ -40,9 +40,11 @@ export const KINDS = {
   qtip:         { shaped: true,  desc: 'ørepinne (stav): movable light + pole: 1.5' },
   sponge:       { shaped: true,  desc: 'svamp: movable light + soft: true' },
   paper_pile:   { shaped: true,  desc: 'haug med dopapir: soft: true (fast myk flate)' },
+  needle:       { shaped: true,  desc: 'nål: movable light + tool: "needle" (trædes med en trådsnelle til en taubane)' },
+  spool:        { shaped: true,  desc: 'trådsnelle: movable light + tool: "spool" + thread: true' },
   gel_bottle:   { shaped: true,  desc: 'hårgelé: movable light + tool: "gel"' },
 };
 export const MATERIALS = ['wood', 'woodpanel', 'tile', 'porcelain', 'ceramic', 'plastic', 'fabric', 'paper', 'metal', 'glass', 'mirror', 'wicker', 'book', 'plaster'];
 export const WEIGHTS = ['light', 'medium', 'heavy'];
 export const HAZARDS = ['pit', 'flush'];
-export const TOOLS = ['gel', 'roll'];
+export const TOOLS = ['gel', 'roll', 'needle', 'spool'];

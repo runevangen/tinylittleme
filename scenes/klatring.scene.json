@@ -306,6 +306,44 @@
       "help": "Hårgelé\nKast den opp på hylla (hold TA). Ta den, smør veggen (TA), legg den fra deg, klatre (GREP). Våt i 20 s: sklir."
     },
     {
+      "id": "nal",
+      "kind": "needle",
+      "material": "metal",
+      "color": "#c9ced3",
+      "box": [
+        100,
+        107,
+        0,
+        0.7,
+        262,
+        262.7
+      ],
+      "movable": "light",
+      "tool": "needle",
+      "confidence": 1,
+      "note": "Nål: trædes med trådsnellen, så kan du lage en taubane.",
+      "help": "Nål\nTa den (TA). Står du ved trådsnella, trykk TA igjen: nålen blir trædd. Så kan du lage en taubane."
+    },
+    {
+      "id": "trad",
+      "kind": "spool",
+      "material": "plastic",
+      "color": "#d04a4a",
+      "box": [
+        112,
+        116,
+        0,
+        3.5,
+        258,
+        262
+      ],
+      "movable": "light",
+      "tool": "spool",
+      "confidence": 1,
+      "note": "Trådsnelle: brukes opp når nålen trædes.",
+      "help": "Trådsnelle\nBær nålen hit og trykk TA: nålen trædes. (Du kan også ta snella og trykke TA ved nålen.)"
+    },
+    {
       "id": "dopapirrull",
       "kind": "roll",
       "material": "paper",

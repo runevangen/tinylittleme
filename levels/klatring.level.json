@@ -372,6 +372,44 @@
    "tool": "gel"
   },
   {
+   "id": "nal",
+   "kind": "needle",
+   "material": "metal",
+   "color": 13225683,
+   "min": [
+    -20,
+    0,
+    22.4
+   ],
+   "max": [
+    -18.6,
+    0.14,
+    22.54
+   ],
+   "weight": "light",
+   "breakable": false,
+   "tool": "needle"
+  },
+  {
+   "id": "trad",
+   "kind": "spool",
+   "material": "plastic",
+   "color": 13650506,
+   "min": [
+    -17.6,
+    0,
+    21.6
+   ],
+   "max": [
+    -16.8,
+    0.7,
+    22.4
+   ],
+   "weight": "light",
+   "breakable": false,
+   "tool": "spool"
+  },
+  {
    "id": "dopapirrull",
    "kind": "roll",
    "material": "paper",
@@ -490,6 +528,24 @@
     -27.6,
     2.9,
     17.4
+   ]
+  },
+  {
+   "id": "nal",
+   "text": "Nål\nTa den (TA). Står du ved trådsnella, trykk TA igjen: nålen blir trædd. Så kan du lage en taubane.",
+   "pos": [
+    -19.3,
+    1.04,
+    22.47
+   ]
+  },
+  {
+   "id": "trad",
+   "text": "Trådsnelle\nBær nålen hit og trykk TA: nålen trædes. (Du kan også ta snella og trykke TA ved nålen.)",
+   "pos": [
+    -17.2,
+    1.6,
+    22
    ]
   },
   {

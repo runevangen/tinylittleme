@@ -13,7 +13,7 @@ Rangert etter verdi/innsats i rapporten. Kildegrunnlaget er svakt (søkesammendr
 - [ ] **Ett verktøy per rom** og hint etter 3 feil på samme sted; første rom per mekanikk uten poengtap.
 - [ ] **Touch:** kast med dra–slipp og snap, kameraassistanse, kontroller minst 44 pt, presets for tilgjengelighet.
 - [ ] **Personvern:** del bare geometri/objektliste, slett bilder etter generering, private brett som standard, overlay av AI-tolkningen på originalbildet før publisering.
-- [ ] **Kombineringsmotor** som tabell over egenskaper og regler (BotW/Scribblenauts), testet i ett rom først; taubane som forhåndsdefinert bane.
+- [~] **Kombineringsmotor** (v0.40): nål + trådsnelle → taubane er hardkodet i `physics.js` (`useTool`, `useZip`). Gjenstår: en tabell over egenskaper og regler (BotW/Scribblenauts) når det kommer flere kombinasjoner.
 - [ ] **Verifiser** hullene i kapittel 5 av rapporten (staminatall, fallterskler, coyote-verdier, single-slot) mot primærkilder når nettilgang finnes.
 
 ## Idéer til sparring
@@ -31,7 +31,7 @@ Gjenstår / til sparring:
 7. Bedre skår/effekter.
 
 ## Bevegelse og spillfølelse
-- [~] **Klatrehjelp (v0.20):** kast, hard landing/myke flater og stavhopp er på plass i prøverommet `?level=klatring` (`docs/KLATREHJELP.md`). Gjenstår: kombinering av ting (nål + tråd, svamp + vann, håndkle + håndkle), taubane, papirhaug som presses sammen, stavhopp-animasjon, bot som bruker stav/kast. Trenger spilletest av verdiene.
+- [~] **Klatrehjelp (v0.20):** kast, hard landing/myke flater og stavhopp er på plass i prøverommet `?level=klatring` (`docs/KLATREHJELP.md`). Nål + tråd → taubane er på plass fra v0.40. Gjenstår: flere kombinasjoner (svamp + vann, håndkle + håndkle), papirhaug som presses sammen, stavhopp-animasjon, bot som bruker stav/kast. Trenger spilletest av verdiene.
 - [~] **Klatring (B):** første versjon fra v0.21: `grip`-flater, stamina, opp/ned/sidelengs, kantgrep over toppen (`docs/KLATREHJELP.md`, prøverom `?level=klatring`). Hårgelé og dopapirbånd er med fra v0.22. Badet (v0.39): et oppfunnet håndkle over servantkanten er grep (det står ikke på bildene). Gjenstår: flere grep i badet (knotter, dusjkurv), `slick`-flater, sidelengs langs stang, boten som klatrer. Se `docs/BADET.md`.
 - [ ] Spilletest av «Spenning» vs «Klassisk» med ekte hender, og justering av verdiene.
 - [ ] Mobil-test av touch-kontrollene (stikke, HOPP, REKK UT).

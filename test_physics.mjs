@@ -765,6 +765,46 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// 33. nål + tråd = taubane: træ nålen (TA ved trådsnellen), fest tråden øverst, gå ned og fest nederst, heng deg i øvre ende (GREP) og skli ned
+{
+  applyPreset('prince');
+  const hylle = box('wood', 0, 12, 0, 6, -3, 3);                       // 6 enheter høy plattform
+  const mkL = () => {
+    const L = { boxes: [floor, hylle], ropes: [], movables: [
+      { id: 'nal', kind: 'needle', material: 'metal', color: 0xcccccc, min: [-4, 0, 0], max: [-3, 0.14, 0.14], weight: 'light', tool: 'needle' },
+      { id: 'snelle', kind: 'spool', material: 'plastic', color: 0xd04a4a, min: [-4, 0, 1.2], max: [-3.2, 0.7, 2], weight: 'light', tool: 'spool' },
+    ] };
+    initBodies(L); return L;
+  };
+  const L = mkL(); const p = newPlayer(-2.2, 0, 0.1); p.fx = -1; p.fz = 0;
+  const go = (n, inp) => { for (let i = 0; i < n; i++) step(p, { ...idle, ...(typeof inp === 'function' ? inp(i) : inp) }, 1 / 60, L); };
+  const tap = (f) => { go(1, { carryPressed: true, carryHeld: true }); go(2, { carryHeld: false }); if (f) f(); };
+  go(20, {});
+  tap(); assert.equal(p.carry?.id, 'nal', 'tok nålen');
+  assert.equal(toolHint(p, L), 'thread', 'trådsnellen er innen rekkevidde');
+  go(2, { carryHeld: false, carryPressed: false }); tap();
+  assert.equal(p.carry?.tool, 'zip', 'nålen er trædd'); assert.ok(!L.bodies.find((b) => b.id === 'snelle').alive, 'snella er brukt opp');
+  // opp på hylla: sett en tråd fra kanten
+  p.x = 11.5; p.y = 6; p.z = 0; p.fx = 1; p.fz = 0; p.vx = p.vy = p.vz = 0; p.state = 'air'; go(10, {});
+  assert.ok(p.onGround && Math.abs(p.y - 6) < 0.01, 'står på hylla');
+  tap(); assert.ok(p.carry?.zipA, 'første trykk fester tråden'); const ya = p.carry.zipA[1];
+  // for flatt: samme høyde
+  p.x = 3; go(5, {}); tap(); assert.equal(L.zips.length, 0, 'ingen tråd uten høydeforskjell (eller for langt)');
+  // ned på gulvet, 8 enheter unna
+  p.x = 14.5; p.y = 0; p.state = 'air'; go(20, {}); assert.ok(p.onGround && p.y < 0.01);
+  assert.equal(L.zips?.length || 0, 0); tap();
+  assert.equal(L.zips.length, 1, `tråden er festet (hi ${ya.toFixed(1)})`); assert.ok(!p.carry, 'nålen legges igjen');
+  // tilbake til øvre ende og heng deg i
+  p.x = 11.5; p.y = 6; p.z = 0; p.fx = 1; p.state = 'air'; go(10, {});
+  go(2, (i) => ({ grabPressed: i === 0 }));
+  assert.equal(p.state, 'zip', 'hang i tråden');
+  go(300, {});
+  assert.notEqual(p.state, 'zip', 'kom til enden');
+  go(120, {}); assert.ok(p.onGround && p.y < 0.05 && Math.abs(p.x - L.zips[0].b[0]) < 2.5, `landet nede ved enden (x=${p.x.toFixed(1)}, y=${p.y.toFixed(2)})`);
+  assert.equal(p.hardLands, 0, 'ingen hard landing');
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 

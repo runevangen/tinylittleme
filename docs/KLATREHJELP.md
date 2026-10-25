@@ -42,10 +42,18 @@ Kjeden i prøverommet: kast gelflasken opp på hylla (hold F, slipp), vault opp 
 ## Klatring i badet (v0.39)
 Et håndkle (`handkle_hang`) henger over servantkanten ned til gulvet (x 100–116 cm, rett under vasken). Hopp mot det, trykk GREP og styr opp; ved toppen hiver du deg over kanten og står på servanten (der målet ligger). Håndkleet er billig å klatre i (`grip_drain: -0.9`), så kreftene rekker hele veien (ca. 17 enheter). Scenefeltene `onto` (flaten du hiver deg opp på) og `grip_drain` er nye; rute-grafen i `scene2level` bruker dem som klatrekanter, så brettet er løsbart uten hjelpetrapper.
 
+## Nål og tråd: taubane (v0.40)
+Første kombinasjon i spillet. Prøverommet har en **nål** og en **trådsnelle** ved start.
+1. Ta nålen (TA). Står du ved snella, trykk TA igjen: nålen trædes (snella brukes opp). Du kan også ta snella og trykke TA ved nålen.
+2. Stå på et høyt sted (hylle, skap) ved kanten og trykk TA: tråden festes der.
+3. Gå ned til et lavere sted (minst 8 cm lavere, høyst ca. 1,2 m i luftlinje) og trykk TA: taubanen er laget, nålen legges igjen. Noe i veien eller feil avstand gir en forklaring i stedet.
+4. Gå tilbake til øvre ende og trykk GREP: du henger deg i tråden og sklir ned (fart 1,5 → 9 enheter/s). Hopp = slipp underveis. Ved enden slippes du forsiktig (ingen hard landing).
+Kun én taubane per nål; ny tråd erstatter den gamle. Trykk TA på samme sted som første feste for å angre og legge fra deg nålen.
+
 ## Det som ikke er med ennå
 - Verktøy er ikke merket i bildene: bare prøverommet har dem foreløpig.
 - Grep-flater i badet fra bildene: hvilke gjenstander som er klatrbare er ikke bestemt (se backlogg). Flatetypen `slick` (glatt, kan ikke klatres) finnes ikke som grep-type ennå.
-- Kombinering av ting (nål + tråd, svamp + vann, håndkle + håndkle …), taubane.
+- Flere kombinasjoner (svamp + vann, håndkle + håndkle …). Taubane: «skyte opp» tråden mot et høyt punkt, tråd som kan klatres, og en lyd/animasjon for selve sklien. Boten bruker den ikke.
 - Stavhopp-animasjon (kroppen bruker vanlig hoppose).
 - Dopapirhaugen presses ikke sammen når du lander i den.
 - Boten bruker ikke stav eller kast, og validerer ikke rutene.

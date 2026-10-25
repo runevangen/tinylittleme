@@ -79,6 +79,7 @@ export const P = {
   throwFull: 0.7,    // ytterligere holdetid til full kraft (s)
   throwV0: 3.5, throwV1: 9.5, throwUp0: 3, throwUp1: 7.5,   // kastefart fremover og opp (svak … full)
   vaultH: 7, vaultMin: 0.55,   // stavhopp: høyde over bakken ved full fart for en stav på 1,5 enheter, og laveste fartsandel for å stavhoppe
+  zipMax: 24, zipMinDrop: 1.5, zipReach: 1.4, zipV0: 1.5, zipAcc: 5, zipVmax: 9,   // taubane: lengste tråd, minste høydeforskjell, rekkevidde til øvre ende, start-/topp-fart (enheter/s)
   stamina: 10, staminaRegen: 2.5, exhaustT: 0.45, exhaustSlide: 3,   // klatring: sekunder du orker å henge på en flate, og hvor fort det kommer tilbake på bakken (s/s)
   climbUp: 1.6, climbDown: 2.6, climbSide: 1.3,   // fart opp, ned og sidelengs på en grep-flate
   gelH: 6, gelW: 1.6, gelDry: 20, gelWetDrain: 1.2, gelSlide: 0.5,   // hårgelé: felt (høyde, bredde), tørketid (s), ekstra stamina-forbruk og sakte skli mens det er vått
@@ -117,6 +118,7 @@ export function newPlayer(x, y, z) {
     gait: 0, stepLen: 0.4,         // skrittfase (rad, π per skritt) og gjeldende skrittlengde
     carry: null, crushed: null, charge: 0, carryLatch: false,   // kast: hold-tid, og «ventet til F ble sluppet etter at noe ble tatt»
     hardLands: 0, knockout: false, vaulting: false, jumpSp: 0, toolWarn: 0,
+    zip: null,
     stam: P.stamina, exhaust: 0, climb: null, climbPh: 0, climbMove: 0,        // klatring: stamina, flaten du henger på, og armtak-fase til animasjon
     t: 0,
   };
@@ -143,10 +145,10 @@ const boxOverlap = (a, b) =>
   a.min[0] < b.max[0] - TOL && a.max[0] > b.min[0] + TOL && a.min[1] < b.max[1] - TOL && a.max[1] > b.min[1] + TOL && a.min[2] < b.max[2] - TOL && a.max[2] > b.min[2] + TOL;
 
 export function initBodies(L) {
-  L.bodies = []; L.events = []; L.made = [];
+  L.bodies = []; L.events = []; L.made = []; L.zips = [];
   for (const m of L.movables || []) {
     const b = {
-      id: m.id, kind: m.kind, pole: m.pole || 0, tool: m.tool || '', soft: !!m.soft, vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
+      id: m.id, kind: m.kind, pole: m.pole || 0, tool: m.tool || '', tool0: m.tool || '', thread: m.tool === 'spool', soft: !!m.soft, vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
       min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
       vy: 0, alive: true, carried: false, home: { min: [...m.min], max: [...m.max] },
     };
@@ -158,8 +160,9 @@ export function initBodies(L) {
 export function resetBodies(L, p) {
   if (p?.carry) { p.carry = null; }
   for (const m of L.made || []) { const i = L.boxes.indexOf(m); if (i >= 0) L.boxes.splice(i, 1); }
-  L.made = [];
+  L.made = []; L.zips = [];
   for (const b of L.bodies || []) {
+    b.tool = b.tool0; b.threaded = false; b.zipA = null;
     b.min = [...b.home.min]; b.max = [...b.home.max]; b.vy = 0; b.vx = b.vz = 0; b.carried = false;
     if (!b.alive) { b.alive = true; L.boxes.push(b); }
   }
@@ -293,6 +296,7 @@ function carryControl(p, inp, dt, L) {
   if (c < P.throwMin) {
     const r = useTool(p, L);
     if (r === true) return;
+    if (typeof r === 'string' && r.startsWith('zip-')) { (L.events ||= []).push({ type: 'toolhint', tool: 'zip', why: r }); return; }   // tråden kan ikke festes her: forklar, behold nålen
     if (p.carry?.tool && r === false && p.toolWarn <= 0) { p.toolWarn = 2; L.events.push({ type: 'toolhint', tool: p.carry.tool }); return; }   // ikke på riktig sted: forklar først, neste trykk slipper
     dropCarry(p, L);
   } else throwCarry(p, L, Math.min(1, (c - P.throwMin) / P.throwFull));
@@ -310,6 +314,9 @@ export function toolHint(p, L) {
     const ax = Math.abs(p.fx) >= Math.abs(p.fz) ? 0 : 2, sgn = Math.sign(ax === 0 ? p.fx : p.fz) || 1;
     return (((sgn > 0 ? gb.max[ax] : gb.min[ax]) - (ax === 0 ? p.x : p.z)) * sgn <= HW + 0.7) ? 'roll' : 'need-roll';
   }
+  if (c.tool === 'needle') return findNear(p, L, (b) => b.thread) ? 'thread' : 'need-thread';
+  if (c.tool === 'spool') return findNear(p, L, (b) => b.tool === 'needle') ? 'thread' : 'need-needle';
+  if (c.tool === 'zip') return c.zipA ? 'zip-b' : 'zip-a';
   return null;
 }
 
@@ -372,7 +379,81 @@ function useTool(p, L) {
     L.events.push({ type: 'use', tool: 'roll' });
     return true;
   }
+  if (c.tool === 'needle') {                                     // nål + trådsnelle: træ nålen, snella er brukt opp
+    const sp = findNear(p, L, (b) => b.thread); if (!sp) return false;
+    removeBody(L, sp, 'used'); c.tool = 'zip'; c.threaded = true; c.zipA = null;
+    L.events.push({ type: 'use', tool: 'thread' });
+    return true;
+  }
+  if (c.tool === 'spool') {                                      // trådsnella i hånden, nålen på bakken: samme resultat, du ender med den trædde nålen i hånden
+    const nd = findNear(p, L, (b) => b.tool === 'needle'); if (!nd) return false;
+    removeBody(L, c, 'used'); p.carry = null;
+    nd.tool = 'zip'; nd.threaded = true; nd.zipA = null; nd.carried = true; nd.vy = 0; p.carry = nd;
+    L.events.push({ type: 'use', tool: 'thread' });
+    return true;
+  }
+  if (c.tool === 'zip') return useZip(p, L, c);
   return false;
+}
+
+// Nærmeste ting (som ikke bæres) innen rekkevidde, uavhengig av retning.
+function findNear(p, L, pred) {
+  let best = null, bd = Infinity;
+  for (const b of L.bodies || []) {
+    if (!b.alive || b.carried || !pred(b)) continue;
+    const dx = Math.max(b.min[0] - p.x, 0, p.x - b.max[0]), dz = Math.max(b.min[2] - p.z, 0, p.z - b.max[2]), d = Math.hypot(dx, dz);
+    if (d > P.carryReach + 0.4 || b.max[1] < p.y - 0.3 || b.min[1] > p.y + H + 0.3) continue;
+    if (d < bd) { bd = d; best = b; }
+  }
+  return best;
+}
+
+// ---- Taubane: den trædde nålen. Første TA fester tråden der du står, andre TA et lavere sted. Så henger du deg i øvre ende (GREP) og sklir ned. ----
+function useZip(p, L, c) {
+  const here = [p.x + p.fx * 0.35, p.y + H + 0.2, p.z + p.fz * 0.35];
+  if (!c.zipA) { c.zipA = here; L.events.push({ type: 'use', tool: 'zipA' }); return true; }
+  const a = c.zipA;
+  if (Math.hypot(here[0] - a[0], here[2] - a[2]) < 1.2 && Math.abs(here[1] - a[1]) < 0.5) { c.zipA = null; return 'again'; }   // samme sted igjen: angre og legg fra deg nålen
+  const [hi, lo] = a[1] >= here[1] ? [a, here] : [here, a];
+  const len = Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]);
+  if (hi[1] - lo[1] < P.zipMinDrop) return 'zip-flat';
+  if (len > P.zipMax) return 'zip-far';
+  for (let t = 1.6 / len; t < 1 - 0.9 / len; t += 0.4 / len) {      // plass til en hengende figur langs hele tråden
+    const x = hi[0] + (lo[0] - hi[0]) * t, y = hi[1] + (lo[1] - hi[1]) * t, z = hi[2] + (lo[2] - hi[2]) * t;
+    for (const b of L.boxes) if (b !== c && !b.carried && b.type !== 'wall' && overlaps(b, x, y - H, z) && (b.type !== 'floor' || y - H < 0)) return 'zip-blocked';
+  }
+  L.zips = (L.zips || []).filter((z) => z.owner !== c.id);
+  L.zips.push({ id: `tråd_${c.id}`, owner: c.id, a: hi, b: lo, len });
+  c.zipA = null;
+  L.events.push({ type: 'use', tool: 'zip' });
+  dropCarry(p, L);
+  return true;
+}
+
+// GREP ved øvre ende av en tråd: heng deg i den.
+export function zipNear(p, L) {
+  if (p.carry || p.state === 'zip') return null;
+  for (const z of L.zips || []) if (Math.hypot(p.x - z.a[0], p.z - z.a[2]) <= P.zipReach && Math.abs(p.y + H - z.a[1]) <= 1.4) return z;
+  return null;
+}
+function tryZip(p, L) {
+  const z = zipNear(p, L); if (!z || p.cd > 0) return false;
+  p.state = 'zip'; p.zip = { z, s: 0, v: P.zipV0 };
+  p.x = z.a[0]; p.z = z.a[2]; p.y = z.a[1] - H; p.vx = p.vy = p.vz = 0; p.onGround = false; p.climb = null; p.hang = null; p.rope = null; p.groundBox = null; p.jumping = false;
+  const h = Math.hypot(z.b[0] - z.a[0], z.b[2] - z.a[2]) || 1; p.fx = (z.b[0] - z.a[0]) / h; p.fz = (z.b[2] - z.a[2]) / h;
+  return true;
+}
+function zipStep(p, inp, dt, L) {
+  const k = p.zip, z = k.z, dx = (z.b[0] - z.a[0]) / z.len, dy = (z.b[1] - z.a[1]) / z.len, dz = (z.b[2] - z.a[2]) / z.len;
+  k.v = Math.min(P.zipVmax, k.v + P.zipAcc * dt); k.s = Math.min(z.len, k.s + k.v * dt);
+  p.x = z.a[0] + dx * k.s; p.z = z.a[2] + dz * k.s; p.y = z.a[1] + dy * k.s - H;
+  p.vx = dx * k.v; p.vz = dz * k.v; p.vy = dy * k.v;
+  if (!(L.zips || []).includes(z)) { p.state = 'air'; p.zip = null; p.cd = 0.3; return; }
+  if (k.s >= z.len || inp.jumpPressed) {                              // ende på tråden, eller du slipper deg selv
+    const early = k.s < z.len;
+    p.state = 'air'; p.zip = null; p.cd = 0.3; p.jumps = Math.min(1, P.airJumps); p.buffer = 0; p.onGround = false;
+    p.vx = dx * k.v * (early ? 0.8 : 0.45); p.vz = dz * k.v * (early ? 0.8 : 0.45); p.vy = early ? P.jump * 0.5 : -1;
+  }
 }
 
 export function dropCarry(p, L) {
@@ -524,6 +605,8 @@ function sub(p, inp, dt, L) {
   if (p.state === 'mantle') return mantleStep(p, dt);
   if (p.state === 'hang') return hangStep(p, wx, wz);
   if (p.state === 'swing') return swingStep(p, inp, wx, wz, dt);
+  if (p.state === 'zip') return zipStep(p, inp, dt, L);
+  if (inp.grabPressed && L.zips?.length && tryZip(p, L)) return;
 
   let handled = false;
   if (P.gaitMode && p.onGround && !p.groundBox?.slick && p.lock <= 0) {

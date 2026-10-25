@@ -49,6 +49,8 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `qtip` | ja | ørepinne (stav): movable light + pole: 1.5 |
 | `sponge` | ja | svamp: movable light + soft: true |
 | `paper_pile` | ja | haug med dopapir: soft: true (fast myk flate) |
+| `needle` | ja | nål: movable light + tool: "needle" (trædes med en trådsnelle til en taubane) |
+| `spool` | ja | trådsnelle: movable light + tool: "spool" + thread: true |
 | `gel_bottle` | ja | hårgelé: movable light + tool: "gel" |
 
 ## Felt per ting
@@ -57,7 +59,7 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 - `cp: true` på et par solide flater midtveis (sjekkpunkt). `soft: true` på myke flater (matte, håndkle, papirhaug) som demper fall.
 - `movable`: light | medium | heavy for løse ting (lett = kan bæres, maks 17 cm). `breakable: true` for skjøre.
 - `grip: true` på ting man kan klatre i (håndkle som henger, kabel). `hold: true` på mulige tak (knotter, kurver).
-- `tool`: gel | roll (krever movable light): hårgelé og dopapirrull. `pole`: stavlengde (enheter) for en stav.
+- `tool`: gel | roll | needle | spool (krever movable light): hårgelé og dopapirrull. `pole`: stavlengde (enheter) for en stav.
 - `decor: true` for ting uten kollisjon (speil, knotter). `group: "navn"` for ting som består av flere bokser (do, badekar).
 
 ## Farer og start/mål
