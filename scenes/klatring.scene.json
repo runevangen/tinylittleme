@@ -4,7 +4,7 @@
   "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
   "validate": false,
   "source": {
-    "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet. Ikke fra bilder."
+    "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet, og klatring i håndkle (grep, stamina, hvile). Ikke fra bilder."
   },
   "room": {
     "width": 400,
@@ -207,6 +207,57 @@
       "soft": true,
       "confidence": 1,
       "note": "Bær den opp, slipp den ned en annen vei, og hopp på den."
+    },
+    {
+      "id": "handkle_nede",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#5a8fb8",
+      "box": [
+        196,
+        200,
+        0,
+        45,
+        110,
+        150
+      ],
+      "grip": true,
+      "confidence": 1,
+      "note": "Klatrbart (grep). Fest deg med REKK UT, styr opp. Stamina tømmes."
+    },
+    {
+      "id": "sims",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b08052",
+      "box": [
+        190,
+        200,
+        42,
+        45,
+        150,
+        190
+      ],
+      "cp": true,
+      "confidence": 1,
+      "note": "Hvile ved siden av håndkleet: stamina fylles på mens du står her. Gå dit langs kanten av nedre håndkle."
+    },
+    {
+      "id": "handkle_oppe",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#b85a6a",
+      "box": [
+        196,
+        200,
+        50,
+        90,
+        150,
+        190
+      ],
+      "grip": true,
+      "confidence": 1,
+      "note": "Øvre del av klatringen opp til toppen av tårnet. Start fra hvilehylla (gå inn under det)."
     }
   ],
   "look": {

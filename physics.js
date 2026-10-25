@@ -78,6 +78,8 @@ export const P = {
   throwFull: 0.7,    // ytterligere holdetid til full kraft (s)
   throwV0: 3.5, throwV1: 9.5, throwUp0: 3, throwUp1: 7.5,   // kastefart fremover og opp (svak … full)
   vaultH: 7, vaultMin: 0.55,   // stavhopp: høyde over bakken ved full fart for en stav på 1,5 enheter, og laveste fartsandel for å stavhoppe
+  stamina: 10, staminaRegen: 2.5,   // klatring: sekunder du orker å henge på en flate, og hvor fort det kommer tilbake på bakken (s/s)
+  climbUp: 1.6, climbDown: 2.6, climbSide: 1.3,   // fart opp, ned og sidelengs på en grep-flate
   throwFriction: 6,  // en kastet ting bremses på bakken
   supportMin: 0.45,  // minste andel av fotavtrykket som må hvile på noe, ellers glir tingen av
 };
@@ -112,6 +114,7 @@ export function newPlayer(x, y, z) {
     gait: 0, stepLen: 0.4,         // skrittfase (rad, π per skritt) og gjeldende skrittlengde
     carry: null, crushed: null, charge: 0, carryLatch: false,   // kast: hold-tid, og «ventet til F ble sluppet etter at noe ble tatt»
     hardLands: 0, knockout: false, vaulting: false, jumpSp: 0,
+    stam: P.stamina, climb: null, climbPh: 0,        // klatring: stamina, flaten du henger på, og armtak-fase til animasjon
     t: 0,
   };
 }
@@ -394,6 +397,8 @@ function sub(p, inp, dt, L) {
 
   if (L.bodies?.length) stepBodies(L, p, dt);
 
+  if (p.state !== 'climb') p.stam = Math.min(P.stamina, p.stam + (p.onGround ? P.staminaRegen * dt : 0));
+  if (p.state === 'climb') return climbStep(p, inp, wx, wz, dt, L);
   if (p.state === 'mantle') return mantleStep(p, dt);
   if (p.state === 'hang') return hangStep(p, wx, wz);
   if (p.state === 'swing') return swingStep(p, inp, wx, wz, dt);
@@ -501,7 +506,8 @@ function sub(p, inp, dt, L) {
 
   updateCarried(p, L);
 
-  if (p.onGround) p.state = 'ground';
+  if (hit?.box.grip && p.reach > 0 && p.state !== 'climb' && (wx * hit.nx + wz * hit.nz) < -0.3 && tryClimb(p, hit)) { /* festet seg på en grep-flate */ }
+  else if (p.onGround) p.state = 'ground';
   else {
     p.state = 'air';
     if (hit && p.vy <= 2 && p.cd <= 0 && (P.autoGrab || p.reach > 0) && (wx * hit.nx + wz * hit.nz) < -0.3) tryLedge(p, hit, L);
@@ -571,6 +577,52 @@ function tryLedge(p, hit, L) {
   p.vx = p.vy = p.vz = 0;
   p.jumping = false;
   return true;
+}
+
+// ---- Klatring på grep-flater (håndkle, knotter, kabel …) --------------------------
+function tryClimb(p, hit) {
+  const b = hit.box;
+  if (p.carry || p.stam < 0.3) return false;
+  p.state = 'climb'; p.climb = { box: b, nx: hit.nx, nz: hit.nz };
+  p.vx = p.vy = p.vz = 0; p.jumping = false; p.reach = 0; p.onGround = false;
+  p.fx = -hit.nx; p.fz = -hit.nz;
+  if (hit.nx) p.x = hit.nx > 0 ? b.max[0] + HW : b.min[0] - HW;
+  if (hit.nz) p.z = hit.nz > 0 ? b.max[2] + HW : b.min[2] - HW;
+  return true;
+}
+function leaveClimb(p, vx, vz, vy, cd) {
+  p.state = 'air'; p.climb = null; p.vx = vx; p.vz = vz; p.vy = vy; p.cd = cd; p.onGround = false;
+}
+function climbStep(p, inp, wx, wz, dt, L) {
+  const c = p.climb, b = c.box, clampN = (v, a, z) => Math.max(a, Math.min(z, v));
+  if (!b || L.boxes.indexOf(b) < 0) return leaveClimb(p, 0, 0, 0, 0.2);
+  const into = -(wx * c.nx + wz * c.nz);                          // mot flaten = opp, bort = ned
+  const tx = -c.nz, tz = c.nx, side = wx * tx + wz * tz;           // langs flaten
+  if (p.buffer > 0) {                                              // hopp: spark deg løs fra flaten
+    p.buffer = 0; p.jumps = Math.min(1, P.airJumps); p.jumping = true; p.lock = P.wallLock;
+    return leaveClimb(p, c.nx * P.wallKick * 0.7, c.nz * P.wallKick * 0.7, P.wallUp * 0.9, 0.3);
+  }
+  const vy = into > 0.25 ? P.climbUp * Math.min(1, into) : into < -0.25 ? -P.climbDown * Math.min(1, -into) : 0;
+  const vs = Math.abs(side) > 0.25 ? P.climbSide * Math.min(1, side * 1.0) : 0;
+  p.stam -= dt * (1 + (vy > 0 ? 0.5 : 0) + (vs ? 0.3 : 0) + (b.gripDrain || 0));
+  if (p.stam <= 0) { p.stam = 0; return leaveClimb(p, c.nx * 1.2, c.nz * 1.2, 0, 0.6); }   // armene gir etter
+  if (vs) {
+    const ox = p.x, oz = p.z;
+    p.x += tx * vs * dt; p.z += tz * vs * dt;
+    if (c.nx) { p.z = clampN(p.z, b.min[2] + 0.15, b.max[2] - 0.15); p.x = c.nx > 0 ? b.max[0] + HW : b.min[0] - HW; }
+    else { p.x = clampN(p.x, b.min[0] + 0.15, b.max[0] - 0.15); p.z = c.nz > 0 ? b.max[2] + HW : b.min[2] - HW; }
+    for (const o of L.boxes) if (o !== b && o !== p.carry && overlaps(o, p.x, p.y, p.z)) { p.x = ox; p.z = oz; break; }
+  }
+  p.climbPh += (Math.abs(vy) + Math.abs(vs)) * dt * 3;
+  if (vy) {
+    p.onGround = false; moveY(p, vy * dt, L);
+    if (p.onGround) { p.state = 'ground'; p.climb = null; p.vy = 0; return; }       // ned til bakken
+  }
+  if (p.y + H < b.min[1] + 0.2) return leaveClimb(p, c.nx * 0.5, c.nz * 0.5, 0, 0.3);   // under nederste grep
+  if (into > 0.25 && p.y + H >= b.max[1] - 0.05) {                                    // helt opp: hiv deg over kanten
+    if (tryLedge(p, { box: b, nx: c.nx, nz: c.nz }, L)) { p.climb = null; return; }
+    p.y = Math.min(p.y, b.max[1] - H);
+  }
 }
 
 function hangStep(p, wx, wz) {

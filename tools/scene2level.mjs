@@ -49,7 +49,7 @@ for (const o of scene.objects) {
     decor.push({ shape: 'box', id: o.id, kind: o.kind, pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
     continue;
   }
-  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft }));
+  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.grip ? { grip: true } : {}) }));
 }
 const hazards = (scene.hazards || []).map((h) => {
   const [a, b, c, d, e, f] = h.box;

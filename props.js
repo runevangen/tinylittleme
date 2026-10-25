@@ -341,6 +341,14 @@ const SINGLE = {
     }
     return g;
   },
+  towel_hang(sx, sy, sz, o) {                                        // håndkle som henger langs en vegg: klatrbart
+    const g = new THREE.Group(), tt = terryTex().clone(); tt.repeat.set(Math.max(1, sz / 3), Math.max(1, sy / 3)); tt.needsUpdate = true;
+    const mat = new THREE.MeshStandardMaterial({ color: o.color, map: tt, bumpMap: tt, bumpScale: 1.4, roughness: 1 });
+    g.add(mesh(roundedBoxGeo(sx, sy, sz, Math.min(sx, sz) * 0.3, Math.min(0.15, sx * 0.3)), mat)); g.children[0].position.y = -sy / 2;
+    const band = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+    for (const f of [0.12, 0.88]) { const b = mesh(new THREE.BoxGeometry(sx * 1.04, sy * 0.05, sz * 1.0), band, false); b.position.y = -sy / 2 + sy * f; g.add(b); }
+    return g;
+  },
   mirror(sx, sy, sz) {
     const g = new THREE.Group(), cr = chrome(), f = 0.35;
     g.add(mesh(new THREE.BoxGeometry(sx - 0.2, sy - 0.2, 0.1), new THREE.MeshStandardMaterial({ color: 0xdfe9ee, metalness: 0.85, roughness: 0.04, emissive: 0x6d7f88, emissiveIntensity: 0.35 }), false));

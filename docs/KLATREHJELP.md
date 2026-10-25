@@ -12,12 +12,23 @@ Status: første versjon (v0.20). Verdiene står i `physics.js` (`P`) og er ment 
 | **Myke flater** | Flater med `soft` (svamp, papirhaug, matte, håndkle) tar `softFactor` = 35 % av landingsfarten. Skjøre ting knuses også mindre. |
 | **Stavhopp** | Bærer du en stav (`pole`) og løper (≥ 55 % av toppfarten), gjør hopp-knappen stavhopp: farten gjøres om til høyde (ca. 6,3 enheter ved full fart med en ørepinne på 1,5; vanlig hopp er 3,4). Staven peker fremover mens du bærer den. |
 
+## Klatring på grep-flater (v0.21)
+| | |
+|---|---|
+| **Feste** | Stå inntil en flate merket `grip` (scene: `"grip": true`) eller hopp mot den, og trykk REKK UT mens du styrer mot den. Du kan ikke klatre mens du bærer noe. |
+| **Styre** | Mot flaten = opp, bort = ned, sidelengs = langs flaten (innenfor flatens bredde). Opp 1,6 enheter/s, ned 2,6, sidelengs 1,3. |
+| **Stamina** | 10 enheter. Går ned 1/s mens du henger, +0,5 når du klatrer opp, +0,3 sidelengs. På bakken fylles den 2,5/s. Tom stamina = du mister taket og faller. Vises i HUD som «grep ▮▮▮▯». Det rekker til ca. 10 enheter opp i ett strekk. |
+| **Av** | Hopp = spark deg løs fra flaten. Ned til bakken = stå. Opp til kanten = kantgrep (hang), så hopp = hiv deg over (som før). |
+
+Prøverommet har en rute fra papirhaugen til toppen av tårnet med to håndklær og en hvilehylle midt i (for lang til ett strekk). Gå inn under det øvre håndkleet, hopp mot det og trykk REKK UT i hoppet.
+
 ## Prøverommet
 - **Hylle (28 cm):** for høy for vanlig hopp. Ta ørepinnen (F), løp, hopp.
 - **Tårn (90 cm)** med fem trinn: fall fra toppen på gulvet er for hardt (tilbake). Hopp ned på **dopapirhaugen** (vest) eller bær **svampen** opp og slipp den nede før du hopper.
 - Flagget (målet) står øverst på tårnet.
 
 ## Det som ikke er med ennå
+- Grep-flater i badet fra bildene: hvilke gjenstander som er klatrbare er ikke bestemt (se backlogg). Hårgelé (klistrete felt) og `slick` (glatt) finnes ikke som flatetyper ennå.
 - Kombinering av ting (nål + tråd, svamp + vann, håndkle + håndkle …), taubane.
 - Stavhopp-animasjon (kroppen bruker vanlig hoppose).
 - Dopapirhaugen presses ikke sammen når du lander i den.

@@ -1,5 +1,6 @@
 // node tinylittleme/test_physics.mjs
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, resetBodies, drainEvents } from './physics.js';
 import { LEVEL } from './level.js';
 
@@ -556,6 +557,71 @@ const fwd = { ...idle, mz: 1 };
   assert.equal(ok, 3, 'alle tre anløp');
   const no = attempt(false, 3.4);
   assert.ok(!no.top, 'uten stav kommer du ikke opp');
+  applyPreset('klassisk');
+}
+
+// 25. klatring på grep-flater: fest med REKK UT, klatre opp og over kanten, sidelengs, ned igjen, stamina, hopp løs
+{
+  applyPreset('prince');
+  const tower = box('grip', 0, 1, 0, 9, -3, 3, { grip: true });
+  const wall = box('wall', 5, 6, 0, 10, -3, 3);
+  const mk = () => { const L = { boxes: [floor, tower, wall], ropes: [] }; const p = newPlayer(-0.3, 0, 0); p.fx = 1; p.fz = 0; return { L, p }; };
+  const go = (L, p, n, inp) => { for (let i = 0; i < n; i++) step(p, { ...idle, ...(typeof inp === 'function' ? inp(i) : inp) }, 1 / 60, L); };
+  // fest
+  let { L, p } = mk(); go(L, p, 10, {});
+  go(L, p, 2, (i) => ({ mx: 1, grabPressed: i === 0 }));
+  assert.equal(p.state, 'climb', 'REKK UT mot en grep-flate fester deg');
+  // opp
+  go(L, p, 60, { mx: 1 });
+  assert.ok(p.y > 1.5, `klatrer opp (y=${p.y})`);
+  assert.ok(p.stam < P.stamina - 0.5, 'stamina går ned');
+  // sidelengs
+  const z0 = p.z; go(L, p, 30, { mz: 1 });
+  assert.ok(Math.abs(p.z - z0) > 0.3 && p.state === 'climb', 'beveger seg langs flaten');
+  // ned til bakken og slipp
+  go(L, p, 200, { mx: -1 });
+  assert.equal(p.state, 'ground', `kommer ned til bakken (${p.state})`);
+  p.stam = 1; go(L, p, 300, {}); assert.ok(p.stam > P.stamina - 1e-6, 'stamina henter seg inn på bakken');
+  // helt opp og over kanten
+  ({ L, p } = mk()); go(L, p, 10, {}); go(L, p, 2, (i) => ({ mx: 1, grabPressed: i === 0 }));
+  go(L, p, 60 * 10, { mx: 1 });
+  assert.ok(['hang', 'mantle', 'ground'].includes(p.state) && p.y > 7, `kommer til toppen (${p.state}, y=${p.y.toFixed(1)})`);
+  if (p.state === 'hang') { go(L, p, 120, (i) => ({ mx: i < 3 ? 1 : 0, jumpPressed: i === 0 })); }
+  assert.equal(p.state, 'ground'); assert.ok(Math.abs(p.y - 9) < 0.05, `står oppå (y=${p.y})`);
+  // stamina tom: du glir av
+  ({ L, p } = mk()); go(L, p, 10, {}); go(L, p, 2, (i) => ({ mx: 1, grabPressed: i === 0 }));
+  p.stam = 0.2; go(L, p, 40, { mx: 1 });
+  assert.notEqual(p.state, 'climb', 'tom stamina: slipper');
+  // hopp løs
+  ({ L, p } = mk()); go(L, p, 10, {}); go(L, p, 2, (i) => ({ mx: 1, grabPressed: i === 0 })); go(L, p, 40, { mx: 1 });
+  go(L, p, 2, (i) => ({ jumpPressed: i === 0 }));
+  assert.equal(p.state, 'air'); assert.ok(p.vx < -1, 'sparker bort fra flaten');
+  // vanlig vegg: ingen feste
+  ({ L, p } = mk()); p.x = 4.7; p.fx = 1; go(L, p, 10, {}); go(L, p, 4, (i) => ({ mx: 1, grabPressed: i === 0 }));
+  assert.notEqual(p.state, 'climb', 'vanlig vegg er ikke klatrbar');
+  applyPreset('klassisk');
+}
+
+// 26. prøverom «klatring»: håndklerute fra papirhaugen til toppen av tårnet (klatre, hvile, hoppe og gripe)
+{
+  applyPreset('prince');
+  const LV = JSON.parse(fs.readFileSync(new URL('./levels/klatring.level.json', import.meta.url), 'utf8'));
+  const L = { boxes: LV.boxes, ropes: [], movables: [], hazards: [] };
+  const p = newPlayer(-1.6, 2.01, -4); p.fx = 1; p.fz = 0;
+  for (let i = 0; i < 30; i++) step(p, idle, 1 / 60, L);
+  let phase = 0, done = false;
+  for (let i = 0; i < 60 * 40 && !done; i++) {
+    let inp = {}; const gnd = p.state === 'ground';
+    if (phase === 0) { inp = { mx: 1, grabPressed: i % 20 === 0 }; if (p.state === 'hang' || (gnd && p.y > 8.5)) phase = 1; }
+    if (phase === 1) { inp = { mx: 1, jumpPressed: p.state === 'hang' && i % 30 === 0 }; if (gnd && p.y > 8.5) phase = 2; }
+    if (phase === 2) { inp = { mz: 1 }; if (p.z > 2.5) phase = 25; }
+    if (phase === 25) { inp = { mx: -1 }; if (p.x < -1.15) phase = 3; }
+    if (phase === 3) { if (p.stam > 9.9) phase = 4; }
+    if (phase === 4) { inp = { mx: 1, jumpPressed: gnd && i % 40 === 0, jumpHeld: true, grabPressed: !gnd && i % 40 === 12 }; if (p.state === 'climb') phase = 5; }
+    if (phase === 5) { inp = { mx: 1, jumpPressed: p.state === 'hang' && i % 30 === 0 }; if (gnd && p.y > 17) done = true; }
+    step(p, { ...idle, ...inp }, 1 / 60, L);
+  }
+  assert.ok(done, `håndklerute til toppen (fase ${phase}, ${p.state}, y=${p.y.toFixed(1)})`);
   applyPreset('klassisk');
 }
 

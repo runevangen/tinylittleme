@@ -439,6 +439,14 @@ function poseHero(p, now, dt, mode) {
       lean: 0.1 + 0.3 * pull * (1 - over), chest: 0.15 * pull * (1 - over), hp: -0.25 * (1 - over), twist: 0.08 * Math.sin(pull * Math.PI),
     });
     bob = -0.06 * pull;
+  } else if (p.state === 'climb') {                              // klatrer: armene veksler opp langs flaten, bena trår
+    const ph = p.climbPh * 2, s1 = Math.sin(ph), tired = clampN(1 - p.stam / (P.stamina * 0.35), 0, 1);
+    Object.assign(T, {
+      aL: -2.85 + 0.45 * s1, aR: -2.85 - 0.45 * s1, eL: -0.35, eR: -0.35,
+      hL: -0.55 + 0.4 * s1, hR: -0.55 - 0.4 * s1, kL: 0.95 - 0.35 * s1, kR: 0.95 + 0.35 * s1,
+      lean: 0.1 + 0.05 * tired, chest: -0.04, hp: -0.18, twist: 0.06 * s1,
+    });
+    bob = 0.02 * Math.abs(s1);
   } else if (p.state === 'hang') {
     const sway = Math.sin(sec * 1.5);
     Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: 0.12 + sway * 0.1, hR: 0.22 - sway * 0.1, kL: 0.3, kR: 0.15, lean: sway * 0.03, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
@@ -882,6 +890,7 @@ function audioFrame(pre, dt) {
   if (pre.onGround && !p.onGround && p.vy > 5) audio.jump();                                  // avspark
   if (!pre.onGround && p.onGround && pre.vy < -3) audio.land(surf, -pre.vy);                  // landing
   if (pre.state !== 'hang' && p.state === 'hang') audio.grab();
+  if (pre.state !== 'climb' && p.state === 'climb') audio.grab();
   if (pre.state !== 'swing' && p.state === 'swing') audio.grab();
   if (pre.state !== 'mantle' && p.state === 'mantle') audio.mantle();
   if (!pre.reach && p.reach > 0) audio.reach();
@@ -891,7 +900,7 @@ function audioFrame(pre, dt) {
   audio.skid(p.skid ? Math.min(1, sp / P.speed) : 0);
   let moved = 0; (LEVEL.bodies || []).forEach((b, i) => { if (b.alive && !b.carried) moved += Math.abs(b.min[0] + b.min[2] - pre.bodies[i]); });
   audio.scrape(Math.min(1, moved / (dt * 3)));                                               // dytting
-  audio.tick(dt, { active: true, speed01: sp / P.speed, climbing: ['hang', 'mantle', 'swing'].includes(p.state) });
+  audio.tick(dt, { active: true, speed01: sp / P.speed, climbing: ['hang', 'mantle', 'swing', 'climb'].includes(p.state) });
 }
 
 // ---------- tegning ----------
@@ -943,7 +952,7 @@ function render(now, dt) {
     if (camFocusY === null || Math.hypot(player.x - cam.target.x, player.z - cam.target.z) > 12 || Math.abs(player.y - camFocusY) > 14) {
       camFocusY = player.y; cam.target.set(player.x, player.y + 0.62, player.z);   // stor teleportering (respawn): hopp direkte
     }
-    const settled = player.onGround || ['hang', 'mantle', 'swing'].includes(player.state) || mode === 'fly';
+    const settled = player.onGround || ['hang', 'mantle', 'swing', 'climb'].includes(player.state) || mode === 'fly';
     if (settled) camFocusY += (player.y - camFocusY) * (1 - Math.pow(0.08, dt));        // følg rolig når du står
     else camFocusY = Math.min(player.y + 0.9, Math.max(player.y - 0.9, camFocusY));       // i lufta: ikke følg hvert hopp
     const kxz = 1 - Math.pow(0.04, dt);
@@ -961,7 +970,7 @@ function render(now, dt) {
   renderer.render(scene, camera);
   $('hud').textContent =
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · REKKER UT' : ''}\n` +
-    `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s\nlagret ${stats.saves} · tilbake ${stats.respawns} · poeng ${points()}`;
+    `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns} · poeng ${points()}`;
 }
 
 function resize() {

@@ -233,6 +233,65 @@
    "material": "paper",
    "cp": false,
    "soft": true
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -0.8,
+    0,
+    -8
+   ],
+   "max": [
+    0,
+    9,
+    0
+   ],
+   "id": "handkle_nede",
+   "kind": "towel_hang",
+   "color": 5935032,
+   "material": "fabric",
+   "cp": false,
+   "soft": false,
+   "grip": true
+  },
+  {
+   "type": "wood",
+   "min": [
+    -2,
+    8.4,
+    0
+   ],
+   "max": [
+    0,
+    9,
+    8
+   ],
+   "id": "sims",
+   "kind": "chest",
+   "color": 11567186,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -0.8,
+    10,
+    0
+   ],
+   "max": [
+    0,
+    18,
+    8
+   ],
+   "id": "handkle_oppe",
+   "kind": "towel_hang",
+   "color": 12081770,
+   "material": "fabric",
+   "cp": false,
+   "soft": false,
+   "grip": true
   }
  ],
  "movables": [
@@ -338,11 +397,11 @@
  },
  "report": {
   "source": {
-   "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet. Ikke fra bilder."
+   "note": "Håndlaget prøverom: stavhopp (ørepinne), kast og myke landinger (svamp, dopapirhaug), hardt fall fra tårnet, og klatring i håndkle (grep, stamina, hvile). Ikke fra bilder."
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 9,
-  "reachable": 9
+  "nodes": 12,
+  "reachable": 12
  }
 }
