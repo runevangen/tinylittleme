@@ -440,6 +440,19 @@ const fwd = { ...idle, mz: 1 };
   assert.ok(p.z > z1 + 0.1, 'holder seg i gang når input faller til svak verdi (hysterese)');
 }
 
+// 20. ujevne bildetider (telefon): å stå stille skal aldri flimre mellom «står» og «luft»
+{
+  const L = { boxes: [floor], ropes: [] };
+  const p = newPlayer(0, 0, 0);
+  run(L, p, 10, () => idle);
+  let seed = 12345, air = 0;
+  const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const dts = [(r) => (1 / 120) * (0.95 + 0.1 * r), (r) => (1 / 60) * (0.9 + 0.2 * r), (r) => 0.001 + 0.049 * r, (r) => 1e-5 * r + 1e-6];
+  for (const f of dts) for (let i = 0; i < 3000; i++) { step(p, idle, f(rnd()), L); if (!p.onGround) air++; }
+  assert.equal(air, 0, `stod i lufta i ${air} bilder med ujevne bildetider`);
+  assert.equal(p.y, 0);
+}
+
 console.log('alle fysikktester grønne');
 
 

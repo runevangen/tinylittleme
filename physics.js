@@ -278,12 +278,9 @@ export function step(p, inp, dt, L) {
   if (inp.carryPressed && L.bodies?.length) tryCarry(p, L);
   if (inp.jumpPressed) p.buffer = P.jumpBuffer;
   if (inp.grabPressed && p.reachCd <= 0) { p.reach = P.reachTime; p.reachCd = P.reachTime + P.reachCooldown; }
-  let left = dt;
-  while (left > 1e-6) {
-    const h = Math.min(left, SUBSTEP);
-    sub(p, inp, h, L);
-    left -= h;
-  }
+  if (dt <= 1e-6) return;
+  const n = Math.max(1, Math.ceil(dt / SUBSTEP - 1e-6)), h = dt / n;      // like lange delsteg (en kort rest på <1 ms ga ikke nok fall til å oppdage gulvet → flimmer mellom «står» og «luft»)
+  for (let i = 0; i < n; i++) sub(p, inp, h, L);
 }
 
 function sub(p, inp, dt, L) {
@@ -445,6 +442,12 @@ function moveY(p, d, L) {
     if (d < 0) { p.y = b.max[1]; p.onGround = true; p.groundBox = b; }
     else p.y = b.min[1] - H;
     p.vy = 0;
+  }
+  if (d < 0 && !p.onGround) {                                  // gulvet rett under føttene (innenfor 0,3 mm) teller som kontakt, uansett hvor kort delsteget er
+    for (const b of L.boxes) {
+      if (b === p.carry || !overlaps(b, p.x, p.y - 3e-4, p.z)) continue;
+      p.y = b.max[1]; p.onGround = true; p.groundBox = b; p.vy = 0;
+    }
   }
 }
 
