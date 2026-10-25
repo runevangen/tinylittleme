@@ -503,14 +503,19 @@ function poseHero(p, now, dt, mode) {
       lean: 0.1 + 0.3 * pull * (1 - over), chest: 0.15 * pull * (1 - over), hp: -0.25 * (1 - over), twist: 0.08 * Math.sin(pull * Math.PI),
     });
     bob = -0.06 * pull;
-  } else if (p.state === 'climb') {                              // klatrer: armene veksler opp langs flaten, bena trår
-    const ph = p.climbPh * 2, s1 = Math.sin(ph), tired = clampN(1 - p.stam / (P.stamina * 0.35), 0, 1);
+  } else if (p.state === 'climb') {                              // klatrer: én arm rekker frem og opp mot veggen mens den andre trekker, bena trår mot veggen
+    const m = clampN(p.climbMove / 0.8, 0, 1), s1 = Math.sin(p.climbPh * 2), tired = clampN(1 - p.stam / (P.stamina * 0.3), 0, 1);
+    const u = lerpN(0.6, (s1 + 1) / 2, m), v = 1 - u + (0.6 - (1 - 0.6)) * (1 - m);      // venstre/høyre arm: 1 = rekker, 0 = trekker (i ro: begge halvveis oppe)
+    const vv = lerpN(0.6, 1 - (s1 + 1) / 2, m);
+    const shake = tired * 0.05 * Math.sin(sec * 37);
+    const stepL = lerpN(0.3, smooth3(vv), m), stepR = lerpN(0.3, smooth3(u), m);          // kryssmønster: venstre bein trår når høyre arm rekker
     Object.assign(T, {
-      aL: -2.85 + 0.45 * s1, aR: -2.85 - 0.45 * s1, eL: -0.35, eR: -0.35,
-      hL: -0.55 + 0.4 * s1, hR: -0.55 - 0.4 * s1, kL: 0.95 - 0.35 * s1, kR: 0.95 + 0.35 * s1,
-      lean: 0.1 + 0.05 * tired, chest: -0.04, hp: -0.18, twist: 0.06 * s1,
+      aL: lerpN(-1.1, -2.85, u) + shake, aR: lerpN(-1.1, -2.85, vv) - shake, eL: lerpN(-1.7, -0.15, u), eR: lerpN(-1.7, -0.15, vv),
+      zL: 0.16, zR: -0.16,
+      hL: lerpN(-0.3, -1.05, stepL), hR: lerpN(-0.3, -1.05, stepR), kL: lerpN(0.5, 1.5, stepL), kR: lerpN(0.5, 1.5, stepR),
+      lean: 0.2 + 0.05 * tired, chest: 0.1, hp: -0.28, twist: 0.12 * s1 * m,
     });
-    bob = 0.02 * Math.abs(s1);
+    bob = -0.05;
   } else if (p.state === 'hang') {
     const sway = Math.sin(sec * 1.5);
     Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: 0.12 + sway * 0.1, hR: 0.22 - sway * 0.1, kL: 0.3, kR: 0.15, lean: sway * 0.03, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
@@ -1142,8 +1147,8 @@ function render(now, dt) {
     let d = cam.dist;
     for (; d > 1.1; d -= 0.2) { if (!insideAny(cam.target.x + dir.x * d, cam.target.y + dir.y * d, cam.target.z + dir.z * d, 0.25)) break; }
     cam.cur += (d - cam.cur) * (d < cam.cur ? 0.5 : 0.08);
-    camera.position.copy(cam.target).addScaledVector(dir, cam.cur);
-    camera.lookAt(cam.target);
+    if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur);
+    camera.lookAt(cam.target); }
   }
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
@@ -1168,4 +1173,4 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-window.__game = { touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { camera, touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

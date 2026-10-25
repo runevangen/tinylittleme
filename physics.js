@@ -117,7 +117,7 @@ export function newPlayer(x, y, z) {
     gait: 0, stepLen: 0.4,         // skrittfase (rad, π per skritt) og gjeldende skrittlengde
     carry: null, crushed: null, charge: 0, carryLatch: false,   // kast: hold-tid, og «ventet til F ble sluppet etter at noe ble tatt»
     hardLands: 0, knockout: false, vaulting: false, jumpSp: 0, toolWarn: 0,
-    stam: P.stamina, climb: null, climbPh: 0,        // klatring: stamina, flaten du henger på, og armtak-fase til animasjon
+    stam: P.stamina, climb: null, climbPh: 0, climbMove: 0,        // klatring: stamina, flaten du henger på, og armtak-fase til animasjon
     t: 0,
   };
 }
@@ -741,7 +741,7 @@ function climbStep(p, inp, wx, wz, dt, L) {
     for (const o of L.boxes) if (o !== b && o !== p.carry && overlaps(o, p.x, p.y, p.z)) { p.x = ox; p.z = oz; break; }
   }
   if (!vy && b.gripSlide) { p.onGround = false; moveY(p, -b.gripSlide * dt, L); if (p.onGround) { p.state = 'ground'; p.climb = null; p.vy = 0; return; } }   // vått gel: du sklir sakte
-  p.climbPh += (Math.abs(vy) + Math.abs(vs)) * dt * 3;
+  p.climbMove = Math.hypot(vy, vs); p.climbPh += p.climbMove * dt * 2.6;
   if (vy) {
     p.onGround = false; moveY(p, vy * dt, L);
     if (p.onGround) { p.state = 'ground'; p.climb = null; p.vy = 0; return; }       // ned til bakken
