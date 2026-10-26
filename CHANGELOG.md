@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.57** – Rettet: «i»-fliken i høyre hjørne gjorde ingenting når du ikke sto nær en ting (og fantes ikke i Soverom). Nå åpner den en bruksanvisning (mål, stikke, hopp, grip, TA, kamera, meny) på norsk eller engelsk; står du nær en ting du ikke har lest om, vises den først, og «›» / «‹» bytter. Fliken vises alltid under spilling.
 - **0.56** – Pust: egne valg i ⚙ → Lyd og stemme (volum 0–200 %, «Rolig pust også når du står stille» er av som standard), roligere og mykere pustelyd, og «Hør pust / skritt / hopp». Nye enkle volumvalg for skritt, hopp/landing/fall, ting og romlyd (hele lydmikseren ligger fortsatt bak admin).
 - **0.55** – Penere gange i alle retninger (sidesteg og rygging: bena svinger riktig vei, foten settes ut til siden, kroppen heller inn i bevegelsen). Står du stille i 3 s, snur figuren seg mot kameraet, smiler stort og blunker (⚙ → Spill kan slå det av).
 - **0.54** – PUBG-styring er standard: fast stikke (større treffsone), figuren ser alltid dit kameraet ser (sidelengs og bakover uten å snu seg), sveip hvor som helst for å se deg rundt, stikken halvveis = gå forsiktig, hopp uten forberedelse, TA = «skyteknapp» (hold = kast mot hårkorset). PC: musestyring med pekerlås (venstre = TA, høyre = GREP). Ny styringsstil «PUBG» i ⚙ → Styring (Prince/Klassisk/Spenning finnes fortsatt), «Flytende stikke» og «Musestyring» er valg.

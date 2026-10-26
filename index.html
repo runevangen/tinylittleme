@@ -31,7 +31,9 @@
   #infotab.dim{opacity:.4}
   #infobody{pointer-events:auto;flex:1;min-height:46px;box-sizing:border-box;background:#121a2cdd;border:2px solid #ffa940;border-right:0;border-radius:0 0 0 14px;padding:9px 13px;color:#eef2fa;font:500 14px/1.35 system-ui}
   #infocard:not(.show) #infobody{pointer-events:none}
-  #infobody b{display:block;color:#ffd9a0;font-size:15px;margin-bottom:2px}#infobody span{display:block}
+  #infocard.manual #infobody{max-height:62vh;overflow:auto;-webkit-overflow-scrolling:touch}
+  #infobody .ilink{display:block;margin-top:8px;padding:6px 10px;border:0;border-radius:8px;background:#ffffff22;color:#ffd9a0;font:700 13px system-ui;text-align:left}
+  #infobody b{display:block;color:#ffd9a0;font-size:15px;margin-bottom:2px}#infobody span{display:block;margin-top:7px}
   #stam{position:fixed;width:46px;height:7px;margin:-22px 0 0 -23px;border-radius:4px;background:#0009;border:1px solid #fff6;display:none;z-index:3;pointer-events:none;overflow:hidden}
   #stam i{display:block;height:100%;width:100%;background:#5fd16f;transform-origin:left}
   #stam.low i{background:#ffa940}#stam.crit i{background:#ff5a4d;animation:stampulse .35s infinite alternate}@keyframes stampulse{to{opacity:.45}}
