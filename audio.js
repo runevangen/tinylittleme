@@ -123,11 +123,11 @@ export function createAudio(ctx, opts = {}) {
   // ---- pust --------------------------------------------------------------
   function breath(kind, intensity, dur, delay = 0) {
     const t = now() + delay, k = clamp(intensity, 0, 1);
-    const peak = (kind === 'in' ? 0.04 : 0.055) + 0.26 * Math.pow(k, 1.3);
+    const peak = ((kind === 'in' ? 0.03 : 0.04) + 0.2 * Math.pow(k, 1.3)) * 0.8;   // roligere enn før
     const att = kind === 'in' ? dur * 0.6 : dur * 0.18;
     for (const [freq, q, mult] of [[kind === 'in' ? 1500 : 1100, 0.7 - 0.35 * k, 1], [3400, 0.5, 0.35 + 0.4 * k]]) {   // nese + munn (mer munn ved anstrengelse)
       const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
-      s.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q; lp.type = 'lowpass'; lp.frequency.value = 5200;
+      s.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q; lp.type = 'lowpass'; lp.frequency.value = 3600;
       g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak * mult, t + att); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       s.connect(f); f.connect(lp); lp.connect(g); g.connect(cur);
       s.start(t, rnd(0, 1.5)); s.stop(t + dur + 0.05);
@@ -143,6 +143,7 @@ export function createAudio(ctx, opts = {}) {
   }
   function tickBreath(dt, st) {
     const target = clamp((st.speed01 || 0) * 0.85 + (st.climbing ? 0.5 : 0), 0, 1);
+    if (!st.rest && effort < 0.18 && target < 0.1) { bphase = 0; effort = Math.max(0, effort - 0.06 * dt); return; }       // ingen jevn «hvilepust»: du puster først etter anstrengelse
     if (target > effort) effort += (target - effort) * (1 - Math.exp(-dt / 2.0));
     else effort = Math.max(target, effort - 0.06 * dt);
     const T = lerp(4.2, 0.7, Math.pow(effort, 0.8));

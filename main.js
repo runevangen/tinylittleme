@@ -1029,7 +1029,9 @@ addEventListener('blur', () => keys.clear());
 const held = (...codes) => codes.some((c) => keys.has(c));
 
 let camSens = store.get('tlm.camsens', 1);
-let idleWink = store.get('tlm.idlewink', true);
+let idleWink = store.get('tlm.idlewink', true), restBreath = store.get('tlm.restbreath', false);
+const mixSet = (ids, v) => { const mix = store.get('tlm.mix2', {}); for (const id of ids) { mix[id] = v; audio?.setLevel(id, v); } store.set('tlm.mix2', mix); };
+const mixGet = (id) => store.get('tlm.mix2', {})[id] ?? 1;
 let stickFloat = store.get('tlm.stickfloat', false), mouseLook = store.get('tlm.mouselook', true);
 let camAnim = null;                                                           // mykt kameraskift: {from, to, pf, pt, t}
 const angDiff = (a, b) => ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
@@ -1324,6 +1326,13 @@ const SETTINGS = [
     fl('voice', 'lyd', 'Stemme (figuren snakker)', true, () => voiceOn, kp('tlm.voice', (v) => { voiceOn = v; if (v) { primeVoice(); say('checkpoint', true); } })),
     rg('voicevol', 'lyd', 'Stemmevolum', 0.9, 0.2, 1, 0.1, () => voiceVol, kp('tlm.voicevol', (v) => { voiceVol = v; })),
   ] : []),
+  // Lydvalg som er lette å finne (hele lydmikseren med alle lydene ligger bak admin)
+  rg('mix_breath', 'lyd', 'Pust: volum (0 = av)', 1, 0, 2, 0.05, () => mixGet('breath'), (v) => mixSet(['breath', 'windup'], v), { pct: true }),
+  fl('restbreath', 'lyd', 'Rolig pust også når du står stille', false, () => restBreath, kp('tlm.restbreath', (v) => { restBreath = v; })),
+  rg('mix_steps', 'lyd', 'Skritt: volum', 1, 0, 2, 0.05, () => mixGet('step'), (v) => mixSet(['step'], v), { pct: true }),
+  rg('mix_move', 'lyd', 'Hopp, landing og fallvind: volum', 1, 0, 2, 0.05, () => mixGet('jump'), (v) => mixSet(['jump', 'land', 'fall', 'skid'], v), { pct: true }),
+  rg('mix_things', 'lyd', 'Ting (ta, slipp, knus): volum', 1, 0, 2, 0.05, () => mixGet('pickup'), (v) => mixSet(['pickup', 'drop', 'scrape', 'shatter'], v), { pct: true }),
+  rg('mix_room', 'lyd', 'Romlyd (drypp, vifte): volum', 1, 0, 2, 0.05, () => mixGet('drip'), (v) => mixSet(['drip', 'fan'], v), { pct: true }),
   // Test
   sl('preset', 'styring', 'Styringsstil', 'pubg', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset3', v); applyPreset(v); store.set('tlm.custom3', {}); }),
   sl('platform', 'test', `Enhet (sjekket ved start: ${platform.auto === 'mobil' ? 'mobil' : 'PC'})`, 'auto', [['auto', 'Automatisk'], ['mobil', 'Mobil (berøring)'], ['pc', 'PC (mus og tastatur)']], () => platform.pref, (v) => { store.set('tlm.platform', v); setTimeout(() => location.reload(), 150); }),
@@ -1338,7 +1347,7 @@ function resetAllSettings() {
   presetName = 'pubg'; store.set('tlm.preset3', presetName); applyPreset(presetName); store.set('tlm.custom3', {});
   for (const [k] of ADMIN_TUNE) P[k] = P0[k];
   for (const d of SETTINGS) if (d.group !== 'admin' && d.id !== 'preset' && d.id !== 'autograb') d.set(d.def);
-  store.set('tlm.mix2', {}); store.set('tlm.reverb', null);
+  store.set('tlm.mix2', {}); store.set('tlm.reverb', null); SOUND_LIST.forEach((sd) => audio?.setLevel(sd.id, 1)); restBreath = false; store.set('tlm.restbreath', false);
 }
 const fmtVal = (d, v) => (d.pct ? `${Math.round(v * 100)} %` : typeof v === 'number' ? (+v).toFixed(d.digits ?? (d.step < 0.1 ? 2 : 1)) : v);
 
@@ -1381,7 +1390,7 @@ function buildPanel() {
       <div class="row"><button id="bExport">Kopier innstillinger</button><button id="bImport">Lim inn innstillinger</button></div>
       <div class="row"><button id="bResetAll">Alt til standard</button></div>
       <small>Rapporten har versjon, enhet, endrede innstillinger, markeringer og siste hendelser. Send den som melding.</small>`;
-    if (g === 'lyd') extra = `<small id="voiceNote"></small>`;
+    if (g === 'lyd') extra = `<div class="row"><button id="bHearBreath">Hør pust</button><button id="bHearStep">Hør skritt</button><button id="bHearJump">Hør hopp</button></div><small id="voiceNote"></small>`;
     if (g === 'admin') extra = `<div class="row"><button id="pPlan">Plan</button><button id="pFly">Fly (ugyldig resultat)</button></div>
       <details><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary><label>Etterklang (rom) <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">${mixerHtml()}
         <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
@@ -1430,6 +1439,7 @@ function buildPanel() {
   };
   confirmed($('bResetAll'), 'Alt til standard', 0, () => { resetAllSettings(); logEv('alt til standard'); buildPanel(); applyUiFlags(); toast('Alt er satt til standard'); });
   // lyd
+  for (const [id, snd] of [['bHearBreath', 'breath'], ['bHearStep', 'step:wood'], ['bHearJump', 'jump']]) $(id).onclick = () => { unlockAudio(); Promise.resolve(audio?.resume()).then(() => audio?.preview(snd)); };
   if ($('voiceNote')) $('voiceNote').textContent = hasTTS ? (ttsVoice ? `Stemme: ${ttsVoice.name} (${ttsVoice.lang}). Lyden kommer fra telefonen.` : 'Fant ingen norsk stemme på denne enheten: da vises bare snakkebobler.') : '';
   // admin
   if (adminOn) {
@@ -1619,7 +1629,7 @@ function audioFrame(pre, dt) {
   audio.skid(p.skid ? Math.min(1, sp / P.speed) : 0);
   let moved = 0; (LEVEL.bodies || []).forEach((b, i) => { if (b.alive && !b.carried) moved += Math.abs(b.min[0] + b.min[2] - pre.bodies[i]); });
   audio.scrape(Math.min(1, moved / (dt * 3)));                                               // dytting
-  audio.tick(dt, { active: true, speed01: sp / P.speed, climbing: ['hang', 'mantle', 'swing', 'climb'].includes(p.state) });
+  audio.tick(dt, { active: true, rest: restBreath, speed01: sp / P.speed, climbing: ['hang', 'mantle', 'swing', 'climb'].includes(p.state) });
 }
 
 // ---------- tegning ----------
