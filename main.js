@@ -10,7 +10,21 @@ import { returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, free
 
 const $ = (id) => document.getElementById(id);
 // mobil (berøring) er hovedplattformen: tekst som nevner taster skal si knappene i stedet
-const TOUCH = matchMedia('(pointer:coarse)').matches;
+// sjekk ved oppstart: mobil (berøring som hovedpeker) eller PC (mus/tastatur). Kan overstyres i ⚙ → Test.
+const platform = (() => {
+  const q = (s) => matchMedia(s).matches;
+  let pref = 'auto'; try { pref = JSON.parse(localStorage.getItem('tlm.platform')) || 'auto'; } catch { /* privat modus */ }
+  const auto = q('(pointer:coarse)') ? 'mobil' : 'pc';
+  return { kind: pref === 'auto' ? auto : pref, pref, auto, coarse: q('(pointer:coarse)'), fine: q('(any-pointer:fine)'), hover: q('(hover:hover)'), touchPoints: navigator.maxTouchPoints || 0 };
+})();
+const TOUCH = platform.kind === 'mobil';
+let pcButtons = true; try { pcButtons = JSON.parse(localStorage.getItem('tlm.pcbtns')) !== false; } catch { /* privat modus */ }
+const applyPlatformUi = () => {
+  document.body.classList.toggle('mobile', TOUCH); document.body.classList.toggle('pc', !TOUCH);
+  document.body.classList.toggle('showbtns', TOUCH || pcButtons);
+  if (!TOUCH) for (const [id, k] of [['btnCarry', 'F'], ['btnJump', 'Mellomrom'], ['btnGrab', 'E / Shift'], ['btnCenter', 'Z']]) { const el = document.getElementById(id); if (el) el.dataset.k = k; }
+};
+applyPlatformUi();
 let lang = (() => { try { return JSON.parse(localStorage.getItem('tlm.lang')) || 'nb'; } catch { return 'nb'; } })();
 const { T, name: kindName } = makeT(() => lang);
 let GREP = TOUCH ? T('btn.grab') : 'Shift/E', TA = TOUCH ? T('btn.take') : 'F';          // TA følger knappen: sier den SMØR, heter den SMØR i teksten
@@ -1225,6 +1239,7 @@ const ADMIN_TUNE = [
 const PSET = (k) => (v) => { P[k] = v; saveCustom(); };
 const SETTINGS = [
   // Spill
+  fl('pcbtns', 'styring', 'Vis skjermknapper på PC (TA, HOPP, GREP)', true, () => pcButtons, kp('tlm.pcbtns', (v) => { pcButtons = v; applyPlatformUi(); })),
   sl('lang', 'spill', 'Språk / Language', 'nb', LANGS, () => lang, kp('tlm.lang', (v) => { lang = v; applyLang(); })),
   fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
@@ -1262,6 +1277,7 @@ const SETTINGS = [
   ] : []),
   // Test
   sl('preset', 'test', 'Hoppfølelse', 'prince', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset2', v); applyPreset(v); store.set('tlm.custom2', {}); }),
+  sl('platform', 'test', `Enhet (sjekket ved start: ${platform.auto === 'mobil' ? 'mobil' : 'PC'})`, 'auto', [['auto', 'Automatisk'], ['mobil', 'Mobil (berøring)'], ['pc', 'PC (mus og tastatur)']], () => platform.pref, (v) => { store.set('tlm.platform', v); setTimeout(() => location.reload(), 150); }),
   fl('fps', 'test', 'Vis bilder per sekund (FPS)', false, () => fpsOn, kp('tlm.fps', (v) => { fpsOn = v; applyUiFlags(); })),
   // Admin: hoppinnstillinger og fininnstilling av mekanikker (verdiene lagres som egen «custom»)
   ...[...TUNE, ...ADMIN_TUNE].map(([k, label, min, max, st]) => ({ id: 'p_' + k, group: 'admin', type: 'range', label, min, max, step: st, get def() { return defOf(k); }, get: () => P[k], set: PSET(k), digits: 2 })),
@@ -1284,7 +1300,7 @@ function buildReportInfo() {
   const t = nextTarget();
   return {
     version: VERSION, level: levelLabel, when: new Date().toLocaleString('nb-NO'), device: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 90),
-    screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
+    screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
     fps: perf.n ? `${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms` : 'fps ukjent',
     pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), state: player.state, target: t.final ? 'målet' : t.label, stats: { ...stats },
     changed: changedSettings(SETTINGS.filter((d) => d.group !== 'admin' || true).map((d) => ({ id: d.id, label: d.label, def: d.def, get: d.get }))),
@@ -1748,6 +1764,8 @@ function resize() {
 addEventListener('resize', resize); resize();
 
 applyLang();
+logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
+if (!TOUCH && !store.get('tlm.pcseen', false)) { store.set('tlm.pcseen', true); setTimeout(() => toast('PC: WASD går, mellomrom hopper, F tar, E griper, Z sentrerer kameraet. Du kan også klikke knappene.'), 2500); }
 let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.min(0.05, raw / 1000); last = now;

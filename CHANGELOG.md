@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.50** – Sjekk ved oppstart om enheten er mobil eller PC (berøring som hovedpeker). På PC vises nå skjermknappene (TA, HOPP, GREP, ◎) med tastene skrevet på, og de kan klikkes; en melding første gang forteller tastene. ⚙: «Vis skjermknapper på PC» og «Enhet» (auto/mobil/PC). Valget logges og står i testrapporten.
 - **0.49** – Prøve: 1. persons visning (⚙ → Kamera → Kamerasyn, eller ?view=first). Fungerer med alle mekanikker, men kanter og avstander er vanskelige å bedømme. Funn og forslag til forbedringer i docs/ETTPERSON.md.
 - **0.48** – TA-knappen heter det den gjør (SMØR, RULL UT, TRÆ, FEST OPPE/NEDE, SLIPP, SETT PÅ, KAST) med farge etter type og «klar»/dempet etter om handlingen går an der du står. Hint-linja og meldinger bruker samme navn. Språkvalg norsk/engelsk (⚙ → Spill): knapper, hint, kompass og visningsnavn på ting (`i18n.js`). Brukslappene i prøverommet er oppdatert.
 - **0.47** – Innstillingene er ryddet og samlet i én liste (SETTINGS) med grupper: Spill, Styring, Kamera, Hjelp og tekst, Lyd og stemme, Test og skjult Admin (7 trykk på tittelen eller ?admin=1). Mange nye valg (kompassmodus, stikke-dødsone, knappestørrelse, kameraavstand, kast med dra, autolagring m.fl.). For testing: «Marker her», «Del rapport» (versjon, enhet, FPS, endrede valg, hendelseslogg), kopier/lim inn innstillinger, «Alt til standard», FPS-visning. Se docs/INNSTILLINGER.md.

@@ -87,9 +87,15 @@
   .tbtn::after{content:'';position:absolute;inset:-9px;border-radius:50%}
   #stick{touch-action:none}
   #bar button.armed{background:#ffd23f;color:#1d2433}
-  @media (pointer:coarse){#stick{display:block;bottom:120px}.tbtn{display:flex}#help{display:none}
-    #bar #bLevel,#bar #bPlan,#bar #bFly,#bar #bSound{display:none}#bar{bottom:max(14px,env(safe-area-inset-bottom))}#bar button{padding:11px 16px;font-size:14px}
-    #btnJump{bottom:140px}#btnGrab{bottom:52px}#btnCarry{bottom:236px;width:76px;height:76px}#btnCenter{bottom:246px}#hint{bottom:112px}}
+  body.mobile #stick{display:block;bottom:120px}body.showbtns .tbtn{display:flex}body.mobile #help{display:none}
+  body.mobile #bar #bLevel,body.mobile #bar #bPlan,body.mobile #bar #bFly,body.mobile #bar #bSound{display:none}body.mobile #bar{bottom:max(14px,env(safe-area-inset-bottom))}body.mobile #bar button{padding:11px 16px;font-size:14px}
+  body.mobile #btnJump{bottom:140px}body.mobile #btnGrab{bottom:52px}body.mobile #btnCarry{bottom:236px;width:76px;height:76px}body.mobile #btnCenter{bottom:246px}body.mobile #hint{bottom:112px}
+  /* PC: samme knapper som på mobil (klikkbare), med tastene skrevet øverst */
+  body.pc .tbtn{cursor:pointer}
+  body.pc #help{max-height:calc(100vh - 400px);overflow:auto}
+  .tbtn[data-k]::before{content:attr(data-k);position:absolute;top:7px;left:0;right:0;text-align:center;font:600 10px system-ui;opacity:.85;pointer-events:none}
+  body.pc #btnCenter::before{top:3px}
+  body.pc #btnCarry,body.pc #btnJump,body.pc #btnGrab{padding-top:12px}
 </style>
 <script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
 </head>
