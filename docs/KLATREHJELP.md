@@ -4,6 +4,9 @@ Knappene på mobil: **TA** (ta/slipp/bruk/kast, hold = kast), **HOPP**, **GREP**
 
 Status: første versjon (v0.20). Verdiene står i `physics.js` (`P`) og er ment å justeres etter spilletest.
 
+## TA-knappen forandrer seg (v0.48)
+Knappen heter det den gjør nå, og har farge etter type: **grønn** TA, **blågrå** SLIPP / SETT PÅ, **oransje** bruk (SMØR, RULL UT, TRÆ, FEST OPPE, FEST NEDE), **rød** KAST. Oransje og pulserende = handlingen går an der du står; oransje og dempet = du må flytte deg (hint-linja sier hvor). Språk velges i ⚙ → Spill → Språk / Language (norsk og engelsk: TAKE, DROP, PLACE, SMEAR, UNROLL, THREAD, TIE UP, TIE DOWN, THROW; HOPP = JUMP, GREP = GRAB). Tingene har visningsnavn per slag (`NAMES` i `i18n.js`). I tekstene under står «TA» for knappen slik den heter når du ikke holder noe.
+
 ## Regler
 | | |
 |---|---|

@@ -4,13 +4,17 @@ import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo } from './props.js';
 import { createVoice } from './voice.js';
+import { makeT, LANGS } from './i18n.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
 // mobil (berøring) er hovedplattformen: tekst som nevner taster skal si knappene i stedet
 const TOUCH = matchMedia('(pointer:coarse)').matches;
-const GREP = TOUCH ? 'GREP' : 'Shift/E', TA = TOUCH ? 'TA' : 'F', key = (k) => (TOUCH ? '' : ` (${k})`);
+let lang = (() => { try { return JSON.parse(localStorage.getItem('tlm.lang')) || 'nb'; } catch { return 'nb'; } })();
+const { T, name: kindName } = makeT(() => lang);
+let GREP = TOUCH ? T('btn.grab') : 'Shift/E', TA = TOUCH ? T('btn.take') : 'F';          // TA følger knappen: sier den SMØR, heter den SMØR i teksten
+const key = (k) => (TOUCH ? '' : ` (${k})`);
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* privat modus e.l. */ } },
@@ -256,7 +260,6 @@ function updateLabels() {
   }
 }
 
-const THROWTXT = TOUCH ? `hold ${TA} og dra ned: sikt og kast` : `hold ${TA}: kast`;
 const nice = (id) => (id && (LEVEL.hints || []).find((h) => h.id === id)?.text.split('\n')[0]) || id || 'flaten';   // pent navn til hint-linja når brettet har en lapp for tingen
 
 // grep-kode: alt som kan klatres i har en varm oransje kant (alltid litt synlig); «Fremhev grep» i ⚙ gjør dem tydeligere og pulserende
@@ -1002,9 +1005,9 @@ function nextTarget() {
     else if (player.onGround) R.forEach((w, k) => { if (!w.grip && !w.via && player.y - w.top > -0.3 && player.y - w.top < 3.5 && player.x >= w.x0 - 0.3 && player.x <= w.x1 + 0.3 && player.z >= w.z0 - 0.3 && player.z <= w.z1 + 0.3) i = k; });   // flaten du står på (også når du står på en løs ting oppå)
     if (i >= 0) routeCur = i;
     const w = R[Math.min(routeCur + 1, R.length - 1)];
-    if (w !== R[R.length - 1]) return { x: Math.max(w.x0, Math.min(w.x1, player.x)), y: w.top, z: Math.max(w.z0, Math.min(w.z1, player.z)), label: w.label || nice(w.id).replace(/_/g, ' '), final: false, act: w.act || (w.grip ? 'klatre' : '') };
+    if (w !== R[R.length - 1]) return { x: Math.max(w.x0, Math.min(w.x1, player.x)), y: w.top, z: Math.max(w.z0, Math.min(w.z1, player.z)), label: (lang === 'en' && w.en) || w.label || nameOfId(w.id).replace(/_/g, ' '), final: false, act: w.act || (w.grip ? 'klatre' : '') };
   }
-  return { x: g[0], y: g[1], z: g[2], label: 'MÅL', final: true };
+  return { x: g[0], y: g[1], z: g[2], label: T('compass.goal'), final: true };
 }
 const camToGoal = () => { const t = nextTarget(); turnCamera(Math.atan2(-(t.x - player.x), -(t.z - player.z)), 0.32); };    // neste mål rett frem
 function stepCamAnim(dt) {
@@ -1026,7 +1029,7 @@ function compassFrame(now) {
   const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
   compArrow.style.transform = `rotate(${ang}rad)`;
   const dy = t.y - player.y;
-  $('compLbl').textContent = t.final ? 'MÅL' : `NESTE: ${t.label}`.toUpperCase();
+  $('compLbl').textContent = t.final ? T('compass.goal') : T('compass.next', { name: t.label.toUpperCase() });
   compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.act ? ` · ▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
   goalArrowG.position.set(player.x + dx / dist * 1.4, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * 1.4);
   goalArrowG.rotation.y = Math.atan2(-dx, -dz);
@@ -1219,6 +1222,7 @@ const ADMIN_TUNE = [
 const PSET = (k) => (v) => { P[k] = v; saveCustom(); };
 const SETTINGS = [
   // Spill
+  sl('lang', 'spill', 'Språk / Language', 'nb', LANGS, () => lang, kp('tlm.lang', (v) => { lang = v; applyLang(); })),
   fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
@@ -1443,12 +1447,12 @@ function update(dt) {
     else if (ev.type === 'exhausted') { setMood('hurt', 0.6); buzz(30); cue('puster tungt'); }
     else if (ev.type === 'use') {
       audio?.pickup(); buzz(20); setMood('happy', 0.9);
-      if (ev.tool === 'thread') { toast(`Nålen er trædd. Fest tråden øverst med ${TA}, gå så ned og fest den med ${TA} igjen.`); say('thread'); }
-      else if (ev.tool === 'zipA') toast(`Tråden er festet her. Gå dit den skal ende (lavere) og trykk ${TA}.`);
-      else if (ev.tool === 'zip') { toast(`Taubane! Gå tilbake til øvre ende og trykk ${GREP} for å henge deg i den.`); say('zip'); }
+      if (ev.tool === 'thread') { toast(T('toast.threaded', { tieTop: T('btn.tieTop') })); say('thread'); }
+      else if (ev.tool === 'zipA') toast(T('toast.tiedTop', { tieEnd: T('btn.tieEnd') }));
+      else if (ev.tool === 'zip') { toast(T('toast.zipMade', { grab: GREP })); say('zip'); }
       else say(ev.tool === 'gel' ? 'gel' : 'roll');
     }
-    else if (ev.type === 'toolhint') toast(ev.tool === 'needle' ? `Gå bort til en trådsnelle og trykk ${TA} for å træ nålen.` : ev.tool === 'spool' ? `Gå bort til en nål og trykk ${TA} for å træ den.` : ev.tool === 'zip' ? ({ 'zip-flat': 'For flatt: tråden må ende minst 8 cm lavere enn der den starter.', 'zip-far': 'For langt: tråden rekker høyst ca. 1,2 m.', 'zip-blocked': 'Noe er i veien for tråden.' }[ev.why] || `Stå på bakken og trykk ${TA} for å feste tråden.`) : ev.tool === 'gel' ? `Gå helt inntil en vegg og trykk ${TA} for å smøre. ${TA} igjen legger fra seg.` : `Gå helt ut til en kant og trykk ${TA} for å rulle ut. ${TA} igjen legger fra seg.`);
+    else if (ev.type === 'toolhint') toast(ev.tool === 'needle' ? T('toast.needSpool', { thread: T('btn.thread') }) : ev.tool === 'spool' ? T('toast.needNeedle', { thread: T('btn.thread') }) : ev.tool === 'zip' ? ({ 'zip-flat': T('toast.zipFlat'), 'zip-far': T('toast.zipFar'), 'zip-blocked': T('toast.zipBlocked') }[ev.why] || T('toast.zipStand', { tieTop: T('btn.tieTop') })) : ev.tool === 'gel' ? T('toast.needGel', { smear: T('btn.smear'), drop: T('btn.drop') }) : T('toast.needRoll', { unroll: T('btn.unroll'), drop: T('btn.drop') }));
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
   }
   if (player.hardLands > pre.hard) { logEv('hard landing'); setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
@@ -1555,7 +1559,7 @@ function insideAny(x, y, z, m) {
 }
 
 function render(now, dt) {
-  { const tb = document.getElementById('btnCarry'); const lab = player.carry && player.charge >= P.throwMin ? 'KAST' : 'TA'; if (tb && tb.textContent !== lab) { tb.textContent = lab; tb.style.background = lab === 'KAST' ? '#c77d12cc' : ''; } }   // knappen sier KAST når holdetiden er nådd
+  updateCarryButton();
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
   poseHero(player, now, dt, mode); animateHero(player, now, dt); updateBubble(now); updateStam();
   updateArc(); syncMade(); syncZips(); updateLabels();
@@ -1585,12 +1589,16 @@ function render(now, dt) {
   const hint = $('hint');
   if (mode === 'play' && !won) {
     const t = player.carry ? null : findCarryTarget(player, LEVEL);
-    const th = player.carry ? toolHint(player, LEVEL) : null;
-    const toolText = { gel: `${TA}: smør gel på veggen`, roll: `${TA}: rull ut et bånd over kanten`, 'need-gel': `Gå helt inntil en vegg, så smører ${TA} gel`, 'need-roll': `Gå helt ut til en kant, så ruller ${TA} ut et bånd`,
-      thread: `${TA}: træ nålen med tråden`, 'need-thread': 'Finn en trådsnelle å træ nålen med', 'need-needle': 'Finn en nål å træ tråden i',
-      'zip-a': `${TA}: fest tråden her (høyt oppe)`, 'zip-b': `Gå dit tråden skal ende (lavere), så fester ${TA} den` }[th];
-    const zn = !player.carry && zipNear(player, LEVEL);
-    hint.textContent = player.carry ? (player.charge >= P.throwMin ? `Slipp ${TA}: KAST` : toolText ? `${toolText} · ${THROWTXT}` : (() => { const sp = findPlaceSpot(player, LEVEL); return (sp && sp.c.type !== 'floor' && sp.min[1] > player.y + 0.2 ? `${TA}: sett på ${nice(sp.c.id)}` : `${TA}: slipp`) + ` · ${THROWTXT}`; })()) : zn ? `${GREP}: heng deg i tråden og skli ned` : t ? `${TA}: ta ${nice(t.id)}` : '';
+    const st = taState(), B = TOUCH ? T('btn.' + st.key) : 'F', zn = !player.carry && zipNear(player, LEVEL);
+    const throwTxt = TOUCH && aimThrowOn ? T('hint.dragThrow') : T('hint.holdThrow');
+    const SENT = { 'need-gel': 'hint.needGel', 'need-roll': 'hint.needRoll', 'need-thread': 'hint.needThread', 'need-needle': 'hint.needNeedle', 'zip-b': 'hint.tieEnd' };   // hele setninger (resten starter med knappen)
+    const ACT = { gel: 'hint.smear', roll: 'hint.unroll', thread: 'hint.thread', 'zip-a': 'hint.tieTop' };
+    hint.textContent = player.carry
+      ? (player.charge >= P.throwMin ? T('hint.releaseThrow', { btn: B })
+        : SENT[st.th] ? `${T(SENT[st.th], { btn: B })} · ${throwTxt}`
+        : ACT[st.th] ? `${B}: ${T(ACT[st.th])} · ${throwTxt}`
+        : `${B}: ${st.key === 'place' ? T('hint.place', { name: nameOfObj(st.sp.c) }) : T('hint.drop')} · ${throwTxt}`)
+      : zn ? T('hint.zipRide', { btn: GREP }) : t ? `${B}: ${T('hint.take', { name: nameOfObj(t) })}` : '';
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;
@@ -1693,12 +1701,38 @@ function updateOffscreen() {
   offEl.firstElementChild.style.transform = `rotate(${Math.atan2(x, y)}rad)`;
 }
 
+// ---------- TA-knappen: navn, farge og «klar» etter hva du holder og hva som er mulig der du står ----------
+const TA_MAP = { gel: ['smear', 1], 'need-gel': ['smear', 0], roll: ['unroll', 1], 'need-roll': ['unroll', 0], thread: ['thread', 1], 'need-thread': ['thread', 0], 'need-needle': ['thread', 0], 'zip-a': ['tieTop', 1], 'zip-b': ['tieEnd', 1] };
+function taState() {
+  const p = player;
+  if (p.carry) {
+    if (p.charge >= P.throwMin) return { key: 'throw', tone: 'throw', ready: true, th: null };
+    const th = toolHint(p, LEVEL), m = TA_MAP[th];
+    if (m) return { key: m[0], tone: 'use', ready: !!m[1], th };
+    const sp = findPlaceSpot(p, LEVEL);
+    return { key: sp && sp.c.type !== 'floor' && sp.min[1] > p.y + 0.2 ? 'place' : 'drop', tone: 'drop', ready: true, th, sp };
+  }
+  return { key: 'take', tone: 'take', ready: !!findCarryTarget(p, LEVEL), th: null };
+}
+let taPrev = '';
+function updateCarryButton() {
+  const s = taState(), label = T('btn.' + s.key), sig = `${s.key}|${s.tone}|${s.ready}|${lang}`;
+  if (TOUCH) TA = label;
+  if (sig === taPrev) return; taPrev = sig;
+  const tb = $('btnCarry'); tb.textContent = label; tb.className = `tbtn ${s.tone} ${s.ready ? 'ready' : 'dim'}${label.length > 6 ? ' long' : ''}`;
+}
+function applyLang() { GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); }
+// navn på ting: fra kind (norsk/engelsk), ellers lappen eller id-en
+const nameOfId = (id) => kindName(LEVEL.bodies?.find((b) => b.id === id)?.kind ?? LEVEL.boxes.find((b) => b.id === id)?.kind, nice(id));
+const nameOfObj = (o) => kindName(o?.kind, nice(o?.id));
+
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
 
+applyLang();
 let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.min(0.05, raw / 1000); last = now;

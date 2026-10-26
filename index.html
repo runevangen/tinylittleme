@@ -10,6 +10,10 @@
   canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   .hide{display:none!important}
   #fps{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));color:#bff;font:600 12px ui-monospace,monospace;background:#0008;padding:3px 7px;border-radius:7px;display:none;z-index:3;pointer-events:none}
+  #btnCarry.take{background:#2a7f62cc}#btnCarry.use{background:#c77d12e6}#btnCarry.throw{background:#c0392be6}#btnCarry.drop{background:#4b6a7acc}
+  #btnCarry.dim{opacity:.55}#btnCarry.take.dim{opacity:.8}
+  #btnCarry.ready.use{animation:taready 1s ease-in-out infinite alternate}@keyframes taready{to{box-shadow:0 0 0 8px #ffd27a66}}
+  #btnCarry.long{font-size:11.5px;line-height:1.05;text-align:center;padding:0 6px}
   .nocenter #btnCenter{display:none!important}
   .tbtn{transform:scale(var(--bs,1))}
   #hud{position:fixed;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));color:#fff;font:600 12px/1.35 ui-monospace,monospace;background:#0008;padding:6px 9px;border-radius:9px;white-space:pre}

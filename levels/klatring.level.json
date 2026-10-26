@@ -478,7 +478,7 @@
   },
   {
    "id": "svamp",
-   "text": "Svamp\nMyk. Bær den (TA) og slipp den der du skal lande.",
+   "text": "Svamp\nMyk. Bær den (TA) og legg den (SLIPP) der du skal lande.",
    "pos": [
     27.2,
     1.7,
@@ -523,7 +523,7 @@
   },
   {
    "id": "haargele",
-   "text": "Hårgelé\nKast den opp på hylla (hold TA). Ta den, smør veggen (TA), legg den fra deg, klatre (GREP). Våt i 20 s: sklir.",
+   "text": "Hårgelé\nKast den opp på hylla (hold knappen og dra ned). Ta den (TA), gå inntil veggen og trykk SMØR, legg den fra deg (SLIPP), klatre (GREP). Våt i 20 s: sklir.",
    "pos": [
     -27.6,
     2.9,
@@ -532,7 +532,7 @@
   },
   {
    "id": "nal",
-   "text": "Nål\nTa den (TA). Står du ved trådsnella, trykk TA igjen: nålen blir trædd. Så kan du lage en taubane.",
+   "text": "Nål\nTa den (TA). Står du ved trådsnella, trykk TRÆ: nålen blir trædd. Så kan du lage en taubane (FEST OPPE, FEST NEDE, GREP).",
    "pos": [
     -19.3,
     1.04,
@@ -541,7 +541,7 @@
   },
   {
    "id": "trad",
-   "text": "Trådsnelle\nBær nålen hit og trykk TA: nålen trædes. (Du kan også ta snella og trykke TA ved nålen.)",
+   "text": "Trådsnelle\nBær nålen hit og trykk TRÆ: nålen trædes. (Du kan også ta snella og trykke TRÆ ved nålen.)",
    "pos": [
     -17.2,
     1.6,
@@ -550,7 +550,7 @@
   },
   {
    "id": "dopapirrull",
-   "text": "Dopapirrull\nBær den til en kant og trykk TA: et bånd ruller ned. Klatre i det, men det revner etter ca. 7 s.",
+   "text": "Dopapirrull\nBær den (TA) til en kant og trykk RULL UT: et bånd ruller ned. Klatre i det, men det revner etter ca. 7 s.",
    "pos": [
     7,
     20.9,
@@ -587,6 +587,64 @@
   "reverb": 0.15
  },
  "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -40,
+   "x1": 40,
+   "z0": -30,
+   "z1": 30,
+   "top": 0
+  },
+  {
+   "id": "trinn_1",
+   "x0": 35.2,
+   "x1": 40,
+   "z0": -10,
+   "z1": 2,
+   "top": 3
+  },
+  {
+   "id": "trinn_2",
+   "x0": 30.4,
+   "x1": 35.2,
+   "z0": -10,
+   "z1": 2,
+   "top": 6
+  },
+  {
+   "id": "trinn_3",
+   "x0": 25.6,
+   "x1": 30.4,
+   "z0": -10,
+   "z1": 2,
+   "top": 9
+  },
+  {
+   "id": "trinn_4",
+   "x0": 20.8,
+   "x1": 25.6,
+   "z0": -10,
+   "z1": 2,
+   "top": 12
+  },
+  {
+   "id": "trinn_5",
+   "x0": 16,
+   "x1": 20.8,
+   "z0": -10,
+   "z1": 2,
+   "top": 15
+  },
+  {
+   "id": "tarn",
+   "x0": 0,
+   "x1": 16,
+   "z0": -14,
+   "z1": 6,
+   "top": 18
+  }
+ ],
  "start": [
   -32,
   0,

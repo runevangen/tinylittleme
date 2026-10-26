@@ -212,7 +212,7 @@
       "soft": true,
       "confidence": 1,
       "note": "Bær den opp, slipp den ned en annen vei, og hopp på den.",
-      "help": "Svamp\nMyk. Bær den (TA) og slipp den der du skal lande."
+      "help": "Svamp\nMyk. Bær den (TA) og legg den (SLIPP) der du skal lande."
     },
     {
       "id": "handkle_nede",
@@ -303,7 +303,7 @@
       "tool": "gel",
       "confidence": 1,
       "note": "Kast den opp på hylla (hold F og slipp), vault opp med ørepinnen, ta den og smør (F) mot skapveggen. Gelen er våt i 20 s (sklir og koster stamina), så fast.",
-      "help": "Hårgelé\nKast den opp på hylla (hold TA). Ta den, smør veggen (TA), legg den fra deg, klatre (GREP). Våt i 20 s: sklir."
+      "help": "Hårgelé\nKast den opp på hylla (hold knappen og dra ned). Ta den (TA), gå inntil veggen og trykk SMØR, legg den fra deg (SLIPP), klatre (GREP). Våt i 20 s: sklir."
     },
     {
       "id": "nal",
@@ -322,7 +322,7 @@
       "tool": "needle",
       "confidence": 1,
       "note": "Nål: trædes med trådsnellen, så kan du lage en taubane.",
-      "help": "Nål\nTa den (TA). Står du ved trådsnella, trykk TA igjen: nålen blir trædd. Så kan du lage en taubane."
+      "help": "Nål\nTa den (TA). Står du ved trådsnella, trykk TRÆ: nålen blir trædd. Så kan du lage en taubane (FEST OPPE, FEST NEDE, GREP)."
     },
     {
       "id": "trad",
@@ -341,7 +341,7 @@
       "tool": "spool",
       "confidence": 1,
       "note": "Trådsnelle: brukes opp når nålen trædes.",
-      "help": "Trådsnelle\nBær nålen hit og trykk TA: nålen trædes. (Du kan også ta snella og trykke TA ved nålen.)"
+      "help": "Trådsnelle\nBær nålen hit og trykk TRÆ: nålen trædes. (Du kan også ta snella og trykke TRÆ ved nålen.)"
     },
     {
       "id": "dopapirrull",
@@ -360,7 +360,7 @@
       "tool": "roll",
       "confidence": 1,
       "note": "Står øverst på tårnet. Bær den til kanten og trykk F: et bånd ruller ned. Det tåler et tak i ca. 7 s.",
-      "help": "Dopapirrull\nBær den til en kant og trykk TA: et bånd ruller ned. Klatre i det, men det revner etter ca. 7 s."
+      "help": "Dopapirrull\nBær den (TA) til en kant og trykk RULL UT: et bånd ruller ned. Klatre i det, men det revner etter ca. 7 s."
     }
   ],
   "look": {
