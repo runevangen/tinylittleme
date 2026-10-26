@@ -23,3 +23,6 @@ Kameraet sitter i øyehøyde (0,8 enheter ≈ 4 cm over føttene), 0,14 foran fi
 - Spilletest på ekte telefon med noen som ikke har spilt før.
 
 Anbefaling: behold som valgfri prøve; 3. person er best til plattformspill i denne skalaen. Hvis 1. person skal brukes, bør det være i rolige utforskingsbrett og ikke i klatre- og hoppbrett.
+
+## Over skulderen (v0.52)
+⚙ → Kamera → «Kamerasyn» → «Over skulderen (som PUBG)», eller `?view=shoulder`. Kameraet står tett bak figuren (3 enheter) og forskjøvet 0,5 til høyre (eller venstre skulder), litt lavere vinkel og synsfelt 58°. Et hårkors står midt på skjermen. Mens du bærer noe: hold TA litt (over ca. 0,3 s) og kastet går dit hårkorset peker, med kraft etter holdetiden (dra ned på TA-knappen virker også). Avstand, sideforskyvning, side og hårkors kan justeres i ⚙ → Kamera. Utoning og kamerahjelp virker som i vanlig 3. person. Figuren går fortsatt i «Prince»-gange (snur seg gradvis mot gangretningen), så den går ikke sidelengs.

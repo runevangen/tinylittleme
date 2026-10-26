@@ -85,7 +85,9 @@ let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', true), fpsOn = store.get('tlm.fps', false);
-let viewFirst = store.get('tlm.viewfirst', false) || new URLSearchParams(location.search).get('view') === 'first';
+let viewMode = new URLSearchParams(location.search).get('view') || store.get('tlm.view', store.get('tlm.viewfirst', false) ? 'first' : 'third');   // third | shoulder | first
+if (!['third', 'shoulder', 'first'].includes(viewMode)) viewMode = 'third';
+let viewFirst = viewMode === 'first', shDist = store.get('tlm.shdist', 3), shOff = store.get('tlm.shoff', 0.5), shSide = store.get('tlm.shside', 'right') === 'left' ? -1 : 1, xhairOn = store.get('tlm.xhair', true);
 let compassMode = store.get('tlm.compassmode', store.get('tlm.compass', true) === false ? 'off' : 'both');   // both | compass | arrow | off
 const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; };
 
@@ -1075,7 +1077,7 @@ canvas.addEventListener('pointermove', (e) => {
   }
   camAnim = null; c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000;
   c.pitch += dy * 0.005 * camSens;
-  const lim = mode === 'plan' ? [-0.3, 1.5] : viewFirst ? [-1.25, 1.25] : [-0.35, 1.35];
+  const lim = mode === 'plan' ? [-0.3, 1.5] : viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35];
   c.pitch = Math.min(lim[1], Math.max(lim[0], c.pitch));
 });
 let lastTap = { t: 0, x: 0, y: 0 };
@@ -1132,6 +1134,13 @@ const aimPt = { id: null, x0: 0, y0: 0, x: 0, y: 0 };
   el.addEventListener('pointermove', (e) => { if (e.pointerId === aimPt.id) { aimPt.x = e.clientX; aimPt.y = e.clientY; } });
   const end = (e) => { if (e.pointerId === aimPt.id) aimPt.id = null; };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
+// skulderkamera: etter at TA er holdt inne en stund kastes dit hårkorset peker (midt på skjermen); kraften vokser med holdetiden
+let shHold = 0;
+function shoulderAim(dt, fx, fz, held) {
+  shHold = held && player.carry ? shHold + dt : 0;
+  if (viewMode !== 'shoulder' || shHold < P.throwMin) return undefined;
+  return { dx: fx, dz: fz, k: Math.min(1, (shHold - P.throwMin) / P.throwFull) };
 }
 function aimInput(fx, fz, rx, rz) {
   if (!aimThrowOn || aimPt.id === null || !touch.carry || !player.carry) return undefined;
@@ -1256,7 +1265,11 @@ const SETTINGS = [
   ...(navigator.vibrate ? [fl('vib', 'styring', 'Vibrasjon', true, () => vibOn, kp('tlm.vib', (v) => { vibOn = v; if (v) buzz(30); }))] : []),
   // Kamera
   fl('autocam', 'kamera', `Kamera følger retning${key('X')}`, false, () => autoCam, kp('tlm.autocam', (v) => { autoCam = v; })),
-  sl('view', 'kamera', 'Kamerasyn / View', 'third', [['third', '3. person (bak figuren)'], ['first', '1. person (prøve)']], () => (viewFirst ? 'first' : 'third'), (v) => { viewFirst = v === 'first'; store.set('tlm.viewfirst', viewFirst); }),
+  sl('view', 'kamera', 'Kamerasyn / View', 'third', [['third', '3. person (bak figuren)'], ['shoulder', 'Over skulderen (som PUBG)'], ['first', '1. person (prøve)']], () => viewMode, (v) => { viewMode = v; viewFirst = v === 'first'; store.set('tlm.view', v); cam.pitch = v === 'shoulder' ? 0.18 : v === 'first' ? 0.05 : 0.3; if (v === 'third') cam.cur = camDistSet; }),
+  rg('shdist', 'kamera', 'Skulderkamera: avstand', 3, 1.6, 5, 0.1, () => shDist, kp('tlm.shdist', (v) => { shDist = v; })),
+  rg('shoff', 'kamera', 'Skulderkamera: sideforskyvning', 0.5, 0.2, 1.3, 0.05, () => shOff, kp('tlm.shoff', (v) => { shOff = v; })),
+  sl('shside', 'kamera', 'Skulderkamera: side', 'right', [['right', 'Høyre skulder'], ['left', 'Venstre skulder']], () => (shSide < 0 ? 'left' : 'right'), (v) => { shSide = v === 'left' ? -1 : 1; store.set('tlm.shside', v); }),
+  fl('xhair', 'kamera', 'Hårkors i skulderkamera (kast mot midten)', true, () => xhairOn, kp('tlm.xhair', (v) => { xhairOn = v; })),
   fl('camassist', 'kamera', 'Kameraet hjelper (over vegger, i fall og klatring)', true, () => camAssist, kp('tlm.camassist', (v) => { camAssist = v; })),
   fl('fade', 'kamera', 'Tone ut ting som står i veien for kameraet', true, () => fadeOn, kp('tlm.fade', (v) => { fadeOn = v; })),
   rg('fadeop', 'kamera', 'Utoning: synlighet (lavt = gjennomsiktig)', 0.16, 0.04, 0.7, 0.02, () => fadeOp, kp('tlm.fadeop', (v) => { fadeOp = v; }), { pct: true }),
@@ -1443,7 +1456,7 @@ function update(dt) {
     mx: rx * ix + fx * iz, mz: rz * ix + fz * iz,
     jumpPressed: jumpEdge, jumpHeld: held('Space') || touch.jump,
     grabPressed: grabEdge, grabHeld: held('ShiftLeft', 'ShiftRight', 'KeyE') || touch.grab,
-    carryPressed: carryEdge, carryHeld: held('KeyF') || touch.carry, aim: aimInput(fx, fz, rx, rz),
+    carryPressed: carryEdge, carryHeld: held('KeyF') || touch.carry, aim: aimInput(fx, fz, rx, rz) ?? shoulderAim(dt, fx, fz, held('KeyF') || touch.carry),
     walk: held('KeyC', 'AltLeft', 'AltRight'),
   };
   jumpEdge = grabEdge = carryEdge = false;
@@ -1654,24 +1667,27 @@ function render(now, dt) {
     const ka = 1 - Math.pow(0.15, dt);
     camLook += (lookT - camLook) * ka; camPitchBias += (pitchT - camPitchBias) * ka;
     cam.target.y = camFocusY + 0.62 + camLook;
+    const SH = viewMode === 'shoulder', baseDist = SH ? shDist : cam.dist;
+    const sdx = SH ? shSide * shOff * Math.cos(cam.yaw) : 0, sdz = SH ? -shSide * shOff * Math.sin(cam.yaw) : 0;       // sideforskyvning: kameraet over skulderen
     const dirAt = (pitch) => { const c = Math.cos(pitch); return new THREE.Vector3(Math.sin(cam.yaw) * c, Math.sin(pitch), Math.cos(cam.yaw) * c); };
-    const clearAt = (dv, dd) => !insideAny(cam.target.x + dv.x * dd, cam.target.y + dv.y * dd, cam.target.z + dv.z * dd, 0.25);
+    const clearAt = (dv, dd) => !insideAny(cam.target.x + dv.x * dd + sdx, cam.target.y + dv.y * dd, cam.target.z + dv.z * dd + sdz, 0.25);
     let liftT = 0;
-    if (camAssist && mode !== 'fly' && !clearAt(dirAt(cam.pitch + camPitchBias), cam.dist)) {         // noe i veien på full avstand: prøv en høyere vinkel
-      for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + o); if (clearAt(dirAt(pp), cam.dist)) { liftT = pp - cam.pitch - camPitchBias; break; } }
+    if (camAssist && mode !== 'fly' && !clearAt(dirAt(cam.pitch + camPitchBias), baseDist)) {         // noe i veien på full avstand: prøv en høyere vinkel
+      for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + o); if (clearAt(dirAt(pp), baseDist)) { liftT = pp - cam.pitch - camPitchBias; break; } }
     }
     camLift += (liftT - camLift) * (liftT > camLift ? 1 - Math.pow(0.02, dt) : 1 - Math.pow(0.2, dt));
     const pitchNow = Math.min(1.3, cam.pitch + camPitchBias + camLift);
     const cp = Math.cos(pitchNow), dir = new THREE.Vector3(Math.sin(cam.yaw) * cp, Math.sin(pitchNow), Math.cos(cam.yaw) * cp);
-    let d = cam.dist;
-    for (; d > 1.1; d -= 0.2) { if (!insideAny(cam.target.x + dir.x * d, cam.target.y + dir.y * d, cam.target.z + dir.z * d, 0.25)) break; }
+    let d = baseDist;
+    for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { if (!insideAny(cam.target.x + dir.x * d + sdx, cam.target.y + dir.y * d, cam.target.z + dir.z * d + sdz, 0.25)) break; }
     cam.cur += (d - cam.cur) * (d < cam.cur ? 0.5 : 0.08);
-    if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur);
-    camera.lookAt(cam.target); }
+    if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur); camera.position.x += sdx; camera.position.z += sdz;
+    camera.lookAt(cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0), cam.target.z + sdz); }
   }
-  { const fp = viewFirst && mode === 'play', fov = fp ? 74 : 50;
+  { const fp = viewFirst && mode === 'play', fov = fp ? 74 : viewMode === 'shoulder' ? 58 : 50;
     for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
     if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
+  { const xh = $('xhair'); if (xh) xh.style.display = viewMode === 'shoulder' && xhairOn && mode === 'play' ? 'block' : 'none'; }
   camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);

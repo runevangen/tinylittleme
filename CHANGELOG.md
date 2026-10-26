@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.52** – Prøve: «Over skulderen»-kamera (som PUBG): tett bak figuren med sideforskyvning, hårkors, og kast dit hårkorset peker. ⚙ → Kamera → Kamerasyn (3 valg), med avstand, sideforskyvning og side. Se docs/ETTPERSON.md.
 - **0.51** – Arbeidsregel: hvert svar avsluttes med status (kjørt til main, hva som er gjort, hvordan teste). Ingen endring i spillet.
 - **0.50** – Sjekk ved oppstart om enheten er mobil eller PC (berøring som hovedpeker). På PC vises nå skjermknappene (TA, HOPP, GREP, ◎) med tastene skrevet på, og de kan klikkes; en melding første gang forteller tastene. ⚙: «Vis skjermknapper på PC» og «Enhet» (auto/mobil/PC). Valget logges og står i testrapporten.
 - **0.49** – Prøve: 1. persons visning (⚙ → Kamera → Kamerasyn, eller ?view=first). Fungerer med alle mekanikker, men kanter og avstander er vanskelige å bedømme. Funn og forslag til forbedringer i docs/ETTPERSON.md.
