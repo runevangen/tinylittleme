@@ -71,6 +71,7 @@ let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', true), fpsOn = store.get('tlm.fps', false);
+let viewFirst = store.get('tlm.viewfirst', false) || new URLSearchParams(location.search).get('view') === 'first';
 let compassMode = store.get('tlm.compassmode', store.get('tlm.compass', true) === false ? 'off' : 'both');   // both | compass | arrow | off
 const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; };
 
@@ -117,6 +118,7 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 0.55;
 
 const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 400);
+const EYE_H = 0.8;   // øyehøyde over føttene (enheter)
 
 const sun = new THREE.DirectionalLight(0xffe7c2, LEVEL.look?.sun ?? 3.0);
 sun.castShadow = true;
@@ -751,6 +753,7 @@ const voice = createVoice({ speak: speakTTS, show: showBubble, now: () => perfor
 const say = (key, force) => voice.say(key, force);
 const _v3 = new THREE.Vector3();
 function updateBubble(now) {
+  if (viewFirst) { bubbleEl.classList.remove('show'); return; }
   if (now / 1000 > bubbleUntil) { bubbleEl.classList.remove('show'); return; }
   hero.head.getWorldPosition(_v3); _v3.y += 0.22; _v3.project(camera);
   if (_v3.z > 1) { bubbleEl.classList.remove('show'); return; }
@@ -759,7 +762,7 @@ function updateBubble(now) {
 }
 const stamEl = $('stam'), stamFill = stamEl.firstElementChild;
 function updateStam() {                                   // krefter-stripe over hodet mens du klatrer eller er sliten
-  const f = clampN(player.stam / P.stamina, 0, 1), show = mode === 'play' && (player.state === 'climb' || f < 0.97);
+  const f = clampN(player.stam / P.stamina, 0, 1), show = mode === 'play' && !viewFirst && (player.state === 'climb' || f < 0.97);
   stamEl.style.display = show ? 'block' : 'none'; if (!show) return;
   hero.head.getWorldPosition(_v3); _v3.y += 0.18; _v3.project(camera);
   stamEl.style.left = `${(_v3.x * 0.5 + 0.5) * innerWidth}px`; stamEl.style.top = `${(-_v3.y * 0.5 + 0.5) * innerHeight}px`;
@@ -994,7 +997,7 @@ let camSens = store.get('tlm.camsens', 1);
 let camAnim = null;                                                           // mykt kameraskift: {from, to, pf, pt, t}
 const angDiff = (a, b) => ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
 function turnCamera(toYaw, toPitch) { camAnim = { from: cam.yaw, d: angDiff(cam.yaw, toYaw), pf: cam.pitch, pt: toPitch ?? cam.pitch, t: 0 }; lastDrag = -99; }
-const camBehind = () => turnCamera(Math.atan2(-player.fx, -player.fz), 0.32);                       // bak figuren, litt ovenfra
+const camBehind = () => turnCamera(Math.atan2(-player.fx, -player.fz), viewFirst ? 0.1 : 0.32);                       // bak figuren, litt ovenfra
 // neste hinder: ruta fra rute-grafen (flater og grep-flater i rekkefølge); uten rute (håndlagde brett) er det målet
 let routeCur = 0;
 function nextTarget() {
@@ -1009,7 +1012,7 @@ function nextTarget() {
   }
   return { x: g[0], y: g[1], z: g[2], label: T('compass.goal'), final: true };
 }
-const camToGoal = () => { const t = nextTarget(); turnCamera(Math.atan2(-(t.x - player.x), -(t.z - player.z)), 0.32); };    // neste mål rett frem
+const camToGoal = () => { const t = nextTarget(); turnCamera(Math.atan2(-(t.x - player.x), -(t.z - player.z)), viewFirst ? 0.1 : 0.32); };    // neste mål rett frem
 function stepCamAnim(dt) {
   if (!camAnim) return; camAnim.t = Math.min(1, camAnim.t + dt / 0.4); const k = 1 - Math.pow(1 - camAnim.t, 3);
   cam.yaw = camAnim.from + camAnim.d * k; cam.pitch = camAnim.pf + (camAnim.pt - camAnim.pf) * k; if (camAnim.t >= 1) camAnim = null;
@@ -1058,7 +1061,7 @@ canvas.addEventListener('pointermove', (e) => {
   }
   camAnim = null; c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000;
   c.pitch += dy * 0.005 * camSens;
-  const lim = mode === 'plan' ? [-0.3, 1.5] : [-0.35, 1.35];
+  const lim = mode === 'plan' ? [-0.3, 1.5] : viewFirst ? [-1.25, 1.25] : [-0.35, 1.35];
   c.pitch = Math.min(lim[1], Math.max(lim[0], c.pitch));
 });
 let lastTap = { t: 0, x: 0, y: 0 };
@@ -1238,6 +1241,7 @@ const SETTINGS = [
   ...(navigator.vibrate ? [fl('vib', 'styring', 'Vibrasjon', true, () => vibOn, kp('tlm.vib', (v) => { vibOn = v; if (v) buzz(30); }))] : []),
   // Kamera
   fl('autocam', 'kamera', `Kamera følger retning${key('X')}`, false, () => autoCam, kp('tlm.autocam', (v) => { autoCam = v; })),
+  sl('view', 'kamera', 'Kamerasyn / View', 'third', [['third', '3. person (bak figuren)'], ['first', '1. person (prøve)']], () => (viewFirst ? 'first' : 'third'), (v) => { viewFirst = v === 'first'; store.set('tlm.viewfirst', viewFirst); }),
   fl('camassist', 'kamera', 'Kameraet hjelper (over vegger, i fall og klatring)', true, () => camAssist, kp('tlm.camassist', (v) => { camAssist = v; })),
   fl('fade', 'kamera', 'Tone ut ting som står i veien for kameraet', true, () => fadeOn, kp('tlm.fade', (v) => { fadeOn = v; })),
   rg('fadeop', 'kamera', 'Utoning: synlighet (lavt = gjennomsiktig)', 0.16, 0.04, 0.7, 0.02, () => fadeOp, kp('tlm.fadeop', (v) => { fadeOp = v; }), { pct: true }),
@@ -1429,7 +1433,7 @@ function update(dt) {
   jumpEdge = grabEdge = carryEdge = false;
   const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
   step(player, inp, dt, LEVEL);
-  if (autoCam && mode === 'play' && player.onGround && !player.carry && performance.now() / 1000 - lastDrag > 1.5) {       // sving kameraet bak figuren
+  if (autoCam && !viewFirst && mode === 'play' && player.onGround && !player.carry && performance.now() / 1000 - lastDrag > 1.5) {       // sving kameraet bak figuren
     const sp = Math.hypot(player.vx, player.vz);
     if (sp > 0.8) {
       const want = Math.atan2(-player.fx, -player.fz), d = ((want - cam.yaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
@@ -1611,6 +1615,13 @@ function render(now, dt) {
     desired = new THREE.Vector3(c.pivot.x + Math.sin(c.yaw) * cp * c.dist, Math.max(0.6, c.pivot.y + Math.sin(c.pitch) * c.dist), c.pivot.z + Math.cos(c.yaw) * cp * c.dist);
     camera.position.lerp(desired, 1 - Math.pow(0.0005, dt));
     camera.lookAt(look);
+  } else if (viewFirst && mode === 'play') {
+    // 1. person: kameraet sitter i figurens øyehøyde og følger den stivt (ingen etterslep). Hodet, skjerf og sekk skjules så de ikke står i veien.
+    const eyeY = player.y + EYE_H - (player.recover > 0.2 ? 0.12 : 0);
+    const fxz = [-Math.sin(cam.yaw), -Math.cos(cam.yaw)], cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+    camera.position.set(player.x + fxz[0] * 0.14, eyeY, player.z + fxz[1] * 0.14);
+    camera.lookAt(camera.position.x - Math.sin(cam.yaw) * cp, camera.position.y - sp, camera.position.z - Math.cos(cam.yaw) * cp);
+    cam.target.set(player.x, player.y + 0.62, player.z); camFocusY = player.y; cam.cur = cam.dist;
   } else {
     if (camFocusY === null || Math.hypot(player.x - cam.target.x, player.z - cam.target.z) > 12 || Math.abs(player.y - camFocusY) > 14) {
       camFocusY = player.y; cam.target.set(player.x, player.y + 0.62, player.z);   // stor teleportering (respawn): hopp direkte
@@ -1642,6 +1653,9 @@ function render(now, dt) {
     if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur);
     camera.lookAt(cam.target); }
   }
+  { const fp = viewFirst && mode === 'play', fov = fp ? 74 : 50;
+    for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
+    if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
@@ -1675,7 +1689,7 @@ function setFadeMats(e, on) {
   });
 }
 function updateFades(dt) {
-  const on = fadeOn && mode !== 'plan' && cam.cur > 0.6;
+  const on = fadeOn && mode !== 'plan' && cam.cur > 0.6 && !(viewFirst && mode === 'play');
   const a = [camera.position.x, camera.position.y, camera.position.z], d = [cam.target.x - a[0], cam.target.y - a[1], cam.target.z - a[2]];
   for (const e of fadeEntries) {
     const hit = on && e.boxes.some((b) => !b.carried && segHitsBox(a, d, b, 0.12));
@@ -1694,8 +1708,9 @@ function updateOffscreen() {
   hero.head.getWorldPosition(_v3); _v3.project(camera);
   const behind = _v3.z > 1, x = behind ? -_v3.x : _v3.x, y = behind ? -_v3.y : _v3.y;
   const out = behind || Math.abs(_v3.x) > 1.02 || _v3.y > 1.02 || _v3.y < -1.02;
-  offEl.style.display = out && mode === 'play' ? 'flex' : 'none';
-  if (!out || mode !== 'play') return;
+  const fpv = viewFirst && mode === 'play';
+  offEl.style.display = out && mode === 'play' && !fpv ? 'flex' : 'none';
+  if (!out || mode !== 'play' || fpv) return;
   const k = 1 / Math.max(Math.abs(x) / 0.86, Math.abs(y) / 0.72, 1e-3);
   offEl.style.left = `${(x * k * 0.5 + 0.5) * innerWidth}px`; offEl.style.top = `${(-y * k * 0.5 + 0.5) * innerHeight}px`;
   offEl.firstElementChild.style.transform = `rotate(${Math.atan2(x, y)}rad)`;
