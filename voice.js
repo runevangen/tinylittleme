@@ -13,6 +13,7 @@ export const LINES = {
   thread:     { say: ['Nå er den trædd.', 'Nål og tråd!'], gap: 15, p: 0.9 },
   zip:        { say: ['Taubane!', 'Det blir en fin tur.'], gap: 15, p: 0.9 },
   zipping:    { say: ['Wiiii!', 'Hurra!', 'Hold meg fast!'], gap: 12, p: 0.9 },
+  wink:       { say: ['Hei du!', 'Ja, det er meg.', 'Hehe.'], gap: 40, p: 0.6 },
   tore:       { say: ['Å nei!', 'Det holdt ikke!'], gap: 8, p: 1 },
   pickup:     { say: ['Den tar jeg.', 'Praktisk.', 'Den kan komme godt med.'], gap: 25, p: 0.45 },
   drop:       { say: ['Sånn.'], gap: 40, p: 0.3 },

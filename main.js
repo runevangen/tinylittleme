@@ -543,7 +543,7 @@ function buildHero() {
     return l;
   };
   const L = { armL: arm(-1), armR: arm(1), legL: leg(-1), legR: leg(1) };
-  const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0 };
+  const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0, lzL: 0, lzR: 0, roll: 0 };
   return { root, body, chest, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null, ikW: 0, hipY: 0.46,
     face, tailA, tailB, packG, helmet, sec: { a: 0, av: 0, b: 0, bv: 0, pk: 0, pkv: 0 }, mood: { name: '', t: 0 }, look: { x: 0, y: 0, tx: 0, ty: 0, t: 0 }, blink: { t: 2, v: 0 }, idleT: 0, talkT: 0 };
 }
@@ -586,8 +586,15 @@ const DIP_MAX = 0.17;   // hvor mye hoftene kan synke i hurk (landing/forberedel
 
 function poseHero(p, now, dt, mode) {
   const c = hero.cur, sp = Math.hypot(p.vx, p.vz), sec = now / 1000;
-  const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0 };
+  const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0, lzL: 0, lzR: 0, roll: 0 };
   let bob = 0;
+  // stå stille i 3 s: figuren snur seg mot kameraet og blunker (bare i skulder-/3. persons-visning med PUBG-styring)
+  { const [ix, iz] = axes(), idleIn = Math.hypot(ix, iz) < 0.05, ok = idleWink && P.faceCam && !viewFirst && mode === 'play' && !won && p.onGround && p.state === 'ground' && !p.carry && Math.hypot(p.vx, p.vz) < 0.15 && idleIn && p.recover <= 0;
+    hero.stillT = ok ? (hero.stillT || 0) + dt : 0;
+    const want = ok && hero.stillT > 3 ? 1 : 0;
+    hero.camTurn = (hero.camTurn || 0) + (want - (hero.camTurn || 0)) * (1 - Math.exp(-dt / (want ? 0.28 : 0.14)));
+    if (want && hero.camTurn > 0.9 && !hero.winked) { hero.winked = true; setMood('wink', 1.5); say('wink'); logEv('blunker'); }
+    if (!ok) hero.winked = false; }
 
   // akselerasjon langs blikkretningen: fremover når du setter fart, bakover når du bremser
   if (!hero.pv) hero.pv = [p.vx, p.vz];
@@ -678,10 +685,17 @@ function poseHero(p, now, dt, mode) {
       const stepIdx = Math.floor(hero.ph / Math.PI);
       if (stepIdx !== hero.lastStep) { hero.lastStep = stepIdx; if (audio && mode === 'play') footstep(stepIdx % 2 ? 1 : -1, sp); }
       const ph = hero.ph, sn = Math.sin(ph), amp = 0.5 + 0.45 * k;
+      // retning relativt til kroppen (PUBG: du går sidelengs og bakover): lf = fremover(+)/bakover(−), lx = sidelengs i kroppens x-retning
+      const lf = clampN((p.vx * p.fx + p.vz * p.fz) / sp, -1, 1), lx = clampN((p.vx * p.fz - p.vz * p.fx) / sp, -1, 1), side = Math.abs(lx), back = Math.max(0, -lf);
+      const swing = lf * (1 - 0.35 * side);                      // forover/bakover-sving: snur retning når du rygger, minkes mot sidelengs
+      const liftL = Math.max(0, sn), liftR = Math.max(0, -sn);   // benet som løftes
       Object.assign(T, {
-        hL: -sn * amp, hR: sn * amp,
-        kL: Math.max(0, Math.sin(ph + 1.6)) * (0.5 + 0.7 * k), kR: Math.max(0, Math.sin(ph + 1.6 + Math.PI)) * (0.5 + 0.7 * k),
-        aL: sn * (0.35 + 0.5 * k), aR: -sn * (0.35 + 0.5 * k), eL: -0.25 - 0.45 * k, eR: -0.25 - 0.45 * k, lean: 0.06 + 0.1 * k, chest: 0.04, twist: -0.1 * sn * k,
+        hL: -sn * amp * swing, hR: sn * amp * swing,
+        kL: Math.max(0, Math.sin(ph + 1.6)) * (0.5 + 0.7 * k) * (1 - 0.3 * back), kR: Math.max(0, Math.sin(ph + 1.6 + Math.PI)) * (0.5 + 0.7 * k) * (1 - 0.3 * back),
+        aL: sn * (0.35 + 0.5 * k) * Math.max(0.25, lf), aR: -sn * (0.35 + 0.5 * k) * Math.max(0.25, lf), eL: -0.25 - 0.45 * k, eR: -0.25 - 0.45 * k,
+        lean: Math.max(0.0, 0.06 + 0.1 * k) * Math.max(0, lf) - 0.04 * back, chest: 0.04 * Math.max(0.2, lf), twist: -0.1 * sn * k * Math.abs(lf),
+        // sidesteg: benet i svevefasen setter foten ut mot gangretningen, standbenet følger etter; kroppen lener seg litt inn i bevegelsen
+        lzL: lx * (0.55 * liftL - 0.12 * liftR) * Math.min(1, side * 1.3), lzR: lx * (0.55 * liftR - 0.12 * liftL) * Math.min(1, side * 1.3), roll: -lx * 0.09 * k,
       });
       bob = Math.abs(Math.cos(ph)) * 0.02 * k;
     } else if (idleNow) {                                       // hvile: pust i brystet, litt armsvev, hodet ser seg rundt
@@ -689,6 +703,7 @@ function poseHero(p, now, dt, mode) {
       T.chest = br * 0.02; T.lean = br * 0.008;
       T.aL = Math.sin(sec * 0.9) * 0.025 + br * 0.01; T.aR = Math.sin(sec * 0.9 + 1.3) * 0.025 - br * 0.01;
       T.hy = Math.sin(sec * 0.43) * 0.28 + Math.sin(sec * 0.17) * 0.18; T.hp = Math.sin(sec * 0.29) * 0.07;
+      if ((hero.camTurn || 0) > 0.3) { T.hy *= 1 - hero.camTurn; T.hp = 0.04 * hero.camTurn; }       // ser rett på deg
     }
     if (df > 0.01) {                                            // hurk: lent frem, armene bak (forberedelse) eller frem (landing)
       T.lean += 0.42 * df; T.chest += 0.14 * df; T.zL += 0.15 * df; T.zR -= 0.15 * df;
@@ -704,7 +719,7 @@ function poseHero(p, now, dt, mode) {
 
   // jevn overgang: armer/overkropp rolig, ben raskere; alt raskere i lufta og i hurk
   const quick = !p.onGround || p.windup > 0 || df > 0.2;
-  const slowKeys = new Set(['aL', 'aR', 'zL', 'zR', 'eL', 'eR', 'lean', 'chest', 'twist', 'hy', 'hp']);
+  const slowKeys = new Set(['aL', 'aR', 'zL', 'zR', 'eL', 'eR', 'lean', 'chest', 'twist', 'hy', 'hp', 'roll']);
   for (const key in T) c[key] += (T[key] - c[key]) * (1 - Math.exp(-dt / (slowKeys.has(key) ? (quick ? (!p.onGround && p.airT < 0.25 ? 0.04 : 0.06) : 0.14) : (!p.onGround ? 0.05 : 0.08))));
   hero.armL.top.rotation.set(c.aL, 0, -c.zL); hero.armR.top.rotation.set(c.aR, 0, -c.zR);
   hero.armL.mid.rotation.x = c.eL; hero.armR.mid.rotation.x = c.eR;
@@ -725,6 +740,7 @@ function poseHero(p, now, dt, mode) {
   hero.plL = plL; hero.plR = plR; hero.gaitWas = gaitOn;
   const mix = (fk, ik) => fk + (ik - fk) * w;
   hero.legL.top.rotation.x = mix(c.hL, ikL.theta); hero.legR.top.rotation.x = mix(c.hR, ikR.theta);
+  hero.legL.top.rotation.z = c.lzL; hero.legR.top.rotation.z = c.lzR; hero.body.rotation.z = c.roll;
   hero.legL.mid.rotation.x = mix(c.kL, ikL.kappa); hero.legR.mid.rotation.x = mix(c.kR, ikR.kappa);
   hero.legL.footG.rotation.x = mix(c.fp, -(ikL.theta + ikL.kappa) + pathL.pitch); hero.legR.footG.rotation.x = mix(c.fp, -(ikR.theta + ikR.kappa) + pathR.pitch);
   hero.legL.top.position.y = hero.legR.top.position.y = hipY;
@@ -736,8 +752,9 @@ function poseHero(p, now, dt, mode) {
   hero.head.rotation.x = c.hp - (c.lean + c.chest) * 0.7; hero.head.rotation.y = c.hy - c.twist * 0.6;
 
   // kroppen: i gange-modus snur fysikken gradvis; ellers begrenses snuhastigheten her
-  const target = Math.atan2(p.fx, p.fz);
-  if (P.gaitMode) hero.yaw = target;
+  let target = Math.atan2(p.fx, p.fz);
+  if ((hero.camTurn || 0) > 0.002) { const toCam = Math.atan2(camera.position.x - p.x, camera.position.z - p.z), dd = ((toCam - target + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; hero.yaw = target + dd * hero.camTurn; }
+  else if (P.gaitMode) hero.yaw = target;
   else {
     const d = ((target - hero.yaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
     const maxStep = P.turnRate * dt;
@@ -804,6 +821,7 @@ function animateHero(p, now, dt) {
   if (stunned) { eyeY = 0.12; bw = 0.35; op = 0.4; sm = -0.4; blush = 0.4; }
   if (mood === 'happy') { sm = 1; eyeY = 0.55; bl = 0.008; blush = 0.6; op = 0; bw = 0; }
   if (mood === 'worry') { bw = 0.4; bl = 0.008; sm = -0.3; eyeY = 1.1; }
+  if (mood === 'wink') { sm = 1; blush = 0.55; eyeY = 1; bw = -0.12; bl = 0.006; }
   if (mood === 'yawn') { op = 1.3; eyeY = 0.1; sm = 0; bl = 0.01; }
   if (h.talkT > 0 && !stunned) { op = Math.max(op, 0.55 + 0.45 * Math.sin(sec * 17)); sm = Math.max(sm, 0.2); }          // munnen beveger seg mens han snakker
   const k = 1 - Math.exp(-dt / 0.07);
@@ -823,6 +841,7 @@ function animateHero(p, now, dt) {
     f.brows[i].rotation.z = (i === 0 ? 1 : -1) * F.bw; f.brows[i].position.y = 0.04 + F.bl + (F.eyeY < 0.4 ? -0.006 : 0);
     f.blush[i].material.opacity = F.blush;
   }
+  if (mood === 'wink') { const wv = Math.sin(clampN((1.45 - h.mood.t) / 0.75, 0, 1) * Math.PI); f.eyes[1].scale.y = Math.max(0.07, 1 - 0.93 * wv); f.brows[1].position.y -= 0.012 * wv; }       // blunker med det ene øyet
   f.smile.visible = F.op < 0.5; f.smile.rotation.z = F.sm >= 0 ? Math.PI : 0; f.smile.scale.set(1 + 0.25 * Math.abs(F.sm), Math.max(0.12, Math.abs(F.sm)), 1);
   f.smile.position.y = -0.03 + (F.sm >= 0 ? 0.004 : -0.004);
   f.open.visible = F.op >= 0.5; f.open.scale.set(1 + 0.3 * F.op, 0.5 + 0.9 * F.op, 0.4);
@@ -1010,6 +1029,7 @@ addEventListener('blur', () => keys.clear());
 const held = (...codes) => codes.some((c) => keys.has(c));
 
 let camSens = store.get('tlm.camsens', 1);
+let idleWink = store.get('tlm.idlewink', true);
 let stickFloat = store.get('tlm.stickfloat', false), mouseLook = store.get('tlm.mouselook', true);
 let camAnim = null;                                                           // mykt kameraskift: {from, to, pf, pt, t}
 const angDiff = (a, b) => ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
@@ -1291,6 +1311,7 @@ const SETTINGS = [
   rg('camdist', 'kamera', 'Kameraavstand', 5.5, 3, 9, 0.1, () => cam.dist, kp('tlm.camdist', (v) => { cam.dist = v; camDistSet = v; })),
   // Hjelp og tekst
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
+  fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
   fl('griphi', 'hjelp', 'Fremhev grep (oransje, pulserende)', false, () => gripHi, kp('tlm.griphi', (v) => { gripHi = v; })),
   ...(labels.length ? [fl('labels', 'hjelp', `Brukslapper ved ting${key('L')}`, true, () => labelsOn, kp('tlm.labels', (v) => { labelsOn = v; }))] : []),

@@ -31,3 +31,7 @@ Korte replikker på norsk, sagt av nettleserens talesyntese (høy tone) og vist 
 - Samle-tilbehør (hatter m.m.) og valg av utseende; bytte stil (strikket, pysjamas).
 - Egne opptak/stemmeskuespiller i stedet for talesyntese.
 - Replikker som reagerer på bestemte ting i brettet (første møte med svamp osv.).
+
+## Gange i alle retninger og «hei du» (v0.55)
+- **Sidesteg og rygging:** gangen bruker bevegelsesretningen relativt til kroppen. Rygger du, svinger bena motsatt vei og kroppen lener seg litt bakover. Går du sidelengs, setter benet i svevefasen foten ut mot gangretningen (hoftens z-rotasjon `lzL`/`lzR`), standbenet følger etter, og kroppen heller litt inn i bevegelsen (`roll`). Armene svinger mindre sidelengs. Gjelder stiler uten gange-modus (PUBG, Klassisk, Spenning).
+- **Hei du:** står du helt stille i 3 s (ingen stikke, ikke bærer noe, på bakken), snur figuren seg rolig mot kameraet, ser på deg med stort smil og rødmer, og blunker med det ene øyet; stemmen kan si «Hei du!». Beveger du deg, snur den seg tilbake. Bare i 3. person/skulderkamera med PUBG-styring. Av/på: ⚙ → Spill → «Figuren snur seg og blunker …».

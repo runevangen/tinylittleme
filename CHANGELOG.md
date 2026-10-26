@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.55** – Penere gange i alle retninger (sidesteg og rygging: bena svinger riktig vei, foten settes ut til siden, kroppen heller inn i bevegelsen). Står du stille i 3 s, snur figuren seg mot kameraet, smiler stort og blunker (⚙ → Spill kan slå det av).
 - **0.54** – PUBG-styring er standard: fast stikke (større treffsone), figuren ser alltid dit kameraet ser (sidelengs og bakover uten å snu seg), sveip hvor som helst for å se deg rundt, stikken halvveis = gå forsiktig, hopp uten forberedelse, TA = «skyteknapp» (hold = kast mot hårkorset). PC: musestyring med pekerlås (venstre = TA, høyre = GREP). Ny styringsstil «PUBG» i ⚙ → Styring (Prince/Klassisk/Spenning finnes fortsatt), «Flytende stikke» og «Musestyring» er valg.
 - **0.53** – «Over skulderen»-kameraet (PUBG-stil) er nå standard. Gammel visning: ⚙ → Kamera → Kamerasyn → 3. person, eller ?view=third.
 - **0.52** – Prøve: «Over skulderen»-kamera (som PUBG): tett bak figuren med sideforskyvning, hårkors, og kast dit hårkorset peker. ⚙ → Kamera → Kamerasyn (3 valg), med avstand, sideforskyvning og side. Se docs/ETTPERSON.md.
