@@ -1096,7 +1096,7 @@ function activeCam() { return mode === 'plan' ? planCam : cam; }
 canvas.addEventListener('pointerdown', (e) => {
   canvas.setPointerCapture(e.pointerId);
   if (document.pointerLockElement === canvas) return;
-  if (!TOUCH && mouseLook && mode === 'play' && e.pointerType === 'mouse' && canvas.requestPointerLock) { canvas.requestPointerLock(); return; }      // PC: klikk for å styre blikket med musa (Esc slipper)
+  if (!TOUCH && mouseLook && mode === 'play' && e.pointerType === 'mouse' && canvas.requestPointerLock) { try { canvas.requestPointerLock(); } catch { /* ikke tillatt */ } }      // PC: klikk for å styre blikket med musa (Esc slipper); dra med musa virker også uten lås
   if (TOUCH && stickFloat && mode !== 'fly' && stickId === null && e.clientX < innerWidth * 0.5 && e.clientY > innerHeight * 0.2) {      // venstre halvdel: stikken dukker opp der tommelen treffer
     stickId = e.pointerId; setStickCenter(e.clientX, e.clientY); stick.classList.add('float'); stickMove(e); return;
   }
@@ -1469,8 +1469,9 @@ const V = new THREE.Vector3();
 function axes() {
   // dødsone på stikken: en tommel som bare hviler der skal ikke gi bevegelse (ga skjelvende armer og mikroskritt)
   const mag = Math.hypot(touch.x, touch.y), DZ = stickDead, tk = mag < DZ ? 0 : Math.pow((mag - DZ) / (1 - DZ), 1.35) / mag;   // myk kurve: finere kontroll nær midten
-  const ix = (held('KeyD', 'ArrowRight') ? 1 : 0) - (held('KeyA', 'ArrowLeft') ? 1 : 0) + touch.x * tk;
-  const iz = (held('KeyW', 'ArrowUp') ? 1 : 0) - (held('KeyS', 'ArrowDown') ? 1 : 0) + touch.y * tk;
+  const arrowsLook = P.faceCam && mode === 'play';                    // PUBG: piltastene ser deg rundt, WASD går
+  const ix = (held('KeyD', ...(arrowsLook ? [] : ['ArrowRight'])) ? 1 : 0) - (held('KeyA', ...(arrowsLook ? [] : ['ArrowLeft'])) ? 1 : 0) + touch.x * tk;
+  const iz = (held('KeyW', ...(arrowsLook ? [] : ['ArrowUp'])) ? 1 : 0) - (held('KeyS', ...(arrowsLook ? [] : ['ArrowDown'])) ? 1 : 0) + touch.y * tk;
   return [Math.max(-1, Math.min(1, ix)), Math.max(-1, Math.min(1, iz))];
 }
 const upKey = () => held('Space') || touch.jump;
@@ -1478,6 +1479,10 @@ const downKey = () => held('KeyC', 'ControlLeft', 'ControlRight') || touch.grab;
 const boost = () => held('ShiftLeft', 'ShiftRight');
 
 function update(dt) {
+  if (P.faceCam && mode === 'play') {                                  // PC: piltastene ser deg rundt (WASD går)
+    const yawIn = (held('ArrowLeft') ? 1 : 0) - (held('ArrowRight') ? 1 : 0), pitchIn = (held('ArrowDown') ? 1 : 0) - (held('ArrowUp') ? 1 : 0);
+    if (yawIn || pitchIn) { camAnim = null; lastDrag = performance.now() / 1000; cam.yaw += yawIn * 1.9 * camSens * dt; const lim = viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35]; cam.pitch = Math.min(lim[1], Math.max(lim[0], cam.pitch + pitchIn * 1.2 * camSens * dt)); }
+  }
   const [ix, iz] = axes();
   if (mode === 'plan') {
     const c = planCam, sp = c.dist * 0.6 * (boost() ? 2.5 : 1);
@@ -1690,7 +1695,7 @@ function render(now, dt) {
         : SENT[st.th] ? `${T(SENT[st.th], { btn: B })} · ${throwTxt}`
         : ACT[st.th] ? `${B}: ${T(ACT[st.th])} · ${throwTxt}`
         : `${B}: ${st.key === 'place' ? T('hint.place', { name: nameOfObj(st.sp.c) }) : T('hint.drop')} · ${throwTxt}`)
-      : zn ? T('hint.zipRide', { btn: GREP }) : t ? `${B}: ${T('hint.take', { name: nameOfObj(t) })}` : '';
+      : zn ? T('hint.zipRide', { btn: GREP }) : t ? `${B}: ${T('hint.take', { name: nameOfObj(t) })}` : (() => { const n = P.faceCam ? findCarryTarget(player, LEVEL, true) : null; return n ? T('hint.turn', { name: nameOfObj(n), look: T(TOUCH ? 'hint.look.touch' : 'hint.look.pc') }) : ''; })();
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;

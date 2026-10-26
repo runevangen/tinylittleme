@@ -492,7 +492,7 @@ export function dropCarry(p, L) {
 }
 
 // Nærmeste lette gjenstand foran deg som kan tas (eller null).
-export function findCarryTarget(p, L) {
+export function findCarryTarget(p, L, anyDir = false) {
   let best = null, bd = Infinity;
   for (const b of L.bodies || []) {
     if (!b.alive || b.weight !== 'light') continue;
@@ -501,7 +501,7 @@ export function findCarryTarget(p, L) {
     const d = Math.hypot(dx, dz);
     if (d > P.carryReach || b.max[1] < p.y - 0.3 || b.min[1] > p.y + H + 0.3) continue;
     const cx = (b.min[0] + b.max[0]) / 2 - p.x, cz = (b.min[2] + b.max[2]) / 2 - p.z, l = Math.hypot(cx, cz) || 1;
-    if (d > 0.15 && (cx * p.fx + cz * p.fz) / l < 0.2) continue;      // må være foran deg
+    if (!anyDir && d > 0.15 && (cx * p.fx + cz * p.fz) / l < 0.2) continue;      // må være foran deg
     if (d < bd) { bd = d; best = b; }
   }
   return best;

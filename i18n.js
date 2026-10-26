@@ -6,6 +6,7 @@ const DICT = {
   nb: {
     'btn.take': 'TA', 'btn.drop': 'SLIPP', 'btn.place': 'SETT PÅ', 'btn.throw': 'KAST', 'btn.smear': 'SMØR', 'btn.unroll': 'RULL UT', 'btn.thread': 'TRÆ',
     'btn.tieTop': 'FEST OPPE', 'btn.tieEnd': 'FEST NEDE', 'btn.jump': 'HOPP', 'btn.grab': 'GREP',
+    'hint.turn': 'Se mot {name} for å ta den ({look})', 'hint.look.touch': 'sveip', 'hint.look.pc': 'musa eller piltastene',
     'hint.take': 'ta {name}', 'hint.place': 'sett på {name}', 'hint.drop': 'slipp', 'hint.holdThrow': 'hold inne: kast', 'hint.dragThrow': 'hold inne og dra ned: sikt og kast',
     'hint.releaseThrow': 'Slipp {btn}: KAST', 'hint.smear': 'smør gel på veggen', 'hint.unroll': 'rull ut et bånd over kanten',
     'hint.needGel': 'Gå helt inntil en vegg, så smører {btn} gel', 'hint.needRoll': 'Gå helt ut til en kant, så ruller {btn} ut et bånd',
@@ -32,6 +33,7 @@ const DICT = {
   en: {
     'btn.take': 'TAKE', 'btn.drop': 'DROP', 'btn.place': 'PLACE', 'btn.throw': 'THROW', 'btn.smear': 'SMEAR', 'btn.unroll': 'UNROLL', 'btn.thread': 'THREAD',
     'btn.tieTop': 'TIE UP', 'btn.tieEnd': 'TIE DOWN', 'btn.jump': 'JUMP', 'btn.grab': 'GRAB',
+    'hint.turn': 'Look at {name} to pick it up ({look})', 'hint.look.touch': 'swipe', 'hint.look.pc': 'mouse or arrow keys',
     'hint.take': 'take {name}', 'hint.place': 'put on {name}', 'hint.drop': 'drop', 'hint.holdThrow': 'hold: throw', 'hint.dragThrow': 'hold and drag down to aim and throw',
     'hint.releaseThrow': 'Release {btn}: THROW', 'hint.smear': 'smear gel on the wall', 'hint.unroll': 'unroll a strip over the edge',
     'hint.needGel': 'Walk right up to a wall, then {btn} smears gel', 'hint.needRoll': 'Walk to an edge, then {btn} unrolls a strip',

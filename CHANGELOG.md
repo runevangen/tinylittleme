@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.58** – PC: F (TA) virket ikke når du ikke så mot tingen, og uten pekerlås kunne du ikke snu kameraet. Nå virker drag med musa også uten lås, piltastene ser deg rundt (WASD går), og står du ved en ting du ikke ser mot, sier hint-linja «Se mot X for å ta den». Rettet også en testfeil fra v0.57.
 - **0.57** – Rettet: «i»-fliken i høyre hjørne gjorde ingenting når du ikke sto nær en ting (og fantes ikke i Soverom). Nå åpner den en bruksanvisning (mål, stikke, hopp, grip, TA, kamera, meny) på norsk eller engelsk; står du nær en ting du ikke har lest om, vises den først, og «›» / «‹» bytter. Fliken vises alltid under spilling.
 - **0.56** – Pust: egne valg i ⚙ → Lyd og stemme (volum 0–200 %, «Rolig pust også når du står stille» er av som standard), roligere og mykere pustelyd, og «Hør pust / skritt / hopp». Nye enkle volumvalg for skritt, hopp/landing/fall, ting og romlyd (hele lydmikseren ligger fortsatt bak admin).
 - **0.55** – Penere gange i alle retninger (sidesteg og rygging: bena svinger riktig vei, foten settes ut til siden, kroppen heller inn i bevegelsen). Står du stille i 3 s, snur figuren seg mot kameraet, smiler stort og blunker (⚙ → Spill kan slå det av).
