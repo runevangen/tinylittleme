@@ -1010,6 +1010,7 @@ addEventListener('blur', () => keys.clear());
 const held = (...codes) => codes.some((c) => keys.has(c));
 
 let camSens = store.get('tlm.camsens', 1);
+let stickFloat = store.get('tlm.stickfloat', false), mouseLook = store.get('tlm.mouselook', true);
 let camAnim = null;                                                           // mykt kameraskift: {from, to, pf, pt, t}
 const angDiff = (a, b) => ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
 function turnCamera(toYaw, toPitch) { camAnim = { from: cam.yaw, d: angDiff(cam.yaw, toYaw), pf: cam.pitch, pt: toPitch ?? cam.pitch, t: 0 }; lastDrag = -99; }
@@ -1060,7 +1061,9 @@ let pinch0 = 0;
 function activeCam() { return mode === 'plan' ? planCam : cam; }
 canvas.addEventListener('pointerdown', (e) => {
   canvas.setPointerCapture(e.pointerId);
-  if (TOUCH && mode !== 'fly' && stickId === null && e.clientX < innerWidth * 0.5 && e.clientY > innerHeight * 0.2) {      // venstre halvdel: stikken dukker opp der tommelen treffer
+  if (document.pointerLockElement === canvas) return;
+  if (!TOUCH && mouseLook && mode === 'play' && e.pointerType === 'mouse' && canvas.requestPointerLock) { canvas.requestPointerLock(); return; }      // PC: klikk for å styre blikket med musa (Esc slipper)
+  if (TOUCH && stickFloat && mode !== 'fly' && stickId === null && e.clientX < innerWidth * 0.5 && e.clientY > innerHeight * 0.2) {      // venstre halvdel: stikken dukker opp der tommelen treffer
     stickId = e.pointerId; setStickCenter(e.clientX, e.clientY); stick.classList.add('float'); stickMove(e); return;
   }
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
@@ -1096,6 +1099,16 @@ function zoom(f) {
 }
 canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
 
+// PC: musestyring som i PUBG (pekerlås): musa dreier blikket, venstre knapp = TA (hold = lad kast), høyre = GREP
+document.addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== canvas || mode !== 'play') return;
+  cam.yaw -= e.movementX * 0.0022 * camSens; lastDrag = performance.now() / 1000; camAnim = null;
+  const lim = viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35];
+  cam.pitch = Math.min(lim[1], Math.max(lim[0], cam.pitch + e.movementY * 0.0018 * camSens));
+});
+canvas.addEventListener('mousedown', (e) => { if (document.pointerLockElement !== canvas) return; if (e.button === 0) { touch.carry = true; carryEdge = true; } if (e.button === 2) { touch.grab = true; grabEdge = true; } });
+addEventListener('mouseup', (e) => { if (e.button === 0) touch.carry = false; if (e.button === 2) touch.grab = false; });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 const stick = $('stick'), knob = $('knob');
 let stickId = null, stickC = null;                                   // pekerid og midtpunkt (px) mens stikken er i bruk
 function setStickCenter(x, y) { stickC = [x, y]; stick.style.left = `${x - 65}px`; stick.style.top = `${y - 65}px`; stick.style.bottom = 'auto'; stick.style.display = 'block'; }
@@ -1179,10 +1192,10 @@ const TUNE = [
   ['reachAbove', 'Grep: ekstra rekkevidde opp', 0, 1.5, 0.05], ['ropeReach', 'Tau-rekkevidde', 0.8, 3.5, 0.1],
 ];
 const P0_SNAPSHOT = { ...P };
-let presetName = store.get('tlm.preset2', 'prince');
+let presetName = store.get('tlm.preset3', 'pubg');
 if (!PRESETS[presetName]) presetName = 'prince';
 applyPreset(presetName);
-Object.assign(P, store.get('tlm.custom2', {}));
+Object.assign(P, store.get('tlm.custom3', {}));
 // ---------- lydmikser ----------
 function mixerHtml() {
   const groups = {};
@@ -1258,6 +1271,8 @@ const SETTINGS = [
   rg('camsens', 'styring', 'Kamerafølsomhet (dra)', 1, 0.4, 2, 0.1, () => camSens, kp('tlm.camsens', (v) => { camSens = v; })),
   rg('stickdead', 'styring', 'Stikke: dødsone (mot skjelving)', 0.22, 0, 0.4, 0.02, () => stickDead, kp('tlm.stickdead', (v) => { stickDead = v; })),
   rg('btnscale', 'styring', 'Knappestørrelse', 1, 0.8, 1.3, 0.05, () => btnScale, kp('tlm.btnscale', (v) => { btnScale = v; applyUiFlags(); })),
+  fl('stickfloat', 'styring', 'Flytende stikke (følger tommelen) i stedet for fast som i PUBG', false, () => stickFloat, kp('tlm.stickfloat', (v) => { stickFloat = v; })),
+  ...(!TOUCH ? [fl('mouselook', 'styring', 'Musestyring (klikk i bildet: mus ser deg rundt, venstre = TA, høyre = GREP)', true, () => mouseLook, kp('tlm.mouselook', (v) => { mouseLook = v; if (!v && document.pointerLockElement) document.exitPointerLock(); }))] : []),
   fl('aimthrow', 'styring', 'Kast med dra og slipp (hold TA, dra ned)', true, () => aimThrowOn, kp('tlm.aimthrow', (v) => { aimThrowOn = v; })),
   fl('dbltap', 'styring', 'Dobbelttrykk på skjermen sentrerer kameraet', true, () => dblTapOn, kp('tlm.dbltap', (v) => { dblTapOn = v; })),
   fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', true, () => showCenter, kp('tlm.showcenter', (v) => { showCenter = v; applyUiFlags(); })),
@@ -1289,7 +1304,7 @@ const SETTINGS = [
     rg('voicevol', 'lyd', 'Stemmevolum', 0.9, 0.2, 1, 0.1, () => voiceVol, kp('tlm.voicevol', (v) => { voiceVol = v; })),
   ] : []),
   // Test
-  sl('preset', 'test', 'Hoppfølelse', 'prince', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset2', v); applyPreset(v); store.set('tlm.custom2', {}); }),
+  sl('preset', 'styring', 'Styringsstil', 'pubg', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset3', v); applyPreset(v); store.set('tlm.custom3', {}); }),
   sl('platform', 'test', `Enhet (sjekket ved start: ${platform.auto === 'mobil' ? 'mobil' : 'PC'})`, 'auto', [['auto', 'Automatisk'], ['mobil', 'Mobil (berøring)'], ['pc', 'PC (mus og tastatur)']], () => platform.pref, (v) => { store.set('tlm.platform', v); setTimeout(() => location.reload(), 150); }),
   fl('fps', 'test', 'Vis bilder per sekund (FPS)', false, () => fpsOn, kp('tlm.fps', (v) => { fpsOn = v; applyUiFlags(); })),
   // Admin: hoppinnstillinger og fininnstilling av mekanikker (verdiene lagres som egen «custom»)
@@ -1297,9 +1312,9 @@ const SETTINGS = [
 ];
 const visible = (d) => d.group !== 'admin' || adminOn;
 
-function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of [...TUNE, ...ADMIN_TUNE]) o[k] = P[k]; store.set('tlm.custom2', o); }
+function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of [...TUNE, ...ADMIN_TUNE]) o[k] = P[k]; store.set('tlm.custom3', o); }
 function resetAllSettings() {
-  presetName = 'prince'; store.set('tlm.preset2', presetName); applyPreset(presetName); store.set('tlm.custom2', {});
+  presetName = 'pubg'; store.set('tlm.preset3', presetName); applyPreset(presetName); store.set('tlm.custom3', {});
   for (const [k] of ADMIN_TUNE) P[k] = P0[k];
   for (const d of SETTINGS) if (d.group !== 'admin' && d.id !== 'preset' && d.id !== 'autograb') d.set(d.def);
   store.set('tlm.mix2', {}); store.set('tlm.reverb', null);
@@ -1457,7 +1472,8 @@ function update(dt) {
     jumpPressed: jumpEdge, jumpHeld: held('Space') || touch.jump,
     grabPressed: grabEdge, grabHeld: held('ShiftLeft', 'ShiftRight', 'KeyE') || touch.grab,
     carryPressed: carryEdge, carryHeld: held('KeyF') || touch.carry, aim: aimInput(fx, fz, rx, rz) ?? shoulderAim(dt, fx, fz, held('KeyF') || touch.carry),
-    walk: held('KeyC', 'AltLeft', 'AltRight'),
+    walk: held('KeyC', 'AltLeft', 'AltRight') || (P.faceCam && TOUCH && touch.x * touch.x + touch.y * touch.y < 0.3 && touch.x * touch.x + touch.y * touch.y > 0.01),
+    face: P.faceCam && mode === 'play' ? { dx: fx, dz: fz } : undefined,
   };
   jumpEdge = grabEdge = carryEdge = false;
   const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };

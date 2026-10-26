@@ -3,7 +3,7 @@
 // Verden: akse-justerte bokser. x/z er gulvplanet, y er opp. Enhet ≈ «spillerhøyde» (1.0).
 
 // Felles bevegelsesvekt: klassisk og spenning er «umiddelbare» (som før); prince har treghet, oppbygging og tidsbruk.
-const SNAPPY = { gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4, hardLand: Infinity, knockV: Infinity };
+const SNAPPY = { faceCam: false, gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4, hardLand: Infinity, knockV: Infinity };
 
 export const PRESETS = {
   // Slik det var først: raskt, to hopp, kanten grips av seg selv.
@@ -21,7 +21,7 @@ export const PRESETS = {
   // Prince of Persia-følelse: du bygger opp fart, snur ikke på stedet, hopp har forberedelse,
   // landing etter høyt fall tar tid, og å hive seg opp på en kant er en bevegelse som tar tid.
   prince: {
-    label: 'Prince', speed: 2.8, accel: 7, decel: 12, turnDecel: 10, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 8,
+    label: 'Prince', faceCam: false, speed: 2.8, accel: 7, decel: 12, turnDecel: 10, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 8,
     gaitMode: true, jumpBoost: 2.0, turnRate: 8, stepMin: 0.25, cadence0: 1.8, cadenceK: 0.6, creep: 0.45,
     autoGrab: false, reachTime: 0.45, reachCooldown: 0.6, ledgeAbove: 0.3, reachAbove: 0.75,
     ropeReach: 2.0, wallKick: 7, wallUp: 11, slide: -3.5, swingPush: 14, ropeJump: 10,
@@ -29,6 +29,9 @@ export const PRESETS = {
     hardLand: 18, knockV: 27,     // landingsfart (enheter/s): hard landing (bedøvet) og så hard at du må tilbake til lagringspunktet
   },
 };
+
+// PUBG-lik styring: figuren ser alltid dit kameraet ser, og du går sidelengs og bakover uten å snu deg (se `faceCam`). Resten (hopp, landing, klatring) som i Prince.
+PRESETS.pubg = { ...PRESETS.prince, label: 'PUBG (kamera styrer)', gaitMode: false, faceCam: true, speed: 4.2, accel: 34, decel: 44, turnDecel: 44, airAccel: 10, jumpBoost: 1.35, jumpWindup: 0, turnRate: 20, walkFactor: 0.45 };
 
 export const P = {
   w: 0.6,
@@ -51,6 +54,7 @@ export const P = {
   walkFactor: 0.4,   // fartsfaktor når du går forsiktig (C)
   turnRate: 8,       // hvor fort figuren snur kroppen (rad/s)
   // gange med skritt (gaitMode): bevegelsen styres av skrittene, ikke omvendt
+  faceCam: false,    // true (PUBG): figuren ser alltid dit kameraet ser (inp.face), og styrer sidelengs/bakover uten å snu seg
   gaitMode: false,   // true: du går i blikkretningen, snur kroppen først, og stopper ved skrittgrensen
   stepMin: 0.25,     // korteste skrittlengde
   cadence0: 1.8, cadenceK: 0.6,   // skritt per sekund = cadence0 + cadenceK * fart
@@ -658,6 +662,7 @@ function sub(p, inp, dt, L) {
     p.skid = p.onGround && rev && speed0 > 2;
     // blikkretningen følger inputen først når du faktisk er på vei den veien (ikke mens du sklir motsatt)
     if (P.gaitMode && !p.onGround) { if (speed0 > 0.5) { p.fx = p.vx / speed0; p.fz = p.vz / speed0; } }   // i lufta: blikk = fartsretning
+    else if (P.faceCam && inp.face && p.lock <= 0) { p.fx = inp.face.dx; p.fz = inp.face.dz; }   // PUBG: blikket følger kameraet, ikke gangretningen
     else if (wl > 0.1 && p.lock <= 0 && (!rev || speed0 < 1.5)) { p.fx = wx / wl; p.fz = wz / wl; }
   
     if (p.lock <= 0) {

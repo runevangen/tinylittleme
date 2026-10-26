@@ -825,6 +825,24 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// 35. PUBG-styring: blikket følger kameraet (inp.face); du går sidelengs og bakover uten å snu deg
+{
+  applyPreset('pubg');
+  const L = { boxes: [floor], ropes: [] }; const p = newPlayer(0, 0, 0);
+  const go = (n, inp) => { for (let i = 0; i < n; i++) step(p, { ...idle, ...inp }, 1 / 60, L); };
+  go(10, {});
+  const face = { dx: 0, dz: -1 };                                   // kameraet ser mot -z
+  go(60, { mx: 1, mz: 0, face });                                  // stikken til høyre = sidelengs (+x)
+  assert.ok(p.vx > 3, `går sidelengs (vx=${p.vx.toFixed(1)})`); assert.ok(Math.abs(p.vz) < 0.2, 'ikke fremover');
+  assert.ok(Math.abs(p.fx) < 1e-6 && Math.abs(p.fz + 1) < 1e-6, 'ser fortsatt dit kameraet ser');
+  go(60, { mx: 0, mz: 1, face });                                  // bakover (+z) mens blikket er -z
+  assert.ok(p.vz > 3 && p.fz < -0.99, `rygger (vz=${p.vz.toFixed(1)}, fz=${p.fz.toFixed(2)})`);
+  go(60, { mx: 0, mz: 0, face }); assert.ok(Math.hypot(p.vx, p.vz) < 0.1, 'stopper raskt');
+  const y0 = p.y; go(1, { jumpPressed: true, jumpHeld: true, face }); go(3, { jumpHeld: true, face }); assert.ok(p.vy > 5 || p.y > y0, 'hopper uten forberedelse');
+  applyPreset('prince'); assert.equal(P.faceCam, false, 'andre stiler slår av faceCam');
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 
