@@ -92,6 +92,9 @@ export const P = {
   supportMin: 0.45,  // minste andel av fotavtrykket som må hvile på noe, ellers glir tingen av
 };
 
+// Mario-stil: figuren snur mot gangretningen (kamera og kropp er uavhengige), kameraet følger etter (se camera_util.js)
+PRESETS.mario = { ...PRESETS.pubg, label: 'Mario (kameraet følger etter)', faceCam: false, turnRate: 14 };
+
 export function applyPreset(name) {
   const { label, ...vals } = PRESETS[name];
   Object.assign(P, vals);
@@ -525,6 +528,18 @@ function updateCarried(p, L) {
   b.min = [cx - sx / 2, y0, cz - sz / 2]; b.max = [cx + sx / 2, y0 + sy, cz + sz / 2];
   if (blockedBody(b, L)) { b.min = oldMin; b.max = oldMax; }
   if (Math.hypot((b.min[0] + b.max[0]) / 2 - p.x, (b.min[2] + b.max[2]) / 2 - p.z) > 3) dropCarry(p, L);
+}
+
+// Flaten rett under figuren (til skygge og landingsmarkør): høyeste topp under y innenfor fotavtrykket. Returnerer {top, soft} eller null.
+export function surfaceBelow(L, x, y, z, hw = 0.3) {
+  let best = null;
+  for (const b of L.boxes) {
+    if (b.carried || b.type === 'wall') continue;
+    if (x + hw < b.min[0] || x - hw > b.max[0] || z + hw < b.min[2] || z - hw > b.max[2]) continue;
+    if (b.max[1] > y + 0.15) continue;
+    if (!best || b.max[1] > best.top) best = { top: b.max[1], soft: !!b.soft };
+  }
+  return best;
 }
 
 // Fare-volum (vann, do-skål, kar): AABB som spilleren ikke skal berøre. Returnerer faren eller null.

@@ -1,7 +1,7 @@
 // node tinylittleme/test_physics.mjs
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, returnBody, resetBodies, drainEvents, toolHint } from './physics.js';
+import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, surfaceBelow, returnBody, resetBodies, drainEvents, toolHint } from './physics.js';
 import { LEVEL } from './level.js';
 
 applyPreset('klassisk');
@@ -840,6 +840,21 @@ const fwd = { ...idle, mz: 1 };
   go(60, { mx: 0, mz: 0, face }); assert.ok(Math.hypot(p.vx, p.vz) < 0.1, 'stopper raskt');
   const y0 = p.y; go(1, { jumpPressed: true, jumpHeld: true, face }); go(3, { jumpHeld: true, face }); assert.ok(p.vy > 5 || p.y > y0, 'hopper uten forberedelse');
   applyPreset('prince'); assert.equal(P.faceCam, false, 'andre stiler slår av faceCam');
+  applyPreset('klassisk');
+}
+
+// 36. skygge/landingsmarkør: flaten under figuren; Mario-stil snur figuren mot gangretningen
+{
+  const boxA = box('wood', 0, 10, 0, 6, 0, 10), boxB = box('soft', 0, 4, 6, 8, 0, 4, { soft: true });
+  const L = { boxes: [floor, boxA, boxB], ropes: [] };
+  assert.equal(surfaceBelow(L, 5, 20, 5, 0.3).top, 6, 'høyeste flate under'); assert.equal(surfaceBelow(L, 2, 20, 2, 0.3).top, 8, 'myk flate');
+  assert.ok(surfaceBelow(L, 2, 20, 2, 0.3).soft); assert.equal(surfaceBelow(L, 30, 20, 30, 0.3).top, 0, 'gulvet');
+  assert.equal(surfaceBelow(L, 5, 3, 5, 0.3).top, 0, 'ikke flaten du står inni/over deg');
+  applyPreset('mario'); assert.equal(P.faceCam, false); assert.equal(P.gaitMode, false);
+  const p = newPlayer(0, 0, 0); p.fx = 0; p.fz = -1;
+  for (let i = 0; i < 40; i++) step(p, { ...idle }, 1 / 60, { boxes: [floor], ropes: [] });
+  for (let i = 0; i < 40; i++) step(p, { ...idle, mx: 1 }, 1 / 60, { boxes: [floor], ropes: [] });
+  assert.ok(p.fx > 0.95, `snur mot gangretningen (fx=${p.fx.toFixed(2)})`);
   applyPreset('klassisk');
 }
 

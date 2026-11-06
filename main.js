@@ -5,8 +5,9 @@ import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo } from './props.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
+import { followYaw, impactSpeed, landingClass } from './camera_util.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
-import { returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
+import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
 // mobil (berøring) er hovedplattformen: tekst som nevner taster skal si knappene i stedet
@@ -74,8 +75,8 @@ function unlockAudio() {
 }
 addEventListener('pointerdown', unlockAudio); addEventListener('keydown', unlockAudio);
 // valgfri kamerafølging: kameraet dreier seg langsomt bak figuren når den går (av etter at du selv har dratt i kameraet)
-let autoCam = store.get('tlm.autocam', false), lastDrag = -99;
-function toggleAutoCam() { autoCam = !autoCam; store.set('tlm.autocam', autoCam); toast(autoCam ? 'Kamera følger retning' : 'Kamera følger ikke'); const c = document.getElementById('chkAutoCam'); if (c) c.checked = autoCam; }
+let autoCam = store.get('tlm.follow', true), lastDrag = -99;
+function toggleAutoCam() { autoCam = !autoCam; store.set('tlm.follow', autoCam); toast(autoCam ? 'Kamera følger retning' : 'Kamera følger ikke'); const c = document.getElementById('chkAutoCam'); if (c) c.checked = autoCam; }
 
 let vibOn = store.get('tlm.vib', true);
 const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(ms); } catch { /* ikke støttet */ } };   // Android; iOS Safari støtter ikke vibrasjon
@@ -85,7 +86,7 @@ let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', true), fpsOn = store.get('tlm.fps', false);
-let viewMode = new URLSearchParams(location.search).get('view') || store.get('tlm.view2', 'shoulder');   // third | shoulder | first (standard fra v0.53: over skulderen)
+let viewMode = new URLSearchParams(location.search).get('view') || store.get('tlm.view3', 'third');   // third | shoulder | first (standard fra v0.59: vanlig 3. person med kamera som følger etter)
 if (!['third', 'shoulder', 'first'].includes(viewMode)) viewMode = 'shoulder';
 let viewFirst = viewMode === 'first', shDist = store.get('tlm.shdist', 3), shOff = store.get('tlm.shoff', 0.5), shSide = store.get('tlm.shside', 'right') === 'left' ? -1 : 1, xhairOn = store.get('tlm.xhair', true);
 let compassMode = store.get('tlm.compassmode', store.get('tlm.compass', true) === false ? 'off' : 'both');   // both | compass | arrow | off
@@ -562,6 +563,25 @@ function buildHero() {
 const hero = buildHero();
 hero.root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 scene.add(hero.root);
+// rund skygge under figuren (som i Mario: viser hvor du lander) og landingsmarkør når du faller
+const blobTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(0,0,0,0.85)'); gr.addColorStop(0.55, 'rgba(0,0,0,0.5)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+const flatMat = (o) => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide, ...o });
+const blob = new THREE.Mesh(new THREE.CircleGeometry(1, 28), flatMat({ map: blobTex })); blob.rotation.x = -Math.PI / 2; blob.renderOrder = 2; blob.visible = false; scene.add(blob);
+const landRing = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 40), flatMat({ color: 0xffffff })); landRing.rotation.x = -Math.PI / 2; landRing.renderOrder = 3; landRing.visible = false; scene.add(landRing);
+const LAND_COL = { ok: 0xffffff, hard: 0xffa940, knock: 0xff4b3e };
+function updateBlob(now) {
+  const p = player, off = () => { blob.visible = landRing.visible = false; };
+  if (!blobOn || mode !== 'play' || ['climb', 'hang', 'swing', 'zip', 'mantle'].includes(p.state)) return off();
+  const s = surfaceBelow(LEVEL, p.x, p.y + 0.05, p.z, 0.3); if (!s) return off();
+  const h = Math.max(0, p.y - s.top); if (h > 40) return off();
+  const r = 0.42 + 0.03 * Math.min(h, 12);
+  blob.visible = true; blob.position.set(p.x, s.top + 0.03, p.z); blob.scale.setScalar(r * 1.15); blob.material.opacity = 0.8 * (1 - Math.min(0.75, h / 16));
+  const falling = !p.onGround && p.vy < -3 && h > 1.2;
+  if (!falling) { landRing.visible = false; return; }
+  const v = impactSpeed(p.vy, h, P.gravity) * (s.soft ? P.softFactor : 1), cls = landingClass(v, P.hardLand, P.knockV);
+  landRing.visible = true; landRing.position.set(p.x, s.top + 0.05, p.z); landRing.material.color.setHex(LAND_COL[cls]);
+  landRing.scale.setScalar(0.55 + (cls === 'ok' ? 0.05 : 0.18) * Math.sin(now / 110)); landRing.material.opacity = cls === 'ok' ? 0.55 : 0.95;
+}
 
 // To-ledds bein-IK i sagittalplanet: gitt hoftehøyde og ankelens posisjon (z fremover, y opp) → hofte- og kneledd.
 const ANKLE_H = 0.037;                       // ankel over såle (rig-lokalt)
@@ -1041,6 +1061,7 @@ addEventListener('blur', () => keys.clear());
 const held = (...codes) => codes.some((c) => keys.has(c));
 
 let camSens = store.get('tlm.camsens', 1);
+let blobOn = store.get('tlm.blob', true);
 let idleWink = store.get('tlm.idlewink', true), restBreath = store.get('tlm.restbreath', false);
 const mixSet = (ids, v) => { const mix = store.get('tlm.mix2', {}); for (const id of ids) { mix[id] = v; audio?.setLevel(id, v); } store.set('tlm.mix2', mix); };
 const mixGet = (id) => store.get('tlm.mix2', {})[id] ?? 1;
@@ -1096,7 +1117,7 @@ function activeCam() { return mode === 'plan' ? planCam : cam; }
 canvas.addEventListener('pointerdown', (e) => {
   canvas.setPointerCapture(e.pointerId);
   if (document.pointerLockElement === canvas) return;
-  if (!TOUCH && mouseLook && mode === 'play' && e.pointerType === 'mouse' && canvas.requestPointerLock) { try { canvas.requestPointerLock(); } catch { /* ikke tillatt */ } }      // PC: klikk for å styre blikket med musa (Esc slipper); dra med musa virker også uten lås
+  if (!TOUCH && mouseLook && P.faceCam && mode === 'play' && e.pointerType === 'mouse' && canvas.requestPointerLock) { try { canvas.requestPointerLock(); } catch { /* ikke tillatt */ } }      // PC: klikk for å styre blikket med musa (Esc slipper); dra med musa virker også uten lås
   if (TOUCH && stickFloat && mode !== 'fly' && stickId === null && e.clientX < innerWidth * 0.5 && e.clientY > innerHeight * 0.2) {      // venstre halvdel: stikken dukker opp der tommelen treffer
     stickId = e.pointerId; setStickCenter(e.clientX, e.clientY); stick.classList.add('float'); stickMove(e); return;
   }
@@ -1226,10 +1247,10 @@ const TUNE = [
   ['reachAbove', 'Grep: ekstra rekkevidde opp', 0, 1.5, 0.05], ['ropeReach', 'Tau-rekkevidde', 0.8, 3.5, 0.1],
 ];
 const P0_SNAPSHOT = { ...P };
-let presetName = store.get('tlm.preset3', 'pubg');
+let presetName = store.get('tlm.preset4', 'mario');
 if (!PRESETS[presetName]) presetName = 'prince';
 applyPreset(presetName);
-Object.assign(P, store.get('tlm.custom3', {}));
+Object.assign(P, store.get('tlm.custom4', {}));
 // ---------- lydmikser ----------
 function mixerHtml() {
   const groups = {};
@@ -1293,6 +1314,7 @@ const ADMIN_TUNE = [
   ['zipMax', 'Taubane: lengste tråd', 8, 40, 1], ['zipMinDrop', 'Taubane: minste fall', 0.5, 4, 0.1], ['zipVmax', 'Taubane: toppfart', 3, 16, 0.5], ['zipAcc', 'Taubane: akselerasjon', 1, 12, 0.5],
 ];
 const PSET = (k) => (v) => { P[k] = v; saveCustom(); };
+function setViewMode(v) { viewMode = v; viewFirst = v === 'first'; store.set('tlm.view3', v); cam.pitch = v === 'shoulder' ? 0.18 : v === 'first' ? 0.05 : 0.26; if (v === 'third') cam.cur = camDistSet; }
 const SETTINGS = [
   // Spill
   fl('pcbtns', 'styring', 'Vis skjermknapper på PC (TA, HOPP, GREP)', true, () => pcButtons, kp('tlm.pcbtns', (v) => { pcButtons = v; applyPlatformUi(); })),
@@ -1313,8 +1335,9 @@ const SETTINGS = [
   { id: 'autograb', group: 'styring', type: 'bool', label: 'Grip kanten automatisk', get def() { return !!PRESETS[presetName]?.autoGrab; }, get: () => P.autoGrab, set: (v) => { P.autoGrab = v; saveCustom(); } },
   ...(navigator.vibrate ? [fl('vib', 'styring', 'Vibrasjon', true, () => vibOn, kp('tlm.vib', (v) => { vibOn = v; if (v) buzz(30); }))] : []),
   // Kamera
-  fl('autocam', 'kamera', `Kamera følger retning${key('X')}`, false, () => autoCam, kp('tlm.autocam', (v) => { autoCam = v; })),
-  sl('view', 'kamera', 'Kamerasyn / View', 'shoulder', [['third', '3. person (bak figuren)'], ['shoulder', 'Over skulderen (som PUBG)'], ['first', '1. person (prøve)']], () => viewMode, (v) => { viewMode = v; viewFirst = v === 'first'; store.set('tlm.view2', v); cam.pitch = v === 'shoulder' ? 0.18 : v === 'first' ? 0.05 : 0.3; if (v === 'third') cam.cur = camDistSet; }),
+  fl('autocam', 'kamera', `Kameraet følger etter deg automatisk${key('X')}`, true, () => autoCam, kp('tlm.follow', (v) => { autoCam = v; })),
+  fl('blob', 'kamera', 'Skygge under figuren og landingsmarkør', true, () => blobOn, kp('tlm.blob', (v) => { blobOn = v; })),
+  sl('view', 'kamera', 'Kamerasyn / View', 'shoulder', [['third', '3. person (bak figuren)'], ['shoulder', 'Over skulderen (som PUBG)'], ['first', '1. person (prøve)']], () => viewMode, setViewMode),
   rg('shdist', 'kamera', 'Skulderkamera: avstand', 3, 1.6, 5, 0.1, () => shDist, kp('tlm.shdist', (v) => { shDist = v; })),
   rg('shoff', 'kamera', 'Skulderkamera: sideforskyvning', 0.5, 0.2, 1.3, 0.05, () => shOff, kp('tlm.shoff', (v) => { shOff = v; })),
   sl('shside', 'kamera', 'Skulderkamera: side', 'right', [['right', 'Høyre skulder'], ['left', 'Venstre skulder']], () => (shSide < 0 ? 'left' : 'right'), (v) => { shSide = v === 'left' ? -1 : 1; store.set('tlm.shside', v); }),
@@ -1346,7 +1369,7 @@ const SETTINGS = [
   rg('mix_things', 'lyd', 'Ting (ta, slipp, knus): volum', 1, 0, 2, 0.05, () => mixGet('pickup'), (v) => mixSet(['pickup', 'drop', 'scrape', 'shatter'], v), { pct: true }),
   rg('mix_room', 'lyd', 'Romlyd (drypp, vifte): volum', 1, 0, 2, 0.05, () => mixGet('drip'), (v) => mixSet(['drip', 'fan'], v), { pct: true }),
   // Test
-  sl('preset', 'styring', 'Styringsstil', 'pubg', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset3', v); applyPreset(v); store.set('tlm.custom3', {}); }),
+  sl('preset', 'styring', 'Styringsstil', 'mario', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset4', v); applyPreset(v); store.set('tlm.custom4', {}); if (v === 'pubg') setViewMode('shoulder'); else if (v === 'mario') setViewMode('third'); }),
   sl('platform', 'test', `Enhet (sjekket ved start: ${platform.auto === 'mobil' ? 'mobil' : 'PC'})`, 'auto', [['auto', 'Automatisk'], ['mobil', 'Mobil (berøring)'], ['pc', 'PC (mus og tastatur)']], () => platform.pref, (v) => { store.set('tlm.platform', v); setTimeout(() => location.reload(), 150); }),
   fl('fps', 'test', 'Vis bilder per sekund (FPS)', false, () => fpsOn, kp('tlm.fps', (v) => { fpsOn = v; applyUiFlags(); })),
   // Admin: hoppinnstillinger og fininnstilling av mekanikker (verdiene lagres som egen «custom»)
@@ -1354,9 +1377,9 @@ const SETTINGS = [
 ];
 const visible = (d) => d.group !== 'admin' || adminOn;
 
-function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of [...TUNE, ...ADMIN_TUNE]) o[k] = P[k]; store.set('tlm.custom3', o); }
+function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of [...TUNE, ...ADMIN_TUNE]) o[k] = P[k]; store.set('tlm.custom4', o); }
 function resetAllSettings() {
-  presetName = 'pubg'; store.set('tlm.preset3', presetName); applyPreset(presetName); store.set('tlm.custom3', {});
+  presetName = 'mario'; store.set('tlm.preset4', presetName); applyPreset(presetName); store.set('tlm.custom4', {});
   for (const [k] of ADMIN_TUNE) P[k] = P0[k];
   for (const d of SETTINGS) if (d.group !== 'admin' && d.id !== 'preset' && d.id !== 'autograb') d.set(d.def);
   store.set('tlm.mix2', {}); store.set('tlm.reverb', null); SOUND_LIST.forEach((sd) => audio?.setLevel(sd.id, 1)); restBreath = false; store.set('tlm.restbreath', false);
@@ -1526,12 +1549,10 @@ function update(dt) {
   jumpEdge = grabEdge = carryEdge = false;
   const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
   step(player, inp, dt, LEVEL);
-  if (autoCam && !viewFirst && mode === 'play' && player.onGround && !player.carry && performance.now() / 1000 - lastDrag > 1.5) {       // sving kameraet bak figuren
-    const sp = Math.hypot(player.vx, player.vz);
-    if (sp > 0.8) {
-      const want = Math.atan2(-player.fx, -player.fz), d = ((want - cam.yaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
-      cam.yaw += Math.max(-1, Math.min(1, d)) * Math.min(1, 0.6 * Math.min(1, sp / P.speed) * dt * Math.min(1, Math.abs(d) * 1.5 + 0.2));
-    }
+  if (autoCam && !P.faceCam && !viewFirst && mode === 'play' && !camAnim && ['ground', 'air'].includes(player.state) && performance.now() / 1000 - lastDrag > 1.1) {      // Mario-stil: kameraet svinger rolig bak deg
+    const k = player.onGround ? 1 : 0.5, sp0 = Math.hypot(player.vx, player.vz);
+    cam.yaw = followYaw(cam.yaw, player.vx, player.vz, P.speed, dt * k);
+    if (sp0 > 1) { const base = viewMode === 'shoulder' ? 0.18 : 0.26; cam.pitch += (base - cam.pitch) * Math.min(1, 0.35 * dt); }       // vinkelen går sakte tilbake til normal
   }
   audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
@@ -1662,7 +1683,7 @@ function render(now, dt) {
   updateArc(); syncMade(); syncZips(); updateLabels();
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
-  hero.root.position.set(player.x, player.y, player.z);
+  hero.root.position.set(player.x, player.y, player.z); updateBlob(now);
   hero.root.scale.set(1, 1, 1);                                  // ingen strekk/klem: det ga «puls» og sjøsyke
 
   for (const { r, line, end } of ropes) {
