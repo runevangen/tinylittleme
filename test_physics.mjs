@@ -858,6 +858,17 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// 37. trinnhopp: små hindre tråkkes opp på uten å hoppe (Mario-stil), høye hindre stopper deg
+{
+  applyPreset('mario');
+  const mk = (h) => ({ boxes: [floor, box('wood', 2, 6, 0, h, -3, 3)], ropes: [] });
+  const walk = (L) => { const p = newPlayer(0, 0, 0); p.fx = 1; p.fz = 0; for (let i = 0; i < 20; i++) step(p, { ...idle }, 1 / 60, L); for (let i = 0; i < 120; i++) step(p, { ...idle, mx: 1 }, 1 / 60, L); return p; };
+  let p = walk(mk(0.4)); assert.ok(p.x > 3, `går opp på 0,4 høyt hinder (x=${p.x.toFixed(1)})`); assert.ok(Math.abs(p.y - 0.4) < 0.05 || p.x > 6, 'står oppå');
+  p = walk(mk(1.5)); assert.ok(p.x < 2, `stoppes av 1,5 høyt hinder (x=${p.x.toFixed(1)})`);
+  applyPreset('prince'); p = walk(mk(0.4)); assert.ok(p.x < 2, 'Prince tråkker ikke opp (stepUp 0)');
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 

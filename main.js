@@ -41,6 +41,7 @@ const LEVELS = [
   { id: 'bad', label: 'Bad (tolket fra 3 bilder)', short: 'Bad' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
   { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
+  { id: 'kontroll', label: 'Kontrollbanen (test av styring og kamera)', short: 'Kontroll' },
 ];
 const levelParam = new URLSearchParams(location.search).get('level');
 let levelId = levelParam === '' ? 'soverom' : (levelParam ?? store.get('tlm.level', 'soverom'));
@@ -90,7 +91,7 @@ let viewMode = new URLSearchParams(location.search).get('view') || store.get('tl
 if (!['third', 'shoulder', 'first'].includes(viewMode)) viewMode = 'shoulder';
 let viewFirst = viewMode === 'first', shDist = store.get('tlm.shdist', 3), shOff = store.get('tlm.shoff', 0.5), shSide = store.get('tlm.shside', 'right') === 'left' ? -1 : 1, xhairOn = store.get('tlm.xhair', true);
 let compassMode = store.get('tlm.compassmode', store.get('tlm.compass', true) === false ? 'off' : 'both');   // both | compass | arrow | off
-const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; };
+const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; $('qbtn').style.display = qbtnOn ? 'flex' : 'none'; };
 
 // ---------- hendelseslogg og FPS: brukes i testrapporten ----------
 const evLog = store.get('tlm.evlog', []);
@@ -1062,6 +1063,9 @@ const held = (...codes) => codes.some((c) => keys.has(c));
 
 let camSens = store.get('tlm.camsens', 1);
 let blobOn = store.get('tlm.blob', true);
+let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get('tlm.followstr', 1), fovSet = store.get('tlm.fov', 52), pitchBase = store.get('tlm.pitchbase', 0.26);
+let stickCurve = store.get('tlm.stickcurve', 1.3), inertia = store.get('tlm.inertia', 1), speedScale = store.get('tlm.speedscale', 1), qbtnOn = store.get('tlm.qbtn', true);
+const metrics = { swipes: 0, dragPx: 0, yawUser: 0, yawAuto: 0, stickT: 0, t: 0 };
 let idleWink = store.get('tlm.idlewink', true), restBreath = store.get('tlm.restbreath', false);
 const mixSet = (ids, v) => { const mix = store.get('tlm.mix2', {}); for (const id of ids) { mix[id] = v; audio?.setLevel(id, v); } store.set('tlm.mix2', mix); };
 const mixGet = (id) => store.get('tlm.mix2', {})[id] ?? 1;
@@ -1121,7 +1125,7 @@ canvas.addEventListener('pointerdown', (e) => {
   if (TOUCH && stickFloat && mode !== 'fly' && stickId === null && e.clientX < innerWidth * 0.5 && e.clientY > innerHeight * 0.2) {      // venstre halvdel: stikken dukker opp der tommelen treffer
     stickId = e.pointerId; setStickCenter(e.clientX, e.clientY); stick.classList.add('float'); stickMove(e); return;
   }
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() }); metrics.swipes++;
   if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); }
 });
 canvas.addEventListener('pointermove', (e) => {
@@ -1133,7 +1137,7 @@ canvas.addEventListener('pointermove', (e) => {
     const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
     if (pinch0) zoom(pinch0 / d); pinch0 = d; return;
   }
-  camAnim = null; c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000;
+  camAnim = null; c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000; metrics.dragPx += Math.abs(dx) + Math.abs(dy); metrics.yawUser += Math.abs(dx * 0.006 * camSens);
   c.pitch += dy * 0.005 * camSens;
   const lim = mode === 'plan' ? [-0.3, 1.5] : viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35];
   c.pitch = Math.min(lim[1], Math.max(lim[0], c.pitch));
@@ -1251,6 +1255,14 @@ let presetName = store.get('tlm.preset4', 'mario');
 if (!PRESETS[presetName]) presetName = 'prince';
 applyPreset(presetName);
 Object.assign(P, store.get('tlm.custom4', {}));
+// hjelp-nivå og fart/treghet legges oppå forhåndsinnstillingen
+function reapplyKnobs() {
+  const base = PRESETS[presetName] || {}, b = (k) => base[k] ?? P0_SNAPSHOT[k];
+  const lv = { none: { coyote: 0.1, jumpBuffer: 0.08, reachSnap: 0.3, stepUp: 0, autoGrab: false }, normal: { coyote: 0.14, jumpBuffer: 0.12, reachSnap: 0.45, stepUp: b('stepUp'), autoGrab: base.autoGrab ?? false }, much: { coyote: 0.22, jumpBuffer: 0.2, reachSnap: 0.7, stepUp: Math.max(0.6, b('stepUp')), autoGrab: true } }[helpLevel] || {};
+  Object.assign(P, lv);
+  P.accel = b('accel') * inertia; P.decel = b('decel') * inertia; P.turnDecel = b('turnDecel') * inertia; P.speed = b('speed') * speedScale;
+}
+reapplyKnobs();
 // ---------- lydmikser ----------
 function mixerHtml() {
   const groups = {};
@@ -1314,7 +1326,7 @@ const ADMIN_TUNE = [
   ['zipMax', 'Taubane: lengste tråd', 8, 40, 1], ['zipMinDrop', 'Taubane: minste fall', 0.5, 4, 0.1], ['zipVmax', 'Taubane: toppfart', 3, 16, 0.5], ['zipAcc', 'Taubane: akselerasjon', 1, 12, 0.5],
 ];
 const PSET = (k) => (v) => { P[k] = v; saveCustom(); };
-function setViewMode(v) { viewMode = v; viewFirst = v === 'first'; store.set('tlm.view3', v); cam.pitch = v === 'shoulder' ? 0.18 : v === 'first' ? 0.05 : 0.26; if (v === 'third') cam.cur = camDistSet; }
+function setViewMode(v) { viewMode = v; viewFirst = v === 'first'; store.set('tlm.view3', v); cam.pitch = v === 'shoulder' ? pitchBase - 0.08 : v === 'first' ? 0.05 : pitchBase; if (v === 'third') cam.cur = camDistSet; }
 const SETTINGS = [
   // Spill
   fl('pcbtns', 'styring', 'Vis skjermknapper på PC (TA, HOPP, GREP)', true, () => pcButtons, kp('tlm.pcbtns', (v) => { pcButtons = v; applyPlatformUi(); })),
@@ -1327,6 +1339,10 @@ const SETTINGS = [
   rg('camsens', 'styring', 'Kamerafølsomhet (dra)', 1, 0.4, 2, 0.1, () => camSens, kp('tlm.camsens', (v) => { camSens = v; })),
   rg('stickdead', 'styring', 'Stikke: dødsone (mot skjelving)', 0.22, 0, 0.4, 0.02, () => stickDead, kp('tlm.stickdead', (v) => { stickDead = v; })),
   rg('btnscale', 'styring', 'Knappestørrelse', 1, 0.8, 1.3, 0.05, () => btnScale, kp('tlm.btnscale', (v) => { btnScale = v; applyUiFlags(); })),
+  sl('help', 'styring', 'Hjelp-nivå (tilgivende hopp, kantgrep, hinder)', 'normal', [['none', 'Ingen (som Prince)'], ['normal', 'Normal'], ['much', 'Mye hjelp']], () => helpLevel, kp('tlm.helplevel', (v) => { helpLevel = v; reapplyKnobs(); })),
+  rg('inertia', 'styring', 'Treghet (lav = kjapp, høy = tung)', 1, 0.5, 1.6, 0.05, () => inertia, kp('tlm.inertia', (v) => { inertia = v; reapplyKnobs(); }), { pct: true }),
+  rg('speedscale', 'styring', 'Gangfart', 1, 0.6, 1.5, 0.05, () => speedScale, kp('tlm.speedscale', (v) => { speedScale = v; reapplyKnobs(); }), { pct: true }),
+  rg('stickcurve', 'styring', 'Stikke: følsomhet (1 = lineær, høyere = finere i midten)', 1.3, 1, 2.2, 0.1, () => stickCurve, kp('tlm.stickcurve', (v) => { stickCurve = v; })),
   fl('stickfloat', 'styring', 'Flytende stikke (følger tommelen) i stedet for fast som i PUBG', false, () => stickFloat, kp('tlm.stickfloat', (v) => { stickFloat = v; })),
   ...(!TOUCH ? [fl('mouselook', 'styring', 'Musestyring (klikk i bildet: mus ser deg rundt, venstre = TA, høyre = GREP)', true, () => mouseLook, kp('tlm.mouselook', (v) => { mouseLook = v; if (!v && document.pointerLockElement) document.exitPointerLock(); }))] : []),
   fl('aimthrow', 'styring', 'Kast med dra og slipp (hold TA, dra ned)', true, () => aimThrowOn, kp('tlm.aimthrow', (v) => { aimThrowOn = v; })),
@@ -1336,6 +1352,9 @@ const SETTINGS = [
   ...(navigator.vibrate ? [fl('vib', 'styring', 'Vibrasjon', true, () => vibOn, kp('tlm.vib', (v) => { vibOn = v; if (v) buzz(30); }))] : []),
   // Kamera
   fl('autocam', 'kamera', `Kameraet følger etter deg automatisk${key('X')}`, true, () => autoCam, kp('tlm.follow', (v) => { autoCam = v; })),
+  rg('followstr', 'kamera', 'Kamerafølging: styrke (0 = av)', 1, 0, 2.5, 0.1, () => followStrength, kp('tlm.followstr', (v) => { followStrength = v; })),
+  rg('fov', 'kamera', 'Synsfelt (grader)', 52, 38, 80, 1, () => fovSet, kp('tlm.fov', (v) => { fovSet = v; }), { digits: 0 }),
+  rg('pitchbase', 'kamera', 'Kameravinkel (høyere = mer ovenfra)', 0.26, 0.05, 0.7, 0.01, () => pitchBase, kp('tlm.pitchbase', (v) => { pitchBase = v; if (viewMode !== 'first') cam.pitch = viewMode === 'shoulder' ? v - 0.08 : v; })),
   fl('blob', 'kamera', 'Skygge under figuren og landingsmarkør', true, () => blobOn, kp('tlm.blob', (v) => { blobOn = v; })),
   sl('view', 'kamera', 'Kamerasyn / View', 'shoulder', [['third', '3. person (bak figuren)'], ['shoulder', 'Over skulderen (som PUBG)'], ['first', '1. person (prøve)']], () => viewMode, setViewMode),
   rg('shdist', 'kamera', 'Skulderkamera: avstand', 3, 1.6, 5, 0.1, () => shDist, kp('tlm.shdist', (v) => { shDist = v; })),
@@ -1369,8 +1388,9 @@ const SETTINGS = [
   rg('mix_things', 'lyd', 'Ting (ta, slipp, knus): volum', 1, 0, 2, 0.05, () => mixGet('pickup'), (v) => mixSet(['pickup', 'drop', 'scrape', 'shatter'], v), { pct: true }),
   rg('mix_room', 'lyd', 'Romlyd (drypp, vifte): volum', 1, 0, 2, 0.05, () => mixGet('drip'), (v) => mixSet(['drip', 'fan'], v), { pct: true }),
   // Test
-  sl('preset', 'styring', 'Styringsstil', 'mario', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset4', v); applyPreset(v); store.set('tlm.custom4', {}); if (v === 'pubg') setViewMode('shoulder'); else if (v === 'mario') setViewMode('third'); }),
+  sl('preset', 'styring', 'Styringsstil', 'mario', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset4', v); applyPreset(v); store.set('tlm.custom4', {}); if (v === 'pubg') setViewMode('shoulder'); else if (v === 'mario') setViewMode('third'); helpLevel = 'normal'; inertia = 1; speedScale = 1; store.set('tlm.helplevel', 'normal'); store.set('tlm.inertia', 1); store.set('tlm.speedscale', 1); reapplyKnobs(); }),
   sl('platform', 'test', `Enhet (sjekket ved start: ${platform.auto === 'mobil' ? 'mobil' : 'PC'})`, 'auto', [['auto', 'Automatisk'], ['mobil', 'Mobil (berøring)'], ['pc', 'PC (mus og tastatur)']], () => platform.pref, (v) => { store.set('tlm.platform', v); setTimeout(() => location.reload(), 150); }),
+  fl('qbtn', 'test', 'Vis vurderingsknappen ⚑ på skjermen', true, () => qbtnOn, kp('tlm.qbtn', (v) => { qbtnOn = v; applyUiFlags(); })),
   fl('fps', 'test', 'Vis bilder per sekund (FPS)', false, () => fpsOn, kp('tlm.fps', (v) => { fpsOn = v; applyUiFlags(); })),
   // Admin: hoppinnstillinger og fininnstilling av mekanikker (verdiene lagres som egen «custom»)
   ...[...TUNE, ...ADMIN_TUNE].map(([k, label, min, max, st]) => ({ id: 'p_' + k, group: 'admin', type: 'range', label, min, max, step: st, get def() { return defOf(k); }, get: () => P[k], set: PSET(k), digits: 2 })),
@@ -1388,6 +1408,19 @@ const fmtVal = (d, v) => (d.pct ? `${Math.round(v * 100)} %` : typeof v === 'num
 
 // ---------- testrapport ----------
 const marks = [];
+// rask vurdering mens du spiller: ⚑ → velg tema → 👍 / 😐 / 😫 (havner i testrapporten med posisjon og innstillinger)
+{
+  let tag = store.get('tlm.qtag', 'Styring'); const pop = $('qpop'), tags = ['Styring', 'Kamera', 'Hopp', 'Gange', 'Annet'];
+  const draw = () => { pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
+  pop.innerHTML = `<div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div>`;
+  pop.addEventListener('click', (e) => {
+    e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.tag) { tag = b.dataset.tag; store.set('tlm.qtag', tag); draw(); return; }
+    if (b.dataset.r) { logEv('vurdering', `${b.dataset.r} · ${tag}`); pop.classList.add('hide'); toast(`Takk! Registrert: ${b.textContent} (${tag})`); }
+  });
+  $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); draw(); });
+  document.addEventListener('pointerdown', (e) => { if (!pop.classList.contains('hide') && !pop.contains(e.target) && e.target !== $('qbtn')) pop.classList.add('hide'); });
+}
 function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); toast('Markert. Husk å sende rapporten etterpå.'); }
 function buildReportInfo() {
   const t = nextTarget();
@@ -1398,6 +1431,8 @@ function buildReportInfo() {
     pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), state: player.state, target: t.final ? 'målet' : t.label, stats: { ...stats },
     changed: changedSettings(SETTINGS.filter((d) => d.group !== 'admin' || true).map((d) => ({ id: d.id, label: d.label, def: d.def, get: d.get }))),
     marks: evLog.filter((e) => e.type === 'MARKERT').slice(-10), events: evLog.slice(-30),
+    ratings: evLog.filter((e) => e.type === 'vurdering').slice(-12),
+    metrics: (() => { const mn = Math.max(metrics.t / 60, 0.05); return `sveip ${metrics.swipes} (${(metrics.swipes / mn).toFixed(1)}/min), dratt ${Math.round(metrics.dragPx)} px, kamera dreid av deg ${metrics.yawUser.toFixed(1)} rad og automatisk ${metrics.yawAuto.toFixed(1)} rad, stikke i bruk ${Math.round(100 * metrics.stickT / Math.max(metrics.t, 0.1))} % av ${mn.toFixed(1)} min`; })(),
   };
 }
 const reportText = () => formatReport(buildReportInfo());
@@ -1491,7 +1526,7 @@ setTimeout(() => $('help').classList.add('hide'), 15000);   // H henter den tilb
 const V = new THREE.Vector3();
 function axes() {
   // dødsone på stikken: en tommel som bare hviler der skal ikke gi bevegelse (ga skjelvende armer og mikroskritt)
-  const mag = Math.hypot(touch.x, touch.y), DZ = stickDead, tk = mag < DZ ? 0 : Math.pow((mag - DZ) / (1 - DZ), 1.35) / mag;   // myk kurve: finere kontroll nær midten
+  const mag = Math.hypot(touch.x, touch.y), DZ = stickDead, tk = mag < DZ ? 0 : Math.pow((mag - DZ) / (1 - DZ), stickCurve) / mag;   // myk kurve: finere kontroll nær midten
   const arrowsLook = P.faceCam && mode === 'play';                    // PUBG: piltastene ser deg rundt, WASD går
   const ix = (held('KeyD', ...(arrowsLook ? [] : ['ArrowRight'])) ? 1 : 0) - (held('KeyA', ...(arrowsLook ? [] : ['ArrowLeft'])) ? 1 : 0) + touch.x * tk;
   const iz = (held('KeyW', ...(arrowsLook ? [] : ['ArrowUp'])) ? 1 : 0) - (held('KeyS', ...(arrowsLook ? [] : ['ArrowDown'])) ? 1 : 0) + touch.y * tk;
@@ -1533,7 +1568,7 @@ function update(dt) {
 
   if (!won) clock += dt;
   stepLost(dt);
-  autoT += dt;
+  autoT += dt; if (mode === 'play' && !won) { metrics.t += dt; if (Math.hypot(touch.x, touch.y) > 0.2 || held('KeyW', 'KeyA', 'KeyS', 'KeyD')) metrics.stickT += dt; }
   if (autoT > 5 && mode === 'play' && !won) {                         // trygg autolagring: en rolig stund på fast grunn
     autoT = 0;
     if (player.onGround && player.state === 'ground' && !player.carry && player.recover <= 0 && player.groundBox && !player.groundBox.dyn && !player.groundBox.owner && player.y > LEVEL.deathY + 5 && !inHazard(LEVEL, player)) { autoPos = [player.x, player.y, player.z]; saveProgress(); }
@@ -1551,8 +1586,8 @@ function update(dt) {
   step(player, inp, dt, LEVEL);
   if (autoCam && !P.faceCam && !viewFirst && mode === 'play' && !camAnim && ['ground', 'air'].includes(player.state) && performance.now() / 1000 - lastDrag > 1.1) {      // Mario-stil: kameraet svinger rolig bak deg
     const k = player.onGround ? 1 : 0.5, sp0 = Math.hypot(player.vx, player.vz);
-    cam.yaw = followYaw(cam.yaw, player.vx, player.vz, P.speed, dt * k);
-    if (sp0 > 1) { const base = viewMode === 'shoulder' ? 0.18 : 0.26; cam.pitch += (base - cam.pitch) * Math.min(1, 0.35 * dt); }       // vinkelen går sakte tilbake til normal
+    const y0 = cam.yaw; if (followStrength > 0) cam.yaw = followYaw(cam.yaw, player.vx, player.vz, P.speed, dt * k, { rateScale: followStrength, capScale: followStrength }); metrics.yawAuto += Math.abs(cam.yaw - y0);
+    if (sp0 > 1) { const base = viewMode === 'shoulder' ? pitchBase - 0.08 : pitchBase; cam.pitch += (base - cam.pitch) * Math.min(1, 0.35 * dt); }       // vinkelen går sakte tilbake til normal
   }
   audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
@@ -1683,7 +1718,8 @@ function render(now, dt) {
   updateArc(); syncMade(); syncZips(); updateLabels();
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
-  hero.root.position.set(player.x, player.y, player.z); updateBlob(now);
+  hero.stepOff = (hero.stepOff || 0) * Math.exp(-dt / 0.07) + (player.stepDy || 0); player.stepDy = 0;                     // trinnhopp: figuren glir opp i stedet for å poppe
+  hero.root.position.set(player.x, player.y - hero.stepOff, player.z); updateBlob(now);
   hero.root.scale.set(1, 1, 1);                                  // ingen strekk/klem: det ga «puls» og sjøsyke
 
   for (const { r, line, end } of ropes) {
@@ -1769,7 +1805,7 @@ function render(now, dt) {
     if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur); camera.position.x += sdx; camera.position.z += sdz;
     camera.lookAt(cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0), cam.target.z + sdz); }
   }
-  { const fp = viewFirst && mode === 'play', fov = fp ? 74 : viewMode === 'shoulder' ? 58 : 50;
+  { const fp = viewFirst && mode === 'play', fov = fp ? 74 : viewMode === 'shoulder' ? fovSet + 8 : fovSet;
     for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
     if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   { const xh = $('xhair'); if (xh) xh.style.display = viewMode === 'shoulder' && xhairOn && mode === 'play' ? 'block' : 'none'; }

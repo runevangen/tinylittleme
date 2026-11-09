@@ -1,0 +1,425 @@
+{
+  "name": "Kontrollbanen",
+  "units": "cm",
+  "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
+  "validate": false,
+  "source": {
+    "note": "Testbane for styring og kamera: slalom, trinn, hopp over hull, fall, balansebjelke. Ikke fra bilder."
+  },
+  "room": {
+    "width": 700,
+    "depth": 240,
+    "height": 220,
+    "floor": {
+      "material": "wood",
+      "color": "#d9b382",
+      "slick": false
+    },
+    "walls": {
+      "material": "plaster",
+      "color": "#e9e1d3"
+    },
+    "ceiling": {
+      "material": "plaster",
+      "color": "#f5f1e8"
+    }
+  },
+  "start": {
+    "x": 40,
+    "z": 120
+  },
+  "goal": {
+    "x": 615,
+    "y": 10,
+    "z": 120,
+    "on": "plattform_4",
+    "note": "Flagget står på siste plattform."
+  },
+  "windows": [
+    {
+      "wall": "N",
+      "z": 350,
+      "y": 120,
+      "w": 120,
+      "h": 70
+    }
+  ],
+  "hazards": [],
+  "objects": [
+    {
+      "id": "stolpe_1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b85a6a",
+      "box": [
+        100,
+        110,
+        0,
+        30,
+        95,
+        105
+      ],
+      "confidence": 1,
+      "help": "Slalom\nGå mellom stolpene uten å stoppe. Prøv rolig og rask gange (stikken halvveis og helt ut)."
+    },
+    {
+      "id": "stolpe_2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b85a6a",
+      "box": [
+        140,
+        150,
+        0,
+        30,
+        145,
+        155
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "stolpe_3",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b85a6a",
+      "box": [
+        180,
+        190,
+        0,
+        30,
+        95,
+        105
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "stolpe_4",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b85a6a",
+      "box": [
+        220,
+        230,
+        0,
+        30,
+        145,
+        155
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "trinn_1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#7fa6c4",
+      "box": [
+        260,
+        290,
+        0,
+        2.5,
+        70,
+        170
+      ],
+      "confidence": 1,
+      "help": "Trinn\nGå rett over: det laveste trinnet (2,5 cm) tråkkes opp på av seg selv, de neste må du hoppe på (Hjelp-nivå «Mye» tar litt mer)."
+    },
+    {
+      "id": "trinn_2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#7fa6c4",
+      "box": [
+        290,
+        320,
+        0,
+        5,
+        70,
+        170
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "trinn_3",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#7fa6c4",
+      "box": [
+        320,
+        350,
+        0,
+        10,
+        70,
+        170
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "trinn_4",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#7fa6c4",
+      "box": [
+        350,
+        380,
+        0,
+        5,
+        70,
+        170
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "trinn_5",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#7fa6c4",
+      "box": [
+        380,
+        410,
+        0,
+        2.5,
+        70,
+        170
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "plattform_1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e3b04a",
+      "box": [
+        430,
+        470,
+        0,
+        10,
+        90,
+        150
+      ],
+      "confidence": 1,
+      "help": "Hopp over hull\nTre hopp med økende gap (2, 3 og 4 enheter). Mål: den siste plattformen."
+    },
+    {
+      "id": "plattform_2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e3b04a",
+      "box": [
+        480,
+        520,
+        0,
+        10,
+        90,
+        150
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "plattform_3",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e3b04a",
+      "box": [
+        535,
+        575,
+        0,
+        10,
+        90,
+        150
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "plattform_4",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e3b04a",
+      "box": [
+        595,
+        635,
+        0,
+        10,
+        90,
+        150
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "fall_1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#a97c50",
+      "box": [
+        250,
+        270,
+        0,
+        15,
+        190,
+        230
+      ],
+      "confidence": 1,
+      "help": "Fall-tårn\nHopp opp trappen. På toppen: hopp ned på den myke matta (østover) eller rett ned i gulvet i vest, og se landingsmarkøren skifte farge (hvit, oransje, rød)."
+    },
+    {
+      "id": "fall_2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#a97c50",
+      "box": [
+        272,
+        292,
+        0,
+        30,
+        190,
+        230
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "fall_3",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#a97c50",
+      "box": [
+        294,
+        314,
+        0,
+        45,
+        190,
+        230
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "fall_4",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#a97c50",
+      "box": [
+        316,
+        336,
+        0,
+        60,
+        190,
+        230
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "fall_5",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#a97c50",
+      "box": [
+        338,
+        358,
+        0,
+        75,
+        190,
+        230
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "fall_6",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#a97c50",
+      "box": [
+        360,
+        380,
+        0,
+        90,
+        190,
+        230
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "fall_matte",
+      "kind": "mat",
+      "material": "fabric",
+      "color": "#c47a8a",
+      "box": [
+        385,
+        425,
+        0,
+        3,
+        190,
+        230
+      ],
+      "confidence": 1,
+      "help": "Myk matte\nTar av for fallet.",
+      "soft": true
+    },
+    {
+      "id": "bjelke_stolpe_1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#8c5a3a",
+      "box": [
+        470,
+        490,
+        0,
+        12,
+        195,
+        215
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "bjelke",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#d9b382",
+      "box": [
+        490,
+        620,
+        10,
+        12,
+        200,
+        210
+      ],
+      "confidence": 1,
+      "help": "Balansebjelke\nSmal. Gå sakte over (stikken halvveis). Hopp av og se skyggen."
+    },
+    {
+      "id": "bjelke_stolpe_2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#8c5a3a",
+      "box": [
+        620,
+        640,
+        0,
+        12,
+        195,
+        215
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "baerekasse",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#6b8f71",
+      "box": [
+        60,
+        100,
+        0,
+        12,
+        40,
+        70
+      ],
+      "confidence": 1,
+      "help": "Lav kasse\n12 cm. Hopp opp, og tråkk opp på de lave trinnene."
+    }
+  ],
+  "look": {
+    "exposure": 1.0,
+    "sun": 2.0
+  },
+  "audio": {
+    "reverb": 0.15
+  }
+}

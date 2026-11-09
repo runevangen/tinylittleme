@@ -11,6 +11,13 @@
   .hide{display:none!important}
   #xhair{position:fixed;left:50%;top:46%;width:22px;height:22px;margin:-11px 0 0 -11px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #0008,inset 0 0 0 1px #0008;display:none;pointer-events:none;z-index:2}
   #xhair::after{content:'';position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:#ffa940}
+  #qbtn{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(66px,calc(env(safe-area-inset-top) + 56px));width:38px;height:38px;border-radius:50%;border:2px solid #ffa94099;background:#121a2caa;color:#ffd9a0;font:700 17px system-ui;display:flex;align-items:center;justify-content:center;z-index:4;padding:0}
+  #qpop{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(110px,calc(env(safe-area-inset-top) + 100px));background:#121a2cf2;border:2px solid #ffa940;border-radius:14px;padding:8px;z-index:5;display:flex;flex-direction:column;gap:6px;max-width:min(300px,86vw)}
+  #qpop.hide{display:none}
+  #qpop .qt,#qpop .qr{display:flex;gap:5px;flex-wrap:wrap}
+  #qpop button{border:0;border-radius:9px;padding:9px 11px;font:600 13px system-ui;background:#ffffff22;color:#eef2fa}
+  #qpop .qt button.on{background:#ffa940;color:#1d2433}
+  #qpop .qr button{background:#ffffff30;font-size:14px}
   #fps{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));color:#bff;font:600 12px ui-monospace,monospace;background:#0008;padding:3px 7px;border-radius:7px;display:none;z-index:3;pointer-events:none}
   #btnCarry.take{background:#2a7f62cc}#btnCarry.use{background:#c77d12e6}#btnCarry.throw{background:#c0392be6}#btnCarry.drop{background:#4b6a7acc}
   #btnCarry.dim{opacity:.55}#btnCarry.take.dim{opacity:.8}
@@ -108,6 +115,8 @@
 <canvas id="c"></canvas>
 <div id="hud"></div>
 <div id="fps"></div>
+<button id="qbtn" aria-label="Vurder">⚑</button>
+<div id="qpop" class="hide"></div>
 <div id="xhair"></div>
 <div id="toast"></div>
 <div id="cues"></div>

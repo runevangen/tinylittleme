@@ -45,6 +45,7 @@ export function formatReport(info) {
   L.push(`${info.when} · ${info.device}`);
   L.push(`Skjerm ${info.screen} · ${info.platform || (info.touch ? 'touch' : 'tastatur/mus')} · ${info.fps}`);
   L.push(`Hoppvalg: ${info.preset} · tid ${info.clock} s · poeng ${info.points}`);
+  if (info.metrics) L.push(`Kamera og styring: ${info.metrics}`);
   L.push(`Figuren: (${info.pos.join(', ')}) · ${info.state}${info.target ? ` · neste: ${info.target}` : ''}`);
   L.push(`Lagret ${info.stats.saves} · tilbake ${info.stats.respawns} · knust ${info.stats.broken} · nullstilt ${info.stats.resets} · hard landing ${info.stats.hard}${info.stats.flew ? ' · FLYMODUS BRUKT' : ''}`);
   L.push('');
@@ -56,6 +57,11 @@ export function formatReport(info) {
   if (info.marks.length) {
     L.push('Markert av testeren:');
     for (const m of info.marks) L.push(`- [${m.c} s] (${m.pos.join(', ')}) ${m.detail || '(ingen tekst)'}`);
+    L.push('');
+  }
+  if (info.ratings?.length) {
+    L.push('Vurderinger:');
+    for (const r of info.ratings) L.push(`- [${r.c} s] ${r.detail} (${r.pos.join(', ')})`);
     L.push('');
   }
   L.push(`Siste hendelser (${info.events.length}):`);

@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.60** – Mer å teste på: Kontrollbanen (`?level=kontroll`: slalom, trinn, hull, fall-tårn, bjelke), Hjelp-nivå (Ingen/Normal/Mye), tråkke opp små hinder uten å hoppe (Mario-stil), kantgrep av seg selv som standard, nye justeringer (treghet, gangfart, stikke-følsomhet, kamerafølging-styrke, synsfelt, kameravinkel), ⚑-knapp for rask vurdering (👍/😐/😫 + tema) og målinger i testrapporten (sveip per minutt, kamera dreid av deg og automatisk). Se docs/TESTING.md.
 - **0.59** – Ny standard: Mario-stil. Figuren snur mot gangretningen, farten følger stikken, og kameraet svinger rolig bak deg (maks 0,8 rad/s, ikke når du går mot det). Rund skygge under figuren og landingsmarkør ved fall (hvit/oransje/rød etter hvor hardt du lander). PUBG-styring og skulderkamera ligger fortsatt som valg (⚙ → Styring → Styringsstil).
 - **0.58** – PC: F (TA) virket ikke når du ikke så mot tingen, og uten pekerlås kunne du ikke snu kameraet. Nå virker drag med musa også uten lås, piltastene ser deg rundt (WASD går), og står du ved en ting du ikke ser mot, sier hint-linja «Se mot X for å ta den». Rettet også en testfeil fra v0.57.
 - **0.57** – Rettet: «i»-fliken i høyre hjørne gjorde ingenting når du ikke sto nær en ting (og fantes ikke i Soverom). Nå åpner den en bruksanvisning (mål, stikke, hopp, grip, TA, kamera, meny) på norsk eller engelsk; står du nær en ting du ikke har lest om, vises den først, og «›» / «‹» bytter. Fliken vises alltid under spilling.

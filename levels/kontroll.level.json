@@ -1,0 +1,696 @@
+{
+ "name": "Kontrollbanen",
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -70,
+    -2,
+    -24
+   ],
+   "max": [
+    70,
+    0,
+    24
+   ],
+   "id": "gulv",
+   "color": 14267266,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -71,
+    0,
+    -24
+   ],
+   "max": [
+    -70,
+    44,
+    24
+   ],
+   "id": "vegg_v",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    70,
+    0,
+    -24
+   ],
+   "max": [
+    71,
+    44,
+    24
+   ],
+   "id": "vegg_o",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -70,
+    0,
+    -25
+   ],
+   "max": [
+    70,
+    44,
+    -24
+   ],
+   "id": "vegg_n",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -70,
+    0,
+    24
+   ],
+   "max": [
+    70,
+    44,
+    25
+   ],
+   "id": "vegg_s",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    -50,
+    0,
+    -5
+   ],
+   "max": [
+    -48,
+    6,
+    -3
+   ],
+   "id": "stolpe_1",
+   "kind": "chest",
+   "color": 12081770,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -42,
+    0,
+    5
+   ],
+   "max": [
+    -40,
+    6,
+    7
+   ],
+   "id": "stolpe_2",
+   "kind": "chest",
+   "color": 12081770,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -34,
+    0,
+    -5
+   ],
+   "max": [
+    -32,
+    6,
+    -3
+   ],
+   "id": "stolpe_3",
+   "kind": "chest",
+   "color": 12081770,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -26,
+    0,
+    5
+   ],
+   "max": [
+    -24,
+    6,
+    7
+   ],
+   "id": "stolpe_4",
+   "kind": "chest",
+   "color": 12081770,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -18,
+    0,
+    -10
+   ],
+   "max": [
+    -12,
+    0.5,
+    10
+   ],
+   "id": "trinn_1",
+   "kind": "chest",
+   "color": 8365764,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -12,
+    0,
+    -10
+   ],
+   "max": [
+    -6,
+    1,
+    10
+   ],
+   "id": "trinn_2",
+   "kind": "chest",
+   "color": 8365764,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -6,
+    0,
+    -10
+   ],
+   "max": [
+    0,
+    2,
+    10
+   ],
+   "id": "trinn_3",
+   "kind": "chest",
+   "color": 8365764,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    0,
+    0,
+    -10
+   ],
+   "max": [
+    6,
+    1,
+    10
+   ],
+   "id": "trinn_4",
+   "kind": "chest",
+   "color": 8365764,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    6,
+    0,
+    -10
+   ],
+   "max": [
+    12,
+    0.5,
+    10
+   ],
+   "id": "trinn_5",
+   "kind": "chest",
+   "color": 8365764,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    16,
+    0,
+    -6
+   ],
+   "max": [
+    24,
+    2,
+    6
+   ],
+   "id": "plattform_1",
+   "kind": "chest",
+   "color": 14921802,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    26,
+    0,
+    -6
+   ],
+   "max": [
+    34,
+    2,
+    6
+   ],
+   "id": "plattform_2",
+   "kind": "chest",
+   "color": 14921802,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    37,
+    0,
+    -6
+   ],
+   "max": [
+    45,
+    2,
+    6
+   ],
+   "id": "plattform_3",
+   "kind": "chest",
+   "color": 14921802,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    49,
+    0,
+    -6
+   ],
+   "max": [
+    57,
+    2,
+    6
+   ],
+   "id": "plattform_4",
+   "kind": "chest",
+   "color": 14921802,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -20,
+    0,
+    14
+   ],
+   "max": [
+    -16,
+    3,
+    22
+   ],
+   "id": "fall_1",
+   "kind": "chest",
+   "color": 11107408,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -15.6,
+    0,
+    14
+   ],
+   "max": [
+    -11.6,
+    6,
+    22
+   ],
+   "id": "fall_2",
+   "kind": "chest",
+   "color": 11107408,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -11.2,
+    0,
+    14
+   ],
+   "max": [
+    -7.2,
+    9,
+    22
+   ],
+   "id": "fall_3",
+   "kind": "chest",
+   "color": 11107408,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -6.8,
+    0,
+    14
+   ],
+   "max": [
+    -2.8,
+    12,
+    22
+   ],
+   "id": "fall_4",
+   "kind": "chest",
+   "color": 11107408,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -2.4,
+    0,
+    14
+   ],
+   "max": [
+    1.6,
+    15,
+    22
+   ],
+   "id": "fall_5",
+   "kind": "chest",
+   "color": 11107408,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    2,
+    0,
+    14
+   ],
+   "max": [
+    6,
+    18,
+    22
+   ],
+   "id": "fall_6",
+   "kind": "chest",
+   "color": 11107408,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    7,
+    0,
+    14
+   ],
+   "max": [
+    15,
+    0.6,
+    22
+   ],
+   "id": "fall_matte",
+   "kind": "mat",
+   "color": 12876426,
+   "material": "fabric",
+   "cp": false,
+   "soft": true
+  },
+  {
+   "type": "wood",
+   "min": [
+    24,
+    0,
+    15
+   ],
+   "max": [
+    28,
+    2.4,
+    19
+   ],
+   "id": "bjelke_stolpe_1",
+   "kind": "chest",
+   "color": 9198138,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    28,
+    2,
+    16
+   ],
+   "max": [
+    54,
+    2.4,
+    18
+   ],
+   "id": "bjelke",
+   "kind": "chest",
+   "color": 14267266,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    54,
+    0,
+    15
+   ],
+   "max": [
+    58,
+    2.4,
+    19
+   ],
+   "id": "bjelke_stolpe_2",
+   "kind": "chest",
+   "color": 9198138,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -58,
+    0,
+    -16
+   ],
+   "max": [
+    -50,
+    2.4,
+    -10
+   ],
+   "id": "baerekasse",
+   "kind": "chest",
+   "color": 7049073,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  }
+ ],
+ "movables": [],
+ "decor": [],
+ "hints": [
+  {
+   "id": "stolpe_1",
+   "text": "Slalom\nGå mellom stolpene uten å stoppe. Prøv rolig og rask gange (stikken halvveis og helt ut).",
+   "pos": [
+    -49,
+    6.9,
+    -4
+   ]
+  },
+  {
+   "id": "trinn_1",
+   "text": "Trinn\nGå rett over: det laveste trinnet (2,5 cm) tråkkes opp på av seg selv, de neste må du hoppe på (Hjelp-nivå «Mye» tar litt mer).",
+   "pos": [
+    -15,
+    1.4,
+    0
+   ]
+  },
+  {
+   "id": "plattform_1",
+   "text": "Hopp over hull\nTre hopp med økende gap (2, 3 og 4 enheter). Mål: den siste plattformen.",
+   "pos": [
+    20,
+    2.9,
+    0
+   ]
+  },
+  {
+   "id": "fall_1",
+   "text": "Fall-tårn\nHopp opp trappen. På toppen: hopp ned på den myke matta (østover) eller rett ned i gulvet i vest, og se landingsmarkøren skifte farge (hvit, oransje, rød).",
+   "pos": [
+    -18,
+    3.9,
+    18
+   ]
+  },
+  {
+   "id": "fall_matte",
+   "text": "Myk matte\nTar av for fallet.",
+   "pos": [
+    11,
+    1.5,
+    18
+   ]
+  },
+  {
+   "id": "bjelke",
+   "text": "Balansebjelke\nSmal. Gå sakte over (stikken halvveis). Hopp av og se skyggen.",
+   "pos": [
+    41,
+    3.3,
+    17
+   ]
+  },
+  {
+   "id": "baerekasse",
+   "text": "Lav kasse\n12 cm. Hopp opp, og tråkk opp på de lave trinnene.",
+   "pos": [
+    -54,
+    3.3,
+    -13
+   ]
+  }
+ ],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    0,
+    24,
+    -23.95
+   ],
+   "size": [
+    24,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -70,
+   "x1": 70,
+   "z0": -24,
+   "z1": 24,
+   "top": 0
+  },
+  {
+   "id": "plattform_4",
+   "x0": 49,
+   "x1": 57,
+   "z0": -6,
+   "z1": 6,
+   "top": 2
+  }
+ ],
+ "start": [
+  -62,
+  0,
+  0
+ ],
+ "goal": [
+  53,
+  2,
+  0
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -70,
+  "x1": 70,
+  "z0": -24,
+  "z1": 24,
+  "height": 44,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b382",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#e9e1d3"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "note": "Testbane for styring og kamera: slalom, trinn, hopp over hull, fall, balansebjelke. Ikke fra bilder."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 23,
+  "reachable": 19
+ }
+}

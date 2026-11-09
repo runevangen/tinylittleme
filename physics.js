@@ -3,7 +3,7 @@
 // Verden: akse-justerte bokser. x/z er gulvplanet, y er opp. Enhet ≈ «spillerhøyde» (1.0).
 
 // Felles bevegelsesvekt: klassisk og spenning er «umiddelbare» (som før); prince har treghet, oppbygging og tidsbruk.
-const SNAPPY = { faceCam: false, gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4, hardLand: Infinity, knockV: Infinity };
+const SNAPPY = { stepUp: 0, faceCam: false, gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4, hardLand: Infinity, knockV: Infinity };
 
 export const PRESETS = {
   // Slik det var først: raskt, to hopp, kanten grips av seg selv.
@@ -21,7 +21,7 @@ export const PRESETS = {
   // Prince of Persia-følelse: du bygger opp fart, snur ikke på stedet, hopp har forberedelse,
   // landing etter høyt fall tar tid, og å hive seg opp på en kant er en bevegelse som tar tid.
   prince: {
-    label: 'Prince', faceCam: false, speed: 2.8, accel: 7, decel: 12, turnDecel: 10, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 8,
+    label: 'Prince', faceCam: false, stepUp: 0, speed: 2.8, accel: 7, decel: 12, turnDecel: 10, gravity: -22, jump: 12.2, airJump: 0, airJumps: 0, airAccel: 8,
     gaitMode: true, jumpBoost: 2.0, turnRate: 8, stepMin: 0.25, cadence0: 1.8, cadenceK: 0.6, creep: 0.45,
     autoGrab: false, reachTime: 0.45, reachCooldown: 0.6, ledgeAbove: 0.3, reachAbove: 0.75,
     ropeReach: 2.0, wallKick: 7, wallUp: 11, slide: -3.5, swingPush: 14, ropeJump: 10,
@@ -31,7 +31,7 @@ export const PRESETS = {
 };
 
 // PUBG-lik styring: figuren ser alltid dit kameraet ser, og du går sidelengs og bakover uten å snu deg (se `faceCam`). Resten (hopp, landing, klatring) som i Prince.
-PRESETS.pubg = { ...PRESETS.prince, label: 'PUBG (kamera styrer)', gaitMode: false, faceCam: true, speed: 4.2, accel: 34, decel: 44, turnDecel: 44, airAccel: 10, jumpBoost: 1.35, jumpWindup: 0, turnRate: 20, walkFactor: 0.45 };
+PRESETS.pubg = { ...PRESETS.prince, label: 'PUBG (kamera styrer)', gaitMode: false, faceCam: true, speed: 4.2, accel: 34, decel: 44, turnDecel: 44, airAccel: 10, jumpBoost: 1.35, jumpWindup: 0, turnRate: 20, walkFactor: 0.45, stepUp: 0.5 };
 
 export const P = {
   w: 0.6,
@@ -54,6 +54,7 @@ export const P = {
   walkFactor: 0.4,   // fartsfaktor når du går forsiktig (C)
   turnRate: 8,       // hvor fort figuren snur kroppen (rad/s)
   // gange med skritt (gaitMode): bevegelsen styres av skrittene, ikke omvendt
+  stepUp: 0,         // høyeste hinder du tråkker opp på uten å hoppe (enheter). 0 = av
   faceCam: false,    // true (PUBG): figuren ser alltid dit kameraet ser (inp.face), og styrer sidelengs/bakover uten å snu seg
   gaitMode: false,   // true: du går i blikkretningen, snur kroppen først, og stopper ved skrittgrensen
   stepMin: 0.25,     // korteste skrittlengde
@@ -93,7 +94,7 @@ export const P = {
 };
 
 // Mario-stil: figuren snur mot gangretningen (kamera og kropp er uavhengige), kameraet følger etter (se camera_util.js)
-PRESETS.mario = { ...PRESETS.pubg, label: 'Mario (kameraet følger etter)', faceCam: false, turnRate: 14 };
+PRESETS.mario = { ...PRESETS.pubg, label: 'Mario (kameraet følger etter)', faceCam: false, turnRate: 14, autoGrab: true };
 
 export function applyPreset(name) {
   const { label, ...vals } = PRESETS[name];
@@ -725,6 +726,7 @@ function sub(p, inp, dt, L) {
 
   const wasGrounded = p.onGround, vyBefore = p.vy, px0 = p.x, pz0 = p.z;
   p.onGround = false; p.groundBox = null;
+  p.stepOk = wasGrounded && !p.jumping && p.vy <= 0.5;
   const hx = moveX(p, p.vx * dt, L);
   const hz = moveZ(p, p.vz * dt, L);
   moveY(p, p.vy * dt, L);
@@ -756,12 +758,22 @@ function sub(p, inp, dt, L) {
   }
 }
 
+// Små hindre (bok, blyant, kant) tråkkes opp på uten å hoppe: bare mens du går på bakken, opp til P.stepUp høyt, og bare hvis det er plass over.
+function stepOver(p, b, L) {
+  if (!p.stepOk || b.dyn || P.stepUp <= 0) return false;
+  const top = b.max[1], dy = top - p.y;
+  if (dy <= 0.02 || dy > P.stepUp) return false;
+  for (const c of L.boxes) if (c !== b && c !== p.carry && !c.carried && overlaps(c, p.x, top + 0.002, p.z)) return false;
+  p.y = top; p.stepDy = (p.stepDy || 0) + dy; return true;
+}
+
 function moveX(p, d, L) {
   if (!d) return null;
   p.x += d;
   let hit = null;
   for (const b of L.boxes) {
     if (b === p.carry || !overlaps(b, p.x, p.y, p.z)) continue;
+    if (stepOver(p, b, L)) continue;
     if (b.dyn) pushForPlayer(p, b, d, 0, L);
     p.x = d > 0 ? b.min[0] - HW : b.max[0] + HW;
     if (!b.dyn) p.vx = 0;                      // mot ting som kan dyttes beholder du farten
@@ -776,6 +788,7 @@ function moveZ(p, d, L) {
   let hit = null;
   for (const b of L.boxes) {
     if (b === p.carry || !overlaps(b, p.x, p.y, p.z)) continue;
+    if (stepOver(p, b, L)) continue;
     if (b.dyn) pushForPlayer(p, b, d, 2, L);
     p.z = d > 0 ? b.min[2] - HW : b.max[2] + HW;
     if (!b.dyn) p.vz = 0;
