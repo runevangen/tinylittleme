@@ -358,9 +358,16 @@ for (const b of LEVEL.boxes) {
 {
   const w = room.x1 - room.x0, d = room.z1 - room.z0, ox = (room.x0 + room.x1) / 2, oz = (room.z0 + room.z1) / 2;
   if (room.walls?.material !== 'tile' && !levelName) {
-    const mat = std({ color: 0xffffff, roughness: 0.5 });
-    for (const [x, z, sx, sz] of [[ox, room.z0 + 0.3, w, 0.6], [ox, room.z1 - 0.3, w, 0.6], [room.x0 + 0.3, oz, 0.6, d], [room.x1 - 0.3, oz, 0.6, d]]) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(sx, 3, sz), mat); m.position.set(x, 1.5, z); m.receiveShadow = true; scene.add(m);
+    // fotlist (12 cm) og taklist (hulkil) langs alle fire vegger, med profil (listverk.js-former i props.js)
+    const cl = 0xf3efe6, H0 = 2.4, TH = 1.0;
+    for (const [kind, sx, sy, sz, x, y, z, ry] of [
+      ['fotlist', w, H0, 0.55, ox, H0 / 2, room.z0 + 0.275, 0], ['fotlist', w, H0, 0.55, ox, H0 / 2, room.z1 - 0.275, Math.PI],
+      ['fotlist', 0.55, H0, d, room.x0 + 0.275, H0 / 2, oz, 0], ['fotlist', 0.55, H0, d, room.x1 - 0.275, H0 / 2, oz, Math.PI],
+      ['taklist', w, TH, TH, ox, room.height - TH / 2, room.z0 + TH / 2, 0], ['taklist', w, TH, TH, ox, room.height - TH / 2, room.z1 - TH / 2, Math.PI],
+      ['taklist', TH, TH, d, room.x0 + TH / 2, room.height - TH / 2, oz, 0], ['taklist', TH, TH, d, room.x1 - TH / 2, room.height - TH / 2, oz, Math.PI],
+    ]) {
+      const t = buildSingle(kind, [sx, sy, sz], { color: cl }); if (!t) continue;
+      t.position.set(x, y, z); t.rotation.y = ry; scene.add(t);
     }
   }
   const ceilMat = room.ceiling?.material === 'woodpanel'
@@ -378,6 +385,9 @@ for (const b of LEVEL.boxes) {
     g.add(new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ color: 0xfff6e0 })));
     for (const [x, y, sx, sy] of [[0, wh / 2 + 0.4, ww + 1.6, 0.8], [0, -wh / 2 - 0.4, ww + 1.6, 0.8], [-ww / 2 - 0.4, 0, 0.8, wh], [ww / 2 + 0.4, 0, 0.8, wh], [0, 0, 0.4, wh]]) {
       const f = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, 0.7), frameMat); f.position.set(x, y, 0.3); g.add(f);
+    }
+    for (const [sx, sy, x, y] of [[ww + 3.2, 1.2, 0, wh / 2 + 1.4], [ww + 3.2, 1.2, 0, -wh / 2 - 1.4], [1.2, wh + 0.4, -ww / 2 - 1.4, 0], [1.2, wh + 0.4, ww / 2 + 1.4, 0]]) {      // gerikt rundt vinduet
+      const ge = buildSingle('gerikt', [sx, sy, 0.35], { color: 0xf3efe6 }); if (ge) { ge.position.set(x, y, 0.2); g.add(ge); }
     }
     scene.add(g);
   }

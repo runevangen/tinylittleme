@@ -46,6 +46,10 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `bag` | ja | pose / toalettveske |
 | `caddy` | ja | dusjkurv (kromtråd) |
 | `pole` | ja | doskrubb / stang |
+| `listverk` | ja | listverk (lister og foringer, generell): lang og smal, tegnes med profil |
+| `fotlist` | ja | fotlist / gulvlist (langs gulv og vegg), ca. 10–12 cm høy |
+| `taklist` | ja | taklist / gesims (hulkil mellom vegg og tak) |
+| `gerikt` | ja | gerikt (list rundt dør og vindu); også dørfôr/vindusfôr |
 | `qtip` | ja | ørepinne (stav): movable light + pole: 1.5 |
 | `sponge` | ja | svamp: movable light + soft: true |
 | `paper_pile` | ja | haug med dopapir: soft: true (fast myk flate) |

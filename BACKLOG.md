@@ -54,6 +54,7 @@ Gjenstår / til sparring:
 - [ ] Musikk.
 
 ## Brett og innhold
+- [~] **Listverk (v0.61):** fotlist, taklist og gerikt (lister og foringer) med profil i Soverom (rundt rommet og vinduet). `kind`: `listverk`, `fotlist`, `taklist`, `gerikt`. Gjenstår: bruke i badet (foringer rundt dør/vindu og fliskant), dørfôr/vannbrett som egne profiler, og lister som klatrekanter.
 - [ ] Flytte motgiften til toppen av speilskapet når klatring finnes.
 - [ ] Motgift-varianter: A) bit = ferdig kapittel, B) vann stiger, rømme til døra.
 - [~] Vask (forsenkning), karets avrundede ende og skråtak: *utseendet* er på plass fra v0.18–0.19 (`props.js`: do, kar, vask, småting). Kollisjonen er fortsatt bokser: vasken er flat å gå på, karet har rettvinklede vegger. Skråtak mangler. Venter på bildene for å rette formene (hvilken ende er rund osv.).

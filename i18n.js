@@ -67,6 +67,7 @@ export const NAMES = {
   tube: ['Tannkrem', 'Toothpaste'], bottle: ['Flaske', 'Bottle'], shaver: ['Barbermaskin', 'Shaver'], basket: ['Vaskekurv', 'Laundry basket'], bag: ['Toalettveske', 'Toiletry bag'],
   mat: ['Dørmatte', 'Door mat'], book: ['Bok', 'Book'], vanity: ['Servantskap', 'Vanity'], vanity_top: ['Servant', 'Sink top'], tub: ['Badekar', 'Bathtub'],
   toilet_tank: ['Do (kasse)', 'Toilet tank'], toilet_bowl: ['Do (skål)', 'Toilet bowl'], toilet_lid: ['Do (lokk)', 'Toilet lid'], knob: ['Knott', 'Knob'], faucet: ['Kran', 'Faucet'],
+  listverk: ['Listverk', 'Trim'], fotlist: ['Fotlist', 'Baseboard'], taklist: ['Taklist', 'Crown moulding'], gerikt: ['Gerikt', 'Door/window casing'],
   shelf: ['Hylle', 'Shelf'], chest: ['Kasse', 'Box'], pole: ['Stav', 'Pole'], caddy: ['Dusjkurv', 'Shower caddy'], sill: ['Vinduskarm', 'Window sill'], mirror: ['Speil', 'Mirror'],
 };
 

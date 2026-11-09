@@ -36,6 +36,11 @@ export const KINDS = {
   bag:          { shaped: true,  desc: 'pose / toalettveske' },
   caddy:        { shaped: true,  desc: 'dusjkurv (kromtråd)' },
   pole:         { shaped: true,  desc: 'doskrubb / stang' },
+  // listverk (lister og foringer, ofte decor: true)
+  listverk:     { shaped: true,  desc: 'listverk (lister og foringer, generell): lang og smal, tegnes med profil' },
+  fotlist:      { shaped: true,  desc: 'fotlist / gulvlist (langs gulv og vegg), ca. 10–12 cm høy' },
+  taklist:      { shaped: true,  desc: 'taklist / gesims (hulkil mellom vegg og tak)' },
+  gerikt:       { shaped: true,  desc: 'gerikt (list rundt dør og vindu); også dørfôr/vindusfôr' },
   // klatrehjelp
   qtip:         { shaped: true,  desc: 'ørepinne (stav): movable light + pole: 1.5' },
   sponge:       { shaped: true,  desc: 'svamp: movable light + soft: true' },

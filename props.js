@@ -161,7 +161,34 @@ const bar = (a, b, r, mat) => {                                         // tynn 
 const lathe = (pts, seg = 28) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(Math.max(0.0005, r), y)), seg);
 
 // ---------- enkeltting: bygges rundt midten av boksen (sx, sy, sz) ----------
+// ---------- listverk: fotlist, taklist, gerikt (lister og foringer) ----------
+// Profilen tegnes i (dybde u fra veggen, høyde v) og trekkes ut langs lengden. Fronten peker +z (lister langs x), +x (lister langs z) eller +z (lister langs y).
+const LIST_PROFILES = {
+  fotlist: (d, h) => [[0, 0], [d * 0.78, 0], [d * 0.78, h * 0.74], [d * 0.92, h * 0.8], [d, h * 0.9], [d * 0.9, h], [0, h]],
+  gerikt: (d, h) => [[0, 0], [d * 0.8, 0], [d, h * 0.07], [d, h * 0.93], [d * 0.8, h], [0, h]],
+  listverk: (d, h) => [[0, 0], [d, 0], [d, h * 0.82], [d * 0.7, h], [0, h]],
+};
+function listGeo(kind, sx, sy, sz) {
+  const dims = [sx, sy, sz], axis = dims.indexOf(Math.max(sx, sy, sz));
+  const len = dims[axis], d = axis === 2 ? sx : sz, h = axis === 1 ? sx : sy;
+  const mir = (pts) => pts.map(([u, v]) => new THREE.Vector2(-u, v));      // speilet: etter rotasjonen peker fronten mot +z
+  let shape;
+  if (kind === 'taklist') {                                                  // hulkil: buet kant mellom vegg og tak
+    shape = new THREE.Shape(); shape.moveTo(0, h); shape.lineTo(0, h * 0.12); shape.quadraticCurveTo(-d * 0.5, h * 0.06, -d, h); shape.lineTo(0, h);
+  } else shape = new THREE.Shape(mir((LIST_PROFILES[kind] || LIST_PROFILES.listverk)(d, h)));
+  const g = new THREE.ExtrudeGeometry(shape, { depth: len, bevelEnabled: false, curveSegments: 10 });   // profilen i XY, lengden langs z
+  g.translate(d / 2, -h / 2, -len / 2);
+  g.rotateY(Math.PI / 2);                                                    // lengde langs x, ryggen mot −z, fronten mot +z
+  if (axis === 1) g.rotateZ(Math.PI / 2);                                    // lang langs y
+  if (axis === 2) g.rotateY(Math.PI / 2);                                    // lang langs z (fronten mot +x)
+  g.computeVertexNormals();
+  return g;
+}
+const paintMat = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.45, side: THREE.DoubleSide });
+const listBuilder = (kind) => (sx, sy, sz, o) => { const g = new THREE.Group(); g.add(mesh(listGeo(kind, sx, sy, sz), paintMat(o.color ?? 0xf3efe6))); return g; };
+
 const SINGLE = {
+  fotlist: listBuilder('fotlist'), taklist: listBuilder('taklist'), gerikt: listBuilder('gerikt'), listverk: listBuilder('listverk'),
   bottle(sx, sy, sz, o) {
     const g = new THREE.Group(), r = Math.min(sx, sz) / 2, y0 = -sy / 2, bh = sy * 0.6;
     const bodyMat = plasticMat(o.color);
