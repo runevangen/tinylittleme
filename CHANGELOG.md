@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.70** – Lyssøylen over målet er tydeligere (sterkere farge, litt bredere, større glorie), og den synes ikke lenger gjennom vegger og møbler: det som står foran, skjuler den.
 - **0.69** – (1) **Målfyr:** en grønn lyssøyle står fra målet og opp til taket, med en glorie som også synes svakt gjennom vegger og møbler, så du ser hvor du skal når du ser deg rundt. Den dempes når du står ved målet. Av/på: ⚙ → Hjelp og tekst → «Lyssøyle over målet». (2) **Mus:** kameraet gikk altfor fort med mus. Musa har fått egen følsomhet (standard 45 % av før), både når du drar og med låst peker: ⚙ → Styring → «Mus: følsomhet». Berøring er uendret.
 - **0.68** – Ny versjon kommer nå med en gang: siden henter versjonsnummeret uten mellomlager og laster alle spillfilene og brettet med `?v=<versjon>`. Før kunne nettleseren på mobil bli sittende med gamle filer i flere minutter etter en utlegging (eller blande gamle og nye). Arbeidsregel: nye `.js`-filer i roten må legges i lista i `index.html`.
 - **0.67** – Soverom: de tre bøkene i boktrappa gikk inn i hverandre (de overlappet litt, noe som ikke syntes da de var enkle klosser). Nå ligger de inntil hverandre. En ny test passer på at bøker ikke overlapper.

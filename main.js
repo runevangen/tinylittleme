@@ -415,7 +415,7 @@ const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.3, 0.5, 14), glas
 const cork = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.17, 0.2, 12), new THREE.MeshStandardMaterial({ color: 0xa9774b, roughness: 0.9 })); cork.position.y = 1.12; goal.add(cork);
 goal.position.set(...LEVEL.goal); scene.add(goal);
 const glow = new THREE.PointLight(0x66ffcc, 30, 14); glow.position.y = 1; goal.add(glow);
-// målfyr (v0.69): en lyssøyle fra målet og opp til taket, og en glorie som også synes svakt gjennom ting, så du finner målet når du ser deg rundt
+// målfyr (v0.69): en lyssøyle fra gulv til tak ved målet og en glorie på selve målet, så du finner det når du ser deg rundt (skjules av ting som står foran)
 let beaconOn = store.get('tlm.beacon', true);
 const beacon = new THREE.Group(); beacon.position.set(LEVEL.goal[0], LEVEL.goal[1], LEVEL.goal[2]); scene.add(beacon);
 {
@@ -423,13 +423,13 @@ const beacon = new THREE.Group(); beacon.position.set(LEVEL.goal[0], LEVEL.goal[
   const gc = document.createElement('canvas'); gc.width = 8; gc.height = 128; { const g = gc.getContext('2d'), lg = g.createLinearGradient(0, 0, 0, 128); lg.addColorStop(0, 'rgba(255,255,255,0)'); lg.addColorStop(0.35, 'rgba(255,255,255,.55)'); lg.addColorStop(1, 'rgba(255,255,255,1)'); g.fillStyle = lg; g.fillRect(0, 0, 8, 128); }
   const gt = new THREE.CanvasTexture(gc), bm = (o) => new THREE.MeshBasicMaterial({ color: 0x19d79a, transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false, ...o });   // vanlig blanding (ikke additiv): synes også mot hvite fliser
   const geo = new THREE.CylinderGeometry(1.1, 0.45, bh, 20, 1, true); geo.translate(0, bh / 2, 0);
-  const core = new THREE.Mesh(geo, bm({ opacity: 0.34, map: gt })); core.renderOrder = 6;
-  const fh = bh + LEVEL.goal[1], full = new THREE.CylinderGeometry(0.75, 0.75, fh, 20, 1, true); full.translate(0, bh - fh / 2, 0);                 // helt fra gulvet til taket, så den er i synsfeltet uansett hvor høyt målet ligger
-  const ghost = new THREE.Mesh(full, bm({ opacity: 0.16, depthTest: false })); ghost.renderOrder = 7;                   // synlig gjennom vegger og møbler
+  const core = new THREE.Mesh(geo, bm({ opacity: 0.5, map: gt })); core.renderOrder = 6;
+  const fh = bh + LEVEL.goal[1], full = new THREE.CylinderGeometry(0.9, 0.9, fh, 20, 1, true); full.translate(0, bh - fh / 2, 0);                 // helt fra gulvet til taket, så den er i synsfeltet uansett hvor høyt målet ligger
+  const ghost = new THREE.Mesh(full, bm({ opacity: 0.3 })); ghost.renderOrder = 7;                                      // skjules av det som står foran (v0.70: ikke lenger synlig gjennom ting)
   const hc = document.createElement('canvas'); hc.width = hc.height = 128; { const g = hc.getContext('2d'), rg = g.createRadialGradient(64, 64, 2, 64, 64, 62); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.25, 'rgba(60,235,170,.85)'); rg.addColorStop(1, 'rgba(25,215,154,0)'); g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
     g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 2; for (const a of [0, Math.PI / 2, Math.PI / 4, -Math.PI / 4]) { g.beginPath(); g.moveTo(64 - Math.cos(a) * 58, 64 - Math.sin(a) * 58); g.lineTo(64 + Math.cos(a) * 58, 64 + Math.sin(a) * 58); g.stroke(); } }
-  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(hc), color: 0xffffff, transparent: true, opacity: 0.7, depthTest: false, depthWrite: false, sizeAttenuation: false, fog: false }));
-  halo.scale.setScalar(0.12); halo.position.y = 0.9; halo.renderOrder = 8;
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(hc), color: 0xffffff, transparent: true, opacity: 0.7, depthWrite: false, sizeAttenuation: false, fog: false }));
+  halo.scale.setScalar(0.14); halo.position.y = 0.9; halo.renderOrder = 8;
   beacon.add(core, ghost, halo); beacon.userData = { core, ghost, halo };
 }
 
@@ -1289,7 +1289,7 @@ const SETTINGS = [
   // Hjelp og tekst
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
-  fl('beacon', 'hjelp', 'Lyssøyle over målet (synes svakt gjennom ting)', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
+  fl('beacon', 'hjelp', 'Lyssøyle over målet', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
   fl('griphi', 'hjelp', 'Fremhev grep (oransje, pulserende)', false, () => gripHi, kp('tlm.griphi', (v) => { gripHi = v; })),
   ...(labels.length ? [fl('labels', 'hjelp', `Brukslapper ved ting${key('L')}`, true, () => labelsOn, kp('tlm.labels', (v) => { labelsOn = v; }))] : []),
@@ -1683,7 +1683,7 @@ function render(now, dt) {
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;
   { const u = beacon.userData, pu = 0.5 + 0.5 * Math.sin(now * 0.0025), near = Math.min(1, Math.hypot(player.x - LEVEL.goal[0], player.y - LEVEL.goal[1], player.z - LEVEL.goal[2]) / 6);   // dempes når du står ved målet
-    beacon.visible = beaconOn && !won && mode !== 'plan'; u.core.material.opacity = (0.26 + 0.12 * pu) * near; u.ghost.material.opacity = (0.13 + 0.06 * pu) * near; u.halo.material.opacity = (0.5 + 0.3 * pu) * near; u.halo.material.rotation = now * 0.0004; beacon.rotation.y = now * 0.0006; }
+    beacon.visible = beaconOn && !won && mode !== 'plan'; u.core.material.opacity = (0.42 + 0.16 * pu) * near; u.ghost.material.opacity = (0.26 + 0.1 * pu) * near; u.halo.material.opacity = (0.65 + 0.3 * pu) * near; u.halo.material.rotation = now * 0.0004; beacon.rotation.y = now * 0.0006; }
   flag.children[1].rotation.y = Math.sin(now * 0.004) * 0.25;
 
   let desired, look;
