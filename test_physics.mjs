@@ -923,6 +923,12 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// soverommet: bøker skal ikke gå inn i hverandre (de tegnes som ekte bøker)
+{
+  const bk = LEVEL.boxes.filter((b) => b.type === 'book');
+  for (const a of bk) for (const b of bk) if (a !== b) assert.ok(!(a.min[0] < b.max[0] - 1e-6 && a.max[0] > b.min[0] + 1e-6 && a.min[1] < b.max[1] - 1e-6 && a.max[1] > b.min[1] + 1e-6 && a.min[2] < b.max[2] - 1e-6 && a.max[2] > b.min[2] + 1e-6), `bøker overlapper: ${a.min} / ${b.min}`);
+}
+
 console.log('alle fysikktester grønne');
 
 

@@ -17,9 +17,10 @@ const boxes = [
   box('wall', -W, W, 0, 120, W, W + 1, { color: 0xe9e1d3 }),
 
   // bokstige: hopp + kantgrep
-  box('book', -14.5, -9.5, 0, 1.6, 6, 10, { color: 0xa23b2a }),
+  // bøkene ligger inntil hverandre (ikke inni hverandre): de tegnes som ekte bøker fra v0.62
+  box('book', -14.5, -11, 0, 1.6, 6, 10, { color: 0xa23b2a }),
   box('book', -11, -6, 0, 3.2, 6, 10, { color: 0x2f5d7c }),
-  box('book', -5.5, -0.5, 0, 5, 6, 10, { color: 0xc99a2e }),
+  box('book', -6, -0.5, 0, 5, 6, 10, { color: 0xc99a2e }),
 
   // nattbord med halvåpen skuff
   box('wood', 0, 10, 0, 11, -6, 4, { color: 0xb9845a, cp: true }),
@@ -50,9 +51,9 @@ export const LEVEL = {
   // ruta pilen følger (flater i rekkefølge; `via` = ikke noe du står på, men noe du bruker: `act` sier hva)
   route: [
     { id: 'gulv', label: 'gulvet', en: 'the floor', x0: -W, x1: W, z0: -W, z1: W, top: 0 },
-    { id: 'bok1', label: 'første bok', en: 'first book', x0: -14.5, x1: -9.5, z0: 6, z1: 10, top: 1.6 },
+    { id: 'bok1', label: 'første bok', en: 'first book', x0: -14.5, x1: -11, z0: 6, z1: 10, top: 1.6 },
     { id: 'bok2', label: 'andre bok', en: 'second book', x0: -11, x1: -6, z0: 6, z1: 10, top: 3.2 },
-    { id: 'bok3', label: 'tredje bok', en: 'third book', x0: -5.5, x1: -0.5, z0: 6, z1: 10, top: 5 },
+    { id: 'bok3', label: 'tredje bok', en: 'third book', x0: -6, x1: -0.5, z0: 6, z1: 10, top: 5 },
     { id: 'nattbord', label: 'nattbordet', en: 'the nightstand', x0: 0, x1: 10, z0: -6, z1: 4, top: 11 },
     { id: 'kabel', label: 'kabelen', en: 'the cable', x0: 13, x1: 14, z0: -0.5, z1: 0.5, top: 12, via: true, act: 'svinge' },
     { id: 'hylle1', label: 'bokhylla', en: 'the bookshelf', x0: 17, x1: 26, z0: -8, z1: 2, top: 16 },
