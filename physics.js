@@ -826,7 +826,8 @@ function sub(p, inp, dt, L) {
   const hx = moveX(p, p.vx * dt, L);
   const hz = moveZ(p, p.vz * dt, L);
   moveY(p, p.vy * dt, L);
-  const hit = hx || hz;
+  const into = (h) => wx * h.nx + wz * h.nz;                 // treffer du to flater samtidig (et hjørne), gjelder den du styrer mest inn mot
+  const hit = hx && hz ? (into(hz) < into(hx) ? hz : hx) : (hx || hz);
   if (hit) { p.wallN = { nx: hit.nx, nz: hit.nz }; p.wallT = 0.12; }
 
   if (P.gaitMode && p.onGround) {                              // fasen følger tilbakelagt distanse, så foten kan stå fast i gulvet
@@ -916,9 +917,13 @@ function tryLedge(p, hit, L) {
   const top = b.max[1];
   const dh = top - (p.y + H);
   if (dh > P.ledgeAbove + (p.reach > 0 ? P.reachAbove : 0) || dh < -P.ledgeBelow) return false;
-  const tx = p.x - hit.nx * (HW + 0.35);
-  const tz = p.z - hit.nz * (HW + 0.35);
+  // tar du tak helt ytterst på et hjørne, flyttes grepet inn på flaten, så du ikke hiver deg opp ved siden av kanten (v0.71)
+  const inset = (v, lo, hi) => (hi - lo < 0.5 ? (lo + hi) / 2 : Math.max(lo + 0.2, Math.min(hi - 0.2, v)));
+  const px = hit.nz ? inset(p.x, b.min[0], b.max[0]) : p.x, pz = hit.nx ? inset(p.z, b.min[2], b.max[2]) : p.z;
+  const tx = px - hit.nx * (HW + 0.35);
+  const tz = pz - hit.nz * (HW + 0.35);
   if (!freeAt(L, tx, top + 0.02, tz)) return false;
+  if (px !== p.x || pz !== p.z) { for (const o of L.boxes) if (o !== b && o !== p.carry && !o.carried && overlaps(o, hit.nx ? p.x : px, top - H, hit.nz ? p.z : pz)) return false; p.x = px; p.z = pz; }
   p.state = 'hang';
   p.hang = { nx: hit.nx, nz: hit.nz, top, tx, tz };
   p.y = top - H;

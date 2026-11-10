@@ -64,7 +64,7 @@ export const NAMES = {
   needle: ['Nål', 'Needle'], spool: ['Trådsnelle', 'Spool of thread'], gel_bottle: ['Hårgelé', 'Hair gel'], gel: ['Gelé', 'Gel'], roll: ['Dopapirrull', 'Toilet roll'],
   paper_strip: ['Papirbånd', 'Paper strip'], paper_pile: ['Dopapirhaug', 'Paper pile'], qtip: ['Ørepinne', 'Cotton swab'], sponge: ['Svamp', 'Sponge'],
   towel: ['Håndkle', 'Towel'], towel_hang: ['Håndkle', 'Towel'], towel_hang_: ['Håndkle', 'Towel'], cup: ['Tannglass', 'Tooth glass'], toothbrush: ['Tannbørste', 'Toothbrush'],
-  tube: ['Tannkrem', 'Toothpaste'], bottle: ['Flaske', 'Bottle'], shaver: ['Barbermaskin', 'Shaver'], basket: ['Vaskekurv', 'Laundry basket'], hamper: ['Kurv', 'Basket'], bag: ['Toalettveske', 'Toiletry bag'],
+  tube: ['Tannkrem', 'Toothpaste'], bottle: ['Flaske', 'Bottle'], shaver: ['Barbermaskin', 'Shaver'], basket: ['Vaskekurv', 'Laundry basket'], hamper: ['Kurv', 'Basket'], toyblock: ['Kloss', 'Block'], bag: ['Toalettveske', 'Toiletry bag'],
   mat: ['Dørmatte', 'Door mat'], book: ['Bok', 'Book'], vanity: ['Servantskap', 'Vanity'], vanity_top: ['Servant', 'Sink top'], tub: ['Badekar', 'Bathtub'],
   toilet_tank: ['Do (kasse)', 'Toilet tank'], toilet_bowl: ['Do (skål)', 'Toilet bowl'], toilet_lid: ['Do (lokk)', 'Toilet lid'], knob: ['Knott', 'Knob'], faucet: ['Kran', 'Faucet'],
   listverk: ['Listverk', 'Trim'], fotlist: ['Fotlist', 'Baseboard'], taklist: ['Taklist', 'Crown moulding'], gerikt: ['Gerikt', 'Door/window casing'],

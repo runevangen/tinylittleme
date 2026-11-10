@@ -37,16 +37,19 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* privat modus e.l. */ } },
 };
 
-// Brett: ?level=bad (eller soverom/poc). Uten parameter åpnes brettet du sist spilte.
+// Brett: ?level=bad (eller barnerom/kjokken/soverom …). Uten parameter åpnes brettet du sist spilte; første gang nivå 1.
+// De tre første er nivåene (n = nivånummer, stigende vanskelighetsgrad); resten er ekstra- og prøverom.
 const LEVELS = [
-  { id: 'soverom', label: 'Soverom (håndlaget)', short: 'Soverom' },
-  { id: 'bad', label: 'Bad (tolket fra 4 bilder)', short: 'Bad' },
+  { id: 'bad', n: 1, label: 'Nivå 1: Badet', short: 'Nivå 1 · Bad' },
+  { id: 'barnerom', n: 2, label: 'Nivå 2: Barnerommet', short: 'Nivå 2 · Barnerom' },
+  { id: 'kjokken', n: 3, label: 'Nivå 3: Kjøkkenet', short: 'Nivå 3 · Kjøkken' },
+  { id: 'soverom', label: 'Ekstra: Soverom (håndlaget)', short: 'Soverom' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
   { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
   { id: 'kontroll', label: 'Kontrollbanen (test av styring og kamera)', short: 'Kontroll' },
 ];
 const levelParam = new URLSearchParams(location.search).get('level');
-let levelId = levelParam === '' ? 'soverom' : (levelParam ?? store.get('tlm.level', 'soverom'));
+let levelId = levelParam === '' ? 'soverom' : (levelParam ?? store.get('tlm.level', 'bad'));
 let LEVEL = null, levelName = '';
 if (levelId && levelId !== 'soverom') {
   try {
@@ -57,7 +60,9 @@ if (levelId && levelId !== 'soverom') {
 }
 if (!LEVEL) { LEVEL = (await import('./level.js')).LEVEL; levelId = 'soverom'; }
 store.set('tlm.level', levelId);
-const levelLabel = LEVELS.find((l) => l.id === levelId)?.short || levelId;
+const levelInfo = LEVELS.find((l) => l.id === levelId), levelLabel = levelInfo?.short || levelId;
+const nextLevel = levelInfo?.n ? LEVELS.find((l) => l.n === levelInfo.n + 1) : null;
+const goLevel = (id) => { store.set('tlm.level', id); location.search = `?level=${id}`; };
 const SUN = LEVEL.sun || [28, 60, -24];
 
 // ---------- lyd ----------
@@ -1374,7 +1379,7 @@ function buildPanel() {
   const groupHtml = (g, title) => {
     const items = SETTINGS.filter((d) => d.group === g && visible(d));
     let extra = '';
-    if (g === 'spill') extra = `<label>Brett</label><select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}</option>`).join('')}</select><div class="row"><button id="pRestart">Start på nytt</button></div>`;
+    if (g === 'spill') extra = `<label>Brett</label><select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`).join('')}</select><div class="row"><button id="pRestart">Start på nytt</button></div>`;
     if (g === 'test') extra = `
       <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
       <div class="row"><button id="bMark">⚑ Marker her</button><button id="bReport">Del rapport</button></div>
@@ -1554,6 +1559,9 @@ function update(dt) {
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); setMood('happy', 6); say('goal', true);
+    { const cl = store.get('tlm.cleared', {}); if (!stats.flew) { cl[levelId] = Math.max(cl[levelId] || 0, points()); store.set('tlm.cleared', cl); }       // husk hvilke nivåer som er klart (beste poeng)
+      $('winTitle').textContent = levelInfo?.n ? (nextLevel ? `Nivå ${levelInfo.n} klart!` : 'Alle tre nivåene klart!') : 'Du kom opp!';
+      const nb = $('nextLevel'); nb.style.display = nextLevel ? '' : 'none'; if (nextLevel) { nb.textContent = `${nextLevel.label} →`; nb.onclick = () => goLevel(nextLevel.id); } }
     $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
     $('win').classList.remove('hide'); clearProgress();

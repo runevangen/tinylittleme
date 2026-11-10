@@ -34,6 +34,7 @@ export const KINDS = {
   mat:          { shaped: true,  desc: 'matte / dørmatte' },
   basket:       { shaped: true,  desc: 'vaskekurv / flettet kurv' },
   hamper:       { shaped: true,  desc: 'firkantet flettet kurv: vaskekurv med lokk; id med «aapen» gir åpen kurv (hylle)' },
+  toyblock:     { shaped: true,  desc: 'trekloss (avrundet terning); høyere enn bred = flere stablet' },
   bag:          { shaped: true,  desc: 'pose / toalettveske' },
   caddy:        { shaped: true,  desc: 'dusjkurv (kromtråd)' },
   pole:         { shaped: true,  desc: 'doskrubb / stang' },

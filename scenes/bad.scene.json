@@ -208,12 +208,12 @@
       "material": "wicker",
       "color": "#a9794a",
       "box": [
-        2,
-        42,
+        4,
+        46,
         0,
         60,
-        14,
-        58
+        19,
+        63
       ],
       "confidence": 0.8,
       "photos": [
@@ -231,12 +231,12 @@
       "material": "paper",
       "color": "#fafafa",
       "box": [
-        16,
-        26,
+        20,
+        30,
         60,
         70,
-        30,
-        40
+        35,
+        45
       ],
       "confidence": 0.7,
       "photos": [

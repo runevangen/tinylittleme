@@ -1,0 +1,1498 @@
+{
+ "name": "Nivå 3: Kjøkkenet",
+ "rev": 1,
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -36,
+    -2,
+    -30
+   ],
+   "max": [
+    36,
+    0,
+    30
+   ],
+   "id": "gulv",
+   "color": 13617595,
+   "slick": true,
+   "material": "tile"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -37,
+    0,
+    -30
+   ],
+   "max": [
+    -36,
+    48,
+    30
+   ],
+   "id": "vegg_v",
+   "color": 15657436,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    36,
+    0,
+    -30
+   ],
+   "max": [
+    37,
+    48,
+    30
+   ],
+   "id": "vegg_o",
+   "color": 15657436,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -36,
+    0,
+    -31
+   ],
+   "max": [
+    36,
+    48,
+    -30
+   ],
+   "id": "vegg_n",
+   "color": 15657436,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -36,
+    0,
+    30
+   ],
+   "max": [
+    36,
+    48,
+    31
+   ],
+   "id": "vegg_s",
+   "color": 15657436,
+   "material": "plaster"
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -36,
+    0,
+    -30
+   ],
+   "max": [
+    -23,
+    38,
+    -17
+   ],
+   "id": "kjoleskap",
+   "kind": "chest",
+   "color": 15659249,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "ceramic",
+   "min": [
+    -34.4,
+    38,
+    -28.4
+   ],
+   "max": [
+    -30,
+    41.6,
+    -24
+   ],
+   "id": "kakeboks",
+   "kind": "cup",
+   "color": 13191227,
+   "material": "ceramic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -23,
+    0,
+    -30
+   ],
+   "max": [
+    -12,
+    17.2,
+    -18
+   ],
+   "id": "benkeskap_v",
+   "kind": "chest",
+   "color": 15262418,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -22,
+    0.4,
+    -18
+   ],
+   "max": [
+    -13,
+    4,
+    -7.6
+   ],
+   "id": "skuff_1",
+   "kind": "crate",
+   "color": 15262418,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -22,
+    4.2,
+    -18
+   ],
+   "max": [
+    -13,
+    8,
+    -10.2
+   ],
+   "id": "skuff_2",
+   "kind": "crate",
+   "color": 15262418,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -22,
+    8.2,
+    -18
+   ],
+   "max": [
+    -13,
+    12,
+    -12.8
+   ],
+   "id": "skuff_3",
+   "kind": "crate",
+   "color": 15262418,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -22,
+    11.8,
+    -18
+   ],
+   "max": [
+    -13,
+    15.6,
+    -15.4
+   ],
+   "id": "skuff_4",
+   "kind": "crate",
+   "color": 15262418,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -23,
+    17.2,
+    -30
+   ],
+   "max": [
+    -12,
+    18,
+    -17.6
+   ],
+   "id": "benk_v",
+   "kind": "chest",
+   "color": 4869458,
+   "material": "plastic",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -12,
+    0,
+    -30
+   ],
+   "max": [
+    -3,
+    16.8,
+    -18
+   ],
+   "id": "vaskeskap_k",
+   "kind": "chest",
+   "color": 15262418,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -12,
+    16.8,
+    -20.4
+   ],
+   "max": [
+    -3,
+    18,
+    -17.6
+   ],
+   "id": "benk_vask_foran",
+   "kind": "chest",
+   "color": 4869458,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -12,
+    16.8,
+    -30
+   ],
+   "max": [
+    -3,
+    18,
+    -27.6
+   ],
+   "id": "benk_vask_bak",
+   "kind": "chest",
+   "color": 4869458,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    -8.4,
+    18,
+    -29.6
+   ],
+   "max": [
+    -6.6,
+    22.4,
+    -27.6
+   ],
+   "id": "kjokkenkran",
+   "kind": "faucet",
+   "color": 13225168,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -3,
+    0,
+    -30
+   ],
+   "max": [
+    4,
+    17.2,
+    -18
+   ],
+   "id": "benkeskap_m",
+   "kind": "chest",
+   "color": 15262418,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -3,
+    17.2,
+    -30
+   ],
+   "max": [
+    4,
+    18,
+    -17.6
+   ],
+   "id": "benk_m",
+   "kind": "chest",
+   "color": 4869458,
+   "material": "plastic",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    -1.6,
+    18,
+    -28.4
+   ],
+   "max": [
+    2,
+    22.4,
+    -24.8
+   ],
+   "id": "vannkoker",
+   "kind": "cup",
+   "color": 13225168,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    4,
+    0,
+    -30
+   ],
+   "max": [
+    16,
+    18,
+    -20.4
+   ],
+   "id": "komfyr_bak",
+   "kind": "chest",
+   "color": 2829617,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    4,
+    0,
+    -20.4
+   ],
+   "max": [
+    16,
+    18,
+    -17.6
+   ],
+   "id": "komfyr_front",
+   "kind": "chest",
+   "color": 3816770,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    16,
+    0,
+    -30
+   ],
+   "max": [
+    30.4,
+    17.2,
+    -18
+   ],
+   "id": "benkeskap_o",
+   "kind": "chest",
+   "color": 15262418,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    16,
+    17.2,
+    -30
+   ],
+   "max": [
+    30.4,
+    18,
+    -17.6
+   ],
+   "id": "benk_o",
+   "kind": "chest",
+   "color": 4869458,
+   "material": "plastic",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    25.2,
+    18,
+    -23.2
+   ],
+   "max": [
+    30,
+    21.2,
+    -18.4
+   ],
+   "id": "brodrister",
+   "kind": "box",
+   "color": 13225168,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    16.4,
+    18,
+    -29.6
+   ],
+   "max": [
+    24.8,
+    23.6,
+    -22
+   ],
+   "id": "mikro",
+   "kind": "box",
+   "color": 3882564,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    16.4,
+    29.6,
+    -30
+   ],
+   "max": [
+    30.4,
+    30.4,
+    -27
+   ],
+   "id": "krydderhylle",
+   "kind": "chest",
+   "color": 13081182,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    18,
+    23.6,
+    -27
+   ],
+   "max": [
+    22.4,
+    30.4,
+    -26.6
+   ],
+   "id": "kjokkenhandkle",
+   "kind": "towel_hang",
+   "color": 14242639,
+   "material": "fabric",
+   "cp": false,
+   "soft": false,
+   "grip": true,
+   "onto": "krydderhylle",
+   "gripDrain": -0.3
+  },
+  {
+   "type": "wood",
+   "min": [
+    -18,
+    28,
+    -30
+   ],
+   "max": [
+    15.6,
+    40,
+    -23
+   ],
+   "id": "overskap",
+   "kind": "chest",
+   "color": 15262418,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "paper",
+   "min": [
+    15.6,
+    30.4,
+    -29.4
+   ],
+   "max": [
+    16.2,
+    40,
+    -27.4
+   ],
+   "id": "hvitlok",
+   "kind": "towel_hang",
+   "color": 15722191,
+   "material": "paper",
+   "cp": false,
+   "soft": false,
+   "grip": true,
+   "onto": "overskap",
+   "gripDrain": -0.3
+  },
+  {
+   "type": "wood",
+   "min": [
+    -10,
+    14,
+    2
+   ],
+   "max": [
+    14,
+    14.8,
+    18
+   ],
+   "id": "bord",
+   "kind": "table",
+   "color": 13081182,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -9.2,
+    0,
+    2.8
+   ],
+   "max": [
+    -8.2,
+    14,
+    3.8
+   ],
+   "id": "bordbein_1",
+   "kind": "box",
+   "color": 12094026,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    12.4,
+    0,
+    2.8
+   ],
+   "max": [
+    13.4,
+    14,
+    3.8
+   ],
+   "id": "bordbein_2",
+   "kind": "box",
+   "color": 12094026,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -9.2,
+    0,
+    16.4
+   ],
+   "max": [
+    -8.2,
+    14,
+    17.4
+   ],
+   "id": "bordbein_3",
+   "kind": "box",
+   "color": 12094026,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    12.4,
+    0,
+    16.4
+   ],
+   "max": [
+    13.4,
+    14,
+    17.4
+   ],
+   "id": "bordbein_4",
+   "kind": "box",
+   "color": 12094026,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "ceramic",
+   "min": [
+    -0.8,
+    14.8,
+    7.6
+   ],
+   "max": [
+    4.8,
+    16.4,
+    12.4
+   ],
+   "id": "fruktfat",
+   "kind": "cup",
+   "color": 15327951,
+   "material": "ceramic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -6,
+    0,
+    18.4
+   ],
+   "max": [
+    2,
+    9,
+    26.4
+   ],
+   "id": "stol_1",
+   "kind": "chest",
+   "color": 12094026,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    18,
+    0,
+    6
+   ],
+   "max": [
+    26,
+    9,
+    14
+   ],
+   "id": "stol_2",
+   "kind": "chest",
+   "color": 12094026,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    30.8,
+    0,
+    -28.8
+   ],
+   "max": [
+    35.6,
+    10.4,
+    -24
+   ],
+   "id": "soppelbotte",
+   "kind": "cup",
+   "color": 13225168,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -12,
+    0,
+    -16.8
+   ],
+   "max": [
+    12,
+    0.4,
+    -8
+   ],
+   "id": "matte_kjokken",
+   "kind": "mat",
+   "color": 8032106,
+   "material": "fabric",
+   "cp": false,
+   "soft": true
+  }
+ ],
+ "movables": [
+  {
+   "id": "eple",
+   "kind": "bag",
+   "material": "plastic",
+   "color": 13187630,
+   "min": [
+    0.8,
+    16.4,
+    9
+   ],
+   "max": [
+    2.8,
+    18.4,
+    11
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "svamp",
+   "kind": "sponge",
+   "material": "plastic",
+   "color": 15323722,
+   "min": [
+    -16,
+    18,
+    -28.8
+   ],
+   "max": [
+    -14,
+    18.8,
+    -27.2
+   ],
+   "weight": "light",
+   "breakable": false,
+   "soft": true
+  }
+ ],
+ "decor": [
+  {
+   "shape": "box",
+   "id": "kjoleskap_handtak",
+   "kind": "box",
+   "pos": [
+    -24.5,
+    22,
+    -16.7
+   ],
+   "size": [
+    0.6,
+    16,
+    0.6
+   ],
+   "color": 13225168,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "kjoleskap_fuge",
+   "kind": "box",
+   "pos": [
+    -29.5,
+    23.7,
+    -16.95
+   ],
+   "size": [
+    13,
+    0.2,
+    0.1
+   ],
+   "color": 12172736,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "skuffknott_1",
+   "kind": "knob",
+   "pos": [
+    -17.5,
+    2.1,
+    -7.4
+   ],
+   "size": [
+    1,
+    0.6,
+    0.4
+   ],
+   "color": 13225168,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "skuffknott_2",
+   "kind": "knob",
+   "pos": [
+    -17.5,
+    6.1,
+    -10
+   ],
+   "size": [
+    1,
+    0.6,
+    0.4
+   ],
+   "color": 13225168,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "skuffknott_3",
+   "kind": "knob",
+   "pos": [
+    -17.5,
+    10.1,
+    -12.6
+   ],
+   "size": [
+    1,
+    0.6,
+    0.4
+   ],
+   "color": 13225168,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "skuffknott_4",
+   "kind": "knob",
+   "pos": [
+    -17.5,
+    13.7,
+    -15.2
+   ],
+   "size": [
+    1,
+    0.6,
+    0.4
+   ],
+   "color": 13225168,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "vask_vann",
+   "kind": "box",
+   "pos": [
+    -7.5,
+    17.35,
+    -24
+   ],
+   "size": [
+    9,
+    0.1,
+    7.2
+   ],
+   "color": 5939136,
+   "material": "glass"
+  },
+  {
+   "shape": "box",
+   "id": "kokeplate_1",
+   "kind": "box",
+   "pos": [
+    7.1,
+    18.04,
+    -27
+   ],
+   "size": [
+    4.6,
+    0.08,
+    3.6
+   ],
+   "color": 14698028,
+   "material": "ceramic"
+  },
+  {
+   "shape": "box",
+   "id": "kokeplate_2",
+   "kind": "box",
+   "pos": [
+    12.9,
+    18.04,
+    -27
+   ],
+   "size": [
+    4.6,
+    0.08,
+    3.6
+   ],
+   "color": 14698028,
+   "material": "ceramic"
+  },
+  {
+   "shape": "box",
+   "id": "kokeplate_3",
+   "kind": "box",
+   "pos": [
+    7.1,
+    18.04,
+    -23
+   ],
+   "size": [
+    4.6,
+    0.08,
+    3.6
+   ],
+   "color": 14698028,
+   "material": "ceramic"
+  },
+  {
+   "shape": "box",
+   "id": "kokeplate_4",
+   "kind": "box",
+   "pos": [
+    12.9,
+    18.04,
+    -23
+   ],
+   "size": [
+    4.6,
+    0.08,
+    3.6
+   ],
+   "color": 14698028,
+   "material": "ceramic"
+  },
+  {
+   "shape": "box",
+   "id": "komfyr_dor",
+   "kind": "box",
+   "pos": [
+    10,
+    8.8,
+    -17.54
+   ],
+   "size": [
+    10,
+    10.4,
+    0.12
+   ],
+   "color": 1382170,
+   "material": "glass"
+  },
+  {
+   "shape": "box",
+   "id": "komfyr_handtak",
+   "kind": "box",
+   "pos": [
+    10,
+    15.1,
+    -17.3
+   ],
+   "size": [
+    8.8,
+    0.6,
+    0.6
+   ],
+   "color": 13225168,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "mikro_dor",
+   "kind": "box",
+   "pos": [
+    19.8,
+    20.8,
+    -21.94
+   ],
+   "size": [
+    5.2,
+    4,
+    0.12
+   ],
+   "color": 1053206,
+   "material": "glass"
+  },
+  {
+   "shape": "box",
+   "id": "krydder_1",
+   "kind": "cup",
+   "pos": [
+    24.7,
+    31.5,
+    -28.7
+   ],
+   "size": [
+    1.4,
+    2.2,
+    1.4
+   ],
+   "color": 11883566,
+   "material": "glass"
+  },
+  {
+   "shape": "box",
+   "id": "krydder_2",
+   "kind": "cup",
+   "pos": [
+    26.7,
+    31.5,
+    -28.7
+   ],
+   "size": [
+    1.4,
+    2.2,
+    1.4
+   ],
+   "color": 7311162,
+   "material": "glass"
+  },
+  {
+   "shape": "box",
+   "id": "krydder_3",
+   "kind": "cup",
+   "pos": [
+    28.7,
+    31.5,
+    -28.7
+   ],
+   "size": [
+    1.4,
+    2.2,
+    1.4
+   ],
+   "color": 14266938,
+   "material": "glass"
+  },
+  {
+   "shape": "box",
+   "id": "overskap_fuge_1",
+   "kind": "box",
+   "pos": [
+    -9.92,
+    34,
+    -22.95
+   ],
+   "size": [
+    0.16,
+    11.2,
+    0.1
+   ],
+   "color": 12169372,
+   "material": "wood"
+  },
+  {
+   "shape": "box",
+   "id": "overskap_fuge_2",
+   "kind": "box",
+   "pos": [
+    -1.12,
+    34,
+    -22.95
+   ],
+   "size": [
+    0.16,
+    11.2,
+    0.1
+   ],
+   "color": 12169372,
+   "material": "wood"
+  },
+  {
+   "shape": "box",
+   "id": "overskap_fuge_3",
+   "kind": "box",
+   "pos": [
+    7.28,
+    34,
+    -22.95
+   ],
+   "size": [
+    0.16,
+    11.2,
+    0.1
+   ],
+   "color": 12169372,
+   "material": "wood"
+  },
+  {
+   "shape": "box",
+   "id": "dor",
+   "kind": "door",
+   "pos": [
+    -24,
+    20,
+    29.8
+   ],
+   "size": [
+    16,
+    40,
+    0.4
+   ],
+   "color": 15656146,
+   "material": "wood"
+  },
+  {
+   "shape": "box",
+   "id": "dorhandtak",
+   "kind": "knob",
+   "pos": [
+    -17.6,
+    20.4,
+    29.35
+   ],
+   "size": [
+    0.8,
+    0.8,
+    0.5
+   ],
+   "color": 13225168,
+   "material": "metal"
+  }
+ ],
+ "hints": [
+  {
+   "id": "kjoleskap",
+   "text": "Kjøleskapet\nMotgiften står på toppen. Veien dit går over benken, opp på overskapene og et hopp over til kjøleskapet.",
+   "pos": [
+    -29.5,
+    38.9,
+    -23.5
+   ]
+  },
+  {
+   "id": "skuff_1",
+   "text": "Skuffetrapp\nSkuffene står åpne som trappetrinn. Hopp opp ett trinn om gangen (HOPP), og ta tak i kanten på neste.",
+   "pos": [
+    -17.5,
+    4.9,
+    -12.8
+   ]
+  },
+  {
+   "id": "benk_vask_foran",
+   "text": "Vasken\nGå på den smale kanten foran vasken. Skyv stikken forsiktig (grønn knott), så stopper du ved kanten i stedet for å falle nedi.",
+   "pos": [
+    -7.5,
+    18.9,
+    -19
+   ]
+  },
+  {
+   "id": "komfyr_front",
+   "text": "Kokeplatene\nPlatene er varme. Hold deg på kanten foran dem.",
+   "pos": [
+    10,
+    18.9,
+    -19
+   ]
+  },
+  {
+   "id": "kjokkenhandkle",
+   "text": "Kjøkkenhåndkle\nKlatre: stå på mikrobølgeovnen, gå inntil håndkleet og hold GREP. Øverst hiver du deg opp på krydderhylla.",
+   "pos": [
+    20.2,
+    31.3,
+    -26.8
+   ]
+  },
+  {
+   "id": "hvitlok",
+   "text": "Hvitløksflette\nKlatre opp på overskapet. Dette er et langt tak: hvil på hylla først, så kreftene er fulle.",
+   "pos": [
+    15.9,
+    40.9,
+    -28.4
+   ]
+  }
+ ],
+ "hazards": [
+  {
+   "id": "vask_inni",
+   "type": "pit",
+   "message": "Plask! Du falt i oppvaskkummen",
+   "min": [
+    -12,
+    16.8,
+    -27.6
+   ],
+   "max": [
+    -3,
+    17.8,
+    -20.4
+   ]
+  },
+  {
+   "id": "kokeplater",
+   "type": "pit",
+   "message": "Au! Kokeplata er varm",
+   "min": [
+    4.4,
+    18,
+    -29.2
+   ],
+   "max": [
+    15.6,
+    18.4,
+    -20.8
+   ]
+  }
+ ],
+ "holds": [
+  {
+   "id": "kjokkenkran",
+   "kind": "faucet",
+   "min": [
+    -8.4,
+    18,
+    -29.6
+   ],
+   "max": [
+    -6.6,
+    22.4,
+    -27.6
+   ]
+  }
+ ],
+ "windows": [
+  {
+   "wall": "E",
+   "pos": [
+    35.95,
+    30,
+    0
+   ],
+   "size": [
+    18,
+    16
+   ]
+  }
+ ],
+ "sun": [
+  30,
+  60,
+  -8
+ ],
+ "look": {
+  "exposure": 0.9,
+  "sun": 2.4
+ },
+ "audio": {
+  "reverb": 0.26,
+  "ambience": [
+   "drip",
+   "fan"
+  ]
+ },
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -36,
+   "x1": 36,
+   "z0": -30,
+   "z1": 30,
+   "top": 0
+  },
+  {
+   "id": "skuff_1",
+   "x0": -22,
+   "x1": -13,
+   "z0": -10.2,
+   "z1": -7.6,
+   "top": 4
+  },
+  {
+   "id": "skuff_2",
+   "x0": -22,
+   "x1": -13,
+   "z0": -12.8,
+   "z1": -10.2,
+   "top": 8
+  },
+  {
+   "id": "skuff_3",
+   "x0": -22,
+   "x1": -13,
+   "z0": -18,
+   "z1": -12.8,
+   "top": 12
+  },
+  {
+   "id": "skuff_4",
+   "x0": -22,
+   "x1": -13,
+   "z0": -18,
+   "z1": -15.4,
+   "top": 15.6
+  },
+  {
+   "id": "benk_v",
+   "x0": -23,
+   "x1": -12,
+   "z0": -30,
+   "z1": -17.6,
+   "top": 18
+  },
+  {
+   "id": "benk_vask_foran",
+   "x0": -12,
+   "x1": -3,
+   "z0": -20.4,
+   "z1": -17.6,
+   "top": 18
+  },
+  {
+   "id": "benk_m",
+   "x0": -3,
+   "x1": 4,
+   "z0": -30,
+   "z1": -17.6,
+   "top": 18
+  },
+  {
+   "id": "komfyr_front",
+   "x0": 4,
+   "x1": 16,
+   "z0": -20.4,
+   "z1": -17.6,
+   "top": 18
+  },
+  {
+   "id": "benk_o",
+   "x0": 16,
+   "x1": 30.4,
+   "z0": -30,
+   "z1": -17.6,
+   "top": 18
+  },
+  {
+   "id": "brodrister",
+   "x0": 25.2,
+   "x1": 30,
+   "z0": -23.2,
+   "z1": -18.4,
+   "top": 21.2
+  },
+  {
+   "id": "mikro",
+   "x0": 16.4,
+   "x1": 24.8,
+   "z0": -29.6,
+   "z1": -22,
+   "top": 23.6
+  },
+  {
+   "id": "kjokkenhandkle",
+   "x0": 18,
+   "x1": 22.4,
+   "z0": -27,
+   "z1": -26.6,
+   "top": 23.6,
+   "grip": true
+  },
+  {
+   "id": "krydderhylle",
+   "x0": 16.4,
+   "x1": 30.4,
+   "z0": -30,
+   "z1": -27,
+   "top": 30.4
+  },
+  {
+   "id": "hvitlok",
+   "x0": 15.6,
+   "x1": 16.2,
+   "z0": -29.4,
+   "z1": -27.4,
+   "top": 30.4,
+   "grip": true
+  },
+  {
+   "id": "overskap",
+   "x0": -18,
+   "x1": 15.6,
+   "z0": -30,
+   "z1": -23,
+   "top": 40
+  },
+  {
+   "id": "kjoleskap",
+   "x0": -36,
+   "x1": -23,
+   "z0": -30,
+   "z1": -17,
+   "top": 38
+  }
+ ],
+ "start": [
+  -24,
+  0,
+  24
+ ],
+ "goal": [
+  -27.2,
+  38,
+  -21.2
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -36,
+  "x1": 36,
+  "z0": -30,
+  "z1": 30,
+  "height": 48,
+  "floor": {
+   "material": "tile",
+   "color": "#cfc9bb",
+   "slick": true,
+   "tile_cm": 20,
+   "diagonal": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#eee9dc"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "photos": 0,
+   "views": [],
+   "interpreted_by": "Oppdiktet rom (ikke fra bilder), laget for nivå 3",
+   "scale_anchors": [
+    "benk 90 cm",
+    "overskap 140–200 cm",
+    "kjøleskap 190 cm"
+   ],
+   "uncertainty": "Ingen: rommet er tegnet for spillet."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 24,
+  "reachable": 20
+ }
+}

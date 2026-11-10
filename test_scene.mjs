@@ -28,4 +28,15 @@ assert.ok(r.errors.some((e) => /color/.test(e)) && r.errors.some((e) => /min < m
   const used = new Set(); for (const f of ['main.js', 'props.js', 'look.js', 'hero.js', 'level.js']) for (const m of fs.readFileSync(f, 'utf8').matchAll(/from '\.\/([a-z_]+)\.js'|import\('\.\/([a-z_]+)\.js'\)/g)) used.add(m[1] || m[2]);
   for (const u of ['main', ...used]) assert.ok(list.includes(`'${u}'`), `index.html: «${u}» mangler i lista over filer som lastes med versjon`);
 }
+// de tre nivåene: ruta skal kunne gås med ekte fysikk (tools/walk_route.mjs), uten hjelpetrinn, og hvert nivå er lengre enn det forrige
+{
+  const { walkRoute } = await import('./tools/walk_route.mjs');
+  let prev = 0;
+  for (const id of ['bad', 'barnerom', 'kjokken']) {
+    const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), r = walkRoute(`levels/${id}.level.json`);
+    assert.ok(r.ok, `${id}: ruta går ikke (${r.why})`);
+    assert.equal(L.report.helpers.length, 0, `${id}: brettet trenger hjelpetrinn`);
+    assert.ok(r.steps > prev, `${id}: skal ha flere steg enn forrige nivå (${r.steps} mot ${prev})`); prev = r.steps;
+  }
+}
 console.log('scene-tester grønne');

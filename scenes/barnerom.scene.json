@@ -1,0 +1,650 @@
+{
+  "name": "Nivå 2: Barnerommet",
+  "units": "cm",
+  "rev": 1,
+  "frame": "Origo i nordvestre hjørne. x mot øst (vinduet), z mot sør (døra), y opp.",
+  "source": {
+    "photos": 0,
+    "views": [],
+    "interpreted_by": "Oppdiktet rom (ikke fra bilder), laget for nivå 2",
+    "scale_anchors": [
+      "seng 50 cm",
+      "skrivebord 74 cm",
+      "klesskap 150 cm"
+    ],
+    "uncertainty": "Ingen: rommet er tegnet for spillet."
+  },
+  "room": {
+    "width": 300,
+    "depth": 280,
+    "height": 240,
+    "floor": {
+      "material": "wood",
+      "color": "#d9b98a"
+    },
+    "walls": {
+      "material": "plaster",
+      "color": "#dfe9ef"
+    },
+    "ceiling": {
+      "material": "plaster",
+      "color": "#f5f1e8"
+    }
+  },
+  "start": {
+    "x": 160,
+    "z": 262,
+    "note": "Innenfor døra"
+  },
+  "goal": {
+    "x": 268,
+    "y": 148,
+    "z": 258,
+    "on": "klesskap",
+    "note": "Motgift-bit på toppen av klesskapet"
+  },
+  "windows": [
+    {
+      "wall": "E",
+      "z": 95,
+      "y": 150,
+      "w": 70,
+      "h": 84
+    }
+  ],
+  "objects": [
+    {
+      "id": "kloss_1",
+      "kind": "toyblock",
+      "material": "wood",
+      "color": "#f2c230",
+      "box": [
+        107,
+        127,
+        0,
+        16,
+        226,
+        246
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "kloss_2",
+      "kind": "toyblock",
+      "material": "wood",
+      "color": "#3f8fd6",
+      "box": [
+        86,
+        106,
+        0,
+        32,
+        226,
+        246
+      ],
+      "confidence": 1,
+      "photos": [],
+      "note": "To klosser i høyden"
+    },
+    {
+      "id": "lekekasse",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9534f",
+      "box": [
+        10,
+        85,
+        0,
+        46,
+        215,
+        255
+      ],
+      "confidence": 1,
+      "photos": [],
+      "cp": true
+    },
+    {
+      "id": "seng",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e9dcc3",
+      "box": [
+        0,
+        95,
+        0,
+        36,
+        20,
+        210
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "dyne",
+      "kind": "mat",
+      "material": "fabric",
+      "color": "#5d8fc9",
+      "box": [
+        2,
+        93,
+        36,
+        50,
+        22,
+        208
+      ],
+      "confidence": 1,
+      "photos": [],
+      "soft": true,
+      "cp": true,
+      "help": "Seng\nMyk å lande på. Herfra går veien opp på nattbordet ved hodeenden."
+    },
+    {
+      "id": "pute",
+      "kind": "towel",
+      "material": "fabric",
+      "color": "#f4f1ea",
+      "box": [
+        14,
+        80,
+        50,
+        60,
+        26,
+        62
+      ],
+      "confidence": 1,
+      "photos": [],
+      "soft": true
+    },
+    {
+      "id": "bamse",
+      "kind": "bag",
+      "material": "fabric",
+      "color": "#a9744a",
+      "box": [
+        30,
+        58,
+        50,
+        78,
+        120,
+        148
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "medium",
+      "soft": true
+    },
+    {
+      "id": "nattbord",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#c79a5e",
+      "box": [
+        97,
+        137,
+        0,
+        62,
+        20,
+        58
+      ],
+      "confidence": 1,
+      "photos": [],
+      "cp": true,
+      "help": "Hopp over lekebøtta\nLøp mot kanten med stikken helt ut, så hopper du over til krakken. Faller du nedi bøtta, må du tilbake til lagringspunktet."
+    },
+    {
+      "id": "nattlampe",
+      "kind": "cup",
+      "material": "ceramic",
+      "color": "#f6e7a8",
+      "box": [
+        102,
+        114,
+        62,
+        80,
+        24,
+        36
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "lekebotte_v",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#4cae6e",
+      "box": [
+        139,
+        141,
+        0,
+        40,
+        22,
+        56
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "lekebotte_o",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#4cae6e",
+      "box": [
+        158,
+        160,
+        0,
+        40,
+        22,
+        56
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "lekebotte_n",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#4cae6e",
+      "box": [
+        141,
+        158,
+        0,
+        40,
+        22,
+        24
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "lekebotte_s",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#4cae6e",
+      "box": [
+        141,
+        158,
+        0,
+        40,
+        54,
+        56
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "krakk",
+      "kind": "chest",
+      "material": "fabric",
+      "color": "#e07b39",
+      "box": [
+        162,
+        200,
+        0,
+        56,
+        20,
+        58
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "skrivebord",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#d9c39a",
+      "box": [
+        205,
+        300,
+        70,
+        74,
+        20,
+        150
+      ],
+      "confidence": 1,
+      "photos": [],
+      "cp": true
+    },
+    {
+      "id": "skrivebord_side_v",
+      "kind": "box",
+      "material": "wood",
+      "color": "#d9c39a",
+      "box": [
+        205,
+        208,
+        0,
+        70,
+        20,
+        150
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "skrivebord_side_s",
+      "kind": "box",
+      "material": "wood",
+      "color": "#d9c39a",
+      "box": [
+        208,
+        300,
+        0,
+        70,
+        147,
+        150
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "bokstabel",
+      "kind": "box",
+      "material": "book",
+      "color": "#2f5d7c",
+      "box": [
+        246,
+        280,
+        74,
+        86,
+        28,
+        52
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "blyantkopp",
+      "kind": "cup",
+      "material": "ceramic",
+      "color": "#c9483b",
+      "box": [
+        214,
+        224,
+        74,
+        88,
+        26,
+        36
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "viskelar",
+      "kind": "sponge",
+      "material": "plastic",
+      "color": "#f3a6b8",
+      "box": [
+        222,
+        232,
+        74,
+        78,
+        80,
+        88
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "light",
+      "soft": true
+    },
+    {
+      "id": "vinduskarm",
+      "kind": "sill",
+      "material": "wood",
+      "color": "#f4efe4",
+      "box": [
+        286,
+        300,
+        104,
+        108,
+        60,
+        130
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "gardin",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#e8c94a",
+      "box": [
+        283,
+        286,
+        74,
+        108,
+        100,
+        128
+      ],
+      "confidence": 1,
+      "photos": [],
+      "grip": true,
+      "onto": "vinduskarm",
+      "grip_drain": -0.3,
+      "help": "Gardin\nKlatre: gå inntil gardinen og hold GREP, styr mot den. Øverst hiver du deg opp i vinduskarmen."
+    },
+    {
+      "id": "vegghylle",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#c79a5e",
+      "box": [
+        286,
+        300,
+        118,
+        121,
+        135,
+        232
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "spilleske",
+      "kind": "box",
+      "material": "paper",
+      "color": "#7a4fb0",
+      "box": [
+        287,
+        300,
+        121,
+        134,
+        206,
+        232
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "hyllebok",
+      "kind": "box",
+      "material": "book",
+      "color": "#c99a2e",
+      "box": [
+        289,
+        300,
+        121,
+        144,
+        150,
+        156
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "klesskap",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e9dcc3",
+      "box": [
+        240,
+        300,
+        0,
+        148,
+        235,
+        280
+      ],
+      "confidence": 1,
+      "photos": [],
+      "help": "Klesskapet\nMotgiften står på toppen. Fall herfra er for høyt: da må du tilbake til lagringspunktet."
+    },
+    {
+      "id": "skapknott_1",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#9aa0a6",
+      "box": [
+        266,
+        269,
+        80,
+        83,
+        233,
+        235
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "skapknott_2",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#9aa0a6",
+      "box": [
+        272,
+        275,
+        80,
+        83,
+        233,
+        235
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "teppe",
+      "kind": "mat",
+      "material": "fabric",
+      "color": "#e9b7a0",
+      "box": [
+        110,
+        230,
+        0,
+        2,
+        150,
+        250
+      ],
+      "confidence": 1,
+      "photos": [],
+      "soft": true
+    },
+    {
+      "id": "ball",
+      "kind": "bag",
+      "material": "plastic",
+      "color": "#e0483e",
+      "box": [
+        150,
+        166,
+        0,
+        16,
+        190,
+        206
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "medium"
+    },
+    {
+      "id": "dor",
+      "kind": "door",
+      "material": "wood",
+      "color": "#eee4d2",
+      "box": [
+        120,
+        200,
+        0,
+        200,
+        278,
+        280
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "dorhandtak",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#9aa0a6",
+      "box": [
+        190,
+        194,
+        100,
+        104,
+        275.5,
+        278
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "plakat_1",
+      "kind": "box",
+      "material": "paper",
+      "color": "#7cc4e8",
+      "box": [
+        30,
+        80,
+        120,
+        180,
+        0,
+        0.6
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "plakat_2",
+      "kind": "box",
+      "material": "paper",
+      "color": "#f2a65a",
+      "box": [
+        0,
+        0.6,
+        110,
+        160,
+        80,
+        130
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    }
+  ],
+  "hazards": [
+    {
+      "id": "lekebotte_inni",
+      "type": "pit",
+      "box": [
+        141,
+        158,
+        0,
+        38,
+        24,
+        54
+      ],
+      "message": "Fanget i lekebøtta"
+    }
+  ],
+  "look": {
+    "exposure": 0.95,
+    "sun": 2.6
+  },
+  "audio": {
+    "reverb": 0.14
+  }
+}

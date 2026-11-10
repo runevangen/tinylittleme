@@ -225,14 +225,14 @@
   {
    "type": "wicker",
    "min": [
-    -26.1,
+    -25.7,
     0,
-    -22.2
+    -21.2
    ],
    "max": [
-    -18.1,
+    -17.3,
     12,
-    -13.4
+    -12.4
    ],
    "id": "vaskekurv",
    "kind": "hamper",
@@ -935,14 +935,14 @@
    "material": "paper",
    "color": 16448250,
    "min": [
-    -23.3,
+    -22.5,
     12,
-    -19
+    -18
    ],
    "max": [
-    -21.3,
+    -20.5,
     14,
-    -17
+    -16
    ],
    "weight": "light",
    "breakable": false,
@@ -1558,9 +1558,9 @@
    "id": "vaskekurv",
    "text": "Vaskekurv\nFlettet, så du kan klatre: gå inntil og trykk GREP, styr mot kurven for å klatre opp. Fra lokket hopper du over til sisternen og videre til vasken.",
    "pos": [
-    -22.1,
+    -21.5,
     12.9,
-    -17.8
+    -16.8
    ]
   }
  ],
@@ -1768,19 +1768,19 @@
   },
   {
    "id": "vaskekurv",
-   "x0": -26.1,
-   "x1": -18.1,
-   "z0": -22.2,
-   "z1": -13.4,
+   "x0": -25.7,
+   "x1": -17.3,
+   "z0": -21.2,
+   "z1": -12.4,
    "top": 0,
    "grip": true
   },
   {
    "id": "vaskekurv",
-   "x0": -26.1,
-   "x1": -18.1,
-   "z0": -22.2,
-   "z1": -13.4,
+   "x0": -25.7,
+   "x1": -17.3,
+   "z0": -21.2,
+   "z1": -12.4,
    "top": 12
   },
   {
@@ -1792,12 +1792,12 @@
    "top": 16
   },
   {
-   "id": "vaskeskap",
-   "x0": -7.1,
-   "x1": 8.9,
+   "id": "vask_plate",
+   "x0": -7.5,
+   "x1": 9.3,
    "z0": -25,
-   "z1": -15.8,
-   "top": 16
+   "z1": -15.4,
+   "top": 16.8
   },
   {
    "id": "tannglass",
@@ -1862,7 +1862,7 @@
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 39,
-  "reachable": 13
+  "nodes": 36,
+  "reachable": 12
  }
 }

@@ -67,6 +67,7 @@ const goal = [ux(scene.goal.x), uy(scene.goal.y), uz(scene.goal.z)];
 const start = [ux(scene.start.x), 0, uz(scene.start.z)];
 
 // ---- 2. overflatekart -----------------------------------------------------
+const hazRaw = (scene.hazards || []).map((h) => ({ x0: ux(h.box[0]), x1: ux(h.box[1]), y0: uy(h.box[2]), y1: uy(h.box[3]), z0: uz(h.box[4]), z1: uz(h.box[5]) }));
 const nodes = [];
 const fromBox = (b) => ({ id: b.id, x0: b.min[0], x1: b.max[0], z0: b.min[2], z1: b.max[2], top: b.max[1] });
 nodes.push({ id: 'gulv', x0, x1, z0, z1, top: 0 });
@@ -74,6 +75,21 @@ for (const b of boxes) {
   if (b.type === 'floor' || b.type === 'wall') continue;
   if (b.max[1] < 0.6) continue;                              // matter o.l. regnes som gulv
   if (b.max[0] - b.min[0] < MIN_NODE || b.max[2] - b.min[2] < MIN_NODE) continue;
+  // en topp som er dekket av noe annet (skapet under benkeplata) kan du ikke stå på: ikke en flate i rutekartet
+  const area = (b.max[0] - b.min[0]) * (b.max[2] - b.min[2]);
+  // … men stikker en stripe frem (trinnet i en skuffetrapp), er stripa flaten
+  const ovl = (c) => Math.max(0, Math.min(b.max[0], c.max[0]) - Math.max(b.min[0], c.min[0])) * Math.max(0, Math.min(b.max[2], c.max[2]) - Math.max(b.min[2], c.min[2]));
+  const cover = boxes.filter((c) => c !== b && c.type !== 'floor' && c.type !== 'wall' && c.min[1] < b.max[1] + 1 && c.max[1] > b.max[1] + 0.01 && ovl(c) >= 0.6 * area).sort((p, q) => ovl(q) - ovl(p))[0];
+  if (cover) {
+    const strips = [];
+    if (cover.min[0] <= b.min[0] + 0.01 && cover.max[0] >= b.max[0] - 0.01) { strips.push({ x0: b.min[0], x1: b.max[0], z0: b.min[2], z1: cover.min[2] }, { x0: b.min[0], x1: b.max[0], z0: cover.max[2], z1: b.max[2] }); }
+    if (cover.min[2] <= b.min[2] + 0.01 && cover.max[2] >= b.max[2] - 0.01) { strips.push({ x0: b.min[0], x1: cover.min[0], z0: b.min[2], z1: b.max[2] }, { x0: cover.max[0], x1: b.max[0], z0: b.min[2], z1: b.max[2] }); }
+    const st = strips.filter((q) => q.x1 - q.x0 >= MIN_NODE && q.z1 - q.z0 >= MIN_NODE).sort((p, q) => (q.x1 - q.x0) * (q.z1 - q.z0) - (p.x1 - p.x0) * (p.z1 - p.z0))[0];
+    if (st) nodes.push({ id: b.id, ...st, top: b.max[1] });
+    continue;
+  }
+  const hot = hazRaw.some((h) => h.y0 < b.max[1] + 1 && h.y1 > b.max[1] && Math.max(0, Math.min(b.max[0], h.x1) - Math.max(b.min[0], h.x0)) * Math.max(0, Math.min(b.max[2], h.z1) - Math.max(b.min[2], h.z0)) >= 0.4 * area);
+  if (hot) continue;                                          // toppen ligger i en fare (kokeplate): ikke en trygg flate
   nodes.push(fromBox(b));
 }
 const gapOf = (A, B) => {
@@ -247,8 +263,17 @@ if (reachable().has(goalIdx())) {
 }
 // ruta spilleren bør ta (færrest hopp fra start til mål), brukt av pilen i spillet: flater og grep-flater i rekkefølge
 const route = (() => {
-  const gi = goalIdx(), prev = new Map([[0, -1]]), q = [0];
-  while (q.length && !prev.has(gi)) { const a = q.shift(); for (let b = 0; b < nodes.length; b++) if (!prev.has(b) && edgeOK(nodes[a], nodes[b])) { prev.set(b, a); q.push(b); } }
+  // den naturlige veien: korte gap og små løft foretrekkes fremfor færrest hopp (du går over benken, ikke i et skrått sprang forbi den)
+  const gi = goalIdx(), dist = nodes.map(() => Infinity), prev = new Map([[0, -1]]), done = new Set(); dist[0] = 0;
+  for (;;) {
+    let a = -1; for (let k = 0; k < nodes.length; k++) if (!done.has(k) && dist[k] < Infinity && (a < 0 || dist[k] < dist[a])) a = k;
+    if (a < 0 || a === gi) break; done.add(a);
+    for (let b = 0; b < nodes.length; b++) {
+      if (done.has(b) || !edgeOK(nodes[a], nodes[b])) continue;
+      const g = gapOf(nodes[a], nodes[b]), rise = Math.max(0, nodes[b].top - nodes[a].top), c = climbOK(nodes[a], nodes[b]) ? 1 : 0.3 + g * 1.5 + rise * 0.3;
+      if (dist[a] + c < dist[b]) { dist[b] = dist[a] + c; prev.set(b, a); }
+    }
+  }
   if (!prev.has(gi)) return [];
   const idx = []; for (let i = gi; i >= 0; i = prev.get(i)) idx.unshift(i);
   const out = [], wp = (n, extra = {}) => ({ id: n.id, x0: round(n.x0), x1: round(n.x1), z0: round(n.z0), z1: round(n.z1), top: round(n.top), ...extra });

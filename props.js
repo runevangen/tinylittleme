@@ -296,6 +296,15 @@ const SINGLE = {
     }
     return g;
   },
+  toyblock(sx, sy, sz, o) {                                         // treklosser: avrundede terninger stablet i høyden, med en innfelt rute på sidene
+    const g = new THREE.Group(), n = Math.max(1, Math.round(sy / Math.max(sx, sz))), h = sy / n;
+    const mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.55 }), inl = new THREE.MeshStandardMaterial({ color: new THREE.Color(o.color).lerp(new THREE.Color(0xffffff), 0.45), roughness: 0.6 });
+    for (let i = 0; i < n; i++) {
+      const b = mesh(roundedBoxGeo(sx, h * 0.985, sz, Math.min(sx, sz) * 0.12, Math.min(0.14, h * 0.1)), mat); b.position.y = -sy / 2 + i * h; g.add(b);
+      for (const [dx, dz, w, d] of [[0, 1, sx * 0.62, 0.05], [0, -1, sx * 0.62, 0.05], [1, 0, 0.05, sz * 0.62], [-1, 0, 0.05, sz * 0.62]]) { const p = mesh(new THREE.BoxGeometry(w, h * 0.6, d), inl, false); p.position.set(dx * sx / 2, -sy / 2 + i * h + h / 2, dz * sz / 2); g.add(p); }
+    }
+    return g;
+  },
   bag(sx, sy, sz, o) {
     const g = new THREE.Group(), wt = weaveTex().clone(); wt.repeat.set(2, 2); wt.needsUpdate = true;
     const body = mesh(new THREE.SphereGeometry(0.5, 20, 14), new THREE.MeshStandardMaterial({ color: o.color, map: wt, bumpMap: wt, bumpScale: 0.6, roughness: 1 }));

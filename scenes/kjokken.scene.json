@@ -1,0 +1,1085 @@
+{
+  "name": "Nivå 3: Kjøkkenet",
+  "units": "cm",
+  "rev": 1,
+  "frame": "Origo i nordvestre hjørne (kjøleskapet). x mot øst, z mot sør (døra), y opp. Kjøkkenbenken står langs nordveggen.",
+  "source": {
+    "photos": 0,
+    "views": [],
+    "interpreted_by": "Oppdiktet rom (ikke fra bilder), laget for nivå 3",
+    "scale_anchors": [
+      "benk 90 cm",
+      "overskap 140–200 cm",
+      "kjøleskap 190 cm"
+    ],
+    "uncertainty": "Ingen: rommet er tegnet for spillet."
+  },
+  "room": {
+    "width": 360,
+    "depth": 300,
+    "height": 240,
+    "floor": {
+      "material": "tile",
+      "color": "#cfc9bb",
+      "slick": true,
+      "tile_cm": 20,
+      "diagonal": false
+    },
+    "walls": {
+      "material": "plaster",
+      "color": "#eee9dc"
+    },
+    "ceiling": {
+      "material": "plaster",
+      "color": "#f5f1e8"
+    }
+  },
+  "start": {
+    "x": 60,
+    "z": 270,
+    "note": "Innenfor døra"
+  },
+  "goal": {
+    "x": 44,
+    "y": 190,
+    "z": 44,
+    "on": "kjoleskap",
+    "note": "Motgift-bit på toppen av kjøleskapet, ved kakeboksen"
+  },
+  "windows": [
+    {
+      "wall": "E",
+      "z": 150,
+      "y": 150,
+      "w": 90,
+      "h": 80
+    }
+  ],
+  "objects": [
+    {
+      "id": "kjoleskap",
+      "kind": "chest",
+      "material": "plastic",
+      "color": "#eef0f1",
+      "box": [
+        0,
+        65,
+        0,
+        190,
+        0,
+        65
+      ],
+      "confidence": 1,
+      "photos": [],
+      "help": "Kjøleskapet\nMotgiften står på toppen. Veien dit går over benken, opp på overskapene og et hopp over til kjøleskapet."
+    },
+    {
+      "id": "kjoleskap_handtak",
+      "kind": "box",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        56,
+        59,
+        70,
+        150,
+        65,
+        68
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "kjoleskap_fuge",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#b9bdc0",
+      "box": [
+        0,
+        65,
+        118,
+        119,
+        65,
+        65.5
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "kakeboks",
+      "kind": "cup",
+      "material": "ceramic",
+      "color": "#c9483b",
+      "box": [
+        8,
+        30,
+        190,
+        208,
+        8,
+        30
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "benkeskap_v",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e8e2d2",
+      "box": [
+        65,
+        120,
+        0,
+        86,
+        0,
+        60
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "skuff_1",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#e8e2d2",
+      "box": [
+        70,
+        115,
+        2,
+        20,
+        60,
+        112
+      ],
+      "confidence": 1,
+      "photos": [],
+      "help": "Skuffetrapp\nSkuffene står åpne som trappetrinn. Hopp opp ett trinn om gangen (HOPP), og ta tak i kanten på neste."
+    },
+    {
+      "id": "skuffknott_1",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        90,
+        95,
+        9,
+        12,
+        112,
+        114
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "skuff_2",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#e8e2d2",
+      "box": [
+        70,
+        115,
+        21,
+        40,
+        60,
+        99
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "skuffknott_2",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        90,
+        95,
+        29,
+        32,
+        99,
+        101
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "skuff_3",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#e8e2d2",
+      "box": [
+        70,
+        115,
+        41,
+        60,
+        60,
+        86
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "skuffknott_3",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        90,
+        95,
+        49,
+        52,
+        86,
+        88
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "skuff_4",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#e8e2d2",
+      "box": [
+        70,
+        115,
+        59,
+        78,
+        60,
+        73
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "skuffknott_4",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        90,
+        95,
+        67,
+        70,
+        73,
+        75
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "benk_v",
+      "kind": "chest",
+      "material": "plastic",
+      "color": "#4a4d52",
+      "box": [
+        65,
+        120,
+        86,
+        90,
+        0,
+        62
+      ],
+      "confidence": 1,
+      "photos": [],
+      "cp": true
+    },
+    {
+      "id": "vaskeskap_k",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e8e2d2",
+      "box": [
+        120,
+        165,
+        0,
+        84,
+        0,
+        60
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "benk_vask_foran",
+      "kind": "chest",
+      "material": "plastic",
+      "color": "#4a4d52",
+      "box": [
+        120,
+        165,
+        84,
+        90,
+        48,
+        62
+      ],
+      "confidence": 1,
+      "photos": [],
+      "help": "Vasken\nGå på den smale kanten foran vasken. Skyv stikken forsiktig (grønn knott), så stopper du ved kanten i stedet for å falle nedi."
+    },
+    {
+      "id": "benk_vask_bak",
+      "kind": "chest",
+      "material": "plastic",
+      "color": "#4a4d52",
+      "box": [
+        120,
+        165,
+        84,
+        90,
+        0,
+        12
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "vask_vann",
+      "kind": "box",
+      "material": "glass",
+      "color": "#5a9fc0",
+      "box": [
+        120,
+        165,
+        86.5,
+        87,
+        12,
+        48
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "kjokkenkran",
+      "kind": "faucet",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        138,
+        147,
+        90,
+        112,
+        2,
+        12
+      ],
+      "confidence": 1,
+      "photos": [],
+      "hold": true
+    },
+    {
+      "id": "benkeskap_m",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e8e2d2",
+      "box": [
+        165,
+        200,
+        0,
+        86,
+        0,
+        60
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "benk_m",
+      "kind": "chest",
+      "material": "plastic",
+      "color": "#4a4d52",
+      "box": [
+        165,
+        200,
+        86,
+        90,
+        0,
+        62
+      ],
+      "confidence": 1,
+      "photos": [],
+      "cp": true
+    },
+    {
+      "id": "vannkoker",
+      "kind": "cup",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        172,
+        190,
+        90,
+        112,
+        8,
+        26
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "komfyr_bak",
+      "kind": "chest",
+      "material": "metal",
+      "color": "#2b2d31",
+      "box": [
+        200,
+        260,
+        0,
+        90,
+        0,
+        48
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "komfyr_front",
+      "kind": "chest",
+      "material": "metal",
+      "color": "#3a3d42",
+      "box": [
+        200,
+        260,
+        0,
+        90,
+        48,
+        62
+      ],
+      "confidence": 1,
+      "photos": [],
+      "help": "Kokeplatene\nPlatene er varme. Hold deg på kanten foran dem."
+    },
+    {
+      "id": "kokeplate_1",
+      "kind": "box",
+      "material": "ceramic",
+      "color": "#e0462c",
+      "box": [
+        204,
+        227,
+        90,
+        90.4,
+        6,
+        24
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "kokeplate_2",
+      "kind": "box",
+      "material": "ceramic",
+      "color": "#e0462c",
+      "box": [
+        233,
+        256,
+        90,
+        90.4,
+        6,
+        24
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "kokeplate_3",
+      "kind": "box",
+      "material": "ceramic",
+      "color": "#e0462c",
+      "box": [
+        204,
+        227,
+        90,
+        90.4,
+        26,
+        44
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "kokeplate_4",
+      "kind": "box",
+      "material": "ceramic",
+      "color": "#e0462c",
+      "box": [
+        233,
+        256,
+        90,
+        90.4,
+        26,
+        44
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "komfyr_dor",
+      "kind": "box",
+      "material": "glass",
+      "color": "#15171a",
+      "box": [
+        205,
+        255,
+        18,
+        70,
+        62,
+        62.6
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "komfyr_handtak",
+      "kind": "box",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        208,
+        252,
+        74,
+        77,
+        62,
+        65
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "benkeskap_o",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e8e2d2",
+      "box": [
+        260,
+        332,
+        0,
+        86,
+        0,
+        60
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "benk_o",
+      "kind": "chest",
+      "material": "plastic",
+      "color": "#4a4d52",
+      "box": [
+        260,
+        332,
+        86,
+        90,
+        0,
+        62
+      ],
+      "confidence": 1,
+      "photos": [],
+      "cp": true
+    },
+    {
+      "id": "brodrister",
+      "kind": "box",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        306,
+        330,
+        90,
+        106,
+        34,
+        58
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "mikro",
+      "kind": "box",
+      "material": "metal",
+      "color": "#3b3e44",
+      "box": [
+        262,
+        304,
+        90,
+        118,
+        2,
+        40
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "mikro_dor",
+      "kind": "box",
+      "material": "glass",
+      "color": "#101216",
+      "box": [
+        266,
+        292,
+        94,
+        114,
+        40,
+        40.6
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "krydderhylle",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#c79a5e",
+      "box": [
+        262,
+        332,
+        148,
+        152,
+        0,
+        15
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "kjokkenhandkle",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#d9534f",
+      "box": [
+        270,
+        292,
+        118,
+        152,
+        15,
+        17
+      ],
+      "confidence": 1,
+      "photos": [],
+      "grip": true,
+      "onto": "krydderhylle",
+      "grip_drain": -0.3,
+      "help": "Kjøkkenhåndkle\nKlatre: stå på mikrobølgeovnen, gå inntil håndkleet og hold GREP. Øverst hiver du deg opp på krydderhylla."
+    },
+    {
+      "id": "krydder_1",
+      "kind": "cup",
+      "material": "glass",
+      "color": "#b5542e",
+      "box": [
+        300,
+        307,
+        152,
+        163,
+        3,
+        10
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "krydder_2",
+      "kind": "cup",
+      "material": "glass",
+      "color": "#6f8f3a",
+      "box": [
+        310,
+        317,
+        152,
+        163,
+        3,
+        10
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "krydder_3",
+      "kind": "cup",
+      "material": "glass",
+      "color": "#d9b23a",
+      "box": [
+        320,
+        327,
+        152,
+        163,
+        3,
+        10
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "overskap",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e8e2d2",
+      "box": [
+        90,
+        258,
+        140,
+        200,
+        0,
+        35
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "hvitlok",
+      "kind": "towel_hang",
+      "material": "paper",
+      "color": "#efe6cf",
+      "box": [
+        258,
+        261,
+        152,
+        200,
+        3,
+        13
+      ],
+      "confidence": 1,
+      "photos": [],
+      "grip": true,
+      "onto": "overskap",
+      "grip_drain": -0.3,
+      "help": "Hvitløksflette\nKlatre opp på overskapet. Dette er et langt tak: hvil på hylla først, så kreftene er fulle."
+    },
+    {
+      "id": "overskap_fuge_1",
+      "kind": "box",
+      "material": "wood",
+      "color": "#b9b09c",
+      "box": [
+        130,
+        130.8,
+        142,
+        198,
+        35,
+        35.5
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "overskap_fuge_2",
+      "kind": "box",
+      "material": "wood",
+      "color": "#b9b09c",
+      "box": [
+        174,
+        174.8,
+        142,
+        198,
+        35,
+        35.5
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "overskap_fuge_3",
+      "kind": "box",
+      "material": "wood",
+      "color": "#b9b09c",
+      "box": [
+        216,
+        216.8,
+        142,
+        198,
+        35,
+        35.5
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "bord",
+      "kind": "table",
+      "material": "wood",
+      "color": "#c79a5e",
+      "box": [
+        130,
+        250,
+        70,
+        74,
+        160,
+        240
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "bordbein_1",
+      "kind": "box",
+      "material": "wood",
+      "color": "#b88a4a",
+      "box": [
+        134,
+        139,
+        0,
+        70,
+        164,
+        169
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "bordbein_2",
+      "kind": "box",
+      "material": "wood",
+      "color": "#b88a4a",
+      "box": [
+        242,
+        247,
+        0,
+        70,
+        164,
+        169
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "bordbein_3",
+      "kind": "box",
+      "material": "wood",
+      "color": "#b88a4a",
+      "box": [
+        134,
+        139,
+        0,
+        70,
+        232,
+        237
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "bordbein_4",
+      "kind": "box",
+      "material": "wood",
+      "color": "#b88a4a",
+      "box": [
+        242,
+        247,
+        0,
+        70,
+        232,
+        237
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "fruktfat",
+      "kind": "cup",
+      "material": "ceramic",
+      "color": "#e9e2cf",
+      "box": [
+        176,
+        204,
+        74,
+        82,
+        188,
+        212
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "eple",
+      "kind": "bag",
+      "material": "plastic",
+      "color": "#c93a2e",
+      "box": [
+        184,
+        194,
+        82,
+        92,
+        195,
+        205
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "light"
+    },
+    {
+      "id": "stol_1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b88a4a",
+      "box": [
+        150,
+        190,
+        0,
+        45,
+        242,
+        282
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "stol_2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b88a4a",
+      "box": [
+        270,
+        310,
+        0,
+        45,
+        180,
+        220
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "soppelbotte",
+      "kind": "cup",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        334,
+        358,
+        0,
+        52,
+        6,
+        30
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "svamp",
+      "kind": "sponge",
+      "material": "plastic",
+      "color": "#e9d24a",
+      "box": [
+        100,
+        110,
+        90,
+        94,
+        6,
+        14
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "light",
+      "soft": true
+    },
+    {
+      "id": "matte_kjokken",
+      "kind": "mat",
+      "material": "fabric",
+      "color": "#7a8f6a",
+      "box": [
+        120,
+        240,
+        0,
+        2,
+        66,
+        110
+      ],
+      "confidence": 1,
+      "photos": [],
+      "soft": true
+    },
+    {
+      "id": "dor",
+      "kind": "door",
+      "material": "wood",
+      "color": "#eee4d2",
+      "box": [
+        20,
+        100,
+        0,
+        200,
+        298,
+        300
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "dorhandtak",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        90,
+        94,
+        100,
+        104,
+        295.5,
+        298
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    }
+  ],
+  "hazards": [
+    {
+      "id": "vask_inni",
+      "type": "pit",
+      "box": [
+        120,
+        165,
+        84,
+        89,
+        12,
+        48
+      ],
+      "message": "Plask! Du falt i oppvaskkummen"
+    },
+    {
+      "id": "kokeplater",
+      "type": "pit",
+      "box": [
+        202,
+        258,
+        90,
+        92,
+        4,
+        46
+      ],
+      "message": "Au! Kokeplata er varm"
+    }
+  ],
+  "look": {
+    "exposure": 0.9,
+    "sun": 2.4
+  },
+  "audio": {
+    "reverb": 0.26,
+    "ambience": [
+      "drip",
+      "fan"
+    ]
+  }
+}

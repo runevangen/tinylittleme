@@ -1,6 +1,6 @@
 # Kapittel 1: Badet
 
-## Slik er badet bygd nå (v0.66, fra fire bilder)
+## Slik er badet bygd nå (v0.66, fra fire bilder; nivå 1 fra v0.71, se `docs/NIVAER.md`)
 Brettet ligger i `scenes/bad.scene.json` (tolkningen, mål i cm) og lages til `levels/bad.level.json` med `node tools/scene2level.mjs scenes/bad.scene.json levels/bad.level.json`. Bildene er ikke lagret i repoet.
 
 ```
