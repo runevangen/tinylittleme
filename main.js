@@ -5,6 +5,7 @@ import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { makeLook } from './look.js';
+import { makeAtmos } from './atmos.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
@@ -105,7 +106,7 @@ const DEFAULT_PRESET = TOUCH ? 'mario' : 'pubg', DEFAULT_VIEW = TOUCH ? 'third' 
 let viewMode = new URLSearchParams(location.search).get('view') || store.get('tlm.view3', DEFAULT_VIEW);   // third | shoulder | first (standard fra v0.59: vanlig 3. person med kamera som følger etter)
 if (!['third', 'shoulder', 'first'].includes(viewMode)) viewMode = 'shoulder';
 let viewFirst = viewMode === 'first', shDist = store.get('tlm.shdist', 3), shOff = store.get('tlm.shoff', 0.5), shSide = store.get('tlm.shside', 'right') === 'left' ? -1 : 1, xhairOn = store.get('tlm.xhair', true);
-let edgeGuardOn = store.get('tlm.edgeguard', true), autoJumpOn = store.get('tlm.autojump', true), lookAheadOn = store.get('tlm.lookahead', true), dustOn = store.get('tlm.dust', true);   // v0.62: kanthjelp, kamera som ser foran deg, støv i lufta
+let edgeGuardOn = store.get('tlm.edgeguard', true), autoJumpOn = store.get('tlm.autojump', true), lookAheadOn = store.get('tlm.lookahead', true), dustOn = store.get('tlm.dust', true), raysOn = store.get('tlm.rays', true), aoOn = store.get('tlm.ao', true), clutterOn = store.get('tlm.clutter', true);   // v0.62: kanthjelp, kamera som ser foran deg, støv i lufta
 let airSteadyOn = store.get('tlm.airsteady', true), magnetOn = store.get('tlm.magnet', true), holdGrabOn = store.get('tlm.holdgrab', true);   // v0.65: stabilisering i lufta
 let compassMode = store.get('tlm.compassmode', store.get('tlm.compass', true) === false ? 'off' : 'both');   // both | compass | arrow | off
 const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; $('qbtn').style.display = qbtnOn ? 'flex' : 'none'; };
@@ -1282,6 +1283,10 @@ const SETTINGS = [
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
+  ...(gfxLow ? [] : [
+    fl('rays', 'spill', 'Lysstråler fra vinduet (Detaljert grafikk)', true, () => raysOn, kp('tlm.rays', (v) => { raysOn = v; logEv('lysstraaler', v ? 'på' : 'av'); })),
+    fl('ao', 'spill', 'Mørkere hjørner og kontaktskygger (Detaljert grafikk)', true, () => aoOn, kp('tlm.ao', (v) => { aoOn = v; logEv('hjorner', v ? 'på' : 'av'); })),
+    fl('clutter', 'spill', 'Småting på gulv og hyller: smuler, knapper, hår (Detaljert grafikk)', true, () => clutterOn, kp('tlm.clutter', (v) => { clutterOn = v; logEv('smating', v ? 'på' : 'av'); }))]),
   fl('hudtech', 'spill', 'Vis alltid tekniske tall (høyde, tid, poeng). Ellers: trykk på teksten øverst', false, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
   // Styring
   ...(!TOUCH ? [rg('mousesens', 'styring', 'Mus: følsomhet (lavere = roligere kamera)', 0.45, 0.15, 1.5, 0.05, () => mouseSens, kp('tlm.mousesens', (v) => { mouseSens = v; }), { pct: true })] : []),
@@ -1683,6 +1688,7 @@ function insideAny(x, y, z, m) {
 
 const camAhead = { x: 0, z: 0 };
 const dust = gfxLow ? null : look.makeDust(); if (dust) scene.add(dust.points);
+const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
 function render(now, dt) {
   updateCarryButton();
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
@@ -1792,6 +1798,7 @@ function render(now, dt) {
     if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   { const xh = $('xhair'); if (xh) xh.style.display = viewMode === 'shoulder' && xhairOn && mode === 'play' ? 'block' : 'none'; }
   if (dust) { dust.points.visible = dustOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
+  if (atmos) atmos.update(now / 1000, { rays: raysOn, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
