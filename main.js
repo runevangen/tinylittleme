@@ -945,7 +945,7 @@ addEventListener('keyup', (e) => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
 const held = (...codes) => codes.some((c) => keys.has(c));
 
-let camSens = store.get('tlm.camsens', 1);
+let camSens = store.get('tlm.camsens', 1), camInvY = store.get('tlm.caminvy', false);   // camInvY: dra opp = se ned (omvendt av standard)
 let blobOn = store.get('tlm.blob', true);
 let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get('tlm.followstr', 1), fovSet = store.get('tlm.fov', 52), pitchBase = store.get('tlm.pitchbase', 0.26);
 let stickCurve = store.get('tlm.stickcurve', 1.3), inertia = store.get('tlm.inertia', 1), speedScale = store.get('tlm.speedscale', 1), qbtnOn = store.get('tlm.qbtn', true);
@@ -1022,7 +1022,7 @@ canvas.addEventListener('pointermove', (e) => {
     if (pinch0) zoom(pinch0 / d); pinch0 = d; return;
   }
   camAnim = null; c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000; metrics.dragPx += Math.abs(dx) + Math.abs(dy); metrics.yawUser += Math.abs(dx * 0.006 * camSens);
-  c.pitch += dy * 0.005 * camSens;
+  c.pitch += dy * 0.005 * camSens * (camInvY && mode !== 'plan' ? -1 : 1);
   const lim = mode === 'plan' ? [-0.3, 1.5] : viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35];
   c.pitch = Math.min(lim[1], Math.max(lim[0], c.pitch));
 });
@@ -1047,7 +1047,7 @@ document.addEventListener('mousemove', (e) => {
   if (document.pointerLockElement !== canvas || mode !== 'play') return;
   cam.yaw -= e.movementX * 0.0022 * camSens; lastDrag = performance.now() / 1000; camAnim = null;
   const lim = viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35];
-  cam.pitch = Math.min(lim[1], Math.max(lim[0], cam.pitch + e.movementY * 0.0018 * camSens));
+  cam.pitch = Math.min(lim[1], Math.max(lim[0], cam.pitch + e.movementY * 0.0018 * camSens * (camInvY ? -1 : 1)));
 });
 canvas.addEventListener('mousedown', (e) => { if (document.pointerLockElement !== canvas) return; if (e.button === 0) { touch.carry = true; carryEdge = true; } if (e.button === 2) { touch.grab = true; grabEdge = true; } });
 addEventListener('mouseup', (e) => { if (e.button === 0) touch.carry = false; if (e.button === 2) touch.grab = false; });
@@ -1226,6 +1226,7 @@ const SETTINGS = [
   fl('hudtech', 'spill', 'Vis tekniske tall (høyde, tid, poeng)', true, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
   // Styring
   rg('camsens', 'styring', 'Kamerafølsomhet (dra)', 1, 0.4, 2, 0.1, () => camSens, kp('tlm.camsens', (v) => { camSens = v; })),
+  sl('caminvy', 'styring', TOUCH ? 'Kamera: når du drar tommelen opp' : 'Kamera: når du drar musa opp', 'up', [['up', 'Se opp (standard)'], ['down', 'Se ned (omvendt)']], () => (camInvY ? 'down' : 'up'), (v) => { camInvY = v === 'down'; store.set('tlm.caminvy', camInvY); }),
   rg('stickdead', 'styring', 'Stikke: dødsone (mot skjelving)', 0.22, 0, 0.4, 0.02, () => stickDead, kp('tlm.stickdead', (v) => { stickDead = v; })),
   rg('btnscale', 'styring', 'Knappestørrelse', 1, 0.8, 1.3, 0.05, () => btnScale, kp('tlm.btnscale', (v) => { btnScale = v; applyUiFlags(); })),
   sl('help', 'styring', 'Hjelp-nivå (tilgivende hopp, kantgrep, hinder)', 'normal', [['none', 'Ingen (som Prince)'], ['normal', 'Normal'], ['much', 'Mye hjelp']], () => helpLevel, kp('tlm.helplevel', (v) => { helpLevel = v; reapplyKnobs(); })),
