@@ -173,6 +173,9 @@ setAniso(maxAniso);
 const look = makeLook({ aniso: maxAniso, low: gfxLow });
 const gradeMode = store.get('tlm.grade', 'film');   // R1: Toy Story-lys (film) eller opprinnelig lys (off); lys i grade.js
 const grade = applyGrade({ renderer, scene, sun, canvas, look: LEVEL.look, mode: gradeMode, low: gfxLow });
+const bigBox = (b) => Array.isArray(b.box) && Math.max(b.box[1] - b.box[0], b.box[3] - b.box[2], b.box[5] - b.box[4]) > 120;   // store flater: dempet clearcoat, ellers hvite glansflekker
+// Blank overflate (clearcoat) er dyrere enn Standard: bare med Grafikk «Detaljert» og ikke «Enkel»
+const glossy = (b, o, cc, ccr) => gfxLow ? std(o) : new THREE.MeshPhysicalMaterial({ ...o, clearcoat: bigBox(b) ? Math.min(cc, 0.25) : cc, clearcoatRoughness: bigBox(b) ? Math.max(ccr, 0.4) : ccr });
 const texMat = (set, o = {}) => std({ map: set.map.clone(), normalMap: set.normalMap ? set.normalMap.clone() : null, roughnessMap: set.roughnessMap ? set.roughnessMap.clone() : null, ...o });
 const eachMap = (mat, fn) => { for (const k of ['map', 'normalMap', 'roughnessMap']) if (mat[k]) fn(mat[k]); };
 
@@ -191,9 +194,9 @@ function material(b) {
     case 'woodpanel': return texMat(look.panel, { color: col, roughness: 0.7 });       // stående panelbord
     case 'wood': return texMat(look.wood, { color: col, roughness: 0.55 });
     case 'book': return std({ color: col, roughness: 0.78 });
-    case 'plastic': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.3, metalness: 0.1, clearcoat: 0.7, clearcoatRoughness: 0.18 });     // R1: blank plast
-    case 'porcelain': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.07, clearcoat: 1, clearcoatRoughness: 0.05 });
-    case 'ceramic': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.15, clearcoat: 0.8, clearcoatRoughness: 0.1 });
+    case 'plastic': return glossy(b, { color: col, roughness: 0.3, metalness: 0.1 }, 0.7, 0.18);     // R1: blank plast
+    case 'porcelain': return glossy(b, { color: col, roughness: 0.1 }, 0.8, 0.12);
+    case 'ceramic': return glossy(b, { color: col, roughness: 0.15 }, 0.7, 0.15);
     case 'glass': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.04, transparent: true, opacity: 0.4, transmission: 0.6 });
     case 'metal': return std({ color: col, roughness: 0.22, metalness: 1 });
     case 'mirror': return std({ color: 0xffffff, roughness: 0.02, metalness: 1 });
@@ -901,6 +904,7 @@ function failAt(why = 'fall') {
 }
 addEventListener('pagehide', saveProgress);
 if (resumed) logEv('gjenopptatt');
+logEv('grade', gradeMode + (gfxLow ? ' (enkel: ingen kantlys/fyll/filter)' : ''));   // R1: hvilken gradering som kjører (rapporten)
 if (resumed) setTimeout(() => toast('Fortsetter der du var · ⚙ → Start på nytt for å begynne på nytt'), 1500);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveProgress(); });
 
@@ -1283,7 +1287,7 @@ const SETTINGS = [
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
-  sl('grade', 'spill', 'Fargegradering (Toy Story-lys, laster siden på nytt)', 'film', [['film', 'Varm film'], ['off', 'Av (opprinnelig lys)']], () => gradeMode, (v) => { if (v === gradeMode) return; store.set('tlm.grade', v); setTimeout(() => location.reload(), 150); }),
+  sl('grade', 'spill', 'Fargegradering (Toy Story-lys, laster siden på nytt)', 'film', [['film', 'Varm film'], ['off', 'Av (opprinnelig lys)']], () => gradeMode, (v) => { if (v === gradeMode) return; logEv('grade', v); store.set('tlm.grade', v); setTimeout(() => location.reload(), 150); }),
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
   fl('hudtech', 'spill', 'Vis alltid tekniske tall (høyde, tid, poeng). Ellers: trykk på teksten øverst', false, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
   // Styring

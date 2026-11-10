@@ -6,16 +6,16 @@ export const GRADE_MODES = ['film', 'off'];
 // Parametre for lyset. `look` er level.look (exposure, sun) fra scenen; film-modus løfter dem litt, bare relativt.
 export function gradeParams(look = {}, mode = 'film', low = false) {
   const exposure = look.exposure ?? 1.05, sun = look.sun ?? 3.0;
-  if (mode === 'off') return { exposure, sun, sunColor: 0xffe7c2, hemiSky: 0xeaf1ff, hemiGround: 0xa5845c, hemi: 0.42, fill: 0, rim: 0, filter: '' };
+  if (mode === 'off') return { exposure, sun, sunColor: 0xffe7c2, hemiSky: 0xeaf1ff, hemiGround: 0xa5845c, hemi: 0.42, fill: 0, rim: 0, env: 0.55, filter: '' };
   return {
-    exposure: exposure * 1.06,                 // litt lysere, så skyggene med mer kontrast ikke gjør rommet mørkere
-    sun: sun * 1.1,
-    sunColor: 0xffd9a0,                        // varm sol
-    hemiSky: 0xcfe0ff, hemiGround: 0xb98a5a,   // kjølig himmel, varmt gjenskinn
-    hemi: 0.4,
-    fill: low ? 0 : 0.55,                      // kjølig fyll fra motsatt side (uten skygge)
-    rim: low ? 0 : 0.9,                        // kantlys bakfra
-    filter: low ? '' : 'saturate(1.18) contrast(1.06)',
+    exposure: exposure * 1.0,                 // omtrent som før: kontrasten kommer fra lysfargene, ikke fra mørkere rom
+    sun: sun * 1.25,
+    sunColor: 0xffbf70,                        // tydelig varm (gyllen) sol
+    hemiSky: 0x8fb4ff, hemiGround: 0xc98a4c,   // kjølig blå himmel i skyggene, varmt gjenskinn fra gulvet
+    hemi: 0.5,
+    env: 0.4,                                  // mindre nøytralt miljølys, så farget lys og skygge vinner
+    fill: low ? 0 : 0.8,                       // kjølig fyll fra motsatt side (uten skygge)
+    rim: low ? 0 : 1.1,                        // varmt kantlys bakfra (lyser opp omrisset på figuren)
+    filter: low ? '' : 'saturate(1.28) contrast(1.08) sepia(0.08)',   // Enkel grafikk: ingen filter (billig)
   };
 }
-
