@@ -415,6 +415,23 @@ const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.3, 0.5, 14), glas
 const cork = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.17, 0.2, 12), new THREE.MeshStandardMaterial({ color: 0xa9774b, roughness: 0.9 })); cork.position.y = 1.12; goal.add(cork);
 goal.position.set(...LEVEL.goal); scene.add(goal);
 const glow = new THREE.PointLight(0x66ffcc, 30, 14); glow.position.y = 1; goal.add(glow);
+// målfyr (v0.69): en lyssøyle fra målet og opp til taket, og en glorie som også synes svakt gjennom ting, så du finner målet når du ser deg rundt
+let beaconOn = store.get('tlm.beacon', true);
+const beacon = new THREE.Group(); beacon.position.set(LEVEL.goal[0], LEVEL.goal[1], LEVEL.goal[2]); scene.add(beacon);
+{
+  const bh = Math.max(12, (LEVEL.room?.height ?? 60) - LEVEL.goal[1] - 0.5);
+  const gc = document.createElement('canvas'); gc.width = 8; gc.height = 128; { const g = gc.getContext('2d'), lg = g.createLinearGradient(0, 0, 0, 128); lg.addColorStop(0, 'rgba(255,255,255,0)'); lg.addColorStop(0.35, 'rgba(255,255,255,.55)'); lg.addColorStop(1, 'rgba(255,255,255,1)'); g.fillStyle = lg; g.fillRect(0, 0, 8, 128); }
+  const gt = new THREE.CanvasTexture(gc), bm = (o) => new THREE.MeshBasicMaterial({ color: 0x19d79a, transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false, ...o });   // vanlig blanding (ikke additiv): synes også mot hvite fliser
+  const geo = new THREE.CylinderGeometry(1.1, 0.45, bh, 20, 1, true); geo.translate(0, bh / 2, 0);
+  const core = new THREE.Mesh(geo, bm({ opacity: 0.34, map: gt })); core.renderOrder = 6;
+  const fh = bh + LEVEL.goal[1], full = new THREE.CylinderGeometry(0.75, 0.75, fh, 20, 1, true); full.translate(0, bh - fh / 2, 0);                 // helt fra gulvet til taket, så den er i synsfeltet uansett hvor høyt målet ligger
+  const ghost = new THREE.Mesh(full, bm({ opacity: 0.16, depthTest: false })); ghost.renderOrder = 7;                   // synlig gjennom vegger og møbler
+  const hc = document.createElement('canvas'); hc.width = hc.height = 128; { const g = hc.getContext('2d'), rg = g.createRadialGradient(64, 64, 2, 64, 64, 62); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.25, 'rgba(60,235,170,.85)'); rg.addColorStop(1, 'rgba(25,215,154,0)'); g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
+    g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 2; for (const a of [0, Math.PI / 2, Math.PI / 4, -Math.PI / 4]) { g.beginPath(); g.moveTo(64 - Math.cos(a) * 58, 64 - Math.sin(a) * 58); g.lineTo(64 + Math.cos(a) * 58, 64 + Math.sin(a) * 58); g.stroke(); } }
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(hc), color: 0xffffff, transparent: true, opacity: 0.7, depthTest: false, depthWrite: false, sizeAttenuation: false, fog: false }));
+  halo.scale.setScalar(0.12); halo.position.y = 0.9; halo.renderOrder = 8;
+  beacon.add(core, ghost, halo); beacon.userData = { core, ghost, halo };
+}
 
 // lagringsflagg
 const flag = new THREE.Group();
@@ -950,6 +967,7 @@ addEventListener('keyup', (e) => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
 const held = (...codes) => codes.some((c) => keys.has(c));
 
+let mouseSens = store.get('tlm.mousesens', 0.45);                              // mus er mye raskere enn en tommel: egen følsomhet (v0.69)
 let camSens = store.get('tlm.camsens', 1), camInvY = store.get('tlm.caminvy', false);   // camInvY: dra opp = se ned (omvendt av standard)
 let blobOn = store.get('tlm.blob', true);
 let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get('tlm.followstr', 1), fovSet = store.get('tlm.fov', 52), pitchBase = store.get('tlm.pitchbase', 0.26);
@@ -1020,7 +1038,7 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stickId) { stickMove(e); return; }            // fingeren styrer stikken (flytende), ikke kameraet
   const p = pointers.get(e.pointerId); if (!p) return;
-  const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  const ms = e.pointerType === 'mouse' ? mouseSens : 1, dx = (e.clientX - p.x) * ms, dy = (e.clientY - p.y) * ms; p.x = e.clientX; p.y = e.clientY;
   const c = activeCam();
   if (pointers.size === 2) {
     const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
@@ -1050,9 +1068,9 @@ canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoom(Math.exp(e.de
 // PC: musestyring som i PUBG (pekerlås): musa dreier blikket, venstre knapp = TA (hold = lad kast), høyre = GREP
 document.addEventListener('mousemove', (e) => {
   if (document.pointerLockElement !== canvas || mode !== 'play') return;
-  cam.yaw -= e.movementX * 0.0022 * camSens; lastDrag = performance.now() / 1000; camAnim = null;
+  cam.yaw -= e.movementX * 0.0022 * camSens * mouseSens; lastDrag = performance.now() / 1000; camAnim = null;
   const lim = viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35];
-  cam.pitch = Math.min(lim[1], Math.max(lim[0], cam.pitch + e.movementY * 0.0018 * camSens * (camInvY ? -1 : 1)));
+  cam.pitch = Math.min(lim[1], Math.max(lim[0], cam.pitch + e.movementY * 0.0018 * camSens * mouseSens * (camInvY ? -1 : 1)));
 });
 canvas.addEventListener('mousedown', (e) => { if (document.pointerLockElement !== canvas) return; if (e.button === 0) { touch.carry = true; carryEdge = true; } if (e.button === 2) { touch.grab = true; grabEdge = true; } });
 addEventListener('mouseup', (e) => { if (e.button === 0) touch.carry = false; if (e.button === 2) touch.grab = false; });
@@ -1231,6 +1249,7 @@ const SETTINGS = [
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
   fl('hudtech', 'spill', 'Vis tekniske tall (høyde, tid, poeng)', true, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
   // Styring
+  ...(!TOUCH ? [rg('mousesens', 'styring', 'Mus: følsomhet (lavere = roligere kamera)', 0.45, 0.15, 1.5, 0.05, () => mouseSens, kp('tlm.mousesens', (v) => { mouseSens = v; }), { pct: true })] : []),
   rg('camsens', 'styring', 'Kamerafølsomhet (dra)', 1, 0.4, 2, 0.1, () => camSens, kp('tlm.camsens', (v) => { camSens = v; })),
   sl('caminvy', 'styring', TOUCH ? 'Kamera: når du drar tommelen opp' : 'Kamera: når du drar musa opp', 'up', [['up', 'Se opp (standard)'], ['down', 'Se ned (omvendt)']], () => (camInvY ? 'down' : 'up'), (v) => { camInvY = v === 'down'; store.set('tlm.caminvy', camInvY); }),
   rg('stickdead', 'styring', 'Stikke: dødsone (mot skjelving)', 0.22, 0, 0.4, 0.02, () => stickDead, kp('tlm.stickdead', (v) => { stickDead = v; })),
@@ -1270,6 +1289,7 @@ const SETTINGS = [
   // Hjelp og tekst
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
+  fl('beacon', 'hjelp', 'Lyssøyle over målet (synes svakt gjennom ting)', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
   fl('griphi', 'hjelp', 'Fremhev grep (oransje, pulserende)', false, () => gripHi, kp('tlm.griphi', (v) => { gripHi = v; })),
   ...(labels.length ? [fl('labels', 'hjelp', `Brukslapper ved ting${key('L')}`, true, () => labelsOn, kp('tlm.labels', (v) => { labelsOn = v; }))] : []),
@@ -1662,6 +1682,8 @@ function render(now, dt) {
     hint.classList.toggle('hide', !hint.textContent);
   } else hint.classList.add('hide');
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;
+  { const u = beacon.userData, pu = 0.5 + 0.5 * Math.sin(now * 0.0025), near = Math.min(1, Math.hypot(player.x - LEVEL.goal[0], player.y - LEVEL.goal[1], player.z - LEVEL.goal[2]) / 6);   // dempes når du står ved målet
+    beacon.visible = beaconOn && !won && mode !== 'plan'; u.core.material.opacity = (0.26 + 0.12 * pu) * near; u.ghost.material.opacity = (0.13 + 0.06 * pu) * near; u.halo.material.opacity = (0.5 + 0.3 * pu) * near; u.halo.material.rotation = now * 0.0004; beacon.rotation.y = now * 0.0006; }
   flag.children[1].rotation.y = Math.sin(now * 0.004) * 0.25;
 
   let desired, look;
