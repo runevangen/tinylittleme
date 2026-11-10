@@ -216,5 +216,40 @@ export function makeLook({ aniso = 4, low = false } = {}) {
     return tex(c, true, false);
   }
 
-  return { floor, plaster, tile, wood, panel, pages, weave, twill, knit, leather, rep, buildBook, contactShadow, edgeShade, makeDust, skyTex };
+  // ---------- finkorn i verdensrommet (v0.76): alle flater får en fin «overflate» som ikke avhenger av UV, så selv glatte flater og
+  // tekstur som forstørres på nært hold får korn og små variasjoner i farge og glans. Tre oppslag (én per akse), blandet etter flatens retning. ----------
+  const detailTex = (() => {
+    const S = 256, c = cv(S), g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data, r = rng(77);
+    const oct = [[8, 0.5], [16, 0.3], [32, 0.2]], grids = oct.map(([n]) => Array.from({ length: n * n }, () => r()));   // verdistøy, flere størrelser; kantene går rundt
+    const sm = (t) => t * t * (3 - 2 * t);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      let v = 0;
+      oct.forEach(([n, w], k) => { const fx = x / S * n, fy = y / S * n, x0 = Math.floor(fx), y0 = Math.floor(fy), tx = sm(fx - x0), ty = sm(fy - y0), G = grids[k], a = (i, j) => G[(((j % n) + n) % n) * n + (((i % n) + n) % n)]; v += w * ((a(x0, y0) * (1 - tx) + a(x0 + 1, y0) * tx) * (1 - ty) + (a(x0, y0 + 1) * (1 - tx) + a(x0 + 1, y0 + 1) * tx) * ty); });
+      const i = (y * S + x) * 4; d[i] = d[i + 1] = d[i + 2] = Math.round(Math.max(0, Math.min(1, v + (r() - 0.5) * 0.18)) * 255); d[i + 3] = 255;
+    }
+    g.putImageData(img, 0, 0); return tex(c, false);
+  })();
+  const detailize = (root, { grain = 0.2, rough = 0.3 } = {}) => {
+    root.traverse((o) => {
+      if (!o.isMesh || o.userData.noDetail) return;
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+        if (!m || !m.isMeshStandardMaterial || m.transparent || m.userData.detailed || m.emissiveIntensity > 0 && m.emissive?.getHex()) continue;
+        m.userData.detailed = true; const prev = m.onBeforeCompile;
+        m.onBeforeCompile = (sh, rd) => {
+          prev?.call(m, sh, rd);
+          sh.uniforms.uDetail = { value: detailTex }; sh.uniforms.uGrain = { value: grain }; sh.uniforms.uRough = { value: rough };
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vDwp; varying vec3 vDwn;')
+            .replace('#include <begin_vertex>', '#include <begin_vertex>\nvDwp = (modelMatrix * vec4(transformed, 1.0)).xyz; vDwn = normalize(mat3(modelMatrix) * objectNormal);');
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vDwp; varying vec3 vDwn; uniform sampler2D uDetail; uniform float uGrain; uniform float uRough;\n'
+            + 'float dTri(vec3 p, vec3 w, float s) { return texture2D(uDetail, p.zy * s).r * w.x + texture2D(uDetail, p.xz * s).r * w.y + texture2D(uDetail, p.xy * s).r * w.z; }')
+            .replace('#include <map_fragment>', '#include <map_fragment>\n  vec3 dW = pow(abs(normalize(vDwn)), vec3(4.0)); dW /= (dW.x + dW.y + dW.z);\n'
+              + '  float dA = dTri(vDwp, dW, 0.35), dB = dTri(vDwp, dW, 1.9);\n  float dG = (dA - 0.5) * 0.7 + (dB - 0.5) * 0.6;\n  diffuseColor.rgb *= 1.0 + dG * uGrain * 2.0;')
+            .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = clamp(roughnessFactor * (1.0 - dG * uRough * 1.6), 0.04, 1.0);');
+        };
+        m.customProgramCacheKey = () => 'detail1'; m.needsUpdate = true;
+      }
+    });
+  };
+
+  return { floor, plaster, tile, wood, panel, pages, weave, twill, knit, leather, rep, buildBook, contactShadow, edgeShade, makeDust, skyTex, detailize };
 }

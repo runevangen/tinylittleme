@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
-import { buildGroup, buildSingle, roundedBoxGeo } from './props.js';
+import { buildGroup, buildSingle, roundedBoxGeo, setAniso } from './props.js';
 import { makeLook } from './look.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
@@ -157,7 +157,8 @@ const sun = new THREE.DirectionalLight(0xffe7c2, LEVEL.look?.sun ?? 3.0);
 sun.castShadow = true;
 const bigShadow = Math.min(renderer.capabilities.maxTextureSize, 4096);
 sun.shadow.mapSize.set(devicePixelRatio > 2 || innerWidth < 700 ? 2048 : bigShadow, devicePixelRatio > 2 || innerWidth < 700 ? 2048 : bigShadow);
-Object.assign(sun.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 220 });
+const shHalf = devicePixelRatio > 2 || innerWidth < 700 ? 17 : 26;       // v0.76: mindre område rundt deg på mobil = skarpere skygger (færre trappetrinn i kantene)
+Object.assign(sun.shadow.camera, { left: -shHalf, right: shHalf, top: shHalf, bottom: -shHalf, near: 1, far: 220 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
 scene.add(new THREE.HemisphereLight(0xeaf1ff, 0xa5845c, 0.42));       // kjølig himmellys ovenfra, varmt gjenskinn fra gulvet
@@ -165,7 +166,9 @@ scene.add(new THREE.HemisphereLight(0xeaf1ff, 0xa5845c, 0.42));       // kjølig
 // ---------- utseende: teksturer med relieff, bøker, kontaktskygger og støv (look.js) ----------
 const gfxLow = store.get('tlm.gfx', 'high') === 'low';
 if (gfxLow) renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-const look = makeLook({ aniso: Math.min(8, renderer.capabilities.getMaxAnisotropy()), low: gfxLow });
+const maxAniso = gfxLow ? 4 : Math.min(16, renderer.capabilities.getMaxAnisotropy());
+setAniso(maxAniso);
+const look = makeLook({ aniso: maxAniso, low: gfxLow });
 const texMat = (set, o = {}) => std({ map: set.map.clone(), normalMap: set.normalMap ? set.normalMap.clone() : null, roughnessMap: set.roughnessMap ? set.roughnessMap.clone() : null, ...o });
 const eachMap = (mat, fn) => { for (const k of ['map', 'normalMap', 'roughnessMap']) if (mat[k]) fn(mat[k]); };
 
@@ -455,6 +458,7 @@ const flag = new THREE.Group();
 }
 
 // ---------- figur ----------
+if (!gfxLow) look.detailize(scene);                                   // fint korn på alle flater i brettet (v0.76)
 const hero = buildHero(look);
 scene.add(hero.root);
 // rund skygge under figuren (som i Mario: viser hvor du lander) og landingsmarkør når du faller
@@ -813,7 +817,7 @@ initBodies(LEVEL);
 const bodyMeshes = LEVEL.bodies.map((b) => {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
-  mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh);
+  mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); if (!gfxLow) look.detailize(mesh);
   return { b, mesh, size: [sx, sy, sz] };
 });
 // taubaner (nål + tråd) opprettes av fysikken: en tynn rød tråd mellom to knuter

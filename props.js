@@ -112,10 +112,12 @@ function tub(members) {
 
 // ---------- teksturer (tegnes i nettleseren, ingen bildefiler) ----------
 function rng(seed) { let a = seed; return () => { a = (a * 1664525 + 1013904223) % 4294967296; return a / 4294967296; }; }
+let ANISO = 4;
+export const setAniso = (n) => { ANISO = n; };      // settes fra main.js etter at maskinvaren er spurt (skarpere teksturer på skrå flater)
 function canvasTex(size, draw, { repeat = [1, 1], srgb = true } = {}) {
   const c = document.createElement('canvas'); c.width = c.height = size;
   draw(c.getContext('2d'), size);
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat); t.anisotropy = 4;
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat); t.anisotropy = ANISO;
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
@@ -129,7 +131,7 @@ const terryTex = () => once('terry', () => canvasTex(256, (g, S) => {
 // flettet tøy (matte) og kurvfletting
 const weaveTex = () => once('weave', () => canvasTex(128, (g, S) => {
   g.fillStyle = '#bdbdbd'; g.fillRect(0, 0, S, S);
-  for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) { const v = (i + j) % 2 ? 235 : 150; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(i * 8 + 1, j * 8 + 1, 6, 6); }
+  for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) { const v = (i + j) % 2 ? 212 : 172; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(i * 8 + 1, j * 8 + 1, 6, 6); }
 }));
 const wickerTex = () => once('wicker', () => canvasTex(128, (g, S) => {
   g.fillStyle = '#9a8f80'; g.fillRect(0, 0, S, S);                       // mørke mellomrom mellom flettene
