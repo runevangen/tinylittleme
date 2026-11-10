@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
+import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
@@ -71,7 +72,7 @@ const SUN = LEVEL.sun || [28, 60, -24];
 
 // ---------- lyd ----------
 // Web Audio kan først startes etter en brukerhandling (nettleserregel), så den opprettes ved første tastetrykk/trykk.
-let audio = null;
+let audio = null, music = null, musicMood = 'calm';
 let soundMuted = store.get('tlm.muted', false);
 function primeVoice() { try { if (hasTTS) speechSynthesis.speak(Object.assign(new SpeechSynthesisUtterance(' '), { volume: 0 })); } catch { /* ok */ } }
 function unlockAudio() {
@@ -81,7 +82,9 @@ function unlockAudio() {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       audio = createAudio(new Ctx(), { volume: store.get('tlm.vol', 0.7), reverb: store.get('tlm.reverb', null) ?? LEVEL.audio?.reverb ?? 0.12, levels: store.get('tlm.mix2', {}) });
       audio.setMuted(soundMuted);
-    } catch { audio = null; }
+      music = createMusic(audio.ctx, audio.out, { theme: themeFor(LEVEL), volume: store.get('tlm.musicvol', 0.6), on: store.get('tlm.music', true) });   // R5: musikk starter etter første trykk
+      music.start();
+    } catch { audio = null; music = null; }
   }
   audio?.resume();
 }
@@ -1333,6 +1336,8 @@ const SETTINGS = [
   // Lyd og stemme
   rg('vol', 'lyd', 'Hovedvolum', 0.7, 0, 1, 0.05, () => store.get('tlm.vol', 0.7), kp('tlm.vol', (v) => audio?.setVolume(v)), { pct: true }),
   fl('sound', 'lyd', 'Lyd på', true, () => !soundMuted, (v) => { if (v === soundMuted) toggleSound(); }),
+  fl('music', 'lyd', 'Musikk (spiller etter første trykk)', true, () => store.get('tlm.music', true), kp('tlm.music', (v) => { music?.setOn(v); logEv('musikk', v ? 'på' : 'av'); })),
+  rg('musicvol', 'lyd', 'Musikk: volum', 0.6, 0, 1, 0.05, () => store.get('tlm.musicvol', 0.6), kp('tlm.musicvol', (v) => music?.setVolume(v)), { pct: true }),
   ...(hasTTS ? [
     fl('voice', 'lyd', 'Stemme (figuren snakker)', true, () => voiceOn, kp('tlm.voice', (v) => { voiceOn = v; if (v) { primeVoice(); say('checkpoint', true); } })),
     rg('voicevol', 'lyd', 'Stemmevolum', 0.9, 0.2, 1, 0.1, () => voiceVol, kp('tlm.voicevol', (v) => { voiceVol = v; })),
@@ -1554,7 +1559,7 @@ function update(dt) {
     const y0 = cam.yaw; if (followStrength > 0) cam.yaw = followYaw(cam.yaw, player.vx, player.vz, P.speed, dt * k, { rateScale: followStrength, capScale: followStrength }); metrics.yawAuto += Math.abs(cam.yaw - y0);
     if (sp0 > 1) { const base = viewMode === 'shoulder' ? pitchBase - 0.08 : pitchBase; cam.pitch += (base - cam.pitch) * Math.min(1, 0.35 * dt); }       // vinkelen går sakte tilbake til normal
   }
-  audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
+  musicFrame(); audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
   if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); saveProgress(); logEv('sjekkpunkt'); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
   if (player.y < LEVEL.deathY) { failAt('falt'); resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
@@ -1653,6 +1658,12 @@ function cueFrame(pre) {
   if (pre.carry && !p.carry) cue('slapp / kastet');
 }
 
+// R5: stemningen i musikken følger faren (en maur ser deg) og målet
+function musicFrame() {
+  if (!music) return;
+  const m = moodFor({ alerted: antsOn && (LEVEL.antList || []).some((a) => a.alive && a.alerted), won });
+  if (m !== musicMood) { musicMood = m; music.setMood(m); logEv('musikk', m); }
+}
 // lyder som følger av hva som skjedde i dette bildet
 function audioFrame(pre, dt) {
   if (!audio) return;
@@ -1940,4 +1951,4 @@ requestAnimationFrame(frame);
 
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
-window.__game = { antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
