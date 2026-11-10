@@ -870,6 +870,24 @@
    ],
    "weight": "light",
    "breakable": false
+  },
+  {
+   "id": "noekkel",
+   "kind": "key",
+   "material": "metal",
+   "color": 14725168,
+   "min": [
+    11.2,
+    40,
+    -27.2
+   ],
+   "max": [
+    14,
+    40.7,
+    -26
+   ],
+   "weight": "light",
+   "breakable": false
   }
  ],
  "decor": [
@@ -1465,6 +1483,39 @@
    "x": 33.76,
    "y": 0.8,
    "z": -2.24
+  }
+ ],
+ "puzzles": [
+  {
+   "id": "bro",
+   "key": "noekkel",
+   "label": "låsen",
+   "en": "the lock",
+   "plate": {
+    "x": 5,
+    "y": 40,
+    "z": -25,
+    "r": 2,
+    "on": "overskap",
+    "x0": -3,
+    "x1": 15.6,
+    "z0": -30,
+    "z1": -23
+   },
+   "bridge": {
+    "min": [
+     -7.6,
+     39,
+     -29.4
+    ],
+    "max": [
+     -3,
+     39.6,
+     -24.6
+    ],
+    "axis": "x",
+    "anchor": "max"
+   }
   }
  ],
  "ropes": [],

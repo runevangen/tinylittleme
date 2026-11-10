@@ -416,6 +416,14 @@ const SINGLE = {
     const head = mesh(lathe([[0.001, -sy / 2], [r * 0.8, -sy / 2 + 0.1], [r, -sy * 0.38], [r * 0.7, -sy * 0.26], [r * 0.35, -sy * 0.2]]), new THREE.MeshStandardMaterial({ color: 0x3b3f46, roughness: 0.9 })); g.add(head);
     return g;
   },
+  key(sx, sy, sz) {                                                 // nøkkel (R7): gylden, flat, med ring i den ene enden og to tenner; bygges langs x
+    const g = new THREE.Group(), gold = new THREE.MeshStandardMaterial({ color: 0xffc83a, roughness: 0.25, metalness: 0.7, emissive: 0x6a4200, emissiveIntensity: 0.45 });
+    const t = Math.min(sy, 0.5), R = Math.min(sz * 0.36, sx * 0.17), L = sx - R * 2 - t * 0.4;
+    const bow = mesh(new THREE.TorusGeometry(R, t * 0.42, 8, 20), gold); bow.rotation.x = Math.PI / 2; bow.position.x = -sx / 2 + R + t * 0.4; g.add(bow);
+    const shaft = mesh(new THREE.BoxGeometry(L, t * 0.62, t * 0.62), gold); shaft.position.x = sx / 2 - L / 2; g.add(shaft);
+    for (const k of [0.16, 0.34]) { const tooth = mesh(new THREE.BoxGeometry(t * 0.55, t * 0.5, sz * 0.26), gold); tooth.position.set(sx / 2 - L * k, 0, sz * 0.13 + t * 0.12); g.add(tooth); }
+    return g;
+  },
   qtip(sx, sy, sz) {                                                // ørepinne: stav med bomullstipper; bygges langs x
     const g = new THREE.Group(), L = Math.max(sx, sy, sz), t = Math.min(sx, sy, sz), r = Math.max(0.035, t * 0.32);
     const stick = mesh(new THREE.CylinderGeometry(r, r, L, 10), new THREE.MeshStandardMaterial({ color: 0xf2f1ec, roughness: 0.5 })); stick.rotation.z = Math.PI / 2; g.add(stick);

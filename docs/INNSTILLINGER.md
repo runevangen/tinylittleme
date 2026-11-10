@@ -24,3 +24,4 @@ Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»
 - FPS-visning (⚙ → Test) hjelper når noe «skjelver»: lav FPS ga tidligere falske feil.
 
 - **Smuler** (⚙ → Spill, `tlm.crumbs`, standard på): gylne smuler å samle i brettene (R3). Av = ingen smuler vises eller plukkes.
+- **Gåter** (⚙ → Spill, `tlm.puzzles`, standard på): nøkkel og lås (R7). Av = ingen veiledning mot nøkkelen, og nøkkelen åpner ikke broen (en åpnet bro står).
