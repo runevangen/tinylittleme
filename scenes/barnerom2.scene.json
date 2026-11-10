@@ -741,7 +741,7 @@
         195,
         100
       ],
-      "crumb": true
+      "type": "carrier"
     },
     {
       "id": "maur_dyne",
@@ -769,15 +769,12 @@
       "speed": 2.4
     },
     {
-      "id": "maur_hjorne",
+      "id": "edderkopp_hjorne",
+      "type": "spider",
       "on": "gulv",
       "from": [
         260,
-        160
-      ],
-      "to": [
-        260,
-        225
+        190
       ]
     }
   ]

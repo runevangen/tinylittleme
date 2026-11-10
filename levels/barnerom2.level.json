@@ -899,6 +899,7 @@
  "ants": [
   {
    "id": "maur_gulv",
+   "type": "carrier",
    "a": [
     -9,
     0,
@@ -908,8 +909,7 @@
     9,
     0,
     -8
-   ],
-   "crumb": true
+   ]
   },
   {
    "id": "maur_dyne",
@@ -939,16 +939,17 @@
    "speed": 2.4
   },
   {
-   "id": "maur_hjorne",
+   "id": "edderkopp_hjorne",
+   "type": "spider",
    "a": [
     22,
     0,
-    4
+    10
    ],
    "b": [
     22,
     0,
-    17
+    10
    ]
   }
  ],

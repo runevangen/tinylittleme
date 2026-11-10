@@ -142,7 +142,7 @@
   var v = String(Date.now());
   try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
   window.__assetV = v;
-  const files = ['main', 'physics', 'props', 'look', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'version', 'level', 'kinds'];
+  const files = ['main', 'physics', 'props', 'look', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'version', 'level', 'kinds'];
   var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
   document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
 })();

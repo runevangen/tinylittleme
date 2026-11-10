@@ -1276,6 +1276,7 @@
  "ants": [
   {
    "id": "maur_gulv",
+   "type": "carrier",
    "a": [
     -28,
     0,
@@ -1285,8 +1286,7 @@
     28,
     0,
     -5
-   ],
-   "crumb": true
+   ]
   },
   {
    "id": "maur_matte",
@@ -1299,6 +1299,34 @@
     2,
     0.4,
     -12.4
+   ]
+  },
+  {
+   "id": "edderkopp_hjorne",
+   "type": "spider",
+   "a": [
+    22,
+    0,
+    20
+   ],
+   "b": [
+    22,
+    0,
+    20
+   ]
+  },
+  {
+   "id": "edderkopp_skap",
+   "type": "spider",
+   "a": [
+    -18,
+    0,
+    7
+   ],
+   "b": [
+    -18,
+    0,
+    7
    ]
   }
  ],

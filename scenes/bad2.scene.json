@@ -1699,7 +1699,8 @@
   },
   "ants": [
     {
-      "id": "maur_gulv",
+      "id": "baerer_gulv",
+      "type": "carrier",
       "on": "gulv",
       "from": [
         92,
@@ -1708,8 +1709,16 @@
       "to": [
         242,
         55
-      ],
-      "crumb": true
+      ]
+    },
+    {
+      "id": "edderkopp_dusj",
+      "type": "spider",
+      "on": "gulv",
+      "from": [
+        233,
+        165
+      ]
     }
   ]
 }
