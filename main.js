@@ -5,6 +5,7 @@ import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
+import { shouldShowIntro, finishData, winHTML, showCard } from './story.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
 import { makeAtmos } from './atmos.js';
@@ -105,6 +106,7 @@ const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(m
 let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
+let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', false), hudOpen = false, fpsOn = store.get('tlm.fps', false);
@@ -1294,6 +1296,7 @@ const SETTINGS = [
   sl('lang', 'spill', 'Språk / Language', 'nb', LANGS, () => lang, kp('tlm.lang', (v) => { lang = v; applyLang(); })),
   fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
   fl('startscreen', 'spill', 'Vis startskjerm (Nytt spill / Fortsett) når spillet åpnes', true, () => startScreenOn, kp('tlm.startscreen', (v) => { startScreenOn = v; })),
+  fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
@@ -1637,11 +1640,14 @@ function update(dt) {
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
-    { const cl = store.get('tlm.cleared', {}); if (!stats.flew) { cl[levelId] = Math.max(cl[levelId] || 0, points()); store.set('tlm.cleared', cl); }       // husk hvilke nivåer som er klart (beste poeng)
-      $('winTitle').textContent = levelInfo?.n ? (nextLevel ? `Nivå ${levelInfo.n} klart!` : 'Alle seks nivåene klart!') : 'Du kom opp!';
-      const nb = $('nextLevel'); nb.style.display = nextLevel ? '' : 'none'; if (nextLevel) { nb.textContent = `${nextLevel.label} →`; nb.onclick = () => goLevel(nextLevel.id); } }
-    $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br>${crumbTotal(LEVEL) ? `Smuler: ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}${crumbCount(LEVEL) === crumbTotal(LEVEL) ? ' ★' : ''}<br>` : ''}<b style="font-size:22px">Poeng: ${points()}</b>` +
-      (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
+    { const cl = store.get('tlm.cleared', {}), prevBest = cl[levelId] || 0, n = levelInfo?.n; if (!stats.flew) { cl[levelId] = Math.max(prevBest, points()); store.set('tlm.cleared', cl); }       // husk hvilke nivåer som er klart (beste poeng)
+      const d = finishData({ n, nextExists: !!nextLevel, clock, stats, crumbs: crumbCount(LEVEL), crumbTotal: crumbTotal(LEVEL), points: points(), prevBest, flew: stats.flew });
+      $('winTitle').textContent = n ? (nextLevel ? T('win.level', { n }) : T('win.all')) : T('win.top');
+      $('winStats').innerHTML = winHTML(d, T); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
+      const nb = $('nextLevel'); nb.style.display = nextLevel || (n && storyOn) ? '' : 'none';
+      if (nextLevel) { nb.textContent = `${T('win.next')} →`; nb.onclick = () => goLevel(nextLevel.id); }
+      else if (n && storyOn) { nb.textContent = `${T('win.ending')} →`; nb.onclick = showEnding; }
+      $('again').textContent = T('win.again'); }
     $('win').classList.remove('hide'); clearProgress();
   }
 }
@@ -1935,6 +1941,17 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 
+// ---------- fortelling (R8): kort tekst ved nivåstart og en avslutning etter nivå 6 (story.js) ----------
+function showIntro() {
+  const n = levelInfo?.n; if (!shouldShowIntro({ n, enabled: storyOn, resumed })) return;
+  menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; logEv('fortelling', `nivå ${n}`);
+  showCard($('story'), { title: T(`story.title.${n}`), text: T(`story.${n}`), btn: T('story.go'), skip: T('story.skip'), onDone: () => { menuOpen = false; } });
+}
+function showEnding() {
+  logEv('avslutning');
+  showCard($('story'), { title: T('story.endTitle'), text: T('story.end'), btn: T('story.endBtn'), onDone: () => { $('win').classList.add('hide'); showStart(); } });
+}
+
 // ---------- startskjerm (v0.73): Nytt spill · Fortsett · Innstillinger · Avslutt ----------
 // Vises når siden åpnes uten ?level=… (en lenke med brett, «Neste nivå» og brettvelgeren hopper over den). Spillet står stille bak.
 let startScreenOn = store.get('tlm.startscreen', true), menuOpen = false;
@@ -1944,7 +1961,7 @@ function clearAllProgress() { try { Object.keys(localStorage).filter((k) => k.st
 function hideStart() { menuOpen = false; $('start').classList.add('hide'); document.body.classList.remove('instart'); }
 function newGame() {
   clearAllProgress(); logEv('nytt spill');
-  if (levelId === 'bad') { restartAll(); hideStart(); toast('Nytt spill'); }
+  if (levelId === 'bad') { restartAll(); hideStart(); toast('Nytt spill'); resumed = false; showIntro(); }
   else { noSave = true; goLevel('bad'); }                                  // laster nivå 1 på nytt (noSave: pagehide skal ikke skrive tilbake gammel fremgang)
 }
 function quitGame() {
@@ -1974,7 +1991,7 @@ function showStart() {
   $('mSet').onclick = () => { buildPanel(); $('help').classList.add('hide'); $('panel').classList.remove('hide'); };
   $('mQuit').onclick = quitGame;
 }
-if (startWanted) showStart();
+if (startWanted) showStart(); else showIntro();
 
 applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
