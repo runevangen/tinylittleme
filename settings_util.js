@@ -59,6 +59,11 @@ export function formatReport(info) {
     for (const m of info.marks) L.push(`- [${m.c} s] (${m.pos.join(', ')}) ${m.detail || '(ingen tekst)'}`);
     L.push('');
   }
+  if (info.backlog?.length) {
+    L.push('Til backloggen (idéer, ikke feil):');
+    for (const m of info.backlog) L.push(`- [${m.c} s] ${m.detail}`);
+    L.push('');
+  }
   if (info.ratings?.length) {
     L.push('Vurderinger:');
     for (const r of info.ratings) L.push(`- [${r.c} s] ${r.detail} (${r.pos.join(', ')})`);
