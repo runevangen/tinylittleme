@@ -14,7 +14,7 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 
 | kind | form | beskrivelse |
 |---|---|---|
-| `tub` | ja | badekar: lag fire bokser (to langsider, to ender) i samme group; en fare «pit» for innsiden |
+| `tub` | ja | badekar: lag fire bokser (to langsider, to ender) i samme group; en fare «pit» for innsiden; face: "S" setter kran og sluk i sørenden |
 | `toilet_tank` | ja | do: sisterne (stående boks mot veggen), i samme group som toilet_bowl |
 | `toilet_bowl` | ja | do: skålen som fire bokser rundt et hull (fare «flush» i hullet), i samme group |
 | `toilet_lid` | ja | do: åpent lokk (tynn stående boks mot sisternen), i samme group |
@@ -43,6 +43,7 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `towel_hang` | ja | håndkle som henger langs en vegg; sett grip: true for klatring |
 | `mat` | ja | matte / dørmatte |
 | `basket` | ja | vaskekurv / flettet kurv |
+| `hamper` | ja | firkantet flettet kurv: vaskekurv med lokk; id med «aapen» gir åpen kurv (hylle) |
 | `bag` | ja | pose / toalettveske |
 | `caddy` | ja | dusjkurv (kromtråd) |
 | `pole` | ja | doskrubb / stang |

@@ -87,6 +87,7 @@ function tub(members) {
   const inner = new THREE.Path(); rrPath(inner, w - 2 * t, d - 2 * t, [Math.max(0.3, rSmall - t * 0.6), Math.max(0.3, rSmall - t * 0.6), rRound - t * 0.7, rRound - t * 0.7]);
   outer.holes.push(inner);
   const g = new THREE.Group(); g.position.set(A.c[0], 0, A.c[2]);
+  if (members.some((m) => m.face === 'S')) g.rotation.y = Math.PI;                 // kran og sluk i sørenden (standard: nord)
   const pw = porcelain(0xf0ede4), cr = chrome();
   const shell = mesh(extrudeUp(outer, h, 0.3), pw); shell.position.y = 0; g.add(shell);
   // innvendig bunn og sluk
@@ -279,6 +280,22 @@ const SINGLE = {
     const knobM = mesh(new THREE.SphereGeometry(Math.min(sx, sz) * 0.07, 12, 8), mat); knobM.position.y = sy * 0.48; g.add(knobM);
     return g;
   },
+  hamper(sx, sy, sz, o) {                                           // firkantet flettet kurv: vaskekurv med lokk, eller åpen kurv (id med «aapen»)
+    const g = new THREE.Group(), wt = wickerTex().clone(); wt.repeat.set(Math.max(2, (sx + sz) / 3), Math.max(2, sy / 1.5)); wt.needsUpdate = true;
+    const mat = new THREE.MeshStandardMaterial({ color: o.color, map: wt, bumpMap: wt, bumpScale: 1.6, roughness: 0.95 });
+    const open = /aapen/i.test(o.id), lidH = open ? 0 : Math.min(0.9, sy * 0.1), rc = Math.min(sx, sz) * 0.1;
+    const body = mesh(roundedBoxGeo(sx * 0.97, sy - lidH, sz * 0.97, rc, 0.15), mat); body.position.y = -sy / 2; g.add(body);
+    const dark = new THREE.MeshStandardMaterial({ color: new THREE.Color(o.color).multiplyScalar(0.45), roughness: 1 });
+    if (open) {                                                         // tykk kant øverst og mørkt innvendig
+      const rim = mesh(roundedBoxGeo(sx, 0.35, sz, rc, 0.12), mat); rim.position.y = sy / 2 - 0.35; g.add(rim);
+      const ins = mesh(new THREE.BoxGeometry(sx * 0.86, 0.04, sz * 0.86), dark, false); ins.position.y = sy / 2 + 0.01; g.add(ins);
+      for (const s of [-1, 1]) { const hd = mesh(new THREE.BoxGeometry(0.08, 0.5, sz * 0.3), dark, false); hd.position.set(s * sx * 0.488, sy * 0.3, 0); g.add(hd); }   // håndtakshull
+    } else {
+      const lid = mesh(roundedBoxGeo(sx, lidH, sz, rc, 0.12), mat); lid.position.y = sy / 2 - lidH; g.add(lid);
+      const gap = mesh(new THREE.BoxGeometry(sx * 0.985, 0.06, sz * 0.985), dark, false); gap.position.y = sy / 2 - lidH; g.add(gap);
+    }
+    return g;
+  },
   bag(sx, sy, sz, o) {
     const g = new THREE.Group(), wt = weaveTex().clone(); wt.repeat.set(2, 2); wt.needsUpdate = true;
     const body = mesh(new THREE.SphereGeometry(0.5, 20, 14), new THREE.MeshStandardMaterial({ color: o.color, map: wt, bumpMap: wt, bumpScale: 0.6, roughness: 1 }));
@@ -373,7 +390,7 @@ const SINGLE = {
     const mat = new THREE.MeshStandardMaterial({ color: o.color, map: tt, bumpMap: tt, bumpScale: 1.4, roughness: 1 });
     g.add(mesh(roundedBoxGeo(sx, sy, sz, Math.min(sx, sz) * 0.3, Math.min(0.15, sx * 0.3)), mat)); g.children[0].position.y = -sy / 2;
     const band = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
-    for (const f of [0.12, 0.88]) { const b = mesh(new THREE.BoxGeometry(sx * 1.04, sy * 0.05, sz * 1.0), band, false); b.position.y = -sy / 2 + sy * f; g.add(b); }
+    if (!/kape|bukse|jakke/i.test(o.id)) for (const f of [0.12, 0.88]) { const b = mesh(new THREE.BoxGeometry(sx * 1.04, sy * 0.05, sz * 1.0), band, false); b.position.y = -sy / 2 + sy * f; g.add(b); }   // håndklær har striper; klær har ikke
     return g;
   },
   needle(sx, sy, sz, o) {                                           // nål: lang, tynn og blank, med øye i den ene enden; får en rød tråd når den er trædd

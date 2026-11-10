@@ -58,6 +58,7 @@ Gjenstår / til sparring:
 - [ ] Musikk.
 
 ## Brett og innhold
+- [~] **Badet på nytt (v0.66):** bygd fra fire bilder med riktig planløsning og kjennetegn (`docs/BADET.md`). Gjenstår: skråtak, åpen dør med gang utenfor, hyller i speilskapet, motgiften høyere opp (medisinskap/kurver) med vei fra knaggrekka, dusjslange som tau, tre dører på vaskeskapet. Trenger tilbakemelding: kjenner du deg igjen, og hva mangler mest?
 - [~] **Listverk (v0.61):** fotlist, taklist og gerikt (lister og foringer) med profil i Soverom (rundt rommet og vinduet). `kind`: `listverk`, `fotlist`, `taklist`, `gerikt`. Gjenstår: bruke i badet (foringer rundt dør/vindu og fliskant), dørfôr/vannbrett som egne profiler, og lister som klatrekanter.
 - [ ] Flytte motgiften til toppen av speilskapet når klatring finnes.
 - [ ] Motgift-varianter: A) bit = ferdig kapittel, B) vann stiger, rømme til døra.

@@ -108,6 +108,22 @@ export function makeLook({ aniso = 4, low = false } = {}) {
     return { map: tex(c), normalMap: low ? null : normalFrom(h, 1.4) };
   })();
 
+  // ---------- trepanel: bord med V-fuge (4 bord per gjentakelse), lyst og kvistete som hvitlasert furu ----------
+  const panel = (() => {
+    const S = 512, c = cv(S), g = c.getContext('2d'), h = cv(S), gh = h.getContext('2d'), r = rng(41), n = 4, bw = S / n;
+    gh.fillStyle = '#a0a0a0'; gh.fillRect(0, 0, S, S);
+    for (let i = 0; i < n; i++) {
+      const t = 0.9 + r() * 0.1; g.fillStyle = `rgb(${Math.round(240 * t)},${Math.round(232 * t)},${Math.round(218 * t)})`; g.fillRect(i * bw, 0, bw, S);
+      g.save(); g.beginPath(); g.rect(i * bw, 0, bw, S); g.clip();
+      for (let l = 0; l < 34; l++) { const x0 = i * bw + r() * bw, pts = []; let xx = x0; for (let y = -8; y <= S + 8; y += 14) { xx += (r() - 0.5) * 2; pts.push([xx, y]); } stroke([[g, `rgba(120,95,60,${0.05 + r() * 0.12})`]], pts, 0.6 + r() * 1.5); }
+      for (let k = 0; k < 2; k++) if (r() < 0.8) { const kx = i * bw + bw * (0.25 + r() * 0.5), ky = r() * S, kr = 5 + r() * 6, rg = g.createRadialGradient(kx, ky, 1, kx, ky, kr * 1.5); rg.addColorStop(0, 'rgba(95,65,35,.75)'); rg.addColorStop(1, 'rgba(120,90,55,0)'); g.fillStyle = rg; g.beginPath(); g.ellipse(kx, ky, kr, kr * 1.5, 0, 0, 7); g.fill(); }
+      g.restore();
+      g.fillStyle = 'rgba(70,50,30,.55)'; g.fillRect(i * bw, 0, 2.5, S); g.fillStyle = 'rgba(255,250,240,.35)'; g.fillRect(i * bw + 2.5, 0, 2, S);
+      gh.fillStyle = 'rgba(0,0,0,.4)'; gh.fillRect(i * bw - 5, 0, 12, S); gh.fillStyle = '#000'; gh.fillRect(i * bw, 0, 3, S);
+    }
+    return { map: tex(c), normalMap: low ? null : normalFrom(h, 2.2) };
+  })();
+
   const pages = (() => { const S = 128, c = cv(S), g = c.getContext('2d'), r = rng(9); g.fillStyle = '#efe6cf'; g.fillRect(0, 0, S, S);
     for (let y = 0; y < S; y += 2) { g.fillStyle = `rgba(120,100,70,${0.08 + r() * 0.16})`; g.fillRect(0, y, S, 1); }
     return tex(c); })();
@@ -200,5 +216,5 @@ export function makeLook({ aniso = 4, low = false } = {}) {
     return tex(c, true, false);
   }
 
-  return { floor, plaster, tile, wood, pages, weave, twill, knit, leather, rep, buildBook, contactShadow, edgeShade, makeDust, skyTex };
+  return { floor, plaster, tile, wood, panel, pages, weave, twill, knit, leather, rep, buildBook, contactShadow, edgeShade, makeDust, skyTex };
 }

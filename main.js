@@ -40,7 +40,7 @@ const store = {
 // Brett: ?level=bad (eller soverom/poc). Uten parameter åpnes brettet du sist spilte.
 const LEVELS = [
   { id: 'soverom', label: 'Soverom (håndlaget)', short: 'Soverom' },
-  { id: 'bad', label: 'Bad (tolket fra 3 bilder)', short: 'Bad' },
+  { id: 'bad', label: 'Bad (tolket fra 4 bilder)', short: 'Bad' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
   { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
   { id: 'kontroll', label: 'Kontrollbanen (test av styring og kamera)', short: 'Kontroll' },
@@ -170,7 +170,8 @@ function material(b) {
     case 'floor:tile': return texMat(look.tile, { color: col, roughness: 0.55 });
     case 'wall:tile': return texMat(look.tile, { color: col, roughness: 0.7 });
     case 'wall:default': case 'wall:plaster': case 'wall': return texMat(look.plaster, { color: col, roughness: 0.95 });
-    case 'wood': case 'woodpanel': return texMat(look.wood, { color: col, roughness: 0.55 });
+    case 'woodpanel': return texMat(look.panel, { color: col, roughness: 0.7 });       // stående panelbord
+    case 'wood': return texMat(look.wood, { color: col, roughness: 0.55 });
     case 'book': return std({ color: col, roughness: 0.78 });
     case 'plastic': return std({ color: col, roughness: 0.3, metalness: 0.1 });
     case 'porcelain': return std({ color: col, roughness: 0.07 });
@@ -292,6 +293,8 @@ for (const b of LEVEL.boxes) {
   if (b.type === 'floor') {
     const rep = tiled ? 4 : 18;
     eachMap(mat, (t) => { t.repeat.set(sx / rep, sz / rep); if (tiled) { t.center.set(0.5, 0.5); t.rotation = room.floor?.diagonal ? Math.PI / 4 : 0; } });
+  } else if ((b.material || b.type) === 'woodpanel') {
+    eachMap(mat, (t) => t.repeat.set(Math.max(sx, sz) / 9.6, sy / 9.6));           // fire bord per 48 cm
   } else if (woodKinds.has(b.material || b.type)) {
     eachMap(mat, (t) => t.repeat.set(Math.max(1, Math.max(sx, sz) / 8), Math.max(1, sy / 8)));
   } else if (b.type === 'wall') {
@@ -321,9 +324,9 @@ for (const b of LEVEL.boxes) {
     }
   }
   const ceilMat = room.ceiling?.material === 'woodpanel'
-    ? texMat(look.wood, { color: hexNum(room.ceiling.color), roughness: 0.6 })
+    ? texMat(look.panel, { color: hexNum(room.ceiling.color), roughness: 0.7 })
     : std({ color: 0xf5f1e8, roughness: 1 });
-  eachMap(ceilMat, (t) => t.repeat.set(w / 10, d / 10));
+  eachMap(ceilMat, (t) => t.repeat.set(w / 9.6, d / 9.6));
   {                                                            // mørkere inn mot veggene, der gulv og vegg møtes
     const fy = Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])) + 0.02, sw = Math.min(4, Math.min(w, d) * 0.12);
     for (const [len, x, z, rz] of [[w, ox, room.z0 + sw / 2, 0], [w, ox, room.z1 - sw / 2, Math.PI], [d, room.x0 + sw / 2, oz, Math.PI / 2], [d, room.x1 - sw / 2, oz, -Math.PI / 2]]) {
@@ -357,8 +360,9 @@ for (const d of LEVEL.decor || []) {
   const mat = d.emissive !== undefined || d.metal !== undefined
     ? std({ color: d.color, emissive: d.emissive ?? 0, roughness: d.rough ?? 0.5, metalness: d.metal ?? 0 })
     : material({ type: d.material || 'plastic', material: d.material, color: d.color });
+  if (d.material === 'woodpanel') eachMap(mat, (t) => t.repeat.set(Math.max(d.size[0], d.size[2]) / 9.6, d.size[1] / 9.6));
   const m = new THREE.Mesh(geo, mat);
-  m.position.set(...d.pos); m.castShadow = d.material !== 'mirror'; scene.add(m);
+  m.position.set(...d.pos); m.castShadow = d.material !== 'mirror'; m.receiveShadow = true; scene.add(m);
 }
 
 for (const h of LEVEL.hazards || []) {   // litt synlig vann i do-skålen
@@ -836,7 +840,7 @@ function placeFlag() { flag.position.set(save.pos[0], save.pos[1], save.pos[2]);
 placeFlag();
 
 // ---------- autolagring: fremgangen huskes per brett, så en kort mobiløkt kan fortsette der du var ----------
-const progKey = `tlm.progress.${levelId}`;
+const progKey = `tlm.progress.${levelId}${LEVEL.rev ? '.r' + LEVEL.rev : ''}`;       // rev: brettet er bygd om (gammel fremgang passer ikke lenger)
 let autoPos = null, autoT = 0, resumed = false;
 function saveProgress() { if (won || !autosaveOn) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells] }); }
 function clearProgress() { autoPos = null; store.set(progKey, null); }

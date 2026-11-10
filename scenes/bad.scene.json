@@ -1,26 +1,29 @@
 {
-  "name": "Bad (tolket fra 3 bilder)",
+  "name": "Bad (tolket fra 4 bilder)",
   "units": "cm",
-  "frame": "Origo i nordvestre hjørne. x mot øst, z mot sør (døra), y opp.",
+  "rev": 2,
+  "frame": "Origo i nordvestre hjørne. x mot øst (vinduet), z mot sør (døra), y opp. Nord er veggen med do, vask og speil.",
   "source": {
-    "photos": 3,
+    "photos": 4,
     "views": [
-      "bredt fra døra: do, vask, kar",
-      "nærbilde vask",
-      "nærbilde kar + vindu"
+      "fra vasken mot døra: panelvegg med knagger, medisinskap og hylle med kurver, vaskekurv og do",
+      "langs badekaret: vindu med glasshylle, dusj innerst, flisbord",
+      "mot vindusveggen: vask, vindu, kar, matter, knagger",
+      "do, vask, speil og åpent speilskap"
     ],
-    "interpreted_by": "Claude (visjon), manuelt gjennomgått av meg i denne prototypen",
+    "interpreted_by": "Claude (visjon) i samtale, ikke målt opp",
     "scale_anchors": [
-      "toalettrull på vasken ≈ 10 cm bred og 10 cm høy",
-      "veggfliser ≈ 20 × 20–25 cm",
-      "do-sete ≈ 40–42 cm over gulv"
+      "toalettrull på vaskekurven ≈ 10 × 10 cm",
+      "gulvfliser ≈ 20 cm (lagt diagonalt)",
+      "do-sete ≈ 42 cm over gulv",
+      "dør ≈ 200 cm"
     ],
-    "uncertainty": "Tre bilder gir ikke eksakt plassering. Avstander ±15 cm, høyder ±5 cm. Døras plassering og baksiden av do er gjettet."
+    "uncertainty": "Avstander ±15 cm, høyder ±5 cm. Rommets bredde og hvor langt skilleveggen går mot nord er anslått. Skråtaket er flatt her. Døra er lukket. Vaskeskapet har tre dører i virkeligheten."
   },
   "room": {
-    "width": 220,
-    "depth": 260,
-    "height": 230,
+    "width": 265,
+    "depth": 250,
+    "height": 240,
     "floor": {
       "material": "tile",
       "color": "#d4d1c7",
@@ -35,138 +38,71 @@
     },
     "ceiling": {
       "material": "woodpanel",
-      "color": "#c9a47a"
+      "color": "#cdb695"
     },
     "note": "Skråtak i virkeligheten, flatt her."
   },
   "start": {
-    "x": 125,
-    "z": 235,
-    "note": "På dørmatta, rett innenfor døra"
+    "x": 105,
+    "z": 222,
+    "note": "Rett innenfor døra"
   },
   "goal": {
-    "x": 122,
-    "y": 98,
-    "z": 8,
+    "x": 164,
+    "y": 96,
+    "z": 10,
     "on": "tannglass",
-    "note": "Motgift-bit på tannglasset (kan nås uten klatring). Toppen av speilskapet (y=190) krever klatring og brukes når den mekanikken finnes.",
-    "future": {
-      "x": 152,
-      "y": 190,
-      "z": 7,
-      "on": "speilskap"
-    }
+    "note": "Motgift-bit på tannglasset"
   },
   "windows": [
     {
       "wall": "E",
-      "z": 90,
-      "y": 152,
-      "w": 60,
-      "h": 60,
+      "z": 51,
+      "y": 153,
+      "w": 56,
+      "h": 58,
       "note": "Matt glass, hvit karm"
     }
   ],
   "objects": [
-    {
-      "id": "badekar_vest",
-      "kind": "tub",
-      "material": "porcelain",
-      "color": "#ebe8df",
-      "box": [
-        150,
-        157,
-        0,
-        55,
-        10,
-        180
-      ],
-      "confidence": 0.7,
-      "photos": [
-        1,
-        3
-      ],
-      "cp": true,
-      "group": "badekar"
-    },
-    {
-      "id": "badekar_ost",
-      "kind": "tub",
-      "material": "porcelain",
-      "color": "#ebe8df",
-      "box": [
-        213,
-        220,
-        0,
-        55,
-        10,
-        180
-      ],
-      "confidence": 0.7,
-      "photos": [
-        1,
-        3
-      ],
-      "group": "badekar"
-    },
-    {
-      "id": "badekar_nord",
-      "kind": "tub",
-      "material": "porcelain",
-      "color": "#ebe8df",
-      "box": [
-        157,
-        213,
-        0,
-        55,
-        10,
-        17
-      ],
-      "confidence": 0.7,
-      "photos": [
-        1,
-        3
-      ],
-      "group": "badekar"
-    },
-    {
-      "id": "badekar_sor",
-      "kind": "tub",
-      "material": "porcelain",
-      "color": "#ebe8df",
-      "box": [
-        157,
-        213,
-        0,
-        55,
-        173,
-        180
-      ],
-      "confidence": 0.7,
-      "photos": [
-        1,
-        3
-      ],
-      "group": "badekar"
-    },
     {
       "id": "do_tank",
       "kind": "toilet_tank",
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
-        0,
-        20,
+        45,
+        85,
         0,
         80,
-        180,
-        220
+        0,
+        18
       ],
       "confidence": 0.8,
       "photos": [
-        1
+        1,
+        4
       ],
-      "cp": true,
+      "group": "do",
+      "cp": true
+    },
+    {
+      "id": "do_skal_bak",
+      "kind": "toilet_bowl",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        47,
+        83,
+        0,
+        42,
+        18,
+        26
+      ],
+      "confidence": 0.7,
+      "photos": [
+        4
+      ],
       "group": "do"
     },
     {
@@ -175,35 +111,16 @@
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
-        20,
-        65,
+        47,
+        83,
         0,
         42,
-        180,
-        190
+        56,
+        66
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        1
-      ],
-      "group": "do"
-    },
-    {
-      "id": "do_skal_bak",
-      "kind": "toilet_bowl",
-      "material": "porcelain",
-      "color": "#ebe8df",
-      "box": [
-        20,
-        65,
-        0,
-        42,
-        210,
-        220
-      ],
-      "confidence": 0.8,
-      "photos": [
-        1
+        4
       ],
       "group": "do"
     },
@@ -213,16 +130,16 @@
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
-        20,
-        32,
+        47,
+        57,
         0,
         42,
-        190,
-        210
+        26,
+        56
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        1
+        4
       ],
       "group": "do"
     },
@@ -232,16 +149,16 @@
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
-        55,
-        65,
+        73,
+        83,
         0,
         42,
-        190,
-        210
+        26,
+        56
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        1
+        4
       ],
       "group": "do"
     },
@@ -251,19 +168,20 @@
       "material": "porcelain",
       "color": "#ebe8df",
       "box": [
-        20,
-        24,
+        48,
+        82,
         42,
         80,
-        183,
-        217
+        18,
+        22
       ],
-      "confidence": 0.6,
+      "confidence": 0.7,
       "photos": [
-        1
+        1,
+        4
       ],
-      "note": "Lokket står opp mot tanken: en tynn vegg",
-      "group": "do"
+      "group": "do",
+      "note": "Lokket står opp mot sisternen"
     },
     {
       "id": "do_kost",
@@ -271,179 +189,41 @@
       "material": "plastic",
       "color": "#1c1c1c",
       "box": [
-        66,
-        74,
+        87,
+        93,
         0,
-        40,
-        222,
-        230
-      ],
-      "confidence": 0.5,
-      "photos": [
-        1
-      ],
-      "hold": true,
-      "note": "Klatre-stolpe i fremtiden"
-    },
-    {
-      "id": "vaskekurv",
-      "kind": "basket",
-      "material": "wicker",
-      "color": "#a9794a",
-      "box": [
-        0,
-        40,
-        0,
-        55,
-        225,
-        260
-      ],
-      "confidence": 0.5,
-      "photos": [
-        1
-      ],
-      "note": "Skimtet nederst til venstre; størrelse usikker",
-      "movable": "heavy"
-    },
-    {
-      "id": "vaskeskap",
-      "kind": "vanity",
-      "material": "wood",
-      "color": "#e3dccb",
-      "box": [
-        50,
-        130,
-        40,
-        83,
-        0,
-        45
-      ],
-      "confidence": 0.8,
-      "photos": [
-        1,
-        2
-      ],
-      "note": "Vegghengt: rom under (40 cm)"
-    },
-    {
-      "id": "vask_plate",
-      "kind": "vanity_top",
-      "material": "porcelain",
-      "color": "#ebe8df",
-      "box": [
-        48,
-        132,
-        83,
-        86,
-        0,
-        47
-      ],
-      "confidence": 0.8,
-      "photos": [
-        1,
-        2
-      ],
-      "cp": true,
-      "note": "Selve vasken (forsenkning) ikke modellert enda"
-    },
-    {
-      "id": "handkle_hang",
-      "kind": "towel_hang",
-      "material": "fabric",
-      "color": "#7fa6c4",
-      "box": [
-        100,
-        116,
-        0,
-        86,
-        47,
-        50
-      ],
-      "grip": true,
-      "onto": "vask_plate",
-      "grip_drain": -0.9,
-      "confidence": 0.5,
-      "note": "Oppfunnet: et håndkle som henger over servantkanten ned til gulvet (ikke på bildene). Gjør det mulig å klatre opp til servanten.",
-      "help": "Håndkle\nHopp mot det og trykk GREP, styr opp. Ved toppen hiver du deg over kanten."
-    },
-    {
-      "id": "saapepumpe",
-      "kind": "bottle",
-      "material": "plastic",
-      "color": "#6f7377",
-      "box": [
-        52,
-        60,
-        86,
-        106,
-        18,
-        26
-      ],
-      "confidence": 0.8,
-      "photos": [
-        1,
-        2
-      ],
-      "movable": "light"
-    },
-    {
-      "id": "tannkrem",
-      "kind": "tube",
-      "material": "plastic",
-      "color": "#e8eef5",
-      "box": [
-        62,
-        67,
-        86,
-        104,
-        8,
-        12
+        38,
+        4,
+        10
       ],
       "confidence": 0.7,
       "photos": [
-        2
-      ],
-      "movable": "light"
-    },
-    {
-      "id": "kran",
-      "kind": "faucet",
-      "material": "metal",
-      "color": "#bfc3c8",
-      "box": [
-        80,
-        88,
-        86,
-        101,
-        10,
-        20
-      ],
-      "confidence": 0.9,
-      "photos": [
-        1,
-        2
+        4
       ],
       "hold": true
     },
     {
-      "id": "barbermaskin",
-      "kind": "shaver",
-      "material": "plastic",
-      "color": "#1b1d22",
+      "id": "vaskekurv",
+      "kind": "hamper",
+      "material": "wicker",
+      "color": "#a9794a",
       "box": [
-        92,
-        98,
-        86,
-        93,
-        24,
-        36
+        2,
+        42,
+        0,
+        60,
+        14,
+        58
       ],
-      "confidence": 0.7,
+      "confidence": 0.8,
       "photos": [
-        2
+        1,
+        4
       ],
-      "movable": "light",
-      "breakable": true
+      "grip": true,
+      "onto": "vaskekurv",
+      "grip_drain": -0.7,
+      "help": "Vaskekurv\nFlettet, så du kan klatre: gå inntil og trykk GREP, styr mot kurven for å klatre opp. Fra lokket hopper du over til sisternen og videre til vasken."
     },
     {
       "id": "dopapir",
@@ -451,57 +231,78 @@
       "material": "paper",
       "color": "#fafafa",
       "box": [
-        100,
-        110,
-        86,
-        96,
-        22,
-        32
+        16,
+        26,
+        60,
+        70,
+        30,
+        40
       ],
-      "confidence": 0.9,
+      "confidence": 0.7,
       "photos": [
-        1,
-        2
+        1
       ],
-      "note": "Målestokk-anker",
-      "movable": "light"
+      "movable": "light",
+      "tool": "roll",
+      "note": "Målestokk-anker: rullen på kurven"
     },
     {
-      "id": "tannglass",
-      "kind": "cup",
-      "material": "ceramic",
-      "color": "#8fb39b",
+      "id": "rullholder",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#9aa0a6",
       "box": [
-        118,
-        126,
-        86,
-        98,
-        4,
-        12
+        42,
+        46,
+        70,
+        74,
+        168,
+        178
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "vaskeskap",
+      "kind": "vanity",
+      "material": "wood",
+      "color": "#f6f3ea",
+      "box": [
+        97,
+        177,
+        28,
+        80,
+        0,
+        46
       ],
       "confidence": 0.8,
       "photos": [
-        2
-      ]
+        4
+      ],
+      "note": "Tre dører med bue i virkeligheten; tegnes med to"
     },
     {
-      "id": "tannborste",
-      "kind": "toothbrush",
-      "material": "plastic",
-      "color": "#3b82c4",
+      "id": "vask_plate",
+      "kind": "vanity_top",
+      "material": "porcelain",
+      "color": "#ebe8df",
       "box": [
-        121,
-        123,
-        98,
-        108,
-        6,
-        8
+        95,
+        179,
+        80,
+        84,
+        0,
+        48
       ],
       "confidence": 0.8,
       "photos": [
-        2
+        3,
+        4
       ],
-      "hold": true
+      "cp": true
     },
     {
       "id": "skapknott_1",
@@ -509,16 +310,16 @@
       "material": "metal",
       "color": "#9aa0a6",
       "box": [
-        60,
-        63,
-        76,
-        79,
-        45,
-        47
+        110,
+        113,
+        62,
+        65,
+        46,
+        48
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        2
+        4
       ],
       "hold": true,
       "decor": true
@@ -529,16 +330,16 @@
       "material": "metal",
       "color": "#9aa0a6",
       "box": [
-        93,
-        96,
-        76,
-        79,
-        45,
-        47
+        136,
+        139,
+        62,
+        65,
+        46,
+        48
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        2
+        4
       ],
       "hold": true,
       "decor": true
@@ -549,19 +350,151 @@
       "material": "metal",
       "color": "#9aa0a6",
       "box": [
-        118,
-        121,
-        76,
-        79,
-        45,
-        47
+        162,
+        165,
+        62,
+        65,
+        46,
+        48
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        2
+        4
       ],
       "hold": true,
       "decor": true
+    },
+    {
+      "id": "saapepumpe",
+      "kind": "bottle",
+      "material": "plastic",
+      "color": "#7c8086",
+      "box": [
+        104,
+        112,
+        84,
+        104,
+        26,
+        34
+      ],
+      "confidence": 0.7,
+      "photos": [
+        4
+      ],
+      "movable": "medium"
+    },
+    {
+      "id": "kran",
+      "kind": "faucet",
+      "material": "metal",
+      "color": "#bfc3c8",
+      "box": [
+        129,
+        137,
+        84,
+        98,
+        6,
+        16
+      ],
+      "confidence": 0.7,
+      "photos": [
+        4
+      ],
+      "hold": true
+    },
+    {
+      "id": "vaskeklut",
+      "kind": "towel",
+      "material": "fabric",
+      "color": "#b9a68c",
+      "box": [
+        141,
+        156,
+        84,
+        86,
+        8,
+        22
+      ],
+      "confidence": 0.7,
+      "photos": [
+        4
+      ],
+      "soft": true
+    },
+    {
+      "id": "tannkrem",
+      "kind": "tube",
+      "material": "plastic",
+      "color": "#e8eef5",
+      "box": [
+        150,
+        155,
+        84,
+        100,
+        30,
+        35
+      ],
+      "confidence": 0.7,
+      "photos": [
+        4
+      ],
+      "movable": "light"
+    },
+    {
+      "id": "tannglass",
+      "kind": "cup",
+      "material": "ceramic",
+      "color": "#8fb39b",
+      "box": [
+        160,
+        168,
+        84,
+        96,
+        6,
+        14
+      ],
+      "confidence": 0.7,
+      "photos": [
+        4
+      ]
+    },
+    {
+      "id": "tannborste",
+      "kind": "toothbrush",
+      "material": "plastic",
+      "color": "#3b82c4",
+      "box": [
+        163,
+        165,
+        96,
+        106,
+        8,
+        10
+      ],
+      "confidence": 0.7,
+      "photos": [
+        4
+      ],
+      "hold": true
+    },
+    {
+      "id": "munnskyll",
+      "kind": "bottle",
+      "material": "plastic",
+      "color": "#e9f1fb",
+      "box": [
+        170,
+        177,
+        84,
+        98,
+        32,
+        39
+      ],
+      "confidence": 0.7,
+      "photos": [
+        4
+      ],
+      "movable": "light"
     },
     {
       "id": "speil",
@@ -569,17 +502,16 @@
       "material": "mirror",
       "color": "#d8e2ea",
       "box": [
-        40,
-        140,
-        100,
-        180,
+        97,
+        150,
+        96,
+        186,
         0,
         2
       ],
-      "confidence": 0.9,
+      "confidence": 0.7,
       "photos": [
-        1,
-        2
+        4
       ],
       "decor": true
     },
@@ -589,73 +521,71 @@
       "material": "plastic",
       "color": "#f3f1ea",
       "box": [
-        40,
-        140,
-        175,
-        190,
+        97,
+        150,
+        186,
+        200,
         0,
         14
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        1
+        4
       ]
     },
     {
       "id": "speilskap",
       "kind": "wall_cabinet",
-      "material": "wood",
-      "color": "#e6e0d0",
+      "material": "plastic",
+      "color": "#f1efe8",
       "box": [
-        140,
-        165,
-        125,
-        190,
+        150,
+        178,
+        112,
+        196,
         0,
-        15
+        16
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        1
+        4
       ],
-      "cp": false,
       "note": "Åpen dør, hyller med flasker"
     },
     {
       "id": "speilskap_dor_aapen",
       "kind": "door",
-      "material": "wood",
+      "material": "plastic",
       "color": "#f3f1ea",
       "box": [
-        163,
-        165,
-        125,
-        190,
-        15,
-        40
+        176,
+        178,
+        112,
+        196,
+        16,
+        44
       ],
       "confidence": 0.7,
       "photos": [
-        1
-      ],
-      "note": "Stående dør: tynn vegg ut fra skapet"
+        4
+      ]
     },
     {
       "id": "vindu_karm",
       "kind": "sill",
       "material": "wood",
-      "color": "#e8dfc8",
+      "color": "#eee6d2",
       "box": [
-        205,
-        220,
-        118,
-        124,
-        58,
-        122
+        253,
+        265,
+        119,
+        123,
+        20,
+        82
       ],
       "confidence": 0.7,
       "photos": [
-        1,
+        2,
         3
       ]
     },
@@ -665,16 +595,16 @@
       "material": "glass",
       "color": "#cfe8e3",
       "box": [
-        205,
-        220,
-        99,
-        101,
-        58,
-        118
+        249,
+        265,
+        106,
+        108,
+        22,
+        84
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        1,
+        2,
         3
       ],
       "cp": true
@@ -683,41 +613,59 @@
       "id": "toalettveske",
       "kind": "bag",
       "material": "fabric",
-      "color": "#1d1f27",
+      "color": "#1a2238",
       "box": [
-        207,
-        217,
-        101,
-        115,
-        60,
-        85
+        251,
+        263,
+        108,
+        122,
+        26,
+        52
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
-        1,
+        2,
         3
       ],
       "movable": "medium"
     },
     {
-      "id": "flaske_gronn",
-      "kind": "bottle",
+      "id": "kremboks",
+      "kind": "cup",
       "material": "plastic",
-      "color": "#4f7a52",
+      "color": "#8d9094",
       "box": [
-        208,
-        214,
-        101,
-        121,
-        100,
-        106
+        252,
+        260,
+        108,
+        113,
+        56,
+        64
       ],
       "confidence": 0.7,
       "photos": [
-        1,
+        2
+      ]
+    },
+    {
+      "id": "flaske_gronn",
+      "kind": "bottle",
+      "material": "plastic",
+      "color": "#55705a",
+      "box": [
+        253,
+        260,
+        108,
+        128,
+        66,
+        73
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2,
         3
       ],
-      "movable": "light"
+      "movable": "medium"
     },
     {
       "id": "flaske_hvit",
@@ -725,19 +673,19 @@
       "material": "plastic",
       "color": "#f1f1ec",
       "box": [
-        208,
-        215,
-        101,
-        123,
+        253,
+        261,
         108,
-        114
+        131,
+        74,
+        82
       ],
       "confidence": 0.7,
       "photos": [
-        1,
+        2,
         3
       ],
-      "movable": "light"
+      "movable": "medium"
     },
     {
       "id": "dusjkurv_ovre",
@@ -745,16 +693,15 @@
       "material": "metal",
       "color": "#222222",
       "box": [
-        208,
-        218,
-        84,
-        94,
-        88,
-        100
+        252,
+        265,
+        74,
+        86,
+        60,
+        78
       ],
       "confidence": 0.7,
       "photos": [
-        1,
         2,
         3
       ],
@@ -766,12 +713,275 @@
       "material": "metal",
       "color": "#222222",
       "box": [
-        208,
-        218,
+        252,
+        265,
+        54,
         66,
+        60,
+        78
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2,
+        3
+      ],
+      "hold": true
+    },
+    {
+      "id": "lotion_pumpe",
+      "kind": "bottle",
+      "material": "plastic",
+      "color": "#f4f4f0",
+      "box": [
+        255,
+        262,
+        86,
+        106,
+        64,
+        71
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2,
+        3
+      ]
+    },
+    {
+      "id": "badekar_vest",
+      "kind": "tub",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        195,
+        202,
+        0,
+        55,
+        88,
+        246
+      ],
+      "confidence": 0.8,
+      "photos": [
+        2,
+        3
+      ],
+      "group": "badekar",
+      "face": "S",
+      "cp": true
+    },
+    {
+      "id": "badekar_ost",
+      "kind": "tub",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        258,
+        265,
+        0,
+        55,
+        88,
+        246
+      ],
+      "confidence": 0.8,
+      "photos": [
+        2,
+        3
+      ],
+      "group": "badekar",
+      "face": "S"
+    },
+    {
+      "id": "badekar_nord",
+      "kind": "tub",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        202,
+        258,
+        0,
+        55,
+        88,
+        95
+      ],
+      "confidence": 0.8,
+      "photos": [
+        2,
+        3
+      ],
+      "group": "badekar",
+      "face": "S"
+    },
+    {
+      "id": "badekar_sor",
+      "kind": "tub",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        202,
+        258,
+        0,
+        55,
+        239,
+        246
+      ],
+      "confidence": 0.8,
+      "photos": [
+        2,
+        3
+      ],
+      "group": "badekar",
+      "face": "S"
+    },
+    {
+      "id": "dusjsaape",
+      "kind": "bottle",
+      "material": "plastic",
+      "color": "#f0f0ea",
+      "box": [
+        203,
+        211,
+        55,
         76,
         88,
-        100
+        95
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2,
+        3
+      ],
+      "movable": "medium",
+      "note": "Flasken som står på karkanten"
+    },
+    {
+      "id": "dusjhylle",
+      "kind": "caddy",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        244,
+        258,
+        118,
+        128,
+        234,
+        246
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2
+      ],
+      "hold": true
+    },
+    {
+      "id": "dusjstang",
+      "kind": "box",
+      "material": "metal",
+      "color": "#c9ccd0",
+      "box": [
+        259,
+        262,
+        95,
+        190,
+        240,
+        243
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2
+      ],
+      "decor": true
+    },
+    {
+      "id": "dusjhode",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#2a2c30",
+      "box": [
+        250,
+        262,
+        180,
+        185,
+        228,
+        240
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2
+      ],
+      "decor": true
+    },
+    {
+      "id": "skillevegg",
+      "kind": "chest",
+      "material": "woodpanel",
+      "color": "#eadfcc",
+      "box": [
+        185,
+        195,
+        0,
+        240,
+        138,
+        250
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1,
+        2,
+        3
+      ],
+      "note": "Panelveggen med knaggene. Karet ligger bak den."
+    },
+    {
+      "id": "skillevegg_flis",
+      "kind": "box",
+      "material": "tile",
+      "color": "#e6e3d8",
+      "box": [
+        184,
+        196,
+        0,
+        240,
+        136,
+        138
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2,
+        3
+      ],
+      "decor": true
+    },
+    {
+      "id": "knaggrekke",
+      "kind": "box",
+      "material": "metal",
+      "color": "#9aa0a6",
+      "box": [
+        180,
+        185,
+        130,
+        135,
+        144,
+        184
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "badekape_bla",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#2f7f8f",
+      "box": [
+        176,
+        185,
+        28,
+        130,
+        144,
+        158
       ],
       "confidence": 0.7,
       "photos": [
@@ -779,65 +989,634 @@
         2,
         3
       ],
-      "hold": true
+      "grip": true,
+      "grip_drain": -0.6
     },
     {
-      "id": "handkle_gulv_1",
-      "kind": "towel",
+      "id": "badekape_lilla",
+      "kind": "towel_hang",
       "material": "fabric",
-      "color": "#6e6a64",
+      "color": "#7a2f86",
       "box": [
-        150,
+        174,
         185,
-        0,
-        9,
+        45,
+        130,
+        158,
+        174
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        2,
+        3
+      ],
+      "grip": true,
+      "grip_drain": -0.6
+    },
+    {
+      "id": "bukse",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#2d3b55",
+      "box": [
+        177,
+        185,
+        35,
+        128,
+        174,
+        184
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ],
+      "grip": true,
+      "grip_drain": -0.6
+    },
+    {
+      "id": "medisinskap",
+      "kind": "wall_cabinet",
+      "material": "plastic",
+      "color": "#f1f3f1",
+      "box": [
+        170,
+        185,
+        150,
+        190,
+        142,
+        182
+      ],
+      "confidence": 0.8,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "medisinskap_glass",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#dfe9e6",
+      "box": [
+        169.4,
+        170,
+        153,
+        187,
+        145,
+        179
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ],
+      "decor": true
+    },
+    {
+      "id": "medisinskap_kors_1",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#98a3a3",
+      "box": [
+        168.9,
+        169.4,
+        158,
         182,
-        205
+        158.5,
+        165.5
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ],
+      "decor": true
+    },
+    {
+      "id": "medisinskap_kors_2",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#98a3a3",
+      "box": [
+        168.9,
+        169.4,
+        166.5,
+        173.5,
+        150,
+        174
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ],
+      "decor": true
+    },
+    {
+      "id": "hylle",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#c79a5e",
+      "box": [
+        157,
+        185,
+        196,
+        199,
+        138,
+        236
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "hyllekonsoll_1",
+      "kind": "box",
+      "material": "metal",
+      "color": "#1c1c1c",
+      "box": [
+        165,
+        185,
+        190,
+        196,
+        140,
+        142
       ],
       "confidence": 0.7,
       "photos": [
         1
       ],
-      "note": "Sammenkrøllet håndkle ved karet",
-      "movable": "medium"
+      "decor": true
     },
     {
-      "id": "handkle_gulv_2",
-      "kind": "towel",
-      "material": "fabric",
-      "color": "#6e6a64",
+      "id": "hyllekonsoll_2",
+      "kind": "box",
+      "material": "metal",
+      "color": "#1c1c1c",
       "box": [
-        155,
-        178,
-        9,
-        16,
-        186,
-        200
+        165,
+        185,
+        190,
+        196,
+        232,
+        234
       ],
-      "confidence": 0.6,
+      "confidence": 0.7,
       "photos": [
         1
       ],
-      "movable": "medium"
+      "decor": true
     },
     {
-      "id": "dormatte",
+      "id": "kurv_stor_aapen",
+      "kind": "hamper",
+      "material": "wicker",
+      "color": "#b88a4a",
+      "box": [
+        158,
+        184,
+        199,
+        228,
+        140,
+        188
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": "kurv_liten_aapen",
+      "kind": "hamper",
+      "material": "wicker",
+      "color": "#b88a4a",
+      "box": [
+        160,
+        184,
+        199,
+        222,
+        192,
+        232
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ]
+    },
+    {
+      "id": "handklestang",
+      "kind": "box",
+      "material": "metal",
+      "color": "#b9bdc2",
+      "box": [
+        177,
+        179,
+        112,
+        114,
+        188,
+        228
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "handkle_gra",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#6f7780",
+      "box": [
+        178,
+        185,
+        55,
+        114,
+        190,
+        208
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3
+      ],
+      "grip": true,
+      "grip_drain": -0.6
+    },
+    {
+      "id": "handkle_gronn",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#a9c77a",
+      "box": [
+        179,
+        185,
+        62,
+        114,
+        208,
+        224
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "grip": true,
+      "grip_drain": -0.6
+    },
+    {
+      "id": "plastpose",
+      "kind": "bag",
+      "material": "plastic",
+      "color": "#d9dde6",
+      "box": [
+        172,
+        185,
+        18,
+        58,
+        228,
+        244
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ]
+    },
+    {
+      "id": "sjakt",
+      "kind": "chest",
+      "material": "plaster",
+      "color": "#f1efe9",
+      "box": [
+        0,
+        42,
+        0,
+        240,
+        150,
+        250
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "note": "Den hvite utforingen ved døra"
+    },
+    {
+      "id": "vegg_vest_hvit",
+      "kind": "box",
+      "material": "plaster",
+      "color": "#f1efe9",
+      "box": [
+        0,
+        1.5,
+        0,
+        240,
+        0,
+        150
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        4
+      ],
+      "decor": true
+    },
+    {
+      "id": "vegg_sor_panel",
+      "kind": "box",
+      "material": "woodpanel",
+      "color": "#eadfcc",
+      "box": [
+        42,
+        185,
+        0,
+        240,
+        248.5,
+        250
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "dor",
+      "kind": "door",
+      "material": "wood",
+      "color": "#eee4d2",
+      "box": [
+        62,
+        142,
+        0,
+        200,
+        246.5,
+        248.5
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true,
+      "note": "Døra står åpen i virkeligheten; her er den lukket"
+    },
+    {
+      "id": "dor_speil_1",
+      "kind": "box",
+      "material": "wood",
+      "color": "#dccfb8",
+      "box": [
+        72,
+        132,
+        12,
+        62,
+        246,
+        246.5
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "dor_speil_2",
+      "kind": "box",
+      "material": "wood",
+      "color": "#dccfb8",
+      "box": [
+        72,
+        132,
+        72,
+        112,
+        246,
+        246.5
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "dor_speil_3",
+      "kind": "box",
+      "material": "wood",
+      "color": "#dccfb8",
+      "box": [
+        72,
+        132,
+        122,
+        188,
+        246,
+        246.5
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "dor_gerikt_v",
+      "kind": "box",
+      "material": "wood",
+      "color": "#f4ecdc",
+      "box": [
+        54,
+        62,
+        0,
+        208,
+        245.5,
+        248.5
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "dor_gerikt_h",
+      "kind": "box",
+      "material": "wood",
+      "color": "#f4ecdc",
+      "box": [
+        142,
+        150,
+        0,
+        208,
+        245.5,
+        248.5
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "dor_gerikt_o",
+      "kind": "box",
+      "material": "wood",
+      "color": "#f4ecdc",
+      "box": [
+        54,
+        150,
+        200,
+        208,
+        245.5,
+        248.5
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "dormatte_gang",
       "kind": "mat",
       "material": "fabric",
       "color": "#7b7c7a",
       "box": [
-        95,
-        150,
+        80,
+        124,
         0,
         1.5,
-        200,
-        250
+        226,
+        246
       ],
-      "confidence": 0.8,
+      "confidence": 0.7,
       "photos": [
         1
       ],
+      "soft": true,
+      "decor": true
+    },
+    {
+      "id": "dorhandtak",
+      "kind": "knob",
+      "material": "metal",
+      "color": "#9aa0a6",
+      "box": [
+        132,
+        136,
+        100,
+        104,
+        244,
+        246.5
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1
+      ],
+      "decor": true
+    },
+    {
+      "id": "matte_gra",
+      "kind": "mat",
+      "material": "fabric",
+      "color": "#8d8a80",
+      "box": [
+        80,
+        140,
+        0,
+        2,
+        70,
+        160
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        3,
+        4
+      ],
       "soft": true
+    },
+    {
+      "id": "matte_bla",
+      "kind": "mat",
+      "material": "fabric",
+      "color": "#20263a",
+      "box": [
+        140,
+        192,
+        0,
+        2,
+        92,
+        134
+      ],
+      "confidence": 0.7,
+      "photos": [
+        1,
+        2,
+        3
+      ],
+      "soft": true
+    },
+    {
+      "id": "bord_nord",
+      "kind": "box",
+      "material": "ceramic",
+      "color": "#4f6fae",
+      "box": [
+        0,
+        265,
+        104,
+        108,
+        0,
+        0.8
+      ],
+      "confidence": 0.7,
+      "photos": [
+        3,
+        4
+      ],
+      "decor": true
+    },
+    {
+      "id": "bord_ost",
+      "kind": "box",
+      "material": "ceramic",
+      "color": "#4f6fae",
+      "box": [
+        264.2,
+        265,
+        104,
+        108,
+        0,
+        250
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2,
+        3
+      ],
+      "decor": true
+    },
+    {
+      "id": "bord_nisje",
+      "kind": "box",
+      "material": "ceramic",
+      "color": "#4f6fae",
+      "box": [
+        195,
+        195.8,
+        104,
+        108,
+        138,
+        246
+      ],
+      "confidence": 0.7,
+      "photos": [
+        2
+      ],
+      "decor": true
     }
   ],
   "hazards": [
@@ -845,12 +1624,12 @@
       "id": "kar_inni",
       "type": "pit",
       "box": [
-        157,
-        213,
+        202,
+        258,
         0,
         52,
-        17,
-        173
+        95,
+        239
       ],
       "message": "Fanget i badekaret",
       "note": "Karet er tomt og glatt; veggene er for høye"
@@ -859,20 +1638,20 @@
       "id": "do_skal_hull",
       "type": "flush",
       "box": [
-        32,
-        55,
+        57,
+        73,
         0,
         40,
-        190,
-        210
+        26,
+        56
       ],
       "message": "Skylt ned!"
     }
   ],
   "look": {
     "exposure": 0.78,
-    "sun": 2.0,
-    "note": "Bildene er nesten helt hvite; dempet lys og litt mer nyanse gir lesbarhet i spillet"
+    "sun": 2,
+    "note": "Bildene er nesten helt hvite; dempet lys gir lesbarhet i spillet"
   },
   "audio": {
     "reverb": 0.38,

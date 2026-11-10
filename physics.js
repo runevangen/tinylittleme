@@ -699,7 +699,7 @@ export function step(p, inp, dt, L) {
   carryControl(p, inp, dt, L);
   if (inp.jumpPressed) p.buffer = Math.max(P.jumpBuffer, p.recover > 0 ? p.recover + 0.06 : 0);
   if (inp.grabPressed && p.reachCd <= 0) { p.reach = P.reachTime; p.reachCd = P.reachTime + P.reachCooldown; }
-  if (P.holdGrab && inp.grabHeld && p.state === 'air' && !p.carry) p.reach = Math.max(p.reach, 0.1);       // hold GREP i lufta: hånden er ute helt til du når noe
+  if (P.holdGrab && inp.grabHeld && (p.state === 'air' || p.state === 'ground') && !p.carry && p.cd <= 0) p.reach = Math.max(p.reach, 0.1);       // hold GREP: hånden er ute helt til du når noe (i lufta, og når du går inntil en klatreflate)
   if (dt <= 1e-6) return;
   const n = Math.max(1, Math.ceil(dt / SUBSTEP - 1e-6)), h = dt / n;      // like lange delsteg (en kort rest på <1 ms ga ikke nok fall til å oppdage gulvet → flimmer mellom «står» og «luft»)
   for (let i = 0; i < n; i++) sub(p, inp, h, L);

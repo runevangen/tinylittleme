@@ -1,5 +1,7 @@
 # Test: kan vi bruke 3–4 bilder? (badet)
 
+> **Oppdatert v0.66:** badet er tolket på nytt fra fire bilder (se toppen av `docs/BADET.md`). Denne gangen trengtes **ingen hjelpeobjekter**: ruta går over ting som står på bildene (flettet vaskekurv → sisterne → vask). Lærdom: fire bilder fra hvert sitt hjørne ga planløsningen (hvilken vegg tingene står på) mye sikrere enn tre, og gjenkjennelsen kommer mest fra de særegne tingene (medisinskap med kors, fargede badekåper, flisbord, panelvegg), ikke fra nøyaktige mål. Teksten under beskriver den første testen med tre bilder.
+
 Brukeren sendte tre vanlige mobilbilder av et enkelt bad. Bildene er **ikke** lagret i repoet (offentlig). Resultatet ligger her:
 
 - `scenes/bad.scene.json` – min tolkning av bildene (objekter, mål i cm, material, farer, hold, konfidens)

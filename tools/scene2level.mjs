@@ -50,7 +50,7 @@ for (const o of scene.objects) {
     decor.push({ shape: 'box', id: o.id, kind: o.kind, pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
     continue;
   }
-  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.grip ? { grip: true } : {}), ...(o.onto ? { onto: o.onto } : {}), ...(o.grip_drain !== undefined ? { gripDrain: o.grip_drain } : {}) }));
+  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), ...(o.face ? { face: o.face } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.grip ? { grip: true } : {}), ...(o.onto ? { onto: o.onto } : {}), ...(o.grip_drain !== undefined ? { gripDrain: o.grip_drain } : {}) }));
 }
 const hazards = (scene.hazards || []).map((h) => {
   const [a, b, c, d, e, f] = h.box;
@@ -263,7 +263,7 @@ const solvable = finalSeen.has(goalIdx());
 
 // ---- 4. skriv ---------------------------------------------------------------
 const level = {
-  name: scene.name,
+  name: scene.name, ...(scene.rev ? { rev: scene.rev } : {}),
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ropes: [],
   route,

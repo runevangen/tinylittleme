@@ -3,7 +3,7 @@
 // shaped: har egen form i props.js. Alle ting har uansett kollisjon som boks.
 export const KINDS = {
   // fast innredning (grupper tegnes som én ting)
-  tub:          { shaped: true,  group: true,  desc: 'badekar: lag fire bokser (to langsider, to ender) i samme group; en fare «pit» for innsiden' },
+  tub:          { shaped: true,  group: true,  desc: 'badekar: lag fire bokser (to langsider, to ender) i samme group; en fare «pit» for innsiden; face: "S" setter kran og sluk i sørenden' },
   toilet_tank:  { shaped: true,  group: true,  desc: 'do: sisterne (stående boks mot veggen), i samme group som toilet_bowl' },
   toilet_bowl:  { shaped: true,  group: true,  desc: 'do: skålen som fire bokser rundt et hull (fare «flush» i hullet), i samme group' },
   toilet_lid:   { shaped: true,  group: true,  desc: 'do: åpent lokk (tynn stående boks mot sisternen), i samme group' },
@@ -33,6 +33,7 @@ export const KINDS = {
   towel_hang:   { shaped: true,  desc: 'håndkle som henger langs en vegg; sett grip: true for klatring' },
   mat:          { shaped: true,  desc: 'matte / dørmatte' },
   basket:       { shaped: true,  desc: 'vaskekurv / flettet kurv' },
+  hamper:       { shaped: true,  desc: 'firkantet flettet kurv: vaskekurv med lokk; id med «aapen» gir åpen kurv (hylle)' },
   bag:          { shaped: true,  desc: 'pose / toalettveske' },
   caddy:        { shaped: true,  desc: 'dusjkurv (kromtråd)' },
   pole:         { shaped: true,  desc: 'doskrubb / stang' },

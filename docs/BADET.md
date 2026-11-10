@@ -1,4 +1,32 @@
-# Kapittel 1: Badet (kladd)
+# Kapittel 1: Badet
+
+## Slik er badet bygd nå (v0.66, fra fire bilder)
+Brettet ligger i `scenes/bad.scene.json` (tolkningen, mål i cm) og lages til `levels/bad.level.json` med `node tools/scene2level.mjs scenes/bad.scene.json levels/bad.level.json`. Bildene er ikke lagret i repoet.
+
+```
+            nord: do, vask, speil, speilskap
+ ┌───────────────────────────────────────────────┬──────────┐
+ │ [vaskekurv][ DO ] [  vask + skap  ][speilskap]│  vindu   │
+ │  (flettet,                                    │ glasshylle
+ │   klatres)        grå matte      mørk matte   ├──────────┤ øst
+ │                                               │ BADEKAR  │
+ │ ┌─────┐                          panelvegg:  ║│ (grop)   │
+ │ │sjakt│                          knagger med ║│          │
+ │ │hvit │                          badekåper,  ║│          │
+ │ │     │        START             medisinskap,║│  dusj    │
+ │ └─────┘     [   dør   ]          hylle+kurver║│  kran    │
+ └───────────────────────────────────────────────┴──────────┘
+            sør: dør med tre fyllinger
+```
+- **Rute til motgiften (ingen hjelpetrinn):** gulv → klatre opp den flettede vaskekurven (GREP, 60 cm) → hopp til sisternen (80 cm) → vasken (84 cm) → tannglasset. Gått med ekte fysikk i Mario-stil, og målet nås.
+- **Kan også klatres:** blå og lilla badekåpe, buksa og de to håndklærne på panelveggen (opp til knaggrekka på 135 cm). Det er ikke en del av ruta ennå.
+- **Farer:** det tomme karet (grop) og do-skåla (skylles ned). Flisene er glatte, mattene er myke.
+- **Forenklet eller gjettet:** skråtaket er flatt, døra er lukket, vaskeskapet har to dører (tre i virkeligheten), speilskapets hyller er ikke modellert, og målene er anslått fra bildene (±15 cm).
+- **Neste steg:** flytte motgiften høyere (medisinskapet eller kurvene på hylla, 2 m) når det finnes en vei fra knaggrekka og opp; skråtak over karet; dusjslange som tau.
+
+Resten av dette dokumentet er det opprinnelige designutkastet (før bildene).
+
+# Opprinnelig kladd
 
 Status: designutkast, ikke bygd. Mål: teste hybrid-bevegelsen (plattformer + klatring) og motgift-ideen i ett lite rom.
 
