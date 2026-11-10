@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
-import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb } from './props.js';
+import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
@@ -137,7 +137,7 @@ function toggleSound() {
 }
 
 // ---------- poeng ----------
-const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2, hardLand: 3, antHit: 4, crumb: CRUMB.points };
+const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2, hardLand: 3, antHit: 4, crumb: CRUMB.points, carried: 5 };
 
 // ---------- renderer / scene ----------
 const canvas = $('c');
@@ -827,7 +827,12 @@ const bodyMeshes = LEVEL.bodies.map((b) => {
 });
 // maur: én modell per patrulje (v0.77)
 const ANT_COL = [0x9a3a1e, 0x7a2a16, 0xb04a22, 0x8a3320];
-const antMeshes = (LEVEL.antList || []).map((t, i) => { const a = buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb }); a.root.userData.antId = t.id; scene.add(a.root); if (!gfxLow) look.detailize(a.root); return { t, a, rot: Math.atan2(-t.fz, t.fx) }; });
+const antMeshes = (LEVEL.antList || []).map((t, i) => {
+  const a = t.type === 'spider' ? buildSpider() : t.type === 'carrier' ? buildCarrier() : buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb });   // R6: tre slag, hver med egen modell
+  a.root.userData.antId = t.id; scene.add(a.root); if (!gfxLow) look.detailize(a.root);
+  let drop = null; if (t.type === 'carrier') { drop = buildDropCrumb(); drop.visible = false; scene.add(drop); }                 // smula bæreren slipper når den knuses
+  return { t, a, drop, rot: Math.atan2(-t.fz, t.fx) };
+});
 // smuler (R3): gylne smuler som flyter og snurrer; tatt = skjult
 const crumbMeshes = (LEVEL.crumbList || []).map((c) => { const m = buildCrumb(); m.root.position.set(c.x, c.y, c.z); scene.add(m.root); return { c, m }; });
 // taubaner (nål + tråd) opprettes av fysikken: en tynn rød tråd mellom to knuter
@@ -869,7 +874,7 @@ function spawnShards(pos, color) {
 
 const player = newPlayer(...LEVEL.start);
 const save = { pos: [...LEVEL.start] };
-const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, flew: false };
+const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 
@@ -877,7 +882,7 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
-const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb);
+const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried);
 function placeFlag() { flag.position.set(save.pos[0], save.pos[1], save.pos[2]); }
 placeFlag();
 
@@ -936,7 +941,7 @@ function restartAll() {
   clearProgress(); failCells.clear();
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player);
-  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = 0; stats.flew = false; resetAnts(LEVEL); resetCollect(LEVEL);
+  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = 0; stats.flew = false; resetAnts(LEVEL); resetCollect(LEVEL);
   won = false; clock = 0; placeFlag(); $('win').classList.add('hide'); setMode('play');
 }
 
@@ -1507,9 +1512,13 @@ const boost = () => held('ShiftLeft', 'ShiftRight');
 
 // maur: hopp på ryggen = knus og sprett; ellers støt tilbake (v0.77)
 function antEvent(ev) {
-  if (ev.type === 'alert' && !store.get('tlm.seen.ant', false)) { store.set('tlm.seen.ant', true); toast(`En maur! Unngå den, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); }
-  if (ev.type === 'stomp') { stats.squashed++; logEv('maur knust', ev.id); audio?.squash(); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], 0x9a3a1e); }
-  else if (ev.type === 'hurt') { stats.hits++; logEv('maur støt', ev.id); audio?.anthit(); buzz(70); setMood('hurt', 0.9); toast(`Au! En maur støtet deg  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
+  if (ev.type === 'alert' && ev.kind === 'spider') { if (!store.get('tlm.seen.spider', false)) { store.set('tlm.seen.spider', true); toast(`En edderkopp-vakt! Den dukker og hopper: rygg unna, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); } audio?.spiderhiss(); }
+  else if (ev.type === 'alert' && !store.get('tlm.seen.ant', false)) { store.set('tlm.seen.ant', true); toast(`En maur! Unngå den, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); }
+  if (ev.type === 'leap') { logEv('edderkopp hopper', ev.id); audio?.spiderleap(); }
+  else if (ev.type === 'drop') { logEv('smule sluppet', ev.id); if (!store.get('tlm.seen.crumb', false)) { store.set('tlm.seen.crumb', true); toast('Bæreren slapp smula! Gå bort til den for å ta den'); } }
+  else if (ev.type === 'crumb') { stats.carried++; logEv('bærer-smule tatt', ev.id); audio?.crumb(5, 99); buzz(20); setMood('happy', 1); cue('smule!'); toast(`Smule tatt  +${SCORE.carried} poeng`); }
+  if (ev.type === 'stomp') { stats.squashed++; logEv(ev.kind === 'spider' ? 'edderkopp knust' : 'maur knust', ev.id); audio?.squash(); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], ev.kind === 'spider' ? 0x6a3a86 : ev.kind === 'carrier' ? 0x5f6b2a : 0x9a3a1e); }
+  else if (ev.type === 'hurt') { stats.hits++; logEv(ev.kind === 'spider' ? 'edderkopp støt' : 'maur støt', ev.id); audio?.anthit(); buzz(70); setMood('hurt', 0.9); toast(`Au! ${ev.kind === 'spider' ? 'Edderkoppen hoppet på deg' : 'En maur støtet deg'}  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
 }
 // smuler: plukk (R3). Små, rolige tilbakemeldinger: lyd, poeng, kort melding, gnister
 function crumbEvent(ev) {
@@ -1719,10 +1728,11 @@ function render(now, dt) {
   }
   for (const { c, m } of crumbMeshes) { m.update(c.phase, c.got || !crumbsOn); }
   for (const m of antMeshes) {
-    const { t, a } = m; a.root.visible = antsOn && (t.alive || t.squash < 0.98);
+    const { t, a, drop } = m;
+    if (drop) { drop.visible = antsOn && !!t.drop && !t.drop.taken; if (drop.visible) { drop.position.set(t.drop.x, t.drop.y + 0.35 + Math.sin(clock * 3) * 0.06, t.drop.z); drop.rotation.y = clock * 1.5; } } a.root.visible = antsOn && (t.alive || t.squash < 0.98);
     a.root.position.set(t.x, t.y, t.z);
     const want = Math.atan2(-t.fz, t.fx); let dr = want - m.rot; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); m.rot += dr * Math.min(1, dt * 10); a.root.rotation.y = m.rot;
-    a.update(t.phase, t.speedNow || 0, t.squash, t.alerted);
+    a.update(t.phase, t.speedNow || 0, t.squash, t.alerted, t);
   }
   for (const { b, mesh, size } of bodyMeshes) {
     mesh.visible = b.alive;

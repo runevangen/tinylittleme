@@ -284,12 +284,13 @@ const route = (() => {
   });
   return out;
 })();
-// maur: patruljer i scenen oppgis i cm: { id, on: «gulv» eller id på en ting (flaten de går på), from: [x, z], to: [x, z], speed? }
+// maur: patruljer i scenen oppgis i cm: { id, on: «gulv» eller id på en ting (flaten de går på), from: [x, z], to: [x, z], speed?, type?: 'ant' | 'spider' | 'carrier' }
 const ants = (scene.ants || []).map((a) => {
   const on = a.on && a.on !== 'gulv' ? scene.objects.find((o) => o.id === a.on) : null;
   if (a.on && a.on !== 'gulv' && !on) throw new Error(`maur ${a.id}: fant ikke flaten ${a.on}`);
   const y = on ? uy(on.box[3]) : 0;
-  return { id: a.id, a: [ux(a.from[0]), y, uz(a.from[1])], b: [ux(a.to[0]), y, uz(a.to[1])], ...(a.speed ? { speed: a.speed } : {}), ...(a.crumb ? { crumb: true } : {}) };
+  const to = a.to || a.from;   // edderkopp: bare hjemmet (from)
+  return { id: a.id, ...(a.type && a.type !== 'ant' ? { type: a.type } : {}), a: [ux(a.from[0]), y, uz(a.from[1])], b: [ux(to[0]), y, uz(to[1])], ...(a.speed ? { speed: a.speed } : {}), ...(a.crumb ? { crumb: true } : {}) };
 });
 
 // smuler (R3): { id, on: «gulv» eller id på en ting, at: [x, z] } i cm; y = flaten + litt (midten av smula)

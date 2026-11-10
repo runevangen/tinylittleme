@@ -27,10 +27,6 @@ Ferdig når: før/etter-skjermbilder av nivå 1, 2 og 3 viser tydelig varmere og
 Prosedyrebasert musikk (Web Audio, ingen filer): rolig, leken tema per rom (bad, barnerom, kjøkken) som dynamikk skifter med fare (maur i nærheten) og mål. Eget volum i mikseren, av/på i ⚙. Nytt modul `music.js` med testbar logikk (skala, mønster, tempo som funksjon av tilstand).
 Ferdig når: musikk spiller etter første trykk, kan slås av, og skifter stemning når en maur ser deg.
 
-### [ ] R6 · Fiender: flere slag
-Utvid `ants.js` med minst to nye typer: **edderkopp-vakt** (står på stedet og hopper mot deg når du er nær, kan knuses fra oven) og **bærer-maur** (går tregere, bærer en smule, slipper den når den knuses så du kan samle den; krever R3 hvis den finnes). Hver type egen modell i `props.js`. Nye lyder. Tester for logikk og at banene er frie.
-Ferdig når: variasjon i nivå 2–6, ingen urettferdige plasseringer, ruta går fortsatt.
-
 ### [ ] R7 · Nøkkel og lås (Zelda-gåte)
 En enkel gåte per nivå fra 3 og oppover: finn en gjenstand (f.eks. knapp, mynt, nøkkel-kloss), bær den til et sted (TA/SETT PÅ) og åpne en hindring (en port/skuff som beveger seg, en bro som rulles ut). Bygg som en liten, datastyrt mekanikk (`puzzles` i scenen) i nytt modul `puzzle.js` med fysikk-integrasjon som ikke ødelegger rutekartet: hindringen skal være valgfri snarvei eller en tydelig vei, og `walk_route` må fortsatt bevise at målet kan nås.
 Ferdig når: minst én fungerende gåte i nivå 3 og 6 med tester og tydelig veiledning (pil/kompass peker mot neste steg).
@@ -48,6 +44,7 @@ Se `docs/FIGUREN.md` og `BACKLOG.md`: føtter som tilpasser seg trinn, bedre hen
 Ferdig når: animasjonene leses tydelig i skjermbilder/serier og ingen eksisterende test brekker.
 
 ## Ferdige punkter
+- [x] Fiender: flere slag (v0.83)
 - [x] Mørkere hjørner og lysstråler (v0.82)
 - [x] Leker i barneskala (v0.80)
 - [x] Maur (v0.77)

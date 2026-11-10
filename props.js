@@ -585,3 +585,64 @@ export function buildCrumb() {
   update(0, false);
   return { root, update };
 }
+
+// ---- R6: edderkopp-vakt og bærer-maur ---------------------------------------------------------------------
+// Edderkopp: rund, lilla kropp med gule flekker, fire store øyne, åtte bein. Står stille (puster), duker når den ser deg, strekker beina i hoppet.
+// update(phase, speed, squash, alerted, t): t er maur-oppføringen (t.crouchK 0..1, t.mode 'idle' | 'crouch' | 'leap' | 'rest' | 'return').
+export function buildSpider({ color = 0x6a3a86 } = {}) {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const shell = new THREE.MeshPhysicalMaterial({ color, roughness: 0.3, clearcoat: 0.9, clearcoatRoughness: 0.15 });
+  const dark = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).multiplyScalar(0.45), roughness: 0.45 });
+  const spot = new THREE.MeshStandardMaterial({ color: 0xf2c64a, roughness: 0.4 });
+  const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 }), black = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
+  const S = (r, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = mesh(new THREE.SphereGeometry(r, 20, 14), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); body.add(m); return m; };
+  S(0.46, shell, -0.4, 0.62, 0, 1.1, 0.95, 1);                           // bakkropp
+  for (const [x, z, r] of [[-0.5, 0.2, 0.09], [-0.5, -0.2, 0.09], [-0.78, 0, 0.1], [-0.28, 0, 0.08]]) S(r, spot, x, 1.02 - Math.abs(x + 0.5) * 0.1, z);   // gule flekker
+  S(0.32, shell, 0.3, 0.58, 0, 1, 0.95, 1.1);                            // hode
+  for (const z of [-1, 1]) {                                            // fire øyne: to store, to små
+    S(0.15, white, 0.52, 0.7, z * 0.17); S(0.075, black, 0.64, 0.7, z * 0.17); S(0.025, white, 0.68, 0.74, z * 0.15);
+    S(0.09, white, 0.5, 0.82, z * 0.1); S(0.045, black, 0.57, 0.82, z * 0.1);
+  }
+  const fang = []; for (const z of [-1, 1]) { const f = mesh(new THREE.ConeGeometry(0.05, 0.22, 8), white); f.position.set(0.58, 0.4, z * 0.09); f.rotation.z = Math.PI * 0.95; body.add(f); fang.push(f); }
+  const legs = [];
+  // fire par bein i et tydelig fan: første par peker framover, siste bakover, midtparene rett ut til siden (ang = vinkel fra framretning mot siden, len = rekkevidde)
+  for (const [i, [hx, ang, len]] of [[0.38, 0.62, 1.2], [0.18, 1.2, 1.4], [-0.04, 1.85, 1.4], [-0.26, 2.5, 1.2]].entries()) for (const z of [-1, 1]) {
+    const up = mesh(new THREE.CylinderGeometry(0.03, 0.045, 1, 8), dark), lo = mesh(new THREE.CylinderGeometry(0.02, 0.032, 1, 8), dark), knee = mesh(new THREE.SphereGeometry(0.05, 10, 8), dark), foot = mesh(new THREE.SphereGeometry(0.035, 8, 6), dark);
+    body.add(up, lo, knee, foot); legs.push({ up, lo, knee, foot, hx, z, ang, len, ph: (i + (z > 0 ? 1 : 0)) % 2 ? Math.PI : 0 });
+  }
+  const seg = (m, a, b) => { const d = new THREE.Vector3().subVectors(b, a), l = d.length() || 1e-3; m.position.copy(a).addScaledVector(d, 0.5); m.scale.set(1, l, 1); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.divideScalar(l)); };
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
+  function update(phase, speed = 0, squash = 0, alerted = false, t = {}) {
+    const crouch = t.crouchK || 0, leap = t.mode === 'leap', walk = Math.min(1, speed / 2), idle = Math.sin(phase * 0.35);
+    for (const l of legs) {
+      const sw = Math.sin(phase + l.ph) * 0.2 * walk, lift = Math.max(0, Math.cos(phase + l.ph)) * 0.18 * walk;
+      const reach = leap ? 1.3 : 1 - crouch * 0.2, cx = Math.cos(l.ang), sz = Math.sin(l.ang) * l.z;
+      A.set(l.hx, 0.58 - crouch * 0.2, l.z * 0.18);
+      C.set(l.hx + cx * l.len * 0.5 * reach, (leap ? 1.2 : 1.08) + crouch * 0.2 + idle * 0.02, sz * l.len * 0.5 * reach + l.z * 0.12);
+      B.set(l.hx + cx * l.len * reach + sw, leap ? 0.5 : lift, sz * l.len * reach);
+      seg(l.up, A, C); seg(l.lo, C, B); l.knee.position.copy(C); l.foot.position.copy(B);
+    }
+    body.position.y = -crouch * 0.18 + (leap ? 0.1 : 0) + idle * 0.015; body.rotation.z = leap ? -0.25 : crouch * 0.08;
+    for (const f of fang) f.rotation.x = (alerted ? 0.35 : 0.1) * (f.position.z > 0 ? 1 : -1);
+    root.scale.set(1 + squash * 0.5, Math.max(0.04, 1 - squash * 0.96), 1 + squash * 0.5);
+  }
+  update(0, 0, 0, false, {});
+  return { root, update };
+}
+
+// Bærer-maur: som en maur, men olivengrønn og med en stor, gyllen smule på ryggen (forsvinner når den er knust og slipper smula).
+export function buildCarrier({ color = 0x5f6b2a } = {}) {
+  const a = buildAnt({ color }), crumb = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({ color: 0xf0c060, roughness: 0.9, flatShading: true });
+  const big = mesh(new THREE.DodecahedronGeometry(0.5, 0), mat); big.scale.set(1.1, 0.85, 1); crumb.add(big);
+  const bit = mesh(new THREE.DodecahedronGeometry(0.2, 0), mat); bit.position.set(0.3, -0.25, 0.3); crumb.add(bit);
+  crumb.position.set(-0.45, 1.35, 0); a.root.add(crumb);
+  return { root: a.root, crumb, update(phase, speed, squash, alerted, t = {}) { a.update(phase, speed, squash, alerted); crumb.visible = t.carry !== false; } };
+}
+
+// Smula som ligger igjen etter en bærer-maur (gyllen, ligger og vipper litt).
+export function buildDropCrumb() {
+  const g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: 0xf5c55a, roughness: 0.6, emissive: 0x5a3c00, flatShading: true });
+  const m = mesh(new THREE.DodecahedronGeometry(0.4, 0), mat); m.scale.set(1.2, 0.85, 1); g.add(m);
+  return g;
+}

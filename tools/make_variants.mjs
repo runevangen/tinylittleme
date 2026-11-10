@@ -28,6 +28,7 @@ const kit = (s) => ({
   k.add('handkle_ny_1', 'towel_hang', 'fabric', '#e0a23a', [170, 184, 135, 163, 188, 190], { grip: true, onto: 'ny_hylle', grip_drain: -0.3 });
   k.add('handkle_ny_2', 'towel_hang', 'fabric', '#c9483b', [154, 157, 163, 199, 200, 216], { grip: true, onto: 'hylle', grip_drain: -0.3 });
   s.goal = { x: 172, y: 199, z: 210, on: 'hylle', note: 'Motgift-bit på den øverste hylla, der den lille kurven sto' };
+  s.ants = [{ id: 'baerer_gulv', type: 'carrier', on: 'gulv', from: [92, 55], to: [242, 55] }, { id: 'edderkopp_dusj', type: 'spider', on: 'gulv', from: [42.5, 115] }];   // R6: bærer-maur og en edderkopp-vakt (fri flate rundt, langt fra start)
   save('bad2', s);
 }
 
@@ -70,6 +71,7 @@ const kit = (s) => ({
   k.add('hylle_over_vask', 'chest', 'wood', '#c79a5e', [118, 142, 194, 198, 0, 30], {});
   k.add('potteplante', 'cup', 'ceramic', '#6f8f3a', [122, 132, 198, 212, 2, 12], {});
   s.goal = { x: 76, y: 190, z: 44, on: 'kjoleskap', note: 'Motgift-bit på toppen av kjøleskapet' };
+  s.ants.push({ id: 'edderkopp_skap', type: 'spider', on: 'gulv', from: [90, 185] });                         // R6: ekstra edderkopp-vakt i nivå 6
   { const m = s.ants.find((x) => x.id === 'maur_matte'); if (m) m.to = [m.from[0] + 55, m.from[1]]; }      // kassa står på matta nå: kortere patrulje (maurene må ha fri bane)
   save('kjokken2', s);
 }

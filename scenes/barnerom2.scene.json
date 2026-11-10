@@ -816,13 +816,13 @@
       "on": "gulv",
       "from": [
         105,
-        100
+        90
       ],
       "to": [
         195,
-        100
+        90
       ],
-      "crumb": true
+      "type": "carrier"
     },
     {
       "id": "maur_dyne",
@@ -850,15 +850,12 @@
       "speed": 2.4
     },
     {
-      "id": "maur_hjorne",
+      "id": "edderkopp_hjorne",
+      "type": "spider",
       "on": "gulv",
       "from": [
-        260,
-        160
-      ],
-      "to": [
-        260,
-        225
+        125,
+        125
       ]
     }
   ],

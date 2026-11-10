@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, surfaceBelow, returnBody, resetBodies, drainEvents, toolHint } from './physics.js';
 import { LEVEL } from './level.js';
 import { initAnts, stepAnts, resetAnts, ANT } from './ants.js';
+import { SPIDER, CARRIER } from './foes.js';
 
 applyPreset('klassisk');
 const floor = box('floor', -50, 50, -2, 0, -50, 50);
@@ -960,6 +961,62 @@ const fwd = { ...idle, mz: 1 };
   assert.equal(a2.alive, true, 'knust maur kommer tilbake');
   // sikt: går mot deg langs streken når du er nær
   const near = newPlayer(8, 0, 3); resetAnts(L); stepAnts(L, near, 1 / 60); assert.equal(L.antList[0].alerted, true);
+}
+
+// R6: edderkopp-vakt og bærer-maur
+{
+  const mk = (ants) => { const L = { boxes: [floor], ropes: [], ants }; initAnts(L); return L; };
+  const far = newPlayer(0, 0, 40);
+  // edderkopp: står på stedet, ser deg, varsler (dukker), hopper mot deg, aldri lenger enn leash, hviler og går hjem
+  {
+    const L = mk([{ id: 's', type: 'spider', a: [0, 0, 0], b: [0, 0, 0] }]), sp = L.antList[0];
+    assert.equal(sp.type, 'spider');
+    for (let i = 0; i < 120; i++) stepAnts(L, far, 1 / 60);
+    assert.ok(sp.x === 0 && sp.z === 0 && sp.mode === 'idle', 'edderkoppen står stille når du er langt unna');
+    const p = newPlayer(0, 0, 5); p.state = 'ground'; p.onGround = true;       // 5 enheter unna: innenfor synsvidde, utenfor leash
+    const evs = []; let hurt = false;
+    const q = { ...p };
+    for (let i = 0; i < 20; i++) evs.push(...stepAnts(L, q, 1 / 60));
+    assert.ok(evs.some((e) => e.type === 'alert' && e.kind === 'spider'), 'varsler');
+    assert.equal(sp.mode, 'crouch'); assert.ok(sp.crouchK > 0.2, 'dukker først');
+    assert.ok(!evs.some((e) => e.type === 'leap'), 'ingen hopp før varselet er over');
+    for (let i = 0; i < 60 * SPIDER.crouch; i++) evs.push(...stepAnts(L, q, 1 / 60));
+    assert.ok(evs.some((e) => e.type === 'leap'), 'hopper');
+    let maxR = 0, maxY = 0;
+    for (let i = 0; i < 60; i++) { const e = stepAnts(L, { ...q, z: 9, y: 0 }, 1 / 60); if (e.some((x) => x.type === 'land')) break; maxR = Math.max(maxR, Math.hypot(sp.x, sp.z)); maxY = Math.max(maxY, sp.y); }
+    assert.ok(maxR <= SPIDER.leash + 1e-6, `hopper aldri lenger enn leash: ${maxR}`); assert.ok(maxY > 0.5, 'hopper opp i lufta');
+    assert.ok(Math.hypot(sp.x, sp.z) <= SPIDER.leash + 1e-6);
+    for (let i = 0; i < 60 * 6; i++) stepAnts(L, far, 1 / 60);
+    assert.ok(Math.hypot(sp.x, sp.z) < 0.2 && sp.mode === 'idle', 'går hjem etter hoppet');
+    // rygger du før varselet er halvveis, avblåses hoppet
+    resetAnts(L); const w = newPlayer(0, 0, 5); stepAnts(L, w, 1 / 60); assert.equal(sp.mode, 'crouch');
+    for (let i = 0; i < 6; i++) stepAnts(L, far, 1 / 60); assert.equal(sp.mode, 'idle', 'avblåst');
+    // treffer deg: støt tilbake; hopp fra oven: knus og sprett
+    resetAnts(L); const h = newPlayer(0.5, 0, 0); h.state = 'ground'; h.onGround = true;
+    const ev = stepAnts(L, h, 1 / 60); assert.ok(ev.some((e) => e.type === 'hurt' && e.kind === 'spider') && h.vy > 0, 'støt');
+    resetAnts(L); const t2 = newPlayer(0, SPIDER.hgt * 0.8, 0); t2.state = 'air'; t2.vy = -6;
+    const e2 = stepAnts(L, t2, 1 / 60); assert.ok(e2.some((e) => e.type === 'stomp' && e.kind === 'spider'), 'knust fra oven'); assert.equal(t2.vy, ANT.bounce); assert.equal(sp.alive, false);
+    for (let i = 0; i < 60 * SPIDER.respawn + 60; i++) stepAnts(L, far, 1 / 60);
+    assert.ok(sp.alive && sp.mode === 'idle', 'kommer tilbake');
+  }
+  // bærer-maur: tregere enn vanlig maur, slipper smula ved knusing, smula plukkes bare én gang
+  {
+    const L = mk([{ id: 'c', type: 'carrier', a: [0, 0, 0], b: [20, 0, 0] }, { id: 'a', a: [0, 0, 10], b: [20, 0, 10] }]), c = L.antList[0], a = L.antList[1];
+    assert.ok(c.carry && !a.carry && c.speed < a.speed, 'bærer bærer og går tregere');
+    for (let i = 0; i < 60; i++) stepAnts(L, far, 1 / 60);
+    assert.ok(Math.abs(c.x - 10) < Math.abs(a.x - 10) + 3 && Math.hypot(c.x - 10, 0) <= 10, 'går på streken');
+    const q = newPlayer(c.x, c.y + CARRIER.hgt * 0.8, c.z); q.state = 'air'; q.vy = -6;
+    const ev = stepAnts(L, q, 1 / 60);
+    assert.ok(ev.some((e) => e.type === 'stomp' && e.kind === 'carrier') && ev.some((e) => e.type === 'drop'), 'slipper smula');
+    assert.ok(c.drop && !c.drop.taken && !c.carry);
+    const away = newPlayer(c.drop.x, 0, c.drop.z + 5); assert.equal(stepAnts(L, away, 1 / 60).filter((e) => e.type === 'crumb').length, 0, 'ikke plukket langt unna');
+    const on = newPlayer(c.drop.x, 0, c.drop.z); on.vy = 0;
+    assert.equal(stepAnts(L, on, 1 / 60).filter((e) => e.type === 'crumb').length, 0, 'smula er først klar etter et lite øyeblikk');
+    for (let i = 0; i < 60; i++) stepAnts(L, far, 1 / 60);
+    assert.equal(stepAnts(L, on, 1 / 60).filter((e) => e.type === 'crumb').length, 1, 'plukkes opp');
+    assert.equal(stepAnts(L, on, 1 / 60).filter((e) => e.type === 'crumb').length, 0, 'bare én gang');
+    resetAnts(L); assert.ok(L.antList[0].carry && !L.antList[0].drop, 'reset: bærer smula igjen');
+  }
 }
 
 console.log('alle fysikktester grønne');

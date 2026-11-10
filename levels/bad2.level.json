@@ -1819,7 +1819,8 @@
  },
  "ants": [
   {
-   "id": "maur_gulv",
+   "id": "baerer_gulv",
+   "type": "carrier",
    "a": [
     -8.1,
     0,
@@ -1829,8 +1830,21 @@
     21.9,
     0,
     -14
+   ]
+  },
+  {
+   "id": "edderkopp_dusj",
+   "type": "spider",
+   "a": [
+    -18,
+    0,
+    -2
    ],
-   "crumb": true
+   "b": [
+    -18,
+    0,
+    -2
+   ]
   }
  ],
  "collectibles": [

@@ -1159,7 +1159,7 @@
         320,
         125
       ],
-      "crumb": true
+      "type": "carrier"
     },
     {
       "id": "maur_matte",
@@ -1171,6 +1171,15 @@
       "to": [
         225,
         88
+      ]
+    },
+    {
+      "id": "edderkopp_hjorne",
+      "type": "spider",
+      "on": "gulv",
+      "from": [
+        290,
+        250
       ]
     }
   ],
