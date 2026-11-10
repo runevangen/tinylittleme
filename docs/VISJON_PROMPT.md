@@ -45,6 +45,9 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `basket` | ja | vaskekurv / flettet kurv |
 | `hamper` | ja | firkantet flettet kurv: vaskekurv med lokk; id med «aapen» gir åpen kurv (hylle) |
 | `toyblock` | ja | trekloss (avrundet terning); høyere enn bred = flere stablet |
+| `letterblock` | ja | bokstavkloss (pastell, avrundet, bokstav på sidene): bokstaven er siste tegn i id-en etter «_» (bokstav_a); høyere enn bred = stablet, hvert lag neste bokstav; kan være movable |
+| `legoblock` | ja | Lego-aktig kloss med knotter oppå (knottene ligger innenfor boksen, ca. 0,6 cm): stables og klatres på, ca. 10 cm høy per lag |
+| `toycar` | ja | leketøysbil (varebil/buss) i fast boks: hele boksen er karosseri med flat topp, hjul og vinduer er pynt; lengste side er kjøreretningen |
 | `ball` | ja | ball (løs kule med ekte kulekollisjon; boksen må være en kube) |
 | `bag` | ja | pose / toalettveske |
 | `caddy` | ja | dusjkurv (kromtråd) |

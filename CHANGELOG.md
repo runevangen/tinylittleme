@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.80** – **Leker i barneskala**: bokstavklosser, legoklosser med knotter og leketøysbiler i barnerommet og kjøkkenet. Klatre på dem med stikke + HOPP/GREP, dytt bokstavklossen med stikka. Rutene er uendret og går.
 - **0.79** – **Smuler å samle**: gullsmuler ligger rundt i alle seks brettene, noen åpne og noen gjemt på omveier. Gå inn i dem (stikke + HOPP/GREP for å nå de høye); telleren vises i HUD-en og målskjermen viser «smuler X/Y». Lagres i autolagringen.
 - **0.78** – **Veikart** (`docs/ROADMAP.md`): kø med ti punkter (Toy Story-lys, leker, smuler, hjørnemørkning, musikk, flere fiender, nøkkel og lås, fortelling, sjef-maur, figur-polering) som parallelle agenter bygger, kritiserer og slår sammen til `main` ett om gangen.
 - **0.77** – **Maur!** Første steg mot et levende, Toy Story-aktig plattformspill. Blanke tegnefilm-maur (store øyne, glans, seks bein i trebeinsgange, noen bærer en brødsmule) patruljerer gulv, matter, seng og skrivebord i nivå 1–3 og 4–6. De ser deg på 7 enheter og løper mot deg. **Hopp på ryggen (HOPP) = knus og sprett**, ellers støt tilbake (−4 poeng, 1,3 s ufarlig). Knuste maur kommer tilbake etter 25 s. Nye lyder (knus, støt) i mikseren. ⚙ → Hjelp og tekst → «Maur» slår dem av. Nytt `ants.js` (ren logikk, testet), `buildAnt` i `props.js`, `ants` i scene/level, test av at banene er frie. Ballen på nivå 2 er nå en egen `ball` med blanke striper.

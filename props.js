@@ -1,6 +1,7 @@
 // Former for ting som ikke er firkanter: do, badekar … Kollisjonen i fysikken er fortsatt bokser;
 // dette er bare utseendet. Brettet gir hver boks `kind` og evt. `group`; boksene i en gruppe tegnes som ÉN ting.
 import * as THREE from 'three';
+import { letterStack, letterTopY, studLayout, STUD_H, carWheel } from './toys.js';
 
 const porcelain = (color = 0xf1eee6) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.06 });
 const chrome = () => new THREE.MeshStandardMaterial({ color: 0xe4e6e8, metalness: 1, roughness: 0.12 });
@@ -153,6 +154,11 @@ const labelTex = (hue = '#e8eef2') => canvasTex(128, (g, S) => {
   g.fillStyle = 'rgba(20,50,90,.65)'; g.fillRect(0, S * 0.12, S, S * 0.1); g.fillRect(0, S * 0.78, S, S * 0.05);
   for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(30,30,30,.35)'; g.fillRect(S * 0.14, S * (0.3 + i * 0.07), S * (0.72 - (i % 3) * 0.14), 3); }
 });
+const letterTex = (L, base) => once('letter' + L + base.getHexString(), () => canvasTex(128, (g, S) => {
+  g.clearRect(0, 0, S, S);
+  g.fillStyle = '#' + new THREE.Color(base).lerp(new THREE.Color(0xffffff), 0.72).getHexString(); g.beginPath(); g.roundRect ? g.roundRect(S * 0.04, S * 0.04, S * 0.92, S * 0.92, S * 0.14) : g.rect(S * 0.04, S * 0.04, S * 0.92, S * 0.92); g.fill();
+  g.fillStyle = '#' + new THREE.Color(base).multiplyScalar(0.78).getHexString(); g.font = `bold ${S * 0.68}px "Trebuchet MS", Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(L, S / 2, S * 0.56);
+}));
 const stripeTex = (c1, c2) => canvasTex(128, (g, S) => { g.fillStyle = c1; g.fillRect(0, 0, S, S); g.fillStyle = c2; g.fillRect(0, S * 0.08, S, S * 0.07); g.fillRect(0, S * 0.85, S, S * 0.07); });
 
 const hexStr = (c) => '#' + (typeof c === 'number' ? c : parseInt(String(c).replace('#', ''), 16)).toString(16).padStart(6, '0');
@@ -306,6 +312,43 @@ const SINGLE = {
       for (const [dx, dz, w, d] of [[0, 1, sx * 0.62, 0.05], [0, -1, sx * 0.62, 0.05], [1, 0, 0.05, sz * 0.62], [-1, 0, 0.05, sz * 0.62]]) { const p = mesh(new THREE.BoxGeometry(w, h * 0.6, d), inl, false); p.position.set(dx * sx / 2, -sy / 2 + i * h + h / 2, dz * sz / 2); g.add(p); }
     }
     return g;
+  },
+  letterblock(sx, sy, sz, o) {                                      // bokstavkloss: pastell, avrundet, med bokstav på alle sider og oppå; høyere enn bred = stablet
+    const g = new THREE.Group(), letters = letterStack(o.id, sx, sy, sz), n = letters.length, h = sy / n, base = new THREE.Color(o.color).lerp(new THREE.Color(0xffffff), 0.35);
+    const mat = new THREE.MeshStandardMaterial({ color: base, roughness: 0.6 });
+    letters.forEach((L, i) => {
+      const b = mesh(roundedBoxGeo(sx, h * 0.985, sz, Math.min(sx, sz) * 0.14, Math.min(0.14, h * 0.1)), mat); b.position.y = -sy / 2 + i * h; g.add(b);
+      const tex = letterTex(L, new THREE.Color(o.color)), lm = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+      for (const [dx, dz, ry, w] of [[0, 1, 0, sx], [0, -1, Math.PI, sx], [1, 0, Math.PI / 2, sz], [-1, 0, -Math.PI / 2, sz]]) {
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.78, h * 0.78), lm); p.rotation.y = ry; p.position.set(dx * (sx / 2 + 0.012), -sy / 2 + i * h + h / 2, dz * (sz / 2 + 0.012)); g.add(p);
+      }
+      if (i === n - 1) { const top = new THREE.Mesh(new THREE.PlaneGeometry(sx * 0.78, sz * 0.78), lm); top.rotation.x = -Math.PI / 2; top.position.set(0, letterTopY(sy, n), 0); g.add(top); }
+    });
+    return g;
+  },
+  legoblock(sx, sy, sz, o) {                                        // Lego-aktig kloss: kropp med knotter på toppen (knottene ligger innenfor boksen). Kan stables og klatres på.
+    const g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.32, metalness: 0 }), stud = Math.min(STUD_H, sy * 0.3), bh = sy - stud;
+    const body = mesh(roundedBoxGeo(sx, bh, sz, Math.min(sx, sz) * 0.05, Math.min(0.1, bh * 0.1)), mat); body.position.y = -sy / 2; g.add(body);
+    const geo = new THREE.CylinderGeometry(0.42, 0.42, stud * 1.02, 14);
+    const r = Math.min(0.42, sx * 0.28, sz * 0.28), sg = r === 0.42 ? geo : new THREE.CylinderGeometry(r, r, stud * 1.02, 14);
+    for (const [x, z] of studLayout(sx, sz)) { const s = mesh(sg, mat); s.position.set(x, sy / 2 - stud / 2, z); g.add(s); }
+    return g;
+  },
+  toycar(sx, sy, sz, o) {                                           // leketøysbil (liten varebil/buss): hele boksen er karosseri, så toppen er flat; hjul og vinduer er pynt innenfor boksen
+    const g = new THREE.Group(), body = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.3 }), dark = new THREE.MeshStandardMaterial({ color: 0x2a2f36, roughness: 0.5 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0xbfe3f4, roughness: 0.08, metalness: 0.2 }), white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+    const long = sx >= sz, L = long ? sx : sz, W = long ? sz : sx, car = new THREE.Group();            // bygges langs x, dreies til lengste side
+    const w = carWheel(L, sy, W), hb = sy - w.r * 0.5;
+    const hull = mesh(roundedBoxGeo(L, hb, W * 0.98, Math.min(W, hb) * 0.18, Math.min(0.2, hb * 0.1)), body); hull.position.y = -sy / 2 + w.r * 0.5; car.add(hull);
+    const wy = -sy / 2 + hb * 0.5 + w.r * 0.5 + hb * 0.12;                                              // vindusbånd
+    for (const s of [-1, 1]) {
+      const win = mesh(new THREE.BoxGeometry(L * 0.62, hb * 0.28, 0.04), glass, false); win.position.set(-L * 0.06, wy, s * (W * 0.49 + 0.015)); car.add(win);
+      const ws = mesh(new THREE.BoxGeometry(0.04, hb * 0.28, W * 0.76), glass, false); if (s > 0) { ws.position.set(L / 2 + 0.01, wy, 0); car.add(ws); }
+      for (const hx of w.xs) { const wh = mesh(new THREE.CylinderGeometry(w.r, w.r, 0.2, 20), dark); wh.rotation.x = Math.PI / 2; wh.position.set(hx, w.y, s * (W / 2 - 0.04)); car.add(wh); const hub = mesh(new THREE.CylinderGeometry(w.r * 0.5, w.r * 0.5, 0.22, 14), white, false); hub.rotation.x = Math.PI / 2; hub.position.set(hx, w.y, s * (W / 2 - 0.035)); car.add(hub); }
+    }
+    for (const s of [-1, 1]) { const hl = mesh(new THREE.SphereGeometry(Math.min(0.3, W * 0.09), 10, 8), white, false); hl.position.set(L / 2 - 0.02, -sy / 2 + hb * 0.3 + w.r * 0.5, s * W * 0.3); car.add(hl); }
+    if (!long) car.rotation.y = -Math.PI / 2;
+    g.add(car); return g;
   },
   ball(sx, sy, sz, o) {
     const g = new THREE.Group(), r = Math.min(sx, sy, sz) / 2, col = new THREE.Color(o.color);
