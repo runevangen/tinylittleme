@@ -11,7 +11,7 @@
   .hide{display:none!important}
   #xhair{position:fixed;left:50%;top:46%;width:22px;height:22px;margin:-11px 0 0 -11px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #0008,inset 0 0 0 1px #0008;display:none;pointer-events:none;z-index:2}
   #xhair::after{content:'';position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:#ffa940}
-  #qbtn{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(66px,calc(env(safe-area-inset-top) + 56px));width:38px;height:38px;border-radius:50%;border:2px solid #ffa94099;background:#121a2caa;color:#ffd9a0;font:700 17px system-ui;display:flex;align-items:center;justify-content:center;z-index:4;padding:0}
+  #qbtn{opacity:.5;position:fixed;right:max(10px,env(safe-area-inset-right));top:max(66px,calc(env(safe-area-inset-top) + 56px));width:32px;height:32px;border-radius:50%;border:2px solid #ffa94099;background:#121a2caa;color:#ffd9a0;font:700 17px system-ui;display:flex;align-items:center;justify-content:center;z-index:4;padding:0}
   #qpop{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(110px,calc(env(safe-area-inset-top) + 100px));background:#121a2cf2;border:2px solid #ffa940;border-radius:14px;padding:8px;z-index:5;display:flex;flex-direction:column;gap:6px;max-width:min(300px,86vw)}
   #qpop.hide{display:none}
   #qpop .qt,#qpop .qr{display:flex;gap:5px;flex-wrap:wrap}
@@ -25,8 +25,15 @@
   #btnCarry.long{font-size:11.5px;line-height:1.05;text-align:center;padding:0 6px}
   .nocenter #btnCenter{display:none!important}
   .tbtn{transform:scale(var(--bs,1))}
-  #hud{position:fixed;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));color:#fff;font:600 12px/1.35 ui-monospace,monospace;background:#0008;padding:6px 9px;border-radius:9px;white-space:pre}
+  #hud{cursor:pointer;-webkit-tap-highlight-color:transparent;position:fixed;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));color:#fff;font:600 12px/1.35 ui-monospace,monospace;background:#0008;padding:6px 9px;border-radius:9px;white-space:pre}
   #bar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 16px);z-index:5}
+  /* v0.75: bunnlinjen er bare Tilbake · ⋯ · ⚙; resten (Lagre, Ting ↺ …) ligger i ⋯-menyen */
+  #more{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(max(10px,env(safe-area-inset-bottom)) + 52px);display:flex;flex-direction:column;gap:6px;z-index:5;background:#121a2cf2;border:2px solid #ffa940;border-radius:16px;padding:8px;min-width:150px}
+  #more.hide{display:none}
+  #more button{font:600 14px system-ui;padding:11px 16px;border:0;border-radius:11px;background:#ffffff26;color:#eef2fa;text-align:left}
+  #more button.on{background:var(--accent);color:var(--ink)}#more button.armed{background:#ffd23f;color:#1d2433}
+  #bMore,#bSet{min-width:42px;padding:9px 0!important;font-size:16px!important}
+  #bar button.open{background:var(--accent)}
   #bar button,.pill{font:600 13px system-ui;padding:9px 12px;border:0;border-radius:999px;background:#fffd;color:var(--ink);box-shadow:0 1px 4px #0004}
   #bar button.on{background:var(--accent)}
   #hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#fffe;color:var(--ink);padding:6px 12px;border-radius:999px;font:600 13px system-ui;pointer-events:none}
@@ -36,6 +43,8 @@
   #infocard.show{transform:translateX(0)}
   #infotab{pointer-events:auto;flex:none;width:38px;height:46px;border:0;border-radius:14px 0 0 14px;background:#121a2cdd;color:#ffd9a0;font:800 20px/1 Georgia,serif;font-style:italic;box-shadow:-2px 2px 6px #0004;border:2px solid #ffa940;border-right:0}
   #infotab.dim{opacity:.4}
+  #infocard:not(.show) #infotab{opacity:.5}
+  #qbtn:active{opacity:1}
   #infobody{pointer-events:auto;flex:1;min-height:46px;box-sizing:border-box;background:#121a2cdd;border:2px solid #ffa940;border-right:0;border-radius:0 0 0 14px;padding:9px 13px;color:#eef2fa;font:500 14px/1.35 system-ui}
   #infocard:not(.show) #infobody{pointer-events:none}
   /* hjelpeteksten ligger helt øverst (v0.63): tittel og «Bruksanvisning ›» på samme linje, så kortet blir lavt */
@@ -49,6 +58,7 @@
   #offscreen{position:fixed;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;background:#121a2ccc;border:2px solid #ffa940;display:none;align-items:center;justify-content:center;z-index:3;pointer-events:none}
   #offscreen svg{width:26px;height:26px}
   #compass{position:fixed;left:max(14px,env(safe-area-inset-left));top:max(104px,calc(env(safe-area-inset-top) + 94px));display:none;align-items:center;gap:8px;background:#121a2cdd;border:2px solid #ffa940;border-radius:999px;padding:5px 12px 5px 6px;color:#eef2fa;font:600 13px/1.2 system-ui;z-index:3;-webkit-tap-highlight-color:transparent}
+  #compass.mini{padding:3px;gap:0;opacity:.8}#compass.mini .ctxt{display:none}#compass.mini .ring{width:34px;height:34px}
   #compass .ring{width:38px;height:38px;border-radius:50%;background:#ffffff14;display:flex;align-items:center;justify-content:center}
   #compass svg{width:26px;height:26px;transition:transform .08s linear}
   #compass small{display:block;color:#ffd9a0;font-weight:700;font-size:11px}
@@ -115,7 +125,7 @@
   #stick::before{content:'';position:absolute;inset:-26px;border-radius:50%}
   #bar button.armed{background:#ffd23f;color:#1d2433}
   body.mobile #stick{display:block;bottom:120px}body.showbtns .tbtn{display:flex}body.mobile #help{display:none}
-  body.mobile #bar #bLevel,body.mobile #bar #bPlan,body.mobile #bar #bFly,body.mobile #bar #bSound{display:none}body.mobile #bar{bottom:max(14px,env(safe-area-inset-bottom))}body.mobile #bar button{padding:11px 16px;font-size:14px}
+  body.mobile #more #bLevel,body.mobile #more #bPlan,body.mobile #more #bFly,body.mobile #more #bSound{display:none}body.mobile #bar{bottom:max(14px,env(safe-area-inset-bottom))}body.mobile #bar button{padding:11px 16px;font-size:14px}body.mobile #bMore,body.mobile #bSet{padding:11px 0!important}
   body.mobile #btnJump{bottom:140px}body.mobile #btnGrab{bottom:52px}body.mobile #btnCarry{bottom:236px;width:76px;height:76px}body.mobile #btnCenter{bottom:246px}body.mobile #hint{bottom:112px}
   /* PC: samme knapper som på mobil (klikkbare), med tastene skrevet øverst */
   body.pc .tbtn{cursor:pointer}
@@ -150,7 +160,7 @@
 <div id="bubble"></div>
 <div id="stam"><i></i></div>
 <div id="offscreen"><svg viewBox="-12 -12 24 24"><path d="M0 -10 L8 8 L0 4 L-8 8 Z" fill="#ffa940" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
-<div id="compass"><span class="ring"><svg viewBox="-12 -12 24 24" id="compArrow"><path d="M0 -10 L7 7 L0 3 L-7 7 Z" fill="#ffa940" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg></span><span><small id="compLbl">MÅL</small><span id="compTxt"></span></span></div>
+<div id="compass" class="mini"><span class="ring"><svg viewBox="-12 -12 24 24" id="compArrow"><path d="M0 -10 L7 7 L0 3 L-7 7 Z" fill="#ffa940" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg></span><span class="ctxt"><small id="compLbl">MÅL</small><span id="compTxt"></span></span></div>
 <div id="hint" class="hide"></div>
 <div id="help"><b>tinylittleme – testbrett</b>
   <kbd>WASD</kbd> gå (fart bygges opp) · <kbd>C</kbd> gå forsiktig · <kbd>Mellomrom</kbd> hopp<br>
@@ -171,15 +181,18 @@
 <button class="tbtn" id="btnCarry">TA</button>
 <button class="tbtn" id="btnCenter" aria-label="Sentrer kamera">◎</button>
 <button class="tbtn" id="btnJump">HOPP</button>
-<div id="bar">
-  <button id="bLevel">Brett</button>
+<div id="more" class="hide">
   <button id="bSave">Lagre</button>
-  <button id="bBack">Tilbake</button>
+  <button id="bThings">Ting ↺</button>
+  <button id="bLevel">Brett</button>
   <button id="bPlan">Plan</button>
   <button id="bFly">Fly</button>
-  <button id="bThings">Ting ↺</button>
   <button id="bSound">Lyd</button>
-  <button id="bSet">⚙</button>
+</div>
+<div id="bar">
+  <button id="bBack">Tilbake</button>
+  <button id="bMore" aria-label="Mer">⋯</button>
+  <button id="bSet" aria-label="Innstillinger">⚙</button>
 </div>
 <script>document.write('<script type="module" src="./main.js?v=' + window.__assetV + '"><\/script>');</script>
 </body>

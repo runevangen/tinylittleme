@@ -96,7 +96,7 @@ const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(m
 let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
-let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', true), fpsOn = store.get('tlm.fps', false);
+let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', false), hudOpen = false, fpsOn = store.get('tlm.fps', false);
 // PC (v0.72): PUBG-styring som standard: WASD går, musa ser deg rundt (klikk i bildet låser pekeren), skulderkamera. Gjøres én gang; kan byttes tilbake i ⚙.
 if (!TOUCH && !store.get('tlm.pcpubg1', false)) { store.set('tlm.pcpubg1', true); store.set('tlm.preset4', 'pubg'); store.set('tlm.view3', 'shoulder'); store.set('tlm.custom4', {}); }
 const DEFAULT_PRESET = TOUCH ? 'mario' : 'pubg', DEFAULT_VIEW = TOUCH ? 'third' : 'shoulder';
@@ -1018,9 +1018,14 @@ const goalArrow = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([[0, 0.
   new THREE.MeshBasicMaterial({ color: 0xffa940, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false }));
 goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visible = false;
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
+let compKey = '', compShowUntil = 0, compIdleSince = 0;
 function compassFrame(now) {
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
   const forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6);
+  { const key = (t.final ? '!' : '') + t.label, idle = player.onGround && Math.hypot(player.vx, player.vz) < 0.3;       // v0.75: bare pila til vanlig; teksten vises ved nytt mål, tips, og når du står stille
+    if (key !== compKey) { compKey = key; compShowUntil = now + 6000; }
+    if (!idle) compIdleSince = now; else if (!compIdleSince) compIdleSince = now;
+    compEl.classList.toggle('mini', !(forced || now < compShowUntil || (idle && now - compIdleSince > 2500))); }
   compEl.style.display = show && (compassMode === 'both' || compassMode === 'compass' || forced) ? 'flex' : 'none';
   goalArrow.visible = show && player.onGround && (compassMode === 'both' || compassMode === 'arrow' || forced); goalArrowG.visible = goalArrow.visible;
   if (!show) { goalArrowG.visible = false; return; }
@@ -1154,11 +1159,17 @@ function confirmed(btn, label, cost, fn) {
     t = setTimeout(() => { t = null; btn.classList.remove('armed'); btn.textContent = orig; }, 2500);
   };
 }
-confirmed($('bThings'), 'Ting', SCORE.resetThings, resetThings);
+confirmed($('bThings'), 'Ting', SCORE.resetThings, () => { resetThings(); closeMore(); });
 $('bLevel').textContent = `Brett: ${levelLabel}`;
 $('bLevel').onclick = () => { const i = LEVELS.findIndex((l) => l.id === levelId), n = LEVELS[(i + 1) % LEVELS.length].id; store.set('tlm.level', n); location.search = `?level=${n}`; };
 $('bSound').onclick = toggleSound; $('bSound').textContent = soundMuted ? 'Lyd av' : 'Lyd'; $('bSound').classList.toggle('on', !soundMuted);
-confirmed($('bSave'), 'Lagre', SCORE.save, doSave); confirmed($('bBack'), 'Tilbake', SCORE.respawn, goBack);
+confirmed($('bSave'), 'Lagre', SCORE.save, () => { doSave(); closeMore(); }); confirmed($('bBack'), 'Tilbake', SCORE.respawn, goBack);
+// ⋯-menyen (v0.75): Lagre, Ting ↺ (og på PC Brett, Plan, Fly, Lyd) ligger skjult, så bunnlinjen bare er Tilbake · ⋯ · ⚙
+function closeMore() { $('more').classList.add('hide'); $('bMore').classList.remove('open'); }
+$('bMore').onclick = (e) => { e.stopPropagation(); const open = $('more').classList.contains('hide'); $('more').classList.toggle('hide', !open); $('bMore').classList.toggle('open', open); };
+document.addEventListener('pointerdown', (e) => { if (!$('more').classList.contains('hide') && !$('more').contains(e.target) && e.target !== $('bMore')) closeMore(); });
+for (const id of ['bLevel', 'bPlan', 'bFly', 'bSound']) $(id).addEventListener('click', closeMore);
+$('hud').addEventListener('pointerdown', (e) => { e.stopPropagation(); hudOpen = !hudOpen; logEv('hud', hudOpen ? 'utvidet' : 'kort'); });
 $('bPlan').onclick = () => setMode('plan'); $('bFly').onclick = () => setMode('fly');
 $('again').onclick = restartAll;
 
@@ -1261,7 +1272,7 @@ const SETTINGS = [
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
-  fl('hudtech', 'spill', 'Vis tekniske tall (høyde, tid, poeng)', true, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
+  fl('hudtech', 'spill', 'Vis alltid tekniske tall (høyde, tid, poeng). Ellers: trykk på teksten øverst', false, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
   // Styring
   ...(!TOUCH ? [rg('mousesens', 'styring', 'Mus: følsomhet (lavere = roligere kamera)', 0.45, 0.15, 1.5, 0.05, () => mouseSens, kp('tlm.mousesens', (v) => { mouseSens = v; }), { pct: true })] : []),
   rg('camsens', 'styring', 'Kamerafølsomhet (dra)', 1, 0.4, 2, 0.1, () => camSens, kp('tlm.camsens', (v) => { camSens = v; })),
@@ -1762,7 +1773,7 @@ function render(now, dt) {
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   renderer.render(scene, camera);
-  $('hud').textContent = !hudTech ? `v${VERSION} · ${levelLabel}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
+  $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
     `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns} · poeng ${points()}`;
 }
