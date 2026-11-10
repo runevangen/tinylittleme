@@ -71,7 +71,7 @@ export function bassFor(theme, bar) { const c = theme.prog[bar % theme.prog.leng
 
 // ---- motor ---------------------------------------------------------------
 export function createMusic(ctx, out, opts = {}) {
-  let theme = opts.theme || THEMES[DEFAULT_THEME], mood = 'calm', vol = opts.volume ?? 0.6, on = opts.on ?? true, running = false;
+  let theme = opts.theme || THEMES[DEFAULT_THEME], mood = 'calm', vol = opts.volume ?? 0.2, on = opts.on ?? true, running = false;
   const master = ctx.createGain(), duckG = ctx.createGain(); master.gain.value = on ? vol : 0; duckG.gain.value = 1; master.connect(duckG); duckG.connect(out);
   const doc = typeof document !== 'undefined' ? document : null;
   let timer = null, nextT = 0, stepI = 0, bpm = tempoFor(theme, mood), bpmNow = bpm;

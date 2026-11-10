@@ -83,7 +83,7 @@ function unlockAudio() {
       audio = createAudio(new Ctx(), { volume: store.get('tlm.vol', 0.7), reverb: store.get('tlm.reverb', null) ?? LEVEL.audio?.reverb ?? 0.12, levels: store.get('tlm.mix2', {}) });
       audio.setMuted(soundMuted);
       music = createMusic(audio.ctx, audio.out, { theme: themeFor(LEVEL), volume: store.get('tlm.musicvol', 0.2), on: store.get('tlm.music', true) });   // R5: musikk starter etter første trykk
-      music.start();
+      music.setMood(musicMood); music.start();
     } catch { audio = null; music = null; }
   }
   audio?.resume();
