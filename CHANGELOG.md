@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.84** – **Musikk og stemning per rom**: rolig, leken musikk for bad, barnerom og kjøkken som spiller etter første trykk, blir mer spent når en maur ser deg og demper seg når du knuser eller blir støtet. Eget volum i ⚙ og kan slås av der.
 - **0.83** – **Flere slag fiender**: edderkopp-vakter som duker, hveser og hopper mot deg når du kommer nær (hopp på ryggen med HOPP for å knuse dem), og bærer-maur som slipper en smule du kan ta når du knuser den (+5 poeng). Finnes i nivå 2–6; rutene er uendret.
 - **0.82** – **Mørkere hjørner og lysstråler**: myk mørkning der vegg møter gulv og lysstråler med støv fra vinduet gir rommene mer dybde. Kan slås av i ⚙ (og er av med Grafikk «Enkel»). Rutene er uendret og går.
 - **0.82** – **Skriv i ⚑-dialogen**: tekstfelt og «⚑ Marker her» i vurderingsvinduet, så du kan skrive hva som skjedde uten å åpne ⚙. Teksten følger også med 👍 / 😐 / 😫.

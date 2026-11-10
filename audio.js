@@ -272,10 +272,10 @@ export function createAudio(ctx, opts = {}) {
   // ---- styring -------------------------------------------------------------
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
-    ctx, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
+    ctx, out: bus, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
     pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, crumb, checkpoint, win, drip, hum,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
-    resume: () => (ctx.state === 'suspended' && ctx.resume ? ctx.resume() : Promise.resolve()),
+    resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },
     setMuted: (m) => { muted = !!m; apply(); },
     setReverb: (v) => { wet.gain.value = v; },
