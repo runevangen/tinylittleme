@@ -1,18 +1,21 @@
 # R1: Toy Story-lys, før/etter
 
-Bildene viser «Av» (venstre) mot «Varm film» (høyre), samme posisjon, iPhone 14-utsnitt, ekte kjøring (`?level=...`, programvare-GL).
-Barnerommet (nivå 2) står med kameraet tett på en vegg ved start, så det er et mindre egnet utsnitt; nivå 1 og 3 er hovedbevisene.
+Bildene viser «Av» (`_av`) mot «Varm film» (`_film`), samme posisjon, iPhone 14-utsnitt, ekte kjøring (`?level=...`, programvare-GL).
 
-Målt i utsnittet uten HUD og knapper (snitt R/B, metning, lysstyrke):
+- Nivå 1 (Bad): `n1_start_av.png` / `n1_start_film.png`. Grå fliser blir varme krem-fliser, sol og skygge får tydelig varm/kjølig kontrast.
+- Nivå 2 (Barnerom): `n2_start_av.png` / `n2_start_film.png`. Kameraet startet før *utenfor* veggen (z=29,3 mot vegg ved z=28), så figuren var skjult. Kameraet holdes nå innenfor rommet (`inRoom` i `main.js`), og utsnittet viser gulv, ball, flagg og figur.
+- Nivå 3 (Kjøkken): `n3_start_av.png` / `n3_start_film.png`.
+- Klarlakk: `n2_ball_av.png` / `n2_ball_film.png` (ballen tett på: tydelig speilende glansflekk og rikere farge i film). Film-modus speiler miljøet kraftigere i blank plast/porselen (envMapIntensity 1,7) og har skarpere klarlakk.
 
-| Nivå | R/B av | R/B film | Metning av -> film | Luma av -> film | Hvite piksler (>240) |
-|---|---|---|---|---|---|
-| 1 Bad | 1.125 | 1.186 | 0.142 -> 0.185 | 150 -> 157 | 0.11 % -> 0.12 % |
-| 3 Kjøkken | 1.132 | 1.253 | 0.150 -> 0.224 | 189 -> 197 | 0.12 % -> 0.13 % |
-| 2 Barnerom | 1.123 | 1.165 | 0.136 -> 0.165 | 182 -> 175 | 0.10 % -> 0.10 % |
+Målt i utsnittet over HUD/knapper (snitt R/B, metning):
 
-Forrige runde målte «av» feil (localStorage-verdien var ikke JSON, så «av» ble lest som standard «film»); derfor så de to like ut.
-Ingen utbrente flater (andelen hvitt øker ikke), rommene blir ikke mørkere (lysstyrken er lik eller litt høyere). Hvit glansflekk på gulvet er borte etter at kant- og fyllys ble løftet høyere (ikke lenger streiflys mot kameraet).
+| Nivå | R/B av -> film | Metning av -> film |
+|---|---|---|
+| 1 Bad | 1,17 -> 1,40 | 0,162 -> 0,302 |
+| 2 Barnerom | 1,56 -> 2,10 | 0,366 -> 0,518 |
+| 3 Kjøkken | 1,14 -> 1,32 | 0,146 -> 0,252 |
+
+Ingen utbrente flater i bildene (hvit speiling på store flater er dempet og miljøspeilingen er begrenset til klarlakk-materialer).
 
 ## Ytelse
 FPS i programvare-GL er ikke representativt, så det er ikke brukt som bevis. I stedet er det ekstra arbeidet begrenset:

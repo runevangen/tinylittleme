@@ -175,7 +175,12 @@ const gradeMode = store.get('tlm.grade', 'film');   // R1: Toy Story-lys (film) 
 const grade = applyGrade({ renderer, scene, sun, canvas, look: LEVEL.look, mode: gradeMode, low: gfxLow });
 const bigBox = (b) => Array.isArray(b.box) && Math.max(b.box[1] - b.box[0], b.box[3] - b.box[2], b.box[5] - b.box[4]) > 120;   // store flater: dempet clearcoat, ellers hvite glansflekker
 // Blank overflate (clearcoat) er dyrere enn Standard: bare med Grafikk «Detaljert» og ikke «Enkel»
-const glossy = (b, o, cc, ccr) => gfxLow ? std(o) : new THREE.MeshPhysicalMaterial({ ...o, clearcoat: bigBox(b) ? Math.min(cc, 0.25) : cc, clearcoatRoughness: bigBox(b) ? Math.max(ccr, 0.4) : ccr });
+const glossy = (b, o, cc, ccr) => {
+  if (gfxLow) return std(o);
+  const big = bigBox(b), m = new THREE.MeshPhysicalMaterial({ ...o, clearcoat: big ? Math.min(cc, 0.35) : cc, clearcoatRoughness: big ? Math.max(ccr, 0.35) : ccr * (grade.params.gloss > 1 ? 0.4 : 1) });
+  if (grade.params.gloss > 1) { m.envMap = scene.environment; m.envMapIntensity = grade.params.gloss; }   // R1: klarlakken speiler miljøet tydelig (film-gradering)
+  return m;
+};
 const texMat = (set, o = {}) => std({ map: set.map.clone(), normalMap: set.normalMap ? set.normalMap.clone() : null, roughnessMap: set.roughnessMap ? set.roughnessMap.clone() : null, ...o });
 const eachMap = (mat, fn) => { for (const k of ['map', 'normalMap', 'roughnessMap']) if (mat[k]) fn(mat[k]); };
 
@@ -183,13 +188,14 @@ const eachMap = (mat, fn) => { for (const k of ['map', 'normalMap', 'roughnessMa
 const room = LEVEL.room;
 const std = (o) => new THREE.MeshStandardMaterial(o);
 
+const warm = (c) => (grade.params.warmTile ? new THREE.Color(c).multiply(new THREE.Color(...grade.params.warmTile)) : c);   // R1: grå fliser blir varme krem-fliser i film-gradering
 function material(b) {
   const col = b.color ?? 0xcccccc;
   const kind = b.type === 'floor' || b.type === 'wall' ? `${b.type}:${b.material || 'default'}` : (b.material || b.type);
   switch (kind) {
     case 'floor:default': case 'floor:wood': return texMat(look.floor, { roughness: 1 });
-    case 'floor:tile': return texMat(look.tile, { color: col, roughness: 0.55 });
-    case 'wall:tile': return texMat(look.tile, { color: col, roughness: 0.7 });
+    case 'floor:tile': return texMat(look.tile, { color: warm(col), roughness: 0.55 });
+    case 'wall:tile': return texMat(look.tile, { color: warm(col), roughness: 0.7 });
     case 'wall:default': case 'wall:plaster': case 'wall': return texMat(look.plaster, { color: col, roughness: 0.95 });
     case 'woodpanel': return texMat(look.panel, { color: col, roughness: 0.7 });       // stående panelbord
     case 'wood': return texMat(look.wood, { color: col, roughness: 0.55 });
@@ -941,6 +947,7 @@ function restartAll() {
 }
 
 // ---------- modus: plan / fly ----------
+if (grade.params.gloss > 1) scene.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (m.isMeshPhysicalMaterial && m.clearcoat > 0 && !m.transparent) { m.envMap = scene.environment; m.envMapIntensity = grade.params.gloss; } });   // R1: all blank klarlakk (props.js m.m.) speiler miljøet tydelig
 const cam = { yaw: 0.35, pitch: viewMode === 'shoulder' ? 0.18 : viewMode === 'first' ? 0.05 : 0.3, dist: camDistSet, cur: viewMode === 'shoulder' ? shDist : camDistSet, target: new THREE.Vector3(...LEVEL.start) };
 let camLook = 0, camPitchBias = 0, camLift = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
@@ -1789,7 +1796,8 @@ function render(now, dt) {
     const pitchNow = Math.min(1.3, cam.pitch + camPitchBias + camLift);
     const cp = Math.cos(pitchNow), dir = new THREE.Vector3(Math.sin(cam.yaw) * cp, Math.sin(pitchNow), Math.cos(cam.yaw) * cp);
     let d = baseDist;
-    for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { if (!insideAny(cam.target.x + dir.x * d + sdx, cam.target.y + dir.y * d, cam.target.z + dir.z * d + sdz, 0.25)) break; }
+    const inRoom = (x, z) => !room || (x > room.x0 + 0.6 && x < room.x1 - 0.6 && z > room.z0 + 0.6 && z < room.z1 - 0.6);   // R1: kameraet blir aldri stående bak en yttervegg (barnerommet startet utenfor veggen, så figuren var skjult)
+    for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { const cx = cam.target.x + dir.x * d + sdx, cz = cam.target.z + dir.z * d + sdz; if (inRoom(cx, cz) && !insideAny(cx, cam.target.y + dir.y * d, cz, 0.25)) break; }
     cam.cur += (d - cam.cur) * (d < cam.cur ? 0.5 : 0.08);
     if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur); camera.position.x += sdx; camera.position.z += sdz;
     camera.lookAt(cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0), cam.target.z + sdz); }

@@ -8,8 +8,9 @@ ok(f.exposure >= look.exposure && f.exposure < look.exposure * 1.15, 'film: ikke
 ok(f.fill > 0 && f.rim > 0 && f.filter.includes('saturate'), 'film har fyll, kantlys og filter');
 ok(lo.fill === 0 && lo.rim === 0 && lo.filter === '', 'Enkel grafikk: ingen ekstra lys/filter');
 ok(gradeParams({}, 'film').sun > 3, 'standardverdier');
-ok(f.sunColor === 0xffbf70 && f.sunColor !== o.sunColor, 'varmere sol enn av');
+ok(f.sunColor === 0xffae55 && f.sunColor !== o.sunColor, 'varmere sol enn av');
 ok(f.fill >= 0.7 && f.rim >= 1 && f.env < o.env, 'fyll/kantlys merkbare, mindre miljølys');
 ok(f.filter.includes('sepia') && f.filter.includes('contrast'), 'filter varmer og gir kontrast');
+ok(f.gloss > 1 && o.gloss === 1 && lo.gloss === 1 && f.warmTile && !o.warmTile, 'klarlakk-speiling og varme fliser bare i film');
 if (bad) process.exit(1);
 console.log('grade: ok');
