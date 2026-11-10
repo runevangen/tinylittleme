@@ -82,13 +82,16 @@ function unlockAudio() {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       audio = createAudio(new Ctx(), { volume: store.get('tlm.vol', 0.7), reverb: store.get('tlm.reverb', null) ?? LEVEL.audio?.reverb ?? 0.12, levels: store.get('tlm.mix2', {}) });
       audio.setMuted(soundMuted);
-      music = createMusic(audio.ctx, audio.out, { theme: themeFor(LEVEL), volume: store.get('tlm.musicvol', 0.6), on: store.get('tlm.music', true) });   // R5: musikk starter etter første trykk
+      music = createMusic(audio.ctx, audio.out, { theme: themeFor(LEVEL), volume: store.get('tlm.musicvol', 0.2), on: store.get('tlm.music', true) });   // R5: musikk starter etter første trykk
       music.start();
     } catch { audio = null; music = null; }
   }
   audio?.resume();
 }
-addEventListener('pointerdown', unlockAudio); addEventListener('keydown', unlockAudio);
+addEventListener('pointerdown', unlockAudio); addEventListener('keydown', unlockAudio); addEventListener('touchend', unlockAudio, { passive: true });
+// iPhone stopper lyden (suspended/interrupted) ved lås eller fanebytte: ta den opp igjen når fanen er synlig, og ved neste trykk (unlockAudio)
+document.addEventListener('visibilitychange', () => { if (!document.hidden) audio?.resume(); });
+addEventListener('pageshow', () => audio?.resume());
 // valgfri kamerafølging: kameraet dreier seg langsomt bak figuren når den går (av etter at du selv har dratt i kameraet)
 let autoCam = store.get('tlm.follow', true), lastDrag = -99;
 function toggleAutoCam() { autoCam = !autoCam; store.set('tlm.follow', autoCam); toast(autoCam ? 'Kamera følger retning' : 'Kamera følger ikke'); const c = document.getElementById('chkAutoCam'); if (c) c.checked = autoCam; }
@@ -1337,7 +1340,7 @@ const SETTINGS = [
   rg('vol', 'lyd', 'Hovedvolum', 0.7, 0, 1, 0.05, () => store.get('tlm.vol', 0.7), kp('tlm.vol', (v) => audio?.setVolume(v)), { pct: true }),
   fl('sound', 'lyd', 'Lyd på', true, () => !soundMuted, (v) => { if (v === soundMuted) toggleSound(); }),
   fl('music', 'lyd', 'Musikk (spiller etter første trykk)', true, () => store.get('tlm.music', true), kp('tlm.music', (v) => { music?.setOn(v); logEv('musikk', v ? 'på' : 'av'); })),
-  rg('musicvol', 'lyd', 'Musikk: volum', 0.6, 0, 1, 0.05, () => store.get('tlm.musicvol', 0.6), kp('tlm.musicvol', (v) => music?.setVolume(v)), { pct: true }),
+  rg('musicvol', 'lyd', 'Musikk: volum', 0.2, 0, 1, 0.05, () => store.get('tlm.musicvol', 0.2), kp('tlm.musicvol', (v) => music?.setVolume(v)), { pct: true }),
   ...(hasTTS ? [
     fl('voice', 'lyd', 'Stemme (figuren snakker)', true, () => voiceOn, kp('tlm.voice', (v) => { voiceOn = v; if (v) { primeVoice(); say('checkpoint', true); } })),
     rg('voicevol', 'lyd', 'Stemmevolum', 0.9, 0.2, 1, 0.1, () => voiceVol, kp('tlm.voicevol', (v) => { voiceVol = v; })),
@@ -1502,8 +1505,8 @@ const boost = () => held('ShiftLeft', 'ShiftRight');
 // maur: hopp på ryggen = knus og sprett; ellers støt tilbake (v0.77)
 function antEvent(ev) {
   if (ev.type === 'alert' && !store.get('tlm.seen.ant', false)) { store.set('tlm.seen.ant', true); toast(`En maur! Unngå den, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); }
-  if (ev.type === 'stomp') { stats.squashed++; logEv('maur knust', ev.id); audio?.squash(); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], 0x9a3a1e); }
-  else if (ev.type === 'hurt') { stats.hits++; logEv('maur støt', ev.id); audio?.anthit(); buzz(70); setMood('hurt', 0.9); toast(`Au! En maur støtet deg  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
+  if (ev.type === 'stomp') { stats.squashed++; logEv('maur knust', ev.id); audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], 0x9a3a1e); }
+  else if (ev.type === 'hurt') { stats.hits++; logEv('maur støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! En maur støtet deg  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
 }
 function update(dt) {
   if (P.faceCam && mode === 'play') {                                  // PC: piltastene ser deg rundt (WASD går)
@@ -1601,7 +1604,7 @@ function update(dt) {
 
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
-    won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); setMood('happy', 6); say('goal', true);
+    won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
     { const cl = store.get('tlm.cleared', {}); if (!stats.flew) { cl[levelId] = Math.max(cl[levelId] || 0, points()); store.set('tlm.cleared', cl); }       // husk hvilke nivåer som er klart (beste poeng)
       $('winTitle').textContent = levelInfo?.n ? (nextLevel ? `Nivå ${levelInfo.n} klart!` : 'Alle seks nivåene klart!') : 'Du kom opp!';
       const nb = $('nextLevel'); nb.style.display = nextLevel ? '' : 'none'; if (nextLevel) { nb.textContent = `${nextLevel.label} →`; nb.onclick = () => goLevel(nextLevel.id); } }
@@ -1951,4 +1954,4 @@ requestAnimationFrame(frame);
 
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
-window.__game = { antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

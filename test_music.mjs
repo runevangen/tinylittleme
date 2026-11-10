@@ -36,4 +36,20 @@ const r = rng(5), a = r(); assert.ok(a >= 0 && a < 1); assert.equal(rng(5)(), a)
   m.start(); t = 2; m.pump(); assert.ok(osc > 3, 'planlegger toner'); m.stop(); assert.equal(m.state.running, false);
   m.setMood('tense'); assert.equal(m.state.mood, 'tense'); m.setOn(false); assert.equal(m.state.on, false);
 }
+
+// ducking, og at pumpen stopper når lyden stopper (iPhone: 'interrupted') eller fanen er skjult
+{
+  let osc = 0, t = 0, calls = [], state = 'running', ls = {}, vis = {};
+  const param = () => ({ value: 1, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, setTargetAtTime: (v) => calls.push(v), cancelScheduledValues() {} });
+  const node = () => ({ connect() {}, gain: param(), frequency: param(), start() {}, stop() {}, type: '' });
+  const ctx = { get currentTime() { return t; }, get state() { return state; }, resume() { state = 'running'; ls.statechange?.(); return Promise.resolve(); }, addEventListener: (n, f) => { ls[n] = f; }, removeEventListener() {}, sampleRate: 8000, createGain: node, createOscillator: () => { osc++; return node(); }, createBiquadFilter: node, createBuffer: (c, n) => ({ getChannelData: () => new Float32Array(n) }), createBufferSource: node };
+  globalThis.document = { hidden: false, addEventListener: (n, f) => { vis[n] = f; }, removeEventListener() {} };
+  const m = createMusic(ctx, node(), { theme: THEMES.kjokken });
+  m.start(); t = 1; m.pump(); const n1 = osc; assert.ok(n1 > 0);
+  state = 'interrupted'; t = 3; m.pump(); assert.equal(osc, n1, 'ingen planlegging mens lyden er stoppet');
+  m.onVis(); assert.equal(ctx.state, 'running', 'resume ved synlig fane'); t = 5; m.pump(); assert.ok(osc > n1, 'spiller igjen etter resume');
+  document.hidden = true; vis.visibilitychange?.(); assert.equal(m.state.ticking, false, 'pumpen stoppet i skjult fane');
+  document.hidden = false; vis.visibilitychange?.(); assert.equal(m.state.ticking, true);
+  calls.length = 0; m.duck(0.4, 0.9); assert.equal(calls[0], 0.4); assert.equal(calls[1], 1); m.stop(); delete globalThis.document;
+}
 console.log('test_music: ok');

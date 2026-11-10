@@ -35,7 +35,7 @@ Ferdig når: du kan samle dem på mobil, de overlever siden lastes på nytt, og 
 Myk hjørne-mørkning der vegg møter gulv og møbler (billig AO, ikke SSAO på mobil), og lysstråler/støv fra vinduet. Små rekvisitter på gulv og hyller for målestokk (smuler, hår, knapper). Må være av med Grafikk «Enkel». Filer: `look.js`, `main.js`.
 Ferdig når: rommene ser mer jordet og detaljerte ut i skjermbilder, uten flimmer.
 
-### [ ] R5 · Musikk og stemning per rom
+### [x] R5 · Musikk og stemning per rom
 Prosedyrebasert musikk (Web Audio, ingen filer): rolig, leken tema per rom (bad, barnerom, kjøkken) som dynamikk skifter med fare (maur i nærheten) og mål. Eget volum i mikseren, av/på i ⚙. Nytt modul `music.js` med testbar logikk (skala, mønster, tempo som funksjon av tilstand).
 Ferdig når: musikk spiller etter første trykk, kan slås av, og skifter stemning når en maur ser deg.
 

@@ -266,7 +266,7 @@ export function createAudio(ctx, opts = {}) {
     ctx, out: bus, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
     pickup, drop, shatter, crush, splash, squash, anthit, checkpoint, win, drip, hum,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
-    resume: () => (ctx.state === 'suspended' && ctx.resume ? ctx.resume() : Promise.resolve()),
+    resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },
     setMuted: (m) => { muted = !!m; apply(); },
     setReverb: (v) => { wet.gain.value = v; },

@@ -51,8 +51,18 @@ Jeg kan ikke høre, så det er målt, ikke vurdert. `tools/audio_check.cjs` rend
 - Romlyd: dryppende kran, fjern vifte, klokke, vindu. Romtone per rom.
 - Ting i rommet gir lyd (dytting av ulike materialer, glass som ringer).
 - Lyd med posisjon (3D) og visuell støtte for hørselshemmede.
-- Musikk, og tydeligere mikser (egne volum for skritt, pust, miljø).
+- Rikere musikk (flere stemmer, ekte melodier), og tydeligere mikser (egne volum for skritt, pust, miljø).
 
 ## Romlyd og lydtekst (v0.23)
 - **Romlyd:** brettets `audio.ambience` (liste) styrer: `drip` = dryppende kran (en dråpe hvert 2,4–6 s, plassert ved første boks med `kind: faucet`, panorert etter kameraet) og `fan` = vifte/lav romtone. Begge har egne kanaler i mikseren (gruppe «Rom»).
 - **Lydtekst (V eller ⚙):** korte tekster øverst til høyre for viktige lyder, med ◀ ▶ for retning: landing / hard landing, drypp, noe knuses, klemt, plask/skylling, sjekkpunkt, tak i kanten, tok/slapp ting. Skritt og pust er utelatt. Lagres i nettleseren; virker også når lyden er av.
+
+## Musikk (R5, `music.js`)
+Prosedyrebasert musikk, helt syntetisert, uten filer. Den starter etter første trykk sammen med lydmotoren og ligger på samme bus som effektene (`audio.out`).
+- **Tema per rom** (`THEMES`): bad (klokkeaktig, 84 slag/min), barnerom (spilledåse, 104), kjøkken (plukkende, mixolydisk, 116). Velges av `audio.theme` i brettet, ellers av navnet (`themeFor`). Hvert tema har grunntone, skala, akkordgang, tempo og sving.
+- **Stemning** (`moodFor`, kalles hvert bilde i `musicFrame`): `calm` (rolig), `tense` (en levende maur har sett deg: mørkere skala, raskere tempo, perkusjon og puls) og `win` (mål nådd: lysere, glitrende). Hver endring logges med `logEv('musikk', stemning)`.
+- **Mobil:** puls og bass ligger høyt nok (puls på grunntonen, ca 200–300 Hz, bass med overtone) til at iPhone-høyttaleren gjengir dem; ingenting under ca 150 Hz bærer hele lyden.
+- **Balanse:** standardvolum 0,2 (var 0,6). Målt offline med `tools/music_balance.cjs` (RMS i dBFS gjennom samme kjede, musikk ved volum 0,35): musikk `calm` -40,8, `tense` -37,8; skritt (matte) -45,5, landing (flis) -36,4, anstrengt pust -31,7 (høyeste 0,25 s). Ved 0,35 lå musikken altså over skrittene, så standarden er senket til 0,2 (ca 5 dB lavere, `calm` omtrent som skrittene og klart under landing og pust). Musikken dukker dessuten (`music.duck`) til 30–45 % i 0,8–1,6 s når mål, maur-støt eller knusing låter. Tallene er første gjetning; hør etter på telefon og justér volumet i ⚙.
+- **Avbrudd:** iPhone setter lyden i `suspended`/`interrupted` ved lås eller fanebytte. Pumpen planlegger ingenting mens lyden ikke går, stopper i skjult fane, og lyden tas opp igjen på `visibilitychange`, `pageshow`, `statechange` og neste trykk.
+- **Innstillinger** (⚙, gruppe Lyd): «Musikk» (av/på) og «Musikk: volum».
+- **Tester:** `test_music.mjs` (logikk, ducking, resume/skjult fane mot falsk AudioContext) og `tools/music_balance.cjs` (balansemåling) og `tools/music_game_check.cjs` (kjører spillet i Playwright og sjekker at stemningen faktisk bytter til tense og win og logges).
