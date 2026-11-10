@@ -48,4 +48,20 @@ assert.ok(r.errors.some((e) => /color/.test(e)) && r.errors.some((e) => /min < m
   { const { execFileSync } = await import('node:child_process'); const before = ['bad2', 'barnerom2', 'kjokken2'].map((n) => fs.readFileSync(`scenes/${n}.scene.json`, 'utf8'));
     execFileSync('node', ['tools/make_variants.mjs']); ['bad2', 'barnerom2', 'kjokken2'].forEach((n, i) => assert.equal(fs.readFileSync(`scenes/${n}.scene.json`, 'utf8'), before[i], `${n}: scenen er utdatert, kjør node tools/make_variants.mjs`)); }
 }
+// maur (v0.77): hver patrulje i hvert brett skal ha fri bane på flaten den går på, og ligge langt nok fra start til at du ikke blir angrepet med en gang
+{
+  const R = 0.7, HG = 0.85;
+  for (const f of fs.readdirSync('levels').filter((n) => n.endsWith('.level.json'))) {
+    const L = JSON.parse(fs.readFileSync(`levels/${f}`, 'utf8')); if (!L.ants?.length) continue;
+    const solid = L.boxes.filter((b) => b.type !== 'floor' && b.type !== 'wall');
+    const topAt = (x, z) => { let t = 0; for (const b of L.boxes) if (b.type !== 'wall' && x > b.min[0] && x < b.max[0] && z > b.min[2] && z < b.max[2]) t = Math.max(t, b.max[1]); return t; };
+    const free = (x, y, z) => !solid.some((b) => x + R > b.min[0] && x - R < b.max[0] && z + R > b.min[2] && z - R < b.max[2] && y + HG > b.min[1] && y < b.max[1] - 0.01)
+      && [[0, 0], [R, 0], [-R, 0], [0, R], [0, -R]].every(([dx, dz]) => topAt(x + dx, z + dz) >= y - 0.02) && Math.abs(topAt(x, z) - y) < 0.02;
+    for (const a of L.ants) {
+      for (let i = 0; i <= 60; i++) { const t = i / 60, x = a.a[0] + (a.b[0] - a.a[0]) * t, z = a.a[2] + (a.b[2] - a.a[2]) * t; assert.ok(free(x, a.a[1], z), `${f}: maur ${a.id} har ikke fri bane ved (${x.toFixed(1)}, ${z.toFixed(1)})`); }
+      for (const t of [0, 1]) assert.ok(Math.hypot(a.a[0] + (a.b[0] - a.a[0]) * t - L.start[0], a.a[2] + (a.b[2] - a.a[2]) * t - L.start[2]) > 12, `${f}: maur ${a.id} er for nær start`);
+    }
+  }
+}
+
 console.log('scene-tester grønne');

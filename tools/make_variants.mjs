@@ -69,6 +69,7 @@ const kit = (s) => ({
   k.add('hylle_over_vask', 'chest', 'wood', '#c79a5e', [118, 142, 194, 198, 0, 30], {});
   k.add('potteplante', 'cup', 'ceramic', '#6f8f3a', [122, 132, 198, 212, 2, 12], {});
   s.goal = { x: 76, y: 190, z: 44, on: 'kjoleskap', note: 'Motgift-bit på toppen av kjøleskapet' };
+  { const m = s.ants.find((x) => x.id === 'maur_matte'); if (m) m.to = [m.from[0] + 55, m.from[1]]; }      // kassa står på matta nå: kortere patrulje (maurene må ha fri bane)
   save('kjokken2', s);
 }
 console.log('skrev scenes/bad2, barnerom2, kjokken2');

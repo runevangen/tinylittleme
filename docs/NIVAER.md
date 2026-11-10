@@ -53,3 +53,8 @@ Ikke gjort ennå i nivå 4–6: nye gjenstander som *verktøy* (hårgelé, dopap
 - Nivå 2 og 3 er enkle i formen (mest klosser med farge): de trenger egne former for seng, stol, kjøleskap, komfyr, og flere småting.
 - Ingen egen historie eller overgang mellom nivåene, og ingen låsing.
 - Vanskelighetsgraden er satt etter rutelengde, farer og fallhøyde, ikke etter spilletest. Trenger tilbakemelding.
+
+## Maur (v0.77)
+Levende fiender som patruljerer en strek (`ants` i `level.json`, laget av `ants` i scenen). Hopp på ryggen (HOPP) = de knuses og du spretter opp; ellers støter de deg tilbake (−4 poeng) og er ufarlige i 1,3 s. De ser deg på 7 enheter (på samme høyde) og løper da mot deg langs streken. Knuste maur kommer tilbake etter 25 s. De hindrer aldri ruta (de kan knuses), så `walk_route` og rutekartet ignorerer dem. Hengende og klatrende er utenfor rekkevidde. Av/på: ⚙ → Hjelp og tekst → «Maur».
+
+I scenen (cm): `"ants": [{ "id": "maur_gulv", "on": "gulv", "from": [x, z], "to": [x, z], "crumb": true, "speed": 2.4 }]`. `on` er `gulv` eller id-en til tingen de går på (toppen av den). `npm test` passer på at hver bane er fri for ting og ligger på flata, og at ingen starter nærmere enn 12 enheter fra start. Variantene (nivå 4–6) arver banene fra grunnscenen; flytter en variant på ting, kortes banen i `tools/make_variants.mjs`.

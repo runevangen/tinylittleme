@@ -1081,5 +1081,32 @@
       "drip",
       "fan"
     ]
-  }
+  },
+  "ants": [
+    {
+      "id": "maur_gulv",
+      "on": "gulv",
+      "from": [
+        40,
+        125
+      ],
+      "to": [
+        320,
+        125
+      ],
+      "crumb": true
+    },
+    {
+      "id": "maur_matte",
+      "on": "matte_kjokken",
+      "from": [
+        135,
+        88
+      ],
+      "to": [
+        225,
+        88
+      ]
+    }
+  ]
 }

@@ -1660,5 +1660,20 @@
       "drip",
       "fan"
     ]
-  }
+  },
+  "ants": [
+    {
+      "id": "maur_gulv",
+      "on": "gulv",
+      "from": [
+        92,
+        55
+      ],
+      "to": [
+        242,
+        55
+      ],
+      "crumb": true
+    }
+  ]
 }

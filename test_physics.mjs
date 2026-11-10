@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { P, box, newPlayer, step, freeAt, applyPreset, stepLength, inHazard, initBodies, surfaceBelow, returnBody, resetBodies, drainEvents, toolHint } from './physics.js';
 import { LEVEL } from './level.js';
+import { initAnts, stepAnts, resetAnts, ANT } from './ants.js';
 
 applyPreset('klassisk');
 const floor = box('floor', -50, 50, -2, 0, -50, 50);
@@ -940,6 +941,25 @@ const fwd = { ...idle, mz: 1 };
   const side = newPlayer(-5, 0, 0); run(L, side, 120, () => ({ ...idle, mx: 1 }));        // går mot kula: dytter den, ingen kantgrep
   const bl = L.bodies[0], bc = (bl.min[0] + bl.max[0]) / 2;
   assert.ok(side.x < bc - 1 && bl.min[0] > -1.6 && side.state !== 'hang' && side.state !== 'climb', `dytter kula, går ikke gjennom: x=${side.x} kule ${bc} ${side.state}`);
+}
+
+// maur (v0.77): patruljerer, ser deg, støter deg tilbake; hopp på ryggen knuser den og spretter deg opp; knust maur kommer tilbake
+{
+  const L = { boxes: [floor], ropes: [], ants: [{ id: 'm', a: [0, 0, 0], b: [10, 0, 0] }] }; initAnts(L);
+  const far = newPlayer(0, 0, 20), ant = L.antList[0], x0 = ant.x;
+  for (let i = 0; i < 120; i++) stepAnts(L, far, 1 / 60);
+  assert.ok(ant.x !== x0 && ant.x >= 0 && ant.x <= 10, `maura går langs streken: ${ant.x}`);
+  // møter deg på bakken: støt tilbake, bare én gang per «ufarlig» tid
+  const p = newPlayer(ant.x, 0, ant.z); p.state = 'ground'; p.onGround = true;
+  const ev = stepAnts(L, p, 1 / 60); assert.ok(ev.some((e) => e.type === 'hurt'), 'støt'); assert.ok(p.vy > 0 && Math.hypot(p.vx, p.vz) > 5 && p.lock > 0);
+  assert.equal(stepAnts(L, { ...p, x: ant.x, z: ant.z, vy: 0 }, 1 / 60).filter((e) => e.type === 'hurt').length, 0, 'ufarlig rett etter støt');
+  // hopp på ryggen
+  resetAnts(L); const a2 = L.antList[0], q = newPlayer(a2.x, a2.y + ANT.hgt * 0.8, a2.z); q.state = 'air'; q.vy = -6;
+  const ev2 = stepAnts(L, q, 1 / 60); assert.ok(ev2.some((e) => e.type === 'stomp'), 'knus'); assert.equal(q.vy, ANT.bounce); assert.equal(a2.alive, false);
+  for (let i = 0; i < 60 * ANT.respawn + 60; i++) stepAnts(L, far, 1 / 60);
+  assert.equal(a2.alive, true, 'knust maur kommer tilbake');
+  // sikt: går mot deg langs streken når du er nær
+  const near = newPlayer(8, 0, 3); resetAnts(L); stepAnts(L, near, 1 / 60); assert.equal(L.antList[0].alerted, true);
 }
 
 console.log('alle fysikktester grønne');

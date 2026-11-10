@@ -728,5 +728,57 @@
   },
   "audio": {
     "reverb": 0.14
-  }
+  },
+  "ants": [
+    {
+      "id": "maur_gulv",
+      "on": "gulv",
+      "from": [
+        105,
+        100
+      ],
+      "to": [
+        195,
+        100
+      ],
+      "crumb": true
+    },
+    {
+      "id": "maur_dyne",
+      "on": "dyne",
+      "from": [
+        15,
+        75
+      ],
+      "to": [
+        80,
+        75
+      ]
+    },
+    {
+      "id": "maur_pult",
+      "on": "skrivebord",
+      "from": [
+        220,
+        60
+      ],
+      "to": [
+        285,
+        60
+      ],
+      "speed": 2.4
+    },
+    {
+      "id": "maur_hjorne",
+      "on": "gulv",
+      "from": [
+        260,
+        160
+      ],
+      "to": [
+        260,
+        225
+      ]
+    }
+  ]
 }

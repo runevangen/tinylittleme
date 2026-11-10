@@ -283,6 +283,14 @@ const route = (() => {
   });
   return out;
 })();
+// maur: patruljer i scenen oppgis i cm: { id, on: «gulv» eller id på en ting (flaten de går på), from: [x, z], to: [x, z], speed? }
+const ants = (scene.ants || []).map((a) => {
+  const on = a.on && a.on !== 'gulv' ? scene.objects.find((o) => o.id === a.on) : null;
+  if (a.on && a.on !== 'gulv' && !on) throw new Error(`maur ${a.id}: fant ikke flaten ${a.on}`);
+  const y = on ? uy(on.box[3]) : 0;
+  return { id: a.id, a: [ux(a.from[0]), y, uz(a.from[1])], b: [ux(a.to[0]), y, uz(a.to[1])], ...(a.speed ? { speed: a.speed } : {}), ...(a.crumb ? { crumb: true } : {}) };
+});
+
 const finalSeen = reachable();
 const solvable = finalSeen.has(goalIdx());
 
@@ -290,6 +298,7 @@ const solvable = finalSeen.has(goalIdx());
 const level = {
   name: scene.name, ...(scene.rev ? { rev: scene.rev } : {}),
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
+  ants,
   ropes: [],
   route,
   start, goal,

@@ -472,3 +472,58 @@ export function buildGroup(members) {
   for (const [test, fn] of BUILDERS) if (test(members)) return fn(members);
   return null;
 }
+
+// ---------- maur (v0.77): blank, litt tegnefilm-aktig (store øyne, tykk kropp), seks bein som går i trebeinsgange ----------
+// Lokal +x er fremover. Returnerer { root, update(phase, speed, squash, alerted) }.
+export function buildAnt({ color = 0x9a3a1e, crumb = false } = {}) {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const shell = new THREE.MeshPhysicalMaterial({ color, roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.12 });
+  const dark = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).multiplyScalar(0.42), roughness: 0.4 });
+  const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 }), black = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
+  const S = (r, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = mesh(new THREE.SphereGeometry(r, 20, 14), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); body.add(m); return m; };
+  S(0.44, shell, -0.66, 0.56, 0, 1.25, 1, 1);                           // bakkropp
+  S(0.3, shell, -0.02, 0.58, 0, 1.15, 0.95, 0.9);                       // bryst
+  const head = S(0.37, shell, 0.62, 0.62, 0, 1, 1, 1.05);               // hode
+  for (const z of [-1, 1]) {                                            // store øyne med glans
+    S(0.17, white, 0.84, 0.74, z * 0.2, 1, 1.15, 1);
+    S(0.085, black, 0.97, 0.75, z * 0.2); S(0.03, white, 1.0, 0.8, z * 0.17);
+  }
+  const mouth = mesh(new THREE.TorusGeometry(0.1, 0.022, 6, 14, Math.PI), dark); mouth.position.set(0.97, 0.52, 0); mouth.rotation.set(0, Math.PI / 2, Math.PI); body.add(mouth);
+  const ant = [];                                                       // følehorn: to ledd + kule i tuppen
+  for (const z of [-1, 1]) {
+    const a = mesh(new THREE.CylinderGeometry(0.03, 0.04, 1, 6), dark), b = mesh(new THREE.CylinderGeometry(0.025, 0.03, 1, 6), dark), tip = S(0.06, shell, 0, 0, 0);
+    body.add(a, b); ant.push({ a, b, tip, z });
+  }
+  // bein: hofte på brystet, kne opp og ut, fot i bakken. Tre par, hvert bein går i fase etter trebeinsgangen
+  const legMat = dark, legs = [];
+  for (const [i, hx] of [0.18, 0, -0.18].entries()) for (const z of [-1, 1]) {
+    const up = mesh(new THREE.CylinderGeometry(0.055, 0.07, 1, 8), legMat), lo = mesh(new THREE.CylinderGeometry(0.04, 0.055, 1, 8), legMat), knee = mesh(new THREE.SphereGeometry(0.085, 10, 8), legMat);
+    body.add(up, lo, knee); legs.push({ up, lo, knee, hx, z, ph: (i + (z > 0 ? 1 : 0)) % 2 ? Math.PI : 0 });
+  }
+  let crumbMesh = null;
+  if (crumb) {                                                          // en brødsmule på ryggen: maurene bærer hjem mat
+    crumbMesh = mesh(new THREE.DodecahedronGeometry(0.26, 0), new THREE.MeshStandardMaterial({ color: 0xe2b66a, roughness: 1, flatShading: true })); crumbMesh.position.set(-0.45, 1.12, 0); crumbMesh.scale.set(1.2, 0.8, 1); body.add(crumbMesh);
+  }
+  const seg = (m, a, b) => { const d = new THREE.Vector3().subVectors(b, a), l = d.length() || 1e-3; m.position.copy(a).addScaledVector(d, 0.5); m.scale.set(1, l, 1); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.divideScalar(l)); };
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
+  function update(phase, speed = 0, squash = 0, alerted = false) {
+    const walk = Math.min(1, speed / 2);
+    for (const l of legs) {
+      const t = phase + l.ph, swing = Math.sin(t) * 0.3 * walk, lift = Math.max(0, Math.cos(t)) * 0.2 * walk;
+      A.set(l.hx, 0.46, l.z * 0.18);                                                     // hofte
+      C.set(l.hx + swing * 0.6, 0.78 + lift * 0.5, l.z * 0.58);                          // kne
+      B.set(l.hx * 1.4 + swing, lift, l.z * 0.78);                                       // fot
+      seg(l.up, A, C); seg(l.lo, C, B); l.knee.position.copy(C);
+    }
+    const perk = alerted ? 0.25 : 0, wob = Math.sin(phase * 0.7) * 0.08;
+    for (const f of ant) {                                                               // følehornene spriker og vifter; reiser seg når den har sett deg
+      A.set(0.78, 0.92, f.z * 0.14); C.set(1.05 + perk * 0.3, 1.2 + perk, f.z * (0.3 + wob)); B.set(1.32 + perk * 0.4, 1.28 + perk * 1.2 + wob, f.z * (0.52 + wob));
+      seg(f.a, A, C); seg(f.b, C, B); f.tip.position.copy(B);
+    }
+    body.position.y = Math.abs(Math.sin(phase)) * 0.045 * walk; body.rotation.z = Math.sin(phase) * 0.04 * walk;
+    head.rotation.y = Math.sin(phase * 0.5) * 0.12 * (1 - walk);
+    root.scale.set(1 + squash * 0.5, Math.max(0.04, 1 - squash * 0.96), 1 + squash * 0.5);   // knust: flat som en pannekake
+  }
+  update(0, 0, 0, false);
+  return { root, update };
+}

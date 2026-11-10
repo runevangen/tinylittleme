@@ -38,6 +38,8 @@ export const SOUND_LIST = [
   { id: 'shatter', label: 'Ting knuses', group: 'Ting' },
   { id: 'crush', label: 'Klemt', group: 'Hendelser' },
   { id: 'splash', label: 'Kar / skylles ned', group: 'Hendelser' },
+  { id: 'squash', label: 'Maur knuses (sprett)', group: 'Hendelser' },
+  { id: 'anthit', label: 'Maur støter deg', group: 'Hendelser' },
   { id: 'checkpoint', label: 'Sjekkpunkt', group: 'Hendelser' },
   { id: 'win', label: 'Mål', group: 'Hendelser' },
   { id: 'drip', label: 'Dryppende kran', group: 'Rom' },
@@ -202,6 +204,8 @@ export function createAudio(ctx, opts = {}) {
     burst({ type: 'lowpass', freq: kind === 'flush' ? 1500 : 800, freq2: 180, gain: 0.35, attack: 0.02, decay: kind === 'flush' ? 1.2 : 0.4 });
     tone({ freq: 120, freq2: 60, gain: 0.4, decay: 0.25 });
   });
+  const squash = () => use('squash', () => { tone({ freq: 640, freq2: 190, type: 'triangle', gain: 0.18, decay: 0.14 }); burst({ type: 'lowpass', freq: 900, gain: 0.3, decay: 0.08 }); tone({ freq: 1250, freq2: 700, type: 'sine', gain: 0.08, decay: 0.1, delay: 0.05 }); });
+  const anthit = () => use('anthit', () => { tone({ freq: 330, freq2: 170, type: 'square', gain: 0.1, decay: 0.2 }); burst({ type: 'bandpass', freq: 2200, gain: 0.16, decay: 0.07 }); });
   const checkpoint = () => use('checkpoint', () => { tone({ freq: 880, type: 'triangle', gain: 0.1, decay: 0.35 }); tone({ freq: 1320, type: 'triangle', gain: 0.07, decay: 0.45, delay: 0.08 }); });
   const win = () => use('win', () => [523, 659, 784, 1047].forEach((f, k) => tone({ freq: f, type: 'triangle', gain: 0.12, decay: 0.5, delay: k * 0.11 })));
 
@@ -239,6 +243,8 @@ export function createAudio(ctx, opts = {}) {
       case 'shatter': shatter(); break;
       case 'crush': crush(); break;
       case 'splash': splash('flush'); break;
+      case 'squash': squash(); break;
+      case 'anthit': anthit(); break;
       case 'checkpoint': checkpoint(); break;
       case 'win': win(); break;
       case 'drip': drip(-0.3); drip(0.3); break;
@@ -258,7 +264,7 @@ export function createAudio(ctx, opts = {}) {
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
     ctx, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
-    pickup, drop, shatter, crush, splash, checkpoint, win, drip, hum,
+    pickup, drop, shatter, crush, splash, squash, anthit, checkpoint, win, drip, hum,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state === 'suspended' && ctx.resume ? ctx.resume() : Promise.resolve()),
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },
