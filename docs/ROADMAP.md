@@ -27,10 +27,6 @@ Ferdig når: før/etter-skjermbilder av nivå 1, 2 og 3 viser tydelig varmere og
 Nye kinds i `props.js`/`kinds.js` (med tester): bokstavkloss (med bokstav, avrundet, pastellfarger), Lego-aktig kloss med knotter (kan stables og klatres på), leketøysbil (hjul som dreier ikke nødvendig, fast boks), ball er allerede egen kind. Plasser dem i barnerommet (nivå 2 og 5) og kjøkkenet der det gir mening, helst som klatrebare trinn eller dyttbare ting. Filer: `props.js`, `kinds.js`, `scenes/barnerom*.scene.json`, `tools/make_variants.mjs`, regenerer levels, kjør `node tools/make_prompt.mjs`.
 Ferdig når: rommene er tydelig leketøysaktige, rutene går gjennom, og kollisjon stemmer med utseende (ingen klatring på luft).
 
-### [ ] R3 · Smuler å samle (belønning for å utforske)
-Nytt modul `collect.js` (ren logikk, testet): gullfargede brødsmuler/stjerner som ligger rundt i brettet, noen åpent, noen gjemt på omveier. Du plukker dem ved å gå inn i dem. Teller i HUD-en (kompakt) og i målskjermen, lagres i autolagringen, gir poeng. Nye lyder i `audio.js`. Smuler plasseres via `collectibles` i scenen (som `ants`) og tester sjekker at de ligger på nåbare flater. Minst 8 per brett i nivå 1–6.
-Ferdig når: du kan samle dem på mobil, de overlever siden lastes på nytt, og målskjermen viser «smuler X/Y».
-
 ### [ ] R4 · Mørkere hjørner og lysstråler
 Myk hjørne-mørkning der vegg møter gulv og møbler (billig AO, ikke SSAO på mobil), og lysstråler/støv fra vinduet. Små rekvisitter på gulv og hyller for målestokk (smuler, hår, knapper). Må være av med Grafikk «Enkel». Filer: `look.js`, `main.js`.
 Ferdig når: rommene ser mer jordet og detaljerte ut i skjermbilder, uten flimmer.
@@ -61,4 +57,5 @@ Ferdig når: animasjonene leses tydelig i skjermbilder/serier og ingen eksistere
 
 ## Ferdige punkter
 - [x] Maur (v0.77)
+- [x] Smuler å samle (belønning for å utforske) (v0.79)
 - [x] Startskjerm (v0.73) · Ryddigere skjerm (v0.75) · Grafikk: korn, skygger, anisotropi (v0.76)
