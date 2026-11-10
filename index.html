@@ -18,7 +18,7 @@
   #qpop button{border:0;border-radius:9px;padding:9px 11px;font:600 13px system-ui;background:#ffffff22;color:#eef2fa}
   #qpop .qt button.on{background:#ffa940;color:#1d2433}
   #qpop .qr button{background:#ffffff30;font-size:14px}
-  #fps{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));color:#bff;font:600 12px ui-monospace,monospace;background:#0008;padding:3px 7px;border-radius:7px;display:none;z-index:3;pointer-events:none}
+  #fps{position:fixed;right:max(52px,calc(env(safe-area-inset-right) + 44px));top:max(10px,env(safe-area-inset-top));color:#bff;font:600 12px ui-monospace,monospace;background:#0008;padding:3px 7px;border-radius:7px;display:none;z-index:3;pointer-events:none}
   #btnCarry.take{background:#2a7f62cc}#btnCarry.use{background:#c77d12e6}#btnCarry.throw{background:#c0392be6}#btnCarry.drop{background:#4b6a7acc}
   #btnCarry.dim{opacity:.55}#btnCarry.take.dim{opacity:.8}
   #btnCarry.ready.use{animation:taready 1s ease-in-out infinite alternate}@keyframes taready{to{box-shadow:0 0 0 8px #ffd27a66}}
@@ -32,13 +32,15 @@
   #hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#fffe;color:var(--ink);padding:6px 12px;border-radius:999px;font:600 13px system-ui;pointer-events:none}
   #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
   #toast.show{opacity:1}
-  #infocard{position:fixed;right:0;top:max(120px,calc(env(safe-area-inset-top) + 110px));width:min(86vw,360px);box-sizing:border-box;display:flex;align-items:flex-start;transform:translateX(calc(100% - 38px));transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:3;pointer-events:none}
+  #infocard{position:fixed;right:0;top:max(6px,env(safe-area-inset-top));width:min(100vw,560px);box-sizing:border-box;display:flex;align-items:flex-start;transform:translateX(calc(100% - 38px));transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:6;pointer-events:none}
   #infocard.show{transform:translateX(0)}
   #infotab{pointer-events:auto;flex:none;width:38px;height:46px;border:0;border-radius:14px 0 0 14px;background:#121a2cdd;color:#ffd9a0;font:800 20px/1 Georgia,serif;font-style:italic;box-shadow:-2px 2px 6px #0004;border:2px solid #ffa940;border-right:0}
   #infotab.dim{opacity:.4}
   #infobody{pointer-events:auto;flex:1;min-height:46px;box-sizing:border-box;background:#121a2cdd;border:2px solid #ffa940;border-right:0;border-radius:0 0 0 14px;padding:9px 13px;color:#eef2fa;font:500 14px/1.35 system-ui}
   #infocard:not(.show) #infobody{pointer-events:none}
-  #infocard.manual #infobody{max-height:62vh;overflow:auto;-webkit-overflow-scrolling:touch}
+  /* hjelpeteksten ligger helt øverst (v0.63): tittel og «Bruksanvisning ›» på samme linje, så kortet blir lavt */
+  #infocard:not(.manual) #infobody{padding:7px 12px;background:#121a2cf2}#infocard:not(.manual) #infobody .ilink{float:right;display:inline-block;margin:0 0 4px 10px;padding:4px 9px;font-size:12px}#infocard:not(.manual) #infobody span{margin-top:3px}
+  #infocard.manual #infobody{max-height:72vh;overflow:auto;-webkit-overflow-scrolling:touch}
   #infobody .ilink{display:block;margin-top:8px;padding:6px 10px;border:0;border-radius:8px;background:#ffffff22;color:#ffd9a0;font:700 13px system-ui;text-align:left}
   #infobody b{display:block;color:#ffd9a0;font-size:15px;margin-bottom:2px}#infobody span{display:block;margin-top:7px}
   #stam{position:fixed;width:46px;height:7px;margin:-22px 0 0 -23px;border-radius:4px;background:#0009;border:1px solid #fff6;display:none;z-index:3;pointer-events:none;overflow:hidden}
@@ -50,7 +52,7 @@
   #compass .ring{width:38px;height:38px;border-radius:50%;background:#ffffff14;display:flex;align-items:center;justify-content:center}
   #compass svg{width:26px;height:26px;transition:transform .08s linear}
   #compass small{display:block;color:#ffd9a0;font-weight:700;font-size:11px}
-  #cues{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none}
+  #cues{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(112px,calc(env(safe-area-inset-top) + 102px));display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none}
   .cue{background:#000a;color:#fff;font:600 13px system-ui;padding:5px 11px;border-radius:999px;animation:cuein .15s ease-out;transition:opacity .4s}
   .cue.out{opacity:0}@keyframes cuein{from{transform:translateX(14px);opacity:0}}
   #help{position:fixed;right:10px;top:10px;max-width:300px;background:var(--panel);color:var(--ink);padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.5}

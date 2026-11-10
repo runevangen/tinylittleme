@@ -209,7 +209,7 @@ function manualHtml() {
 function openInfo(l, pinned) {                       // l = ting (brukslapp), eller null = den generelle bruksanvisningen
   infoCur = l; if (l) infoLast = l;
   const near = labels.filter((x) => x.d < 13).sort((a, b) => a.d - b.d)[0];
-  infoBody.innerHTML = l ? `<b>${l.title}</b>${l.body ? `<span>${l.body}</span>` : ''}<button class="ilink" data-i="manual">${T('manual.show')} ›</button>` : `${manualHtml()}${near ? `<button class="ilink" data-i="item">‹ ${T('manual.near')}: ${near.title}</button>` : ''}`;
+  infoBody.innerHTML = l ? `<button class="ilink" data-i="manual">${T('manual.show')} ›</button><b>${l.title}</b>${l.body ? `<span>${l.body}</span>` : ''}` : `${manualHtml()}${near ? `<button class="ilink" data-i="item">‹ ${T('manual.near')}: ${near.title}</button>` : ''}`;
   infoOpen = true; infoPinned = !!pinned || !l; infoT = pinned || !l ? 14 : 5.5; infoCard.classList.add('show'); if (l) infoSeen.add(l);
   infoCard.classList.toggle('manual', !l);
 }
