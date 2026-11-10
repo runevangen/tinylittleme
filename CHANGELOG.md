@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.82** – **Mørkere hjørner og lysstråler**: myk mørkning der vegg møter gulv og lysstråler med støv fra vinduet gir rommene mer dybde. Kan slås av i ⚙ (og er av med Grafikk «Enkel»). Rutene er uendret og går.
 - **0.81** – **Figuren forsvant i gardinen**: når du hang i vinduskarmen i nivå 5 satt figuren inni gardinen og ble skjult av den. Ting som figuren sitter inni, tones nå ut uansett kameravinkel.
 - **0.80** – **Leker i barneskala**: bokstavklosser, legoklosser med knotter og leketøysbiler i barnerommet og kjøkkenet. Klatre på dem med stikke + HOPP/GREP, dytt bokstavklossen med stikka. Rutene er uendret og går.
 - **0.79** – **Smuler å samle**: gullsmuler ligger rundt i alle seks brettene, noen åpne og noen gjemt på omveier. Gå inn i dem (stikke + HOPP/GREP for å nå de høye); telleren vises i HUD-en og målskjermen viser «smuler X/Y». Lagres i autolagringen.

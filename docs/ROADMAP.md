@@ -23,10 +23,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 Varmere, mer mettet belysning og fargegradering som i Pixar: mykere nøkkellys med varm sol og kjølig fyll, litt mer kontrast i skyggene, blankere plast (clearcoat) på plast- og porselensflater, tydeligere kantlys. Må ikke gjøre rommene mørkere eller ulesbare, og FPS skal ikke falle merkbart (Grafikk «Enkel» skal fortsatt virke). Filer: `main.js` (lys, tonemapping), `look.js`, evt. `level.look` i scenene.
 Ferdig når: før/etter-skjermbilder av nivå 1, 2 og 3 viser tydelig varmere og mer levende bilde uten blomstring eller utbrente flater.
 
-### [ ] R4 · Mørkere hjørner og lysstråler
-Myk hjørne-mørkning der vegg møter gulv og møbler (billig AO, ikke SSAO på mobil), og lysstråler/støv fra vinduet. Små rekvisitter på gulv og hyller for målestokk (smuler, hår, knapper). Må være av med Grafikk «Enkel». Filer: `look.js`, `main.js`.
-Ferdig når: rommene ser mer jordet og detaljerte ut i skjermbilder, uten flimmer.
-
 ### [ ] R5 · Musikk og stemning per rom
 Prosedyrebasert musikk (Web Audio, ingen filer): rolig, leken tema per rom (bad, barnerom, kjøkken) som dynamikk skifter med fare (maur i nærheten) og mål. Eget volum i mikseren, av/på i ⚙. Nytt modul `music.js` med testbar logikk (skala, mønster, tempo som funksjon av tilstand).
 Ferdig når: musikk spiller etter første trykk, kan slås av, og skifter stemning når en maur ser deg.
@@ -52,6 +48,7 @@ Se `docs/FIGUREN.md` og `BACKLOG.md`: føtter som tilpasser seg trinn, bedre hen
 Ferdig når: animasjonene leses tydelig i skjermbilder/serier og ingen eksisterende test brekker.
 
 ## Ferdige punkter
+- [x] Mørkere hjørner og lysstråler (v0.82)
 - [x] Leker i barneskala (v0.80)
 - [x] Maur (v0.77)
 - [x] Smuler å samle (belønning for å utforske) (v0.79)
