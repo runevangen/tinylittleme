@@ -112,7 +112,19 @@
   body.pc #btnCenter::before{top:3px}
   body.pc #btnCarry,body.pc #btnJump,body.pc #btnGrab{padding-top:12px}
 </style>
-<script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
+<script>
+// Alltid nyeste versjon (v0.68): hent versjonsnummeret uten mellomlager, og last alle spillfilene med ?v=<versjon>.
+// Uten dette kunne nettleseren (særlig på mobil) bli sittende med gamle filer i flere minutter, eller blande gamle og nye.
+// Gjøres mens siden leses inn (før noen modul er lastet), så import-kartet virker i alle nettlesere som støtter slike kart.
+(function () {
+  var v = String(Date.now());
+  try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
+  window.__assetV = v;
+  const files = ['main', 'physics', 'props', 'look', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'version', 'level', 'kinds'];
+  var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
+  document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
+})();
+</script>
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -156,6 +168,6 @@
   <button id="bSound">Lyd</button>
   <button id="bSet">⚙</button>
 </div>
-<script type="module" src="./main.js"></script>
+<script>document.write('<script type="module" src="./main.js?v=' + window.__assetV + '"><\/script>');</script>
 </body>
 </html>

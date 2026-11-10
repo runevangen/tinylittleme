@@ -50,7 +50,7 @@ let levelId = levelParam === '' ? 'soverom' : (levelParam ?? store.get('tlm.leve
 let LEVEL = null, levelName = '';
 if (levelId && levelId !== 'soverom') {
   try {
-    const r = await fetch(`./levels/${encodeURIComponent(levelId)}.level.json`);
+    const r = await fetch(`./levels/${encodeURIComponent(levelId)}.level.json?v=${encodeURIComponent(window.__assetV || VERSION)}`);       // brettet følger versjonen, så et ombygd brett ikke hentes fra mellomlageret
     if (!r.ok) throw new Error(r.status);
     LEVEL = await r.json(); levelName = levelId;
   } catch { LEVEL = null; }

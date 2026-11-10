@@ -22,4 +22,10 @@ const bad = { units: 'cm', room: { width: 200, depth: 200, height: 200, floor: {
   objects: [{ id: 'a', kind: 'box', material: 'wood', color: 'rød', box: [10, 5, 0, 10, 0, 10] }, { id: 'a', kind: 'toilet_tank', group: 'x', material: 'wood', color: '#ffffff', box: [0, 10, 0, 10, 0, 10] }] };
 const r = validateScene(bad);
 assert.ok(r.errors.some((e) => /color/.test(e)) && r.errors.some((e) => /min < maks/.test(e)) && r.errors.some((e) => /flere ganger/.test(e)) && r.errors.some((e) => /toilet_bowl/.test(e)), r.errors.join(' | '));
+// alle moduler i roten som spillet laster skal stå i lista i index.html (ellers kan de bli hengende i nettleserens mellomlager)
+{
+  const html = fs.readFileSync('index.html', 'utf8'), list = (html.match(/const files = \[([^\]]+)\]/) || [])[1] || '';
+  const used = new Set(); for (const f of ['main.js', 'props.js', 'look.js', 'hero.js', 'level.js']) for (const m of fs.readFileSync(f, 'utf8').matchAll(/from '\.\/([a-z_]+)\.js'|import\('\.\/([a-z_]+)\.js'\)/g)) used.add(m[1] || m[2]);
+  for (const u of ['main', ...used]) assert.ok(list.includes(`'${u}'`), `index.html: «${u}» mangler i lista over filer som lastes med versjon`);
+}
 console.log('scene-tester grønne');
