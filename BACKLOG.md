@@ -31,6 +31,9 @@ Gjenstår / til sparring:
 7. Bedre skår/effekter.
 
 ## Bevegelse og spillfølelse
+- [~] **Kanthjelp (v0.62):** forsiktig stikke stopper ved kanten, løp hopper selv over gap med landingsflate (`docs/STYRING.md`). Trenger spilletest: er 80 % riktig grense, hopper han når du ikke vil, og blir Kontrollbanen for lett? Gjenstår: styrehjelp i lufta mot landingsflaten, og at boten bruker det samme.
+- [~] **Naturtro figur og bevegelser (v0.62):** ny kropp (`hero.js`), føtter som står fast i Mario-stil, løp med svev, helling i sving, skritt ved snuing (`docs/FIGUREN.md`). Gjenstår: føtter som tilpasser seg trinn, bedre heng/sving/klatring, stavhopp-animasjon. Mål FPS på eldre telefoner (flere deler i figuren enn før).
+- [~] **Detaljert rom (v0.62):** teksturer med relieff, bøker, kontaktskygger, støv (`look.js`). Gjenstår: avrundede kanter på møbler, flere småting på gulvet (smuler, hår, knapper) for målestokk, lys fra vinduet som stråler, samme løft for tingene i badet.
 - [~] **Klatrehjelp (v0.20):** kast, hard landing/myke flater og stavhopp er på plass i prøverommet `?level=klatring` (`docs/KLATREHJELP.md`). Nål + tråd → taubane er på plass fra v0.40. Gjenstår: flere kombinasjoner (svamp + vann, håndkle + håndkle), papirhaug som presses sammen, stavhopp-animasjon, bot som bruker stav/kast. Trenger spilletest av verdiene.
 - [~] **Klatring (B):** første versjon fra v0.21: `grip`-flater, stamina, opp/ned/sidelengs, kantgrep over toppen (`docs/KLATREHJELP.md`, prøverom `?level=klatring`). Hårgelé og dopapirbånd er med fra v0.22. Badet (v0.39): et oppfunnet håndkle over servantkanten er grep (det står ikke på bildene). Gjenstår: flere grep i badet (knotter, dusjkurv), `slick`-flater, sidelengs langs stang, boten som klatrer. Se `docs/BADET.md`.
 - [ ] Spilletest av «Spenning» vs «Klassisk» med ekte hender, og justering av verdiene.

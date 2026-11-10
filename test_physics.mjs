@@ -869,6 +869,29 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// kanthjelp (v0.62): forsiktig gange stopper ved kanten, løp hopper selv over et gap, og uten landingsflate løper du utfor som før
+{
+  applyPreset('mario');
+  const mk = (gap, top2 = 4) => ({ boxes: [floor, box('wood', -5, 5, 0, 4, -3, 3), ...(gap ? [box('wood', 5 + gap, 14 + gap, 0, top2, -3, 3)] : [])], ropes: [] });
+  const go = (L, mag, frames = 240) => { const p = newPlayer(0, 4, 0); for (let i = 0; i < 20; i++) step(p, { ...idle }, 1 / 60, L); let minY = 9; for (let i = 0; i < frames; i++) { step(p, { ...idle, mx: mag }, 1 / 60, L); minY = Math.min(minY, p.y); } return { p, minY }; };
+  let r = go(mk(0), 0.5); assert.ok(r.p.y < 1, 'uten kanthjelp går du utfor (som før)');
+  P.edgeGuard = true;
+  r = go(mk(0), 0.5); assert.ok(Math.abs(r.p.y - 4) < 0.01 && r.p.x > 4.5 && r.p.x <= 5.01, `forsiktig gange stopper ved kanten (x=${r.p.x.toFixed(2)}, y=${r.p.y.toFixed(2)})`);
+  r = go(mk(0), 1); assert.ok(r.p.y < 1, 'full stikke går utfor kanten');
+  { const L = mk(0); const p = newPlayer(0, 4, 0); for (let i = 0; i < 20; i++) step(p, { ...idle }, 1 / 60, L); for (let i = 0; i < 200; i++) step(p, { ...idle, mx: 0.5 }, 1 / 60, L); for (let i = 0; i < 90; i++) step(p, { ...idle, mx: -0.5 }, 1 / 60, L); assert.ok(p.x < 3, 'kan gå tilbake fra kanten'); }
+  { const L = { boxes: [floor, box('wood', -5, 5, 0, 4, -3, 3), box('wood', 5, 9, 0, 3.6, -3, 3)], ropes: [] }; const q = go(L, 0.5); assert.ok(q.p.x > 6, 'små trinn ned (0,4) stopper deg ikke'); }
+  P.autoJump = true;
+  r = go(mk(3), 1); assert.ok(r.p.x > 8.2 && Math.abs(r.p.y - 4) < 0.01 && r.minY > 3.9, `løp hopper selv over et gap på 3 (x=${r.p.x.toFixed(2)}, y=${r.p.y.toFixed(2)}, minY=${r.minY.toFixed(2)})`);
+  r = go(mk(3, 5.5), 1); assert.ok(r.p.x > 8.2 && Math.abs(r.p.y - 5.5) < 0.01, `… også opp på en høyere flate (y=${r.p.y.toFixed(2)})`);
+  r = go(mk(3, 2.8), 1); assert.ok(r.p.x > 8.2 && Math.abs(r.p.y - 2.8) < 0.01 && r.minY > 2.7, '… og ned på en lavere flate');
+  r = go(mk(0), 1); assert.ok(r.p.y < 1, 'ingen landingsflate: løper utfor som før');
+  r = go(mk(12), 1); assert.ok(r.p.y < 1, 'for langt gap: ikke noe hopp');
+  r = go(mk(3), 0.5); assert.ok(r.p.x <= 5.01 && Math.abs(r.p.y - 4) < 0.01, 'forsiktig gange hopper ikke, men stopper');
+  { const L = { boxes: [floor, box('wood', -5, 5, 0, 4, -3, 3), box('book', 8, 9, 0, 20, -3, 3)], ropes: [] }; const q = go(L, 1, 60); assert.ok(q.p.y <= 4.01, 'hopper ikke mot en høy vegg'); }
+  P.edgeGuard = false; P.autoJump = false;
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 

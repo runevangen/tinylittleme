@@ -2,6 +2,15 @@
 
 Status: v0.35. Mer sjarm og personlighet, ikke bare «Playmobil».
 
+## Ny kropp og bevegelser (v0.62)
+Figuren bygges i `hero.js` (`buildHero`), med samme skjelett og de samme leddene som før, så alle poser i `poseHero` (`main.js`) virker.
+- **Kropp:** mindre hode (1,18 mot 1,38), kjeve, øyne med iris og øyelokk, hår i nakken, hjelm med kam, brem, lykt og hakerem. Armer og ben er dreide profiler som smalner (lår, legg, underarm) med kne og albue, jakka har liv, skuldre, glidelås, lommer og krage, hendene har tommel og fire fingre, støvlene har skaft, tåhette, hæl og lisser. Sekken har lokk, spenner, ytterlomme, sovepose og en blikkopp. Stoff (vev, dongeri, strikk) og lær har relieff fra `look.js`. Tegneserie-kanten er borte.
+- **Gange og løp (Mario-stil):** føttene følger en bane som står fast i gulvet (to-ledds IK, samme som Prince brukte), drevet av distansen figuren faktisk har gått (`hero.gph`). Skrittlengden vokser med farten (0,3 til 1,15 enheter), og over ca. halv fart blir det løp med svev, bøyde albuer og mer fremoverlent kropp. Vekten flyttes over standbenet (`sway`), hoften synker litt på svingsiden, og overkroppen vrir seg mot hoftene mens hodet holdes rolig.
+- **Svinger og snuing:** han lener seg inn i svingen etter hvor fort han snur (`hero.yawRate`), og tar små skritt når han snur på stedet. Hodet ser dit du styrer litt før kroppen har snudd.
+- **Hvile:** flytter vekten rolig fra ben til ben, skuldrene følger pusten.
+- **Fingre:** knyttet rundt det han bærer eller henger i, løst knyttet i løp, åpne når han rekker ut eller faller.
+- PUBG-stil (går sidelengs og bakover) bruker fortsatt den gamle gangen.
+
 ## Utseende
 Gul hjelm med lykt og briller, oransje jakke (kontrast mot det hvite badet), grønnblått skjerf, sekk med sovepose, verktøybelte, votter og støvler. Stort hode, tegneserie-kant. Skjelettet er det samme som før (samme bein, armer, IK), så alle animasjoner virker.
 
@@ -27,7 +36,8 @@ Korte replikker på norsk, sagt av nettleserens talesyntese (høy tone) og vist 
 - Test: `node test_voice.mjs`.
 
 ## Ikke gjort ennå
-- Fingre som tar tak, hår/jakke som beveger seg, hår under hjelmen er bare tuster.
+- Fingre som faktisk lukker seg rundt tingen (nå bare knytter de seg), hår/jakke som beveger seg.
+- Føtter som tilpasser seg trinn og skrå flater, og fotfeste i sidesteg (PUBG-stil).
 - Samle-tilbehør (hatter m.m.) og valg av utseende; bytte stil (strikket, pysjamas).
 - Egne opptak/stemmeskuespiller i stedet for talesyntese.
 - Replikker som reagerer på bestemte ting i brettet (første møte med svamp osv.).

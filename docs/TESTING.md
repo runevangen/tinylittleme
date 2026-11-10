@@ -15,6 +15,9 @@ Mål: finn en styring og et kamera som føles lett, tydelig og ikke slitsomt, og
 | Hjelp-nivå | Styring | Ingen / Normal / Mye hjelp (tilgivende hopp, kantgrep, tråkke opp små hinder) |
 | Treghet, gangfart, stikke-følsomhet | Styring | Mer kjapp mot mer tung |
 | Flytende stikke | Styring | Fast (PUBG) mot flytende (følger tommelen) |
+| Kanthjelp (to valg) | Styring | På mot av: stopper du trygt ved kanter med forsiktig stikke? Hopper han når du vil, og bare da? |
+| Kameraet ser litt foran deg | Kamera | På mot av |
+| Grafikk | Spill | Detaljert mot Enkel: se på FPS (⚙ → Test) |
 | Kamerafølging: styrke | Kamera | 0 (av), 1 (normal), 2 (sterk) |
 | Synsfelt, kameravinkel, avstand | Kamera | Lavt og nærme gir mer «liten»-følelse |
 | Skygge og landingsmarkør | Kamera | På mot av |

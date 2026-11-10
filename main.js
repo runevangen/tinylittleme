@@ -3,6 +3,8 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo } from './props.js';
+import { makeLook } from './look.js';
+import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
 import { followYaw, impactSpeed, landingClass } from './camera_util.js';
@@ -90,6 +92,7 @@ let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech
 let viewMode = new URLSearchParams(location.search).get('view') || store.get('tlm.view3', 'third');   // third | shoulder | first (standard fra v0.59: vanlig 3. person med kamera som følger etter)
 if (!['third', 'shoulder', 'first'].includes(viewMode)) viewMode = 'shoulder';
 let viewFirst = viewMode === 'first', shDist = store.get('tlm.shdist', 3), shOff = store.get('tlm.shoff', 0.5), shSide = store.get('tlm.shside', 'right') === 'left' ? -1 : 1, xhairOn = store.get('tlm.xhair', true);
+let edgeGuardOn = store.get('tlm.edgeguard', true), autoJumpOn = store.get('tlm.autojump', true), lookAheadOn = store.get('tlm.lookahead', true), dustOn = store.get('tlm.dust', true);   // v0.62: kanthjelp, kamera som ser foran deg, støv i lufta
 let compassMode = store.get('tlm.compassmode', store.get('tlm.compass', true) === false ? 'off' : 'both');   // both | compass | arrow | off
 const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; $('qbtn').style.display = qbtnOn ? 'flex' : 'none'; };
 
@@ -145,79 +148,28 @@ sun.shadow.mapSize.set(devicePixelRatio > 2 || innerWidth < 700 ? 2048 : bigShad
 Object.assign(sun.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 220 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
-scene.add(new THREE.HemisphereLight(0xfff4e0, 0x9b8468, 0.35));
+scene.add(new THREE.HemisphereLight(0xeaf1ff, 0xa5845c, 0.42));       // kjølig himmellys ovenfra, varmt gjenskinn fra gulvet
 
-// ---------- prosedyre-teksturer ----------
-function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
-function canvasTex(size, draw, srgb = true) {
-  const c = document.createElement('canvas'); c.width = c.height = size;
-  draw(c.getContext('2d'), size);
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  return t;
-}
-function grain(g, S, r, lines, rgb) {
-  for (let i = 0; i < lines; i++) {
-    const y = r() * S;
-    g.strokeStyle = `rgba(${rgb},${0.04 + r() * 0.13})`;
-    g.lineWidth = 0.6 + r() * 1.8;
-    g.beginPath(); let yy = y; g.moveTo(0, yy);
-    for (let x = 0; x <= S; x += 16) { yy += (r() - 0.5) * 2.2 + Math.sin(x * 0.02 + y) * 0.4; g.lineTo(x, yy); }
-    g.stroke();
-  }
-}
-const woodTex = canvasTex(512, (g, S) => {
-  const r = rng(7);
-  g.fillStyle = '#ebe5dc'; g.fillRect(0, 0, S, S);
-  grain(g, S, r, 260, '90,60,30');
-  for (let k = 0; k < 3; k++) {
-    const x = r() * S, y = r() * S, gr = g.createRadialGradient(x, y, 1, x, y, 20);
-    gr.addColorStop(0, 'rgba(80,50,25,.45)'); gr.addColorStop(1, 'rgba(80,50,25,0)');
-    g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, 32, 12, 0, 0, 7); g.fill();
-  }
-});
-const floorTex = canvasTex(1024, (g, S) => {
-  const r = rng(21), n = 6, h = S / n;
-  for (let i = 0; i < n; i++) {
-    const t = 0.82 + r() * 0.18;
-    g.fillStyle = `rgb(${Math.round(222 * t)},${Math.round(176 * t)},${Math.round(122 * t)})`;
-    g.fillRect(0, i * h, S, h);
-    g.save(); g.beginPath(); g.rect(0, i * h, S, h); g.clip();
-    g.translate(0, i * h); grain(g, S, r, 40, '110,70,35'); g.restore();
-    g.fillStyle = 'rgba(60,35,15,.55)'; g.fillRect(0, i * h, S, 3);                // lang skjøt
-    const sx = r() * S; g.fillRect(sx, i * h, 3, h);                                // kort skjøt
-  }
-});
-const pagesTex = canvasTex(128, (g, S) => {
-  g.fillStyle = '#efe6cf'; g.fillRect(0, 0, S, S);
-  for (let y = 0; y < S; y += 3) { g.fillStyle = `rgba(120,100,70,${0.12 + (y % 6) * 0.03})`; g.fillRect(0, y, S, 1); }
-});
-const plasterTex = canvasTex(256, (g, S) => {
-  const r = rng(3); g.fillStyle = '#f2ece0'; g.fillRect(0, 0, S, S);
-  for (let i = 0; i < 4000; i++) { g.fillStyle = `rgba(120,100,80,${r() * 0.05})`; g.fillRect(r() * S, r() * S, 2, 2); }
-});
+// ---------- utseende: teksturer med relieff, bøker, kontaktskygger og støv (look.js) ----------
+const gfxLow = store.get('tlm.gfx', 'high') === 'low';
+if (gfxLow) renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+const look = makeLook({ aniso: Math.min(8, renderer.capabilities.getMaxAnisotropy()), low: gfxLow });
+const texMat = (set, o = {}) => std({ map: set.map.clone(), normalMap: set.normalMap ? set.normalMap.clone() : null, roughnessMap: set.roughnessMap ? set.roughnessMap.clone() : null, ...o });
+const eachMap = (mat, fn) => { for (const k of ['map', 'normalMap', 'roughnessMap']) if (mat[k]) fn(mat[k]); };
 
 // ---------- brettet ----------
 const room = LEVEL.room;
-const tileTex = canvasTex(256, (g, S) => {
-  g.fillStyle = '#cfcfc8'; g.fillRect(0, 0, S, S);                       // fuge
-  const gr = g.createLinearGradient(0, 0, S, S);
-  gr.addColorStop(0, '#fbfbf8'); gr.addColorStop(1, '#eceae3');
-  g.fillStyle = gr; g.fillRect(5, 5, S - 10, S - 10);
-});
 const std = (o) => new THREE.MeshStandardMaterial(o);
 
 function material(b) {
   const col = b.color ?? 0xcccccc;
   const kind = b.type === 'floor' || b.type === 'wall' ? `${b.type}:${b.material || 'default'}` : (b.material || b.type);
   switch (kind) {
-    case 'floor:default': case 'floor:wood': return std({ map: floorTex.clone(), roughness: 0.5 });
-    case 'floor:tile': return std({ map: tileTex.clone(), color: col, roughness: 0.14 });
-    case 'wall:tile': return std({ map: tileTex.clone(), color: col, roughness: 0.2 });
-    case 'wall:default': case 'wall:plaster': case 'wall': return std({ map: plasterTex.clone(), color: col, roughness: 0.95 });
-    case 'wood': case 'woodpanel': return std({ map: woodTex.clone(), color: col, roughness: 0.55 });
+    case 'floor:default': case 'floor:wood': return texMat(look.floor, { roughness: 1 });
+    case 'floor:tile': return texMat(look.tile, { color: col, roughness: 0.55 });
+    case 'wall:tile': return texMat(look.tile, { color: col, roughness: 0.7 });
+    case 'wall:default': case 'wall:plaster': case 'wall': return texMat(look.plaster, { color: col, roughness: 0.95 });
+    case 'wood': case 'woodpanel': return texMat(look.wood, { color: col, roughness: 0.55 });
     case 'book': return std({ color: col, roughness: 0.78 });
     case 'plastic': return std({ color: col, roughness: 0.3, metalness: 0.1 });
     case 'porcelain': return std({ color: col, roughness: 0.07 });
@@ -230,7 +182,6 @@ function material(b) {
     default: return std({ color: col, roughness: 0.7 });
   }
 }
-const pageMat = std({ map: pagesTex, roughness: 0.9 });
 const woodKinds = new Set(['wood', 'woodpanel']);
 
 // brukslapper: små lapper med bruksanvisning ved ting som kan gjøre noe (brettets `hints`, bl.a. i treningsrommet). Vises når du er nær.
@@ -321,6 +272,7 @@ const drawn = new Set(); let hasToilet = false;
     if (members.some((m) => m.kind === 'toilet_tank')) hasToilet = true;
   }
 }
+let bookN = 0; const col0 = (b) => b.color ?? 0xcccccc;
 for (const b of LEVEL.boxes) {
   if (drawn.has(b)) continue;
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
@@ -328,30 +280,27 @@ for (const b of LEVEL.boxes) {
   const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material }) : null;
   if (b.grip) gripMark(b);
   if (shaped) { shaped.position.set(cx, cy, cz); scene.add(shaped); regFade(shaped, [b]); continue; }
+  if (b.type !== 'floor' && b.type !== 'wall' && !b.dyn && Math.min(sx, sz) > 0.4 && LEVEL.boxes.some((c) => c !== b && !c.dyn && Math.abs(c.max[1] - b.min[1]) < 0.05 && c.min[0] < b.max[0] && c.max[0] > b.min[0] && c.min[2] < b.max[2] && c.max[2] > b.min[2])) {
+    const cs = look.contactShadow(sx, sz, Math.max(0.3, Math.min(0.9, Math.min(sx, sz) * 0.35))); cs.position.set(cx, b.min[1] + 0.02, cz); scene.add(cs);   // myk mørk kant der tingen står
+  }
+  if (b.type === 'book' && !b.material) {                    // bok: permer med tittel, avrundet rygg og sideblokk
+    const bk = look.buildBook(sx, sy, sz, col0(b), ++bookN); bk.position.set(cx, cy, cz); scene.add(bk); regFade(bk, [b]); continue;
+  }
   const mat = material(b);
   const tiled = b.material === 'tile';
   if (b.type === 'floor') {
     const rep = tiled ? 4 : 18;
-    mat.map.repeat.set(sx / rep, sz / rep);
-    if (tiled) { mat.map.center.set(0.5, 0.5); mat.map.rotation = room.floor?.diagonal ? Math.PI / 4 : 0; }
+    eachMap(mat, (t) => { t.repeat.set(sx / rep, sz / rep); if (tiled) { t.center.set(0.5, 0.5); t.rotation = room.floor?.diagonal ? Math.PI / 4 : 0; } });
   } else if (woodKinds.has(b.material || b.type)) {
-    mat.map.repeat.set(Math.max(1, Math.max(sx, sz) / 8), Math.max(1, sy / 8));
+    eachMap(mat, (t) => t.repeat.set(Math.max(1, Math.max(sx, sz) / 8), Math.max(1, sy / 8)));
   } else if (b.type === 'wall') {
-    if (tiled) mat.map.repeat.set(Math.max(sx, sz) / 4, Math.max(1, sy / 4));
-    else mat.map.repeat.set(Math.max(sx, sz) / 10, 8);
+    eachMap(mat, (t) => (tiled ? t.repeat.set(Math.max(sx, sz) / 4, Math.max(1, sy / 4)) : t.repeat.set(Math.max(sx, sz) / 10, 8)));
   }
   const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat);
   m.position.set(cx, cy, cz);
   m.castShadow = b.type !== 'floor' && b.type !== 'wall' && b.material !== 'glass'; m.receiveShadow = true;
   scene.add(m);
-  const fadeExtra = [];
-
-  if (b.type === 'book' && sy > 1 && Math.min(sx, sz) > 1.5) {
-    // liggende bok: sider synlige på tre sider, rygg mot -x
-    const pm = new THREE.Mesh(new THREE.BoxGeometry(sx - 0.3, Math.max(0.2, sy - 0.24), sz + 0.04), pageMat);
-    pm.position.set(cx + 0.17, cy, cz); pm.castShadow = false; pm.receiveShadow = true; scene.add(pm); fadeExtra.push(pm);
-  }
-  regFade(m, [b], fadeExtra);
+  regFade(m, [b]);
 }
 
 // sokkellist (kun med malte vegger), tak og vinduer
@@ -371,9 +320,15 @@ for (const b of LEVEL.boxes) {
     }
   }
   const ceilMat = room.ceiling?.material === 'woodpanel'
-    ? std({ map: woodTex.clone(), color: hexNum(room.ceiling.color), roughness: 0.6 })
+    ? texMat(look.wood, { color: hexNum(room.ceiling.color), roughness: 0.6 })
     : std({ color: 0xf5f1e8, roughness: 1 });
-  if (ceilMat.map) ceilMat.map.repeat.set(w / 10, d / 10);
+  eachMap(ceilMat, (t) => t.repeat.set(w / 10, d / 10));
+  {                                                            // mørkere inn mot veggene, der gulv og vegg møtes
+    const fy = Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])) + 0.02, sw = Math.min(4, Math.min(w, d) * 0.12);
+    for (const [len, x, z, rz] of [[w, ox, room.z0 + sw / 2, 0], [w, ox, room.z1 - sw / 2, Math.PI], [d, room.x0 + sw / 2, oz, Math.PI / 2], [d, room.x1 - sw / 2, oz, -Math.PI / 2]]) {
+      const es = look.edgeShade(len, sw); es.rotation.set(-Math.PI / 2, 0, rz); es.position.set(x, fy, z); scene.add(es);
+    }
+  }
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceilMat);
   ceil.rotation.x = Math.PI / 2; ceil.position.set(ox, room.height, oz); ceil.receiveShadow = true; scene.add(ceil);
 
@@ -382,7 +337,7 @@ for (const b of LEVEL.boxes) {
     const g = new THREE.Group(); g.position.set(...win.pos);
     g.rotation.y = { N: 0, S: Math.PI, E: -Math.PI / 2, W: Math.PI / 2 }[win.wall] ?? 0;
     const [ww, wh] = win.size;
-    g.add(new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ color: 0xfff6e0 })));
+    g.add(new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ map: look.skyTex(), toneMapped: false })));
     for (const [x, y, sx, sy] of [[0, wh / 2 + 0.4, ww + 1.6, 0.8], [0, -wh / 2 - 0.4, ww + 1.6, 0.8], [-ww / 2 - 0.4, 0, 0.8, wh], [ww / 2 + 0.4, 0, 0.8, wh], [0, 0, 0.4, wh]]) {
       const f = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, 0.7), frameMat); f.position.set(x, y, 0.3); g.add(f);
     }
@@ -467,112 +422,7 @@ const flag = new THREE.Group();
 }
 
 // ---------- figur ----------
-const RIG_S = 1.07;   // figuren tegnes litt større enn animasjonsrommet (så den blir ~1,0 høy)
-function buildHero() {
-  const root = new THREE.Group();
-  const rig = new THREE.Group(); rig.scale.setScalar(RIG_S); root.add(rig);
-  // liten utforsker: oransje jakke, grønnblått skjerf, gul hjelm med lykt og briller, sekk og verktøybelte (kontrast mot det hvite badet)
-  const mat = (color, rough = 0.75, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, ...extra });
-  const M = {
-    skin: mat(0xf0c09e, 0.6), jacket: mat(0xe8742a, 0.8), jacketD: mat(0xc4561a, 0.85), scarf: mat(0x23a6a0, 0.9), pants: mat(0x3a4a5a, 0.85),
-    boot: mat(0x7a5236, 0.7), sole: mat(0xe9e0cf, 0.8), glove: mat(0x5a3d28, 0.8), hair: mat(0x4a2f1c, 0.8), helmet: mat(0xf3b938, 0.45),
-    strap: mat(0x5a3d28, 0.85), lens: new THREE.MeshPhysicalMaterial({ color: 0xffe27a, roughness: 0.1, transparent: true, opacity: 0.7 }),
-    lamp: new THREE.MeshStandardMaterial({ color: 0xfff6c8, emissive: 0xffe9a0, emissiveIntensity: 0.9 }), pack: mat(0x6f7a3a, 0.9), roll: mat(0x4d6d82, 0.9),
-    pouch: mat(0x8a6a46, 0.85), gold: mat(0xd8b24a, 0.35, { metalness: 0.8 }), white: new THREE.MeshBasicMaterial({ color: 0xffffff }), pupil: new THREE.MeshBasicMaterial({ color: 0x1b1b1b }),
-    brow: mat(0x3a2418, 0.9), mouth: new THREE.MeshBasicMaterial({ color: 0x8a3030 }), blush: new THREE.MeshBasicMaterial({ color: 0xf08080, transparent: true, opacity: 0 }),
-    sweat: new THREE.MeshStandardMaterial({ color: 0x9fd8f0, roughness: 0.1, transparent: true, opacity: 0.85 }), line: new THREE.MeshBasicMaterial({ color: 0x241d20, side: THREE.BackSide }),
-  };
-  const shadow = (m) => { m.castShadow = true; return m; };
-  const outline = (m, k = 1.07) => { const o = new THREE.Mesh(m.geometry, M.line); o.scale.setScalar(k); m.add(o); return m; };      // tegneserie-kant (omvendt skall)
-  const cap = (r, l, mat, ol = true) => { const m = shadow(new THREE.Mesh(new THREE.CapsuleGeometry(r, l, 6, 12), mat)); return ol ? outline(m, 1.08) : m; };
-  const limb = (up, lo, r, mat, matLo = mat) => {
-    const top = new THREE.Group(), u = cap(r, up, mat); u.position.y = -(up / 2 + r * 0.6); top.add(u);
-    const mid = new THREE.Group(); mid.position.y = -(up + r * 1.2); top.add(mid);
-    const l = cap(r * 0.9, lo, matLo); l.position.y = -(lo / 2 + r * 0.6); mid.add(l);
-    return { top, mid, end: -(lo + r * 1.2), l1: up + r * 1.2, l2: lo + r * 1.2 };
-  };
-
-  // ryggrad i to deler: bekken (følger hoftene) og bryst (kan bøye og vri seg)
-  const body = new THREE.Group(); body.position.y = 0.46; rig.add(body);
-  const pelvis = cap(0.08, 0.05, M.pants); pelvis.scale.set(1.4, 1, 0.9); body.add(pelvis);
-  const belt = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.014, 8, 24), M.strap)); belt.rotation.x = Math.PI / 2; belt.scale.set(1.35, 0.95, 1); belt.position.y = 0.045; body.add(belt);
-  const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.026, 0.012), M.gold); buckle.position.set(0, 0.045, 0.098); body.add(buckle);
-  for (const sx of [-1, 1]) { const po = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.03), M.pouch)); po.position.set(sx * 0.1, 0.03, 0.055); po.rotation.y = sx * 0.5; body.add(po); }
-  const chest = new THREE.Group(); chest.position.y = 0.09; body.add(chest);
-  const torso = cap(0.088, 0.17, M.jacket); torso.scale.set(1.25, 1, 0.8); torso.position.y = 0.09; chest.add(torso);
-  const zip = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.17, 0.006), M.jacketD); zip.position.set(0, 0.1, 0.0775); chest.add(zip);
-  const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.035, 0.01), M.jacketD); pocket.position.set(0.055, 0.12, 0.074); pocket.rotation.y = 0.35; chest.add(pocket);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.05, 10), M.skin); neck.position.y = 0.2; chest.add(neck);
-  const scarfRing = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.024, 8, 18), M.scarf)); scarfRing.rotation.x = Math.PI / 2; scarfRing.position.y = 0.195; scarfRing.scale.set(1.15, 1, 1); chest.add(scarfRing);
-  const knot = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), M.scarf)); knot.position.set(0.04, 0.185, 0.06); chest.add(knot);
-  // skjerfhaler (to ledd) som flagrer bakover med farten
-  const tailA = new THREE.Group(); tailA.position.set(0.02, 0.19, -0.058); chest.add(tailA);
-  const tA = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.1, 0.012), M.scarf)); tA.position.y = -0.05; tailA.add(tA);
-  const tailB = new THREE.Group(); tailB.position.y = -0.1; tailA.add(tailB);
-  const tB = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.085, 0.012), M.scarf)); tB.position.y = -0.0425; tailB.add(tB);
-  const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.012, 0.014), M.jacket); stripe.position.y = -0.07; tailB.add(stripe);
-  // sekk med sovepose
-  const packG = new THREE.Group(); packG.position.set(0, 0.09, -0.1); chest.add(packG);
-  const pk = shadow(new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.1, 5, 10), M.pack)); pk.scale.set(1.3, 1, 0.8); packG.add(pk);
-  const rollM = shadow(new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.1, 5, 10), M.roll)); rollM.rotation.z = Math.PI / 2; rollM.position.y = 0.105; packG.add(rollM);
-  const flap = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.02), M.pouch); flap.position.set(0, 0.0, -0.03); packG.add(flap);
-
-  // hode (stort og tydelig): hjelm, lykt, briller, hår under hjelmen og et ansikt som kan uttrykke seg
-  const HS = 1.38;
-  const head = new THREE.Group(); head.position.y = 0.265; chest.add(head);
-  const headS = new THREE.Group(); headS.scale.setScalar(HS); head.add(headS);
-  const skull = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.075, 24, 18), M.skin)); outline(skull, 1.05); headS.add(skull);
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.0125, 8, 8), M.skin); nose.position.set(0, -0.008, 0.077); nose.scale.set(1, 0.9, 1.1); headS.add(nose);
-  for (const sx of [-1, 1]) { const ear = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.017, 8, 8), M.skin)); ear.position.set(sx * 0.076, -0.005, 0); ear.scale.set(0.6, 1, 0.9); headS.add(ear); }
-  const helmet = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.084, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), M.helmet)); outline(helmet, 1.05); helmet.rotation.x = -0.12; helmet.position.y = 0.012; headS.add(helmet);
-  const visor = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.008, 20, 1, false, -Math.PI * 0.45, Math.PI * 0.9), M.helmet)); visor.rotation.set(0.15, 0, 0); visor.position.set(0, 0.034, 0.045); visor.rotation.y = Math.PI * 0.5 * 0; headS.add(visor);
-  const hStrap = new THREE.Mesh(new THREE.TorusGeometry(0.081, 0.0055, 6, 28), M.strap); hStrap.rotation.x = Math.PI / 2 + 0.12; hStrap.position.y = 0.047; headS.add(hStrap);
-  for (const sx of [-1, 1]) {                                              // briller skjøvet opp på hjelmen
-    const ring = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.005, 6, 14), M.strap)); ring.position.set(sx * 0.03, 0.062, 0.062); ring.rotation.x = -0.6; headS.add(ring);
-    const lens = new THREE.Mesh(new THREE.CircleGeometry(0.019, 14), M.lens); lens.position.set(sx * 0.03, 0.0625, 0.0635); lens.rotation.x = -0.6; headS.add(lens);
-  }
-  const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.016, 0.02, 10), M.lamp); lamp.rotation.x = Math.PI / 2 - 0.5; lamp.position.set(0, 0.083, 0.035); headS.add(lamp);
-  for (const [x, y, z, r] of [[0, 0.0, -0.074, 0.02], [-0.04, -0.005, -0.066, 0.017], [0.04, -0.005, -0.066, 0.017], [0.07, 0.005, -0.03, 0.014], [-0.07, 0.005, -0.03, 0.014]]) {
-    const h = shadow(new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), M.hair)); h.position.set(x, y, z); headS.add(h);       // hår som titter ut under hjelmen
-  }
-  // ansikt
-  const face = { eyes: [], pupils: [], brows: [], blush: [] };
-  for (const sx of [-1, 1]) {
-    const eye = new THREE.Group(); eye.position.set(sx * 0.03, 0.006, 0.0655); headS.add(eye);
-    const white = new THREE.Mesh(new THREE.SphereGeometry(0.0215, 14, 12), M.white); white.scale.set(1, 1.15, 0.45); eye.add(white);
-    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.0125, 12, 10), M.pupil); pupil.scale.set(1, 1.1, 0.5); pupil.position.z = 0.0065; eye.add(pupil);
-    const glint = new THREE.Mesh(new THREE.SphereGeometry(0.0042, 6, 6), M.white); glint.position.set(0.004, 0.005, 0.0105); pupil.add(glint);
-    face.eyes.push(eye); face.pupils.push(pupil);
-    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.0075, 0.008), M.brow); brow.position.set(sx * 0.031, 0.04, 0.064); headS.add(brow); face.brows.push(brow);
-    const bl = new THREE.Mesh(new THREE.CircleGeometry(0.014, 12), M.blush); bl.position.set(sx * 0.047, -0.02, 0.06); bl.rotation.y = sx * 0.55; headS.add(bl); face.blush.push(bl);
-  }
-  face.smile = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.0042, 6, 14, Math.PI), M.mouth); face.smile.position.set(0, -0.03, 0.0715); headS.add(face.smile);
-  face.open = new THREE.Mesh(new THREE.SphereGeometry(0.012, 10, 8), M.mouth); face.open.position.set(0, -0.034, 0.07); face.open.scale.set(1, 1, 0.4); face.open.visible = false; headS.add(face.open);
-  face.sweat = new THREE.Group(); { const d = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 8), M.sweat); const c = new THREE.Mesh(new THREE.ConeGeometry(0.0085, 0.02, 8), M.sweat); c.position.y = 0.014; face.sweat.add(d, c); face.sweat.position.set(0.062, 0.035, 0.045); face.sweat.visible = false; headS.add(face.sweat); }
-
-  const arm = (s) => {
-    const a = limb(0.09, 0.09, 0.034, M.jacket); a.top.position.set(s * 0.127, 0.16, 0); chest.add(a.top);
-    const shoulder = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.043, 12, 10), M.jacket)); a.top.add(shoulder);
-    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.016, 10), M.jacketD); cuff.position.y = a.end + 0.012; a.mid.add(cuff);
-    const hand = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 10), M.glove)); hand.scale.set(0.95, 1.15, 0.85); hand.position.y = a.end - 0.016; a.mid.add(hand);
-    const thumb = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.0165, 8, 8), M.glove)); thumb.position.set(-s * 0.03, a.end - 0.005, 0.014); a.mid.add(thumb);
-    return a;
-  };
-  const leg = (s) => {
-    const l = limb(0.15, 0.15, 0.047, M.pants); l.top.position.set(s * 0.058, 0.46, 0); rig.add(l.top);
-    const footG = new THREE.Group(); footG.position.y = l.end; l.mid.add(footG); l.footG = footG;      // ankelen
-    const boot = shadow(new THREE.Mesh(roundedBoxGeo(0.088, 0.062, 0.175, 0.03, 0.014), M.boot)); boot.geometry.translate(0, -0.031, 0); boot.position.set(0, 0.018, 0.036); outline(boot, 1.05); footG.add(boot);
-    const sole = shadow(new THREE.Mesh(roundedBoxGeo(0.092, 0.02, 0.18, 0.032, 0.008), M.sole)); sole.geometry.translate(0, -0.01, 0); sole.position.set(0, -0.026, 0.036); footG.add(sole);
-    const cuffB = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.05, 0.024, 10), M.boot); cuffB.position.y = 0.02; footG.add(cuffB);
-    return l;
-  };
-  const L = { armL: arm(-1), armR: arm(1), legL: leg(-1), legR: leg(1) };
-  const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0, lzL: 0, lzR: 0, roll: 0 };
-  return { root, body, chest, head, ...L, cur, yaw: 0, ph: 0, accLean: 0, bob: 0, pv: null, ikW: 0, hipY: 0.46,
-    face, tailA, tailB, packG, helmet, sec: { a: 0, av: 0, b: 0, bv: 0, pk: 0, pkv: 0 }, mood: { name: '', t: 0 }, look: { x: 0, y: 0, tx: 0, ty: 0, t: 0 }, blink: { t: 2, v: 0 }, idleT: 0, talkT: 0 };
-}
-const hero = buildHero();
-hero.root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+const hero = buildHero(look);
 scene.add(hero.root);
 // rund skygge under figuren (som i Mario: viser hvor du lander) og landingsmarkør når du faller
 const blobTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(0,0,0,0.85)'); gr.addColorStop(0.55, 'rgba(0,0,0,0.5)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
@@ -629,7 +479,7 @@ const DIP_MAX = 0.17;   // hvor mye hoftene kan synke i hurk (landing/forberedel
 
 function poseHero(p, now, dt, mode) {
   const c = hero.cur, sp = Math.hypot(p.vx, p.vz), sec = now / 1000;
-  const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0, lzL: 0, lzR: 0, roll: 0 };
+  const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0, lzL: 0, lzR: 0, roll: 0, sway: 0, fgL: 0.35, fgR: 0.35 };
   let bob = 0;
   // stå stille i 3 s: figuren snur seg mot kameraet og blunker (bare i skulder-/3. persons-visning med PUBG-styring)
   { const [ix, iz] = axes(), idleIn = Math.hypot(ix, iz) < 0.05, ok = idleWink && P.faceCam && !viewFirst && mode === 'play' && !won && p.onGround && p.state === 'ground' && !p.carry && Math.hypot(p.vx, p.vz) < 0.15 && idleIn && p.recover <= 0;
@@ -646,14 +496,24 @@ function poseHero(p, now, dt, mode) {
   hero.accLean += (clampN(acc * 0.012, -0.3, 0.3) - hero.accLean) * (1 - Math.exp(-dt / 0.15));
 
   // fotbaner fra fysikkens skrittfase (samme distanse som kroppen faktisk har gått → ingen gliding)
-  const A_MAX = 0.25, kSp = clampN(sp / P.speed, 0, 1), SL = 2 * p.stepLen;
-  const sFrac = Math.max(0.28, Math.min(0.64, 2 * A_MAX / SL)), A = sFrac * SL / 2, lift = 0.025 + 0.06 * kSp;
-  const u = (p.gait / (Math.PI * 2)) % 1, idleW = clampN(1 - sp / 0.35, 0, 1);
+  // Mario-stil (v0.62): også her settes føttene fast i gulvet. Skrittfasen følger distansen figuren faktisk har gått, og skrittene blir lengre (med svev) når han løper.
+  const ownGait = !P.gaitMode && !P.faceCam, ikGait = P.gaitMode || ownGait, yawRate = hero.yawRate || 0;
+  if (ownGait) {
+    hero.stepLen = clampN(0.3 + 0.19 * sp, 0.3, 1.15);
+    const walking = p.onGround && p.state === 'ground' && mode !== 'fly';
+    if (walking && sp > 0.05) hero.gph = (hero.gph + Math.PI * sp * dt / hero.stepLen) % (Math.PI * 2);
+    else if (walking && Math.abs(yawRate) > 1.2) hero.gph = (hero.gph + Math.abs(yawRate) * dt * 1.7) % (Math.PI * 2);   // snur på stedet: små skritt
+  }
+  const gph = P.gaitMode ? p.gait : hero.gph, stepLen = P.gaitMode ? p.stepLen : (hero.stepLen || 0.3);
+  const A_MAX = 0.25, kSp = clampN(sp / P.speed, 0, 1), SL = 2 * stepLen;
+  const sFrac = Math.max(ownGait ? 0.2 : 0.28, Math.min(0.64, 2 * A_MAX / SL)), A = sFrac * SL / 2, lift = ownGait ? 0.03 + 0.1 * kSp : 0.025 + 0.06 * kSp;
+  const u = (gph / (Math.PI * 2)) % 1, idleW = clampN(1 - sp / 0.35, 0, 1);
   const pathL = footPath(u, sFrac, A, lift), pathR = footPath((u + 0.5) % 1, sFrac, A, lift);
   for (const f of [pathL, pathR]) { f.z *= 1 - idleW; f.y *= 1 - idleW; f.pitch *= 1 - idleW; }
+  if (ownGait && p.onGround) { const tw = idleW * clampN((Math.abs(yawRate) - 1) / 3, 0, 1), sn = Math.sin(gph); pathL.y += 0.035 * tw * Math.max(0, sn); pathR.y += 0.035 * tw * Math.max(0, -sn); }   // løfter føttene når han snur seg på stedet
   const gaitN = { L: pathL.z / (A + 1e-6), R: pathR.z / (A + 1e-6) };
   pathL.z /= RIG_S; pathR.z /= RIG_S;          // rig-lokalt: figuren er skalert, så foten må flyttes tilsvarende mindre
-  const gaitOn = P.gaitMode && mode !== 'fly' && p.state === 'ground' && p.onGround && !p.skid;
+  const gaitOn = ikGait && mode !== 'fly' && p.state === 'ground' && p.onGround && !p.skid;
 
   // hurk: forberedelse før hopp (armene bak) og demping etter landing (armene frem). 0 = oppreist, 1 = dypt.
   const wDF = p.windup > 0 ? smooth3(clampN((P.jumpWindup - p.windup) / 0.07, 0, 1)) : 0;
@@ -718,11 +578,15 @@ function poseHero(p, now, dt, mode) {
   } else if (p.skid) {                                          // du skrider mens du snur: lent bakover, bein foran
     Object.assign(T, { aL: -0.9, aR: -0.4, zL: 0.5, zR: -0.5, eL: -0.3, eR: -0.3, hL: -0.55, hR: 0.45, kL: 0.2, kR: 0.6, lean: -0.3, chest: -0.08 });
   } else {
-    if (P.gaitMode && sp > 0.15) {
-      const k = kSp, amp = (0.3 + 0.45 * k) * smooth3(clampN(sp / 0.8, 0, 1));    // armsving vokser jevnt med farten (ikke en terskel)
-      Object.assign(T, { aL: -amp * gaitN.R, aR: -amp * gaitN.L, eL: -0.25 - 0.45 * k, eR: -0.25 - 0.45 * k, lean: 0.04 + 0.1 * k, chest: 0.03 + 0.07 * k, hp: -0.04 * k });
-      T.twist = -0.14 * k * (gaitN.L - gaitN.R) / 2;                                // overkroppen vrir seg motsatt hoftene
-    } else if (sp > 0.4 && !P.gaitMode) {
+    if (ikGait && sp > 0.15) {
+      const k = kSp, amp = (0.28 + 0.58 * k) * smooth3(clampN(sp / 0.8, 0, 1));   // armsving vokser jevnt med farten (ikke en terskel)
+      const run = ownGait ? smooth3(clampN((k - 0.45) / 0.4, 0, 1)) : 0;           // løp: albuene i vinkel, mer fremoverlent, armene pumper
+      Object.assign(T, { aL: -amp * gaitN.R + 0.1 * run, aR: -amp * gaitN.L + 0.1 * run,
+        eL: -0.22 - 0.45 * k - 0.6 * run - 0.3 * k * Math.max(0, gaitN.R), eR: -0.22 - 0.45 * k - 0.6 * run - 0.3 * k * Math.max(0, gaitN.L),   // albuen bøyes mer når armen er fremme
+        zL: 0.07 + 0.06 * run, zR: -0.07 - 0.06 * run, lean: 0.04 + 0.1 * k + 0.07 * run, chest: 0.03 + 0.07 * k, hp: -0.04 * k - 0.05 * run });
+      T.twist = -(0.14 + 0.1 * run) * k * (gaitN.L - gaitN.R) / 2;                  // overkroppen vrir seg motsatt hoftene
+      if (ownGait) { const cg = Math.cos(gph) * smooth3(clampN(sp / 0.8, 0, 1)); T.sway = -0.013 * (1 - 0.6 * run) * cg; T.roll = 0.03 * (1 - 0.5 * run) * cg; }   // vekten over standbenet, hoften synker litt på svingsiden
+    } else if (sp > 0.4 && !ikGait) {
       const k = Math.min(1, sp / 5.6);
       hero.ph += dt * (2.2 + sp * 1.0);                         // takten følger farten (ikke en fast frekvens)
       const stepIdx = Math.floor(hero.ph / Math.PI);
@@ -745,27 +609,36 @@ function poseHero(p, now, dt, mode) {
       const br = Math.sin(sec * 1.7);
       T.chest = br * 0.02; T.lean = br * 0.008;
       T.aL = Math.sin(sec * 0.9) * 0.025 + br * 0.01; T.aR = Math.sin(sec * 0.9 + 1.3) * 0.025 - br * 0.01;
+      { const ws = Math.sin(sec * 0.31) + 0.4 * Math.sin(sec * 0.13 + 1); T.sway = 0.009 * ws; T.roll = 0.016 * ws; T.zL += br * 0.014; T.zR -= br * 0.014; T.twist = 0.03 * Math.sin(sec * 0.19); }   // flytter vekten rolig fra ben til ben, skuldrene følger pusten
       T.hy = Math.sin(sec * 0.43) * 0.28 + Math.sin(sec * 0.17) * 0.18; T.hp = Math.sin(sec * 0.29) * 0.07;
       if ((hero.camTurn || 0) > 0.3) { T.hy *= 1 - hero.camTurn; T.hp = 0.04 * hero.camTurn; }       // ser rett på deg
     }
     if (df > 0.01) {                                            // hurk: lent frem, armene bak (forberedelse) eller frem (landing)
       T.lean += 0.42 * df; T.chest += 0.14 * df; T.zL += 0.15 * df; T.zR -= 0.15 * df;
       T.aL += 0.6 * wDF - 0.85 * Math.max(0, df - wDF); T.aR += 0.6 * wDF - 0.85 * Math.max(0, df - wDF);
-      if (!P.gaitMode) { T.hL += -0.65 * df; T.hR += -0.65 * df; T.kL += 1.3 * df; T.kR += 1.3 * df; bob = -DIP_MAX * 0.8 * df; }
+      if (!ikGait) { T.hL += -0.65 * df; T.hR += -0.65 * df; T.kL += 1.3 * df; T.kR += 1.3 * df; bob = -DIP_MAX * 0.8 * df; }
     }
     if (p.carry) { T.aL = T.aR = -1.25; T.eL = T.eR = -0.95; T.zL = 0.1; T.zR = -0.1; T.lean -= 0.04; }       // holder tingen foran seg
     else if (p.pushT > 0) { T.lean += 0.22; T.chest += 0.1; T.aL = T.aR = -1.4; T.eL = T.eR = -0.2; }          // lener seg inn i det han dytter
   }
   if (!p.skid && p.state !== 'mantle' && p.state !== 'hang' && p.state !== 'swing' && mode !== 'fly' && p.onGround) T.lean += hero.accLean;
 
-  if (hero.gripNear && (p.state === 'ground' || p.state === 'air') && !p.carry) { T.aR = Math.min(T.aR, -1.75); T.eR = -0.45; }   // rekker en arm mot grepet
+  // fingrene: knyttet rundt det han holder eller henger i, løst knyttet i løp, åpne når han rekker ut
+  T.fgL = T.fgR = p.carry || ['hang', 'climb', 'swing', 'zip', 'mantle'].includes(p.state) ? 1.2 : p.reach > 0 || (!p.onGround && p.vy < -8) ? 0.05 : 0.35 + 0.55 * kSp * (p.onGround ? 1 : 0);
+  if (hero.gripNear && (p.state === 'ground' || p.state === 'air') && !p.carry) { T.aR = Math.min(T.aR, -1.75); T.eR = -0.45; T.fgR = 0.05; }   // rekker en arm mot grepet
+  if (ownGait && p.onGround && p.state === 'ground' && mode === 'play') {
+    T.roll += clampN(-yawRate * 0.06 * kSp, -0.2, 0.2);                            // lener seg inn i svingen
+    const [jx, jz] = axes();                                                       // hodet ser dit du styrer, litt før kroppen har snudd seg
+    if (Math.hypot(jx, jz) > 0.2) { const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw); T.hy += clampN(angDiff(hero.yaw, Math.atan2(cy * jx - sy * jz, -sy * jx - cy * jz)), -0.8, 0.8) * 0.5; }
+  }
 
   // jevn overgang: armer/overkropp rolig, ben raskere; alt raskere i lufta og i hurk
   const quick = !p.onGround || p.windup > 0 || df > 0.2;
-  const slowKeys = new Set(['aL', 'aR', 'zL', 'zR', 'eL', 'eR', 'lean', 'chest', 'twist', 'hy', 'hp', 'roll']);
+  const slowKeys = new Set(['aL', 'aR', 'zL', 'zR', 'eL', 'eR', 'lean', 'chest', 'twist', 'hy', 'hp', 'roll', 'sway', 'fgL', 'fgR']);
   for (const key in T) c[key] += (T[key] - c[key]) * (1 - Math.exp(-dt / (slowKeys.has(key) ? (quick ? (!p.onGround && p.airT < 0.25 ? 0.04 : 0.06) : 0.14) : (!p.onGround ? 0.05 : 0.08))));
   hero.armL.top.rotation.set(c.aL, 0, -c.zL); hero.armR.top.rotation.set(c.aR, 0, -c.zR);
   hero.armL.mid.rotation.x = c.eL; hero.armR.mid.rotation.x = c.eR;
+  hero.armL.fingers.rotation.z = c.fgL; hero.armL.tips.rotation.z = c.fgL * 0.9; hero.armR.fingers.rotation.z = -c.fgR; hero.armR.tips.rotation.z = -c.fgR * 0.9;
 
   // bein: bland mellom FK-posene og IK (fast fot) etter om vi går/står
   hero.ikW += ((gaitOn ? 1 : 0) - hero.ikW) * (1 - Math.exp(-(gaitOn ? (p.landT < 0.12 ? 25 : 10) : 12) * dt));
@@ -789,7 +662,7 @@ function poseHero(p, now, dt, mode) {
   hero.legL.top.position.y = hero.legR.top.position.y = hipY;
 
   // overkropp: bekken bærer lean, bryst bøyer og vrir mer, hodet ser dit kroppen går (pluss litt omkringsyn i hvile)
-  hero.body.position.y = hipY;
+  hero.body.position.y = hipY; hero.body.position.x = c.sway;
   hero.body.rotation.x = c.lean; hero.body.rotation.y = -c.twist * 0.4;
   hero.chest.rotation.x = c.chest; hero.chest.rotation.y = c.twist;
   hero.head.rotation.x = c.hp - (c.lean + c.chest) * 0.7; hero.head.rotation.y = c.hy - c.twist * 0.6;
@@ -804,6 +677,7 @@ function poseHero(p, now, dt, mode) {
     hero.yaw += Math.max(-maxStep, Math.min(maxStep, d));
   }
   hero.root.rotation.y = hero.yaw;
+  { const dy = angDiff(hero.yawPrev ?? hero.yaw, hero.yaw); hero.yawPrev = hero.yaw; hero.yawRate = yawRate + (dy / Math.max(dt, 1e-3) - yawRate) * (1 - Math.exp(-dt / 0.12)); }   // hvor fort han snur seg (til sving-helling og skritt på stedet)
 }
 function lerpN(a, b, t) { return a + (b - a) * t; }
 
@@ -881,7 +755,7 @@ function animateHero(p, now, dt) {
     const e = f.eyes[i], pu = f.pupils[i];
     e.scale.y = Math.max(0.07, F.eyeY * (1 - 0.93 * bAmt)); e.scale.x = 1 + (F.eyeY > 1 ? 0.08 : 0);
     pu.scale.set(F.pup, 1.1 * F.pup, 0.5); pu.position.set(h.look.x * 0.0075, h.look.y * 0.006, 0.0065);
-    f.brows[i].rotation.z = (i === 0 ? 1 : -1) * F.bw; f.brows[i].position.y = 0.04 + F.bl + (F.eyeY < 0.4 ? -0.006 : 0);
+    f.brows[i].rotation.z = (i === 0 ? 1 : -1) * F.bw; f.brows[i].position.y = f.browY + F.bl + (F.eyeY < 0.4 ? -0.006 : 0);
     f.blush[i].material.opacity = F.blush;
   }
   if (mood === 'wink') { const wv = Math.sin(clampN((1.45 - h.mood.t) / 0.75, 0, 1) * Math.PI); f.eyes[1].scale.y = Math.max(0.07, 1 - 0.93 * wv); f.brows[1].position.y -= 0.012 * wv; }       // blunker med det ene øyet
@@ -1190,11 +1064,13 @@ function stickMove(e) {
     dx /= l; dy /= l;
   }
   touch.x = dx; touch.y = -dy; knob.style.transform = `translate(${dx * 40}px, ${dy * 40}px)`;
+  { const m = Math.min(1, Math.hypot(dx, dy)), out = m < stickDead ? 0 : Math.pow((m - stickDead) / (1 - stickDead), stickCurve);       // fargen på stikken viser sonen: forsiktig (stopper ved kanter) eller løp (hopper over gap)
+    stick.classList.toggle('run', out >= P.autoJumpMin && (P.autoJump || P.edgeGuard)); stick.classList.toggle('soft', out > 0 && out < P.guardMax && P.edgeGuard); }
 }
 stick.addEventListener('pointerdown', (e) => { stickId = e.pointerId; stick.setPointerCapture(e.pointerId); stickC = null; stickMove(e); });
 stick.addEventListener('pointermove', (e) => { if (e.pointerId === stickId) stickMove(e); });
 const stickEnd = (e) => {
-  if (e.pointerId !== stickId) return; stickId = null; stickC = null; touch.x = touch.y = 0; knob.style.transform = '';
+  if (e.pointerId !== stickId) return; stickId = null; stickC = null; touch.x = touch.y = 0; knob.style.transform = ''; stick.classList.remove('run', 'soft');
   if (stick.classList.contains('float')) { stick.classList.remove('float'); stick.style.left = stick.style.top = stick.style.bottom = ''; stick.style.display = ''; }   // tilbake til hvilestilling (flyttet eller flytende)
 };
 stick.addEventListener('pointerup', stickEnd); stick.addEventListener('pointercancel', stickEnd);
@@ -1270,6 +1146,7 @@ function reapplyKnobs() {
   const base = PRESETS[presetName] || {}, b = (k) => base[k] ?? P0_SNAPSHOT[k];
   const lv = { none: { coyote: 0.1, jumpBuffer: 0.08, reachSnap: 0.3, stepUp: 0, autoGrab: false }, normal: { coyote: 0.14, jumpBuffer: 0.12, reachSnap: 0.45, stepUp: b('stepUp'), autoGrab: base.autoGrab ?? false }, much: { coyote: 0.22, jumpBuffer: 0.2, reachSnap: 0.7, stepUp: Math.max(0.6, b('stepUp')), autoGrab: true } }[helpLevel] || {};
   Object.assign(P, lv);
+  P.edgeGuard = edgeGuardOn && helpLevel !== 'none'; P.autoJump = autoJumpOn && helpLevel !== 'none';       // kanthjelp: stopp ved kanten (forsiktig) og hopp selv over gap (løp)
   P.accel = b('accel') * inertia; P.decel = b('decel') * inertia; P.turnDecel = b('turnDecel') * inertia; P.speed = b('speed') * speedScale;
 }
 reapplyKnobs();
@@ -1344,6 +1221,8 @@ const SETTINGS = [
   fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
+  sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
+  fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
   fl('hudtech', 'spill', 'Vis tekniske tall (høyde, tid, poeng)', true, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
   // Styring
   rg('camsens', 'styring', 'Kamerafølsomhet (dra)', 1, 0.4, 2, 0.1, () => camSens, kp('tlm.camsens', (v) => { camSens = v; })),
@@ -1358,6 +1237,8 @@ const SETTINGS = [
   fl('aimthrow', 'styring', 'Kast med dra og slipp (hold TA, dra ned)', true, () => aimThrowOn, kp('tlm.aimthrow', (v) => { aimThrowOn = v; })),
   fl('dbltap', 'styring', 'Dobbelttrykk på skjermen sentrerer kameraet', true, () => dblTapOn, kp('tlm.dbltap', (v) => { dblTapOn = v; })),
   fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', true, () => showCenter, kp('tlm.showcenter', (v) => { showCenter = v; applyUiFlags(); })),
+  fl('edgeguard', 'styring', TOUCH ? 'Kanthjelp: stopp ved kanten når du skyver stikken forsiktig' : 'Kanthjelp: stopp ved kanten når du går forsiktig (C)', true, () => edgeGuardOn, kp('tlm.edgeguard', (v) => { edgeGuardOn = v; reapplyKnobs(); })),
+  fl('autojump', 'styring', TOUCH ? 'Kanthjelp: hopp av seg selv over gap når du løper (stikken helt ut)' : 'Kanthjelp: hopp av seg selv over gap når du løper mot kanten', true, () => autoJumpOn, kp('tlm.autojump', (v) => { autoJumpOn = v; reapplyKnobs(); })),
   { id: 'autograb', group: 'styring', type: 'bool', label: 'Grip kanten automatisk', get def() { return !!PRESETS[presetName]?.autoGrab; }, get: () => P.autoGrab, set: (v) => { P.autoGrab = v; saveCustom(); } },
   ...(navigator.vibrate ? [fl('vib', 'styring', 'Vibrasjon', true, () => vibOn, kp('tlm.vib', (v) => { vibOn = v; if (v) buzz(30); }))] : []),
   // Kamera
@@ -1365,6 +1246,7 @@ const SETTINGS = [
   rg('followstr', 'kamera', 'Kamerafølging: styrke (0 = av)', 1, 0, 2.5, 0.1, () => followStrength, kp('tlm.followstr', (v) => { followStrength = v; })),
   rg('fov', 'kamera', 'Synsfelt (grader)', 52, 38, 80, 1, () => fovSet, kp('tlm.fov', (v) => { fovSet = v; }), { digits: 0 }),
   rg('pitchbase', 'kamera', 'Kameravinkel (høyere = mer ovenfra)', 0.26, 0.05, 0.7, 0.01, () => pitchBase, kp('tlm.pitchbase', (v) => { pitchBase = v; if (viewMode !== 'first') cam.pitch = viewMode === 'shoulder' ? v - 0.08 : v; })),
+  fl('lookahead', 'kamera', 'Kameraet ser litt foran deg når du går', true, () => lookAheadOn, kp('tlm.lookahead', (v) => { lookAheadOn = v; })),
   fl('blob', 'kamera', 'Skygge under figuren og landingsmarkør', true, () => blobOn, kp('tlm.blob', (v) => { blobOn = v; })),
   sl('view', 'kamera', 'Kamerasyn / View', 'shoulder', [['third', '3. person (bak figuren)'], ['shoulder', 'Over skulderen (som PUBG)'], ['first', '1. person (prøve)']], () => viewMode, setViewMode),
   rg('shdist', 'kamera', 'Skulderkamera: avstand', 3, 1.6, 5, 0.1, () => shDist, kp('tlm.shdist', (v) => { shDist = v; })),
@@ -1616,6 +1498,8 @@ function update(dt) {
       else say(ev.tool === 'gel' ? 'gel' : 'roll');
     }
     else if (ev.type === 'toolhint') toast(ev.tool === 'needle' ? T('toast.needSpool', { thread: T('btn.thread') }) : ev.tool === 'spool' ? T('toast.needNeedle', { thread: T('btn.thread') }) : ev.tool === 'zip' ? ({ 'zip-flat': T('toast.zipFlat'), 'zip-far': T('toast.zipFar'), 'zip-blocked': T('toast.zipBlocked') }[ev.why] || T('toast.zipStand', { tieTop: T('btn.tieTop') })) : ev.tool === 'gel' ? T('toast.needGel', { smear: T('btn.smear'), drop: T('btn.drop') }) : T('toast.needRoll', { unroll: T('btn.unroll'), drop: T('btn.drop') }));
+    else if (ev.type === 'autojump') { buzz(15); if (!store.get('tlm.seen.autojump', false)) { store.set('tlm.seen.autojump', true); toast(TOUCH ? 'Hoppet av seg selv: stikken helt ut mot en kant = hopp over. Skyv forsiktig for å stoppe ved kanten.' : 'Hoppet av seg selv over gapet. Hold C for å gå forsiktig og stoppe ved kanten.'); } }
+    else if (ev.type === 'edgestop') { buzz(10); if (!store.get('tlm.seen.edgestop', false)) { store.set('tlm.seen.edgestop', true); toast(TOUCH ? 'Stopper ved kanten. Skyv stikken helt ut for å hoppe over eller gå utfor.' : 'Stopper ved kanten. Slipp C for å gå utfor.'); } }
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
   }
   if (player.hardLands > pre.hard) { logEv('hard landing'); setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
@@ -1721,6 +1605,8 @@ function insideAny(x, y, z, m) {
   return false;
 }
 
+const camAhead = { x: 0, z: 0 };
+const dust = gfxLow ? null : look.makeDust(); if (dust) scene.add(dust.points);
 function render(now, dt) {
   updateCarryButton();
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
@@ -1790,7 +1676,9 @@ function render(now, dt) {
     if (settled) camFocusY += (player.y - camFocusY) * (1 - Math.pow(0.08, dt));        // følg rolig når du står
     else camFocusY = Math.min(player.y + 0.9, Math.max(player.y - 0.9, camFocusY));       // i lufta: ikke følg hvert hopp
     const kxz = 1 - Math.pow(0.04, dt);
-    cam.target.x += (player.x - cam.target.x) * kxz; cam.target.z += (player.z - cam.target.z) * kxz;
+    { const la = lookAheadOn && mode === 'play' && player.state === 'ground' ? 0.17 : 0, ka = 1 - Math.pow(0.25, dt);       // se litt foran figuren i gangretningen (mer av det du går mot)
+      camAhead.x += (player.vx * la - camAhead.x) * ka; camAhead.z += (player.vz * la - camAhead.z) * ka; }
+    cam.target.x += (player.x + camAhead.x - cam.target.x) * kxz; cam.target.z += (player.z + camAhead.z - cam.target.z) * kxz;
     // kameraassistanse: se der du lander (fall) og opp mot neste grep (klatring), og løft deg over vegger i stedet for å bli trukket tett inn
     const falling = !player.onGround && player.vy < -6 && !['hang', 'mantle', 'swing', 'climb', 'zip'].includes(player.state);
     const climbing = ['climb', 'hang'].includes(player.state);
@@ -1819,6 +1707,7 @@ function render(now, dt) {
     for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
     if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   { const xh = $('xhair'); if (xh) xh.style.display = viewMode === 'shoulder' && xhairOn && mode === 'play' ? 'block' : 'none'; }
+  if (dust) { dust.points.visible = dustOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
   camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
@@ -1915,7 +1804,7 @@ logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.
 if (!TOUCH && !store.get('tlm.pcseen', false)) { store.set('tlm.pcseen', true); setTimeout(() => toast('PC: WASD går, mellomrom hopper, F tar, E griper, Z sentrerer kameraet. Du kan også klikke knappene.'), 2500); }
 let last = performance.now();
 function frame(now) {
-  const raw = now - last, dt = Math.min(0.05, raw / 1000); last = now;
+  const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
   if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps`; perf.win = perf.winN = 0; } }
   if (!window.__paused) update(dt);
   stepCamAnim(dt); compassFrame(now);

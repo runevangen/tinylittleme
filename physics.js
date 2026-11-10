@@ -91,6 +91,12 @@ export const P = {
   stripMax: 14, stripW: 0.5, stripTear: 7,   // dopapirbånd: lengste fall, bredde, og hvor lenge det tåler et tak (s) før det revner
   throwFriction: 6,  // en kastet ting bremses på bakken
   supportMin: 0.45,  // minste andel av fotavtrykket som må hvile på noe, ellers glir tingen av
+  // kanthjelp (v0.62): av som standard her; spillet slår dem på etter innstillingene
+  edgeGuard: false,  // true: går du forsiktig (stikken under guardMax), stopper du ved kanten i stedet for å gå utfor
+  guardMax: 0.7,     // stikke-utslag (0..1) som regnes som «forsiktig»
+  edgeDrop: 0.6,     // fall større enn dette regnes som en kant
+  autoJump: false,   // true: løper du (stikken over autoJumpMin) mot en kant med en flate på andre siden, hopper du av deg selv
+  autoJumpMin: 0.85, autoJumpDown: 2.0,   // minste stikke-utslag, og hvor mye lavere landingsflaten kan ligge
 };
 
 // Mario-stil: figuren snur mot gangretningen (kamera og kropp er uavhengige), kameraet følger etter (se camera_util.js)
@@ -610,6 +616,48 @@ function approach(v, target, d) {
   return Math.max(v - d, target);
 }
 
+// ---------- kanthjelp: stopp ved kanten (forsiktig gange) og hopp av seg selv over et gap (løp) ----------
+const supportAt = (L, p, x, z) => { const s = surfaceBelow(L, x, p.y + 0.05, z, 0.04); return !!s && s.top >= p.y - P.edgeDrop; };
+// Landingsflate rett frem på andre siden av et gap: gir avsparkfarten som trengs, eller null (da løper du bare utfor som før).
+export function autoJumpTarget(p, L, ux, uz, vh) {
+  const g = -P.gravity, hMax = P.jump * P.jump / (2 * g), dMax = vh * 2 * P.jump / g;
+  let pit = -Infinity;
+  for (let d = 0.6; d <= dMax + 0.01; d += 0.3) {
+    const x = p.x + ux * d, z = p.z + uz * d, s = surfaceBelow(L, x, p.y + hMax * 0.8, z, 0.04);
+    if (d < 0.61) { if (s && s.top >= p.y - P.edgeDrop) return null; pit = s ? s.top : -Infinity; continue; }   // bare en smal sprekk: gå over
+    if (!s || s.top < p.y - P.autoJumpDown || s.top < pit + 0.8) { if (s) pit = Math.min(pit, s.top); continue; }
+    if (!freeAt(L, x, s.top + 0.02, z)) return null;                                  // noe står i veien der du ville landet
+    const dh = s.top - p.y, dd = d + 0.45, t = dd / vh;
+    let vy = (dh + 0.5 * g * t * t) / t;                                              // buen som lander litt inne på flaten
+    if (dh > 0) vy = Math.max(vy, Math.sqrt(2 * g * (dh + 0.35)));                    // høyere flate: toppen av buen må over kanten
+    if (vy > P.jump * 1.02) {                                                         // for langt til å lande oppå: fullt hopp hvis du rekker kanten med hendene (kantgrep), ellers ikke noe hopp
+      if (P.autoGrab && dh <= 0.3 && d - 0.3 <= vh * 2 * P.jump / g + 0.2) return { vy: P.jump, d, top: s.top, grab: true };
+      return null;
+    }
+    return { vy: Math.max(4.5, vy), d: dd, top: s.top };
+  }
+  return null;
+}
+function edgeAssist(p, inp, wl, dt, L) {
+  const sp = Math.hypot(p.vx, p.vz);
+  if (sp < 0.05 || !supportAt(L, p, p.x, p.z)) return;                               // står du allerede utenfor kanten, skal du ikke låses
+  const ux = p.vx / sp, uz = p.vz / sp;
+  if (P.autoJump && wl >= P.autoJumpMin && !inp.walk && sp > 0.6 * P.speed && p.recover <= 0 && p.windup <= 0 && !p.carry?.pole && !supportAt(L, p, p.x + ux * 0.3, p.z + uz * 0.3)) {
+    const t = autoJumpTarget(p, L, ux, uz, Math.max(sp, 0.85 * P.speed) * (P.gaitMode ? P.jumpBoost : 1));
+    if (t) {
+      p.vy = t.vy - P.gravity * dt; p.onGround = false; p.coyote = 0; p.buffer = 0; p.jumping = false; p.vaulting = false; boostJump(p);
+      (L.events ||= []).push({ type: 'autojump' }); return;
+    }
+  }
+  if (P.edgeGuard && (wl < P.guardMax || inp.walk)) {
+    const la = 0.1 + sp * dt; let stop = false;
+    if (Math.abs(p.vx) > 1e-3 && !supportAt(L, p, p.x + Math.sign(p.vx) * la, p.z)) { p.vx = 0; stop = true; }
+    if (Math.abs(p.vz) > 1e-3 && !supportAt(L, p, p.x, p.z + Math.sign(p.vz) * la)) { p.vz = 0; stop = true; }
+    if (stop && p.t - (p.edgeEvT ?? -9) > 4) { p.edgeEvT = p.t; (L.events ||= []).push({ type: 'edgestop' }); }
+    p.edgeStop = stop ? 0.25 : p.edgeStop;
+  }
+}
+
 // inp: { mx, mz (-1..1, verdensretning), jumpPressed, jumpHeld, grabPressed, grabHeld }
 export function step(p, inp, dt, L) {
   carryControl(p, inp, dt, L);
@@ -694,6 +742,8 @@ function sub(p, inp, dt, L) {
     }
   }
 
+  p.edgeStop = Math.max(0, (p.edgeStop || 0) - dt);
+  if ((P.edgeGuard || P.autoJump) && p.onGround && p.lock <= 0 && p.state === 'ground') edgeAssist(p, inp, wl, dt, L);
   p.vy = Math.max(P.maxFall, p.vy + P.gravity * dt);
   const pushWall = p.wallT > 0 && p.wallN && (wx * p.wallN.nx + wz * p.wallN.nz) < -0.3;
   p.sliding = !p.onGround && !!pushWall && p.vy < P.slide;

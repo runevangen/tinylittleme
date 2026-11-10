@@ -89,6 +89,7 @@
   #win button{font:700 15px system-ui;padding:11px 22px;border:0;border-radius:999px;background:var(--accent);color:var(--ink);margin-top:6px}
   #stick{position:fixed;left:max(22px,env(safe-area-inset-left));bottom:76px;width:130px;height:130px;border-radius:50%;background:#fff5;border:2px solid #fff8;display:none}
   #knob{position:absolute;left:35px;top:35px;width:60px;height:60px;border-radius:50%;background:#1d2433aa}
+  #knob{transition:background .12s,box-shadow .12s}#stick.soft #knob{background:#2f6f5ecc;box-shadow:0 0 0 3px #9fe0c888}#stick.run #knob{background:#c96a1ecc;box-shadow:0 0 0 3px #ffc98a99}
   .tbtn{position:fixed;border-radius:50%;border:0;color:#fff;font:700 13px system-ui;display:none;align-items:center;justify-content:center;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none}
   #btnJump{right:max(24px,env(safe-area-inset-right));bottom:96px;width:88px;height:88px;background:#c1121fcc}
   #btnGrab{right:max(30px,env(safe-area-inset-right));bottom:10px;width:76px;height:76px;background:#1d2433cc}
