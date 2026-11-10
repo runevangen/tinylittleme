@@ -54,10 +54,10 @@
   ],
   "objects": [
     {
-      "id": "kloss_1",
-      "kind": "toyblock",
+      "id": "bokstav_a",
+      "kind": "letterblock",
       "material": "wood",
-      "color": "#f2c230",
+      "color": "#f4a6a6",
       "box": [
         107,
         127,
@@ -70,10 +70,10 @@
       "photos": []
     },
     {
-      "id": "kloss_2",
-      "kind": "toyblock",
+      "id": "bokstav_b",
+      "kind": "letterblock",
       "material": "wood",
-      "color": "#3f8fd6",
+      "color": "#7fb8ea",
       "box": [
         86,
         106,
@@ -84,7 +84,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "note": "To klosser i høyden"
+      "note": "To bokstavklosser i høyden (B og C)"
     },
     {
       "id": "lekekasse",
@@ -591,6 +591,87 @@
       "confidence": 1,
       "photos": [],
       "decor": true
+    },
+    {
+      "id": "lego_1",
+      "kind": "legoblock",
+      "material": "plastic",
+      "color": "#e0483e",
+      "box": [
+        215,
+        231,
+        0,
+        9.6,
+        170,
+        186
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "lego_2",
+      "kind": "legoblock",
+      "material": "plastic",
+      "color": "#3f8fd6",
+      "box": [
+        215,
+        247,
+        0,
+        9.6,
+        186,
+        202
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "lego_3",
+      "kind": "legoblock",
+      "material": "plastic",
+      "color": "#f2c230",
+      "box": [
+        215,
+        231,
+        9.6,
+        19.2,
+        170,
+        186
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "leketoybil",
+      "kind": "toycar",
+      "material": "plastic",
+      "color": "#4cae6e",
+      "box": [
+        118,
+        150,
+        0,
+        12,
+        168,
+        184
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "bokstav_m",
+      "kind": "letterblock",
+      "material": "wood",
+      "color": "#c9a0e8",
+      "box": [
+        128,
+        144,
+        0,
+        16,
+        118,
+        134
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "light"
     },
     {
       "id": "nattbok",

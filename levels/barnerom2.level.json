@@ -95,9 +95,9 @@
     3.2,
     21.2
    ],
-   "id": "kloss_1",
-   "kind": "toyblock",
-   "color": 15909424,
+   "id": "bokstav_a",
+   "kind": "letterblock",
+   "color": 16033446,
    "material": "wood",
    "cp": false,
    "soft": false
@@ -114,9 +114,9 @@
     6.4,
     21.2
    ],
-   "id": "kloss_2",
-   "kind": "toyblock",
-   "color": 4165590,
+   "id": "bokstav_b",
+   "kind": "letterblock",
+   "color": 8370410,
    "material": "wood",
    "cp": false,
    "soft": false
@@ -505,6 +505,82 @@
    "soft": true
   },
   {
+   "type": "plastic",
+   "min": [
+    13,
+    0,
+    6
+   ],
+   "max": [
+    16.2,
+    1.92,
+    9.2
+   ],
+   "id": "lego_1",
+   "kind": "legoblock",
+   "color": 14698558,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    13,
+    0,
+    9.2
+   ],
+   "max": [
+    19.4,
+    1.92,
+    12.4
+   ],
+   "id": "lego_2",
+   "kind": "legoblock",
+   "color": 4165590,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    13,
+    1.92,
+    6
+   ],
+   "max": [
+    16.2,
+    3.84,
+    9.2
+   ],
+   "id": "lego_3",
+   "kind": "legoblock",
+   "color": 15909424,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -6.4,
+    0,
+    5.6
+   ],
+   "max": [
+    0,
+    2.4,
+    8.8
+   ],
+   "id": "leketoybil",
+   "kind": "toycar",
+   "color": 5025390,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
    "type": "book",
    "min": [
     -10,
@@ -657,6 +733,24 @@
    "weight": "medium",
    "breakable": false,
    "round": true
+  },
+  {
+   "id": "bokstav_m",
+   "kind": "letterblock",
+   "material": "wood",
+   "color": 13213928,
+   "min": [
+    -4.4,
+    0,
+    -4.4
+   ],
+   "max": [
+    -1.2,
+    3.2,
+    -1.2
+   ],
+   "weight": "light",
+   "breakable": false
   }
  ],
  "decor": [
@@ -963,7 +1057,7 @@
    "top": 0
   },
   {
-   "id": "kloss_1",
+   "id": "bokstav_a",
    "x0": -8.6,
    "x1": -4.6,
    "z0": 17.2,
@@ -971,7 +1065,7 @@
    "top": 3.2
   },
   {
-   "id": "kloss_2",
+   "id": "bokstav_b",
    "x0": -12.8,
    "x1": -8.8,
    "z0": 17.2,
@@ -1128,7 +1222,7 @@
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 19,
-  "reachable": 19
+  "nodes": 22,
+  "reachable": 22
  }
 }

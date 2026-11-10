@@ -1041,6 +1041,71 @@
       "confidence": 1,
       "photos": [],
       "decor": true
+    },
+    {
+      "id": "lego_k1",
+      "kind": "legoblock",
+      "material": "plastic",
+      "color": "#e0483e",
+      "box": [
+        20,
+        36,
+        0,
+        9.6,
+        215,
+        231
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "lego_k2",
+      "kind": "legoblock",
+      "material": "plastic",
+      "color": "#f2c230",
+      "box": [
+        20,
+        36,
+        9.6,
+        19.2,
+        215,
+        231
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "bokstav_k",
+      "kind": "letterblock",
+      "material": "wood",
+      "color": "#a9d6f5",
+      "box": [
+        44,
+        60,
+        0,
+        16,
+        215,
+        231
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "light"
+    },
+    {
+      "id": "leketoybil_k",
+      "kind": "toycar",
+      "material": "plastic",
+      "color": "#d9534f",
+      "box": [
+        20,
+        52,
+        0,
+        12,
+        236,
+        252
+      ],
+      "confidence": 1,
+      "photos": []
     }
   ],
   "hazards": [

@@ -753,6 +753,63 @@
    "material": "fabric",
    "cp": false,
    "soft": true
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -32,
+    0,
+    13
+   ],
+   "max": [
+    -28.8,
+    1.92,
+    16.2
+   ],
+   "id": "lego_k1",
+   "kind": "legoblock",
+   "color": 14698558,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -32,
+    1.92,
+    13
+   ],
+   "max": [
+    -28.8,
+    3.84,
+    16.2
+   ],
+   "id": "lego_k2",
+   "kind": "legoblock",
+   "color": 15909424,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -32,
+    0,
+    17.2
+   ],
+   "max": [
+    -25.6,
+    2.4,
+    20.4
+   ],
+   "id": "leketoybil_k",
+   "kind": "toycar",
+   "color": 14242639,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
   }
  ],
  "movables": [
@@ -792,6 +849,24 @@
    "weight": "light",
    "breakable": false,
    "soft": true
+  },
+  {
+   "id": "bokstav_k",
+   "kind": "letterblock",
+   "material": "wood",
+   "color": 11130613,
+   "min": [
+    -27.2,
+    0,
+    13
+   ],
+   "max": [
+    -24,
+    3.2,
+    16.2
+   ],
+   "weight": "light",
+   "breakable": false
   }
  ],
  "decor": [
@@ -1521,7 +1596,7 @@
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 24,
-  "reachable": 20
+  "nodes": 26,
+  "reachable": 22
  }
 }

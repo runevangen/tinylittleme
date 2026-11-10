@@ -65,3 +65,17 @@ assert.ok(r.errors.some((e) => /color/.test(e)) && r.errors.some((e) => /min < m
 }
 
 console.log('scene-tester grønne');
+// leker i barneskala (R2): ren logikk i toys.js, og brettene bruker de nye kindene
+{
+  const { letterOf, letterStack, studLayout, carWheel, STUD_H } = await import('./toys.js');
+  assert.equal(letterOf('bokstav_a'), 'A'); assert.equal(letterOf('kloss-ø'), 'Ø'); assert.match(letterOf('hvadsomhelst'), /^[A-Z]$/);
+  assert.deepEqual(letterStack('bokstav_b', 3.2, 6.4, 3.2), ['B', 'C']); assert.deepEqual(letterStack('bokstav_x', 3, 3, 3), ['X']);
+  assert.equal(studLayout(3.2, 3.2).length, 4); assert.equal(studLayout(6.4, 3.2).length, 8); assert.equal(studLayout(0.5, 0.5).length, 1);
+  for (const [x, z] of studLayout(6.4, 3.2)) assert.ok(Math.abs(x) < 3.2 && Math.abs(z) < 1.6, 'knotter innenfor klossen');
+  assert.ok(STUD_H > 0 && STUD_H < 0.3);
+  const w = carWheel(6, 2.4, 3.2); assert.ok(w.y - w.r >= -1.2 - 1e-9 && w.y + w.r <= 1.2, 'hjulene ligger innenfor boksen i høyden');
+  for (const lv of ['barnerom', 'barnerom2', 'kjokken']) {
+    const all = fs.readFileSync(`levels/${lv}.level.json`, 'utf8');
+    for (const k of ['letterblock', 'legoblock', 'toycar']) assert.ok(all.includes(`"${k}"`), `${lv}: mangler ${k}`);
+  }
+}
