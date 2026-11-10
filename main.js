@@ -93,6 +93,7 @@ let viewMode = new URLSearchParams(location.search).get('view') || store.get('tl
 if (!['third', 'shoulder', 'first'].includes(viewMode)) viewMode = 'shoulder';
 let viewFirst = viewMode === 'first', shDist = store.get('tlm.shdist', 3), shOff = store.get('tlm.shoff', 0.5), shSide = store.get('tlm.shside', 'right') === 'left' ? -1 : 1, xhairOn = store.get('tlm.xhair', true);
 let edgeGuardOn = store.get('tlm.edgeguard', true), autoJumpOn = store.get('tlm.autojump', true), lookAheadOn = store.get('tlm.lookahead', true), dustOn = store.get('tlm.dust', true);   // v0.62: kanthjelp, kamera som ser foran deg, støv i lufta
+let airSteadyOn = store.get('tlm.airsteady', true), magnetOn = store.get('tlm.magnet', true), holdGrabOn = store.get('tlm.holdgrab', true);   // v0.65: stabilisering i lufta
 let compassMode = store.get('tlm.compassmode', store.get('tlm.compass', true) === false ? 'off' : 'both');   // both | compass | arrow | off
 const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; $('qbtn').style.display = qbtnOn ? 'flex' : 'none'; };
 
@@ -1147,6 +1148,7 @@ function reapplyKnobs() {
   const lv = { none: { coyote: 0.1, jumpBuffer: 0.08, reachSnap: 0.3, stepUp: 0, autoGrab: false }, normal: { coyote: 0.14, jumpBuffer: 0.12, reachSnap: 0.45, stepUp: b('stepUp'), autoGrab: base.autoGrab ?? false }, much: { coyote: 0.22, jumpBuffer: 0.2, reachSnap: 0.7, stepUp: Math.max(0.6, b('stepUp')), autoGrab: true } }[helpLevel] || {};
   Object.assign(P, lv);
   P.edgeGuard = edgeGuardOn && helpLevel !== 'none'; P.autoJump = autoJumpOn && helpLevel !== 'none';       // kanthjelp: stopp ved kanten (forsiktig) og hopp selv over gap (løp)
+  P.airSteady = airSteadyOn && helpLevel !== 'none'; P.magnet = magnetOn && helpLevel !== 'none'; P.holdGrab = holdGrabOn && helpLevel !== 'none';   // stabilisering i lufta: demping, sikte-hjelp, hold GREP
   P.accel = b('accel') * inertia; P.decel = b('decel') * inertia; P.turnDecel = b('turnDecel') * inertia; P.speed = b('speed') * speedScale;
 }
 reapplyKnobs();
@@ -1240,6 +1242,9 @@ const SETTINGS = [
   fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', true, () => showCenter, kp('tlm.showcenter', (v) => { showCenter = v; applyUiFlags(); })),
   fl('edgeguard', 'styring', TOUCH ? 'Kanthjelp: stopp ved kanten når du skyver stikken forsiktig' : 'Kanthjelp: stopp ved kanten når du går forsiktig (C)', true, () => edgeGuardOn, kp('tlm.edgeguard', (v) => { edgeGuardOn = v; reapplyKnobs(); })),
   fl('autojump', 'styring', TOUCH ? 'Kanthjelp: hopp av seg selv over gap når du løper (stikken helt ut)' : 'Kanthjelp: hopp av seg selv over gap når du løper mot kanten', true, () => autoJumpOn, kp('tlm.autojump', (v) => { autoJumpOn = v; reapplyKnobs(); })),
+  fl('airsteady', 'styring', TOUCH ? 'I lufta: demp skjelving på stikken' : 'I lufta: demp små rykk i styringen', true, () => airSteadyOn, kp('tlm.airsteady', (v) => { airSteadyOn = v; reapplyKnobs(); })),
+  fl('magnet', 'styring', 'I lufta: sikte-hjelp (trekkes svakt mot grep, kanter og tau du nesten treffer)', true, () => magnetOn, kp('tlm.magnet', (v) => { magnetOn = v; reapplyKnobs(); })),
+  fl('holdgrab', 'styring', TOUCH ? 'I lufta: hold GREP inne for å gripe det første du når' : 'I lufta: hold E / Shift inne for å gripe det første du når', true, () => holdGrabOn, kp('tlm.holdgrab', (v) => { holdGrabOn = v; reapplyKnobs(); })),
   { id: 'autograb', group: 'styring', type: 'bool', label: 'Grip kanten automatisk', get def() { return !!PRESETS[presetName]?.autoGrab; }, get: () => P.autoGrab, set: (v) => { P.autoGrab = v; saveCustom(); } },
   ...(navigator.vibrate ? [fl('vib', 'styring', 'Vibrasjon', true, () => vibOn, kp('tlm.vib', (v) => { vibOn = v; if (v) buzz(30); }))] : []),
   // Kamera

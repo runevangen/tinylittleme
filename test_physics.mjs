@@ -892,6 +892,37 @@ const fwd = { ...idle, mz: 1 };
   applyPreset('klassisk');
 }
 
+// stabilisering i lufta (v0.65): demping av skjelving, sikte-hjelp mot grep/flate, og hold GREP
+{
+  applyPreset('mario');
+  // demping: en stikke som skjelver sidelengs under hoppet flytter figuren mindre
+  const jitter = () => { const L = { boxes: [floor], ropes: [] }; const p = newPlayer(0, 0, 0); for (let i = 0; i < 10; i++) step(p, { ...idle }, 1 / 60, L); let dev = 0;
+    for (let i = 0; i < 70; i++) { step(p, { ...idle, mx: 1, mz: i < 12 ? 0 : 0.15 * Math.sign(Math.sin(i * 1.3)), jumpPressed: i === 10, jumpHeld: true }, 1 / 60, L); dev = Math.max(dev, Math.abs(p.z)); } return dev; };
+  const d0 = jitter(); P.airSteady = true; const d1 = jitter(); P.airSteady = false;
+  assert.ok(d1 < d0 * 0.4 && d1 < 0.05, `demping i lufta: sideavvik ${d1.toFixed(3)} mot ${d0.toFixed(3)} uten`);
+  // … men en tydelig styring i lufta virker fortsatt
+  { P.airSteady = true; const L = { boxes: [floor], ropes: [] }; const p = newPlayer(0, 0, 0); for (let i = 0; i < 10; i++) step(p, { ...idle }, 1 / 60, L);
+    for (let i = 0; i < 60; i++) step(p, { ...idle, mx: i < 25 ? 1 : 0, mz: i < 25 ? 0 : 1, jumpPressed: i === 10, jumpHeld: true }, 1 / 60, L); assert.ok(p.z > 0.8, `tydelig styring i lufta følges (z=${p.z.toFixed(2)})`); P.airSteady = false; }
+  // sikte-hjelp: hopp mot en smal plattform, 0,45 utenfor rekkevidde til siden for banen. Uten hjelp bommer du, med hjelp lander du på den.
+  const narrow = () => { const L = { boxes: [floor, box('wood', -5, 5, 0, 4, -3, 3), box('wood', 8, 12, 0, 4, 0.8, 1.4)], ropes: [] }; const p = newPlayer(3, 4, 0.05);
+    for (let i = 0; i < 10; i++) step(p, { ...idle }, 1 / 60, L); for (let i = 0; i < 150; i++) step(p, { ...idle, mx: i < 110 ? 1 : 0, jumpPressed: i === 14, jumpHeld: true }, 1 / 60, L); return p; };
+  let q = narrow(); assert.ok(q.y < 1, `uten sikte-hjelp bommer du på den smale plattformen (y=${q.y.toFixed(2)})`);
+  P.magnet = true; q = narrow(); assert.ok(Math.abs(q.y - 4) < 0.01 && q.x > 7.5, `med sikte-hjelp lander du på den (x=${q.x.toFixed(2)}, y=${q.y.toFixed(2)}, z=${q.z.toFixed(2)})`);
+  // … og styrer du tydelig bort, lar den deg være
+  { const L = { boxes: [floor, box('wood', -5, 5, 0, 4, -3, 3), box('wood', 8, 12, 0, 4, 0.8, 1.4)], ropes: [] }; const p = newPlayer(3, 4, 0.05);
+    for (let i = 0; i < 10; i++) step(p, { ...idle }, 1 / 60, L); for (let i = 0; i < 150; i++) step(p, { ...idle, mx: 1, mz: i > 14 ? -0.6 : 0, jumpPressed: i === 14, jumpHeld: true }, 1 / 60, L); assert.ok(p.y < 1, 'styrer du bort fra flaten, trekkes du ikke dit'); }
+  // rett frem uten noe å bomme på: banen endres ikke
+  { const fly = () => { const L = { boxes: [floor, box('wood', 20, 30, 0, 2, 5, 9)], ropes: [] }; const p = newPlayer(0, 0, 0); for (let i = 0; i < 10; i++) step(p, { ...idle }, 1 / 60, L); for (let i = 0; i < 80; i++) step(p, { ...idle, mx: 1, jumpPressed: i === 10, jumpHeld: true }, 1 / 60, L); return p.z; }; assert.ok(Math.abs(fly()) < 1e-6, 'ingenting i nærheten: ingen sidedrift'); }
+  P.magnet = false;
+  // hold GREP: uten automatisk kantgrep må GREP trykkes i riktig øyeblikk; holder du den inne fra avsparket, griper du kanten likevel
+  const ledge = (hold) => { P.autoGrab = false; const L = { boxes: [floor, box('wood', 3.5, 8, 0, 4.2, -3, 3)], ropes: [] }; const p = newPlayer(0, 0, 0); let hung = false;
+    for (let i = 0; i < 10; i++) step(p, { ...idle }, 1 / 60, L); for (let i = 0; i < 90; i++) { step(p, { ...idle, mx: 1, jumpPressed: i === 5, jumpHeld: true, grabPressed: i === 5, grabHeld: hold }, 1 / 60, L); hung ||= p.state === 'hang' || p.state === 'mantle'; } P.autoGrab = true; return hung; };
+  assert.ok(!ledge(true), 'uten hold-valget rekker ikke ett tidlig trykk frem til kanten');
+  P.holdGrab = true; assert.ok(ledge(true), 'hold GREP: griper kanten når du når den'); assert.ok(!ledge(false), 'slipper du GREP, griper du ikke');
+  P.holdGrab = false;
+  applyPreset('klassisk');
+}
+
 console.log('alle fysikktester grønne');
 
 

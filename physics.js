@@ -97,6 +97,10 @@ export const P = {
   edgeDrop: 0.6,     // fall større enn dette regnes som en kant
   autoJump: false,   // true: løper du (stikken over autoJumpMin) mot en kant med en flate på andre siden, hopper du av deg selv
   autoJumpMin: 0.85, autoJumpDown: 2.0,   // minste stikke-utslag, og hvor mye lavere landingsflaten kan ligge
+  // stabilisering i lufta (v0.65): av som standard her; spillet slår dem på etter innstillingene
+  airSteady: false, airDead: 0.18, airSmooth: 0.08,   // små rykk på stikken (under airDead) overses i lufta; større endringer følges mykt (tidskonstant i s)
+  magnet: false, magnetRange: 3.5, magnetWidth: 0.7, magnetV: 2.0, magnetAcc: 16,   // sikte-hjelp: bommer du med mindre enn magnetWidth sidelengs på et grep, en kant eller et tau innen magnetRange, trekkes banen dit
+  holdGrab: false,   // true: holder du GREP inne i lufta, griper du det første som kommer innen rekkevidde
 };
 
 // Mario-stil: figuren snur mot gangretningen (kamera og kropp er uavhengige), kameraet følger etter (se camera_util.js)
@@ -658,11 +662,44 @@ function edgeAssist(p, inp, wl, dt, L) {
   }
 }
 
+// ---------- sikte-hjelp i lufta: trekk banen svakt sidelengs mot et grep, en kant/flate eller et tau du er i ferd med å bomme så vidt på ----------
+export function magnetTarget(p, L, wx, wz) {
+  const sp = Math.hypot(p.vx, p.vz); if (sp < 1 || p.carry) return null;
+  const ux = p.vx / sp, uz = p.vz / sp, nx = -uz, nz = ux, g = P.gravity;
+  let best = null;
+  const tryPt = (tx, tz, id, w) => {
+    const dx = tx - p.x, dz = tz - p.z, f = dx * ux + dz * uz, e = dx * nx + dz * nz;
+    if (f < 0.2 || f > P.magnetRange || Math.abs(e) > P.magnetWidth) return null;
+    if ((wx * nx + wz * nz) * Math.sign(e) < -0.3) return null;                      // du styrer tydelig bort fra det: ingen hjelp
+    const score = Math.abs(e) + f * 0.1 + w; if (!best || score < best.score) best = { e, f, id, score };
+    return f;
+  };
+  for (const b of L.boxes) {
+    if (b.carried || b.dyn || b.type === 'floor' || b.type === 'wall') continue;
+    const mx = b.grip ? Math.min(0.1, (b.max[0] - b.min[0]) / 2) : -0.15, mz = b.grip ? Math.min(0.1, (b.max[2] - b.min[2]) / 2) : -0.15;   // grep: midten din må være innenfor flaten; kant/flate: det holder at en del av foten er over
+    const tx = Math.max(b.min[0] + mx, Math.min(b.max[0] - mx, p.x)), tz = Math.max(b.min[2] + mz, Math.min(b.max[2] - mz, p.z));
+    const f = (tx - p.x) * ux + (tz - p.z) * uz; if (f < 0.2 || f > P.magnetRange) continue;
+    const t = f / sp, yArr = p.y + p.vy * t + 0.5 * g * t * t, top = b.max[1];
+    if (b.grip ? (yArr + H >= b.min[1] && yArr <= top) : (yArr + H >= top - P.ledgeBelow - 0.3 && yArr <= top + 2.5)) tryPt(tx, tz, b.id, b.grip ? -0.3 : 0);   // grep-flate i høyde, eller en kant/flate du rekker
+  }
+  for (const r of L.ropes || []) { const f = (r.x - p.x) * ux + (r.z - p.z) * uz; if (f < 0.2) continue; const t = f / sp, hy = p.y + p.vy * t + 0.5 * g * t * t + H * 0.85; if (hy < r.y - 1 && hy > r.y - r.len - 0.5) tryPt(r.x, r.z, 'tau', -0.3); }
+  return best;
+}
+function magnetAssist(p, wx, wz, dt, L) {
+  const m = magnetTarget(p, L, wx, wz); if (!m || Math.abs(m.e) < 0.03) return;
+  const sp = Math.hypot(p.vx, p.vz), nx = -p.vz / sp, nz = p.vx / sp;
+  const want = Math.max(-P.magnetV, Math.min(P.magnetV, m.e / Math.max(0.12, m.f / sp * 0.7)));   // lukk avstanden før du er fremme
+  const dv = Math.max(-P.magnetAcc * dt, Math.min(P.magnetAcc * dt, want));
+  p.vx += nx * dv; p.vz += nz * dv;
+  if (p.t - (p.magEvT ?? -9) > 5) { p.magEvT = p.t; (L.events ||= []).push({ type: 'magnet', id: m.id }); }
+}
+
 // inp: { mx, mz (-1..1, verdensretning), jumpPressed, jumpHeld, grabPressed, grabHeld }
 export function step(p, inp, dt, L) {
   carryControl(p, inp, dt, L);
   if (inp.jumpPressed) p.buffer = Math.max(P.jumpBuffer, p.recover > 0 ? p.recover + 0.06 : 0);
   if (inp.grabPressed && p.reachCd <= 0) { p.reach = P.reachTime; p.reachCd = P.reachTime + P.reachCooldown; }
+  if (P.holdGrab && inp.grabHeld && p.state === 'air' && !p.carry) p.reach = Math.max(p.reach, 0.1);       // hold GREP i lufta: hånden er ute helt til du når noe
   if (dt <= 1e-6) return;
   const n = Math.max(1, Math.ceil(dt / SUBSTEP - 1e-6)), h = dt / n;      // like lange delsteg (en kort rest på <1 ms ga ikke nok fall til å oppdage gulvet → flimmer mellom «står» og «luft»)
   for (let i = 0; i < n; i++) sub(p, inp, h, L);
@@ -680,6 +717,14 @@ function sub(p, inp, dt, L) {
   let wx = inp.mx, wz = inp.mz;
   const wl = Math.hypot(wx, wz);
   if (wl > 1) { wx /= wl; wz /= wl; }
+  // demping i lufta: en tommel som skjelver skal ikke flytte figuren. Små rykk overses; en tydelig endring følges mykt til den er nådd.
+  if (!P.airSteady || p.onGround || p.state !== 'air' || !Number.isFinite(p.airIx + p.airIz)) { p.airIx = wx; p.airIz = wz; p.airFollow = false; }
+  else {
+    const dx = wx - p.airIx, dz = wz - p.airIz, d = Math.hypot(dx, dz);
+    if (d > P.airDead) p.airFollow = true; else if (d < 0.03) p.airFollow = false;
+    if (p.airFollow) { const k = 1 - Math.exp(-dt / P.airSmooth); p.airIx += dx * k; p.airIz += dz * k; }
+    wx = p.airIx; wz = p.airIz;
+  }
 
   if (L.bodies?.length) stepBodies(L, p, dt);
   for (const m of L.made || []) if (m.wet) { m.wetT -= dt; if (m.wetT <= 0) { m.wet = false; m.gripDrain = 0.15; m.gripSlide = 0; } }   // gelen tørker til et fast grep
@@ -744,6 +789,7 @@ function sub(p, inp, dt, L) {
 
   p.edgeStop = Math.max(0, (p.edgeStop || 0) - dt);
   if ((P.edgeGuard || P.autoJump) && p.onGround && p.lock <= 0 && p.state === 'ground') edgeAssist(p, inp, wl, dt, L);
+  if (P.magnet && p.state === 'air' && !p.onGround && p.lock <= 0) magnetAssist(p, wx, wz, dt, L);
   p.vy = Math.max(P.maxFall, p.vy + P.gravity * dt);
   const pushWall = p.wallT > 0 && p.wallN && (wx * p.wallN.nx + wz * p.wallN.nz) < -0.3;
   p.sliding = !p.onGround && !!pushWall && p.vy < P.slide;

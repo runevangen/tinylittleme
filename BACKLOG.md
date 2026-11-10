@@ -31,6 +31,7 @@ Gjenstår / til sparring:
 7. Bedre skår/effekter.
 
 ## Bevegelse og spillfølelse
+- [~] **Stabilisering i lufta (v0.65):** demping av stikken, sikte-hjelp mot grep/kant/tau og hold GREP er på plass (`docs/STYRING.md`). Trenger spilletest: merkes sikte-hjelpen for mye eller for lite (bredde 0,7, fart 2)? Ikke bygd, kan prøves hvis det ikke holder: «hold kursen» (slipp stikken = fortsett), svev på toppen av hoppet, mild sakte film det siste øyeblikket før et grep, og at grepet du kommer til å ta lyser opp.
 - [~] **Kanthjelp (v0.62):** forsiktig stikke stopper ved kanten, løp hopper selv over gap med landingsflate (`docs/STYRING.md`). Trenger spilletest: er 80 % riktig grense, hopper han når du ikke vil, og blir Kontrollbanen for lett? Gjenstår: styrehjelp i lufta mot landingsflaten, og at boten bruker det samme.
 - [~] **Naturtro figur og bevegelser (v0.62):** ny kropp (`hero.js`), føtter som står fast i Mario-stil, løp med svev, helling i sving, skritt ved snuing (`docs/FIGUREN.md`). Gjenstår: føtter som tilpasser seg trinn, bedre heng/sving/klatring, stavhopp-animasjon. Mål FPS på eldre telefoner (flere deler i figuren enn før).
 - [~] **Detaljert rom (v0.62):** teksturer med relieff, bøker, kontaktskygger, støv (`look.js`). Gjenstår: avrundede kanter på møbler, flere småting på gulvet (smuler, hår, knapper) for målestokk, lys fra vinduet som stråler, samme løft for tingene i badet.
