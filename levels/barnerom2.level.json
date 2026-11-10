@@ -641,7 +641,7 @@
   },
   {
    "id": "ball",
-   "kind": "bag",
+   "kind": "ball",
    "material": "plastic",
    "color": 14698558,
    "min": [
@@ -655,7 +655,8 @@
     13.2
    ],
    "weight": "medium",
-   "breakable": false
+   "breakable": false,
+   "round": true
   }
  ],
  "decor": [

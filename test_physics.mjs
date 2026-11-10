@@ -929,6 +929,19 @@ const fwd = { ...idle, mz: 1 };
   for (const a of bk) for (const b of bk) if (a !== b) assert.ok(!(a.min[0] < b.max[0] - 1e-6 && a.max[0] > b.min[0] + 1e-6 && a.min[1] < b.max[1] - 1e-6 && a.max[1] > b.min[1] + 1e-6 && a.min[2] < b.max[2] - 1e-6 && a.max[2] > b.min[2] + 1e-6), `bøker overlapper: ${a.min} / ${b.min}`);
 }
 
+// kule (ballen, v0.74): ekte kulekollisjon. Hjørnene av boksen rundt er luft, og toppen er bare ett punkt høyt
+{
+  const L = world([{ id: 'ball', kind: 'ball', material: 'plastic', color: 0xff0000, min: [-1.6, 0, -1.6], max: [1.6, 3.2, 1.6], weight: 'medium' }]);
+  const drop = (x, z) => { const p = newPlayer(x, 6, z); run(L, p, 240, () => idle); return p; };
+  const top = drop(0, 0), corner = drop(1.5, 1.5);
+  assert.ok(Math.abs(top.y - 3.2) < 0.05, `står på toppen av kula: ${top.y}`);
+  assert.ok(corner.y < 0.05 && corner.groundBox?.type === 'floor', `hjørnet av boksen er luft: y=${corner.y}`);
+  assert.equal(surfaceBelow(L, 1.5, 6, 1.5, 0.04)?.top, 0, 'kulas hjørne gir ikke støtte');
+  const side = newPlayer(-5, 0, 0); run(L, side, 120, () => ({ ...idle, mx: 1 }));        // går mot kula: dytter den, ingen kantgrep
+  const bl = L.bodies[0], bc = (bl.min[0] + bl.max[0]) / 2;
+  assert.ok(side.x < bc - 1 && bl.min[0] > -1.6 && side.state !== 'hang' && side.state !== 'climb', `dytter kula, går ikke gjennom: x=${side.x} kule ${bc} ${side.state}`);
+}
+
 console.log('alle fysikktester grønne');
 
 

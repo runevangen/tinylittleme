@@ -541,7 +541,7 @@
     },
     {
       "id": "ball",
-      "kind": "bag",
+      "kind": "ball",
       "material": "plastic",
       "color": "#e0483e",
       "box": [

@@ -45,6 +45,7 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `basket` | ja | vaskekurv / flettet kurv |
 | `hamper` | ja | firkantet flettet kurv: vaskekurv med lokk; id med «aapen» gir åpen kurv (hylle) |
 | `toyblock` | ja | trekloss (avrundet terning); høyere enn bred = flere stablet |
+| `ball` | ja | ball (løs kule med ekte kulekollisjon; boksen må være en kube) |
 | `bag` | ja | pose / toalettveske |
 | `caddy` | ja | dusjkurv (kromtråd) |
 | `pole` | ja | doskrubb / stang |

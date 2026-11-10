@@ -149,7 +149,15 @@ export function resetPlayer(p, x, y, z) {
 
 // Liten toleranse: å stå akkurat inntil en kant skal ikke telle som overlapp (flyttallsavvik ga «hopp opp på toppen»).
 const TOL = 1e-5;
+// Kuler (ballen): kolliderer som en ekte kule, ikke som boksen rundt (v0.74: man klatret på luft i hjørnene). Spillerboksen mot kulas sentrum.
+const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+function sphereGap(b, x, y, z) {                              // avstand (i kvadrat) mellom kulas sentrum og nærmeste punkt i spillerboksen, og kulas radius
+  const r = (b.max[0] - b.min[0]) / 2, cx = (b.min[0] + b.max[0]) / 2, cy = (b.min[1] + b.max[1]) / 2, cz = (b.min[2] + b.max[2]) / 2;
+  const dx = clampN(cx, x - HW, x + HW) - cx, dy = clampN(cy, y, y + H) - cy, dz = clampN(cz, z - HW, z + HW) - cz;
+  return { r, cx, cy, cz, dx, dy, dz };
+}
 function overlaps(b, x, y, z) {
+  if (b.round) { const g = sphereGap(b, x, y, z); return g.dx * g.dx + g.dy * g.dy + g.dz * g.dz < (g.r - 1e-4) * (g.r - 1e-4); }
   return x - HW < b.max[0] - TOL && x + HW > b.min[0] + TOL &&
          y < b.max[1] - TOL && y + H > b.min[1] + TOL &&
          z - HW < b.max[2] - TOL && z + HW > b.min[2] + TOL;
@@ -167,7 +175,7 @@ export function initBodies(L) {
   for (const m of L.movables || []) {
     const b = {
       id: m.id, kind: m.kind, pole: m.pole || 0, tool: m.tool || '', tool0: m.tool || '', thread: m.tool === 'spool', soft: !!m.soft, vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
-      min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
+      round: m.kind === 'ball' || !!m.round, min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
       vy: 0, alive: true, carried: false, home: { min: [...m.min], max: [...m.max] },
     };
     b.pushFactor = P.push[b.weight] ?? 0.5;
@@ -542,11 +550,16 @@ function updateCarried(p, L) {
 }
 
 // Flaten rett under figuren (til skygge og landingsmarkør): høyeste topp under y innenfor fotavtrykket. Returnerer {top, soft} eller null.
+function roundTop(b, x, z, hw) {                                // høyden på kulas overflate under (x,z), eller null utenfor kula
+  const g = sphereGap(b, x, b.min[1], z), dx = Math.max(0, Math.abs(x - g.cx) - hw), dz = Math.max(0, Math.abs(z - g.cz) - hw), d2 = dx * dx + dz * dz;
+  return d2 < g.r * g.r ? g.cy + Math.sqrt(g.r * g.r - d2) : null;
+}
 export function surfaceBelow(L, x, y, z, hw = 0.3) {
   let best = null;
   for (const b of L.boxes) {
     if (b.carried || b.type === 'wall') continue;
     if (x + hw < b.min[0] || x - hw > b.max[0] || z + hw < b.min[2] || z - hw > b.max[2]) continue;
+    if (b.round) { const c = roundTop(b, x, z, hw); if (c !== null && c <= y + 0.15 && (!best || c > best.top)) best = { top: c, soft: false }; continue; }
     if (b.max[1] > y + 0.15) continue;
     if (!best || b.max[1] > best.top) best = { top: b.max[1], soft: !!b.soft };
   }
@@ -872,7 +885,8 @@ function moveX(p, d, L) {
     if (b === p.carry || !overlaps(b, p.x, p.y, p.z)) continue;
     if (stepOver(p, b, L)) continue;
     if (b.dyn) pushForPlayer(p, b, d, 0, L);
-    p.x = d > 0 ? b.min[0] - HW : b.max[0] + HW;
+    if (b.round) { const g = sphereGap(b, p.x, p.y, p.z), w = Math.sqrt(Math.max(0, g.r * g.r - g.dy * g.dy - g.dz * g.dz)); p.x = d > 0 ? g.cx - w - HW : g.cx + w + HW; }
+    else p.x = d > 0 ? b.min[0] - HW : b.max[0] + HW;
     if (!b.dyn) p.vx = 0;                      // mot ting som kan dyttes beholder du farten
     hit = { box: b, nx: d > 0 ? -1 : 1, nz: 0 };
   }
@@ -887,7 +901,8 @@ function moveZ(p, d, L) {
     if (b === p.carry || !overlaps(b, p.x, p.y, p.z)) continue;
     if (stepOver(p, b, L)) continue;
     if (b.dyn) pushForPlayer(p, b, d, 2, L);
-    p.z = d > 0 ? b.min[2] - HW : b.max[2] + HW;
+    if (b.round) { const g = sphereGap(b, p.x, p.y, p.z), w = Math.sqrt(Math.max(0, g.r * g.r - g.dy * g.dy - g.dx * g.dx)); p.z = d > 0 ? g.cz - w - HW : g.cz + w + HW; }
+    else p.z = d > 0 ? b.min[2] - HW : b.max[2] + HW;
     if (!b.dyn) p.vz = 0;
     hit = { box: b, nx: 0, nz: d > 0 ? -1 : 1 };
   }
@@ -898,6 +913,11 @@ function moveY(p, d, L) {
   p.y += d;
   for (const b of L.boxes) {
     if (b === p.carry || !overlaps(b, p.x, p.y, p.z)) continue;
+    if (b.round) {
+      const g = sphereGap(b, p.x, p.y, p.z), w = Math.sqrt(Math.max(0, g.r * g.r - g.dx * g.dx - g.dz * g.dz));
+      if (d < 0) { p.y = g.cy + w; p.onGround = true; p.groundBox = b; } else p.y = g.cy - w - H;
+      p.vy = 0; continue;
+    }
     if (d < 0) { p.y = b.max[1]; p.onGround = true; p.groundBox = b; }
     else p.y = b.min[1] - H;
     p.vy = 0;
@@ -905,14 +925,14 @@ function moveY(p, d, L) {
   if (d < 0 && !p.onGround) {                                  // gulvet rett under føttene (innenfor 0,3 mm) teller som kontakt, uansett hvor kort delsteget er
     for (const b of L.boxes) {
       if (b === p.carry || !overlaps(b, p.x, p.y - 3e-4, p.z)) continue;
-      p.y = b.max[1]; p.onGround = true; p.groundBox = b; p.vy = 0;
+      p.y = b.round ? Math.max(p.y, roundTop(b, p.x, p.z, HW) ?? p.y) : b.max[1]; p.onGround = true; p.groundBox = b; p.vy = 0;
     }
   }
 }
 
 // ---- Kantgrep ----------------------------------------------------------
 function tryLedge(p, hit, L) {
-  if (p.carry) return false;
+  if (p.carry || hit.box.round) return false;                     // ingen kantgrep på en kule
   const b = hit.box;
   const top = b.max[1];
   const dh = top - (p.y + H);
@@ -938,7 +958,7 @@ function tryLedge(p, hit, L) {
 // ---- Klatring på grep-flater (håndkle, knotter, kabel …) --------------------------
 function tryClimb(p, hit) {
   const b = hit.box;
-  if (p.carry || p.stam < 0.3) return false;
+  if (p.carry || p.stam < 0.3 || b.round) return false;
   p.state = 'climb'; p.climb = { box: b, nx: hit.nx, nz: hit.nz };
   p.vx = p.vy = p.vz = 0; p.jumping = false; p.reach = 0; p.onGround = false;
   p.fx = -hit.nx; p.fz = -hit.nz;

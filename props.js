@@ -305,6 +305,13 @@ const SINGLE = {
     }
     return g;
   },
+  ball(sx, sy, sz, o) {
+    const g = new THREE.Group(), r = Math.min(sx, sy, sz) / 2, col = new THREE.Color(o.color);
+    g.add(mesh(new THREE.SphereGeometry(r, 28, 20), new THREE.MeshStandardMaterial({ color: col, roughness: 0.45 })));
+    const band = new THREE.MeshStandardMaterial({ color: col.clone().lerp(new THREE.Color(0xffffff), 0.8), roughness: 0.5 });
+    for (const rot of [0, Math.PI / 2]) { const t = mesh(new THREE.TorusGeometry(r * 1.002, r * 0.07, 8, 40), band, false); t.rotation.x = rot; g.add(t); }
+    return g;
+  },
   bag(sx, sy, sz, o) {
     const g = new THREE.Group(), wt = weaveTex().clone(); wt.repeat.set(2, 2); wt.needsUpdate = true;
     const body = mesh(new THREE.SphereGeometry(0.5, 20, 14), new THREE.MeshStandardMaterial({ color: o.color, map: wt, bumpMap: wt, bumpScale: 0.6, roughness: 1 }));

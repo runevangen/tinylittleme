@@ -43,7 +43,7 @@ for (const o of scene.objects) {
   if (o.hold) holds.push({ id: o.id, kind: o.kind, min: lo, max: hi });
   if (o.help) hints.push({ id: o.id, text: o.help, pos: [round((lo[0] + hi[0]) / 2), round(hi[1] + 0.9), round((lo[2] + hi[2]) / 2)] });   // liten lapp over tingen
   if (o.movable) {                                         // løse ting: egne legemer i spillet, ikke faste flater
-    movables.push({ id: o.id, kind: o.kind, material: o.material, color: hex(o.color), min: lo, max: hi, weight: o.movable, breakable: !!o.breakable, ...(o.soft ? { soft: true } : {}), ...(o.pole ? { pole: o.pole } : {}), ...(o.tool ? { tool: o.tool } : {}) });
+    movables.push({ id: o.id, kind: o.kind, material: o.material, color: hex(o.color), min: lo, max: hi, weight: o.movable, breakable: !!o.breakable, ...(o.soft ? { soft: true } : {}), ...(o.kind === 'ball' ? { round: true } : {}), ...(o.pole ? { pole: o.pole } : {}), ...(o.tool ? { tool: o.tool } : {}) });
     continue;
   }
   if (o.decor) {
