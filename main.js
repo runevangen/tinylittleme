@@ -1841,8 +1841,9 @@ function setFadeMats(e, on) {
 function updateFades(dt) {
   const on = fadeOn && mode !== 'plan' && cam.cur > 0.6 && !(viewFirst && mode === 'play');
   const a = [camera.position.x, camera.position.y, camera.position.z], d = [cam.target.x - a[0], cam.target.y - a[1], cam.target.z - a[2]];
+  const hc = [player.x, player.y + 0.5, player.z], insideBody = (b) => hc[0] > b.min[0] - 0.05 && hc[0] < b.max[0] + 0.05 && hc[1] > b.min[1] && hc[1] < b.max[1] && hc[2] > b.min[2] - 0.05 && hc[2] < b.max[2] + 0.05;
   for (const e of fadeEntries) {
-    const hit = on && e.boxes.some((b) => !b.carried && segHitsBox(a, d, b, 0.12));
+    const hit = on && e.boxes.some((b) => !b.carried && (segHitsBox(a, d, b, 0.12) || insideBody(b)));   // v0.80: sitter figuren inni tingen (henger i kanten bak en gardin), tones den ut uansett kameravinkel
     const was = e.t;
     e.t = Math.max(0, Math.min(1, e.t + (hit ? 1 : -1) * dt * 6));
     if (e.t > 0 && was === 0) setFadeMats(e, true);
