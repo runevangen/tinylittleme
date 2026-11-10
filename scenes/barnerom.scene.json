@@ -460,7 +460,7 @@
       "material": "book",
       "color": "#c99a2e",
       "box": [
-        289,
+        295,
         300,
         121,
         144,
@@ -468,8 +468,7 @@
         156
       ],
       "confidence": 1,
-      "photos": [],
-      "decor": true
+      "photos": []
     },
     {
       "id": "klesskap",

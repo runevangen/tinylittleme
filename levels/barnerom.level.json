@@ -505,6 +505,25 @@
    "soft": false
   },
   {
+   "type": "book",
+   "min": [
+    29,
+    24.2,
+    2
+   ],
+   "max": [
+    30,
+    28.8,
+    3.2
+   ],
+   "id": "hyllebok",
+   "kind": "box",
+   "color": 13212206,
+   "material": "book",
+   "cp": false,
+   "soft": false
+  },
+  {
    "type": "wood",
    "min": [
     18,
@@ -697,23 +716,6 @@
   }
  ],
  "decor": [
-  {
-   "shape": "box",
-   "id": "hyllebok",
-   "kind": "box",
-   "pos": [
-    28.9,
-    26.5,
-    2.6
-   ],
-   "size": [
-    2.2,
-    4.6,
-    1.2
-   ],
-   "color": 13212206,
-   "material": "book"
-  },
   {
    "shape": "box",
    "id": "skapknott_1",
@@ -1170,7 +1172,7 @@
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 19,
+  "nodes": 20,
   "reachable": 19
  }
 }

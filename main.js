@@ -529,6 +529,11 @@ function poseHero(p, now, dt, mode) {
   const c = hero.cur, sp = Math.hypot(p.vx, p.vz), sec = now / 1000;
   const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0, lzL: 0, lzR: 0, roll: 0, sway: 0, fgL: 0.35, fgR: 0.35 };
   let bob = 0;
+  // v0.86: levende grep: tid siden hånden ble rakt ut, og et «fang»-støt når du tar tak (kroppen tar imot, albuene bøyes, bena svinger)
+  { const gripSt = p.state === 'climb' || p.state === 'hang';
+    if (gripSt && hero.pst !== 'climb' && hero.pst !== 'hang') hero.catchT = 1;
+    hero.pst = p.state; hero.catchT = Math.max(0, (hero.catchT || 0) - dt / 0.55);
+    hero.reachT = p.reach > 0 ? (hero.reachT || 0) + dt : 0; }
   // stå stille i 3 s: figuren snur seg mot kameraet og blunker (bare i skulder-/3. persons-visning med PUBG-styring)
   { const [ix, iz] = axes(), idleIn = Math.hypot(ix, iz) < 0.05, ok = idleWink && P.faceCam && !viewFirst && mode === 'play' && !won && p.onGround && p.state === 'ground' && !p.carry && Math.hypot(p.vx, p.vz) < 0.15 && idleIn && p.recover <= 0;
     hero.stillT = ok ? (hero.stillT || 0) + dt : 0;
@@ -593,15 +598,21 @@ function poseHero(p, now, dt, mode) {
       hL: lerpN(-0.3, -1.05, stepL), hR: lerpN(-0.3, -1.05, stepR), kL: lerpN(0.5, 1.5, stepL), kR: lerpN(0.5, 1.5, stepR),
       lean: 0.2 + 0.05 * tired, chest: 0.1, hp: -0.28, twist: 0.12 * s1 * m,
     });
+    { const id = 1 - m, a1 = Math.sin(sec * 1.9), a2 = Math.sin(sec * 2.7 + 1.3);       // i ro henger han ikke stille: puster, flytter vekten, leter etter fotfeste
+      T.aL += id * 0.1 * a1; T.aR -= id * 0.1 * a1; T.hL += id * 0.12 * a2; T.hR -= id * 0.12 * a2; T.kL += id * 0.2 * (a2 + 1) / 2; T.kR += id * 0.2 * (1 - a2) / 2;
+      T.twist += id * 0.06 * a1; T.lean += id * 0.015 * a2; T.chest += id * 0.03 * a1; T.hy += 0.25 * Math.sin(sec * 0.8) * id; }
     bob = -0.05;
   } else if (p.state === 'hang' || p.state === 'zip') {
     const sway = Math.sin(sec * 1.5);
-    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: 0.12 + sway * 0.1, hR: 0.22 - sway * 0.1, kL: 0.3, kR: 0.15, lean: sway * 0.03, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
+    const kk = Math.sin(sec * 2.3 + 0.7);
+    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: 0.12 + sway * 0.1 + 0.1 * kk, hR: 0.22 - sway * 0.1 - 0.1 * kk, kL: 0.3 + 0.25 * Math.max(0, kk), kR: 0.15 + 0.25 * Math.max(0, -kk), lean: sway * 0.03, chest: -0.05 + 0.02 * Math.sin(sec * 1.8), hp: -0.2, twist: sway * 0.05 });
   } else if (p.state === 'swing') {
     const k = clampN((p.vx * p.fx + p.vz * p.fz) * 0.1, -0.8, 0.8);
     Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: -0.5 * k + 0.2, hR: -0.5 * k + 0.4, kL: 0.5, kR: 0.8, lean: -0.25 * k, chest: -0.1 * k, hp: -0.15 });
   } else if (p.reach > 0) {
-    Object.assign(T, { aL: -2.75, aR: -3.1, eL: -0.05, eR: -0.05, hL: -0.6, hR: 0.3, kL: 1.0, kR: 0.2, lean: 0.15, chest: 0.12, hp: -0.2 });
+    const rt = clampN((hero.reachT || 0) / 0.25, 0, 1), fl = Math.sin(sec * 15), wv = Math.sin(sec * 11);   // armene strekker seg mer og mer, bena sparker, kroppen vrir seg mot grepet
+    Object.assign(T, { aL: -2.55 - 0.3 * rt + 0.1 * wv, aR: -2.8 - 0.35 * rt - 0.1 * wv, eL: -0.3 + 0.25 * rt, eR: -0.25 + 0.2 * rt, hL: -0.6 + 0.35 * fl, hR: 0.3 - 0.35 * fl, kL: 0.9 + 0.45 * Math.max(0, fl), kR: 0.5 + 0.45 * Math.max(0, -fl),
+      lean: 0.12 + 0.12 * rt, chest: 0.1 + 0.14 * rt, hp: -0.2, twist: 0.12 * wv * rt });
   } else if (!p.onGround) {
     if (p.sliding) {
       Object.assign(T, { aL: -2.8, aR: -2.8, eL: -0.3, eR: -0.3, hL: -0.2, hR: 0.1, kL: 0.6, kR: 0.7, lean: 0.05, hp: -0.15 });
@@ -668,6 +679,10 @@ function poseHero(p, now, dt, mode) {
     }
     if (p.carry) { T.aL = T.aR = -1.25; T.eL = T.eR = -0.95; T.zL = 0.1; T.zR = -0.1; T.lean -= 0.04; }       // holder tingen foran seg
     else if (p.pushT > 0) { T.lean += 0.22; T.chest += 0.1; T.aL = T.aR = -1.4; T.eL = T.eR = -0.2; }          // lener seg inn i det han dytter
+  }
+  if ((hero.catchT || 0) > 0 && (p.state === 'climb' || p.state === 'hang')) {                     // tar imot: albuene bøyes og kroppen dypper, så strammer han seg opp igjen
+    const g = hero.catchT, g2 = g * g;
+    T.eL -= 0.9 * g2; T.eR -= 0.9 * g2; T.chest += 0.16 * g2; T.lean += 0.1 * g2; T.hL += 0.35 * g2 * Math.sin(sec * 12); T.hR -= 0.35 * g2 * Math.sin(sec * 12); T.kL += 0.5 * g2; T.kR += 0.5 * g2; bob -= 0.08 * g2;
   }
   if (!p.skid && p.state !== 'mantle' && p.state !== 'hang' && p.state !== 'swing' && mode !== 'fly' && p.onGround) T.lean += hero.accLean;
 
@@ -1828,7 +1843,10 @@ function render(now, dt) {
     const SH = viewMode === 'shoulder', baseDist = SH ? shDist : cam.dist;
     const sdx = SH ? shSide * shOff * Math.cos(cam.yaw) : 0, sdz = SH ? -shSide * shOff * Math.sin(cam.yaw) : 0;       // sideforskyvning: kameraet over skulderen
     const dirAt = (pitch) => { const c = Math.cos(pitch); return new THREE.Vector3(Math.sin(cam.yaw) * c, Math.sin(pitch), Math.cos(cam.yaw) * c); };
-    const clearAt = (dv, dd) => !insideAny(cam.target.x + dv.x * dd + sdx, cam.target.y + dv.y * dd, cam.target.z + dv.z * dd + sdz, 0.25);
+    // v0.86: kameraet blir inne i rommet (ikke utenfor veggen / over taket): bak et vindu eller en vegg ble figuren borte bak karmen eller veggen
+    const RM = LEVEL.room, keepIn = !!RM && Number.isFinite(RM.x0) && player.x > RM.x0 && player.x < RM.x1 && player.z > RM.z0 && player.z < RM.z1;
+    const inRoom = (x, y, z) => !keepIn || (x > RM.x0 + 0.4 && x < RM.x1 - 0.4 && z > RM.z0 + 0.4 && z < RM.z1 - 0.4 && y < (RM.height || 1e9) - 0.4);
+    const clearAt = (dv, dd) => { const x = cam.target.x + dv.x * dd + sdx, y = cam.target.y + dv.y * dd, z = cam.target.z + dv.z * dd + sdz; return !insideAny(x, y, z, 0.25) && inRoom(x, y, z); };
     let liftT = 0;
     if (camAssist && mode !== 'fly' && !clearAt(dirAt(cam.pitch + camPitchBias), baseDist)) {         // noe i veien på full avstand: prøv en høyere vinkel
       for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + o); if (clearAt(dirAt(pp), baseDist)) { liftT = pp - cam.pitch - camPitchBias; break; } }
@@ -1837,7 +1855,7 @@ function render(now, dt) {
     const pitchNow = Math.min(1.3, cam.pitch + camPitchBias + camLift);
     const cp = Math.cos(pitchNow), dir = new THREE.Vector3(Math.sin(cam.yaw) * cp, Math.sin(pitchNow), Math.cos(cam.yaw) * cp);
     let d = baseDist;
-    for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { if (!insideAny(cam.target.x + dir.x * d + sdx, cam.target.y + dir.y * d, cam.target.z + dir.z * d + sdz, 0.25)) break; }
+    for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { if (clearAt(dir, d)) break; }
     cam.cur += (d - cam.cur) * (d < cam.cur ? 0.5 : 0.08);
     if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur); camera.position.x += sdx; camera.position.z += sdz;
     camera.lookAt(cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0), cam.target.z + sdz); }
@@ -1998,4 +2016,5 @@ requestAnimationFrame(frame);
 
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
+window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
 window.__game = { antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

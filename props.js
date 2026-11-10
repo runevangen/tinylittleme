@@ -451,7 +451,7 @@ const SINGLE = {
     const mat = new THREE.MeshStandardMaterial({ color: o.color, map: tt, bumpMap: tt, bumpScale: 1.4, roughness: 1 });
     g.add(mesh(roundedBoxGeo(sx, sy, sz, Math.min(sx, sz) * 0.3, Math.min(0.15, sx * 0.3)), mat)); g.children[0].position.y = -sy / 2;
     const band = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
-    if (!/kape|bukse|jakke/i.test(o.id)) for (const f of [0.12, 0.88]) { const b = mesh(new THREE.BoxGeometry(sx * 1.04, sy * 0.05, sz * 1.0), band, false); b.position.y = -sy / 2 + sy * f; g.add(b); }   // håndklær har striper; klær har ikke
+    if (!/kape|bukse|jakke/i.test(o.id)) for (const f of [0.12, 0.88]) { const b = mesh(new THREE.BoxGeometry(sx + 0.08, sy * 0.05, Math.max(0.05, sz - 0.04)), band, false); b.position.y = -sy / 2 + sy * f; g.add(b); }   // håndklær har striper; klær har ikke
     return g;
   },
   needle(sx, sy, sz, o) {                                           // nål: lang, tynn og blank, med øye i den ene enden; får en rød tråd når den er trædd
