@@ -2,8 +2,9 @@ import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { VERSION } from './version.js';
-import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt } from './props.js';
+import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
+import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
@@ -97,6 +98,7 @@ const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(m
 let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
+let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', false), hudOpen = false, fpsOn = store.get('tlm.fps', false);
 // PC (v0.72): PUBG-styring som standard: WASD går, musa ser deg rundt (klikk i bildet låser pekeren), skulderkamera. Gjøres én gang; kan byttes tilbake i ⚙.
@@ -134,7 +136,7 @@ function toggleSound() {
 }
 
 // ---------- poeng ----------
-const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2, hardLand: 3, antHit: 4 };
+const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2, hardLand: 3, antHit: 4, crumb: CRUMB.points };
 
 // ---------- renderer / scene ----------
 const canvas = $('c');
@@ -815,7 +817,7 @@ function animateHero(p, now, dt) {
 }
 
 // ---------- tilstand ----------
-initBodies(LEVEL); initAnts(LEVEL);
+initBodies(LEVEL); initAnts(LEVEL); initCollect(LEVEL);
 const bodyMeshes = LEVEL.bodies.map((b) => {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
@@ -825,6 +827,8 @@ const bodyMeshes = LEVEL.bodies.map((b) => {
 // maur: én modell per patrulje (v0.77)
 const ANT_COL = [0x9a3a1e, 0x7a2a16, 0xb04a22, 0x8a3320];
 const antMeshes = (LEVEL.antList || []).map((t, i) => { const a = buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb }); a.root.userData.antId = t.id; scene.add(a.root); if (!gfxLow) look.detailize(a.root); return { t, a, rot: Math.atan2(-t.fz, t.fx) }; });
+// smuler (R3): gylne smuler som flyter og snurrer; tatt = skjult
+const crumbMeshes = (LEVEL.crumbList || []).map((c) => { const m = buildCrumb(); m.root.position.set(c.x, c.y, c.z); scene.add(m.root); return { c, m }; });
 // taubaner (nål + tråd) opprettes av fysikken: en tynn rød tråd mellom to knuter
 const zipMeshes = new Map();
 function syncZips() {
@@ -864,7 +868,7 @@ function spawnShards(pos, color) {
 
 const player = newPlayer(...LEVEL.start);
 const save = { pos: [...LEVEL.start] };
-const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, flew: false };
+const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 
@@ -872,7 +876,7 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
-const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds);
+const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb);
 function placeFlag() { flag.position.set(save.pos[0], save.pos[1], save.pos[2]); }
 placeFlag();
 
@@ -880,7 +884,7 @@ placeFlag();
 const progKey = `tlm.progress.${levelId}${LEVEL.rev ? '.r' + LEVEL.rev : ''}`;       // rev: brettet er bygd om (gammel fremgang passer ikke lenger)
 let autoPos = null, autoT = 0, resumed = false;
 let noSave = false;       // satt rett før siden lastes på nytt etter «Nytt spill», så pagehide ikke skriver gammel fremgang tilbake
-function saveProgress() { if (won || !autosaveOn || noSave) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells] }); }
+function saveProgress() { if (won || !autosaveOn || noSave) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells], crumbs: collectedIds(LEVEL) }); }
 function clearProgress() { autoPos = null; store.set(progKey, null); }
 const failCells = new Map();
 let compassForce = 0;
@@ -894,6 +898,7 @@ function failAt(why = 'fall') {
   if (autosaveOn && pr && pr.clock > 4 && okAt(pr.save)) {
     save.pos = pr.save; Object.assign(stats, pr.stats || {}); clock = pr.clock; autoPos = okAt(pr.auto) ? pr.auto : null;
     for (const [k, v] of pr.fails || []) failCells.set(k, v);
+    stats.crumbs = restoreCollected(LEVEL, pr.crumbs);
     resetPlayer(player, ...(autoPos || save.pos)); placeFlag(); resumed = true;
   }
 }
@@ -930,7 +935,7 @@ function restartAll() {
   clearProgress(); failCells.clear();
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player);
-  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = 0; stats.flew = false; resetAnts(LEVEL);
+  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = 0; stats.flew = false; resetAnts(LEVEL); resetCollect(LEVEL);
   won = false; clock = 0; placeFlag(); $('win').classList.add('hide'); setMode('play');
 }
 
@@ -1277,6 +1282,7 @@ const SETTINGS = [
   sl('lang', 'spill', 'Språk / Language', 'nb', LANGS, () => lang, kp('tlm.lang', (v) => { lang = v; applyLang(); })),
   fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
   fl('startscreen', 'spill', 'Vis startskjerm (Nytt spill / Fortsett) når spillet åpnes', true, () => startScreenOn, kp('tlm.startscreen', (v) => { startScreenOn = v; })),
+  fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
@@ -1500,6 +1506,11 @@ function antEvent(ev) {
   if (ev.type === 'stomp') { stats.squashed++; logEv('maur knust', ev.id); audio?.squash(); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], 0x9a3a1e); }
   else if (ev.type === 'hurt') { stats.hits++; logEv('maur støt', ev.id); audio?.anthit(); buzz(70); setMood('hurt', 0.9); toast(`Au! En maur støtet deg  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
 }
+// smuler: plukk (R3). Små, rolige tilbakemeldinger: lyd, poeng, kort melding, gnister
+function crumbEvent(ev) {
+  stats.crumbs = ev.n; logEv('smule', `${ev.id} ${ev.n}/${ev.total}`); audio?.crumb(ev.n, ev.total); buzz(15); setMood('happy', 0.9); spawnShards([ev.x, ev.y, ev.z], 0xffc83a);
+  toast(ev.n === ev.total ? `Alle smulene! ${ev.n}/${ev.total}  +${SCORE.crumb} poeng` : `Smule ${ev.n}/${ev.total}  +${SCORE.crumb} poeng`);
+}
 function update(dt) {
   if (P.faceCam && mode === 'play') {                                  // PC: piltastene ser deg rundt (WASD går)
     const yawIn = (held('ArrowLeft') ? 1 : 0) - (held('ArrowRight') ? 1 : 0), pitchIn = (held('ArrowDown') ? 1 : 0) - (held('ArrowUp') ? 1 : 0);
@@ -1549,6 +1560,7 @@ function update(dt) {
   const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
   step(player, inp, dt, LEVEL);
   if (antsOn) for (const ev of stepAnts(LEVEL, player, dt, mode === 'play' && !won)) antEvent(ev);
+  if (crumbsOn) for (const ev of stepCollect(LEVEL, player, dt, mode === 'play' && !won)) crumbEvent(ev);
   if (autoCam && !P.faceCam && !viewFirst && mode === 'play' && !camAnim && ['ground', 'air'].includes(player.state) && performance.now() / 1000 - lastDrag > 1.1) {      // Mario-stil: kameraet svinger rolig bak deg
     const k = player.onGround ? 1 : 0.5, sp0 = Math.hypot(player.vx, player.vz);
     const y0 = cam.yaw; if (followStrength > 0) cam.yaw = followYaw(cam.yaw, player.vx, player.vz, P.speed, dt * k, { rateScale: followStrength, capScale: followStrength }); metrics.yawAuto += Math.abs(cam.yaw - y0);
@@ -1600,7 +1612,7 @@ function update(dt) {
     { const cl = store.get('tlm.cleared', {}); if (!stats.flew) { cl[levelId] = Math.max(cl[levelId] || 0, points()); store.set('tlm.cleared', cl); }       // husk hvilke nivåer som er klart (beste poeng)
       $('winTitle').textContent = levelInfo?.n ? (nextLevel ? `Nivå ${levelInfo.n} klart!` : 'Alle seks nivåene klart!') : 'Du kom opp!';
       const nb = $('nextLevel'); nb.style.display = nextLevel ? '' : 'none'; if (nextLevel) { nb.textContent = `${nextLevel.label} →`; nb.onclick = () => goLevel(nextLevel.id); } }
-    $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
+    $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br>${crumbTotal(LEVEL) ? `Smuler: ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}${crumbCount(LEVEL) === crumbTotal(LEVEL) ? ' ★' : ''}<br>` : ''}<b style="font-size:22px">Poeng: ${points()}</b>` +
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
     $('win').classList.remove('hide'); clearProgress();
   }
@@ -1699,6 +1711,7 @@ function render(now, dt) {
     const b = player.rope === r ? new THREE.Vector3(player.x, player.y + 0.85, player.z) : new THREE.Vector3(r.x, r.y - r.len, r.z);
     setCyl(line, a, b); end.position.copy(b);
   }
+  for (const { c, m } of crumbMeshes) { m.update(c.phase, c.got || !crumbsOn); }
   for (const m of antMeshes) {
     const { t, a } = m; a.root.visible = antsOn && (t.alive || t.squash < 0.98);
     a.root.position.set(t.x, t.y, t.z);
@@ -1796,9 +1809,10 @@ function render(now, dt) {
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   renderer.render(scene, camera);
-  $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
+  const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
+  $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
-    `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns} · poeng ${points()}`;
+    `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns}${crumbHud} · poeng ${points()}`;
 }
 
 // ---------- kamerahjelp: tone ut det som står i veien, og vis hvor figuren er når den er utenfor skjermen ----------

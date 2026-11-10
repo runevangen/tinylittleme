@@ -1675,5 +1675,87 @@
       ],
       "crumb": true
     }
+  ],
+  "collectibles": [
+    {
+      "id": "smule_1",
+      "on": "vaskekurv",
+      "at": [
+        11.3,
+        56.3
+      ]
+    },
+    {
+      "id": "smule_2",
+      "on": "do_tank",
+      "at": [
+        78.8,
+        11.3
+      ]
+    },
+    {
+      "id": "smule_3",
+      "on": "vask_plate",
+      "at": [
+        123.8,
+        41.3
+      ]
+    },
+    {
+      "id": "smule_4",
+      "on": "vaskekurv",
+      "at": [
+        41.3,
+        26.3
+      ]
+    },
+    {
+      "id": "smule_5",
+      "on": "vask_plate",
+      "at": [
+        161.3,
+        41.3
+      ]
+    },
+    {
+      "id": "smule_6",
+      "on": "do_tank",
+      "at": [
+        56.3,
+        11.3
+      ]
+    },
+    {
+      "id": "smule_7",
+      "on": "gulv",
+      "at": [
+        11.3,
+        146.3
+      ]
+    },
+    {
+      "id": "smule_8",
+      "on": "gulv",
+      "at": [
+        146.3,
+        138.8
+      ]
+    },
+    {
+      "id": "smule_9",
+      "on": "gulv",
+      "at": [
+        71.3,
+        78.8
+      ]
+    },
+    {
+      "id": "smule_10",
+      "on": "gulv",
+      "at": [
+        71.3,
+        168.8
+      ]
+    }
   ]
 }

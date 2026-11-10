@@ -1,8 +1,9 @@
 // Nivå 4–6: de samme rommene som nivå 1–3, men ommøblert, med nye hyller og nye ting, så de må løses på en ny måte.
 // Leser grunnscenene og skriver variantene. Bruk: node tools/make_variants.mjs   (deretter scene2level + walk_route for hver)
 import fs from 'node:fs';
+import { autoCrumbs } from './place_crumbs.mjs';
 const load = (n) => JSON.parse(fs.readFileSync(new URL(`../scenes/${n}.scene.json`, import.meta.url), 'utf8'));
-const save = (n, s) => fs.writeFileSync(new URL(`../scenes/${n}.scene.json`, import.meta.url), JSON.stringify(s, null, 2) + '\n');
+const save = (n, s) => { s.collectibles = autoCrumbs(s); fs.writeFileSync(new URL(`../scenes/${n}.scene.json`, import.meta.url), JSON.stringify(s, null, 2) + '\n'); };
 const kit = (s) => ({
   get: (id) => { const o = s.objects.find((x) => x.id === id); if (!o) throw new Error(`fant ikke ${id}`); return o; },
   del: (...ids) => { for (const id of ids) { const i = s.objects.findIndex((x) => x.id === id); if (i < 0) throw new Error(`fant ikke ${id}`); s.objects.splice(i, 1); } },
