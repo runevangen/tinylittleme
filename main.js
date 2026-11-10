@@ -5,6 +5,9 @@ import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
+import { initBoss, resetBoss, stepBoss } from './boss.js';   // R9: sjef-maur i siste rom (egen logikk, modell og helsebar)
+import { buildBoss, buildPrize } from './boss_model.js';
+import { createBossBar } from './boss_ui.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
 import { makeAtmos } from './atmos.js';
@@ -107,6 +110,7 @@ let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.ai
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
+let bossOn = store.get('tlm.boss', true);   // sjef-maur (R9)
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', false), hudOpen = false, fpsOn = store.get('tlm.fps', false);
 // PC (v0.72): PUBG-styring som standard: WASD går, musa ser deg rundt (klikk i bildet låser pekeren), skulderkamera. Gjøres én gang; kan byttes tilbake i ⚙.
 if (!TOUCH && !store.get('tlm.pcpubg1', false)) { store.set('tlm.pcpubg1', true); store.set('tlm.preset4', 'pubg'); store.set('tlm.view3', 'shoulder'); store.set('tlm.custom4', {}); }
@@ -143,7 +147,7 @@ function toggleSound() {
 }
 
 // ---------- poeng ----------
-const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2, hardLand: 3, antHit: 4, crumb: CRUMB.points, carried: 5 };
+const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2, hardLand: 3, antHit: 4, crumb: CRUMB.points, carried: 5, boss: 25 };
 
 // ---------- renderer / scene ----------
 const canvas = $('c');
@@ -824,7 +828,7 @@ function animateHero(p, now, dt) {
 }
 
 // ---------- tilstand ----------
-initBodies(LEVEL); initAnts(LEVEL); initCollect(LEVEL);
+initBodies(LEVEL); initAnts(LEVEL); initBoss(LEVEL); initCollect(LEVEL);
 const bodyMeshes = LEVEL.bodies.map((b) => {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
@@ -839,6 +843,9 @@ const antMeshes = (LEVEL.antList || []).map((t, i) => {
   let drop = null; if (t.type === 'carrier') { drop = buildDropCrumb(); drop.visible = false; scene.add(drop); }                 // smula bæreren slipper når den knuses
   return { t, a, drop, rot: Math.atan2(-t.fz, t.fx) };
 });
+// sjef-maur (R9): én stor modell, premien (gyllen smule) og helsebaren
+const bossMesh = LEVEL.bossS ? (() => { const m = buildBoss(), prize = buildPrize(); prize.visible = false; scene.add(m.root, prize); if (!gfxLow) look.detailize(m.root); return { ...m, prize, rot: 0 }; })() : null;
+const bossBar = LEVEL.bossS ? createBossBar(document.body, TOUCH ? T('btn.jump') : 'Mellomrom') : null;
 // smuler (R3): gylne smuler som flyter og snurrer; tatt = skjult
 const crumbMeshes = (LEVEL.crumbList || []).map((c) => { const m = buildCrumb(); m.root.position.set(c.x, c.y, c.z); scene.add(m.root); return { c, m }; });
 // taubaner (nål + tråd) opprettes av fysikken: en tynn rød tråd mellom to knuter
@@ -880,7 +887,7 @@ function spawnShards(pos, color) {
 
 const player = newPlayer(...LEVEL.start);
 const save = { pos: [...LEVEL.start] };
-const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
+const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 
@@ -888,7 +895,7 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
-const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried);
+const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried + (stats.boss || 0) * SCORE.boss);
 function placeFlag() { flag.position.set(save.pos[0], save.pos[1], save.pos[2]); }
 placeFlag();
 
@@ -947,7 +954,7 @@ function restartAll() {
   clearProgress(); failCells.clear();
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player);
-  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = 0; stats.flew = false; resetAnts(LEVEL); resetCollect(LEVEL);
+  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = stats.boss = 0; stats.flew = false; resetAnts(LEVEL); resetBoss(LEVEL); resetCollect(LEVEL);
   won = false; clock = 0; placeFlag(); $('win').classList.add('hide'); setMode('play');
 }
 
@@ -1296,6 +1303,7 @@ const SETTINGS = [
   fl('startscreen', 'spill', 'Vis startskjerm (Nytt spill / Fortsett) når spillet åpnes', true, () => startScreenOn, kp('tlm.startscreen', (v) => { startScreenOn = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
+  fl('boss', 'hjelp', 'Sjef-maur i siste rom (nivå 6): av = ingen sjef', true, () => bossOn, kp('tlm.boss', (v) => { bossOn = v; logEv('sjef', v ? 'på' : 'av'); })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
@@ -1534,6 +1542,21 @@ function antEvent(ev) {
   if (ev.type === 'stomp') { stats.squashed++; logEv(ev.kind === 'spider' ? 'edderkopp knust' : 'maur knust', ev.id); audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], ev.kind === 'spider' ? 0x6a3a86 : ev.kind === 'carrier' ? 0x5f6b2a : 0x9a3a1e); }
   else if (ev.type === 'hurt') { stats.hits++; logEv(ev.kind === 'spider' ? 'edderkopp støt' : 'maur støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${ev.kind === 'spider' ? 'Edderkoppen hoppet på deg' : 'En maur støtet deg'}  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
 }
+// sjef-maur (R9): varsel, støt i veggen, skade, seier og premie
+function bossEvent(ev) {
+  const seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); toast(msg); } };
+  const J = TOUCH ? T('btn.jump') : 'Mellomrom';
+  if (ev.type === 'alert') { logEv('sjef varsler', ev.id); audio?.bossroar(false); music?.duck(0.5, 1); buzz(30); seen('boss', 'Sjef-maur! Den varsler før den stormer: gå til siden så den smeller i veggen'); }
+  else if (ev.type === 'charge') { logEv('sjef stormer', ev.id); audio?.bossroar(true); buzz(40); }
+  else if (ev.type === 'bump') { logEv('sjef svimmel', ev.id); audio?.bossbump(); music?.duck(0.4, 1.2); buzz(60); setMood('happy', 1); cue('bom!'); spawnShards([ev.x, ev.y + 1, ev.z], 0xc8c0b0); seen('boss2', `Den er svimmel! Hopp på ryggen (${J}) mens stjernene går rundt`); }
+  else if (ev.type === 'tired') { logEv(ev.worn ? 'sjef slumper' : 'sjef sliten', ev.id); if (ev.worn) { cue('sliten!'); setMood('happy', 0.8); } }
+  else if (ev.type === 'hit') { logEv('sjef truffet', `${ev.hp} igjen`); audio?.squash(); buzz(40); setMood('happy', 1.6); cue(ev.hp > 0 ? 'au!' : 'seier!'); spawnShards([ev.x, ev.y, ev.z], 0x7c1f14); }
+  else if (ev.type === 'phase') { logEv('sjef fase', ev.phase); toast(ev.phase === 3 ? 'Sjefen er rasende! Den er raskere nå' : 'Sjefen er sint! Den er litt raskere nå'); }
+  else if (ev.type === 'clang') { logEv('sjef pansret'); audio?.anthit(); buzz(20); seen('boss3', 'Ryggen er for hard nå. Vent til den er svimmel'); }
+  else if (ev.type === 'hurt') { stats.hits++; logEv('sjef støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(80); setMood('hurt', 1); toast(`Au! Sjefen traff deg  −${SCORE.antHit} poeng. Gå til siden når den varsler`); }
+  else if (ev.type === 'defeat') { stats.squashed++; logEv('SJEF SLÅTT', ev.id); audio?.fanfare(); music?.duck(0.2, 3); buzz([40, 60, 40, 60, 120]); setMood('happy', 6); cue('SJEF SLÅTT!'); toast('Du slo sjef-mauren! Ta den gylne smula'); for (let i = 0; i < 3; i++) spawnShards([ev.x + (i - 1) * 0.8, ev.y + 1.4, ev.z], [0xffc83a, 0xe23a3a, 0x3aa0e2][i]); }
+  else if (ev.type === 'prize') { stats.boss++; logEv('sjef-smule tatt', ev.id); audio?.crumb(12, 12); buzz(30); setMood('happy', 3); cue('siste smule!'); toast(`Den siste smula! +${SCORE.boss} poeng`); spawnShards([ev.x, ev.y, ev.z], 0xffc83a); }
+}
 // smuler: plukk (R3). Små, rolige tilbakemeldinger: lyd, poeng, kort melding, gnister
 function crumbEvent(ev) {
   stats.crumbs = ev.n; logEv('smule', `${ev.id} ${ev.n}/${ev.total}`); audio?.crumb(ev.n, ev.total); buzz(15); setMood('happy', 0.9); spawnShards([ev.x, ev.y, ev.z], 0xffc83a);
@@ -1588,6 +1611,7 @@ function update(dt) {
   const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
   step(player, inp, dt, LEVEL);
   if (antsOn) for (const ev of stepAnts(LEVEL, player, dt, mode === 'play' && !won)) antEvent(ev);
+  if (bossOn && LEVEL.bossS) for (const ev of stepBoss(LEVEL, player, dt, mode === 'play' && !won)) bossEvent(ev);
   if (crumbsOn) for (const ev of stepCollect(LEVEL, player, dt, mode === 'play' && !won)) crumbEvent(ev);
   if (autoCam && !P.faceCam && !viewFirst && mode === 'play' && !camAnim && ['ground', 'air'].includes(player.state) && performance.now() / 1000 - lastDrag > 1.1) {      // Mario-stil: kameraet svinger rolig bak deg
     const k = player.onGround ? 1 : 0.5, sp0 = Math.hypot(player.vx, player.vz);
@@ -1696,7 +1720,7 @@ function cueFrame(pre) {
 // R5: stemningen i musikken følger faren (en maur ser deg) og målet
 function musicFrame() {
   if (!music) return;
-  const m = moodFor({ alerted: antsOn && (LEVEL.antList || []).some((a) => a.alive && a.alerted), won });
+  const m = moodFor({ alerted: (antsOn && (LEVEL.antList || []).some((a) => a.alive && a.alerted)) || (bossOn && !!LEVEL.bossS?.alerted), won });
   if (m !== musicMood) { musicMood = m; music.setMood(m); logEv('musikk', m); }
 }
 // lyder som følger av hva som skjedde i dette bildet
@@ -1753,6 +1777,14 @@ function render(now, dt) {
     a.root.position.set(t.x, t.y, t.z);
     const want = Math.atan2(-t.fz, t.fx); let dr = want - m.rot; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); m.rot += dr * Math.min(1, dt * 10); a.root.rotation.y = m.rot;
     a.update(t.phase, t.speedNow || 0, t.squash, t.alerted, t);
+  }
+  if (bossMesh) {                                                  // sjef-maur: modell, premie og helsebar
+    const B = LEVEL.bossS, on = bossOn;
+    bossMesh.root.visible = on && !B.gone; bossMesh.root.position.set(B.x, B.y, B.z);
+    const want = Math.atan2(-B.fz, B.fx); let dr = want - bossMesh.rot; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); bossMesh.rot += dr * Math.min(1, dt * (B.mode === 'windup' ? 14 : 8)); bossMesh.root.rotation.y = bossMesh.rot;
+    bossMesh.update(B, clock); if (!on) bossMesh.root.visible = false;
+    const pz = B.prize; bossMesh.prize.visible = on && !!pz && !pz.taken; if (bossMesh.prize.visible) { bossMesh.prize.position.set(pz.x, pz.y + 0.35 + Math.sin(clock * 3) * 0.12, pz.z); bossMesh.prize.rotation.y = clock * 1.8; }
+    bossBar.update(on ? B : null, mode === 'play' && !won && (B.mode !== 'patrol' || Math.hypot(player.x - B.x, player.z - B.z) < 22));
   }
   for (const { b, mesh, size } of bodyMeshes) {
     mesh.visible = b.alive;

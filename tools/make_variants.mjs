@@ -73,6 +73,8 @@ const kit = (s) => ({
   s.goal = { x: 76, y: 190, z: 44, on: 'kjoleskap', note: 'Motgift-bit på toppen av kjøleskapet' };
   s.ants.push({ id: 'edderkopp_skap', type: 'spider', on: 'gulv', from: [90, 185] });                         // R6: ekstra edderkopp-vakt i nivå 6
   { const m = s.ants.find((x) => x.id === 'maur_matte'); if (m) m.to = [m.from[0] + 55, m.from[1]]; }      // kassa står på matta nå: kortere patrulje (maurene må ha fri bane)
+  { const m = s.ants.find((x) => x.id === 'maur_gulv'); if (m) m.from = [135, m.from[1]]; }               // R9: bærer-mauren går ikke gjennom sjefens område (venstre del av rommet)
+  s.boss = { id: 'sjef', on: 'gulv', from: [25, 110], to: [85, 110] };                                        // R9: sjef-maur på den åpne gulvflata til venstre (veggen og kjøleskapet står som vegger for støtet)
   save('kjokken2', s);
 }
 console.log('skrev scenes/bad2, barnerom2, kjokken2');

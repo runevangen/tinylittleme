@@ -293,6 +293,9 @@ const ants = (scene.ants || []).map((a) => {
   return { id: a.id, ...(a.type && a.type !== 'ant' ? { type: a.type } : {}), a: [ux(a.from[0]), y, uz(a.from[1])], b: [ux(to[0]), y, uz(to[1])], ...(a.speed ? { speed: a.speed } : {}), ...(a.crumb ? { crumb: true } : {}) };
 });
 
+// sjef-maur (R9): { id, on: «gulv» eller flate, from: [x, z], to: [x, z], hp? } i cm
+const boss = scene.boss ? (() => { const b = scene.boss, on = b.on && b.on !== 'gulv' ? scene.objects.find((o) => o.id === b.on) : null, y = on ? uy(on.box[3]) : 0; return { id: b.id || 'sjef', a: [ux(b.from[0]), y, uz(b.from[1])], b: [ux(b.to[0]), y, uz(b.to[1])], ...(b.hp ? { hp: b.hp } : {}) }; })() : null;
+
 // smuler (R3): { id, on: «gulv» eller id på en ting, at: [x, z] } i cm; y = flaten + litt (midten av smula)
 const collectibles = (scene.collectibles || []).map((c) => {
   const on = c.on && c.on !== 'gulv' ? scene.objects.find((o) => o.id === c.on) : null;
@@ -308,6 +311,7 @@ const level = {
   name: scene.name, ...(scene.rev ? { rev: scene.rev } : {}),
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ants,
+  ...(boss ? { boss } : {}),
   collectibles,
   ropes: [],
   route,
