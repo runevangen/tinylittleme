@@ -5,6 +5,7 @@ import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { makeLook } from './look.js';
+import { applyGrade } from './grade_apply.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
@@ -163,7 +164,6 @@ const shHalf = devicePixelRatio > 2 || innerWidth < 700 ? 17 : 26;       // v0.7
 Object.assign(sun.shadow.camera, { left: -shHalf, right: shHalf, top: shHalf, bottom: -shHalf, near: 1, far: 220 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
-scene.add(new THREE.HemisphereLight(0xeaf1ff, 0xa5845c, 0.42));       // kjølig himmellys ovenfra, varmt gjenskinn fra gulvet
 
 // ---------- utseende: teksturer med relieff, bøker, kontaktskygger og støv (look.js) ----------
 const gfxLow = store.get('tlm.gfx', 'high') === 'low';
@@ -171,6 +171,8 @@ if (gfxLow) renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 const maxAniso = gfxLow ? 4 : Math.min(16, renderer.capabilities.getMaxAnisotropy());
 setAniso(maxAniso);
 const look = makeLook({ aniso: maxAniso, low: gfxLow });
+const gradeMode = store.get('tlm.grade', 'film');   // R1: Toy Story-lys (film) eller opprinnelig lys (off); lys i grade.js
+const grade = applyGrade({ renderer, scene, sun, canvas, look: LEVEL.look, mode: gradeMode, low: gfxLow });
 const texMat = (set, o = {}) => std({ map: set.map.clone(), normalMap: set.normalMap ? set.normalMap.clone() : null, roughnessMap: set.roughnessMap ? set.roughnessMap.clone() : null, ...o });
 const eachMap = (mat, fn) => { for (const k of ['map', 'normalMap', 'roughnessMap']) if (mat[k]) fn(mat[k]); };
 
@@ -189,9 +191,9 @@ function material(b) {
     case 'woodpanel': return texMat(look.panel, { color: col, roughness: 0.7 });       // stående panelbord
     case 'wood': return texMat(look.wood, { color: col, roughness: 0.55 });
     case 'book': return std({ color: col, roughness: 0.78 });
-    case 'plastic': return std({ color: col, roughness: 0.3, metalness: 0.1 });
-    case 'porcelain': return std({ color: col, roughness: 0.07 });
-    case 'ceramic': return std({ color: col, roughness: 0.15 });
+    case 'plastic': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.3, metalness: 0.1, clearcoat: 0.7, clearcoatRoughness: 0.18 });     // R1: blank plast
+    case 'porcelain': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.07, clearcoat: 1, clearcoatRoughness: 0.05 });
+    case 'ceramic': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.15, clearcoat: 0.8, clearcoatRoughness: 0.1 });
     case 'glass': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.04, transparent: true, opacity: 0.4, transmission: 0.6 });
     case 'metal': return std({ color: col, roughness: 0.22, metalness: 1 });
     case 'mirror': return std({ color: 0xffffff, roughness: 0.02, metalness: 1 });
@@ -1281,6 +1283,7 @@ const SETTINGS = [
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
+  sl('grade', 'spill', 'Fargegradering (Toy Story-lys, laster siden på nytt)', 'film', [['film', 'Varm film'], ['off', 'Av (opprinnelig lys)']], () => gradeMode, (v) => { if (v === gradeMode) return; store.set('tlm.grade', v); setTimeout(() => location.reload(), 150); }),
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
   fl('hudtech', 'spill', 'Vis alltid tekniske tall (høyde, tid, poeng). Ellers: trykk på teksten øverst', false, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
   // Styring
@@ -1795,6 +1798,7 @@ function render(now, dt) {
   camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
+  grade.follow(player, camera);
   renderer.render(scene, camera);
   $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +

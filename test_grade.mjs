@@ -1,0 +1,12 @@
+import { gradeParams, GRADE_MODES } from './grade.js';
+let bad = 0; const ok = (c, m) => { if (!c) { bad++; console.log('FEIL: ' + m); } };
+const look = { exposure: 0.78, sun: 2 };
+const f = gradeParams(look, 'film'), o = gradeParams(look, 'off'), lo = gradeParams(look, 'film', true);
+ok(GRADE_MODES.includes('film') && GRADE_MODES.includes('off'), 'moduser');
+ok(o.exposure === 0.78 && o.sun === 2 && o.fill === 0 && o.rim === 0 && o.filter === '', 'off = uendret');
+ok(f.exposure > look.exposure && f.exposure < look.exposure * 1.15, 'film: ikke mørkere, ikke utbrent');
+ok(f.fill > 0 && f.rim > 0 && f.filter.includes('saturate'), 'film har fyll, kantlys og filter');
+ok(lo.fill === 0 && lo.rim === 0 && lo.filter === '', 'Enkel grafikk: ingen ekstra lys/filter');
+ok(gradeParams({}, 'film').sun > 3, 'standardverdier');
+if (bad) process.exit(1);
+console.log('grade: ok');
