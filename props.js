@@ -527,3 +527,18 @@ export function buildAnt({ color = 0x9a3a1e, crumb = false } = {}) {
   update(0, 0, 0, false);
   return { root, update };
 }
+
+// ---------- smule (R3): gylden, blank stjerneklump som flyter og snurrer. Returnerer { root, update(t, got) } ----------
+export function buildCrumb() {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const gold = new THREE.MeshStandardMaterial({ color: 0xffc83a, roughness: 0.25, metalness: 0.55, emissive: 0xc77a10, emissiveIntensity: 0.55, flatShading: true });
+  const core = mesh(new THREE.OctahedronGeometry(0.42, 0), gold); core.scale.set(1, 1.15, 1); body.add(core);
+  const cap = mesh(new THREE.DodecahedronGeometry(0.22, 0), gold); cap.position.set(0.12, 0.34, 0.05); body.add(cap);
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.72, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.16, depthWrite: false })); body.add(glow);
+  function update(t, got = false) {
+    body.rotation.y = t * 2.2; body.position.y = Math.sin(t * 2.6) * 0.12; body.rotation.z = Math.sin(t * 1.7) * 0.12;
+    root.visible = !got;
+  }
+  update(0, false);
+  return { root, update };
+}

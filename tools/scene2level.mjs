@@ -7,6 +7,7 @@
 //  3. Beste rute start → mål. Der en kant er for stor legges det inn hjelpeobjekter (bro / trappetrinn).
 //  4. Skriver brettet + en rapport. Bekreft etterpå med fysikk-boten: node tools/solve.mjs spenning --level=<fil>
 import fs from 'node:fs';
+import { CRUMB } from '../collect.js';
 
 const [, , inPath, outPath] = process.argv;
 if (!inPath || !outPath) { console.error('bruk: scene2level.mjs <scene.json> <level.json>'); process.exit(1); }
@@ -291,6 +292,13 @@ const ants = (scene.ants || []).map((a) => {
   return { id: a.id, a: [ux(a.from[0]), y, uz(a.from[1])], b: [ux(a.to[0]), y, uz(a.to[1])], ...(a.speed ? { speed: a.speed } : {}), ...(a.crumb ? { crumb: true } : {}) };
 });
 
+// smuler (R3): { id, on: «gulv» eller id på en ting, at: [x, z] } i cm; y = flaten + litt (midten av smula)
+const collectibles = (scene.collectibles || []).map((c) => {
+  const on = c.on && c.on !== 'gulv' ? scene.objects.find((o) => o.id === c.on) : null;
+  if (c.on && c.on !== 'gulv' && !on) throw new Error(`smule ${c.id}: fant ikke flaten ${c.on}`);
+  return { id: c.id, x: ux(c.at[0]), y: round((on ? uy(on.box[3]) : 0) + CRUMB.lift), z: uz(c.at[1]) };
+});
+
 const finalSeen = reachable();
 const solvable = finalSeen.has(goalIdx());
 
@@ -299,6 +307,7 @@ const level = {
   name: scene.name, ...(scene.rev ? { rev: scene.rev } : {}),
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ants,
+  collectibles,
   ropes: [],
   route,
   start, goal,

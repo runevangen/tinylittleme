@@ -22,3 +22,5 @@ Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»
 - **Kopier / lim inn innstillinger** gjør at en tester og utvikleren kan kjøre med nøyaktig samme oppsett.
 - **Alt til standard** nullstiller alle valg (ikke fremgangen i spillet).
 - FPS-visning (⚙ → Test) hjelper når noe «skjelver»: lav FPS ga tidligere falske feil.
+
+- **Smuler** (⚙ → Spill, `tlm.crumbs`, standard på): gylne smuler å samle i brettene (R3). Av = ingen smuler vises eller plukkes.
