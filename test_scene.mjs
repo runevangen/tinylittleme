@@ -67,9 +67,10 @@ assert.ok(r.errors.some((e) => /color/.test(e)) && r.errors.some((e) => /min < m
 console.log('scene-tester grønne');
 // leker i barneskala (R2): ren logikk i toys.js, og brettene bruker de nye kindene
 {
-  const { letterOf, letterStack, studLayout, carWheel, STUD_H } = await import('./toys.js');
+  const { letterOf, letterStack, studLayout, carWheel, STUD_H, letterTopY } = await import('./toys.js');
   assert.equal(letterOf('bokstav_a'), 'A'); assert.equal(letterOf('kloss-ø'), 'Ø'); assert.match(letterOf('hvadsomhelst'), /^[A-Z]$/);
   assert.deepEqual(letterStack('bokstav_b', 3.2, 6.4, 3.2), ['B', 'C']); assert.deepEqual(letterStack('bokstav_x', 3, 3, 3), ['X']);
+  { const sy = 6.4, n = 2, h = sy / n; assert.ok(Math.abs(letterTopY(sy, n) - (-sy / 2 + (n - 1) * h + h * 0.985 + 0.012)) < 1e-9); assert.ok(letterTopY(sy, n) > -sy / 2 + (n - 1) * h + h * 0.985, 'topp-bokstaven ligger over øverste lags overside'); }
   assert.equal(studLayout(3.2, 3.2).length, 4); assert.equal(studLayout(6.4, 3.2).length, 8); assert.equal(studLayout(0.5, 0.5).length, 1);
   for (const [x, z] of studLayout(6.4, 3.2)) assert.ok(Math.abs(x) < 3.2 && Math.abs(z) < 1.6, 'knotter innenfor klossen');
   assert.ok(STUD_H > 0 && STUD_H < 0.3);

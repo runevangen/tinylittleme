@@ -29,3 +29,6 @@ export function studLayout(sx, sz, pitch = STUD_PITCH) {
 export const STUD_H = 0.12;
 // Hjulstørrelse på leketøysbilen: hjulene skal ligge innenfor boksen (ikke stikke under gulvet eller over taket).
 export function carWheel(sx, sy, sz) { const r = Math.min(sy * 0.26, sx * 0.14, sz * 0.3); return { r, y: -sy / 2 + r, xs: [-sx * 0.3, sx * 0.3], zEdge: sz / 2 }; }
+
+// y for bokstaven oppå en stablet bokstavkloss (n lag, total høyde sy): rett over øverste lags overside (laget starter i -sy/2 + i*h og er h*0.985 høyt)
+export function letterTopY(sy, n) { const h = sy / n; return -sy / 2 + (n - 1) * h + h * 0.985 + 0.012; }

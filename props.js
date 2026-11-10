@@ -1,7 +1,7 @@
 // Former for ting som ikke er firkanter: do, badekar … Kollisjonen i fysikken er fortsatt bokser;
 // dette er bare utseendet. Brettet gir hver boks `kind` og evt. `group`; boksene i en gruppe tegnes som ÉN ting.
 import * as THREE from 'three';
-import { letterStack, studLayout, STUD_H, carWheel } from './toys.js';
+import { letterStack, letterTopY, studLayout, STUD_H, carWheel } from './toys.js';
 
 const porcelain = (color = 0xf1eee6) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.06 });
 const chrome = () => new THREE.MeshStandardMaterial({ color: 0xe4e6e8, metalness: 1, roughness: 0.12 });
@@ -322,7 +322,7 @@ const SINGLE = {
       for (const [dx, dz, ry, w] of [[0, 1, 0, sx], [0, -1, Math.PI, sx], [1, 0, Math.PI / 2, sz], [-1, 0, -Math.PI / 2, sz]]) {
         const p = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.78, h * 0.78), lm); p.rotation.y = ry; p.position.set(dx * (sx / 2 + 0.012), -sy / 2 + i * h + h / 2, dz * (sz / 2 + 0.012)); g.add(p);
       }
-      if (i === n - 1) { const top = new THREE.Mesh(new THREE.PlaneGeometry(sx * 0.78, sz * 0.78), lm); top.rotation.x = -Math.PI / 2; top.position.set(0, -sy / 2 + (i + 1) * h * 0.985 + 0.012, 0); g.add(top); }
+      if (i === n - 1) { const top = new THREE.Mesh(new THREE.PlaneGeometry(sx * 0.78, sz * 0.78), lm); top.rotation.x = -Math.PI / 2; top.position.set(0, letterTopY(sy, n), 0); g.add(top); }
     });
     return g;
   },
