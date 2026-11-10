@@ -1397,7 +1397,10 @@ const marks = [];
   $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); draw(); });
   document.addEventListener('pointerdown', (e) => { if (!pop.classList.contains('hide') && !pop.contains(e.target) && e.target !== $('qbtn')) pop.classList.add('hide'); });
 }
-function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); toast('Markert. Husk å sende rapporten etterpå.'); }
+const markCount = () => evLog.filter((e) => e.type === 'MARKERT').length;
+function updateMarkBadge() { const n = markCount(), el = $('qcnt'); el.textContent = n; el.style.display = n ? 'flex' : 'none'; }
+function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); updateMarkBadge(); toast(`Markert (${markCount()} registrert). Husk å sende rapporten etterpå.`); }
+updateMarkBadge();
 function buildReportInfo() {
   const t = nextTarget();
   return {

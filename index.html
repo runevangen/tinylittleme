@@ -47,6 +47,7 @@
   #infotab.dim{opacity:.4}
   #infocard:not(.show) #infotab{opacity:.5}
   #qbtn:active{opacity:1}
+  #qcnt{position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 3px;box-sizing:border-box;border-radius:9px;background:#e8504a;color:#fff;font:700 11px system-ui;display:none;align-items:center;justify-content:center}
   #infobody{pointer-events:auto;flex:1;min-height:46px;box-sizing:border-box;background:#121a2cdd;border:2px solid #ffa940;border-right:0;border-radius:0 0 0 14px;padding:9px 13px;color:#eef2fa;font:500 14px/1.35 system-ui}
   #infocard:not(.show) #infobody{pointer-events:none}
   /* hjelpeteksten ligger helt øverst (v0.63): tittel og «Bruksanvisning ›» på samme linje, så kortet blir lavt */
@@ -154,7 +155,7 @@
 <canvas id="c"></canvas>
 <div id="hud"></div>
 <div id="fps"></div>
-<button id="qbtn" aria-label="Vurder">⚑</button>
+<button id="qbtn" aria-label="Vurder">⚑<span id="qcnt"></span></button>
 <div id="qpop" class="hide"></div>
 <div id="xhair"></div>
 <div id="toast"></div>
