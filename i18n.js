@@ -29,6 +29,8 @@ const DICT = {
     'toast.zipFlat': 'For flatt: tråden må ende minst 8 cm lavere enn der den starter.', 'toast.zipFar': 'For langt: tråden rekker høyst ca. 1,2 m.',
     'toast.zipBlocked': 'Noe er i veien for tråden.', 'toast.zipStand': 'Stå på bakken og trykk {tieTop} for å feste tråden.',
     'toast.needGel': 'Gå helt inntil en vegg og trykk {smear}. {drop} legger fra seg.', 'toast.needRoll': 'Gå helt ut til en kant og trykk {unroll}. {drop} legger fra seg.',
+    'menu.tagline': 'Du er noen få centimeter høy. Kom deg opp til motgiften.', 'menu.new': 'Nytt spill', 'menu.continue': 'Fortsett fra forrige gang', 'menu.settings': 'Innstillinger', 'menu.quit': 'Avslutt',
+    'menu.sure': 'Slette fremgangen? Trykk igjen', 'menu.nosave': 'Ingen lagret fremgang ennå', 'menu.byeTitle': 'Takk for nå!', 'menu.byeText': 'Fremgangen er lagret. Du kan lukke fanen eller bytte app. Neste gang fortsetter du der du var.', 'menu.back': 'Tilbake til menyen', 'menu.menu': 'Hovedmeny',
   },
   en: {
     'btn.take': 'TAKE', 'btn.drop': 'DROP', 'btn.place': 'PLACE', 'btn.throw': 'THROW', 'btn.smear': 'SMEAR', 'btn.unroll': 'UNROLL', 'btn.thread': 'THREAD',
@@ -56,6 +58,8 @@ const DICT = {
     'toast.zipFlat': 'Too flat: the line must end at least 8 cm lower than where it starts.', 'toast.zipFar': 'Too far: the line reaches about 1.2 m at most.',
     'toast.zipBlocked': 'Something is in the way of the line.', 'toast.zipStand': 'Stand on the ground and press {tieTop} to tie the thread.',
     'toast.needGel': 'Walk right up to a wall and press {smear}. {drop} puts it down.', 'toast.needRoll': 'Walk to an edge and press {unroll}. {drop} puts it down.',
+    'menu.tagline': 'You are a few centimetres tall. Climb up to the antidote.', 'menu.new': 'New game', 'menu.continue': 'Continue from last time', 'menu.settings': 'Settings', 'menu.quit': 'Quit',
+    'menu.sure': 'Delete progress? Tap again', 'menu.nosave': 'No saved progress yet', 'menu.byeTitle': 'See you!', 'menu.byeText': 'Your progress is saved. You can close the tab or switch app. Next time you continue where you were.', 'menu.back': 'Back to menu', 'menu.menu': 'Main menu',
   },
 };
 

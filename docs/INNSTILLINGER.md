@@ -5,7 +5,7 @@ Alle valg ligger i **én liste, `SETTINGS` i `main.js`**. Den styrer panelet, «
 ## Grupper
 | Gruppe | Innhold |
 |---|---|
-| **Spill** | Autolagring, ting kommer tilbake, to trykk på Lagre/Tilbake/Ting, tekniske tall, brettvalg, Start på nytt |
+| **Spill** | Startskjerm (vis ved oppstart), Hovedmeny-knapp, Autolagring, ting kommer tilbake, to trykk på Lagre/Tilbake/Ting, tekniske tall, brettvalg, Start på nytt |
 | **Styring** | Kamerafølsomhet, stikke-dødsone, knappestørrelse, kast med dra, dobbelttrykk, ◎-knapp, grip kanten, vibrasjon |
 | **Kamera** | Følger retning, hjelper, utoning (+ synlighet), kameraavstand |
 | **Hjelp og tekst** | Retningshjelp (kompass/gulvpil/begge/av), tips etter 3 fall, fremhev grep, lapper, lydtekst, snakkebobler |

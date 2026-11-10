@@ -870,7 +870,8 @@ placeFlag();
 // ---------- autolagring: fremgangen huskes per brett, så en kort mobiløkt kan fortsette der du var ----------
 const progKey = `tlm.progress.${levelId}${LEVEL.rev ? '.r' + LEVEL.rev : ''}`;       // rev: brettet er bygd om (gammel fremgang passer ikke lenger)
 let autoPos = null, autoT = 0, resumed = false;
-function saveProgress() { if (won || !autosaveOn) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells] }); }
+let noSave = false;       // satt rett før siden lastes på nytt etter «Nytt spill», så pagehide ikke skriver gammel fremgang tilbake
+function saveProgress() { if (won || !autosaveOn || noSave) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells] }); }
 function clearProgress() { autoPos = null; store.set(progKey, null); }
 const failCells = new Map();
 let compassForce = 0;
@@ -954,6 +955,7 @@ let jumpEdge = false, grabEdge = false, carryEdge = false;
 const touch = { x: 0, y: 0, jump: false, grab: false, carry: false };
 addEventListener('keydown', (e) => {
   if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+  if (menuOpen) { if (e.code === 'Escape') $('panel').classList.add('hide'); return; }       // startskjermen er oppe: ingen spilltaster
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
   if (e.repeat || keys.has(e.code)) return;
   keys.add(e.code);
@@ -1254,6 +1256,7 @@ const SETTINGS = [
   fl('pcbtns', 'styring', 'Vis skjermknapper på PC (TA, HOPP, GREP)', true, () => pcButtons, kp('tlm.pcbtns', (v) => { pcButtons = v; applyPlatformUi(); })),
   sl('lang', 'spill', 'Språk / Language', 'nb', LANGS, () => lang, kp('tlm.lang', (v) => { lang = v; applyLang(); })),
   fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
+  fl('startscreen', 'spill', 'Vis startskjerm (Nytt spill / Fortsett) når spillet åpnes', true, () => startScreenOn, kp('tlm.startscreen', (v) => { startScreenOn = v; })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
@@ -1385,7 +1388,7 @@ function buildPanel() {
   const groupHtml = (g, title) => {
     const items = SETTINGS.filter((d) => d.group === g && visible(d));
     let extra = '';
-    if (g === 'spill') extra = `<label>Brett</label><select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`).join('')}</select><div class="row"><button id="pRestart">Start på nytt</button></div>`;
+    if (g === 'spill') extra = `<label>Brett</label><select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`).join('')}</select><div class="row"><button id="pRestart">Start på nytt</button><button id="pMenu">${T('menu.menu')}</button></div>`;
     if (g === 'test') extra = `
       <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
       <div class="row"><button id="bMark">⚑ Marker her</button><button id="bReport">Del rapport</button></div>
@@ -1422,6 +1425,7 @@ function buildPanel() {
   p.querySelectorAll('details[data-g]').forEach((el) => el.addEventListener('toggle', () => { open[el.dataset.g] = el.open; store.set('tlm.panelopen', open); }));
   $('levelSel').value = levelId; $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
   confirmed($('pRestart'), 'Start på nytt', 0, () => { restartAll(); $('panel').classList.add('hide'); toast('Startet på nytt'); });
+  $('pMenu').onclick = () => { $('panel').classList.add('hide'); showStart(); };
   $('closePanel').onclick = () => $('panel').classList.add('hide');
   // admin skjules bak 7 trykk på tittelen (eller ?admin=1)
   let taps = 0, tapT = 0;
@@ -1845,6 +1849,47 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 
+// ---------- startskjerm (v0.73): Nytt spill · Fortsett · Innstillinger · Avslutt ----------
+// Vises når siden åpnes uten ?level=… (en lenke med brett, «Neste nivå» og brettvelgeren hopper over den). Spillet står stille bak.
+let startScreenOn = store.get('tlm.startscreen', true), menuOpen = false;
+const startWanted = startScreenOn && levelParam === null && new URLSearchParams(location.search).get('start') !== '0';
+const hasProgress = () => resumed || clock > 4 || levelId !== 'bad' || Object.keys(store.get('tlm.cleared', {})).length > 0;
+function clearAllProgress() { try { Object.keys(localStorage).filter((k) => k.startsWith('tlm.progress.')).forEach((k) => localStorage.removeItem(k)); } catch { /* privat modus */ } }
+function hideStart() { menuOpen = false; $('start').classList.add('hide'); document.body.classList.remove('instart'); }
+function newGame() {
+  clearAllProgress(); logEv('nytt spill');
+  if (levelId === 'bad') { restartAll(); hideStart(); toast('Nytt spill'); }
+  else { noSave = true; goLevel('bad'); }                                  // laster nivå 1 på nytt (noSave: pagehide skal ikke skrive tilbake gammel fremgang)
+}
+function quitGame() {
+  saveProgress(); logEv('avslutt');
+  $('start').innerHTML = `<h1>${T('menu.byeTitle')}</h1><p class="tag">${T('menu.byeText')}</p><button class="mbtn" id="mBack">${T('menu.back')}</button>`;
+  $('mBack').onclick = showStart;
+  try { window.close(); } catch { /* nettlesere lar bare skript-åpnede vinduer lukkes: da blir takkesiden stående */ }
+}
+function showStart() {
+  menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; saveProgress();
+  if (document.pointerLockElement) document.exitPointerLock();
+  const has = hasProgress();
+  $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${T('menu.tagline')}</p>
+    <button class="mbtn" id="mCont" ${has ? '' : 'disabled'}>${T('menu.continue')}<small>${has ? levelLabel : T('menu.nosave')}</small></button>
+    <button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
+    <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
+    <button class="mbtn sec" id="mQuit">${T('menu.quit')}</button>
+    <div class="ver">v${VERSION}</div>`;
+  $('start').classList.remove('hide'); document.body.classList.add('instart');
+  $('mCont').onclick = () => { unlockAudio(); hideStart(); logEv('fortsett'); };
+  let armed = 0;
+  $('mNew').onclick = () => {
+    unlockAudio();
+    if (has && !armed) { armed = 1; $('mNew').classList.add('warn'); $('mNew').classList.remove('sec'); $('mNew').textContent = T('menu.sure'); setTimeout(() => { armed = 0; if ($('mNew')) { $('mNew').classList.remove('warn'); $('mNew').classList.toggle('sec', has); $('mNew').textContent = T('menu.new'); } }, 4000); return; }
+    newGame();
+  };
+  $('mSet').onclick = () => { buildPanel(); $('help').classList.add('hide'); $('panel').classList.remove('hide'); };
+  $('mQuit').onclick = quitGame;
+}
+if (startWanted) showStart();
+
 applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
 if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true); setTimeout(() => toast('PC: klikk i bildet for å styre blikket med musa (Esc slipper). WASD går, mellomrom hopper, venstre museknapp eller F tar, høyre eller E griper.'), 2500); }
@@ -1852,7 +1897,7 @@ let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
   if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps`; perf.win = perf.winN = 0; } }
-  if (!window.__paused) update(dt);
+  if (!window.__paused && !menuOpen) update(dt);
   stepCamAnim(dt); compassFrame(now);
   render(now, dt);
   requestAnimationFrame(frame);
