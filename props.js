@@ -547,21 +547,22 @@ export function buildSpider({ color = 0x6a3a86 } = {}) {
   }
   const fang = []; for (const z of [-1, 1]) { const f = mesh(new THREE.ConeGeometry(0.05, 0.22, 8), white); f.position.set(0.58, 0.4, z * 0.09); f.rotation.z = Math.PI * 0.95; body.add(f); fang.push(f); }
   const legs = [];
-  for (const [i, hx] of [0.42, 0.22, 0.04, -0.16].entries()) for (const z of [-1, 1]) {
-    const up = mesh(new THREE.CylinderGeometry(0.04, 0.055, 1, 8), dark), lo = mesh(new THREE.CylinderGeometry(0.028, 0.04, 1, 8), dark), knee = mesh(new THREE.SphereGeometry(0.065, 10, 8), dark);
-    body.add(up, lo, knee); legs.push({ up, lo, knee, hx, z, fan: (i - 1.5) * 0.32, ph: (i + (z > 0 ? 1 : 0)) % 2 ? Math.PI : 0 });
+  // fire par bein i et tydelig fan: første par peker framover, siste bakover, midtparene rett ut til siden (ang = vinkel fra framretning mot siden, len = rekkevidde)
+  for (const [i, [hx, ang, len]] of [[0.38, 0.62, 1.2], [0.18, 1.2, 1.4], [-0.04, 1.85, 1.4], [-0.26, 2.5, 1.2]].entries()) for (const z of [-1, 1]) {
+    const up = mesh(new THREE.CylinderGeometry(0.03, 0.045, 1, 8), dark), lo = mesh(new THREE.CylinderGeometry(0.02, 0.032, 1, 8), dark), knee = mesh(new THREE.SphereGeometry(0.05, 10, 8), dark), foot = mesh(new THREE.SphereGeometry(0.035, 8, 6), dark);
+    body.add(up, lo, knee, foot); legs.push({ up, lo, knee, foot, hx, z, ang, len, ph: (i + (z > 0 ? 1 : 0)) % 2 ? Math.PI : 0 });
   }
   const seg = (m, a, b) => { const d = new THREE.Vector3().subVectors(b, a), l = d.length() || 1e-3; m.position.copy(a).addScaledVector(d, 0.5); m.scale.set(1, l, 1); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.divideScalar(l)); };
   const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
   function update(phase, speed = 0, squash = 0, alerted = false, t = {}) {
     const crouch = t.crouchK || 0, leap = t.mode === 'leap', walk = Math.min(1, speed / 2), idle = Math.sin(phase * 0.35);
     for (const l of legs) {
-      const sw = Math.sin(phase + l.ph) * 0.25 * walk, lift = Math.max(0, Math.cos(phase + l.ph)) * 0.18 * walk;
-      const reach = leap ? 1.35 : 1 - crouch * 0.25;
+      const sw = Math.sin(phase + l.ph) * 0.2 * walk, lift = Math.max(0, Math.cos(phase + l.ph)) * 0.18 * walk;
+      const reach = leap ? 1.3 : 1 - crouch * 0.2, cx = Math.cos(l.ang), sz = Math.sin(l.ang) * l.z;
       A.set(l.hx, 0.58 - crouch * 0.2, l.z * 0.18);
-      C.set(l.hx + l.fan * 0.5, leap ? 1.1 : 0.98 + crouch * 0.22 + idle * 0.02, l.z * 0.72 * reach);
-      B.set(l.hx + l.fan * 0.9 + sw, leap ? 0.55 : lift, l.z * (0.98 + (leap ? 0.3 : 0)));
-      seg(l.up, A, C); seg(l.lo, C, B); l.knee.position.copy(C);
+      C.set(l.hx + cx * l.len * 0.5 * reach, (leap ? 1.2 : 1.08) + crouch * 0.2 + idle * 0.02, sz * l.len * 0.5 * reach + l.z * 0.12);
+      B.set(l.hx + cx * l.len * reach + sw, leap ? 0.5 : lift, sz * l.len * reach);
+      seg(l.up, A, C); seg(l.lo, C, B); l.knee.position.copy(C); l.foot.position.copy(B);
     }
     body.position.y = -crouch * 0.18 + (leap ? 0.1 : 0) + idle * 0.015; body.rotation.z = leap ? -0.25 : crouch * 0.08;
     for (const f of fang) f.rotation.x = (alerted ? 0.35 : 0.1) * (f.position.z > 0 ? 1 : -1);

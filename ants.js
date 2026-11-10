@@ -28,7 +28,7 @@ function placeAnt(t) {
   t.x = t.a[0] + (t.b[0] - t.a[0]) * t.s; t.z = t.a[2] + (t.b[2] - t.a[2]) * t.s; t.y = t.a[1] + (t.b[1] - t.a[1]) * t.s;
 }
 export function resetAnts(L) {
-  for (const t of L.antList || []) { t.alive = true; t.dead = 0; t.squash = 0; t.s = 0.5; t.dir = 1; t.wait = 0; t.alerted = false; t.carry = t.type === 'carrier'; t.drop = null; placeAnt(t); if (isSpider(t)) initSpider(t); }
+  for (const t of L.antList || []) { t.alive = true; t.dead = 0; t.squash = 0; t.s = 0.5; t.dir = 1; t.wait = 0; t.alerted = false; t.carry = t.type === 'carrier'; t.crumbUsed = false; t.drop = null; placeAnt(t); if (isSpider(t)) initSpider(t); }
   L.antInvuln = 0;
 }
 
@@ -40,7 +40,7 @@ export function stepAnts(L, p, dt, active = true) {
     t.phase += dt * 9;
     if (t.drop && t.drop.arm > 0) t.drop.arm -= dt;
     if (t.drop && !t.drop.taken && active && !(t.drop.arm > 0) && Math.hypot(p.x - t.drop.x, p.z - t.drop.z) < CARRIER.pickup && Math.abs(p.y - t.drop.y) < 1.6) { t.drop.taken = true; ev.push({ type: 'crumb', id: t.id, x: t.drop.x, y: t.drop.y, z: t.drop.z }); }
-    if (!t.alive) { t.squash = Math.min(1, t.squash + dt * 6); t.dead -= dt; if (t.dead <= 0 && !near(t, p, 2.5)) { t.alive = true; t.squash = 0; t.alerted = false; t.carry = t.type === 'carrier'; if (isSpider(t)) initSpider(t); } continue; }
+    if (!t.alive) { t.squash = Math.min(1, t.squash + dt * 6); t.dead -= dt; if (t.dead <= 0 && !near(t, p, 2.5)) { t.alive = true; t.squash = 0; t.alerted = false; t.carry = t.type === 'carrier' && !t.crumbUsed; if (isSpider(t)) initSpider(t); } continue; }
     const dx = p.x - t.x, dz = p.z - t.z, d = Math.hypot(dx, dz), dy = p.y - t.y;
     const sees = active && d < ANT.alert && Math.abs(dy) < ANT.alertDy;
     if (!isSpider(t) && sees && !t.alerted) ev.push({ type: 'alert', kind: t.type, id: t.id, x: t.x, y: t.y, z: t.z });
@@ -66,7 +66,7 @@ export function stepAnts(L, p, dt, active = true) {
       if (p.vy < -1.5 && p.y > t.y + t.hgt * 0.12) {            // landet på ryggen: knus, og sprett
         t.alive = false; t.dead = isSpider(t) ? SPIDER.respawn : ANT.respawn; t.squash = 0; p.vy = ANT.bounce; p.onGround = false; p.state = 'air'; p.jumping = true; p.jumps = Math.max(p.jumps || 0, 1);
         ev.push({ type: 'stomp', kind: t.type, id: t.id, x: t.x, y: t.y + t.hgt, z: t.z });
-        if (t.carry) { t.carry = false; t.drop = { x: t.x, y: t.y, z: t.z, taken: false, arm: CARRIER.arm }; ev.push({ type: 'drop', id: t.id, x: t.x, y: t.y, z: t.z }); }
+        if (t.carry) { t.carry = false; t.crumbUsed = true; t.drop = { x: t.x, y: t.y, z: t.z, taken: false, arm: CARRIER.arm }; ev.push({ type: 'drop', id: t.id, x: t.x, y: t.y, z: t.z }); }
       } else if (L.antInvuln <= 0) {                               // ellers: støt tilbake
         const l = d > 0.05 ? d : 1, ux = d > 0.05 ? dx / l : -(p.fx || 1), uz = d > 0.05 ? dz / l : -(p.fz || 0);
         p.vx = ux * ANT.knock; p.vz = uz * ANT.knock; p.vy = ANT.knockUp; p.onGround = false; p.state = 'air'; p.jumping = false; p.lock = Math.max(p.lock || 0, ANT.lock);

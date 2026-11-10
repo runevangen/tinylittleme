@@ -65,6 +65,11 @@ assert.ok(r.errors.some((e) => /color/.test(e)) && r.errors.some((e) => /min < m
         assert.ok(Math.hypot(a.a[0] - L.start[0], a.a[2] - L.start[2]) > SPIDER.leash + SPIDER.alert + 2, `${f}: edderkopp ${a.id} ser deg fra start`);
         for (const o of L.ants) if (o !== a) for (let i = 0; i <= 40; i++) { const t = i / 40; assert.ok(Math.hypot(o.a[0] + (o.b[0] - o.a[0]) * t - a.a[0], o.a[2] + (o.b[2] - o.a[2]) * t - a.a[2]) > SPIDER.leash + 1, `${f}: ${o.id} går inn i hoppflata til ${a.id}`); }
       }
+      // R6: ingen fiende (spiderens hjem og hoppflate, bærer- og maurpatruljer) skal stå eller gå inni en fallgruve/utskylling: da er den uten funksjon
+      { const bad = (x, z) => (L.hazards || []).find((h) => (h.type === 'pit' || h.type === 'flush') && x > h.min[0] && x < h.max[0] && z > h.min[2] && z < h.max[2]);
+        const pts = a.type === 'spider' ? [[a.a[0], a.a[2]], ...Array.from({ length: 16 * 4 }, (_, i) => [a.a[0] + Math.cos((i % 16) * Math.PI / 8) * (1 + Math.floor(i / 16) * (SPIDER.leash - 1) / 3), a.a[2] + Math.sin((i % 16) * Math.PI / 8) * (1 + Math.floor(i / 16) * (SPIDER.leash - 1) / 3)])]
+          : Array.from({ length: 61 }, (_, i) => [a.a[0] + (a.b[0] - a.a[0]) * i / 60, a.a[2] + (a.b[2] - a.a[2]) * i / 60]);
+        for (const [x, z] of pts) { const h = bad(x, z); assert.ok(!h, `${f}: ${a.type || 'maur'} ${a.id} står/går inni ${h?.id} (${x.toFixed(1)}, ${z.toFixed(1)})`); } }
       for (const t of [0, 1]) assert.ok(Math.hypot(a.a[0] + (a.b[0] - a.a[0]) * t - L.start[0], a.a[2] + (a.b[2] - a.a[2]) * t - L.start[2]) > 12, `${f}: maur ${a.id} er for nær start`);
     }
   }

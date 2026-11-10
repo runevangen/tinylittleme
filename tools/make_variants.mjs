@@ -27,7 +27,7 @@ const kit = (s) => ({
   k.add('handkle_ny_1', 'towel_hang', 'fabric', '#e0a23a', [170, 184, 135, 163, 188, 190], { grip: true, onto: 'ny_hylle', grip_drain: -0.3 });
   k.add('handkle_ny_2', 'towel_hang', 'fabric', '#c9483b', [154, 157, 163, 199, 200, 216], { grip: true, onto: 'hylle', grip_drain: -0.3 });
   s.goal = { x: 172, y: 199, z: 210, on: 'hylle', note: 'Motgift-bit på den øverste hylla, der den lille kurven sto' };
-  s.ants = [{ id: 'baerer_gulv', type: 'carrier', on: 'gulv', from: [92, 55], to: [242, 55] }, { id: 'edderkopp_dusj', type: 'spider', on: 'gulv', from: [233, 165] }];   // R6: bærer-maur og en edderkopp-vakt (fri flate rundt, langt fra start)
+  s.ants = [{ id: 'baerer_gulv', type: 'carrier', on: 'gulv', from: [92, 55], to: [242, 55] }, { id: 'edderkopp_dusj', type: 'spider', on: 'gulv', from: [42.5, 115] }];   // R6: bærer-maur og en edderkopp-vakt (fri flate rundt, langt fra start)
   save('bad2', s);
 }
 
