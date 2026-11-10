@@ -20,6 +20,17 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario' } = {})
     const B = R[i], t0 = t; let jumpT = -99, tries = 0, lastPos = [p.x, p.z], lastT = t, detour = 0, side = 1, stuckN = 0;
     if (B.grip) {                                              // klatreflate: gå inntil, hold GREP, klatre til toppen av neste flate
       const C = R[i + 1]; i++;
+      for (let k = 0; k < 600 && p.onGround && p.stam < P.stamina - 0.1 && !fail; k++) tick({});       // hvil til kreftene er fulle før du klatrer (som en spiller ville gjort)
+      // gå til den åpne siden av klatreflaten (den som vender bort fra flaten du skal opp på), om nødvendig rundt enden av den
+      { const thinX = B.x1 - B.x0 < B.z1 - B.z0, gc = [(B.x0 + B.x1) / 2, (B.z0 + B.z1) / 2], cc = [(C.x0 + C.x1) / 2, (C.z0 + C.z1) / 2];
+        const sgn = (thinX ? gc[0] - cc[0] : gc[1] - cc[1]) >= 0 ? 1 : -1, half = (thinX ? B.x1 - B.x0 : B.z1 - B.z0) / 2;
+        const side = (q) => ((thinX ? q[0] - gc[0] : q[1] - gc[1]) * sgn);
+        const mk = (off, along) => (thinX ? [gc[0] + sgn * off, along] : [along, gc[1] + sgn * off]);
+        const walkTo = (w, n = 360) => { for (let k = 0; k < n && !fail && Math.hypot(w[0] - p.x, w[1] - p.z) > 0.25 && p.onGround; k++) { const dx = w[0] - p.x, dz = w[1] - p.z, d = Math.hypot(dx, dz); tick({ mx: dx / d * 0.7, mz: dz / d * 0.7 }); } };
+        if (B.id !== C.id && p.onGround && Math.abs(p.y - C.top) > 0.06 && side([p.x, p.z]) < half + 0.25) {       // (en kurv du klatrer rett opp på har ingen «riktig» side)
+          const lo = thinX ? B.z0 : B.x0, hi = thinX ? B.z1 : B.x1, me = thinX ? p.z : p.x, end = Math.abs(me - lo) < Math.abs(me - hi) ? lo - 0.75 : hi + 0.75;
+          walkTo(mk(-(half + 0.7), end)); walkTo(mk(half + 0.7, end)); walkTo(mk(half + 0.7, thinX ? gc[1] : gc[0]));
+        } }
       while (!fail && !on(C) && t - t0 < 60 * 40) {
         const [tx, tz] = near(B, 0.2), dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1;
         if (p.state === 'hang') tick({ jumpPressed: t % 20 === 0 });

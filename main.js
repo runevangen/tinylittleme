@@ -38,11 +38,14 @@ const store = {
 };
 
 // Brett: ?level=bad (eller barnerom/kjokken/soverom …). Uten parameter åpnes brettet du sist spilte; første gang nivå 1.
-// De tre første er nivåene (n = nivånummer, stigende vanskelighetsgrad); resten er ekstra- og prøverom.
+// De seks første er nivåene (n = nivånummer, stigende vanskelighetsgrad; 4–6 er de samme rommene ommøblert); resten er ekstra- og prøverom.
 const LEVELS = [
   { id: 'bad', n: 1, label: 'Nivå 1: Badet', short: 'Nivå 1 · Bad' },
   { id: 'barnerom', n: 2, label: 'Nivå 2: Barnerommet', short: 'Nivå 2 · Barnerom' },
   { id: 'kjokken', n: 3, label: 'Nivå 3: Kjøkkenet', short: 'Nivå 3 · Kjøkken' },
+  { id: 'bad2', n: 4, label: 'Nivå 4: Badet, ommøblert', short: 'Nivå 4 · Bad' },
+  { id: 'barnerom2', n: 5, label: 'Nivå 5: Barnerommet, ommøblert', short: 'Nivå 5 · Barnerom' },
+  { id: 'kjokken2', n: 6, label: 'Nivå 6: Kjøkkenet, ryddet om', short: 'Nivå 6 · Kjøkken' },
   { id: 'soverom', label: 'Ekstra: Soverom (håndlaget)', short: 'Soverom' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
   { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
@@ -94,7 +97,10 @@ let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', true), fpsOn = store.get('tlm.fps', false);
-let viewMode = new URLSearchParams(location.search).get('view') || store.get('tlm.view3', 'third');   // third | shoulder | first (standard fra v0.59: vanlig 3. person med kamera som følger etter)
+// PC (v0.72): PUBG-styring som standard: WASD går, musa ser deg rundt (klikk i bildet låser pekeren), skulderkamera. Gjøres én gang; kan byttes tilbake i ⚙.
+if (!TOUCH && !store.get('tlm.pcpubg1', false)) { store.set('tlm.pcpubg1', true); store.set('tlm.preset4', 'pubg'); store.set('tlm.view3', 'shoulder'); store.set('tlm.custom4', {}); }
+const DEFAULT_PRESET = TOUCH ? 'mario' : 'pubg', DEFAULT_VIEW = TOUCH ? 'third' : 'shoulder';
+let viewMode = new URLSearchParams(location.search).get('view') || store.get('tlm.view3', DEFAULT_VIEW);   // third | shoulder | first (standard fra v0.59: vanlig 3. person med kamera som følger etter)
 if (!['third', 'shoulder', 'first'].includes(viewMode)) viewMode = 'shoulder';
 let viewFirst = viewMode === 'first', shDist = store.get('tlm.shdist', 3), shOff = store.get('tlm.shoff', 0.5), shSide = store.get('tlm.shside', 'right') === 'left' ? -1 : 1, xhairOn = store.get('tlm.xhair', true);
 let edgeGuardOn = store.get('tlm.edgeguard', true), autoJumpOn = store.get('tlm.autojump', true), lookAheadOn = store.get('tlm.lookahead', true), dustOn = store.get('tlm.dust', true);   // v0.62: kanthjelp, kamera som ser foran deg, støv i lufta
@@ -1165,7 +1171,7 @@ const TUNE = [
   ['reachAbove', 'Grep: ekstra rekkevidde opp', 0, 1.5, 0.05], ['ropeReach', 'Tau-rekkevidde', 0.8, 3.5, 0.1],
 ];
 const P0_SNAPSHOT = { ...P };
-let presetName = store.get('tlm.preset4', 'mario');
+let presetName = store.get('tlm.preset4', DEFAULT_PRESET);
 if (!PRESETS[presetName]) presetName = 'prince';
 applyPreset(presetName);
 Object.assign(P, store.get('tlm.custom4', {}));
@@ -1282,7 +1288,7 @@ const SETTINGS = [
   rg('pitchbase', 'kamera', 'Kameravinkel (høyere = mer ovenfra)', 0.26, 0.05, 0.7, 0.01, () => pitchBase, kp('tlm.pitchbase', (v) => { pitchBase = v; if (viewMode !== 'first') cam.pitch = viewMode === 'shoulder' ? v - 0.08 : v; })),
   fl('lookahead', 'kamera', 'Kameraet ser litt foran deg når du går', true, () => lookAheadOn, kp('tlm.lookahead', (v) => { lookAheadOn = v; })),
   fl('blob', 'kamera', 'Skygge under figuren og landingsmarkør', true, () => blobOn, kp('tlm.blob', (v) => { blobOn = v; })),
-  sl('view', 'kamera', 'Kamerasyn / View', 'shoulder', [['third', '3. person (bak figuren)'], ['shoulder', 'Over skulderen (som PUBG)'], ['first', '1. person (prøve)']], () => viewMode, setViewMode),
+  sl('view', 'kamera', 'Kamerasyn / View', DEFAULT_VIEW, [['third', '3. person (bak figuren)'], ['shoulder', 'Over skulderen (som PUBG)'], ['first', '1. person (prøve)']], () => viewMode, setViewMode),
   rg('shdist', 'kamera', 'Skulderkamera: avstand', 3, 1.6, 5, 0.1, () => shDist, kp('tlm.shdist', (v) => { shDist = v; })),
   rg('shoff', 'kamera', 'Skulderkamera: sideforskyvning', 0.5, 0.2, 1.3, 0.05, () => shOff, kp('tlm.shoff', (v) => { shOff = v; })),
   sl('shside', 'kamera', 'Skulderkamera: side', 'right', [['right', 'Høyre skulder'], ['left', 'Venstre skulder']], () => (shSide < 0 ? 'left' : 'right'), (v) => { shSide = v === 'left' ? -1 : 1; store.set('tlm.shside', v); }),
@@ -1315,7 +1321,7 @@ const SETTINGS = [
   rg('mix_things', 'lyd', 'Ting (ta, slipp, knus): volum', 1, 0, 2, 0.05, () => mixGet('pickup'), (v) => mixSet(['pickup', 'drop', 'scrape', 'shatter'], v), { pct: true }),
   rg('mix_room', 'lyd', 'Romlyd (drypp, vifte): volum', 1, 0, 2, 0.05, () => mixGet('drip'), (v) => mixSet(['drip', 'fan'], v), { pct: true }),
   // Test
-  sl('preset', 'styring', 'Styringsstil', 'mario', Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset4', v); applyPreset(v); store.set('tlm.custom4', {}); if (v === 'pubg') setViewMode('shoulder'); else if (v === 'mario') setViewMode('third'); helpLevel = 'normal'; inertia = 1; speedScale = 1; store.set('tlm.helplevel', 'normal'); store.set('tlm.inertia', 1); store.set('tlm.speedscale', 1); reapplyKnobs(); }),
+  sl('preset', 'styring', 'Styringsstil', DEFAULT_PRESET, Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset4', v); applyPreset(v); store.set('tlm.custom4', {}); if (v === 'pubg') setViewMode('shoulder'); else if (v === 'mario') setViewMode('third'); helpLevel = 'normal'; inertia = 1; speedScale = 1; store.set('tlm.helplevel', 'normal'); store.set('tlm.inertia', 1); store.set('tlm.speedscale', 1); reapplyKnobs(); }),
   sl('platform', 'test', `Enhet (sjekket ved start: ${platform.auto === 'mobil' ? 'mobil' : 'PC'})`, 'auto', [['auto', 'Automatisk'], ['mobil', 'Mobil (berøring)'], ['pc', 'PC (mus og tastatur)']], () => platform.pref, (v) => { store.set('tlm.platform', v); setTimeout(() => location.reload(), 150); }),
   fl('qbtn', 'test', 'Vis vurderingsknappen ⚑ på skjermen', true, () => qbtnOn, kp('tlm.qbtn', (v) => { qbtnOn = v; applyUiFlags(); })),
   fl('fps', 'test', 'Vis bilder per sekund (FPS)', false, () => fpsOn, kp('tlm.fps', (v) => { fpsOn = v; applyUiFlags(); })),
@@ -1326,7 +1332,7 @@ const visible = (d) => d.group !== 'admin' || adminOn;
 
 function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of [...TUNE, ...ADMIN_TUNE]) o[k] = P[k]; store.set('tlm.custom4', o); }
 function resetAllSettings() {
-  presetName = 'mario'; store.set('tlm.preset4', presetName); applyPreset(presetName); store.set('tlm.custom4', {});
+  presetName = DEFAULT_PRESET; store.set('tlm.preset4', presetName); applyPreset(presetName); store.set('tlm.custom4', {});
   for (const [k] of ADMIN_TUNE) P[k] = P0[k];
   for (const d of SETTINGS) if (d.group !== 'admin' && d.id !== 'preset' && d.id !== 'autograb') d.set(d.def);
   store.set('tlm.mix2', {}); store.set('tlm.reverb', null); SOUND_LIST.forEach((sd) => audio?.setLevel(sd.id, 1)); restBreath = false; store.set('tlm.restbreath', false);
@@ -1560,7 +1566,7 @@ function update(dt) {
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); setMood('happy', 6); say('goal', true);
     { const cl = store.get('tlm.cleared', {}); if (!stats.flew) { cl[levelId] = Math.max(cl[levelId] || 0, points()); store.set('tlm.cleared', cl); }       // husk hvilke nivåer som er klart (beste poeng)
-      $('winTitle').textContent = levelInfo?.n ? (nextLevel ? `Nivå ${levelInfo.n} klart!` : 'Alle tre nivåene klart!') : 'Du kom opp!';
+      $('winTitle').textContent = levelInfo?.n ? (nextLevel ? `Nivå ${levelInfo.n} klart!` : 'Alle seks nivåene klart!') : 'Du kom opp!';
       const nb = $('nextLevel'); nb.style.display = nextLevel ? '' : 'none'; if (nextLevel) { nb.textContent = `${nextLevel.label} →`; nb.onclick = () => goLevel(nextLevel.id); } }
     $('winStats').innerHTML = `Tid: ${clock.toFixed(1)} s<br>Lagringspunkter brukt: ${stats.saves}<br>Tilbakeføringer: ${stats.respawns}<br>Ting knust: ${stats.broken} · nullstilt: ${stats.resets}<br><b style="font-size:22px">Poeng: ${points()}</b>` +
       (stats.flew ? '<br><i>Flymodus ble brukt – resultatet er ikke gyldig</i>' : '');
@@ -1841,7 +1847,7 @@ addEventListener('resize', resize); resize();
 
 applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
-if (!TOUCH && !store.get('tlm.pcseen', false)) { store.set('tlm.pcseen', true); setTimeout(() => toast('PC: WASD går, mellomrom hopper, F tar, E griper, Z sentrerer kameraet. Du kan også klikke knappene.'), 2500); }
+if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true); setTimeout(() => toast('PC: klikk i bildet for å styre blikket med musa (Esc slipper). WASD går, mellomrom hopper, venstre museknapp eller F tar, høyre eller E griper.'), 2500); }
 let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)

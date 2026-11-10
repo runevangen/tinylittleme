@@ -270,7 +270,7 @@ const route = (() => {
     if (a < 0 || a === gi) break; done.add(a);
     for (let b = 0; b < nodes.length; b++) {
       if (done.has(b) || !edgeOK(nodes[a], nodes[b])) continue;
-      const g = gapOf(nodes[a], nodes[b]), rise = Math.max(0, nodes[b].top - nodes[a].top), c = climbOK(nodes[a], nodes[b]) ? 1 : 0.3 + g * 1.5 + rise * 0.3;
+      const g = gapOf(nodes[a], nodes[b]), rise = Math.max(0, nodes[b].top - nodes[a].top), c = climbOK(nodes[a], nodes[b]) ? 1 : 0.3 + g * 1.5 + rise * 0.3 + Math.max(0, rise - 2.8) * 1.5;   // løft over 2,8 krever kantgrep: bruk heller et mellomtrinn når det finnes
       if (dist[a] + c < dist[b]) { dist[b] = dist[a] + c; prev.set(b, a); }
     }
   }

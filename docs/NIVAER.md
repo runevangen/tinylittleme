@@ -1,6 +1,6 @@
-# Nivåene (v0.71)
+# Nivåene (v0.72)
 
-Tre nivåer med stigende vanskelighetsgrad. Spillet åpner nivå 1 første gang, og når du når målet får du knappen «Neste nivå →». Nivåer du har klart får ✓ i ⚙ → Spill → Brett. Ingen nivåer er låst (alt kan velges fritt mens vi tester).
+Seks nivåer med stigende vanskelighetsgrad: tre rom (nivå 1–3), og de samme tre rommene ommøblert (nivå 4–6, se lenger ned). Spillet åpner nivå 1 første gang, og når du når målet får du knappen «Neste nivå →». Nivåer du har klart får ✓ i ⚙ → Spill → Brett. Ingen nivåer er låst (alt kan velges fritt mens vi tester).
 
 | | Nivå 1: Badet | Nivå 2: Barnerommet | Nivå 3: Kjøkkenet |
 |---|---|---|---|
@@ -20,6 +20,21 @@ Tre nivåer med stigende vanskelighetsgrad. Spillet åpner nivå 1 første gang,
 - **Nivå 2:** gulv → to klosser → lekekasse → seng → nattbord → hopp over lekebøtta → krakk → skrivebord → gardin (klatre) → vinduskarm → vegghylle → spilleske → klesskap.
 - **Nivå 3:** gulv → fire skuffer som trapp → benk → smal kant foran vasken → benk → smal kant foran kokeplatene → benk → brødrister → mikrobølgeovn → kjøkkenhåndkle (klatre) → krydderhylle → hvitløksflette (klatre) → overskap → hopp til kjøleskapet.
 
+## Nivå 4–6: de samme rommene, løst på en ny måte
+Laget av grunnscenene med `tools/make_variants.mjs` (flytter møbler, legger til hyller og ting, flytter målet). Endrer du en grunnscene, kjør verktøyet på nytt; `npm test` sier fra hvis variantene er utdaterte, og krever at ruta er en annen enn i grunnrommet.
+
+| | Nivå 4: Badet, ommøblert | Nivå 5: Barnerommet, ommøblert | Nivå 6: Kjøkkenet, ryddet om |
+|---|---|---|---|
+| Fil | `scenes/bad2.scene.json` | `scenes/barnerom2.scene.json` | `scenes/kjokken2.scene.json` |
+| Hva er endret | Vaskekurven står under knaggene, buksa er tatt ned, ny hylle og to nye håndklær, den lille kurven står på gulvet | Krakken er borte, ny smal hylle over lekebøtta, bok på nattbordet, to nye hyller over døra | Skuffene er lukket, kasse og håndkle foran komfyren, overskapet er kortere, kjøleskapet flyttet, liten hylle over vasken |
+| Ny løsning | Fire klatringer rett opp panelveggen: kurv → badekåpe → knaggrekke → håndkle → ny hylle → håndkle → øverste hylle | Balanser på hylla over lekebøtta i stedet for å hoppe, og fortsett fra klesskapet bortover hyllene over døra med et hopp til siste hylle | Opp via kassa og håndkleet på komfyren (rett inn mellom kokeplatene og kanten), og to hopp i høyden: overskap → liten hylle → kjøleskap |
+| Mål | øverste hylle, 199 cm | hylla i hjørnet, 150 cm | kjøleskapet, 190 cm |
+| Steg | 8 (4 klatringer) | 15 | 12 (3 klatringer) |
+| Det vanskelige | krefter: du må hvile mellom klatringene, og alt over kurven er for høyt å falle fra | smal hylle over en fare, og 1,5 m fallhøyde på slutten | varme plater rett bak deg når du kommer opp, og to hopp 2 m over gulvet |
+| Gått av verktøyet | 43 s | 54 s | 56 s |
+
+Ikke gjort ennå i nivå 4–6: nye gjenstander som *verktøy* (hårgelé, dopapirbånd, nål og tråd, stav) er ikke lagt inn som alternative løsninger. Gå-verktøyet kan ikke bruke dem, så de må prøves for hånd først.
+
 ## Slik lages og sjekkes et nivå
 1. Skriv scenen (`scenes/<navn>.scene.json`, mål i cm) og kontroller den: `node tools/validate_scene.mjs scenes/<navn>.scene.json`.
 2. Lag brettet: `node tools/scene2level.mjs scenes/<navn>.scene.json levels/<navn>.level.json`. Rutekartet finner veien og sier fra om det måtte legge inn hjelpetrinn (nivåene skal ha 0).
@@ -30,7 +45,8 @@ Tre nivåer med stigende vanskelighetsgrad. Spillet åpner nivå 1 første gang,
 - Løft over ca. 2,8 enheter (14 cm) krever kantgrep, og da må kanten være tykk nok å ta i (minst 1,5 enheter). Tynne hyller må kunne nås med et rent hopp.
 - Trappetrinn som henger over hverandre (skuffer) må ha hel front, ellers går figuren inn under neste trinn.
 - Ikke la det være sprekker på rundt 3 cm mellom ting: figuren er 3 cm bred og kan kile seg fast.
-- En klatreflate må henge foran kanten du skal opp på, og du må ha noe å stå på foran den.
+- En klatreflate må henge foran kanten du skal opp på, og du må ha noe å stå på foran den (minst 14 cm). Toppen av klatreflaten må ligge i høyde med flaten du skal opp på.
+- Ikke sett småting der du lander fra et trinn over (figuren blir stående oppå dem).
 - Flater som ligger i en fare (kokeplate) eller under noe annet (skap under benkeplate) regnes ikke som trygge flater i rutekartet.
 
 ## Ikke gjort ennå

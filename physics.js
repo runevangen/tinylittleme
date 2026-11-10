@@ -31,7 +31,7 @@ export const PRESETS = {
 };
 
 // PUBG-lik styring: figuren ser alltid dit kameraet ser, og du går sidelengs og bakover uten å snu deg (se `faceCam`). Resten (hopp, landing, klatring) som i Prince.
-PRESETS.pubg = { ...PRESETS.prince, label: 'PUBG (kamera styrer)', gaitMode: false, faceCam: true, speed: 4.2, accel: 34, decel: 44, turnDecel: 44, airAccel: 10, jumpBoost: 1.35, jumpWindup: 0, turnRate: 20, walkFactor: 0.45, stepUp: 0.5 };
+PRESETS.pubg = { ...PRESETS.prince, autoGrab: true, label: 'PUBG (kamera styrer)', gaitMode: false, faceCam: true, speed: 4.2, accel: 34, decel: 44, turnDecel: 44, airAccel: 10, jumpBoost: 1.35, jumpWindup: 0, turnRate: 20, walkFactor: 0.45, stepUp: 0.5 };
 
 export const P = {
   w: 0.6,

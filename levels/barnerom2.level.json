@@ -1,0 +1,1077 @@
+{
+ "name": "Nivå 5: Barnerommet, ommøblert",
+ "rev": 1,
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -30,
+    -2,
+    -28
+   ],
+   "max": [
+    30,
+    0,
+    28
+   ],
+   "id": "gulv",
+   "color": 14268810,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -31,
+    0,
+    -28
+   ],
+   "max": [
+    -30,
+    48,
+    28
+   ],
+   "id": "vegg_v",
+   "color": 14674415,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    30,
+    0,
+    -28
+   ],
+   "max": [
+    31,
+    48,
+    28
+   ],
+   "id": "vegg_o",
+   "color": 14674415,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -30,
+    0,
+    -29
+   ],
+   "max": [
+    30,
+    48,
+    -28
+   ],
+   "id": "vegg_n",
+   "color": 14674415,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -30,
+    0,
+    28
+   ],
+   "max": [
+    30,
+    48,
+    29
+   ],
+   "id": "vegg_s",
+   "color": 14674415,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    -8.6,
+    0,
+    17.2
+   ],
+   "max": [
+    -4.6,
+    3.2,
+    21.2
+   ],
+   "id": "kloss_1",
+   "kind": "toyblock",
+   "color": 15909424,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -12.8,
+    0,
+    17.2
+   ],
+   "max": [
+    -8.8,
+    6.4,
+    21.2
+   ],
+   "id": "kloss_2",
+   "kind": "toyblock",
+   "color": 4165590,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -28,
+    0,
+    15
+   ],
+   "max": [
+    -13,
+    9.2,
+    23
+   ],
+   "id": "lekekasse",
+   "kind": "crate",
+   "color": 14242639,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -30,
+    0,
+    -24
+   ],
+   "max": [
+    -11,
+    7.2,
+    14
+   ],
+   "id": "seng",
+   "kind": "chest",
+   "color": 15326403,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -29.6,
+    7.2,
+    -23.6
+   ],
+   "max": [
+    -11.4,
+    10,
+    13.6
+   ],
+   "id": "dyne",
+   "kind": "mat",
+   "color": 6131657,
+   "material": "fabric",
+   "cp": true,
+   "soft": true
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -27.2,
+    10,
+    -22.8
+   ],
+   "max": [
+    -14,
+    12,
+    -15.6
+   ],
+   "id": "pute",
+   "kind": "towel",
+   "color": 16052714,
+   "material": "fabric",
+   "cp": false,
+   "soft": true
+  },
+  {
+   "type": "wood",
+   "min": [
+    -10.6,
+    0,
+    -24
+   ],
+   "max": [
+    -2.6,
+    12.4,
+    -16.4
+   ],
+   "id": "nattbord",
+   "kind": "chest",
+   "color": 13081182,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -2.2,
+    0,
+    -23.6
+   ],
+   "max": [
+    -1.8,
+    8,
+    -16.8
+   ],
+   "id": "lekebotte_v",
+   "kind": "box",
+   "color": 5025390,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    1.6,
+    0,
+    -23.6
+   ],
+   "max": [
+    2,
+    8,
+    -16.8
+   ],
+   "id": "lekebotte_o",
+   "kind": "box",
+   "color": 5025390,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -1.8,
+    0,
+    -23.6
+   ],
+   "max": [
+    1.6,
+    8,
+    -23.2
+   ],
+   "id": "lekebotte_n",
+   "kind": "box",
+   "color": 5025390,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -1.8,
+    0,
+    -17.2
+   ],
+   "max": [
+    1.6,
+    8,
+    -16.8
+   ],
+   "id": "lekebotte_s",
+   "kind": "box",
+   "color": 5025390,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    11,
+    14,
+    -24
+   ],
+   "max": [
+    30,
+    14.8,
+    2
+   ],
+   "id": "skrivebord",
+   "kind": "chest",
+   "color": 14271386,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    11,
+    0,
+    -24
+   ],
+   "max": [
+    11.6,
+    14,
+    2
+   ],
+   "id": "skrivebord_side_v",
+   "kind": "box",
+   "color": 14271386,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    11.6,
+    0,
+    1.4
+   ],
+   "max": [
+    30,
+    14,
+    2
+   ],
+   "id": "skrivebord_side_s",
+   "kind": "box",
+   "color": 14271386,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "book",
+   "min": [
+    19.2,
+    14.8,
+    -22.4
+   ],
+   "max": [
+    26,
+    17.2,
+    -17.6
+   ],
+   "id": "bokstabel",
+   "kind": "box",
+   "color": 3104124,
+   "material": "book",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "ceramic",
+   "min": [
+    24,
+    14.8,
+    -8
+   ],
+   "max": [
+    26,
+    17.6,
+    -6
+   ],
+   "id": "blyantkopp",
+   "kind": "cup",
+   "color": 13191227,
+   "material": "ceramic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    27.2,
+    20.8,
+    -16
+   ],
+   "max": [
+    30,
+    21.6,
+    -2
+   ],
+   "id": "vinduskarm",
+   "kind": "sill",
+   "color": 16052196,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    26.6,
+    14.8,
+    -8
+   ],
+   "max": [
+    27.2,
+    21.6,
+    -2.4
+   ],
+   "id": "gardin",
+   "kind": "towel_hang",
+   "color": 15255882,
+   "material": "fabric",
+   "cp": false,
+   "soft": false,
+   "grip": true,
+   "onto": "vinduskarm",
+   "gripDrain": -0.3
+  },
+  {
+   "type": "wood",
+   "min": [
+    27.2,
+    23.6,
+    -1
+   ],
+   "max": [
+    30,
+    24.2,
+    18.4
+   ],
+   "id": "vegghylle",
+   "kind": "chest",
+   "color": 13081182,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "paper",
+   "min": [
+    27.4,
+    24.2,
+    13.2
+   ],
+   "max": [
+    30,
+    26.8,
+    18.4
+   ],
+   "id": "spilleske",
+   "kind": "box",
+   "color": 8015792,
+   "material": "paper",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    18,
+    0,
+    19
+   ],
+   "max": [
+    30,
+    29.6,
+    28
+   ],
+   "id": "klesskap",
+   "kind": "chest",
+   "color": 15326403,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -8,
+    0,
+    2
+   ],
+   "max": [
+    16,
+    0.4,
+    22
+   ],
+   "id": "teppe",
+   "kind": "mat",
+   "color": 15316896,
+   "material": "fabric",
+   "cp": false,
+   "soft": true
+  },
+  {
+   "type": "book",
+   "min": [
+    -10,
+    12.4,
+    -23.6
+   ],
+   "max": [
+    -2.8,
+    14.8,
+    -19.2
+   ],
+   "id": "nattbok",
+   "kind": "box",
+   "color": 4160858,
+   "material": "book",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -2.8,
+    16,
+    -24
+   ],
+   "max": [
+    11.2,
+    16.6,
+    -21.2
+   ],
+   "id": "hylle_a",
+   "kind": "chest",
+   "color": 13081182,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -8,
+    29.4,
+    25.2
+   ],
+   "max": [
+    18,
+    30,
+    28
+   ],
+   "id": "hylle_b",
+   "kind": "chest",
+   "color": 13081182,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -26,
+    29.4,
+    25.2
+   ],
+   "max": [
+    -12,
+    30,
+    28
+   ],
+   "id": "hylle_c",
+   "kind": "chest",
+   "color": 13081182,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    -25.2,
+    30,
+    25.6
+   ],
+   "max": [
+    -22.4,
+    34,
+    27.6
+   ],
+   "id": "robot",
+   "kind": "cup",
+   "color": 10133670,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  }
+ ],
+ "movables": [
+  {
+   "id": "bamse",
+   "kind": "bag",
+   "material": "fabric",
+   "color": 11105354,
+   "min": [
+    -24,
+    10,
+    -4
+   ],
+   "max": [
+    -18.4,
+    15.6,
+    1.6
+   ],
+   "weight": "medium",
+   "breakable": false,
+   "soft": true
+  },
+  {
+   "id": "viskelar",
+   "kind": "sponge",
+   "material": "plastic",
+   "color": 15967928,
+   "min": [
+    14.4,
+    14.8,
+    -12
+   ],
+   "max": [
+    16.4,
+    15.6,
+    -10.4
+   ],
+   "weight": "light",
+   "breakable": false,
+   "soft": true
+  },
+  {
+   "id": "ball",
+   "kind": "bag",
+   "material": "plastic",
+   "color": 14698558,
+   "min": [
+    0,
+    0,
+    10
+   ],
+   "max": [
+    3.2,
+    3.2,
+    13.2
+   ],
+   "weight": "medium",
+   "breakable": false
+  }
+ ],
+ "decor": [
+  {
+   "shape": "box",
+   "id": "hyllebok",
+   "kind": "box",
+   "pos": [
+    28.9,
+    26.5,
+    2.6
+   ],
+   "size": [
+    2.2,
+    4.6,
+    1.2
+   ],
+   "color": 13212206,
+   "material": "book"
+  },
+  {
+   "shape": "box",
+   "id": "skapknott_1",
+   "kind": "knob",
+   "pos": [
+    23.5,
+    16.3,
+    18.8
+   ],
+   "size": [
+    0.6,
+    0.6,
+    0.4
+   ],
+   "color": 10133670,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "skapknott_2",
+   "kind": "knob",
+   "pos": [
+    24.7,
+    16.3,
+    18.8
+   ],
+   "size": [
+    0.6,
+    0.6,
+    0.4
+   ],
+   "color": 10133670,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "dor",
+   "kind": "door",
+   "pos": [
+    2,
+    20,
+    27.8
+   ],
+   "size": [
+    16,
+    40,
+    0.4
+   ],
+   "color": 15656146,
+   "material": "wood"
+  },
+  {
+   "shape": "box",
+   "id": "dorhandtak",
+   "kind": "knob",
+   "pos": [
+    8.4,
+    20.4,
+    27.35
+   ],
+   "size": [
+    0.8,
+    0.8,
+    0.5
+   ],
+   "color": 10133670,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "plakat_1",
+   "kind": "box",
+   "pos": [
+    -19,
+    30,
+    -27.94
+   ],
+   "size": [
+    10,
+    12,
+    0.12
+   ],
+   "color": 8176872,
+   "material": "paper"
+  },
+  {
+   "shape": "box",
+   "id": "plakat_2",
+   "kind": "box",
+   "pos": [
+    -29.94,
+    27,
+    -7
+   ],
+   "size": [
+    0.12,
+    10,
+    10
+   ],
+   "color": 15902298,
+   "material": "paper"
+  },
+  {
+   "shape": "box",
+   "id": "hylle_a_konsoll",
+   "kind": "box",
+   "pos": [
+    4,
+    14,
+    -23.8
+   ],
+   "size": [
+    0.8,
+    4,
+    0.4
+   ],
+   "color": 3816770,
+   "material": "metal"
+  },
+  {
+   "shape": "box",
+   "id": "vimpel",
+   "kind": "box",
+   "pos": [
+    -4,
+    38.2,
+    27.86
+   ],
+   "size": [
+    44,
+    0.4,
+    0.12
+   ],
+   "color": 14698558,
+   "material": "paper"
+  }
+ ],
+ "hints": [
+  {
+   "id": "dyne",
+   "text": "Seng\nMyk å lande på. Herfra går veien opp på nattbordet ved hodeenden.",
+   "pos": [
+    -20.5,
+    10.9,
+    -5
+   ]
+  },
+  {
+   "id": "nattbord",
+   "text": "Ny vei\nKrakken er borte. Gå opp på bøkene og balanser bortover den smale hylla over lekebøtta. Skyv stikken forsiktig.",
+   "pos": [
+    -6.6,
+    13.3,
+    -20.2
+   ]
+  },
+  {
+   "id": "gardin",
+   "text": "Gardin\nKlatre: gå inntil gardinen og hold GREP, styr mot den. Øverst hiver du deg opp i vinduskarmen.",
+   "pos": [
+    26.9,
+    22.5,
+    -5.2
+   ]
+  },
+  {
+   "id": "klesskap",
+   "text": "Videre fra klesskapet\nMotgiften er flyttet. Gå bortover hylla over døra og hopp over til den siste hylla.",
+   "pos": [
+    24,
+    30.5,
+    23.5
+   ]
+  }
+ ],
+ "hazards": [
+  {
+   "id": "lekebotte_inni",
+   "type": "pit",
+   "message": "Fanget i lekebøtta",
+   "min": [
+    -1.8,
+    0,
+    -23.2
+   ],
+   "max": [
+    1.6,
+    7.6,
+    -17.2
+   ]
+  }
+ ],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "E",
+   "pos": [
+    29.95,
+    30,
+    -9
+   ],
+   "size": [
+    14,
+    16.8
+   ]
+  }
+ ],
+ "sun": [
+  30,
+  60,
+  -8
+ ],
+ "look": {
+  "exposure": 0.95,
+  "sun": 2.6
+ },
+ "audio": {
+  "reverb": 0.14
+ },
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -30,
+   "x1": 30,
+   "z0": -28,
+   "z1": 28,
+   "top": 0
+  },
+  {
+   "id": "kloss_1",
+   "x0": -8.6,
+   "x1": -4.6,
+   "z0": 17.2,
+   "z1": 21.2,
+   "top": 3.2
+  },
+  {
+   "id": "kloss_2",
+   "x0": -12.8,
+   "x1": -8.8,
+   "z0": 17.2,
+   "z1": 21.2,
+   "top": 6.4
+  },
+  {
+   "id": "lekekasse",
+   "x0": -28,
+   "x1": -13,
+   "z0": 15,
+   "z1": 23,
+   "top": 9.2
+  },
+  {
+   "id": "dyne",
+   "x0": -29.6,
+   "x1": -11.4,
+   "z0": -23.6,
+   "z1": 13.6,
+   "top": 10
+  },
+  {
+   "id": "nattbord",
+   "x0": -10.6,
+   "x1": -2.6,
+   "z0": -24,
+   "z1": -16.4,
+   "top": 12.4
+  },
+  {
+   "id": "nattbok",
+   "x0": -10,
+   "x1": -2.8,
+   "z0": -23.6,
+   "z1": -19.2,
+   "top": 14.8
+  },
+  {
+   "id": "hylle_a",
+   "x0": -2.8,
+   "x1": 11.2,
+   "z0": -24,
+   "z1": -21.2,
+   "top": 16.6
+  },
+  {
+   "id": "skrivebord",
+   "x0": 11,
+   "x1": 30,
+   "z0": -24,
+   "z1": 2,
+   "top": 14.8
+  },
+  {
+   "id": "gardin",
+   "x0": 26.6,
+   "x1": 27.2,
+   "z0": -8,
+   "z1": -2.4,
+   "top": 14.8,
+   "grip": true
+  },
+  {
+   "id": "vinduskarm",
+   "x0": 27.2,
+   "x1": 30,
+   "z0": -16,
+   "z1": -2,
+   "top": 21.6
+  },
+  {
+   "id": "vegghylle",
+   "x0": 27.2,
+   "x1": 30,
+   "z0": -1,
+   "z1": 18.4,
+   "top": 24.2
+  },
+  {
+   "id": "spilleske",
+   "x0": 27.4,
+   "x1": 30,
+   "z0": 13.2,
+   "z1": 18.4,
+   "top": 26.8
+  },
+  {
+   "id": "klesskap",
+   "x0": 18,
+   "x1": 30,
+   "z0": 19,
+   "z1": 28,
+   "top": 29.6
+  },
+  {
+   "id": "hylle_b",
+   "x0": -8,
+   "x1": 18,
+   "z0": 25.2,
+   "z1": 28,
+   "top": 30
+  },
+  {
+   "id": "hylle_c",
+   "x0": -26,
+   "x1": -12,
+   "z0": 25.2,
+   "z1": 28,
+   "top": 30
+  }
+ ],
+ "start": [
+  2,
+  0,
+  24.4
+ ],
+ "goal": [
+  -18,
+  30,
+  26.6
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -30,
+  "x1": 30,
+  "z0": -28,
+  "z1": 28,
+  "height": 48,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b98a"
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#dfe9ef"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "photos": 0,
+   "views": [],
+   "interpreted_by": "Oppdiktet rom (ikke fra bilder), laget for nivå 2. Ommøblert for nivå 5.",
+   "scale_anchors": [
+    "seng 50 cm",
+    "skrivebord 74 cm",
+    "klesskap 150 cm"
+   ],
+   "uncertainty": "Ingen: rommet er tegnet for spillet."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 19,
+  "reachable": 19
+ }
+}

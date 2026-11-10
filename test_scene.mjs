@@ -28,15 +28,24 @@ assert.ok(r.errors.some((e) => /color/.test(e)) && r.errors.some((e) => /min < m
   const used = new Set(); for (const f of ['main.js', 'props.js', 'look.js', 'hero.js', 'level.js']) for (const m of fs.readFileSync(f, 'utf8').matchAll(/from '\.\/([a-z_]+)\.js'|import\('\.\/([a-z_]+)\.js'\)/g)) used.add(m[1] || m[2]);
   for (const u of ['main', ...used]) assert.ok(list.includes(`'${u}'`), `index.html: «${u}» mangler i lista over filer som lastes med versjon`);
 }
-// de tre nivåene: ruta skal kunne gås med ekte fysikk (tools/walk_route.mjs), uten hjelpetrinn, og hvert nivå er lengre enn det forrige
+// nivåene: ruta skal kunne gås med ekte fysikk (tools/walk_route.mjs), uten hjelpetrinn, og nivå 1–3 er hvert lengre enn det forrige
 {
   const { walkRoute } = await import('./tools/walk_route.mjs');
   let prev = 0;
-  for (const id of ['bad', 'barnerom', 'kjokken']) {
+  for (const id of ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2']) {
     const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), r = walkRoute(`levels/${id}.level.json`);
     assert.ok(r.ok, `${id}: ruta går ikke (${r.why})`);
     assert.equal(L.report.helpers.length, 0, `${id}: brettet trenger hjelpetrinn`);
-    assert.ok(r.steps > prev, `${id}: skal ha flere steg enn forrige nivå (${r.steps} mot ${prev})`); prev = r.steps;
+    if (!id.endsWith('2')) { assert.ok(r.steps > prev, `${id}: skal ha flere steg enn forrige nivå (${r.steps} mot ${prev})`); prev = r.steps; }
   }
+  // nivå 4–6 gjenbruker rommene, men ruta skal være en annen enn i nivå 1–3 (ny løsning), og målet et annet sted
+  for (const id of ['bad', 'barnerom', 'kjokken']) {
+    const a = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), b = JSON.parse(fs.readFileSync(`levels/${id}2.level.json`, 'utf8'));
+    assert.notDeepEqual(a.route.map((w) => w.id), b.route.map((w) => w.id), `${id}2: ruta er den samme som i ${id}`);
+    assert.ok(Math.hypot(a.goal[0] - b.goal[0], a.goal[1] - b.goal[1], a.goal[2] - b.goal[2]) > 2 || id === 'kjokken', `${id}2: målet står samme sted`);
+  }
+  // variantene skal være laget av grunnscenene (tools/make_variants.mjs): kjør verktøyet på nytt hvis en grunnscene er endret
+  { const { execFileSync } = await import('node:child_process'); const before = ['bad2', 'barnerom2', 'kjokken2'].map((n) => fs.readFileSync(`scenes/${n}.scene.json`, 'utf8'));
+    execFileSync('node', ['tools/make_variants.mjs']); ['bad2', 'barnerom2', 'kjokken2'].forEach((n, i) => assert.equal(fs.readFileSync(`scenes/${n}.scene.json`, 'utf8'), before[i], `${n}: scenen er utdatert, kjør node tools/make_variants.mjs`)); }
 }
 console.log('scene-tester grønne');
