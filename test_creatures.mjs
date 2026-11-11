@@ -73,6 +73,11 @@ const MIN_WARN = 0.5;   // krav fra R19: ingen skade uten minst 0,5 s varsel
   d.mode = 'hold'; d.mt = 0; d.y = d.base + DANGLER.low; d.danger = true;
   const t = newPlayer(0, d.y + DANGLER.hgt * 0.8, 0); t.state = 'air'; t.vy = -6;
   const e = stepAnts(L, t, DT); assert.ok(e.some((x) => x.type === 'stomp' && x.kind === 'dangler'), 'knust'); assert.equal(d.alive, false);
+  // knust edderkopp kommer ikke tilbake rett over en spiller som venter under tråden (sjekkes mot fotpunktet, ikke mot t.y), og den starter 'oppe' igjen
+  { d.y = d.base + DANGLER.up; const w = grounded(d.hx + 1, d.hz, d.base); L.antInvuln = 99;
+    for (let i = 0; i < 60 * DANGLER.respawn + 120; i++) stepAnts(L, w, DT); assert.equal(d.alive, false, 'ikke tilbake over en spiller som venter');
+    for (let i = 0; i < 10; i++) stepAnts(L, far, DT); assert.ok(d.alive && d.mode === 'up' && Math.abs(d.y - (d.base + DANGLER.up)) < 1e-6, 'tilbake i oppe-stilling når ingen står under'); L.antInvuln = 0;
+    const kn = newPlayer(0, d.base + DANGLER.low + DANGLER.hgt * 0.8, 0); kn.state = 'air'; kn.vy = -6; d.mode = 'hold'; d.y = d.base + DANGLER.low; d.danger = true; d.mt = 0; d.x = d.hx; d.z = d.hz; stepAnts(L, kn, DT); assert.equal(d.alive, false); }
   for (let i = 0; i < 60 * DANGLER.respawn + 60; i++) stepAnts(L, far, DT); assert.ok(d.alive && d.mode === 'up' && d.danger === false, 'kommer tilbake nullstilt');
   // oppe i luften (over hodet) er den aldri farlig
   resetAnts(L); const q = grounded(0, 0); L.antInvuln = 0; assert.ok(!stepAnts(L, q, DT).some((x) => x.type === 'hurt'));

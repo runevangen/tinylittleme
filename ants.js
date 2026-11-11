@@ -42,7 +42,7 @@ export function stepAnts(L, p, dt, active = true) {
     t.phase += dt * 9;
     if (t.drop && t.drop.arm > 0) t.drop.arm -= dt;
     if (t.drop && !t.drop.taken && active && !(t.drop.arm > 0) && Math.hypot(p.x - t.drop.x, p.z - t.drop.z) < CARRIER.pickup && Math.abs(p.y - t.drop.y) < 1.6) { t.drop.taken = true; ev.push({ type: 'crumb', id: t.id, x: t.drop.x, y: t.drop.y, z: t.drop.z }); }
-    if (!t.alive) { t.squash = Math.min(1, t.squash + dt * 6); t.dead -= dt; if (t.dead <= 0 && !near(t, p, 2.5)) { t.alive = true; t.squash = 0; t.alerted = false; t.carry = t.type === 'carrier' && !t.crumbUsed; if (isSpider(t)) initSpider(t); if (isCreature(t)) initCreature(t); } continue; }
+    if (!t.alive) { t.squash = Math.min(1, t.squash + dt * 6); t.dead -= dt; if (t.dead <= 0 && !(isDangler(t) ? nearBase(t, p, 2.5) : near(t, p, 2.5))) { t.alive = true; t.squash = 0; t.alerted = false; t.carry = t.type === 'carrier' && !t.crumbUsed; if (isSpider(t)) initSpider(t); if (isCreature(t)) initCreature(t); } continue; }
     const dx = p.x - t.x, dz = p.z - t.z, d = Math.hypot(dx, dz), dy = p.y - t.y;
     const sees = active && d < ANT.alert && Math.abs(dy) < ANT.alertDy;
     if (!isSpider(t) && !isCreature(t) && sees && !t.alerted) ev.push({ type: 'alert', kind: t.type, id: t.id, x: t.x, y: t.y, z: t.z });
@@ -81,5 +81,6 @@ export function stepAnts(L, p, dt, active = true) {
   return ev;
 }
 const spec = (t) => (isDangler(t) ? DANGLER : ROLLER);
+const nearBase = (t, p, r) => Math.hypot(p.x - t.hx, p.z - t.hz) < r && Math.abs(p.y - t.base) < 2;   // dangler: t.y står på takhøyde etter knusing, så sjekk mot fotpunktet under tråden
 const near = (t, p, r) => Math.hypot(p.x - t.x, p.z - t.z) < r && Math.abs(p.y - t.y) < 2;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));

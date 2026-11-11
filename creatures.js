@@ -9,8 +9,8 @@ export const ROLLER = {
   roll: 7.5, rest: 1.8, respawn: 25,               // rullefart, hvile (svimmel) etter rullen, tid knust
 };
 export const DANGLER = {
-  rad: 0.6, hgt: 0.8, alert: 8, up: 5.5,             // alert: den begynner å gi når du er nærmere enn dette; up: høyde over flata når den er oppe (over hodet)
-  wait: 1.6, warn: 0.9, plunge: 0.25, hold: 1.0, rise: 0.8, low: 0.2,   // oppe-tid, varsel (s), stup, hengende lav (farlig), trekkes opp; low: høyde over flata når den henger
+  rad: 0.6, hgt: 0.8, alert: 8, up: 4.6,             // alert: den begynner å gi når du er nærmere enn dette; up: høyde over flata når den er oppe (over hodet); warnLow: høyde når varselet er over (siger ned i bildet så varselet synes)
+  wait: 1.6, warnLow: 1.2, warn: 0.9, plunge: 0.25, hold: 1.0, rise: 0.8, low: 0.2,   // oppe-tid, varsel (s), stup, hengende lav (farlig), trekkes opp; low: høyde over flata når den henger
   respawn: 20,
 };
 export const TUNE = { warn: 1 };                    // admin: varseltid-faktor (aldri under 0,7: varselet skal alltid vare minst 0,5 s)
@@ -71,7 +71,7 @@ export function stepDangler(t, p, dt, active) {
     if (!near) t.mt = Math.min(t.mt, D.wait * 0.5);                                 // gir ikke når du er langt unna
     else if (t.mt >= D.wait) { t.mode = 'warn'; t.mt = 0; t.shake = 1; ev.push(at('alert', t)); }
   } else if (t.mode === 'warn') {                                                  // varsel: tråden rister, den siger litt
-    const w = warnTime(D.warn); t.shake = 1; t.y = hi - Math.min(1, t.mt / w) * 3.0;
+    const w = warnTime(D.warn); t.shake = 1; t.y = hi - Math.min(1, t.mt / w) * (D.up - D.warnLow);
     if (t.mt >= w) { t.mode = 'plunge'; t.mt = 0; t.y0 = t.y; ev.push(at('plunge', t)); }
   } else if (t.mode === 'plunge') {
     const u = Math.min(1, t.mt / D.plunge); t.y = t.y0 + (lo - t.y0) * u; t.danger = true;
