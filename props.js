@@ -152,9 +152,14 @@ const terryTex = () => once('terry', () => canvasTex(256, (g, S) => {
   for (let i = 0; i < 5200; i++) { const v = 150 + r() * 105; g.fillStyle = `rgb(${v},${v},${v})`; g.beginPath(); g.arc(r() * S, r() * S, 1.2 + r() * 1.6, 0, 7); g.fill(); }
 }));
 // flettet tøy (matte) og kurvfletting
-const weaveTex = () => once('weave', () => canvasTex(128, (g, S) => {
-  g.fillStyle = '#bdbdbd'; g.fillRect(0, 0, S, S);
-  for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) { const v = (i + j) % 2 ? 212 : 172; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(i * 8 + 1, j * 8 + 1, 6, 6); }
+const weaveTex = () => once('weave', () => canvasTex(128, (g, S) => {   // R13: grovere og mykere flettemønster, lav kontrast (var 16×16 celler med hard kant: moiré/flimmer på matter i bevegelse)
+  g.fillStyle = '#c4c4c4'; g.fillRect(0, 0, S, S);
+  const n = 8, c = S / n;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+    const lg = (i + j) % 2 ? g.createLinearGradient(i * c, 0, (i + 1) * c, 0) : g.createLinearGradient(0, j * c, 0, (j + 1) * c), hi = (i + j) % 2 ? 222 : 206;
+    lg.addColorStop(0, `rgb(${hi - 26},${hi - 26},${hi - 26})`); lg.addColorStop(0.5, `rgb(${hi},${hi},${hi})`); lg.addColorStop(1, `rgb(${hi - 26},${hi - 26},${hi - 26})`);
+    g.fillStyle = lg; g.fillRect(i * c + 1, j * c + 1, c - 2, c - 2);
+  }
 }));
 const wickerTex = () => once('wicker', () => canvasTex(128, (g, S) => {
   g.fillStyle = '#9a8f80'; g.fillRect(0, 0, S, S);                       // mørke mellomrom mellom flettene
@@ -296,8 +301,8 @@ const SINGLE = {
     return g;
   },
   mat(sx, sy, sz, o) {
-    const g = new THREE.Group(), wt = weaveTex().clone(); wt.repeat.set(sx / 3, sz / 3); wt.needsUpdate = true;
-    const m = mesh(roundedBoxGeo(sx, sy, sz, Math.min(sx, sz) * 0.08, Math.min(0.18, sy * 0.4)), new THREE.MeshStandardMaterial({ color: o.color, map: wt, bumpMap: wt, bumpScale: 0.8, roughness: 1 }));
+    const g = new THREE.Group(), wt = weaveTex().clone(); wt.repeat.set(sx / 6, sz / 6); wt.needsUpdate = true;   // R13: ingen relieffkart på matter (det bruker skjermderivater og flimrer i bevegelse); relieffet ligger i selve teksturen
+    const m = mesh(roundedBoxGeo(sx, sy, sz, Math.min(sx, sz) * 0.08, Math.min(0.18, sy * 0.4)), new THREE.MeshStandardMaterial({ color: o.color, map: wt, roughness: 1 }));
     m.position.y = -sy / 2; g.add(m);
     return g;
   },
