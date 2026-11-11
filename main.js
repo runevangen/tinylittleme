@@ -1481,7 +1481,7 @@ const SETTINGS = [
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
   fl('goals', 'spill', 'Delmål (milepæler: panel øverst, jubel når et delmål er klart)', true, () => goalsOn, kp('tlm.goals', (v) => { goalsOn = v; goalView?.setOn(v); logEv('delmål', v ? 'på' : 'av'); })),
   fl('goalarrow', 'hjelp', 'Pila og kompasset peker mot aktivt delmål', true, () => goalArrowOn, kp('tlm.goalarrow', (v) => { goalArrowOn = v; logEv('delmål', v ? 'pil følger delmål' : 'pil følger ruta'); })),
-  fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; })),
+  fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; logEv('delmål', v ? 'lås på' : 'lås av'); })),
   fl('rewards', 'spill', 'Tilbehør på figuren (hatter, skjerf, sekk du har samlet)', true, () => rewardsOn, kp('tlm.rewards', (v) => { rewardsOn = v; refreshAccessories(); logEv('belønning', v ? 'tilbehør på' : 'tilbehør av'); })),
   fl('rewardsall', 'admin', 'Alt tilbehør åpent (test av lekerommet)', false, () => rewardsAll, kp('tlm.rewardsall', (v) => { rewardsAll = v; refreshAccessories(); })),
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
