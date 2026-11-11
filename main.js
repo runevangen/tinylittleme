@@ -1134,9 +1134,12 @@ function stepCamAnim(dt) {
   cam.yaw = camAnim.from + camAnim.d * k; cam.pitch = camAnim.pf + (camAnim.pt - camAnim.pf) * k; if (camAnim.t >= 1) camAnim = null;
 }
 const compEl = $('compass'), compArrow = $('compArrow'), compTxt = $('compTxt');
-const goalArrow = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([[0, 0.5], [0.3, -0.25], [0, -0.1], [-0.3, -0.25]].map(([x, y]) => new THREE.Vector2(x, y)))),
-  new THREE.MeshBasicMaterial({ color: 0xffa940, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false }));
-goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visible = false;
+const arrowShape = new THREE.Shape([[0, 0.5], [0.3, -0.25], [0, -0.1], [-0.3, -0.25]].map(([x, y]) => new THREE.Vector2(x, y)));
+const arrowGeo = new THREE.ShapeGeometry(arrowShape);
+const arrowMat = (color, order) => { const m = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }); m.userData.order = order; return m; };
+const goalArrow = new THREE.Mesh(arrowGeo, arrowMat(0xff9a1f, 7));   // R14: full dekning, med hvit glorie og mørk kant så pila leses på lyse gulv og fra lavt kamera
+goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 7; goalArrow.visible = false;
+for (const [color, k, ord, z] of [[0x10151f, 1.5, 5, -0.004], [0xffffff, 1.28, 6, -0.002]]) { const o = new THREE.Mesh(arrowGeo, arrowMat(color)); o.scale.set(k, k, 1); o.renderOrder = ord; goalArrow.add(o); }
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
 const mv = createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay: () => mode === 'play' && !won, isOn: () => markersOn, logEv });   // R14: markører som holder seg unna knappene (markers.js, markers_view.js)
 let compKey = '', compShowUntil = 0, compIdleSince = 0;
@@ -1173,7 +1176,8 @@ function compassFrame(now) {
   const dy = t.y - player.y;
   $('compLbl').textContent = t.final ? T('compass.goal') : T('compass.next', { name: t.label.toUpperCase() });
   compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.act ? ` · ▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
-  const placeArrow = (d) => goalArrowG.position.set(player.x + dx / dist * d, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * d);
+  const lowCam = innerWidth > innerHeight; goalArrowG.scale.setScalar(lowCam ? 1.35 : 1);   // liggende: lavere kamera, så pila er større og hevet litt
+  const placeArrow = (d) => goalArrowG.position.set(player.x + dx / dist * d, player.y + (lowCam ? 0.14 : 0.07) + 0.01 * Math.sin(now / 200), player.z + dz / dist * d);
   placeArrow(1.4); goalArrowG.rotation.y = Math.atan2(-dx, -dz);
   if (goalArrow.visible && mv?.arrowFrame(placeArrow, ang, true)) goalArrow.visible = goalArrowG.visible = false;   // R14: bak en knapp, bak figuren eller utenfor skjermen: kantstilt pil i stedet (ellers flyttes gulvpila lenger fram)
   else if (!goalArrow.visible) mv?.arrowFrame(null, 0, false);

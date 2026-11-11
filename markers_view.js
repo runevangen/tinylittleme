@@ -104,7 +104,7 @@ export function createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay, i
     } }
 
   // glatt: iskald glans med brede, lyse diagonale striper som glir sakte, pluss lyseblå kant. Ser helt annerledes ut enn oransje grep og teal hylle, uten tekst
-  const slicks = [];
+  const slicks = [], slickCenter = { value: new THREE.Vector3() };
   { const tex = spriteTex((g, n) => {
       g.clearRect(0, 0, n, n); g.fillStyle = 'rgba(120,200,255,.28)'; g.fillRect(0, 0, n, n);
       g.fillStyle = 'rgba(255,255,255,.92)';
@@ -115,11 +115,20 @@ export function createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay, i
     for (const b of LEVEL.boxes) {
       if (!b.slick || b.dyn) continue;
       const sx = b.max[0] - b.min[0], sz = b.max[2] - b.min[2], t = tex.clone(); t.needsUpdate = true; t.repeat.set(Math.max(1, sx / 3), Math.max(1, sz / 3));
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(sx, sz), new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, fog: false }));
+      const big = sx * sz > 16;                                                // stort glatt gulv (hele rommet): bare en glans rundt figuren, ikke striper over alt
+      const mat = new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, fog: false });
+      if (big) {
+        mat.onBeforeCompile = (sh) => {
+          sh.uniforms.uC = slickCenter;
+          sh.vertexShader = 'varying vec3 vWp;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvWp = (modelMatrix * vec4(position, 1.0)).xyz;');
+          sh.fragmentShader = 'varying vec3 vWp;\nuniform vec3 uC;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', 'diffuseColor.a *= 0.55 * (1.0 - smoothstep(1.3, 3.2, distance(vWp.xz, uC.xz)));\n#include <opaque_fragment>');
+        };
+      }
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(sx, sz), mat);
       m.rotation.x = -Math.PI / 2; m.position.set((b.min[0] + b.max[0]) / 2, b.max[1] + 0.02, (b.min[2] + b.max[2]) / 2); m.renderOrder = 2; m.visible = false; scene.add(m);
       const y = b.max[1] + 0.03, pts = [[b.min[0], y, b.min[2]], [b.max[0], y, b.min[2]], [b.max[0], y, b.max[2]], [b.min[0], y, b.max[2]]].map((q) => new THREE.Vector3(...q));
       const edgeLine = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xbfeaff, transparent: true, opacity: 0.95, depthWrite: false })); edgeLine.renderOrder = 3; edgeLine.visible = false; scene.add(edgeLine);
-      slicks.push(Object.assign(m, { userData: { tex: t, edgeLine } }));
+      edgeLine.userData.big = big; slicks.push(Object.assign(m, { userData: { tex: t, edgeLine, big } }));
     } }
 
   // ✕: DOM-element (alltid øverst) lagt på skjermpunktet for flaten du hopper mot, flyttet ut av figuren og knappene
@@ -133,7 +142,8 @@ export function createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay, i
   function update(now, dt) {
     const on = isOn() && isPlay();
     for (const l of shelves) l.visible = on;
-    for (const m of slicks) { m.visible = on; m.material.opacity = on ? 0.95 : 0; m.userData.edgeLine.visible = on; m.userData.tex.offset.x = (now / 4000) % 1; }
+    slickCenter.value.set(player.x, player.y, player.z);
+    for (const m of slicks) { m.visible = on; m.material.opacity = on ? 0.95 : 0; m.userData.edgeLine.visible = on && !m.userData.big; m.userData.tex.offset.x = (now / 4000) % 1; }
     const bob = Math.sin(now / 300) * 0.08;
     for (const g of grips) {
       const d = Math.hypot(player.x - g.c[0], player.z - g.c[2], (player.y - g.c[1]) * 0.5), want = on && d < 24 ? Math.min(1, (24 - d) / 6) : 0;

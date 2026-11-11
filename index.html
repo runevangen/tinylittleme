@@ -55,6 +55,14 @@
   /* hjelpeteksten ligger helt øverst (v0.63): tittel og «Bruksanvisning ›» på samme linje, så kortet blir lavt */
   #infocard:not(.manual) #infobody{padding:7px 12px;background:#121a2cf2}#infocard:not(.manual) #infobody .ilink{float:right;display:inline-block;margin:0 0 4px 10px;padding:4px 9px;font-size:12px}#infocard:not(.manual) #infobody span{margin-top:3px}
   #infocard.manual #infobody{max-height:72vh;overflow:auto;-webkit-overflow-scrolling:touch}
+  /* R14 liggende: knappene (◎, TA, HOPP, GREP) ligger i høyre kolonne; kortet holdes til venstre for dem og blir lavt */
+  @media (orientation:landscape) and (max-height:520px){
+    #infocard{right:max(200px,calc(env(safe-area-inset-right) + 200px));width:min(400px,calc(100vw - 200px - 290px));transform:translateX(calc(100% - 38px))}
+    #infocard.show{transform:translateX(0)}
+    #infocard:not(.show) #infobody{visibility:hidden}
+    #infocard #infobody{max-height:calc(100vh - 90px);overflow:auto;font-size:13px;line-height:1.3}
+    #infocard.manual #infobody{max-height:calc(100vh - 90px)}
+  }
   #infobody .ilink{display:block;margin-top:8px;padding:6px 10px;border:0;border-radius:8px;background:#ffffff22;color:#ffd9a0;font:700 13px system-ui;text-align:left}
   #infobody b{display:block;color:#ffd9a0;font-size:15px;margin-bottom:2px}#infobody span{display:block;margin-top:7px}
   #stam{position:fixed;width:46px;height:7px;margin:-22px 0 0 -23px;border-radius:4px;background:#0009;border:1px solid #fff6;display:none;z-index:3;pointer-events:none;overflow:hidden}
