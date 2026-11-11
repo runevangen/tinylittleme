@@ -23,10 +23,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 Varmere, mer mettet belysning og fargegradering som i Pixar: mykere nøkkellys med varm sol og kjølig fyll, litt mer kontrast i skyggene, blankere plast (clearcoat) på plast- og porselensflater, tydeligere kantlys. Må ikke gjøre rommene mørkere eller ulesbare, og FPS skal ikke falle merkbart (Grafikk «Enkel» skal fortsatt virke). Filer: `main.js` (lys, tonemapping), `look.js`, evt. `level.look` i scenene.
 Ferdig når: før/etter-skjermbilder av nivå 1, 2 og 3 viser tydelig varmere og mer levende bilde uten blomstring eller utbrente flater.
 
-### [ ] R7 · Nøkkel og lås (Zelda-gåte)
-En enkel gåte per nivå fra 3 og oppover: finn en gjenstand (f.eks. knapp, mynt, nøkkel-kloss), bær den til et sted (TA/SETT PÅ) og åpne en hindring (en port/skuff som beveger seg, en bro som rulles ut). Bygg som en liten, datastyrt mekanikk (`puzzles` i scenen) i nytt modul `puzzle.js` med fysikk-integrasjon som ikke ødelegger rutekartet: hindringen skal være valgfri snarvei eller en tydelig vei, og `walk_route` må fortsatt bevise at målet kan nås.
-Ferdig når: minst én fungerende gåte i nivå 3 og 6 med tester og tydelig veiledning (pil/kompass peker mot neste steg).
-
 ### [ ] R8 · Fortelling og målseremoni
 Korte fortellertekster (norsk/engelsk i `i18n.js`) i start av hvert nivå (kort kort-kort, ikke vegger av tekst), en bedre målskjerm med smuler, tid, maur knust og en tydelig «Neste nivå», og en liten avslutning etter nivå 6. Alt bruker knappenavn, ikke taster. Må kunne hoppes over med ett trykk.
 Ferdig når: flyten start → spill → mål → neste nivå føles komplett på mobil.
@@ -40,6 +36,7 @@ Se `docs/FIGUREN.md` og `BACKLOG.md`: føtter som tilpasser seg trinn, bedre hen
 Ferdig når: animasjonene leses tydelig i skjermbilder/serier og ingen eksisterende test brekker.
 
 ## Ferdige punkter
+- [x] Nøkkel og lås (Zelda-gåte) (v0.90)
 - [x] Musikk og stemning per rom (v0.84)
 - [x] Fiender: flere slag (v0.83)
 - [x] Mørkere hjørner og lysstråler (v0.82)
