@@ -342,6 +342,17 @@ const goals = (scene.goals || []).map((g) => {
   else if (g.type === 'flag') out.flag = g.flag;
   return out;
 });
+// byggested (R24): build: { sites: [{ id, label, at: [x, z], y, w, h }], parts: [{ id, type, on: «gulv» eller flate, at: [x, z] }] } i cm. Berører ikke ruta.
+const build = scene.build ? {
+  sites: (scene.build.sites || []).map((s) => ({ id: s.id, ...(s.label ? { label: s.label } : {}), x: ux(s.at[0]), y: uy(s.y), z: uz(s.at[1]), w: round(s.w / U), h: round(s.h / U),
+    ...(s.anchors ? { anchors: s.anchors.map((a) => ({ u: round(a[0] / U), v: round(a[1] / U) })) } : {}),   // festepunkter [u, v] cm fra midten og opp fra flata
+    ...(s.deck ? { deck: s.deck.map((d) => ({ u0: round(d[0] / U), u1: round(d[1] / U) })) } : {}) })),   // underlag (hyller/kanter) [u0, u1] cm fra midten
+  parts: (scene.build.parts || []).map((q) => {
+    const on = q.on && q.on !== 'gulv' ? scene.objects.find((o) => o.id === q.on) : null;
+    if (q.on && q.on !== 'gulv' && !on) throw new Error(`byggedel ${q.id}: fant ikke flaten ${q.on}`);
+    return { id: q.id, type: q.type, x: ux(q.at[0]), y: round((on ? uy(on.box[3]) : 0) + 0.9), z: uz(q.at[1]) };
+  }),
+} : null;
 
 const finalSeen = reachable();
 const solvable = finalSeen.has(goalIdx());
@@ -354,6 +365,7 @@ const level = {
   ...(variant ? { variant } : {}),
   ...(boss ? { boss } : {}),
   collectibles,
+  ...(build ? { build } : {}),
   ...(puzzles.length ? { puzzles } : {}),
   ...(goals.length ? { goals } : {}),
   ropes: [],

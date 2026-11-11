@@ -19,10 +19,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R24 · Byggeskjerm A: skallet (egen modus, sideriss, snapping)
-Besluttet med spilleren (se samtalen): bygging skjer i en **egen skjerm/modus**, ikke som klikking i 3D-verdenen, for finmotorikk på mobil. Verden fryses og dimmes; kameraet blir et ortografisk **sideriss** låst til byggeplassen (gapet eller trappestedet) med faste festepunkter. Nytt modul `build.js` (modus, kamera, input) + `build_ui.js`; små hekter i `main.js` (inn/ut av modus, `menuOpen`-lignende pause). Deler som spilleren har funnet i verdenen (`parts` i scenen, plukkes med TA) ligger i et brett nederst; du drar en del ut med fingeren, den **snapper** til rutenett/festepunkter (snapping kan slås av i ⚙), roteres med to-fingers vri eller ±-knapper, zoom/pan med klyp og dra. Store knapper: ANGRE, NULLSTILL, PRØV, TILBAKE. Begrenset antall deler (leting i nivået lønner seg). Dette er et unntak fra «stikke + TA/HOPP/GREP»: i byggeskjermen styrer man med direkte berøring; tekst nevner knapper og berøring, ikke taster; tastatur/mus støttes bare som tillegg. Nye valg i `SETTINGS`, hendelser med `logEv`, ny modul i `files` i `index.html`. Ingen fysikk ennå utover å plassere/flytte deler; ruta (`walk_route`) skal være uberørt.
-Ferdig når: på iPhone (`devices['iPhone 14']`) kan man gå inn i byggeskjermen ved en byggeplass, dra, snappe, rotere, angre, nullstille og gå ut igjen uten å sette spillet fast; delene man har plukket opp dukker opp i brettet; tester dekker snapping, angre/nullstill og inn/ut av modus.
-
 ### [ ] R25 · Byggeskjerm B: 2D-fysikk (planker, klosser, tau, tape, vekter) og testfigur
 Avhenger av R24. Egen ren logikkmodul `build_phys.js` (ingen three.js, helt testbar) med en liten, stabil 2D-modell i sideriss: stive planker og klosser, **ledd/tape** (stive eller svake festepunkter), **tau** (fjær/avstandsbegrensning som bare trekker), **vekter** (tunge deler/motvekt) og tyngdekraft; planker bøyer seg synlig (visuell nedbøyning) og kan brekke ved for stor last. PRØV starter simuleringen med en liten **testfigur eller kule** som krysser (ligner Poly Bridge); holder bygget, vises jubel, ellers ser man hvor det brakk og kan justere. Start enkelt: planker og klosser først i modulen, deretter tau, tape og vekter (hver for seg testet) så ikke ett punkt blir for stort. Fysikken skal være deterministisk (fast tidssteg) slik at tester og `walk_route`-beviset kan kjøre samme bygg. Lyd (knirk, brudd, plask) via `audio.js`. Tester: en korrekt bro bærer, en for svak faller, tau holder kun i strekk, motvekt veier opp, samme input gir samme resultat.
 Ferdig når: man kan bygge og teste en bro og en trapp i byggeskjermen på mobil, se dem bære eller falle på en lesbar måte, og alle fysikktester er grønne.
@@ -44,6 +40,7 @@ Forrige ytelsespunkt tok tegnekall og lav profil, men ikke minne: alle teksturer
 Ferdig når: rapporten viser teksturminne og geometrier per nivå, lav profil bruker minst 40 % mindre teksturminne, nivåbytte 1→6 lekker ikke (antall geometrier/teksturer er stabilt i test), og ingen visuell feil sees i skjermbilde.
 
 ## Ferdige punkter
+- [x] Byggeskjerm A: skallet, egen modus, sideriss og snapping (R24, v1.09)
 - [x] Delmål (milepæler) i hvert nivå (R23, v1.08)
 - [x] Mål-lesbarhet i start: kamerasveip, første delmål og hint-boble (R22, v1.07)
 - [x] Fiendevariasjon utover maur: én ny skapning per romtype (v1.06)

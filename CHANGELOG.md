@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.09** – Byggeskjerm (BYGG-knappen vises ved et byggested): dra deler fra raden nederst opp i bildet, roter, angre, nullstill; snapping til rutenett og festepunkter. Ny test for inn/ut av byggemodus.
 - **1.08** – Delmål (milepæler) i alle seks nivåer: panel under HUD-linja, pil mot aktivt delmål, lås på målet, lagring. Kan justeres i ⚙ → Spill/Hjelp/Admin.
 - **1.07** – Mål-lesbarhet i start: kort kamerasveip fra målet til figuren (trykk for å hoppe over), pil mot første delmål og en hint-boble som nevner riktig knapp (TA, HOPP, GREP).
 - **1.06** – Nye skapninger: hvert rom har sin egen trussel utover maur. De gir varsel i farge og lyd før de kan skade, og kan ufarliggjøres med stikke + TA/HOPP/GREP. Kan justeres i ⚙ → Spill.

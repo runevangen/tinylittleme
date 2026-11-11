@@ -38,3 +38,4 @@ Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»
 - **Delmål** (⚙ → Spill, `tlm.goals`, standard på, R23): panel under HUD-linja med ett aktivt delmål; trykk på det for hele lista. Av = ingen panel, ingen telling, ingen lås.
 - **Pila peker mot aktivt delmål** (⚙ → Hjelp, `tlm.goalarrow`, standard på): kompass og gulvpil følger delmålet (flate, nærmeste smule, nærmeste maur, sjef). Av = pila følger ruta som før.
 - **Delmål som låser målet** (⚙ → Admin, `tlm.goallock`, standard på): delmål merket `gate` (alltid på ruta) må være klare før målet åpner; ellers vises «Målet er låst». Flymodus omgår låsen. Logges som `delmål`-hendelse («lås på/av»).
+- **Byggeskjerm: snapping** (⚙ → Spill, `tlm.buildsnap`, standard på, R24): delene snapper til rutenett og festepunkter i byggeskjermen (`build.js`, `build_logic.js`). Admin: `tlm.buildall` gir alle deler (test). Hendelser logges som `bygg`.
