@@ -3,7 +3,7 @@
 //  - mergeStatic: slår sammen statiske meshes med samme materiale til ett tegnekall (flere kall = tregt på gamle telefoner)
 //  - createLowProfile: avgjør når «Lav profil» (ingen skygge-kart, støv, korn, ekstra lys) slås på av seg selv
 
-export const BUDGET = { calls: 220, tris: 60000, lights: 6 };   // anbefalt tak per bilde (inkl. skyggepass); over det logges en advarsel
+export const BUDGET = { calls: 220, tris: 60000, lights: 7 };   // 7 lys: hjelmlykta i nivå 4–6 står alltid i scenen (styrke 0) så antall lys aldri endres (ellers kompileres alle materialer på nytt). Anbefalt tak per bilde (inkl. skyggepass); over det logges en advarsel
 
 // R21: minnebudsjett (MB) for teksturer og geometrier; iPhone 8-klassen; målt i full kvalitet: 41 MB (bad) og 66 MB (kjokken2), med små teksturer 7 og 10 MB. Over det logges en advarsel.
 export const MEM_BUDGET = { texMB: 80, texMBLow: 24, geoMB: 20 };

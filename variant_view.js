@@ -80,7 +80,7 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
   const V = LEVEL.variant;
   const off = { active: false, raysFactor: 1, beforeStep() {}, afterStep() {}, update() {}, info: () => null };
   if (!V) return off;
-  const moodsOn = opts.moods || (() => true), twistsOn = opts.twists || (() => true), lampOpt = opts.lamp || (() => 1), say = opts.say || (() => ''), logEv = opts.logEv || (() => {});
+  const moodsOn = opts.moods || (() => true), twistsOn = opts.twists || (() => true), lampOpt = opts.lamp || (() => 1), aimOpt = opts.aim || (() => 0.26), say = opts.say || (() => ''), logEv = opts.logEv || (() => {});
   const room = LEVEL.room, group = new THREE.Group(); scene.add(group);
   let vt = 0, wadeSaved = null, phase = null, waterNow = 0, wading = false, lightNow = 1, starsMat = null, prevWading = false;
 
@@ -156,7 +156,7 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
       if (p) {
         const fx = p.fx ?? 0, fz = p.fz ?? 1; dirF.x += (fx - dirF.x) * Math.min(1, dt * 8); dirF.z += (fz - dirF.z) * Math.min(1, dt * 8);
         const l = Math.hypot(dirF.x, dirF.z) || 1, ux = dirF.x / l, uz = dirF.z / l, hy = p.y + 0.95;
-        lampL.position.set(p.x + ux * 0.25, hy, p.z + uz * 0.25); lampL.target.position.set(p.x + ux * 9, hy - 2.4, p.z + uz * 9);
+        lampL.position.set(p.x + ux * 0.25, hy, p.z + uz * 0.25); lampL.target.position.set(p.x + ux * 9, hy - 9 * Math.tan(Math.max(-0.6, Math.min(1.0, aimOpt()))), p.z + uz * 9);   // lykta peker dit kameraet ser: dra opp/ned i bildet løfter og senker den (kameravinkel 0,26 = som før)
         cone.position.copy(lampL.position); cone.lookAt(lampL.target.position);
       }
       lampL.intensity = 80 * on;

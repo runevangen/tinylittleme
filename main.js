@@ -2063,7 +2063,7 @@ const camAhead = { x: 0, z: 0 };
 const dust = gfxLow ? null : look.makeDust(); if (dust) scene.add(dust.points);
 let variantMoodOn = store.get('tlm.varmood', true), variantTwistOn = store.get('tlm.vartwist', true), lampPower = store.get('tlm.lamp', 1);   // R12
 const variant = makeVariant({ scene, LEVEL, renderer, sun, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])),
-  opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, P, say: (k) => toast(T(k)), logEv } });
+  opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, aim: () => cam.pitch, P, say: (k) => toast(T(k)), logEv } });
 if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
 const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
