@@ -1423,11 +1423,11 @@ const marks = [];
 }
 const unsent = (type) => evLog.filter((e) => e.type === type && !e.sent).length, markCount = () => unsent('MARKERT');
 function updateMarkBadge() { const n = markCount() + unsent('BACKLOGG'), el = $('qcnt'); el.textContent = n; el.style.display = n ? 'flex' : 'none'; const h = $('repHead'); if (h) h.innerHTML = repHeadHtml(); }
-function repHeadHtml() { const f = markCount(), b = unsent('BACKLOGG'); return f || b ? `<b>${f} feil meldt${b ? ` · ${b} i backloggen` : ''}</b><br>Del eller kopier til Claude: <button id="hShare">Del</button> <button id="hCopy">Kopier</button>` : ''; }
+function repHeadHtml() { const f = markCount(), b = unsent('BACKLOGG'); return f || b ? `<b>${f} feil meldt${b ? ` · ${b} i backloggen` : ''}</b><br>Send til Claude: <button id="hShare">Del tilbakemeldinger</button> <button id="hCopy">Kopier tilbakemeldinger</button>` : ''; }
 function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); updateMarkBadge(); toast(`Feil meldt (${markCount()} totalt). Husk å sende rapporten etterpå.`); }
 function markSent() { for (const e of evLog) if (e.type === 'MARKERT' || e.type === 'BACKLOGG') e.sent = true; updateMarkBadge(); }
 const doShare = async (copyOnly) => { const t = reportText(); { const rb = $('reportBox'); if (rb) rb.value = t; } let r; if (copyOnly) { try { await navigator.clipboard.writeText(t); r = 'kopiert'; } catch { r = 'vis'; } } else r = await shareText(t, `tinylittleme v${VERSION} testrapport`); if (r === 'delt' || r === 'kopiert') markSent(); return r; };
-$('panel').addEventListener('click', (e) => { if (e.target.id === 'hShare') doShare(false).then((r) => toast(r === 'delt' ? 'Delt' : r === 'kopiert' ? 'Rapporten er kopiert' : r === 'vis' ? 'Åpne ⚙ → Test → Vis rapporten og kopier' : 'Avbrutt')); if (e.target.id === 'hCopy') doShare(true).then((r) => toast(r === 'kopiert' ? 'Rapporten er kopiert. Lim inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis rapporten')); });
+$('panel').addEventListener('click', (e) => { if (e.target.id === 'hShare') doShare(false).then((r) => toast(r === 'delt' ? 'Delt' : r === 'kopiert' ? 'Tilbakemeldingene er kopiert' : r === 'vis' ? 'Åpne ⚙ → Test → Vis rapporten og kopier' : 'Avbrutt')); if (e.target.id === 'hCopy') doShare(true).then((r) => toast(r === 'kopiert' ? 'Rapporten er kopiert. Lim inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis rapporten')); });
 updateMarkBadge();
 function buildReportInfo() {
   const t = nextTarget();
@@ -1462,9 +1462,10 @@ function buildPanel() {
     if (g === 'spill') extra = `<label>Brett</label><select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`).join('')}</select><div class="row"><button id="pRestart">Start på nytt</button><button id="pMenu">${T('menu.menu')}</button></div>`;
     if (g === 'test') extra = `
       <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
-      <div class="row"><button id="bMark">⚑ Marker her</button><button id="bReport">Del rapport</button></div>
-      <details><summary>Vis rapporten</summary><textarea id="reportBox" readonly rows="9"></textarea></details>
-      <div class="row"><button id="bExport">Kopier innstillinger</button><button id="bImport">Lim inn innstillinger</button></div>
+      <div class="row"><button id="bMark">⚑ Marker her</button></div>
+      <div class="row"><button id="bReport">Del tilbakemeldinger</button><button id="bCopyRep">Kopier tilbakemeldinger</button></div>
+      <details><summary>Vis tilbakemeldingene (rapporten)</summary><textarea id="reportBox" readonly rows="9"></textarea></details>
+      <small>Bare innstillingene (ikke tilbakemeldinger):</small><div class="row"><button id="bExport">Kopier innstillinger</button><button id="bImport">Lim inn innstillinger</button></div>
       <div class="row"><button id="bResetAll">Alt til standard</button></div>
       <small>Rapporten har versjon, enhet, endrede innstillinger, markeringer og siste hendelser. Send den som melding.</small>`;
     if (g === 'lyd') extra = `<div class="row"><button id="bHearBreath">Hør pust</button><button id="bHearStep">Hør skritt</button><button id="bHearJump">Hør hopp</button></div><small id="voiceNote"></small>`;
@@ -1505,7 +1506,8 @@ function buildPanel() {
   if ($('lockAdmin')) $('lockAdmin').onclick = () => { adminOn = false; store.set('tlm.admin', false); buildPanel(); toast('Admin låst'); };
   // test
   $('bMark').onclick = () => { markHere($('markText').value.trim()); $('markText').value = ''; $('reportBox').value = reportText(); };
-  $('bReport').onclick = async () => { const r = await doShare(false); toast(r === 'vis' ? 'Kunne ikke dele: åpne «Vis rapporten» og kopier teksten' : r === 'kopiert' ? 'Rapporten er kopiert' : r === 'delt' ? 'Delt' : 'Avbrutt'); if (r === 'vis') $('reportBox').closest('details').open = true; };
+  $('bCopyRep').onclick = () => doShare(true).then((r) => { toast(r === 'kopiert' ? 'Tilbakemeldingene er kopiert. Lim dem inn til Claude' : 'Kunne ikke kopiere: åpne «Vis tilbakemeldingene» og kopier teksten'); if (r === 'vis') $('reportBox').closest('details').open = true; });
+  $('bReport').onclick = async () => { const r = await doShare(false); toast(r === 'vis' ? 'Kunne ikke dele: åpne «Vis rapporten» og kopier teksten' : r === 'kopiert' ? 'Tilbakemeldingene er kopiert' : r === 'delt' ? 'Delt' : 'Avbrutt'); if (r === 'vis') $('reportBox').closest('details').open = true; };
   $('reportBox').closest('details').addEventListener('toggle', () => { $('reportBox').value = reportText(); });
   $('bExport').onclick = async () => { const t = exportSettings(SETTINGS.filter((d) => d.group !== 'admin' || adminOn).map((d) => ({ id: d.id, get: d.get })), { v: VERSION }); const r = await shareText(t, 'tinylittleme innstillinger'); toast(r === 'vis' ? 'Kunne ikke kopiere' : 'Innstillingene er kopiert'); };
   $('bImport').onclick = async () => {
