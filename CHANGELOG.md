@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.96** – Ytelse på eldre telefoner: statiske deler slås sammen så scenen tegnes med færre kall, tegnekall og trekanter står i rapporten, og ⚙ har «Lav profil» (Test) som kutter skygge-kart, støv, korn og lysstråler ved lav FPS.
 - **0.95** – Nivå 4–6 er nye rom: egen stemning og palett, hjelmlykt i mørke rom, nye rekvisitter og én vri per rom, som alt kan løses med stikke + TA/HOPP/GREP. Nye valg i ⚙ under Spill.
 - **0.94** – Veikartet fylt på med seks nye punkter (R11–R16): flagg og mål, egne rom i nivå 4–6, gulv uten moiré, lesbarhet bak knapper, ytelsesbudsjett og varig belønning.
 - **0.93** – Figur og bevegelse, siste polering (R10): figuren jubler og spretter når du knuser en maur (TA/HOPP som vanlig), rykker til når en maur støter deg, henger og svinger mer levende, og føttene tilpasser seg små trinn og kanter. Skrur av/på i ⚙ under Spill. Oppløsningen går automatisk ned om FPS blir lav.

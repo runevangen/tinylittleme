@@ -46,6 +46,7 @@ export function formatReport(info) {
   L.push(`Skjerm ${info.screen} · ${info.platform || (info.touch ? 'touch' : 'tastatur/mus')} · ${info.fps}`);
   L.push(`Hoppvalg: ${info.preset} · tid ${info.clock} s · poeng ${info.points}`);
   if (info.metrics) L.push(`Kamera og styring: ${info.metrics}`);
+  if (info.perf) L.push(`Scene: ${info.perf}`);
   L.push(`Figuren: (${info.pos.join(', ')}) · ${info.state}${info.target ? ` · neste: ${info.target}` : ''}`);
   L.push(`Lagret ${info.stats.saves} · tilbake ${info.stats.respawns} · knust ${info.stats.broken} · nullstilt ${info.stats.resets} · hard landing ${info.stats.hard}${info.stats.flew ? ' · FLYMODUS BRUKT' : ''}`);
   L.push('');

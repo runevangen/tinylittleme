@@ -10,7 +10,7 @@ Alle valg ligger i **én liste, `SETTINGS` i `main.js`**. Den styrer panelet, «
 | **Kamera** | Følger retning, hjelper, utoning (+ synlighet), kameraavstand |
 | **Hjelp og tekst** | Retningshjelp (kompass/gulvpil/begge/av), tips etter 3 fall, fremhev grep, lapper, lydtekst, snakkebobler |
 | **Lyd og stemme** | Hovedvolum, lyd på, **musikk** (av/på og volum; tema per rom i `music.js`), stemme, stemmevolum, **pust** (volum og «rolig pust når du står stille»), skritt, hopp/landing/fall, ting og romlyd (volum), og knapper for å høre pust, skritt og hopp. Hele lydmikseren (hver enkelt lyd) ligger bak admin. |
-| **Test** | Hoppfølelse (Prince/Klassisk/Spenning), FPS, **Oppløsning** (`resq`, R10: Auto følger FPS ned og opp, eller fast Full/Middels/Lav),  **Marker her**, **Del rapport**, kopier/lim inn innstillinger, Alt til standard |
+| **Test** | Hoppfølelse (Prince/Klassisk/Spenning), FPS, **Oppløsning** (`resq`, R10: Auto følger FPS ned og opp, eller fast Full/Middels/Lav), **Lav profil** (`lowprofile`, R15: Auto/Av/På; kutter skygge-kart, støv, korn, lysstråler og ekstra lys),  **Marker her**, **Del rapport**, kopier/lim inn innstillinger, Alt til standard |
 | **Admin** (skjult) | Alle hoppverdier og mekanikk-verdier (krefter, klatring, kast, hard landing, taubane …), lydmikser og etterklang, Plan/Fly, hjelpeobjekter |
 
 ## Admin
@@ -26,3 +26,6 @@ Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»
 - **Smuler** (⚙ → Spill, `tlm.crumbs`, standard på): gylne smuler å samle i brettene (R3). Av = ingen smuler vises eller plukkes.
 - **Gåter** (⚙ → Spill, `tlm.puzzles`, standard på): nøkkel og lås (R7). Av = ingen veiledning mot nøkkelen, og nøkkelen åpner ikke broen (en åpnet bro står).
 - **Gåter: kamerasveip** (⚙ → Hjelp, `tlm.puzcam`, standard på): når broen åpnes svinger kameraet kort mot den; pila peker på broen til du er over.
+
+- **Lav profil** (⚙ → Test, `tlm.lowprofile`, standard Auto, R15): slår av sol-skygge-kart, støv, korn (detalj-shaderen), lysstråler, fyll-/kantlys og målets punktlys. Auto slår den på når FPS er under 22 i tre vinduer på rad og oppløsningen allerede er på bunnen; den blir på til du velger Av eller laster siden på nytt. Logges som `lav profil`.
+- **Budsjett** (R15, `perf_budget.js`): ca. 30 bilder etter oppstart (og etter at Lav profil endres) logges `budsjett` med tegnekall, trekanter, lys og meshes (før/etter sammenslåing), og med «OVER BUDSJETT» hvis det går over taket (`BUDGET`: 220 kall, 60 000 trekanter, 6 lys). Linja står også i testrapporten («Scene: …»). Statiske ting (rekvisitter, kontaktskygger, småting) og figuren/maurene slås sammen per materiale og ledd, så de tegnes med få kall.

@@ -35,15 +35,12 @@ Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hve
 (a) Pilene i verdenen (målpil, «neste»-pil, gule piler) tegnes ofte under TA/HOPP-knappene og blir halvt skjult (se kjøkkenet i nivå 6 der pilen ligger bak TA). Hold dem innenfor en trygg sone som unngår knappene og HUD-en, og kantstill dem mot skjermkanten med kontrastkant. (b) Fullfør BACKLOG «Grep-kode»: tydelig negativ markering av glatte/ugripbare flater, og tydeligere forskjell på grep, hylle og dekor. (c) Teksten i «NESTE»-bobla blir kuttet når nivånavn er lange: la den bryte linjer. Filer: `main.js` (HUD, pil), `look.js`, `i18n.js` om tekst endres.
 Ferdig når: skjermbilder (iPhone 14, stående og liggende) av nivå 1–6 viser ingen pil eller tekst delvis bak en knapp, glatte flater kan skilles fra grep uten å lese tekst, og `npm test` dekker pilplasseringen (ren funksjon).
 
-### [ ] R15 · Ytelse på eldre telefoner: budsjett og lav profil
-R10 sørger for at oppløsningen går ned ved lav FPS, men ingenting begrenser selve scenen. Mål antall tegnekall, trekanter, lys og skygger per nivå (`renderer.info`) og logg dem med `logEv`. Slå sammen statisk geometri (`BufferGeometryUtils.mergeGeometries`/instansering for smuler, fliser, bokser), gjenbruk materialer, deaktiver skygger og partikler utenfor synsfeltet, og legg et valg «Lav profil» i `SETTINGS` (gruppe Test) som kutter skygge-kart, støv, korn og ekstra lys når FPS er lav. Filer: `main.js`, `look.js`, `atmos.js`, `polish.js`, evt. ny `perf_budget.js` med test.
-Ferdig når: tegnekall og trekanter per nivå står i rapporten, nivå 6 har minst 30 % færre tegnekall enn i dag uten synlig forskjell på skjermbildene, Playwright med CPU-throttle (4×) holder jevn FPS i Lav profil, og ruta går.
-
 ### [ ] R16 · Belønning som varer: stjerner, hatter og et rom å komme tilbake til
 Smulene (★ 0/10) gir i dag bare et tall på målskjermen. Gi dem verdi: hvert nivå husker beste smuletall og tid (autolagring), 10/10 gir et kosmetisk tilbehør til figuren (hatt, skjerf, sekk i annen farge; se BACKLOG «tilbehør å samle»), og et lite «lekerom»-skap på startskjermen viser det du har samlet og lar deg bytte med ett trykk. Alt med stikke/knapper, uten tastatur. Filer: `collect.js`, `hero.js`, `story.js`, `main.js` (startskjerm), nye valg i `SETTINGS`, `logEv('belønning', …)`.
 Ferdig når: etter å ha tatt alle smuler i et nivå ser spilleren et nytt tilbehør på figuren neste gang, valget huskes etter omlasting, tester dekker lagring og opplåsing, og skjermbilde av skapet er sjekket på iPhone 14.
 
 ## Ferdige punkter
+- [x] Ytelse på eldre telefoner: budsjett og lav profil (v0.96)
 - [x] Nivå 4–6 skal føles som nye rom, ikke bare ommøblerte (v0.95)
 - [x] Fortelling og målseremoni (v0.92)
 - [x] Toy Story-lys og farge (v0.91)

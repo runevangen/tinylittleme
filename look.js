@@ -229,7 +229,10 @@ export function makeLook({ aniso = 4, low = false } = {}) {
     }
     g.putImageData(img, 0, 0); return tex(c, false);
   })();
+  const detailU = { uGrain: { value: 0.2 }, uRough: { value: 0.3 }, uOn: { value: 1 } };   // delt av alle detaljerte materialer (R15: «Lav profil» slår korn av uten omkompilering)
+  const setDetail = (on) => { detailU.uOn.value = on ? 1 : 0; };
   const detailize = (root, { grain = 0.2, rough = 0.3 } = {}) => {
+    detailU.uGrain.value = grain; detailU.uRough.value = rough;
     root.traverse((o) => {
       if (!o.isMesh || o.userData.noDetail) return;
       for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
@@ -237,19 +240,19 @@ export function makeLook({ aniso = 4, low = false } = {}) {
         m.userData.detailed = true; const prev = m.onBeforeCompile;
         m.onBeforeCompile = (sh, rd) => {
           prev?.call(m, sh, rd);
-          sh.uniforms.uDetail = { value: detailTex }; sh.uniforms.uGrain = { value: grain }; sh.uniforms.uRough = { value: rough };
+          sh.uniforms.uDetail = { value: detailTex }; sh.uniforms.uGrain = detailU.uGrain; sh.uniforms.uRough = detailU.uRough; sh.uniforms.uOn = detailU.uOn;
           sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vDwp; varying vec3 vDwn;')
             .replace('#include <begin_vertex>', '#include <begin_vertex>\nvDwp = (modelMatrix * vec4(transformed, 1.0)).xyz; vDwn = normalize(mat3(modelMatrix) * objectNormal);');
-          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vDwp; varying vec3 vDwn; uniform sampler2D uDetail; uniform float uGrain; uniform float uRough;\n'
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vDwp; varying vec3 vDwn; uniform sampler2D uDetail; uniform float uGrain; uniform float uRough; uniform float uOn;\n'
             + 'float dTri(vec3 p, vec3 w, float s) { return texture2D(uDetail, p.zy * s).r * w.x + texture2D(uDetail, p.xz * s).r * w.y + texture2D(uDetail, p.xy * s).r * w.z; }')
-            .replace('#include <map_fragment>', '#include <map_fragment>\n  vec3 dW = pow(abs(normalize(vDwn)), vec3(4.0)); dW /= (dW.x + dW.y + dW.z);\n'
-              + '  float dA = dTri(vDwp, dW, 0.35), dB = dTri(vDwp, dW, 1.9);\n  float dG = (dA - 0.5) * 0.7 + (dB - 0.5) * 0.6;\n  diffuseColor.rgb *= 1.0 + dG * uGrain * 2.0;')
+            .replace('#include <map_fragment>', '#include <map_fragment>\n  float dG = 0.0;\n  if (uOn > 0.5) { vec3 dW = pow(abs(normalize(vDwn)), vec3(4.0)); dW /= (dW.x + dW.y + dW.z);\n'
+              + '  float dA = dTri(vDwp, dW, 0.35), dB = dTri(vDwp, dW, 1.9);\n  dG = (dA - 0.5) * 0.7 + (dB - 0.5) * 0.6;\n  diffuseColor.rgb *= 1.0 + dG * uGrain * 2.0; }')
             .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = clamp(roughnessFactor * (1.0 - dG * uRough * 1.6), 0.04, 1.0);');
         };
-        m.customProgramCacheKey = () => 'detail1'; m.needsUpdate = true;
+        m.customProgramCacheKey = () => 'detail2'; m.needsUpdate = true;
       }
     });
   };
 
-  return { floor, plaster, tile, wood, panel, pages, weave, twill, knit, leather, rep, buildBook, contactShadow, edgeShade, makeDust, skyTex, detailize };
+  return { floor, plaster, tile, wood, panel, pages, weave, twill, knit, leather, rep, buildBook, contactShadow, edgeShade, makeDust, skyTex, detailize, setDetail };
 }
