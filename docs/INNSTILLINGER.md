@@ -34,3 +34,7 @@ Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»
 
 - **Tilbehør på figuren** (⚙ → Spill, `tlm.rewards`, standard på, R16): hatter, skjerf og sekk som låses opp ved å ta alle smulene i et nivå (nivå 1 til 6). Valget gjøres i lekerommet på startskjermen og huskes (`tlm.unlocks`, `tlm.equip`; beste smuler og tid i `tlm.best`). Admin: «Alt tilbehør åpent» (`tlm.rewardsall`). Logges som `belønning`.
 - **Myke skygger og lysflekk** (⚙ → Spill, tlm.softlight, standard på, R17, softlight.js + softlight_logic.js): bakte mørke blobber under og rundt faste ting og i gulvhjørnene, varm lysflekk fra vinduet og mykere skyggekant (sun.shadow.radius). Bare Detaljert grafikk; Enkel grafikk og Lav profil beholder dagens look (test_softlight.mjs). Logges som «myke skygger».
+
+- **Delmål** (⚙ → Spill, `tlm.goals`, standard på, R23): panel under HUD-linja med ett aktivt delmål; trykk på det for hele lista. Av = ingen panel, ingen telling, ingen lås.
+- **Pila peker mot aktivt delmål** (⚙ → Hjelp, `tlm.goalarrow`, standard på): kompass og gulvpil følger delmålet (flate, nærmeste smule, nærmeste maur, sjef). Av = pila følger ruta som før.
+- **Delmål som låser målet** (⚙ → Admin, `tlm.goallock`, standard på): delmål merket `gate` (alltid på ruta) må være klare før målet åpner; ellers vises «Målet er låst». Flymodus omgår låsen.

@@ -1857,5 +1857,31 @@
         168.8
       ]
     }
+  ],
+  "goals": [
+    {
+      "id": "kurv",
+      "type": "reach",
+      "label": "Klatre opp på vaskekurven",
+      "en": "Climb the laundry basket",
+      "on": "vaskekurv",
+      "gate": true
+    },
+    {
+      "id": "smuler",
+      "type": "crumbs",
+      "label": "Samle 5 smuler",
+      "en": "Collect 5 crumbs",
+      "n": 5
+    },
+    {
+      "id": "vask",
+      "type": "reach",
+      "label": "Nå vasken",
+      "en": "Reach the sink",
+      "on": "vask_plate",
+      "gate": true,
+      "after": "kurv"
+    }
   ]
 }

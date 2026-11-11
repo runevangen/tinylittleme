@@ -857,5 +857,38 @@
         266.3
       ]
     }
+  ],
+  "goals": [
+    {
+      "id": "kasse",
+      "type": "reach",
+      "label": "Hopp opp på lekekassen",
+      "en": "Jump onto the toy box",
+      "on": "lekekasse",
+      "gate": true
+    },
+    {
+      "id": "smuler",
+      "type": "crumbs",
+      "label": "Samle 5 smuler",
+      "en": "Collect 5 crumbs",
+      "n": 5
+    },
+    {
+      "id": "maur",
+      "type": "stomp",
+      "label": "Knus en maur",
+      "en": "Squash an ant",
+      "n": 1
+    },
+    {
+      "id": "pult",
+      "type": "reach",
+      "label": "Nå skrivebordet",
+      "en": "Reach the desk",
+      "on": "skrivebord",
+      "gate": true,
+      "after": "kasse"
+    }
   ]
 }

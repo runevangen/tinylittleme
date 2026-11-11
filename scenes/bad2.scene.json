@@ -1921,6 +1921,39 @@
       ]
     }
   ],
+  "goals": [
+    {
+      "id": "kurv",
+      "type": "reach",
+      "on": "vaskekurv",
+      "gate": true,
+      "label": "Klatre opp på vaskekurven",
+      "en": "Climb the laundry basket"
+    },
+    {
+      "id": "hylle",
+      "type": "reach",
+      "on": "ny_hylle",
+      "gate": true,
+      "after": "kurv",
+      "label": "Nå den nye hylla",
+      "en": "Reach the new shelf"
+    },
+    {
+      "id": "smuler",
+      "type": "crumbs",
+      "n": 5,
+      "label": "Samle 5 smuler",
+      "en": "Collect 5 crumbs"
+    },
+    {
+      "id": "vokter",
+      "type": "stomp",
+      "n": 1,
+      "label": "Knus en vokter",
+      "en": "Squash a guard"
+    }
+  ],
   "variant": {
     "mood": "evening",
     "twist": {

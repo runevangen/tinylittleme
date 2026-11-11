@@ -1608,6 +1608,41 @@
    }
   }
  ],
+ "goals": [
+  {
+   "id": "smuler",
+   "type": "crumbs",
+   "label": "Samle 6 smuler",
+   "en": "Collect 6 crumbs",
+   "n": 6
+  },
+  {
+   "id": "sjef",
+   "type": "boss",
+   "label": "Slå sjef-mauren",
+   "en": "Beat the boss ant"
+  },
+  {
+   "id": "bro",
+   "type": "puzzle",
+   "label": "Åpne snarveien med nøkkelen",
+   "en": "Open the shortcut with the key",
+   "puzzle": "bro"
+  },
+  {
+   "id": "skap",
+   "type": "reach",
+   "label": "Nå overskapet",
+   "en": "Reach the top cabinet",
+   "gate": true,
+   "on": "overskap",
+   "x0": -3,
+   "x1": 15.6,
+   "z0": -30,
+   "z1": -23,
+   "top": 40
+  }
+ ],
  "ropes": [],
  "route": [
   {

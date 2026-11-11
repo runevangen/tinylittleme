@@ -50,7 +50,7 @@
   #bar button,.pill{font:600 13px system-ui;padding:9px 12px;border:0;border-radius:999px;background:#fffd;color:var(--ink);box-shadow:0 1px 4px #0004}
   #bar button.on{background:var(--accent)}
   #hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#fffe;color:var(--ink);padding:6px 12px;border-radius:999px;font:600 13px system-ui;pointer-events:none}
-  #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:18px;max-width:90vw;box-sizing:border-box;text-align:center;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
+  #toast{z-index:6;position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:18px;max-width:90vw;box-sizing:border-box;text-align:center;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
   body.bossfight #toast{top:calc(max(10px,env(safe-area-inset-top)) + 134px);padding:3px 10px;font-size:13px;white-space:nowrap}   /* under kamp: én kort linje rett under varselstripen, aldri midt over sjefen */
   #toast.show{opacity:1}
   #toast.low{top:28%;max-width:84vw;text-align:center;font-size:12px;padding:5px 12px;background:#0008}
@@ -190,7 +190,7 @@
   var v = String(Date.now());
   try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
   window.__assetV = v;
-  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view'];
+  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view', 'goals', 'goals_view'];
   var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
   document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
 })();

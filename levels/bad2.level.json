@@ -2074,6 +2074,49 @@
    "z": 8.76
   }
  ],
+ "goals": [
+  {
+   "id": "kurv",
+   "type": "reach",
+   "label": "Klatre opp på vaskekurven",
+   "en": "Climb the laundry basket",
+   "gate": true,
+   "on": "vaskekurv",
+   "x0": 1.5,
+   "x1": 9.9,
+   "z0": 3,
+   "z1": 11.8,
+   "top": 12
+  },
+  {
+   "id": "hylle",
+   "type": "reach",
+   "label": "Nå den nye hylla",
+   "en": "Reach the new shelf",
+   "gate": true,
+   "after": "kurv",
+   "on": "ny_hylle",
+   "x0": 1.1,
+   "x1": 10.5,
+   "z0": 13,
+   "z1": 21.4,
+   "top": 32.6
+  },
+  {
+   "id": "smuler",
+   "type": "crumbs",
+   "label": "Samle 5 smuler",
+   "en": "Collect 5 crumbs",
+   "n": 5
+  },
+  {
+   "id": "vokter",
+   "type": "stomp",
+   "label": "Knus en vokter",
+   "en": "Squash a guard",
+   "n": 1
+  }
+ ],
  "ropes": [],
  "route": [
   {

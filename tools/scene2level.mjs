@@ -330,6 +330,19 @@ const puzzles = (scene.puzzles || []).map((p) => {
     bridge: { min: [ux(bx0), uy(by0), uz(bz0)], max: [ux(bx1), uy(by1), uz(bz1)], axis: p.bridge.axis || 'x', anchor: p.bridge.anchor || 'max' } };
 });
 
+// delmål (R23, se goals.js): { id, type: 'reach'|'crumbs'|'stomp'|'puzzle'|'boss'|'flag', label, en, gate?, req?, after?, on? (reach: id på flata), n?, puzzle?, flag? }
+// reach: flata (`on`) blir en rektangel + topp i enheter. gate = må være klart før målet åpner (må ligge på ruta).
+const goals = (scene.goals || []).map((g) => {
+  const out = { id: g.id, type: g.type, label: g.label, en: g.en, ...(g.gate ? { gate: true } : {}), ...(g.req ? { req: true } : {}), ...(g.after ? { after: g.after } : {}) };
+  if (g.type === 'reach') {
+    const o = scene.objects.find((q) => q.id === g.on); if (!o) throw new Error(`delmål ${g.id}: fant ikke flata ${g.on}`);
+    const [a, b, , d, e, f] = o.box; Object.assign(out, { on: g.on, x0: ux(a), x1: ux(b), z0: uz(e), z1: uz(f), top: uy(d) });
+  } else if (g.type === 'crumbs' || g.type === 'stomp') out.n = g.n;
+  else if (g.type === 'puzzle') out.puzzle = g.puzzle;
+  else if (g.type === 'flag') out.flag = g.flag;
+  return out;
+});
+
 const finalSeen = reachable();
 const solvable = finalSeen.has(goalIdx());
 
@@ -342,6 +355,7 @@ const level = {
   ...(boss ? { boss } : {}),
   collectibles,
   ...(puzzles.length ? { puzzles } : {}),
+  ...(goals.length ? { goals } : {}),
   ropes: [],
   route,
   start, goal,

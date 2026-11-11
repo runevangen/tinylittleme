@@ -10,6 +10,8 @@ import { buildRoller, buildDangler, ROLLER_COL, DANGLER_COL } from './creatures_
 import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid, nearBridge } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
 import { buildFlag, buildGoalRing } from './markers.js';
+import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
+import { createGoalView } from './goals_view.js';
 import { shouldShowIntro, finishData, winHTML, showCard, heroSVG, totals, endHTML } from './story.js';
 import { initBoss, resetBoss, stepBoss } from './boss.js';   // R9: sjef-maur i siste rom (egen logikk, modell og helsebar)
 import { buildBoss, buildPrize } from './boss_model.js';
@@ -144,6 +146,7 @@ let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avsl
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
+let goalsOn = store.get('tlm.goals', true), goalArrowOn = store.get('tlm.goalarrow', true), goalLockOn = store.get('tlm.goallock', true);   // delmål (R23)
 let rewardsOn = store.get('tlm.rewards', true), rewardsAll = store.get('tlm.rewardsall', false);   // belønninger (R16)
 let bossOn = store.get('tlm.boss', true);   // sjef-maur (R9)
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', false), hudOpen = false, fpsOn = store.get('tlm.fps', false);
@@ -924,7 +927,7 @@ function animateHero(p, now, dt) {
 }
 
 // ---------- tilstand ----------
-initBodies(LEVEL); initAnts(LEVEL); initBoss(LEVEL); initCollect(LEVEL); initPuzzles(LEVEL);
+initBodies(LEVEL); initAnts(LEVEL); initBoss(LEVEL); initCollect(LEVEL); initPuzzles(LEVEL); initGoals(LEVEL);
 const bodyMeshes = LEVEL.bodies.map((b) => {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
@@ -1032,7 +1035,7 @@ placeFlag();
 const progKey = `tlm.progress.${levelId}${LEVEL.rev ? '.r' + LEVEL.rev : ''}`;       // rev: brettet er bygd om (gammel fremgang passer ikke lenger)
 let autoPos = null, autoT = 0, resumed = false;
 let noSave = false;       // satt rett før siden lastes på nytt etter «Nytt spill», så pagehide ikke skriver gammel fremgang tilbake
-function saveProgress() { if (won || !autosaveOn || noSave) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells], crumbs: collectedIds(LEVEL), puzzles: puzzleOpenIds(LEVEL) }); }
+function saveProgress() { if (won || !autosaveOn || noSave) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells], crumbs: collectedIds(LEVEL), puzzles: puzzleOpenIds(LEVEL), goals: goalDoneIds(LEVEL), goalFlags: goalFlagList(LEVEL) }); }
 function clearProgress() { autoPos = null; store.set(progKey, null); }
 const failCells = new Map();
 let compassForce = 0;
@@ -1046,7 +1049,7 @@ function failAt(why = 'fall') {
   if (autosaveOn && pr && pr.clock > 4 && okAt(pr.save)) {
     save.pos = pr.save; Object.assign(stats, pr.stats || {}); clock = pr.clock; autoPos = okAt(pr.auto) ? pr.auto : null;
     for (const [k, v] of pr.fails || []) failCells.set(k, v);
-    stats.crumbs = restoreCollected(LEVEL, pr.crumbs); restorePuzzles(LEVEL, pr.puzzles);
+    stats.crumbs = restoreCollected(LEVEL, pr.crumbs); restorePuzzles(LEVEL, pr.puzzles); restoreGoals(LEVEL, pr.goals, pr.goalFlags);
     resetPlayer(player, ...(autoPos || save.pos)); placeFlag(); if (stats.saves > 0) flagV.ignite(true); resumed = true;
   }
 }
@@ -1084,7 +1087,7 @@ function restartAll() {
   clearProgress(); failCells.clear();
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player);
-  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = stats.boss = 0; stats.flew = false; resetAnts(LEVEL); resetBoss(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); bridgeGuide = null;
+  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = stats.boss = 0; stats.flew = false; resetAnts(LEVEL); resetBoss(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); resetGoals(LEVEL); bridgeGuide = null;
   won = false; clock = 0; placeFlag(); flagV.extinguish(); $('win').classList.add('hide'); setMode('play');
 }
 
@@ -1162,7 +1165,7 @@ const angDiff = (a, b) => ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (M
 function turnCamera(toYaw, toPitch) { camAnim = { from: cam.yaw, d: angDiff(cam.yaw, toYaw), pf: cam.pitch, pt: toPitch ?? cam.pitch, t: 0 }; lastDrag = -99; }
 const camBehind = () => turnCamera(Math.atan2(-player.fx, -player.fz), viewFirst ? 0.1 : 0.32);                       // bak figuren, litt ovenfra
 // neste hinder: ruta fra rute-grafen (flater og grep-flater i rekkefølge); uten rute (håndlagde brett) er det målet
-let routeCur = 0;
+let routeCur = 0, goalLockMsg = 0, goalView = null;
 function nextTarget() {
   const R = LEVEL.route, g = LEVEL.goal;
   if (puzzlesOn && mode === 'play' && bridgeGuide) {                              // R7: etter åpning peker pila på broen til du er over
@@ -1171,6 +1174,10 @@ function nextTarget() {
     else return { x: e.x, y: e.y, z: e.z, label: T('puz.bridgeLbl'), final: false, act: '' };
   }
   if (puzzlesOn && mode === 'play') { const pt = puzzleTarget(LEVEL, player); if (pt) return { x: pt.x, y: pt.y, z: pt.z, label: T('puz.' + pt.key), final: false, act: pt.key === 'plate' ? T('btn.drop') : T('btn.take') }; }   // R7: nøkkel, så lås
+  if (goalsOn && goalArrowOn && mode === 'play') {                                  // R23: pila peker mot aktivt delmål (reach/smuler/maur/sjef); gåter har egen veiledning over
+    const ag = activeGoal(LEVEL), gt = ag && goalTarget(LEVEL, ag, player);
+    if (gt) return { x: gt.x, y: gt.y, z: gt.z, label: goalLabel(ag, lang), final: false, act: '' };
+  }
   if (R?.length > 1) {
     let i = -1;
     if (player.state === 'climb') i = R.findIndex((w) => (w.grip || w.via) && w.id === player.climb?.box?.id);
@@ -1200,9 +1207,11 @@ let compKey = '', compShowUntil = 0, compIdleSince = 0;
 const bossFighting = () => bossOn && !!LEVEL.bossS && !LEVEL.bossS.gone && ['windup', 'charge', 'stunned', 'hit', 'tired'].includes(LEVEL.bossS.mode);   // under sjefkamp: skjul NESTE-pillen så varsel og tekst får plass
 // R14: infokortet skal aldri dekke HUD-en eller NESTE-bobla: kortet legges under HUD-en, og bobla under kortet (eller skjules når bruksanvisningen er åpen)
 const hudEl = $('hud');
+goalView = createGoalView({ $, T, getLang: () => lang, L: LEVEL, hudEl }); goalView.setOn(goalsOn);   // R23: delmål-panelet (goals_view.js)
 function topLayout() {
   const open = infoCard.classList.contains('show'), cw = infoCard.offsetWidth, left = innerWidth - cw;
-  const hr = hudEl.getBoundingClientRect(), hudHit = open && left < hr.right && hr.width > 0;
+  const hr0 = hudEl.getBoundingClientRect(), gr = goalView?.el.classList.contains('show') ? goalView.el.getBoundingClientRect() : null;      // R23: delmål-panelet hører til samme øvre venstre hjørne som HUD-en
+  const hr = gr ? { right: Math.max(hr0.right, gr.right), bottom: Math.max(hr0.bottom, gr.bottom), width: hr0.width } : hr0, hudHit = open && left < hr.right && hr.width > 0;
   const cardTop = hudHit ? Math.round(hr.bottom + 6) : null;
   infoCard.style.top = cardTop === null ? '' : `${cardTop}px`;
   let ct = ''; compEl.style.top = '';
@@ -1470,6 +1479,9 @@ const SETTINGS = [
   fl('startscreen', 'spill', 'Vis startskjerm (Nytt spill / Fortsett) når spillet åpnes', true, () => startScreenOn, kp('tlm.startscreen', (v) => { startScreenOn = v; })),
   fl('puzzles', 'spill', 'Gåter (nøkkel og lås: en snarvei du åpner)', true, () => puzzlesOn, kp('tlm.puzzles', (v) => { puzzlesOn = v; })),
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
+  fl('goals', 'spill', 'Delmål (milepæler: panel øverst, jubel når et delmål er klart)', true, () => goalsOn, kp('tlm.goals', (v) => { goalsOn = v; goalView?.setOn(v); logEv('delmål', v ? 'på' : 'av'); })),
+  fl('goalarrow', 'hjelp', 'Pila og kompasset peker mot aktivt delmål', true, () => goalArrowOn, kp('tlm.goalarrow', (v) => { goalArrowOn = v; logEv('delmål', v ? 'pil følger delmål' : 'pil følger ruta'); })),
+  fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; })),
   fl('rewards', 'spill', 'Tilbehør på figuren (hatter, skjerf, sekk du har samlet)', true, () => rewardsOn, kp('tlm.rewards', (v) => { rewardsOn = v; refreshAccessories(); logEv('belønning', v ? 'tilbehør på' : 'tilbehør av'); })),
   fl('rewardsall', 'admin', 'Alt tilbehør åpent (test av lekerommet)', false, () => rewardsAll, kp('tlm.rewardsall', (v) => { rewardsAll = v; refreshAccessories(); })),
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
@@ -1782,6 +1794,21 @@ function crumbEvent(ev) {
   stats.crumbs = ev.n; logEv('smule', `${ev.id} ${ev.n}/${ev.total}`); audio?.crumb(ev.n, ev.total); buzz(15); setMood('happy', 0.9); spawnShards([ev.x, ev.y, ev.z], 0xffc83a);
   toast(ev.n === ev.total ? `Alle smulene! ${ev.n}/${ev.total}  +${SCORE.crumb} poeng` : `Smule ${ev.n}/${ev.total}  +${SCORE.crumb} poeng`);
 }
+// R23: målskjermen viser hvilke delmål som er klare
+function goalsWinHTML() {
+  if (!goalTotal(LEVEL) || !goalsOn) return '';
+  const rows = LEVEL.goalList.map((g) => `<div style="font-size:13px;opacity:${g.done ? 1 : 0.55};text-align:left">${g.done ? '✓' : '○'} ${goalLabel(g, lang).replace(/[<>&]/g, '')}</div>`).join('');
+  return `<div class="wpts" style="font-size:15px;margin-top:8px">★ ${T('goal.title')} ${goalDone(LEVEL)}/${goalTotal(LEVEL)}</div><div style="display:inline-block;margin:4px 0">${rows}</div>`;
+}
+// R23: delmål klart: kort jubel (lyd, puls i panelet, stjerne-smuler), logg og autolagring
+function goalEvent(ev) {
+  const g = goalById(LEVEL, ev.id), name = g ? goalLabel(g, lang) : ev.id;
+  logEv('delmål', `${ev.id} ${ev.n}/${ev.total}${ev.last ? ' (alle)' : ''}`);
+  if (ev.last) { audio?.fanfare(); music?.duck(0.3, 2); buzz([30, 50, 30, 50, 90]); setMood('happy', 4); cue('alle delmål!'); toast(T('goal.cheer')); }
+  else { audio?.crumb(ev.n, ev.total); audio?.checkpoint(); buzz(25); setMood('happy', 1.6); cue('delmål!'); toast(T('goal.done', { name })); }
+  for (let i = 0; i < 3; i++) spawnShards([player.x + (i - 1) * 0.6, player.y + 1.6, player.z], [0xffd23f, 0xffffff, 0xff9a1f][i]);
+  goalView?.cheer(); saveProgress();
+}
 function update(dt) {
   if (P.faceCam && mode === 'play') {                                  // PC: piltastene ser deg rundt (WASD går)
     const yawIn = (held('ArrowLeft') ? 1 : 0) - (held('ArrowRight') ? 1 : 0), pitchIn = (held('ArrowDown') ? 1 : 0) - (held('ArrowUp') ? 1 : 0);
@@ -1837,6 +1864,7 @@ function update(dt) {
   if (puzzlesOn && mode === 'play' && !won) puzzleIntro();
   if (bossOn && LEVEL.bossS) for (const ev of stepBoss(LEVEL, player, dt, mode === 'play' && !won)) bossEvent(ev);
   if (crumbsOn) for (const ev of stepCollect(LEVEL, player, dt, mode === 'play' && !won)) crumbEvent(ev);
+  if (goalTotal(LEVEL) && goalsOn) for (const ev of stepGoals(LEVEL, { player, crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0 }, mode === 'play' && !won)) goalEvent(ev);
   if (autoCam && !P.faceCam && !viewFirst && mode === 'play' && !camAnim && ['ground', 'air'].includes(player.state) && performance.now() / 1000 - lastDrag > 1.1) {      // Mario-stil: kameraet svinger rolig bak deg
     const k = player.onGround ? 1 : 0.5, sp0 = Math.hypot(player.vx, player.vz);
     const y0 = cam.yaw; if (followStrength > 0) cam.yaw = followYaw(cam.yaw, player.vx, player.vz, P.speed, dt * k, { rateScale: followStrength, capScale: followStrength }); metrics.yawAuto += Math.abs(cam.yaw - y0);
@@ -1883,14 +1911,16 @@ function update(dt) {
   }
 
   const g = LEVEL.goal;
-  if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
+  if (!won && goalTotal(LEVEL) && goalsOn && goalLockOn && !goalsOpen(LEVEL) && mode === 'play' && !stats.flew && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
+    if (performance.now() > goalLockMsg) { goalLockMsg = performance.now() + 4000; logEv('mål låst', lockingGoals(LEVEL).map((q) => q.id).join(',')); toast(T('goal.locked', { name: goalLabel(lockingGoals(LEVEL)[0], lang) })); }
+  } else if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
     let d, rw = null;
     { const cl = store.get('tlm.cleared', {}), prevBest = cl[levelId] || 0, n = levelInfo?.n; if (!stats.flew) { cl[levelId] = Math.max(prevBest, points()); store.set('tlm.cleared', cl); store.set('tlm.done', false); const runs = store.get('tlm.runs', {}); runs[levelId] = { t: clock, ants: stats.squashed || 0, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL) }; store.set('tlm.runs', runs);
         rw = recordRun(store, { levelId, n, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL), t: clock, flew: stats.flew }); logEv('belønning', `beste ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}${rw.unlocked ? ', låste opp ' + rw.unlocked.id : ''}${rw.newBestTime ? ', ny beste tid' : ''}`); if (rw.unlocked) refreshAccessories(); }       // husk hvilke nivåer som er klart (beste poeng)
       d = finishData({ n, nextExists: !!nextLevel, clock, stats, crumbs: crumbCount(LEVEL), crumbTotal: crumbTotal(LEVEL), points: points(), prevBest, flew: stats.flew });
       $('winTitle').textContent = n ? (nextLevel ? T('win.level', { n }) : T('win.all')) : T('win.top');
-      $('winStats').innerHTML = winHTML(d, T) + (rw?.unlocked && rewardsOn ? `<div class="wpts" style="font-size:17px;line-height:1.3">🎁 ${rwT(lang, 'rw.new', { name: rwT(lang, 'acc.' + rw.unlocked.id) })}</div>` : '') + (rw?.newBestTime ? `<div class="wpts" style="font-size:15px"><small>${rwT(lang, 'rw.newbest')}</small></div>` : ''); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
+      $('winStats').innerHTML = winHTML(d, T) + goalsWinHTML() + (rw?.unlocked && rewardsOn ? `<div class="wpts" style="font-size:17px;line-height:1.3">🎁 ${rwT(lang, 'rw.new', { name: rwT(lang, 'acc.' + rw.unlocked.id) })}</div>` : '') + (rw?.newBestTime ? `<div class="wpts" style="font-size:15px"><small>${rwT(lang, 'rw.newbest')}</small></div>` : ''); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
       const nb = $('nextLevel'); nb.style.display = nextLevel || (n && storyOn) ? '' : 'none';
       if (nextLevel) { nb.textContent = `${T('win.next')} →`; nb.onclick = () => goLevel(nextLevel.id); }
       else if (n && storyOn) { nb.textContent = `${T('win.ending')} →`; nb.onclick = showEnding; }
@@ -2158,6 +2188,7 @@ function render(now, dt) {
   grade.follow(player, camera);
   renderer.render(scene, camera);
   if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + (lowOn ? ' · lav profil' : ''); const w = overBudget(st); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
+  goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, show: mode === 'play' && !won && !menuOpen }, now);
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
   $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
@@ -2345,4 +2376,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { mv, ov, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
