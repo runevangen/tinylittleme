@@ -703,6 +703,93 @@
       "confidence": 1,
       "photos": [],
       "movable": "light"
+    },
+    {
+      "id": "leke_bil",
+      "kind": "toycar",
+      "material": "plastic",
+      "color": "#e0483e",
+      "box": [
+        125,
+        149,
+        0,
+        11,
+        66,
+        78
+      ],
+      "movable": "light",
+      "confidence": 1,
+      "photos": [],
+      "help": "Leker som lever\nDytt til bilen med stikka, så ruller den og tuter. TA den for å tute."
+    },
+    {
+      "id": "leke_robot",
+      "kind": "windup",
+      "material": "metal",
+      "color": "#3a7bd5",
+      "box": [
+        172,
+        182,
+        0,
+        14,
+        70,
+        78
+      ],
+      "movable": "light",
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "leke_tennisball",
+      "kind": "tennisball",
+      "material": "fabric",
+      "color": "#d4e157",
+      "box": [
+        155,
+        168,
+        0,
+        13,
+        100,
+        113
+      ],
+      "movable": "light",
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "leke_hest",
+      "kind": "rockinghorse",
+      "material": "wood",
+      "color": "#b9824a",
+      "box": [
+        128,
+        152,
+        0,
+        16,
+        128,
+        138
+      ],
+      "movable": "heavy",
+      "confidence": 1,
+      "photos": [],
+      "help": "Vippehest\nHopp opp på hesten (HOPP) så gynger den. TA wind-up-roboten og slipp den, så går den."
+    },
+    {
+      "id": "leke_sprettboks",
+      "kind": "jackbox",
+      "material": "plastic",
+      "color": "#f2b134",
+      "box": [
+        176,
+        190,
+        0,
+        14,
+        110,
+        124
+      ],
+      "movable": "medium",
+      "confidence": 1,
+      "photos": []
     }
   ],
   "hazards": [

@@ -11,7 +11,7 @@ for (const f of fs.readdirSync('scenes').filter((n) => n.endsWith('.scene.json')
   assert.deepEqual(errors, [], `${f}: ${errors.join(' | ')}`);
 }
 // «shaped» i kinds.js skal ha en bygger i props.js (enkeltting eller gruppe)
-const props = fs.readFileSync('props.js', 'utf8');
+const props = fs.readFileSync('props.js', 'utf8') + fs.readFileSync('toys_view.js', 'utf8');   // R18: de levende lekene tegnes i toys_view.js
 for (const [k, v] of Object.entries(KINDS)) {
   if (!v.shaped) continue;
   const single = new RegExp(`^  ${k}\\(`, 'm').test(props), grouped = props.includes(`'${k}'`);

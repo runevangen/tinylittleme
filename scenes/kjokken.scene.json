@@ -1123,6 +1123,92 @@
       "confidence": 1,
       "photos": [],
       "movable": "light"
+    },
+    {
+      "id": "leke_hest",
+      "kind": "rockinghorse",
+      "material": "wood",
+      "color": "#b9824a",
+      "box": [
+        170,
+        194,
+        0,
+        16,
+        125,
+        135
+      ],
+      "movable": "heavy",
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "leke_sprettboks",
+      "kind": "jackbox",
+      "material": "plastic",
+      "color": "#e0483e",
+      "box": [
+        205,
+        219,
+        0,
+        14,
+        120,
+        134
+      ],
+      "movable": "medium",
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "leke_robot",
+      "kind": "windup",
+      "material": "metal",
+      "color": "#c9483b",
+      "box": [
+        235,
+        245,
+        0,
+        14,
+        125,
+        133
+      ],
+      "movable": "light",
+      "confidence": 1,
+      "photos": [],
+      "help": "Leker som lever\nHopp på sprettboksen eller hesten. TA wind-up-roboten og slipp den, så går den noen skritt."
+    },
+    {
+      "id": "leke_tennisball",
+      "kind": "tennisball",
+      "material": "fabric",
+      "color": "#d4e157",
+      "box": [
+        255,
+        268,
+        0,
+        13,
+        135,
+        148
+      ],
+      "movable": "light",
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "leke_bil",
+      "kind": "toycar",
+      "material": "plastic",
+      "color": "#3a7bd5",
+      "box": [
+        150,
+        174,
+        0,
+        11,
+        140,
+        152
+      ],
+      "movable": "light",
+      "confidence": 1,
+      "photos": []
     }
   ],
   "hazards": [

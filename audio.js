@@ -45,6 +45,11 @@ export const SOUND_LIST = [
   { id: 'bossroar', label: 'Sjef-maur varsler / stormer', group: 'Hendelser' },
   { id: 'bossbump', label: 'Sjef-maur smeller i veggen', group: 'Hendelser' },
   { id: 'fanfare', label: 'Sjef-maur slått (fanfare)', group: 'Hendelser' },
+  { id: 'squeak', label: 'Leker: ball piper', group: 'Leker' },
+  { id: 'honk', label: 'Leker: bil tuter', group: 'Leker' },
+  { id: 'creak', label: 'Leker: vippehest knirker', group: 'Leker' },
+  { id: 'boing', label: 'Leker: sprettboks', group: 'Leker' },
+  { id: 'tick', label: 'Leker: wind-up tikker', group: 'Leker' },
   { id: 'crumb', label: 'Smule plukket', group: 'Hendelser' },
   { id: 'checkpoint', label: 'Sjekkpunkt', group: 'Hendelser' },
   { id: 'win', label: 'Mål', group: 'Hendelser' },
@@ -219,6 +224,12 @@ export function createAudio(ctx, opts = {}) {
   const fanfare = () => use('fanfare', () => { [[523, 0], [523, 0.14], [523, 0.28], [659, 0.42], [523, 0.6], [659, 0.78], [784, 0.96]].forEach(([f, t]) => { tone({ freq: f, type: 'triangle', gain: 0.13, decay: 0.32, delay: t }); tone({ freq: f * 2, type: 'sine', gain: 0.05, decay: 0.3, delay: t }); }); [1047, 1319, 1568].forEach((f) => tone({ freq: f, type: 'triangle', gain: 0.1, decay: 1.1, delay: 1.2 })); });
   const crumb = (n = 1, total = 10) => use('crumb', () => { const f = 880 * Math.pow(2, Math.min(n, 12) / 12); tone({ freq: f, type: 'triangle', gain: 0.1, decay: 0.16 }); tone({ freq: f * 1.5, type: 'sine', gain: 0.07, decay: 0.28, delay: 0.06 }); if (n >= total) [1047, 1319, 1568, 2093].forEach((g, k) => tone({ freq: g, type: 'triangle', gain: 0.08, decay: 0.4, delay: 0.14 + k * 0.08 })); });
   const checkpoint = () => use('checkpoint', () => { tone({ freq: 880, type: 'triangle', gain: 0.1, decay: 0.35 }); tone({ freq: 1320, type: 'triangle', gain: 0.07, decay: 0.45, delay: 0.08 }); });
+  // leker (R18): små, runde lyder. amp 0–1 gir litt variasjon etter hvor hardt det skjedde.
+  const squeak = (amp = 1) => use('squeak', () => { const f = rnd(1500, 1800); tone({ freq: f * 0.8, freq2: f * 1.5, type: 'sine', gain: 0.16 * (0.5 + amp / 2), attack: 0.004, decay: 0.09 }); tone({ freq: f * 1.6, freq2: f * 2.2, type: 'triangle', gain: 0.05, decay: 0.07, delay: 0.02 }); });
+  const honk = (amp = 1) => use('honk', () => { const g = 0.12 * (0.5 + amp / 2); tone({ freq: 392, type: 'square', gain: g, attack: 0.005, decay: 0.11 }); tone({ freq: 523, type: 'square', gain: g * 0.9, attack: 0.005, decay: 0.12, delay: 0.14 }); });
+  const creak = (amp = 1) => use('creak', () => { for (let k = 0; k < 3; k++) { tone({ freq: rnd(210, 260) - k * 14, freq2: rnd(120, 150), type: 'sawtooth', gain: 0.045 * (0.5 + amp / 2), attack: 0.01, decay: 0.16, delay: k * 0.28 }); burst({ type: 'lowpass', freq: 500, gain: 0.1 * amp, decay: 0.08, delay: k * 0.28 }); } });
+  const boing = (amp = 1) => use('boing', () => { tone({ freq: 160, freq2: 520, type: 'sine', gain: 0.2 * (0.5 + amp / 2), attack: 0.005, decay: 0.35 }); tone({ freq: 480, freq2: 300, type: 'triangle', gain: 0.07, decay: 0.45, delay: 0.1 }); burst({ type: 'bandpass', freq: 2400, gain: 0.1, decay: 0.05 }); });
+  const toyTick = () => use('tick', () => { tone({ freq: rnd(1750, 2000), type: 'square', gain: 0.045, attack: 0.001, decay: 0.025 }); burst({ type: 'highpass', freq: 3500, gain: 0.07, decay: 0.015 }); });
   const win = () => use('win', () => [523, 659, 784, 1047].forEach((f, k) => tone({ freq: f, type: 'triangle', gain: 0.12, decay: 0.5, delay: k * 0.11 })));
 
   // ---- romlyd (kommer fra brettets audio.ambience) -------------------------------------
@@ -262,6 +273,11 @@ export function createAudio(ctx, opts = {}) {
       case 'bossroar': bossroar(); break;
       case 'bossbump': bossbump(); break;
       case 'fanfare': fanfare(); break;
+      case 'squeak': squeak(); break;
+      case 'honk': honk(); break;
+      case 'creak': creak(); break;
+      case 'boing': boing(); break;
+      case 'tick': toyTick(); setTimeout(toyTick, 260); setTimeout(toyTick, 520); break;
       case 'crumb': crumb(3, 10); break;
       case 'checkpoint': checkpoint(); break;
       case 'win': win(); break;
@@ -282,7 +298,7 @@ export function createAudio(ctx, opts = {}) {
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
     ctx, out: bus, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
-    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, bossroar, bossbump, fanfare, crumb, checkpoint, win, drip, hum,
+    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, bossroar, bossbump, fanfare, crumb, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },

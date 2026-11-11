@@ -2,6 +2,8 @@
 // Ren JS uten DOM/three, slik at den kan testes i Node og porteres (Unity/Godot) senere.
 // Verden: akse-justerte bokser. x/z er gulvplanet, y er opp. Enhet ≈ «spillerhøyde» (1.0).
 
+import { ROUND_KINDS } from './toys_live.js';   // R18: kuleformede leker (ball, tennisball)
+
 // Felles bevegelsesvekt: klassisk og spenning er «umiddelbare» (som før); prince har treghet, oppbygging og tidsbruk.
 const SNAPPY = { stepUp: 0, faceCam: false, gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4, hardLand: Infinity, knockV: Infinity };
 
@@ -175,7 +177,7 @@ export function initBodies(L) {
   for (const m of L.movables || []) {
     const b = {
       id: m.id, kind: m.kind, pole: m.pole || 0, tool: m.tool || '', tool0: m.tool || '', thread: m.tool === 'spool', soft: !!m.soft, vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
-      round: m.kind === 'ball' || !!m.round, min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
+      round: ROUND_KINDS.includes(m.kind) || !!m.round, min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
       vy: 0, alive: true, carried: false, home: { min: [...m.min], max: [...m.max] },
     };
     b.pushFactor = P.push[b.weight] ?? 0.5;

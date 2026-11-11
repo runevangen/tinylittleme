@@ -47,7 +47,11 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `toyblock` | ja | trekloss (avrundet terning); høyere enn bred = flere stablet |
 | `letterblock` | ja | bokstavkloss (pastell, avrundet, bokstav på sidene): bokstaven er siste tegn i id-en etter «_» (bokstav_a); høyere enn bred = stablet, hvert lag neste bokstav; kan være movable |
 | `legoblock` | ja | Lego-aktig kloss med knotter oppå (knottene ligger innenfor boksen, ca. 0,6 cm): stables og klatres på, ca. 10 cm høy per lag |
-| `toycar` | ja | leketøysbil (varebil/buss) i fast boks: hele boksen er karosseri med flat topp, hjul og vinduer er pynt; lengste side er kjøreretningen |
+| `toycar` | ja | leketøysbil (varebil/buss) i fast boks (med movable light: skyves og tuter, R18): hele boksen er karosseri med flat topp, hjul og vinduer er pynt; lengste side er kjøreretningen |
+| `tennisball` | ja | tennisball (R18): movable light, boksen må være en kube (ca. 13 cm); piper og ruller videre når den dyttes eller lander |
+| `rockinghorse` | ja | vippehest (R18): movable heavy, ca. 24×10×16 cm; gynger og knirker når du lander på den; lengste side er langsaksen |
+| `windup` | ja | wind-up-robot av blikk (R18): movable light, ca. 10×8×14 cm; TA den og slipp den, så går den noen skritt og stopper |
+| `jackbox` | ja | sprettboks (R18): movable medium, kube ca. 14 cm; lokket slår opp og klovnen spretter ut når du lander på den eller tar den |
 | `ball` | ja | ball (løs kule med ekte kulekollisjon; boksen må være en kube) |
 | `bag` | ja | pose / toalettveske |
 | `caddy` | ja | dusjkurv (kromtråd) |

@@ -25,6 +25,8 @@ import { recordRun, getEquipped, rt as rwT, accById } from './rewards.js';
 import { applyAccessories, updateAccessories, showCloset, previewSVG } from './rewards_view.js';
 import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4–6 som egne rom (stemning, hjelmlykt, vri)
 import { createVoice } from './voice.js';
+import { createToyLife, resetToys, stepToys, TOY, TOY_SOUND, TOY_CUE } from './toys_live.js';   // R18: leker som lever og reagerer
+import { animateToy } from './toys_view.js';
 import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
 import { createMarkerView } from './readable_view.js';
@@ -142,6 +144,8 @@ let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.s
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
+let toysOn = store.get('tlm.toys', true);   // R18
+TOY.windT = store.get('tlm.toywind', TOY.windT);
 let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let rewardsOn = store.get('tlm.rewards', true), rewardsAll = store.get('tlm.rewardsall', false);   // belønninger (R16)
@@ -931,6 +935,7 @@ const bodyMeshes = LEVEL.bodies.map((b) => {
   mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); if (!gfxLow) look.detailize(mesh);
   return { b, mesh, size: [sx, sy, sz] };
 });
+const toyLife = createToyLife(LEVEL); toyLife.on = toysOn;   // R18: leker som lever (toys_live.js): reagerer på dytt, landing og TA/slipp
 // maur: én modell per patrulje (v0.77)
 LEVEL.noCreatures = !creaturesOn; CREATURE_TUNE.warn = creatureWarn;     // R19
 const ANT_COL = [0x9a3a1e, 0x7a2a16, 0xb04a22, 0x8a3320];
@@ -1077,13 +1082,13 @@ function stepLost(dt) {
 function resetThings() {
   if (mode !== 'play') return;
   if (!(LEVEL.bodies || []).some((b) => !b.alive || b.min.some((v, i) => Math.abs(v - b.home.min[i]) > 0.05))) return toast('Alt står på plass');
-  logEv('ting nullstilt'); resetBodies(LEVEL, player); stats.resets++; say('reset');
+  logEv('ting nullstilt'); resetBodies(LEVEL, player); resetToys(toyLife); stats.resets++; say('reset');
   toast(`Ting satt tilbake  −${SCORE.resetThings} poeng`);
 }
 function restartAll() {
   clearProgress(); failCells.clear();
   resetPlayer(player, ...LEVEL.start);
-  resetBodies(LEVEL, player);
+  resetBodies(LEVEL, player); resetToys(toyLife);
   save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = stats.boss = 0; stats.flew = false; resetAnts(LEVEL); resetBoss(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); bridgeGuide = null;
   won = false; clock = 0; placeFlag(); flagV.extinguish(); $('win').classList.add('hide'); setMode('play');
 }
@@ -1475,6 +1480,8 @@ const SETTINGS = [
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
+  fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, wind-up og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
+  rg('toywind', 'admin', 'Levende leker: hvor lenge wind-up-roboten går (sekunder)', 2.6, 1, 6, 0.2, () => TOY.windT, kp('tlm.toywind', (v) => { TOY.windT = v; }), { digits: 1 }),
   fl('creatures', 'spill', 'Nye skapninger (pillbug som ruller, edderkopp i tråd): av = bare maur', true, () => creaturesOn, kp('tlm.creatures', (v) => { creaturesOn = v; LEVEL.noCreatures = !v; logEv('fiende', v ? 'skapninger på' : 'skapninger av'); })),
   rg('creaturewarn', 'admin', 'Nye skapninger: varseltid (faktor, 1 = standard)', 1, 0.7, 2.5, 0.1, () => creatureWarn, kp('tlm.creaturewarn', (v) => { creatureWarn = v; CREATURE_TUNE.warn = v; }), { digits: 1 }),
   fl('boss', 'hjelp', 'Sjef-maur i siste rom (nivå 6): av = ingen sjef', true, () => bossOn, kp('tlm.boss', (v) => { bossOn = v; logEv('sjef', v ? 'på' : 'av'); })),
@@ -1561,6 +1568,7 @@ const SETTINGS = [
   rg('mix_steps', 'lyd', 'Skritt: volum', 1, 0, 2, 0.05, () => mixGet('step'), (v) => mixSet(['step'], v), { pct: true }),
   rg('mix_move', 'lyd', 'Hopp, landing og fallvind: volum', 1, 0, 2, 0.05, () => mixGet('jump'), (v) => mixSet(['jump', 'land', 'fall', 'skid'], v), { pct: true }),
   rg('mix_things', 'lyd', 'Ting (ta, slipp, knus): volum', 1, 0, 2, 0.05, () => mixGet('pickup'), (v) => mixSet(['pickup', 'drop', 'scrape', 'shatter'], v), { pct: true }),
+  rg('mix_toys', 'lyd', 'Leker (pip, tut, knirk, boing, tikk): volum', 1, 0, 2, 0.05, () => mixGet('squeak'), (v) => mixSet(['squeak', 'honk', 'creak', 'boing', 'tick'], v), { pct: true }),
   rg('mix_room', 'lyd', 'Romlyd (drypp, vifte): volum', 1, 0, 2, 0.05, () => mixGet('drip'), (v) => mixSet(['drip', 'fan'], v), { pct: true }),
   // Test
   sl('preset', 'styring', 'Styringsstil', DEFAULT_PRESET, Object.entries(PRESETS).map(([k, v]) => [k, v.label]), () => presetName, (v) => { presetName = v; store.set('tlm.preset4', v); applyPreset(v); store.set('tlm.custom4', {}); if (v === 'pubg') setViewMode('shoulder'); else if (v === 'mario') setViewMode('third'); helpLevel = 'normal'; inertia = 1; speedScale = 1; store.set('tlm.helplevel', 'normal'); store.set('tlm.inertia', 1); store.set('tlm.speedscale', 1); reapplyKnobs(); }),
@@ -1863,6 +1871,10 @@ function update(dt) {
     else if (ev.type === 'edgestop') { buzz(10); if (!store.get('tlm.seen.edgestop', false)) { store.set('tlm.seen.edgestop', true); toast(TOUCH ? 'Stopper ved kanten. Skyv stikken helt ut for å hoppe over eller gå utfor.' : 'Stopper ved kanten. Slipp C for å gå utfor.'); } }
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
   }
+  if (toysOn) for (const ev of stepToys(toyLife, LEVEL, player, dt)) {                // R18: små stemmer i rommet
+    const snd = TOY_SOUND[ev.act]; if (snd === 'squeak') audio?.squeak(ev.amp); else if (snd === 'honk') audio?.honk(ev.amp); else if (snd === 'creak') audio?.creak(ev.amp); else if (snd === 'boing') audio?.boing(ev.amp); else if (snd === 'tick') audio?.toyTick();
+    if (ev.act !== 'tick') { logEv('leke', `${ev.id} ${ev.act}`); cue(TOY_CUE[ev.act] || ev.act); if (ev.act !== 'stop') buzz(12); }
+  }
   if (player.hardLands > pre.hard) { logEv('hard landing'); setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
   if (player.knockout) {
     player.knockout = false; audio?.crush(); buzz(90); say('knockout'); failAt('hardt fall');
@@ -2049,6 +2061,7 @@ function render(now, dt) {
     if (b.kind === 'needle' && mesh.userData.thread && mesh.userData.on !== !!b.threaded) { mesh.userData.on = !!b.threaded; mesh.userData.thread(!!b.threaded); }
     const bx = b.max[0] - b.min[0], by = b.max[1] - b.min[1], bz = b.max[2] - b.min[2];
     mesh.position.set(b.min[0] + bx / 2, b.min[1] + by / 2, b.min[2] + bz / 2);
+    animateToy(mesh, b.kind, toyLife.toys.get(b.id), clock);          // R18
     if (b.pole) mesh.rotation.y = b.carried ? Math.atan2(-player.fz, player.fx) : (bz > bx ? Math.PI / 2 : 0);   // staven peker fremover når du bærer den
   }
   for (let i = shards.length - 1; i >= 0; i--) {
