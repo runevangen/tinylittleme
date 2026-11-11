@@ -33,8 +33,8 @@ export function bossFrame(px, pz, bx, bz, mode) {
   return {
     on: true, sep,
     shift: 0.75 * far * (1 - 0.5 * Math.min(1, Math.max(0, (sep - 14) / 14))),      // fokus mot sjefen så begge er i bildet
-    dist: 3.2 * near + far * Math.min(25, 13.5 + 1.3 * (sep - 3)),
-    pitch: 0.48 * near + far * (0.85 - 0.5 * mid),
+    dist: 5.5 * near + far * Math.min(25, 13.5 + 1.3 * (sep - 3)),
+    pitch: 0.55 * near + far * (0.85 - 0.5 * mid),
     yaw: sep > 1.5 ? Math.atan2(-dx, -dz) : null,                 // kameraet bak figuren med blikk mot sjefen (figuren står da alltid foran sjefen, aldri skjult bak den)
   };
 }
@@ -54,3 +54,18 @@ export function bossCamStep(s, f, B, p, yaw, dt, play = true) {
   } else { s.ox *= 1 - kb; s.oz *= 1 - kb; }
   return yaw;
 }
+
+// Figur-anker (R9): etter at kameraposisjonen er endelig (vegger kan ha dratt det tett inn), flytt blikkpunktet loddrett så figuren havner innenfor [lo, hi] i bildet
+// (NDC y, -1 nederst). Det hindrer at figuren havner under stikke/knappene eller bak sjefen når kameraet ikke får full avstand.
+// cam = [x,y,z], look = [x,y,z] (blikkpunkt), hero = [x,y,z]. Returnerer nytt blikkpunkt (samme retning sideveis, bare dreid opp/ned).
+export function anchorLook(cam, look, hero, fovDeg, lo, hi) {
+  const lx = look[0] - cam[0], ly = look[1] - cam[1], lz = look[2] - cam[2], lh = Math.hypot(lx, lz), len = Math.hypot(lx, ly, lz);
+  const hx = hero[0] - cam[0], hy = hero[1] - cam[1], hz = hero[2] - cam[2], hh = Math.hypot(hx, hz);
+  if (lh < 1e-6 || hh < 1e-6) return look;
+  const a0 = Math.atan2(ly, lh), ah = Math.atan2(hy, hh), th = Math.tan(fovDeg * Math.PI / 360);
+  const ndc = Math.tan(ah - a0) / th, want = Math.max(lo, Math.min(hi, ndc));
+  if (want === ndc) return look;
+  const a1 = ah - Math.atan(want * th);
+  return [cam[0] + lx / lh * Math.cos(a1) * len, cam[1] + Math.sin(a1) * len, cam[2] + lz / lh * Math.cos(a1) * len];
+}
+export const BOSS_HERO_Y = [-0.26, 0.22];   // trygg skjermsone for figuren under sjefkamp (NDC y): over stikke/TA/HOPP/GREP/Tilbake nederst, under helsebar og varselstripe øverst

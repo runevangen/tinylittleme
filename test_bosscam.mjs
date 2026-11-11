@@ -1,6 +1,6 @@
 // node test_bosscam.mjs: sjef-kameraet holder figuren i bildet (portrett) og aldri bak sjefen
 import assert from 'node:assert/strict';
-import { bossFrame, bossCamStep, angleDiff } from './camera_util.js';
+import { bossFrame, bossCamStep, angleDiff, anchorLook, BOSS_HERO_Y } from './camera_util.js';
 const FOV = 52 * Math.PI / 180, ASPECT = 390 / 844, DIST = 5.5, PITCH = 0.3, dt = 1 / 30;
 // som main.js: mål 0.62 over figuren, kamera bak/over med sideforskyvning (ox,oz)
 function view(s, yaw, p, wx, wy, wz) {
@@ -40,6 +40,16 @@ for (const mode of ['windup', 'charge', 'stunned', 'hit', 'tired']) for (const {
       const dd = Math.hypot(h.cx + dx * tt - B.x, h.cz + dz * tt - B.z);
       assert.ok(tt >= 1 - 1e-9 || dd > 2.2 || Math.hypot(B.x, B.z) > Math.hypot(h.cx, h.cz), `figuren skjult bak sjefen: ${tag}`);
     }
+  }
+}
+// figur-anker: uansett kameraavstand (veggen kan dra det helt inn til 1,8 m) og blikkpunkt havner figuren i trygg sone
+{
+  const proj = (cam, look, h, fov) => { const a0 = Math.atan2(look[1] - cam[1], Math.hypot(look[0] - cam[0], look[2] - cam[2])), ah = Math.atan2(h[1] - cam[1], Math.hypot(h[0] - cam[0], h[2] - cam[2])); return Math.tan(ah - a0) / Math.tan(fov * Math.PI / 360); };
+  for (const dist of [1.8, 3, 5.5, 14]) for (const pitch of [0.1, 0.5, 0.9, 1.3]) for (const lookY of [-3, 0, 0.6, 4, 9]) {
+    const hero = [0, 0.6, 0], cam = [0, 0.6 + Math.sin(pitch) * dist, Math.cos(pitch) * dist], look = [0, lookY, 0.5 * -dist];
+    const a = anchorLook(cam, look, hero, 52, BOSS_HERO_Y[0], BOSS_HERO_Y[1]), y = proj(cam, a, hero, 52);
+    assert.ok(y >= BOSS_HERO_Y[0] - 1e-6 && y <= BOSS_HERO_Y[1] + 1e-6, `anker: avstand ${dist} pitch ${pitch} blikk ${lookY} gir y ${y.toFixed(2)}`);
+    const y0 = proj(cam, look, hero, 52); if (y0 >= BOSS_HERO_Y[0] && y0 <= BOSS_HERO_Y[1]) assert.deepEqual(a, look);   // allerede trygt: urørt
   }
 }
 assert.ok(Math.abs(angleDiff(0, 0)) === 0);

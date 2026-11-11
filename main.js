@@ -14,7 +14,7 @@ import { makeAtmos } from './atmos.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
-import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff } from './camera_util.js';
+import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, BOSS_HERO_Y } from './camera_util.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
@@ -891,6 +891,19 @@ const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, h
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 
+// Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
+const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
+let heroXray = false;
+function heroSeen(check) {
+  let want = false;
+  if (check) {
+    _hv.set(player.x, player.y + 0.6, player.z); _hd.copy(_hv).sub(camera.position); const dist = _hd.length(); _hd.normalize();
+    _ray.set(camera.position, _hd); _ray.far = dist;
+    const hits = _ray.intersectObject(bossMesh.root, true); want = hits.length > 0 && hits[0].distance < dist - 0.25;
+  }
+  if (want === heroXray) return; heroXray = want;
+  hero.root.traverse((o) => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) { if (m.userData.dt0 === undefined) m.userData.dt0 = m.depthTest; m.depthTest = want ? false : m.userData.dt0; } o.renderOrder = want ? 40 : 0; });
+}
 function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
@@ -1554,9 +1567,9 @@ function bossEvent(ev) {
   else if (ev.type === 'bump') { logEv('sjef svimmel', ev.id); audio?.bossbump(); music?.duck(0.4, 1.2); buzz(60); setMood('happy', 1); cue('bom!'); spawnShards([ev.x, ev.y + 1, ev.z], 0xc8c0b0); seen('boss2', `Den er svimmel! Hopp på ryggen (${J}) mens stjernene går rundt`); }
   else if (ev.type === 'tired') { logEv(ev.worn ? 'sjef slumper' : 'sjef sliten', ev.id); if (ev.worn) { cue('sliten!'); setMood('happy', 0.8); seen('boss4', `Den er helt utslitt og svimmel! Hopp på ryggen (${J})`); } }
   else if (ev.type === 'hit') { logEv('sjef truffet', `${ev.hp} igjen`); audio?.squash(); buzz(40); setMood('happy', 1.6); cue(ev.hp > 0 ? 'au!' : 'seier!'); spawnShards([ev.x, ev.y, ev.z], 0x7c1f14); }
-  else if (ev.type === 'phase') { logEv('sjef fase', ev.phase); toast(ev.phase === 3 ? 'Sjefen er rasende! Den er raskere nå' : 'Sjefen er sint! Den er litt raskere nå'); }
+  else if (ev.type === 'phase') { logEv('sjef fase', ev.phase); toast(ev.phase === 3 ? 'Rasende!' : 'Sint!'); }
   else if (ev.type === 'clang') { logEv('sjef pansret'); audio?.anthit(); buzz(20); seen('boss3', 'Ryggen er for hard nå. Vent til den er svimmel'); }
-  else if (ev.type === 'hurt') { stats.hits++; logEv('sjef støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(80); setMood('hurt', 1); toast(`Au! Sjefen traff deg  −${SCORE.antHit} poeng. Stikk til siden når den varsler`); }
+  else if (ev.type === 'hurt') { stats.hits++; logEv('sjef støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(80); setMood('hurt', 1); toast(`Au! −${SCORE.antHit}`); }
   else if (ev.type === 'defeat') { stats.squashed++; logEv('SJEF SLÅTT', ev.id); audio?.fanfare(); music?.duck(0.2, 3); buzz([40, 60, 40, 60, 120]); setMood('happy', 6); cue('SJEF SLÅTT!'); toast('Du slo sjef-mauren! Ta den gylne smula'); for (let i = 0; i < 3; i++) spawnShards([ev.x + (i - 1) * 0.8, ev.y + 1.4, ev.z], [0xffc83a, 0xe23a3a, 0x3aa0e2][i]); }
   else if (ev.type === 'prize') { stats.boss++; logEv('sjef-smule tatt', ev.id); audio?.crumb(12, 12); buzz(30); setMood('happy', 3); cue('siste smule!'); toast(`Den siste smula! +${SCORE.boss} poeng`); spawnShards([ev.x, ev.y, ev.z], 0xffc83a); }
 }
@@ -1843,7 +1856,7 @@ function render(now, dt) {
     const settled = player.onGround || ['hang', 'mantle', 'swing', 'climb'].includes(player.state) || mode === 'fly';
     if (settled) camFocusY += (player.y - camFocusY) * (1 - Math.pow(0.08, dt));        // følg rolig når du står
     else camFocusY = Math.min(player.y + 0.9, Math.max(player.y - 0.9, camFocusY));       // i lufta: ikke følg hvert hopp
-    const kxz = 1 - Math.pow(0.04, dt);
+    const kxz = 1 - Math.pow(0.04 - 0.0395 * Math.min(1, camBossK), dt);       // under sjefkamp følger kameraet figuren nesten uten forsinkelse (støt fra sjefen kaster figuren langt)
     { const la = lookAheadOn && mode === 'play' && player.state === 'ground' ? 0.17 : 0, ka = 1 - Math.pow(0.25, dt);       // se litt foran figuren i gangretningen (mer av det du går mot)
       camAhead.x += (player.vx * la - camAhead.x) * ka; camAhead.z += (player.vz * la - camAhead.z) * ka; }
     cam.target.x += (player.x + camAhead.x - cam.target.x) * kxz; cam.target.z += (player.z + camAhead.z - cam.target.z) * kxz;
@@ -1873,7 +1886,9 @@ function render(now, dt) {
     for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { if (!insideAny(cam.target.x + dir.x * d + sdx, cam.target.y + dir.y * d, cam.target.z + dir.z * d + sdz, 0.25)) break; }
     cam.cur += (d - cam.cur) * (d < cam.cur ? 0.5 : 0.08);
     if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur); camera.position.x += sdx; camera.position.z += sdz;
-    camera.lookAt(cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0), cam.target.z + sdz); }
+    { let lk = [cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0), cam.target.z + sdz];
+      if (camBossK > 0.02 && !SH) { const a = anchorLook([camera.position.x, camera.position.y, camera.position.z], lk, [player.x, player.y + 0.6, player.z], camera.fov, BOSS_HERO_Y[0], BOSS_HERO_Y[1]), w = Math.min(1, camBossK); lk = lk.map((v, i) => v + (a[i] - v) * w); }   // sjefkamp: figuren holdes over knappene og under varselstripen selv om veggen drar kameraet tett inn
+      camera.lookAt(lk[0], lk[1], lk[2]); } }
   }
   { const fp = viewFirst && mode === 'play', fov = fp ? 74 : viewMode === 'shoulder' ? fovSet + 8 : fovSet;
     for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
@@ -1882,6 +1897,7 @@ function render(now, dt) {
   if (dust) { dust.points.visible = dustOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
   if (atmos) atmos.update(now / 1000, { rays: raysOn, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
+  heroSeen(bossMesh && bossOn && !LEVEL.bossS.gone && camBossK > 0.05 && mode === 'play' && !viewFirst);
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   renderer.render(scene, camera);
