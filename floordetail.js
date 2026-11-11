@@ -24,18 +24,18 @@ export function makeFloorDetail({ scene, LEVEL, floorY, quality = 'high', densit
   const put = (geo, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = false; m.receiveShadow = true; m.userData.noDetail = true; group.add(m); return m; };
   const pick = (a, v) => a[Math.floor(v * a.length) % a.length];
   for (const s of spots) {
-    const cs = Math.cos(s.rot), sn = Math.sin(s.rot), y = s.y;
+    const cs = Math.cos(s.rot), sn = Math.sin(s.rot), y = s.y, k = s.ring ? 2.4 : 1;   // ring-tingene (foran start) er større, så de leses tydelig på mobil
     if (s.kind === 'stain') { const w = 1.2 + s.s * 2.2, m = put(G.flat, M.stain, s.x, y + 0.02, s.z, w, 1, w * (0.6 + s.a * 0.5)); m.rotation.y = s.rot; m.renderOrder = 1; }
     else if (s.kind === 'grout') { const m = put(G.flat, M.grout, s.x, y + 0.025, s.z, s.len, 1, 0.16 + s.a * 0.1); m.rotation.y = s.rot; m.renderOrder = 1; }
-    else if (s.kind === 'crumbs') { const k = 4 + Math.floor(s.a * 4); for (let i = 0; i < k; i++) { const a = i * 2.4 + s.h * 6, d = 0.08 + (i % 3) * 0.14 * s.s; const m = put(G.crumb, M.crumb, s.x + Math.cos(a) * d, y + 0.04, s.z + Math.sin(a) * d, 0.7 + (i % 2) * 0.6, 0.55, 0.9); m.rotation.y = a; } }
-    else if (s.kind === 'bead') { put(G.bead, pick(M.bead, s.c), s.x, y + 0.2 * s.s, s.z, s.s, s.s * 0.9, s.s); }
+    else if (s.kind === 'crumbs') { const nk = 4 + Math.floor(s.a * 4); for (let i = 0; i < nk; i++) { const a = i * 2.4 + s.h * 6, d = (0.08 + (i % 3) * 0.14 * s.s) * k; const m = put(G.crumb, M.crumb, s.x + Math.cos(a) * d, y + 0.04 * k, s.z + Math.sin(a) * d, (0.7 + (i % 2) * 0.6) * k, 0.55 * k, 0.9 * k); m.rotation.y = a; } }
+    else if (s.kind === 'bead') { put(G.bead, pick(M.bead, s.c), s.x, y + 0.2 * s.s * k, s.z, s.s * k, s.s * 0.9 * k, s.s * k); }
     else if (s.kind === 'pencil') {                                                  // blyantstumper: skaft, spiss med blyant
-      const L = 1.2 + s.a * 0.7, yy = y + 0.16, rot = (m) => { m.rotation.y = s.rot; return m; };
-      rot(put(G.body, pick(M.pencil, s.c), s.x, yy, s.z, L, 1, 1));
-      rot(put(G.tip, M.wood, s.x + cs * (L / 2 + 0.17), yy, s.z - sn * (L / 2 + 0.17)));
-      rot(put(G.lead, M.lead, s.x + cs * (L / 2 + 0.38), yy, s.z - sn * (L / 2 + 0.38)));
+      const L = (1.2 + s.a * 0.7) * k, yy = y + 0.16 * k, rot = (m) => { m.rotation.y = s.rot; return m; };
+      rot(put(G.body, pick(M.pencil, s.c), s.x, yy, s.z, L, k, k));
+      rot(put(G.tip, M.wood, s.x + cs * (L / 2 + 0.17 * k), yy, s.z - sn * (L / 2 + 0.17 * k), k, k, k));
+      rot(put(G.lead, M.lead, s.x + cs * (L / 2 + 0.38 * k), yy, s.z - sn * (L / 2 + 0.38 * k), k, k, k));
     }
-    else if (s.kind === 'eraser') { const m = put(G.eraser, M.eraser, s.x, y + 0.15, s.z, s.s, 1, s.s); m.rotation.y = s.rot; }
+    else if (s.kind === 'eraser') { const m = put(G.eraser, M.eraser, s.x, y + 0.15 * k, s.z, s.s * k, k, s.s * k); m.rotation.y = s.rot; }
   }
   return { group, count: spots.length, spots, update(on) { group.visible = on; } };
 }

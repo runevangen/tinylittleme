@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.12** – Gulv og overflater (R13): blyantstumper, viskelær, perler, smulehauger, flekker og fugeskitt gir målestokk (de tre-seks nærmest start er større og ligger foran figuren); badematta er grovere og uten relieffkart, så den ikke flimrer. ⚙ → Spill: «Gulvdetaljer».
 - **1.11** – Mindre teksturminne på svake telefoner: Lav profil (også Auto ved lav FPS, midt i spillet) og «Små teksturer» i ⚙ → Test halverer overflate-teksturene. Teksturer og geometrier per nivå logges i rapporten.
 - **1.10** – Levende leker i nivå 2, 3, 5 og 6: tennisball (dytt), bil (TA), vippehest (HOPP på den), wind-up-robot (TA, slipp) og sprettboks (TA) svarer med lyd, lydtekst og bevegelse. Kan slås av i ⚙ → Spill.
 - **1.09** – Byggeskjerm (BYGG-knappen vises ved et byggested): dra deler fra raden nederst opp i bildet, roter, angre, nullstill; snapping til rutenett og festepunkter. Ny test for inn/ut av byggemodus.

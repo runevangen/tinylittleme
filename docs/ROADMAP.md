@@ -27,11 +27,8 @@ Ferdig når: man kan bygge og teste en bro og en trapp i byggeskjermen på mobil
 Avhenger av R24 og R25. Når PRØV lykkes, **flyttes bygget ut i verdenen som solid** (AABB-/rampe-kollisjonsflater som vanlig geometri i `physics.js` via en liten hekt) slik at den ekte figuren kan gå/klatre på det; visuell nedbøyning kan fakes. Bygget **lagres** med autolagring og gjenopprettes ved «Fortsett». Lag minst to brett: (1) en **bro over et gap** (f.eks. mellom to hyller eller over vasken) og (2) en **trapp av klosser/bøker** opp til noe høyt; bruk gjerne tau/tape/vekt i minst ett av dem. **Valgt av spilleren: det skal alltid finnes en alternativ vei som ikke krever bygging, men den skal være vanskelig** (lang omvei, krevende hopp/klatring eller risiko fra maur); bygging er den smarte snarveien og belønner leting etter deler. `walk_route` må bevise at målet kan nås uten bygging, og et eget testskript må bevise at en kjent god bygging (lagret som referanse i scenen) også gir en gyldig rute og at en dårlig bygging ikke blokkerer den alternative veien. Bygg-delmålet («bygg broen») kobles til `goals` (R23) når det finnes.
 Ferdig når: begge brettene kan fullføres både ved å bygge og via den vanskelige veien, bygget overlever lagre/fortsett, `walk_route` og `npm test` er grønne, og en tester på iPhone kan bygge en bro og gå over den.
 
-### [ ] R13 · Gulv og overflater: moiré, tomme flater og skala
-I skjermbildene er gulvet i nivå 2 en stor, nesten tom trebit med lite å lese skala av, den mørke badematta i nivå 1 flimrer/pikselerer (moiré på ripestruktur), og kjøkkengulvet er en jevn beige flate. Fiks mipmap/anisotropi/relieff-frekvens på matta og andre høyfrekvente teksturer, og strø småting for målestokk (smuler, hår, knapper, mynter, blyantstumper, flekker, fuger med skitt) med tetthet satt etter rom og kvalitet. Dette gjelder også BACKLOG «Detaljert rom». Filer: `look.js`, `props.js`, `scenes/` (dekor uten kollisjon), `main.js` (teksturinnstillinger).
-Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hverandre), start-skjermbildene i nivå 2 og 6 viser minst tre ting som gir skala, og FPS-målingen ligger innenfor 1 fps av før.
-
 ## Ferdige punkter
+- [x] Gulv og overflater: gulvdetaljer for målestokk og matter uten moiré (R13, v1.12)
 - [x] Ytelse: tekstur- og minnebudsjett for iPhone 8-klassen (R21, v1.11)
 - [x] Små stemmer i rommet: levende leker (R18, v1.10)
 - [x] Byggeskjerm A: skallet, egen modus, sideriss og snapping (R24, v1.09)
