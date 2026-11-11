@@ -19,7 +19,7 @@ import { applyGrade } from './grade_apply.js';
 import { gradeTint } from './grade.js';
 import { buildHero, RIG_S } from './hero.js';
 import { recordRun, getEquipped, rt as rwT, accById } from './rewards.js';
-import { applyAccessories, updateAccessories, showCloset } from './rewards_view.js';
+import { applyAccessories, updateAccessories, showCloset, previewSVG } from './rewards_view.js';
 import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4–6 som egne rom (stemning, hjelmlykt, vri)
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
@@ -524,6 +524,7 @@ const flagV = buildFlag(scene, { low: gfxLow }), goalRing = buildGoalRing(scene,
 if (!gfxLow) look.detailize(scene);                                   // fint korn på alle flater i brettet (v0.76)
 const hero = buildHero(look);
 scene.add(hero.root);
+const heroArt = (pose) => (rewardsOn ? previewSVG(getEquipped(store, rewardsAll), pose) : heroSVG(pose));   // R16: figuren med valgt tilbehør også på introkort og målskjerm
 const refreshAccessories = () => applyAccessories(hero, rewardsOn ? getEquipped(store, rewardsAll) : {});   // R16: valgt tilbehør på figuren
 refreshAccessories();
 // rund skygge under figuren (som i Mario: viser hvor du lander) og landingsmarkør når du faller
@@ -1872,7 +1873,7 @@ function update(dt) {
       if (nextLevel) { nb.textContent = `${T('win.next')} →`; nb.onclick = () => goLevel(nextLevel.id); }
       else if (n && storyOn) { nb.textContent = `${T('win.ending')} →`; nb.onclick = showEnding; }
       $('again').textContent = T('win.again'); }
-    $('win').classList.remove('hide'); $('winHero').innerHTML = heroSVG(d.stars >= 2 ? 'cheer' : 'hi'); $('winConfetti').innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 7) * 0.12}s;background:${['#ffd9a0', '#e85d4a', '#9fe0c8', '#8fb4ff'][i % 4]}"></i>`).join(''); clearProgress();
+    $('win').classList.remove('hide'); $('winHero').innerHTML = heroArt(d.stars >= 2 ? 'cheer' : 'hi'); $('winConfetti').innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 7) * 0.12}s;background:${['#ffd9a0', '#e85d4a', '#9fe0c8', '#8fb4ff'][i % 4]}"></i>`).join(''); clearProgress();
   }
 }
 
@@ -2226,12 +2227,12 @@ addEventListener('resize', resize); resize();
 function showIntro() {
   const n = levelInfo?.n; if (!shouldShowIntro({ n, enabled: storyOn, resumed, seen: store.get(`tlm.storySeen.${levelId}`, false) })) return;
   menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; logEv('fortelling', `nivå ${n}`);
-  showCard($('story'), { art: heroSVG('hi'), title: T(`story.title.${n}`), text: T(`story.${n}`), btn: T('story.go'), skip: T('story.skip'), onDone: () => { menuOpen = false; store.set(`tlm.storySeen.${levelId}`, true); } });
+  showCard($('story'), { art: heroArt('hi'), title: T(`story.title.${n}`), text: T(`story.${n}`), btn: T('story.go'), skip: T('story.skip'), onDone: () => { menuOpen = false; store.set(`tlm.storySeen.${levelId}`, true); } });
 }
 function showEnding() {
   logEv('avslutning');
   const tt = totals(store.get('tlm.runs', {}));
-  showCard($('story'), { art: `<div class="sconf">${Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 7) * 0.12}s;background:${['#ffd9a0', '#e85d4a', '#9fe0c8', '#8fb4ff'][i % 4]}"></i>`).join('')}</div>` + heroSVG('cheer'), title: T('story.endTitle'), text: T('story.end'), extra: `<b class="stot">${T('story.endTotal')}</b>${endHTML(tt, T)}`, btn: T('story.endBtn'), onDone: () => { gameDone = true; clearAllProgress(); store.set('tlm.done', true); store.set('tlm.cleared', {}); store.set('tlm.level', 'bad'); $('win').classList.add('hide'); showStart(); } });
+  showCard($('story'), { art: `<div class="sconf">${Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 7) * 0.12}s;background:${['#ffd9a0', '#e85d4a', '#9fe0c8', '#8fb4ff'][i % 4]}"></i>`).join('')}</div>` + heroArt('cheer'), title: T('story.endTitle'), text: T('story.end'), extra: `<b class="stot">${T('story.endTotal')}</b>${endHTML(tt, T)}`, btn: T('story.endBtn'), onDone: () => { gameDone = true; clearAllProgress(); store.set('tlm.done', true); store.set('tlm.cleared', {}); store.set('tlm.level', 'bad'); $('win').classList.add('hide'); showStart(); } });
 }
 
 // ---------- startskjerm (v0.73): Nytt spill · Fortsett · Innstillinger · Avslutt ----------

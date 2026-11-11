@@ -53,9 +53,12 @@ export function recordRun(st, { levelId, n, crumbs, total, t, flew }) {
   const out = { unlocked: null, newBestTime: false, newBestCrumbs: false };
   if (flew || !levelId) return out;
   const b = getBest(st), old = b[levelId];
-  const cur = { crumbs: Math.max(old?.crumbs || 0, crumbs || 0), total: total || old?.total || 0, t: old?.t > 0 ? old.t : 0 };
-  out.newBestCrumbs = (crumbs || 0) > (old?.crumbs || 0);
-  if (t > 0 && (!(old?.t > 0) || t < old.t)) { out.newBestTime = !!(old?.t > 0); cur.t = Math.round(t * 10) / 10; }
+  // Beste tid gjelder bare løp med minst like mange smuler som rekorden, så «10/10 smuler, 0:20» aldri kommer fra to ulike løp.
+  const oc = old?.crumbs || 0, nc = crumbs || 0, tt = t > 0 ? Math.round(t * 10) / 10 : 0;
+  const cur = { crumbs: Math.max(oc, nc), total: total || old?.total || 0, t: old?.t > 0 ? old.t : 0 };
+  out.newBestCrumbs = nc > oc;
+  if (nc > oc) cur.t = tt;                                                              // flere smuler enn før: tiden følger det løpet
+  else if (nc === oc && tt > 0 && (!(old?.t > 0) || tt < old.t)) { out.newBestTime = !!(old?.t > 0); cur.t = tt; }
   b[levelId] = cur; st.set('tlm.best', b);
   const acc = total > 0 && crumbs >= total ? accForLevel(n) : null;
   if (acc && !getUnlocks(st).includes(acc.id)) {

@@ -16,9 +16,18 @@ let st = mem();
 let r = recordRun(st, { levelId: 'bad', n: 1, crumbs: 6, total: 10, t: 80 });
 assert.equal(r.unlocked, null); assert.deepEqual(getBest(st).bad, { crumbs: 6, total: 10, t: 80 });
 r = recordRun(st, { levelId: 'bad', n: 1, crumbs: 4, total: 10, t: 60 });
-assert.equal(getBest(st).bad.crumbs, 6); assert.equal(getBest(st).bad.t, 60); assert.ok(r.newBestTime && !r.newBestCrumbs);
+assert.equal(getBest(st).bad.crumbs, 6); assert.equal(getBest(st).bad.t, 80); assert.ok(!r.newBestTime && !r.newBestCrumbs, 'raskere men færre smuler er ikke rekord');
+r = recordRun(st, { levelId: 'bad', n: 1, crumbs: 6, total: 10, t: 60 });
+assert.equal(getBest(st).bad.t, 60); assert.ok(r.newBestTime && !r.newBestCrumbs, 'like mange smuler og raskere');
 r = recordRun(st, { levelId: 'bad', n: 1, crumbs: 5, total: 10, t: 90 });
 assert.equal(getBest(st).bad.t, 60, 'tregere tid overskriver ikke');
+
+// rask tur med få smuler overskriver ikke tiden til 10/10
+{ const s3 = mem(); recordRun(s3, { levelId: 'bad', n: 1, crumbs: 10, total: 10, t: 83 }); const r3 = recordRun(s3, { levelId: 'bad', n: 1, crumbs: 2, total: 10, t: 20 });
+  assert.deepEqual(getBest(s3).bad, { crumbs: 10, total: 10, t: 83 }); assert.equal(r3.newBestTime, false);
+  recordRun(s3, { levelId: 'bad', n: 1, crumbs: 10, total: 10, t: 70 }); assert.equal(getBest(s3).bad.t, 70);
+  const s4 = mem(); recordRun(s4, { levelId: 'bad', n: 1, crumbs: 2, total: 10, t: 20 }); recordRun(s4, { levelId: 'bad', n: 1, crumbs: 5, total: 10, t: 90 });
+  assert.deepEqual(getBest(s4).bad, { crumbs: 5, total: 10, t: 90 }, 'flere smuler: tiden følger det løpet'); }
 
 // flymodus teller ikke
 r = recordRun(st, { levelId: 'bad', n: 1, crumbs: 10, total: 10, t: 5, flew: true });
