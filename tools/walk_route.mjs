@@ -5,10 +5,10 @@
 import fs from 'node:fs';
 import { P, newPlayer, step, applyPreset, initBodies, inHazard } from '../physics.js';
 
-export function walkRoute(levelPath, { verbose = false, preset = 'mario' } = {}) {
+export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [] } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
   applyPreset(preset); Object.assign(P, { edgeGuard: true, autoJump: true, airSteady: true, magnet: true, holdGrab: true });
-  const L = JSON.parse(fs.readFileSync(levelPath, 'utf8')); initBodies(L);
-  const R = L.route || []; if (R.length < 2) return { ok: false, why: 'brettet har ingen rute' };
+  const L = level ? JSON.parse(JSON.stringify(level)) : JSON.parse(fs.readFileSync(levelPath, 'utf8')); initBodies(L); for (const b of extraBoxes) L.boxes.push(JSON.parse(JSON.stringify(b)));
+  const R = route || L.route || []; if (R.length < 2) return { ok: false, why: 'brettet har ingen rute' };
   const p = newPlayer(...L.start), idle = { mx: 0, mz: 0, jumpPressed: false, jumpHeld: false, grabPressed: false, grabHeld: false };
   let t = 0, fail = null; const log = [];
   const tick = (inp) => { step(p, { ...idle, ...inp }, 1 / 60, L); t++; if (inHazard(L, p)) fail = `fare: ${inHazard(L, p).id}`; else if (p.knockout) fail = 'for hardt fall'; else if (p.y < L.deathY) fail = 'falt ut'; };
@@ -56,7 +56,7 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario' } = {})
     const last = i === R.length - 1, there = () => on(B) || (last && p.onGround && Math.hypot(p.x - L.goal[0], p.z - L.goal[2]) < 2 && Math.abs(p.y - L.goal[1]) < 2.5);   // ved målet gjelder spillets egen regel
     while (!fail && !there() && t - t0 < 60 * 30) {
       if (!staged && (Math.hypot(a1[0] - p.x, a1[1] - p.z) < 0.25 || !(p.onGround && Math.abs(p.y - A.top) < 0.06) || Math.max(B.x0 - p.x, p.x - B.x1, B.z0 - p.z, p.z - B.z1) < 0.45)) staged = true;   // fremme ved kanten, falt av, eller står allerede inntil neste flate
-      const [tx, tz] = staged ? near(B) : a1, dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1, rise = B.top - p.y;
+      const inB = p.x > B.x0 && p.x < B.x1 && p.z > B.z0 && p.z < B.z1, [tx, tz] = staged ? (inB && p.onGround && Math.abs(p.y - B.top) > 0.06 && Math.abs(p.y - B.top) < 0.8 ? [(B.x0 + B.x1) / 2, (B.z0 + B.z1) / 2] : near(B)) : a1, dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1, rise = B.top - p.y;   // R26: står du på noe som stikker inn over flata (enden av en planke), gå mot midten av flata
       if (p.state === 'hang') { tick({ jumpPressed: t % 20 === 0 }); continue; }
       const spd = staged ? 1 : Math.min(1, 0.45 + d * 0.4);       // rolig mot kanten, full fart over
       if (p.state === 'mantle') { tick({}); continue; }

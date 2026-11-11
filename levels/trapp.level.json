@@ -1,0 +1,422 @@
+{
+ "name": "Klossetrappa",
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -50,
+    -2,
+    -20
+   ],
+   "max": [
+    50,
+    0,
+    20
+   ],
+   "id": "gulv",
+   "color": 14071946,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -51,
+    0,
+    -20
+   ],
+   "max": [
+    -50,
+    48,
+    20
+   ],
+   "id": "vegg_v",
+   "color": 14673642,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    50,
+    0,
+    -20
+   ],
+   "max": [
+    51,
+    48,
+    20
+   ],
+   "id": "vegg_o",
+   "color": 14673642,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -50,
+    0,
+    -21
+   ],
+   "max": [
+    50,
+    48,
+    -20
+   ],
+   "id": "vegg_n",
+   "color": 14673642,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -50,
+    0,
+    20
+   ],
+   "max": [
+    50,
+    48,
+    21
+   ],
+   "id": "vegg_s",
+   "color": 14673642,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    10,
+    0,
+    -12
+   ],
+   "max": [
+    34,
+    6,
+    8
+   ],
+   "id": "hylle",
+   "kind": "chest",
+   "color": 7114431,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    37,
+    0,
+    -10
+   ],
+   "max": [
+    44,
+    4.2,
+    6
+   ],
+   "id": "e1",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  }
+ ],
+ "movables": [],
+ "decor": [],
+ "hints": [],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    0,
+    26,
+    -19.95
+   ],
+   "size": [
+    24,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ants": [
+  {
+   "id": "maur_gulv",
+   "a": [
+    26,
+    0,
+    15
+   ],
+   "b": [
+    46,
+    0,
+    15
+   ]
+  }
+ ],
+ "collectibles": [],
+ "build": {
+  "sites": [
+   {
+    "id": "trapp1",
+    "label": "Foran hylla (trapp)",
+    "x": 5.75,
+    "y": 0,
+    "z": -2,
+    "w": 16,
+    "h": 10,
+    "anchors": [],
+    "deck": [
+     {
+      "u0": -14,
+      "u1": 4.25
+     },
+     {
+      "u0": 4.25,
+      "u1": 10,
+      "top": 6
+     }
+    ],
+    "goal": {
+     "u": 6,
+     "v": 6
+    },
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "k1",
+       "type": "block",
+       "u": 0,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k2",
+       "type": "block",
+       "u": 1.5,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k3",
+       "type": "block",
+       "u": 1.5,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k4",
+       "type": "block",
+       "u": 3,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k5",
+       "type": "block",
+       "u": 3,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k6",
+       "type": "block",
+       "u": 3,
+       "v": 3.75,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@t1",
+       "u0": -0.75,
+       "u1": 0.75,
+       "top": 1.5
+      },
+      {
+       "id": "@t2",
+       "u0": 0.75,
+       "u1": 2.25,
+       "top": 3
+      },
+      {
+       "id": "@t3",
+       "u0": 2.25,
+       "u1": 3.75,
+       "top": 4.5
+      }
+     ],
+     "route": [
+      "gulv",
+      "@t1",
+      "@t2",
+      "@t3",
+      "hylle"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "k1",
+    "type": "block",
+    "x": -30,
+    "y": 0.9,
+    "z": -12
+   },
+   {
+    "id": "k2",
+    "type": "block",
+    "x": -22,
+    "y": 0.9,
+    "z": 12
+   },
+   {
+    "id": "k3",
+    "type": "block",
+    "x": -14,
+    "y": 0.9,
+    "z": -12
+   },
+   {
+    "id": "k4",
+    "type": "block",
+    "x": -6,
+    "y": 0.9,
+    "z": 14
+   },
+   {
+    "id": "k5",
+    "type": "block",
+    "x": -30,
+    "y": 0.9,
+    "z": 12
+   },
+   {
+    "id": "k6",
+    "type": "block",
+    "x": -38,
+    "y": 0.9,
+    "z": -12
+   },
+   {
+    "id": "k7",
+    "type": "plank_l",
+    "x": -10,
+    "y": 0.9,
+    "z": -14
+   },
+   {
+    "id": "k8",
+    "type": "weight",
+    "x": -20,
+    "y": 0.9,
+    "z": -14
+   }
+  ]
+ },
+ "goals": [
+  {
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg en trapp av klosser (BYGG-knappen)",
+   "en": "Build a block staircase (BUILD button)",
+   "flag": "trapp1"
+  },
+  {
+   "id": "flagg",
+   "type": "reach",
+   "label": "Kom opp på hylla",
+   "en": "Get up on the shelf",
+   "gate": true,
+   "on": "hylle",
+   "x0": 10,
+   "x1": 34,
+   "z0": -12,
+   "z1": 8,
+   "top": 6
+  }
+ ],
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -50,
+   "x1": 50,
+   "z0": -20,
+   "z1": 20,
+   "top": 0
+  },
+  {
+   "id": "e1",
+   "x0": 37,
+   "x1": 44,
+   "z0": -10,
+   "z1": 6,
+   "top": 4.2
+  },
+  {
+   "id": "hylle",
+   "x0": 10,
+   "x1": 34,
+   "z0": -12,
+   "z1": 8,
+   "top": 6
+  }
+ ],
+ "start": [
+  -42,
+  0,
+  14
+ ],
+ "goal": [
+  23,
+  6,
+  -2
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -50,
+  "x1": 50,
+  "z0": -20,
+  "z1": 20,
+  "height": 48,
+  "floor": {
+   "material": "wood",
+   "color": "#d6b88a",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#dfe6ea"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "note": "Byggebrett (R26): en høy hylle (30 cm). Den smarte veien er en trapp av klosser; den harde veien er et 21 cm hopp opp bak hylla og et gaphopp."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 3,
+  "reachable": 3
+ }
+}

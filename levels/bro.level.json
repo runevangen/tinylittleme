@@ -1,0 +1,530 @@
+{
+ "name": "Hyllebroen",
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -52,
+    -2,
+    -20
+   ],
+   "max": [
+    52,
+    0,
+    20
+   ],
+   "id": "gulv",
+   "color": 14267266,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -53,
+    0,
+    -20
+   ],
+   "max": [
+    -52,
+    48,
+    20
+   ],
+   "id": "vegg_v",
+   "color": 15129803,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    52,
+    0,
+    -20
+   ],
+   "max": [
+    53,
+    48,
+    20
+   ],
+   "id": "vegg_o",
+   "color": 15129803,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -52,
+    0,
+    -21
+   ],
+   "max": [
+    52,
+    48,
+    -20
+   ],
+   "id": "vegg_n",
+   "color": 15129803,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -52,
+    0,
+    20
+   ],
+   "max": [
+    52,
+    48,
+    21
+   ],
+   "id": "vegg_s",
+   "color": 15129803,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    -40,
+    0,
+    -12
+   ],
+   "max": [
+    -32,
+    2,
+    4
+   ],
+   "id": "a1",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -32,
+    0,
+    -12
+   ],
+   "max": [
+    -24,
+    4,
+    4
+   ],
+   "id": "a2",
+   "kind": "chest",
+   "color": 15906891,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -24,
+    0,
+    -12
+   ],
+   "max": [
+    -16,
+    6,
+    4
+   ],
+   "id": "a3",
+   "kind": "chest",
+   "color": 8499866,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -16,
+    0,
+    -12
+   ],
+   "max": [
+    0,
+    8,
+    4
+   ],
+   "id": "hylleA",
+   "kind": "chest",
+   "color": 7114431,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    7,
+    0,
+    -12
+   ],
+   "max": [
+    17,
+    8,
+    4
+   ],
+   "id": "hylleB",
+   "kind": "chest",
+   "color": 7114431,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    17,
+    0,
+    -12
+   ],
+   "max": [
+    25,
+    10.4,
+    4
+   ],
+   "id": "s1",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    25,
+    0,
+    -12
+   ],
+   "max": [
+    33,
+    12.8,
+    4
+   ],
+   "id": "s2",
+   "kind": "chest",
+   "color": 15906891,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    34,
+    0,
+    -8
+   ],
+   "max": [
+    39.6,
+    9.4,
+    0
+   ],
+   "id": "c3",
+   "kind": "chest",
+   "color": 11887990,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    40.6,
+    0,
+    -8
+   ],
+   "max": [
+    46,
+    6.2,
+    0
+   ],
+   "id": "c2",
+   "kind": "chest",
+   "color": 8499866,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    47,
+    0,
+    -8
+   ],
+   "max": [
+    52,
+    3,
+    0
+   ],
+   "id": "c1",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  }
+ ],
+ "movables": [],
+ "decor": [],
+ "hints": [],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    0,
+    26,
+    -19.95
+   ],
+   "size": [
+    24,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ants": [
+  {
+   "id": "maur_gulv",
+   "a": [
+    -2,
+    0,
+    12
+   ],
+   "b": [
+    20,
+    0,
+    12
+   ]
+  }
+ ],
+ "collectibles": [],
+ "build": {
+  "sites": [
+   {
+    "id": "bro1",
+    "label": "Gapet mellom hyllene",
+    "x": 3.5,
+    "y": 8,
+    "z": -4,
+    "w": 13,
+    "h": 10,
+    "anchors": [
+     {
+      "u": -3.5,
+      "v": 0
+     },
+     {
+      "u": 3.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.5
+     },
+     {
+      "u0": 3.5,
+      "u1": 9.5
+     }
+    ],
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "d2",
+       "type": "plank_l",
+       "u": 0,
+       "v": 0.25,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
+      }
+     ],
+     "route": [
+      "gulv",
+      "a1",
+      "a2",
+      "a3",
+      "hylleA",
+      "@bro",
+      "hylleB",
+      "s1",
+      "s2"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "d1",
+    "type": "plank_s",
+    "x": -36,
+    "y": 2.9,
+    "z": -4
+   },
+   {
+    "id": "d2",
+    "type": "plank_l",
+    "x": 8,
+    "y": 0.9,
+    "z": 14
+   },
+   {
+    "id": "d3",
+    "type": "block",
+    "x": -28,
+    "y": 0.9,
+    "z": 16
+   },
+   {
+    "id": "d4",
+    "type": "weight",
+    "x": -12,
+    "y": 0.9,
+    "z": 16
+   },
+   {
+    "id": "d5",
+    "type": "plank_l",
+    "x": -8,
+    "y": 8.9,
+    "z": -4
+   }
+  ]
+ },
+ "goals": [
+  {
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg en bro over gapet (BYGG-knappen)",
+   "en": "Build a bridge over the gap (BUILD button)",
+   "flag": "bro1"
+  },
+  {
+   "id": "flagg",
+   "type": "reach",
+   "label": "Nå flagget øverst",
+   "en": "Reach the flag on top",
+   "gate": true,
+   "on": "s2",
+   "x0": 25,
+   "x1": 33,
+   "z0": -12,
+   "z1": 4,
+   "top": 12.8
+  }
+ ],
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -52,
+   "x1": 52,
+   "z0": -20,
+   "z1": 20,
+   "top": 0
+  },
+  {
+   "id": "c1",
+   "x0": 47,
+   "x1": 52,
+   "z0": -8,
+   "z1": 0,
+   "top": 3
+  },
+  {
+   "id": "c2",
+   "x0": 40.6,
+   "x1": 46,
+   "z0": -8,
+   "z1": 0,
+   "top": 6.2
+  },
+  {
+   "id": "c3",
+   "x0": 34,
+   "x1": 39.6,
+   "z0": -8,
+   "z1": 0,
+   "top": 9.4
+  },
+  {
+   "id": "s2",
+   "x0": 25,
+   "x1": 33,
+   "z0": -12,
+   "z1": 4,
+   "top": 12.8
+  }
+ ],
+ "start": [
+  -44,
+  0,
+  12
+ ],
+ "goal": [
+  29,
+  12.8,
+  -4
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -52,
+  "x1": 52,
+  "z0": -20,
+  "z1": 20,
+  "height": 48,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b382",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#e6dccb"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "note": "Byggebrett (R26): en bro over et gap mellom to hyller. Den smarte veien er å bygge broen; den harde veien er langt rundt og opp den smale trappa til høyre."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 11,
+  "reachable": 11
+ }
+}

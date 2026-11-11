@@ -13,7 +13,7 @@ globalThis.window = globalThis; globalThis.innerWidth = 390; globalThis.innerHei
 globalThis.addEventListener = (t, f) => { if (t === 'keydown') keys.push(f); }; globalThis.removeEventListener = () => {};
 globalThis.requestAnimationFrame = () => 0; globalThis.cancelAnimationFrame = () => {};
 const { createBuildMode } = await import('./build.js');
-const L = { build: { sites: [{ id: 's', x: 0, y: 2, z: 0, w: 11, h: 8, anchors: [{ u: -1.5, v: 0 }, { u: 1.5, v: 0 }] }], parts: [{ id: 'a', type: 'plank_s', x: 10, y: 1, z: 0 }, { id: 'b', type: 'plank_l', x: 30, y: 1, z: 0 }] } };
+const L = { boxes: [], build: { sites: [{ id: 's', x: 0, y: 2, z: 0, w: 11, h: 8, anchors: [{ u: -1.5, v: 0 }, { u: 1.5, v: 0 }] }], parts: [{ id: 'a', type: 'plank_s', x: 10, y: 1, z: 0 }, { id: 'b', type: 'plank_l', x: 30, y: 1, z: 0 }] } };
 const player = { x: 0, y: 2, z: 0, onGround: true, state: 'ground' }; const log = []; let play = true;
 const bm = createBuildMode({ scene: { add() {}, remove() {} }, LEVEL: L, player, $: () => mkEl(), T: (k) => k, logEv: (t, d) => log.push([t, d]), toast() {}, TOUCH: true, buzz() {}, audio: {}, isPlay: () => play, isMenu: () => false, isBoss: () => false, isWon: () => false, isOv: () => false, getSnap: () => true, setSnap() {}, allParts: () => false, onChange() {} });
 assert.ok(bm.enabled, 'bygg er på');
@@ -26,4 +26,14 @@ assert.ok(log.some(([t, d]) => t === 'bygg' && /^inn/.test(d)) && log.some(([t, 
 play = false; bm.update(0.016, false); assert.ok(!bm.open(), 'ikke inn utenfor spill'); play = true;
 bm.update(0.016, true); const key = (code) => ({ code, preventDefault() {}, stopImmediatePropagation() {}, repeat: false }); for (const f of keys) f(key('KeyB'));
 assert.ok(bm.active, 'B åpner på tastatur'); for (const f of keys) f(key('Escape')); assert.ok(!bm.active && !body.classList.contains('building'), 'Escape lukker');
+// R26: bygget står i verden etter «Fortsett», overlever å åpne og lukke uendret, og fjernes ved «Start på nytt»
+{
+  const saved = { got: ['a', 'b'], solved: ['s'], sites: { s: { have: ['a', 'b'], placed: [{ id: 'b', u: 0, v: 0.25, rot: 0 }], links: [] } } };
+  assert.equal(bm.inWorld('s'), false); bm.load(saved);
+  assert.ok(bm.inWorld('s') && L.boxes.some((b) => b.built === 's'), 'bygget gjenopprettes i verden ved fortsett'); assert.equal(bm.worldCount('s'), 1);
+  assert.ok(bm.isSolved('s')); bm.update(0.016, true); assert.ok(bm.open()); bm.close('test'); assert.ok(bm.inWorld('s'), 'uendret bygg blir stående etter å ha åpnet og lukket');
+  assert.deepEqual(JSON.parse(JSON.stringify(bm.save())).solved, ['s']); assert.equal(JSON.parse(JSON.stringify(bm.save())).sites.s.placed.length, 1, 'lagres med autolagringen');
+  assert.ok(log.some(([t, d]) => t === 'bygg' && /står i verdenen/.test(d)), 'logges');
+  bm.resetAll(); assert.ok(!bm.inWorld('s') && !L.boxes.some((b) => b.built), 'start på nytt fjerner bygget fra verden');
+}
 console.log('bygg-DOM-tester grønne');

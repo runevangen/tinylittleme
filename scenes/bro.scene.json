@@ -1,0 +1,354 @@
+{
+ "name": "Hyllebroen",
+ "units": "cm",
+ "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
+ "validate": true,
+ "source": {
+  "note": "Byggebrett (R26): en bro over et gap mellom to hyller. Den smarte veien er å bygge broen; den harde veien er langt rundt og opp den smale trappa til høyre."
+ },
+ "room": {
+  "width": 520,
+  "depth": 200,
+  "height": 240,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b382",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#e6dccb"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "start": {
+  "x": 40,
+  "z": 160
+ },
+ "goal": {
+  "x": 405,
+  "y": 64,
+  "z": 80,
+  "on": "s2",
+  "note": "Flagget står øverst på s2."
+ },
+ "windows": [
+  {
+   "wall": "N",
+   "z": 260,
+   "y": 130,
+   "w": 120,
+   "h": 70
+  }
+ ],
+ "hazards": [],
+ "objects": [
+  {
+   "id": "a1",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#e07a5f",
+   "box": [
+    60,
+    100,
+    0,
+    10,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "a2",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#f2b84b",
+   "box": [
+    100,
+    140,
+    0,
+    20,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "a3",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#81b29a",
+   "box": [
+    140,
+    180,
+    0,
+    30,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "hylleA",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#6c8ebf",
+   "box": [
+    180,
+    260,
+    0,
+    40,
+    40,
+    120
+   ],
+   "confidence": 1,
+   "cp": true
+  },
+  {
+   "id": "hylleB",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#6c8ebf",
+   "box": [
+    295,
+    345,
+    0,
+    40,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "s1",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#e07a5f",
+   "box": [
+    345,
+    385,
+    0,
+    52,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "s2",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#f2b84b",
+   "box": [
+    385,
+    425,
+    0,
+    64,
+    40,
+    120
+   ],
+   "confidence": 1,
+   "cp": true
+  },
+  {
+   "id": "c3",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#b56576",
+   "box": [
+    430,
+    458,
+    0,
+    47,
+    60,
+    100
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "c2",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#81b29a",
+   "box": [
+    463,
+    490,
+    0,
+    31,
+    60,
+    100
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "c1",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#e07a5f",
+   "box": [
+    495,
+    520,
+    0,
+    15,
+    60,
+    100
+   ],
+   "confidence": 1
+  }
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ants": [
+  {
+   "id": "maur_gulv",
+   "on": "gulv",
+   "from": [
+    250,
+    160
+   ],
+   "to": [
+    360,
+    160
+   ]
+  }
+ ],
+ "goals": [
+  {
+   "id": "bygg",
+   "type": "flag",
+   "flag": "bro1",
+   "label": "Bygg en bro over gapet (BYGG-knappen)",
+   "en": "Build a bridge over the gap (BUILD button)"
+  },
+  {
+   "id": "flagg",
+   "type": "reach",
+   "on": "s2",
+   "label": "Nå flagget øverst",
+   "en": "Reach the flag on top",
+   "gate": true
+  }
+ ],
+ "build": {
+  "sites": [
+   {
+    "id": "bro1",
+    "label": "Gapet mellom hyllene",
+    "at": [
+     277.5,
+     80
+    ],
+    "y": 40,
+    "w": 65,
+    "h": 50,
+    "d": 20,
+    "anchors": [
+     [
+      -17.5,
+      0
+     ],
+     [
+      17.5,
+      0
+     ]
+    ],
+    "deck": [
+     [
+      -47.5,
+      -17.5
+     ],
+     [
+      17.5,
+      47.5
+     ]
+    ],
+    "ref": {
+     "placed": [
+      {
+       "id": "d2",
+       "type": "plank_l",
+       "u": 0,
+       "v": 0.25,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
+      }
+     ],
+     "route": [
+      "gulv",
+      "a1",
+      "a2",
+      "a3",
+      "hylleA",
+      "@bro",
+      "hylleB",
+      "s1",
+      "s2"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "d1",
+    "type": "plank_s",
+    "on": "a1",
+    "at": [
+     80,
+     80
+    ]
+   },
+   {
+    "id": "d2",
+    "type": "plank_l",
+    "on": "gulv",
+    "at": [
+     300,
+     170
+    ]
+   },
+   {
+    "id": "d3",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     120,
+     180
+    ]
+   },
+   {
+    "id": "d4",
+    "type": "weight",
+    "on": "gulv",
+    "at": [
+     200,
+     180
+    ]
+   },
+   {
+    "id": "d5",
+    "type": "plank_l",
+    "on": "hylleA",
+    "at": [
+     220,
+     80
+    ]
+   }
+  ]
+ }
+}

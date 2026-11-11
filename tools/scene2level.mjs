@@ -347,7 +347,11 @@ const goals = (scene.goals || []).map((g) => {
 const build = scene.build ? {
   sites: (scene.build.sites || []).map((s) => ({ id: s.id, ...(s.label ? { label: s.label } : {}), x: ux(s.at[0]), y: uy(s.y), z: uz(s.at[1]), w: round(s.w / U), h: round(s.h / U),
     ...(s.anchors ? { anchors: s.anchors.map((a) => ({ u: round(a[0] / U), v: round(a[1] / U) })) } : {}),   // festepunkter [u, v] cm fra midten og opp fra flata
-    ...(s.deck ? { deck: s.deck.map((d) => ({ u0: round(d[0] / U), u1: round(d[1] / U) })) } : {}) })),   // underlag (hyller/kanter) [u0, u1] cm fra midten
+    ...(s.deck ? { deck: s.deck.map((d) => ({ u0: round(d[0] / U), u1: round(d[1] / U), ...(d[2] !== undefined ? { top: round(d[2] / U) } : {}) })) } : {}),   // underlag (hyller/kanter) [u0, u1, top?] cm fra midten
+    ...(s.start ? { start: { u: round(s.start[0] / U), v: round(s.start[1] / U) } } : {}), ...(s.goal ? { goal: { u: round(s.goal[0] / U), v: round(s.goal[1] / U) } } : {}),   // R26: figurens start og mål i prøven [u, v] cm
+    ...(s.d ? { d: round(s.d / U) } : {}),                                  // R26: dybden på bygget i verden (cm)
+    // R26: referansebygg (kjent god bygging) og ruta gjennom det: ref = { placed: [{id,type,u,v,rot}] (enheter, som lagret), links: [], surfaces: [{id,u0,u1,top}] (enheter), route: [id i ruta eller i surfaces] }
+    ...(s.ref ? { ref: s.ref } : {}) })),
   parts: (scene.build.parts || []).map((q) => {
     const on = q.on && q.on !== 'gulv' ? scene.objects.find((o) => o.id === q.on) : null;
     if (q.on && q.on !== 'gulv' && !on) throw new Error(`byggedel ${q.id}: fant ikke flaten ${q.on}`);

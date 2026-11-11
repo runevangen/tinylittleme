@@ -6,7 +6,8 @@ import {
   PART_TYPES, partType, createBuild, inTray, addPart, place, rotate, remove, undo, reset, topHit, raise, corners, serialize, restore,
   addLink, removeLink, topLink, linkEnds, LINK_KINDS, twistRot, fitView, clampScale, toScreen, toWorld, canEnterBuild, nearestSite, initParts, partTypes, gotPartIds, stepParts, restoreParts, snapPoint, siteAnchors, ROT_STEP,
 } from './build_logic.js';
-import { createSim, DT, siteBoxes, siteGoal, siteStart, FIG_R } from './build_phys.js';
+import { createSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
+import { applyBuilt, clearBuilt, liftOut, builtCount } from './build_world.js';   // R26: bygget flyttes ut i verdenen
 
 const css = `
 #bld{position:fixed;inset:0;z-index:7;display:none;background:linear-gradient(#26324bfa,#141a2cff);touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font:600 14px system-ui}
@@ -21,7 +22,7 @@ body.building #panel{z-index:10}
 #bld button.go{background:#2a7f62;border-color:#3df0b0;color:#fff}
 #bld button.on{background:#7a4a14}
 #bld button[disabled]{opacity:.4}
-#bld .tray{position:absolute;left:0;right:0;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px);height:70px;display:flex;gap:10px;align-items:center;justify-content:center;padding:6px 10px;background:#0b1020aa;border-top:2px solid #ffa94066;border-bottom:2px solid #ffa94066;overflow-x:auto;touch-action:pan-x}
+#bld .tray{position:absolute;left:0;right:0;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px);height:70px;display:flex;gap:10px;align-items:center;padding:6px 10px;background:#0b1020aa;border-top:2px solid #ffa94066;border-bottom:2px solid #ffa94066;overflow-x:auto;touch-action:pan-x}
 #bld .chip{flex:0 0 auto;height:54px;min-width:70px;border:2px solid #fff6;border-radius:10px;background:#1d2433;display:flex;align-items:center;justify-content:center;touch-action:none;position:relative}
 #bld .chip i{display:block;border-radius:3px;border:2px solid #0006}
 #bld .chip.used{opacity:.3}
@@ -29,13 +30,14 @@ body.building #panel{z-index:10}
 #bld .tools{position:absolute;left:0;right:0;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px + 92px);display:flex;gap:6px;justify-content:center;padding:0 8px;pointer-events:none}
 #bld .tools button{height:42px;flex:0 1 96px;font-size:13px}
 #bld .tools button.on{background:#7a4a14;border-color:#fff}
+#bld .tray>:first-child{margin-left:auto}#bld .tray>:last-child{margin-right:auto}   /* R26: midtstilt, men venstre kant kan rulles til når det er mange deler */
 #bld.sim .tray,#bld.sim .tools{display:none}
 #bld.sim button[data-a="undo"],#bld.sim button[data-a="reset"],#bld.sim button[data-a="rotl"],#bld.sim button[data-a="rotr"],#bld.sim button[data-a="snap"],#bld.sim button[data-a="del"]{opacity:.25;pointer-events:none}
-#btnBuild{position:fixed;left:50%;transform:translateX(-50%);top:calc(max(8px,env(safe-area-inset-top)) + 64px);z-index:4;height:50px;padding:0 22px;border-radius:25px;border:2px solid #3df0b0;background:#2a7f62dd;color:#fff;font:800 16px system-ui;display:none;touch-action:manipulation}
+#btnBuild{position:fixed;right:12px;top:calc(max(8px,env(safe-area-inset-top)) + 112px);z-index:4;height:50px;padding:0 22px;border-radius:25px;border:2px solid #3df0b0;background:#2a7f62dd;color:#fff;font:800 16px system-ui;display:none;touch-action:manipulation}
 @media (orientation:landscape) and (max-height:520px){#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1 }) {
+export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -48,6 +50,27 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [];   // R25: PRØV
   const solved = new Set();
+  const committed = new Map();               // R26: stedets id -> bygget (som tekst) som står i verdenen akkurat nå
+  const worldPlaced = new Map();             // stedets id -> delene slik de ligger etter at de har satt seg
+  const worldMeshes = new Map();             // stedets id -> three-gruppe med de ferdige delene
+  const sigOf = (B) => JSON.stringify(serialize(B).placed);
+  function showWorld(site) {                 // tegn bygget i verdenen (nedbøyning er bare faket: delene står i designposen)
+    hideWorld(site.id); const g = new THREE.Group(), hd = (site.d ?? 4);
+    for (const p of worldPlaced.get(site.id) || []) {
+      const t = partType(p.type), m = new THREE.Mesh(new THREE.BoxGeometry(t.w, t.h, hd), new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.65, metalness: p.type === 'weight' ? 0.5 : 0 }));
+      m.position.set(site.x + p.u, site.y + p.v, site.z); m.rotation.z = p.rot || 0; g.add(m);
+    }
+    scene.add(g); worldMeshes.set(site.id, g);
+  }
+  function hideWorld(id) { const g = worldMeshes.get(id); if (g) { scene.remove(g); g.traverse?.((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); }); worldMeshes.delete(id); } }
+  function commitWorld(site, why) {          // R26: flytt bygget ut i verdenen som solid
+    if (!getWorld() || !LEVEL.boxes) return 0; const B = getB(site);
+    const wp = settledPlaced({ site, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() }); worldPlaced.set(site.id, wp);   // delene der de ender opp (klosser har falt på plass)
+    const n = applyBuilt(LEVEL, site, wp);
+    committed.set(site.id, sigOf(B)); if (liftOut(LEVEL, player, site.id)) logEv('bygg', 'figuren løftet ut av bygget'); showWorld(site);
+    logEv('bygg', `bygget står i verdenen (${why}): ${site.id}, ${B.placed.length} deler, ${n} flater`); return n;
+  }
+  function uncommitWorld(site, why) { if (!committed.has(site.id)) return; clearBuilt(LEVEL, site.id); hideWorld(site.id); committed.delete(site.id); worldPlaced.delete(site.id); logEv('bygg', `bygget fjernet fra verden (${why}): ${site.id}`); }
   const ptrs = new Map(); let gest = null;
 
   // ---- verden: deler som ligger og lyser, og byggestedet som en gylden ramme ----
@@ -294,7 +317,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
         else if (e.type === 'creak') audio?.bcreak?.(e.stress);
         else if (e.type === 'hop') audio?.bhop?.();
         else if (e.type === 'splash') audio?.bsplash?.();
-        else if (e.type === 'win') { audio?.win?.(); buzz?.([30, 40, 30]); solved.add(active.id); for (let i = 0; i < 46; i++) confetti.push({ u: e.u + (i % 9 - 4) * 0.3, v: e.v + 1 + (i % 5) * 0.2, vx: ((i * 37) % 13 - 6) * 0.4, vy: 5 + (i * 17) % 7, c: ['#ffd23f', '#3df0b0', '#ff6a5a', '#6ab8ff'][i % 4] }); }
+        else if (e.type === 'win') { audio?.win?.(); buzz?.([30, 40, 30]); solved.add(active.id); commitWorld(active, 'prøve klarte det'); onSolved(active.id); for (let i = 0; i < 46; i++) confetti.push({ u: e.u + (i % 9 - 4) * 0.3, v: e.v + 1 + (i % 5) * 0.2, vx: ((i * 37) % 13 - 6) * 0.4, vy: 5 + (i * 17) % 7, c: ['#ffd23f', '#3df0b0', '#ff6a5a', '#6ab8ff'][i % 4] }); }
       }
       if (sim.state.state !== 'run') { simDone = true; logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(T(sim.state.state === 'won' ? 'build.won' : simMarks.length ? 'build.lostBreak' : sim.state.reason === 'fell' ? 'build.lostFell' : 'build.lostStuck')); onChange?.(); }
     }
@@ -320,6 +343,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   function close(why) {
     if (!active) return; const B = getB(active);
     logEv('bygg', `ut (${why}): ${B.placed.length}/${B.have.length} plassert`);
+    if (committed.has(active.id) && committed.get(active.id) !== sigOf(B)) { uncommitWorld(active, 'endret uten ny prøve'); solved.delete(active.id); }   // R26: et endret bygg må prøves på nytt før det står i verden
     sim = null; root.classList.remove('sim'); tool = null; linkFrom = null;
     active = null; drag = null; gest = null; ptrs.clear(); document.body.classList.remove('building'); onChange?.();
   }
@@ -347,9 +371,11 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     load(data) {
       if (!enabled || !data) return; restoreParts(LEVEL, data.got); solved.clear(); for (const id of Array.isArray(data.solved) ? data.solved : []) solved.add(id);
       for (const s of sites) { const d = data.sites?.[s.id]; if (!d) continue; const b = getB(s); restore(b, { have: d.have, placed: d.placed, links: d.links }); for (const id of data.got || []) addPart(b, id); }
+      for (const s of sites) if (solved.has(s.id) && getB(s).placed.length) commitWorld(s, 'fortsett');   // R26: bygget gjenopprettes i verdenen
     },
-    resetAll() { for (const q of parts) q.got = false; builds.clear(); solved.clear(); sim = null; },
-    isSolved: (id) => solved.has(id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length } : null; },
+    resetAll() { for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); sim = null; },
+    screenPos: (u, v) => (active && view ? toScreen(view, W, H, u, v) : null),   // til tester på mobil (Playwright)
+    isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'),
     state: () => ({ active: active?.id || null, builds: [...builds].map(([k, b]) => ({ id: k, have: b.have.length, placed: b.placed.length })) }),
   };

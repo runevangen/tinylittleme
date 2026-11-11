@@ -1,0 +1,299 @@
+{
+ "name": "Klossetrappa",
+ "units": "cm",
+ "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
+ "validate": true,
+ "source": {
+  "note": "Byggebrett (R26): en høy hylle (30 cm). Den smarte veien er en trapp av klosser; den harde veien er et 21 cm hopp opp bak hylla og et gaphopp."
+ },
+ "room": {
+  "width": 500,
+  "depth": 200,
+  "height": 240,
+  "floor": {
+   "material": "wood",
+   "color": "#d6b88a",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#dfe6ea"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "start": {
+  "x": 40,
+  "z": 170
+ },
+ "goal": {
+  "x": 365,
+  "y": 30,
+  "z": 90,
+  "on": "hylle",
+  "note": "Flagget står på hylla."
+ },
+ "windows": [
+  {
+   "wall": "N",
+   "z": 250,
+   "y": 130,
+   "w": 120,
+   "h": 70
+  }
+ ],
+ "hazards": [],
+ "objects": [
+  {
+   "id": "hylle",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#6c8ebf",
+   "box": [
+    300,
+    420,
+    0,
+    30,
+    40,
+    140
+   ],
+   "confidence": 1,
+   "cp": true
+  },
+  {
+   "id": "e1",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#e07a5f",
+   "box": [
+    435,
+    470,
+    0,
+    21,
+    50,
+    130
+   ],
+   "confidence": 1
+  }
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ants": [
+  {
+   "id": "maur_gulv",
+   "on": "gulv",
+   "from": [
+    380,
+    175
+   ],
+   "to": [
+    480,
+    175
+   ]
+  }
+ ],
+ "goals": [
+  {
+   "id": "bygg",
+   "type": "flag",
+   "flag": "trapp1",
+   "label": "Bygg en trapp av klosser (BYGG-knappen)",
+   "en": "Build a block staircase (BUILD button)"
+  },
+  {
+   "id": "flagg",
+   "type": "reach",
+   "on": "hylle",
+   "label": "Kom opp på hylla",
+   "en": "Get up on the shelf",
+   "gate": true
+  }
+ ],
+ "build": {
+  "sites": [
+   {
+    "id": "trapp1",
+    "label": "Foran hylla (trapp)",
+    "at": [
+     278.75,
+     90
+    ],
+    "y": 0,
+    "w": 80,
+    "h": 50,
+    "d": 20,
+    "anchors": [],
+    "deck": [
+     [
+      -70,
+      21.25
+     ],
+     [
+      21.25,
+      50,
+      30
+     ]
+    ],
+    "goal": [
+     30,
+     30
+    ],
+    "ref": {
+     "placed": [
+      {
+       "id": "k1",
+       "type": "block",
+       "u": 0,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k2",
+       "type": "block",
+       "u": 1.5,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k3",
+       "type": "block",
+       "u": 1.5,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k4",
+       "type": "block",
+       "u": 3,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k5",
+       "type": "block",
+       "u": 3,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k6",
+       "type": "block",
+       "u": 3,
+       "v": 3.75,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@t1",
+       "u0": -0.75,
+       "u1": 0.75,
+       "top": 1.5
+      },
+      {
+       "id": "@t2",
+       "u0": 0.75,
+       "u1": 2.25,
+       "top": 3
+      },
+      {
+       "id": "@t3",
+       "u0": 2.25,
+       "u1": 3.75,
+       "top": 4.5
+      }
+     ],
+     "route": [
+      "gulv",
+      "@t1",
+      "@t2",
+      "@t3",
+      "hylle"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "k1",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     100,
+     40
+    ]
+   },
+   {
+    "id": "k2",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     140,
+     160
+    ]
+   },
+   {
+    "id": "k3",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     180,
+     40
+    ]
+   },
+   {
+    "id": "k4",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     220,
+     170
+    ]
+   },
+   {
+    "id": "k5",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     100,
+     160
+    ]
+   },
+   {
+    "id": "k6",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     60,
+     40
+    ]
+   },
+   {
+    "id": "k7",
+    "type": "plank_l",
+    "on": "gulv",
+    "at": [
+     200,
+     30
+    ]
+   },
+   {
+    "id": "k8",
+    "type": "weight",
+    "on": "gulv",
+    "at": [
+     150,
+     30
+    ]
+   }
+  ]
+ }
+}

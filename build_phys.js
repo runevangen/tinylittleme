@@ -143,7 +143,7 @@ export function createSim(def, opts = {}) {
 
   function substep(h) {
     // fart og posisjon
-    const drive = state.state === 'run' && state.t >= SETTLE;
+    const drive = state.state === 'run' && state.t >= SETTLE && !opts.hold;   // hold: figuren står stille (brukes til å finne hvor delene lander, se settledPlaced)
     if (drive) { const tgt = FIG_SPEED, ac = supported ? 14 : 3; F.vx += (tgt - F.vx) * Math.min(1, ac * h); if (supported && blocked && hopCd <= 0) { F.vy = FIG_HOP; hopCd = 0.45; events.push({ type: 'hop', u: F.x, v: F.y }); } }
     hopCd -= h; supported = false; blocked = false; const calm = state.t < SETTLE;
     for (const p of P) { if (!p.w) continue; p.vy -= G * h; p.px = p.x; p.py = p.y; p.x += p.vx * h; p.y += p.vy * h; }
@@ -222,6 +222,20 @@ export function createSim(def, opts = {}) {
   }
   const drain = () => events.splice(0, events.length);
   return { step, pose, drain, state, figure: F, get t() { return state.t; }, breaks: () => bodies.filter((b) => b.broken).map((b) => b.id) };
+}
+
+// R26: hvor delene kommer til å ligge når de har satt seg (klosser faller ned på hverandre, løftes opp av underlaget): brukes når bygget flyttes ut i verdenen.
+// Planker settes rett (nedbøyningen er bare visuell i verden). Samme fast tidssteg, så samme bygg gir alltid samme resultat.
+export function settledPlaced(def, opts = {}) {
+  const sim = createSim(def, { ...opts, hold: true }), n = Math.round((opts.secs ?? 1.5) / DT);
+  for (let i = 0; i < n && sim.state.state === 'run'; i++) sim.step();
+  const by = new Map(sim.pose().parts.map((p) => [p.id, p]));
+  return def.placed.map((d) => {
+    const p = by.get(d.id); if (!p) return { ...d };
+    if (p.kind === 'rect') return { id: d.id, type: d.type, u: p.u, v: p.v, rot: p.rot };
+    const a = p.pts[0], b = p.pts[p.pts.length - 1];       // rett linje mellom endene (der planken hviler); synlig nedbøyning faker vi bare
+    return { id: d.id, type: d.type, u: (a.u + b.u) / 2, v: (a.v + b.v) / 2, rot: Math.atan2(b.v - a.v, b.u - a.u) };
+  });
 }
 
 // kjør en hel prøve uten visning (tester og bevis). Returnerer { result: 'won'|'lost', reason, t, breaks: [{id,u,v}], linkBreaks }
