@@ -35,4 +35,11 @@ ok(hangSway(1, 3, true).legL !== hangSway(1, 3, false).legL, 'sving skiller seg 
   for (let i = 0; i < 8; i++) ok(!(q.decide(W(60), 2, true)), 'autoq: aldri over full oppløsning');
   q = createAutoQ(); for (let i = 0; i < 9; i++) q.feed(1000); let n = 0; for (let i = 0; i < 80; i++) { const r = q.decide(W(i % 14 < 7 ? 12 : 60), 1.5, true); if (r && r.dir === 'up') n++; } ok(n <= 3, 'autoq: pendler ikke (maks antall opp)');
 }
+{ // main.js bruker faktisk polish.js: fotløft (IK-fot) og heng/sving
+  const { readFileSync } = await import('node:fs'); const m = readFileSync(new URL('./main.js', import.meta.url), 'utf8');
+  ok(/off = stepOffset\(sf \? sf\.top : null, p\.y\)/.test(m) && /f\.y \+= footSm\[key\] \/ RIG_S/.test(m), 'main.js: stepOffset løfter IK-foten');
+  ok(/p\.state === 'hang'[^\n]*\n[^\n]*hangSway\(sec, [^\n]*false\)/.test(m), 'main.js: heng bruker hangSway');
+  ok(/p\.state === 'swing'[^\n]*\n[^\n]*hangSway\(sec \* 1\.4, [^\n]*true\)/.test(m), 'main.js: sving bruker hangSway');
+  ok((m.match(/Lavere oppløsning/g) || []).length === 1 && /qToasted/.test(m), 'autoq: én melding per økt');
+}
 if (bad) process.exit(1); console.log('polish ok');

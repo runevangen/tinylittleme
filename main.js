@@ -126,7 +126,7 @@ const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, 
 const fpsW = fpsWatch(24, 3000);   // 24, ikke 30: iPhone i strømsparemodus låser til 30 fps og er frisk
 const autoQC = createAutoQ();      // polish.js: når oppløsningen går ned/opp (testet i test_polish.mjs)
 let resQ = store.get('tlm.resq', 'auto'); if (!['auto', 'full', 'mid', 'low'].includes(resQ)) resQ = 'auto';   // R10: auto = følger FPS (ned ved vedvarende lav, opp igjen når det går fint); ellers fast valg
-let autoQ = resQ === 'auto', qSteps = 0, basePr = 1;
+let autoQ = resQ === 'auto', qSteps = 0, basePr = 1, qToasted = false;
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
 addEventListener('pagehide', () => store.set('tlm.evlog', evLog.slice(-120)));
 
@@ -916,8 +916,8 @@ const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, s
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 
-function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+function toast(msg, low = false) {
+  const t = $('toast'); t.textContent = msg; t.classList.toggle('low', low); t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
 const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried);
@@ -2023,7 +2023,7 @@ function frame(now) {
   { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
     if (mode === 'play' && !menuOpen) autoQC.feed(raw);
     const dq = fr && mode === 'play' && !menuOpen ? autoQC.decide(fr, renderer.getPixelRatio(), autoQ, basePr) : null;
-    if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); toast(dq.dir === 'down' ? `Lavere oppløsning (${dq.pr.toFixed(2)}×) for jevnere bilde. ⚙ → Test → Oppløsning styrer det` : `Skarpere igjen (${dq.pr.toFixed(2)}×)`); } }
+    if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); if (dq.dir === 'down' && !qToasted) { qToasted = true; toast('Lavere oppløsning for jevnere bilde. ⚙ → Test → Oppløsning styrer det', true); } } }   // én melding per økt, nede ved kanten så den ikke dekker målpilen; resten logges bare
   if (!window.__paused && !menuOpen) update(dt);
   stepCamAnim(dt); compassFrame(now);
   render(now, dt);
@@ -2033,4 +2033,4 @@ requestAnimationFrame(frame);
 
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
-window.__game = { react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
