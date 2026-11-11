@@ -1186,12 +1186,34 @@
       ]
     },
     {
+      "id": "pillbug_gulv",
+      "type": "roller",
+      "on": "gulv",
+      "from": [
+        260,
+        95
+      ],
+      "to": [
+        330,
+        95
+      ]
+    },
+    {
       "id": "edderkopp_skap",
       "type": "spider",
       "on": "gulv",
       "from": [
         90,
         185
+      ]
+    },
+    {
+      "id": "traad_kjokken",
+      "type": "dangler",
+      "on": "gulv",
+      "from": [
+        300,
+        165
       ]
     }
   ],

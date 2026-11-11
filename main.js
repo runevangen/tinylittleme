@@ -5,6 +5,8 @@ import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
+import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
+import { buildRoller, buildDangler, ROLLER_COL, DANGLER_COL } from './creatures_view.js';
 import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid, nearBridge } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
 import { buildFlag, buildGoalRing } from './markers.js';
@@ -140,6 +142,7 @@ let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.s
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
+let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let rewardsOn = store.get('tlm.rewards', true), rewardsAll = store.get('tlm.rewardsall', false);   // belønninger (R16)
 let bossOn = store.get('tlm.boss', true);   // sjef-maur (R9)
@@ -929,9 +932,10 @@ const bodyMeshes = LEVEL.bodies.map((b) => {
   return { b, mesh, size: [sx, sy, sz] };
 });
 // maur: én modell per patrulje (v0.77)
+LEVEL.noCreatures = !creaturesOn; CREATURE_TUNE.warn = creatureWarn;     // R19
 const ANT_COL = [0x9a3a1e, 0x7a2a16, 0xb04a22, 0x8a3320];
 const antMeshes = (LEVEL.antList || []).map((t, i) => {
-  const a = LEVEL.ants[i].skin === 'train' ? buildTrain() : t.type === 'spider' ? buildSpider() : t.type === 'carrier' ? buildCarrier() : buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb });   // R6: tre slag, hver med egen modell
+  const a = LEVEL.ants[i].skin === 'train' ? buildTrain() : t.type === 'roller' ? buildRoller() : t.type === 'dangler' ? buildDangler({ ceil: LEVEL.room?.height ?? 48 }) : t.type === 'spider' ? buildSpider() : t.type === 'carrier' ? buildCarrier() : buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb });   // R6: tre slag, hver med egen modell
   a.root.userData.antId = t.id; scene.add(a.root); if (!gfxLow) look.detailize(a.root);
   let drop = null; if (t.type === 'carrier') { drop = buildDropCrumb(); drop.visible = false; scene.add(drop); }                 // smula bæreren slipper når den knuses
   return { t, a, drop, rot: Math.atan2(-t.fz, t.fx) };
@@ -1471,6 +1475,8 @@ const SETTINGS = [
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
+  fl('creatures', 'spill', 'Nye skapninger (pillbug som ruller, edderkopp i tråd): av = bare maur', true, () => creaturesOn, kp('tlm.creatures', (v) => { creaturesOn = v; LEVEL.noCreatures = !v; logEv('fiende', v ? 'skapninger på' : 'skapninger av'); })),
+  rg('creaturewarn', 'admin', 'Nye skapninger: varseltid (faktor, 1 = standard)', 1, 0.7, 2.5, 0.1, () => creatureWarn, kp('tlm.creaturewarn', (v) => { creatureWarn = v; CREATURE_TUNE.warn = v; }), { digits: 1 }),
   fl('boss', 'hjelp', 'Sjef-maur i siste rom (nivå 6): av = ingen sjef', true, () => bossOn, kp('tlm.boss', (v) => { bossOn = v; logEv('sjef', v ? 'på' : 'av'); })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
@@ -1723,7 +1729,17 @@ const downKey = () => held('KeyC', 'ControlLeft', 'ControlRight') || touch.grab;
 const boost = () => held('ShiftLeft', 'ShiftRight');
 
 // maur: hopp på ryggen = knus og sprett; ellers støt tilbake (v0.77)
+// R19: pillbug (roller) og tråd-edderkopp (dangler): varsel, støt, knus. Alle hendelser logges som «fiende».
+function creatureEvent(ev) {
+  const J = TOUCH ? T('btn.jump') : 'Mellomrom', roller = ev.kind === 'roller', seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); toast(msg); } };
+  logEv('fiende', `${ev.kind} ${ev.type} ${ev.id}`);
+  if (ev.type === 'alert') { audio?.spiderhiss(); buzz(15); if (roller) seen('roller', `En pillbug! Den ruller seg sammen og ruller rett mot deg: stikk til siden, eller hopp på den (${J})`); else seen('dangler', `Edderkopp i tråd! Den rister før den stuper: løp forbi mens den er oppe, eller hopp på den (${J}) når den henger lavt`); }
+  else if (ev.type === 'roll' || ev.type === 'plunge') { audio?.spiderleap(); buzz(25); }
+  else if (ev.type === 'stomp') { react.trigger('stomp'); stats.squashed++; audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], roller ? ROLLER_COL : DANGLER_COL); }
+  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${roller ? 'Pillbuggen rullet over deg' : 'Edderkoppen falt ned på deg'}  −${SCORE.antHit} poeng. Hopp på den (${J}) for å knuse den`); }
+}
 function antEvent(ev) {
+  if (ev.kind === 'roller' || ev.kind === 'dangler') { creatureEvent(ev); return; }          // R19 (creatures.js)
   if (ev.type === 'alert' && ev.kind === 'spider') { if (!store.get('tlm.seen.spider', false)) { store.set('tlm.seen.spider', true); toast(`En edderkopp-vakt! Den dukker og hopper: rygg unna, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); } audio?.spiderhiss(); }
   else if (ev.type === 'alert' && !store.get('tlm.seen.ant', false)) { store.set('tlm.seen.ant', true); toast(`En maur! Unngå den, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); }
   if (ev.type === 'leap') { logEv('edderkopp hopper', ev.id); audio?.spiderleap(); }
@@ -1980,8 +1996,8 @@ const perfMerge = { before: 0, after: 0 };
   { const m = mergeRigid(THREE, hero.root, refsIn(hero)); perfMerge.before += m.before; perfMerge.after += m.after; }      // figuren: deler som følger samme ledd slås sammen (ledd og ansiktsdeler som koden styrer røres ikke)
   for (const am of antMeshes) {                                                                                           // maur: finn hva som beveger seg ved å kjøre animasjonen i noen stillinger
     try {
-      const T = [{}, { carry: false, crouchK: 0.8, mode: 'leap' }, { crouchK: 0.3, mode: 'crouch' }];
-      const keep = movingNodes(am.a.root, [[0, 0, 0, false, 0], [1.7, 2, 0, true, 1], [3.9, 1, 0.5, false, 2], [5.2, 0.5, 0, true, 1]].map(([ph, sp, sq, al, ti]) => () => am.a.update(ph, sp, sq, al, T[ti])));
+      const T = [{}, { carry: false, crouchK: 0.8, mode: 'leap' }, { crouchK: 0.3, mode: 'crouch' }, { crouchK: 1, mode: 'roll', y: 3 }, { mode: 'plunge', y: 2, shake: 1 }];   // R19: også rulle- og stup-stilling
+      const keep = movingNodes(am.a.root, [[0, 0, 0, false, 0], [1.7, 2, 0, true, 1], [3.9, 1, 0.5, false, 2], [5.2, 0.5, 0, true, 1], [2.2, 7, 0, true, 3], [4.1, 0, 0, true, 4]].map(([ph, sp, sq, al, ti]) => () => { am.a.update(ph, sp, sq, al, T[ti]); if (am.t.type === 'roller' || am.t.type === 'dangler') am.a.root.updateMatrixWorld(true); }));   // R19: skapningene må ha oppdatert matrise for at bevegelige deler skal oppdages (ellers slås kula/ringen sammen i hvilestilling)
       am.a.update(0, 0, 0, false, T[0]);
       const m = mergeRigid(THREE, am.a.root, keep); perfMerge.before += m.before; perfMerge.after += m.after;
     } catch (e) { console.warn('maur ikke slått sammen', e); }
@@ -2015,7 +2031,7 @@ function render(now, dt) {
   for (const { c, m } of crumbMeshes) { m.update(c.phase, c.got || !crumbsOn); }
   for (const m of antMeshes) {
     const { t, a, drop } = m;
-    if (drop) { drop.visible = antsOn && !!t.drop && !t.drop.taken; if (drop.visible) { drop.position.set(t.drop.x, t.drop.y + 0.35 + Math.sin(clock * 3) * 0.06, t.drop.z); drop.rotation.y = clock * 1.5; } } a.root.visible = antsOn && (t.alive || t.squash < 0.98);
+    if (drop) { drop.visible = antsOn && !!t.drop && !t.drop.taken; if (drop.visible) { drop.position.set(t.drop.x, t.drop.y + 0.35 + Math.sin(clock * 3) * 0.06, t.drop.z); drop.rotation.y = clock * 1.5; } } a.root.visible = antsOn && !(LEVEL.noCreatures && (t.type === 'roller' || t.type === 'dangler')) && (t.alive || t.squash < 0.98);
     a.root.position.set(t.x, t.y, t.z);
     const want = Math.atan2(-t.fz, t.fx); let dr = want - m.rot; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); m.rot += dr * Math.min(1, dt * 10); a.root.rotation.y = m.rot;
     a.update(t.phase, t.speedNow || 0, t.squash, t.alerted, t);

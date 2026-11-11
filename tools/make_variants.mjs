@@ -32,6 +32,7 @@ const kit = (s) => ({
   // R12: egen stemning. Kveldslys og korallfarger; vri: vannet stiger (vading = tregere og mister krefter, så klatre opp!). Rekvisitter er bare pynt (ingen kollisjon).
   s.variant = { mood: 'evening', twist: { type: 'water', max: 4, dry: 16, rise: 9, hold: 6, drain: 9 },
     props: [{ type: 'rug', x: 105, z: 195, w: 70, d: 38, color: '#e8574a', stripe: '#ffe2b8' }, { type: 'rug', x: 62, z: 90, w: 40, d: 40, shape: 'round', color: '#7a5cc8', stripe: '#f4d6ff' }, { type: 'duck', x: 150, z: 112, r: 9 }] };
+  s.ants.push({ id: 'traad_dusj', type: 'dangler', on: 'gulv', from: [42.5, 80] }, { id: 'traad_vask', type: 'dangler', on: 'gulv', from: [212.5, 75] });   // R19: nivå 4 = edderkopper i tråd fra taket (ingen pillbug)
   save('bad2', s);
 }
 
@@ -57,6 +58,7 @@ const kit = (s) => ({
   s.ants.push({ id: 'tog', type: 'ant', skin: 'train', on: 'gulv', from: [104, 72], to: [104, 212], speed: 3.2 });
   s.variant = { mood: 'night', twist: { type: 'train', ant: 'tog' },
     props: [{ type: 'rug', x: 170, z: 200, w: 110, d: 90, shape: 'round', color: '#3b64c4', stripe: '#ffd45a' }, { type: 'track', from: [104, 72], to: [104, 212] }, { type: 'stars', count: 46 }] };
+  s.ants.push({ id: 'traad_hylle', type: 'dangler', on: 'gulv', from: [155, 75] }, { id: 'pillbug_gulv', type: 'roller', on: 'gulv', from: [115, 135], to: [145, 135] });   // R19: nivå 5 = en tråd-edderkopp og en pillbug på den trange gulvstripa
   save('barnerom2', s);
 }
 
@@ -89,6 +91,7 @@ const kit = (s) => ({
     props: [{ type: 'rug', x: 180, z: 150, w: 130, d: 30, color: '#e08a2e', stripe: '#fff0c8' }, { type: 'rug', x: 110, z: 240, w: 50, d: 50, shape: 'round', color: '#2f9a8a', stripe: '#ffe9b0' }] };
   { const m = s.ants.find((x) => x.id === 'maur_gulv'); if (m) m.from = [135, m.from[1]]; }               // R9: bærer-mauren går ikke gjennom sjefens område (venstre del av rommet)
   s.boss = { id: 'sjef', on: 'gulv', from: [25, 110], to: [85, 110] };                                        // R9: sjef-maur på den åpne gulvflata til venstre (veggen og kjøleskapet står som vegger for støtet)
+  s.ants.push({ id: 'traad_kjokken', type: 'dangler', on: 'gulv', from: [300, 165] });                          // R19: nivå 6 = pillbugen fra nivå 3 (arvet) pluss en tråd-edderkopp
   save('kjokken2', s);
 }
 console.log('skrev scenes/bad2, barnerom2, kjokken2');

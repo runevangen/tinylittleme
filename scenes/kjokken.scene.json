@@ -1198,6 +1198,19 @@
         290,
         250
       ]
+    },
+    {
+      "id": "pillbug_gulv",
+      "type": "roller",
+      "on": "gulv",
+      "from": [
+        260,
+        95
+      ],
+      "to": [
+        330,
+        95
+      ]
     }
   ],
   "collectibles": [

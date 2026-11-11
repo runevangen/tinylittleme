@@ -1428,6 +1428,20 @@
    ]
   },
   {
+   "id": "pillbug_gulv",
+   "type": "roller",
+   "a": [
+    16,
+    0,
+    -11
+   ],
+   "b": [
+    30,
+    0,
+    -11
+   ]
+  },
+  {
    "id": "edderkopp_skap",
    "type": "spider",
    "a": [
@@ -1439,6 +1453,20 @@
     -18,
     0,
     7
+   ]
+  },
+  {
+   "id": "traad_kjokken",
+   "type": "dangler",
+   "a": [
+    24,
+    0,
+    3
+   ],
+   "b": [
+    24,
+    0,
+    3
    ]
   }
  ],
