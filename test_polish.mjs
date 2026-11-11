@@ -12,4 +12,8 @@ let late = 0; for (let i = 0; i < 20; i++) late = r.update(0.05); ok(!late.activ
 ok(hangSway(0, 0).legL > 0 && hangSway(1, 3, true).roll < 0, 'heng');
 const f = fpsWatch(30, 1000); let res; for (let i = 0; i < 40; i++) res = f.push(50) || res; ok(res && res.low && res.fps < 25, 'lav fps');
 const g = fpsWatch(30, 1000); res = null; for (let i = 0; i < 70; i++) res = g.push(16) || res; ok(res && !res.low, 'bra fps');
+const rs = createReact(); rs.trigger('stomp'); let hmax = 0, cmin = 9; for (let i = 0; i < 20; i++) hmax = Math.max(hmax, rs.update(0.04).hop); ok(hmax > 0.15, 'stomp: tydelig sprett');
+rs.trigger('hurt'); cmin = rs.update(0.02).crouch; ok(cmin > 0.45, 'hurt: tydelig sammenkrøping');
+for (const h of [0, 0.02, 0.1, 0.28, 0.4]) ok(stepOffset(1 + h, 1) <= 0.28 && stepOffset(1 + h, 1) >= 0, 'trinnserie ' + h);
+ok(hangSway(1, 3, true).legL !== hangSway(1, 3, false).legL, 'sving skiller seg fra heng');
 if (bad) process.exit(1); console.log('polish ok');

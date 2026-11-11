@@ -35,11 +35,8 @@ Ferdig når: flyten start → spill → mål → neste nivå føles komplett på
 Stor sjef-maur i nivå 6 (kjøkkenet), tre faser (patrulje, charge, stunned etter å ha truffet vegg/kasse så du kan hoppe på den), helsebar, tegnefilm-aktig animasjon, lyd og belønning (siste smule + en liten fanfare). Egen logikk i `ants.js` eller nytt `boss.js` med tester. Må være rettferdig på mobil.
 Ferdig når: en spiller kan slå sjefen med bare stikke + HOPP, og ruta går fortsatt.
 
-### [ ] R10 · Figur og bevegelse: siste polering
-Se `docs/FIGUREN.md` og `BACKLOG.md`: føtter som tilpasser seg trinn, bedre heng/sving/klatring, hoppe-på-maur-animasjon (spretter), reaksjon når en maur støter deg, glede når du knuser den. Mål FPS på eldre telefoner.
-Ferdig når: animasjonene leses tydelig i skjermbilder/serier og ingen eksisterende test brekker.
-
 ## Ferdige punkter
+- [x] Figur og bevegelse: siste polering (R10): jubel/sprett, rykk, heng/sving/klatring, fottilpasning (bare 2-28 cm kanter), FPS-vakt med auto-oppløsning. Se `docs/FIGUREN.md`
 - [x] Musikk og stemning per rom (v0.84)
 - [x] Fiender: flere slag (v0.83)
 - [x] Mørkere hjørner og lysstråler (v0.82)

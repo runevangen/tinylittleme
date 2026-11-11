@@ -124,6 +124,7 @@ const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCen
 const evLog = store.get('tlm.evlog', []);
 const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION }); if (evLog.length > 120) evLog.shift(); };
 const fpsW = fpsWatch(30, 3000);
+let autoQ = store.get('tlm.autoq', true), qSteps = 0;   // R10: vedvarende lav FPS gir lavere oppløsning (ett trinn om gangen, ned til 1×)
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
 addEventListener('pagehide', () => store.set('tlm.evlog', evLog.slice(-120)));
 
@@ -607,14 +608,15 @@ function poseHero(p, now, dt, mode) {
       zL: 0.16, zR: -0.16,
       hL: lerpN(-0.3, -1.05, stepL), hR: lerpN(-0.3, -1.05, stepR), kL: lerpN(0.5, 1.5, stepL), kR: lerpN(0.5, 1.5, stepR),
       lean: 0.2 + 0.05 * tired, chest: 0.1, hp: -0.28, twist: 0.12 * s1 * m,
+      roll: 0.05 * s1 * m + (1 - m) * 0.015 * Math.sin(sec * 1.3), sway: 0.012 * s1 * m,   // vekten flyttes mot armen som trekker; i ro dingler han litt
     });
-    bob = -0.05;
+    bob = -0.05 - 0.012 * Math.abs(s1) * m;
   } else if (p.state === 'hang' || p.state === 'zip') {
-    const sway = Math.sin(sec * 1.5), hs = hangSway(sec, Math.hypot(p.vx, p.vz), false);
+    const sway = Math.sin(sec * 1.5), hs = hangSway(sec, Math.hypot(p.vx, p.vz), false);   // heng: rolig dingling
     Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: hs.legL, hR: hs.legR, kL: hs.kneeL, kR: hs.kneeR, lean: hs.lean, roll: hs.roll, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
   } else if (p.state === 'swing') {
-    const k = clampN((p.vx * p.fx + p.vz * p.fz) * 0.1, -0.8, 0.8);
-    Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: -0.5 * k + 0.2, hR: -0.5 * k + 0.4, kL: 0.5, kR: 0.8, lean: -0.25 * k, chest: -0.1 * k, hp: -0.15 });
+    const k = clampN((p.vx * p.fx + p.vz * p.fz) * 0.1, -0.8, 0.8), ss = hangSway(sec * 1.4, Math.hypot(p.vx, p.vz), true);   // sving: stort pendel i bena, kroppen lener med farten
+    Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: ss.legL - 0.5 * k, hR: ss.legR - 0.5 * k, kL: ss.kneeL + 0.3, kR: ss.kneeR + 0.5, lean: -0.25 * k + ss.lean * 2, roll: ss.roll, chest: -0.1 * k, hp: -0.15, twist: 0.06 * Math.sin(sec * 2.1) });
   } else if (p.reach > 0) {
     Object.assign(T, { aL: -2.75, aR: -3.1, eL: -0.05, eR: -0.05, hL: -0.6, hR: 0.3, kL: 1.0, kR: 0.2, lean: 0.15, chest: 0.12, hp: -0.2 });
   } else if (!p.onGround) {
@@ -699,9 +701,10 @@ function poseHero(p, now, dt, mode) {
   const rx = react.update(dt);
   if (rx.active) {
     if (rx.armsUp > 0) { T.aL = lerpN(T.aL, -2.9, rx.armsUp); T.aR = lerpN(T.aR, -2.9, rx.armsUp); T.zL = lerpN(T.zL, 0.45, rx.armsUp); T.zR = lerpN(T.zR, 0.45, rx.armsUp); T.eL = lerpN(T.eL, -0.3, rx.armsUp); T.eR = lerpN(T.eR, -0.3, rx.armsUp); T.fgL = T.fgR = 0.05; }
-    if (rx.flinch > 0) { T.aL = lerpN(T.aL, -0.7, rx.flinch); T.aR = lerpN(T.aR, -0.7, rx.flinch); T.zL = lerpN(T.zL, 0.9, rx.flinch); T.zR = lerpN(T.zR, 0.9, rx.flinch); T.eL = lerpN(T.eL, -0.9, rx.flinch); T.eR = lerpN(T.eR, -0.9, rx.flinch); T.fgL = T.fgR = 1.0; if (p.onGround && !ikGait) { T.kL += rx.crouch; T.kR += rx.crouch; } }
+    if (rx.flinch > 0) { T.aL = lerpN(T.aL, -1.5, rx.flinch); T.aR = lerpN(T.aR, -1.3, rx.flinch); T.zL = lerpN(T.zL, 0.35, rx.flinch); T.zR = lerpN(T.zR, 0.35, rx.flinch); T.eL = lerpN(T.eL, -1.7, rx.flinch); T.eR = lerpN(T.eR, -1.7, rx.flinch); T.hp += 0.3 * rx.flinch; T.fgL = T.fgR = 1.0; if (p.onGround && !ikGait) { T.kL += rx.crouch; T.kR += rx.crouch; }
+      if (p.onGround && ikGait) { T.zL += 0.1 * rx.flinch; T.zR -= 0.1 * rx.flinch; } }
     T.lean += rx.lean; T.twist += rx.spin; T.hy += rx.spin * 1.4; T.chest += rx.flinch * 0.2;
-    if (rx.flinch > 0) bob -= rx.crouch * 0.05;
+    if (rx.flinch > 0) bob -= rx.crouch * 0.16;   // synker tydelig sammen (også med IK-gange)
   }
 
   // jevn overgang: armer/overkropp rolig, ben raskere; alt raskere i lufta og i hurk
@@ -1371,6 +1374,7 @@ const SETTINGS = [
   // Hjelp og tekst
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
   fl('stepadapt', 'spill', 'Føttene tilpasser seg trinn og kanter', true, () => stepAdapt, kp('tlm.stepadapt', (v) => { stepAdapt = v; })),
+  fl('autoq', 'test', 'Senk oppløsningen automatisk ved lav FPS', true, () => autoQ, kp('tlm.autoq', (v) => { autoQ = v; })),
   fl('reactanim', 'spill', 'Figuren jubler (knuser maur) og rykker (maur støter)', true, () => reactAnim, kp('tlm.reactanim', (v) => { reactAnim = v; })),
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
   fl('beacon', 'hjelp', 'Lyssøyle over målet', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
@@ -2011,7 +2015,8 @@ let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
   if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps`; perf.win = perf.winN = 0; } }
-  { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`); }
+  { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
+    if (fr && autoQ && mode === 'play' && !menuOpen && fr.low && fr.lowRuns >= 2) { const pr = renderer.getPixelRatio(), np = Math.max(1, Math.round(pr * 75) / 100); if (np < pr - 0.01) { renderer.setPixelRatio(np); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv('kvalitet ned', `oppløsning ${pr.toFixed(2)}× til ${np.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); } } }
   if (!window.__paused && !menuOpen) update(dt);
   stepCamAnim(dt); compassFrame(now);
   render(now, dt);

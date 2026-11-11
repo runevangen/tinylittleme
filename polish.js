@@ -31,14 +31,14 @@ export function createReact() {
       if (s.kind === 'stomp') {
         const strech = Math.sin(clamp(u / 0.3, 0, 1) * Math.PI);                  // strekk i oppsprettet
         const land = u > 0.55 ? Math.sin(clamp((u - 0.55) / 0.3, 0, 1) * Math.PI) : 0;   // klem ved neste landing
-        out.sy = 1 + 0.1 * strech - 0.14 * land; out.sxz = 1 - 0.05 * strech + 0.08 * land;
+        out.sy = 1 + 0.16 * strech - 0.2 * land; out.sxz = 1 - 0.08 * strech + 0.12 * land;
         out.armsUp = smooth(clamp(u / 0.15, 0, 1)) * (1 - smooth(clamp((u - 0.7) / 0.3, 0, 1)));
-        out.hop = 0.06 * Math.sin(clamp(u / 0.5, 0, 1) * Math.PI);
+        out.hop = 0.2 * Math.sin(clamp(u / 0.45, 0, 1) * Math.PI);   // tydelig sprett (ca. 20 cm) som på en trampoline
         out.spin = 0.5 * Math.sin(u * Math.PI * 2) * (1 - u);                      // lite jubel-vrid i overkroppen
       } else {
         const hit = Math.exp(-u * 5);                                              // rykk med en gang, så demper det
-        out.flinch = hit; out.lean = -0.38 * hit; out.crouch = 0.45 * hit;
-        out.sy = 1 - 0.06 * hit; out.sxz = 1 + 0.04 * hit;
+        out.flinch = hit; out.lean = -0.5 * hit; out.crouch = 0.6 * hit;
+        out.sy = 1 - 0.12 * hit; out.sxz = 1 + 0.07 * hit;
         out.spin = 0.35 * Math.sin(u * Math.PI * 7) * (1 - u);                     // rister på hodet
       }
       return out;

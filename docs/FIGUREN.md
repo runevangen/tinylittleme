@@ -35,9 +35,17 @@ Korte replikker på norsk, sagt av nettleserens talesyntese (høy tone) og vist 
 - ⚙: «Snakkebobler», «Stemme» og «Stemmevolum». Stemmen bruker en norsk stemme fra enheten (nb/no/nn); finnes ingen, vises bare bobler (⚙ sier hvilken stemme som brukes).
 - Test: `node test_voice.mjs`.
 
+## Siste polering (R10, `polish.js`)
+Ren logikk i `polish.js` (testet i `test_polish.mjs`), brukt i `poseHero`/render-løkka i `main.js`.
+- **Føtter mot trinn** (innstilling `stepadapt`, standard på): svingfoten ser 0.6-0.8 m frem og løftes/senkes til flaten den treffer. `stepOffset` begrenser til +0.28 m opp og -0.1 m ned så beinet ikke strekkes, og effekten er bare synlig der kanten er mellom ca. 2 cm og 28 cm. Dagens brett har bare 0.4 m kanter (de tas med klatring/mantle), så fotløftet er liten (maks ca. 7 cm målt i skjermbilde) og ingenting skjer på flatt gulv. Den er ment for fremtidige trapper og skråkanter.
+- **Jubel** (`reactanim`, standard på): maur knust gir armene opp + strekk, et tydelig sprett på ca. 20 cm og klem ved landing (ca. 0.9 s).
+- **Rykk**: maur støter gir sammenkrøping (hoftene synker ca. 10 cm, hodet ned, albuene inn, armene foran), lent bakover, ristende hode (ca. 0.8 s). Virker også med IK-gange.
+- **Heng/sving/klatring**: heng dingler rolig (`hangSway`, amp 0.1), sving bruker `hangSway(..., true)` (amp 0.35, bena pendler stort, kroppen lener med farten), klatring har vektforskyvning (roll/sway) mot armen som trekker og dingler i ro.
+- **FPS-vakt** (`fpsWatch`): snitt hvert 3. sekund, under 30 fps logges `lav fps`. Etter to slike perioder på rad (ca. 6 s) senkes oppløsningen ett trinn (x0.75, ned til 1x) og `kvalitet ned` logges (innstilling `autoq`, standard på). Ikke målt på ekte eldre telefon her; bruk **Del rapport** (se `lav fps`/`kvalitet ned`) fra en slik telefon. Grafikk «Enkel» er fortsatt manuelt valg.
+
 ## Ikke gjort ennå
 - Fingre som faktisk lukker seg rundt tingen (nå bare knytter de seg), hår/jakke som beveger seg.
-- Føtter som tilpasser seg trinn og skrå flater, og fotfeste i sidesteg (PUBG-stil).
+- Fotfeste i sidesteg (PUBG-stil) og fotløft på skrå flater (trinn er gjort i R10).
 - Samle-tilbehør (hatter m.m.) og valg av utseende; bytte stil (strikket, pysjamas).
 - Egne opptak/stemmeskuespiller i stedet for talesyntese.
 - Replikker som reagerer på bestemte ting i brettet (første møte med svamp osv.).

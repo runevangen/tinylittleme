@@ -5,12 +5,12 @@ Alle valg ligger i **én liste, `SETTINGS` i `main.js`**. Den styrer panelet, «
 ## Grupper
 | Gruppe | Innhold |
 |---|---|
-| **Spill** | Lysstråler, mørkere hjørner og småting på gulvet (R4, atmos.js; bare med Detaljert grafikk), Startskjerm (vis ved oppstart), Hovedmeny-knapp, Autolagring, ting kommer tilbake, to trykk på Lagre/Tilbake/Ting, tekniske tall (alltid, eller trykk på teksten øverst), brettvalg, Start på nytt |
+| **Spill** | **Føttene tilpasser seg trinn og kanter** (`stepadapt`) og **Figuren jubler/rykker** (`reactanim`) (R10, `polish.js`), Lysstråler, mørkere hjørner og småting på gulvet (R4, atmos.js; bare med Detaljert grafikk), Startskjerm (vis ved oppstart), Hovedmeny-knapp, Autolagring, ting kommer tilbake, to trykk på Lagre/Tilbake/Ting, tekniske tall (alltid, eller trykk på teksten øverst), brettvalg, Start på nytt |
 | **Styring** | Kamerafølsomhet, stikke-dødsone, knappestørrelse, kast med dra, dobbelttrykk, ◎-knapp, grip kanten, vibrasjon |
 | **Kamera** | Følger retning, hjelper, utoning (+ synlighet), kameraavstand |
 | **Hjelp og tekst** | Retningshjelp (kompass/gulvpil/begge/av), tips etter 3 fall, fremhev grep, lapper, lydtekst, snakkebobler |
 | **Lyd og stemme** | Hovedvolum, lyd på, **musikk** (av/på og volum; tema per rom i `music.js`), stemme, stemmevolum, **pust** (volum og «rolig pust når du står stille»), skritt, hopp/landing/fall, ting og romlyd (volum), og knapper for å høre pust, skritt og hopp. Hele lydmikseren (hver enkelt lyd) ligger bak admin. |
-| **Test** | Hoppfølelse (Prince/Klassisk/Spenning), FPS, **Marker her**, **Del rapport**, kopier/lim inn innstillinger, Alt til standard |
+| **Test** | Hoppfølelse (Prince/Klassisk/Spenning), FPS, **Senk oppløsningen automatisk ved lav FPS** (`autoq`, R10),  **Marker her**, **Del rapport**, kopier/lim inn innstillinger, Alt til standard |
 | **Admin** (skjult) | Alle hoppverdier og mekanikk-verdier (krefter, klatring, kast, hard landing, taubane …), lydmikser og etterklang, Plan/Fly, hjelpeobjekter |
 
 ## Admin
