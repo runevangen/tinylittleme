@@ -105,28 +105,30 @@ export function createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay, i
       m.rotation.x = -Math.PI / 2; m.position.set((b.min[0] + b.max[0]) / 2, b.max[1] + 0.012, (b.min[2] + b.max[2]) / 2); m.renderOrder = 2; m.visible = false; scene.add(m); slicks.push(m);
     } }
 
-  const cross = mkSprite(crossTex, 0.05); let crossT = 0, crossLogged = false;
+  const cross = mkSprite(crossTex, 0.06); let crossT = 0, crossLogged = false;
   const reachK = { HW: P.w / 2, H: P.h, reach: 0, range: 0.5 };
 
   // kalles hver bildeoppdatering
   function update(now, dt) {
     const on = isOn() && isPlay();
     for (const l of shelves) l.visible = on;
-    for (const m of slicks) { m.visible = on; m.material.opacity = on ? 0.22 : 0; }
+    for (const m of slicks) { m.visible = on; m.material.opacity = on ? 0.5 : 0; }
     const rs = safeRects(now), bob = Math.sin(now / 300) * 0.08;
     for (const g of grips) {
       const d = Math.hypot(player.x - g.c[0], player.z - g.c[2], (player.y - g.c[1]) * 0.5), want = on && d < 16 ? Math.min(1, (16 - d) / 5) : 0;
       const hidden = want > 0 && (() => { const s = toScreen(g.c[0], g.c[1], g.c[2]); return !s || inAny(s.x, s.y, rs); })();
       g.sp.material.opacity += ((hidden ? 0 : want * 0.95) - g.sp.material.opacity) * 0.2; g.sp.visible = g.sp.material.opacity > 0.03;
-      g.sp.position.set(g.c[0], g.c[1] + bob, g.c[2]);
+      { const dx = player.x - g.c[0], dz = player.z - g.c[2], dl = Math.hypot(dx, dz) || 1, off = 0.45 + Math.min(g.b.max[0] - g.b.min[0], g.b.max[2] - g.b.min[2]) / 2;   // foran flaten (mot deg), i høyde med figuren, så den både sees og ikke skjules av tingen
+        g.sp.position.set(g.c[0] + dx / dl * off, Math.max(g.b.min[1] + 0.5, Math.min(g.b.max[1] + 0.5, player.y + 1.7)) + bob, g.c[2] + dz / dl * off); }
     }
     // ✕ på flaten foran deg når du hopper mot noe som ikke kan gripes
     reachK.reach = (P.ledgeAbove || 0) + (P.reachAbove || 0);
     const u = on ? ungrippableAhead(player, LEVEL.boxes, reachK) : null;
-    if (u) { crossT = Math.min(1, crossT + dt * 6); cross.position.set(u.x + u.nx * 0.08, u.y, u.z + u.nz * 0.08); if (!crossLogged) { crossLogged = true; logEv('markør', `ugripbar flate ${u.box.id || ''}`); } }
+    if (u) { crossT = Math.min(1, crossT + dt * 6); cross.position.set(u.x + u.nx * 0.08, u.y + reachK.H * 0.6, u.z + u.nz * 0.08);   // over hodet, så figuren ikke dekker den
+      if (!crossLogged) { crossLogged = true; logEv('markør', `ugripbar flate ${u.box.id || ''}`); } }
     else crossT = Math.max(0, crossT - dt * 3);
     cross.material.opacity = crossT * 0.95; cross.visible = crossT > 0.03 && !covered(cross.position.x, cross.position.y, cross.position.z);
   }
 
-  return { update, arrowFrame, covered, safeRects, toScreen, edge };
+  return { update, arrowFrame, covered, safeRects, toScreen, edge, debug: () => ({ slicks: slicks.map((m) => [m.visible, m.material.opacity, m.position.y]), grips: grips.map((g) => [g.sp.visible, g.sp.material.opacity]), shelves: shelves.length, cross: [cross.visible, crossT] }) };
 }

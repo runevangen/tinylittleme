@@ -65,6 +65,7 @@
   #compass{position:fixed;left:max(14px,env(safe-area-inset-left));top:max(104px,calc(env(safe-area-inset-top) + 94px));display:none;align-items:center;gap:8px;background:#121a2cdd;border:2px solid #ffa940;border-radius:999px;padding:5px 12px 5px 6px;color:#eef2fa;font:600 13px/1.2 system-ui;z-index:3;-webkit-tap-highlight-color:transparent}
   #compass .ctxt{max-width:min(52vw,230px);white-space:normal;overflow-wrap:anywhere;hyphens:auto}
   #compass:not(.mini){border-radius:22px}
+  @media (max-height:500px){#compass{top:max(54px,calc(env(safe-area-inset-top) + 48px))}}   /* liggende: bobla rett under HUD-linja, ikke over stikka */
   #wmark{position:fixed;width:44px;height:44px;margin:-22px 0 0 -22px;display:none;z-index:3;pointer-events:none;filter:drop-shadow(0 1px 3px #000a)}#wmark svg{width:100%;height:100%}
   #compass.mini{padding:3px;gap:0;opacity:.8}#compass.mini .ctxt{display:none}#compass.mini .ring{width:34px;height:34px}
   #compass .ring{width:38px;height:38px;border-radius:50%;background:#ffffff14;display:flex;align-items:center;justify-content:center}
