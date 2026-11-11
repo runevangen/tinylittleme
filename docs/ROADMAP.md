@@ -23,15 +23,12 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 I skjermbildene er gulvet i nivå 2 en stor, nesten tom trebit med lite å lese skala av, den mørke badematta i nivå 1 flimrer/pikselerer (moiré på ripestruktur), og kjøkkengulvet er en jevn beige flate. Fiks mipmap/anisotropi/relieff-frekvens på matta og andre høyfrekvente teksturer, og strø småting for målestokk (smuler, hår, knapper, mynter, blyantstumper, flekker, fuger med skitt) med tetthet satt etter rom og kvalitet. Dette gjelder også BACKLOG «Detaljert rom». Filer: `look.js`, `props.js`, `scenes/` (dekor uten kollisjon), `main.js` (teksturinnstillinger).
 Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hverandre), start-skjermbildene i nivå 2 og 6 viser minst tre ting som gir skala, og FPS-målingen ligger innenfor 1 fps av før.
 
-### [ ] R14 · Lesbarhet: verdensmarkører under knapper og tydelig hva som kan gripes
-(a) Pilene i verdenen (målpil, «neste»-pil, gule piler) tegnes ofte under TA/HOPP-knappene og blir halvt skjult (se kjøkkenet i nivå 6 der pilen ligger bak TA). Hold dem innenfor en trygg sone som unngår knappene og HUD-en, og kantstill dem mot skjermkanten med kontrastkant. (b) Fullfør BACKLOG «Grep-kode»: tydelig negativ markering av glatte/ugripbare flater, og tydeligere forskjell på grep, hylle og dekor. (c) Teksten i «NESTE»-bobla blir kuttet når nivånavn er lange: la den bryte linjer. Filer: `main.js` (HUD, pil), `look.js`, `i18n.js` om tekst endres.
-Ferdig når: skjermbilder (iPhone 14, stående og liggende) av nivå 1–6 viser ingen pil eller tekst delvis bak en knapp, glatte flater kan skilles fra grep uten å lese tekst, og `npm test` dekker pilplasseringen (ren funksjon).
-
 ### [ ] R16 · Belønning som varer: stjerner, hatter og et rom å komme tilbake til
 Smulene (★ 0/10) gir i dag bare et tall på målskjermen. Gi dem verdi: hvert nivå husker beste smuletall og tid (autolagring), 10/10 gir et kosmetisk tilbehør til figuren (hatt, skjerf, sekk i annen farge; se BACKLOG «tilbehør å samle»), og et lite «lekerom»-skap på startskjermen viser det du har samlet og lar deg bytte med ett trykk. Alt med stikke/knapper, uten tastatur. Filer: `collect.js`, `hero.js`, `story.js`, `main.js` (startskjerm), nye valg i `SETTINGS`, `logEv('belønning', …)`.
 Ferdig når: etter å ha tatt alle smuler i et nivå ser spilleren et nytt tilbehør på figuren neste gang, valget huskes etter omlasting, tester dekker lagring og opplåsing, og skjermbilde av skapet er sjekket på iPhone 14.
 
 ## Ferdige punkter
+- [x] Lesbarhet: verdensmarkører under knapper og tydelig hva som kan gripes (v1.00)
 - [x] Sjef-maur i siste rom (v0.99)
 - [x] Flagg og mål som ser ut som Toy Story-rekvisitter (v0.98)
 - [x] Ytelse på eldre telefoner: budsjett og lav profil (v0.96)

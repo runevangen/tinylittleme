@@ -56,6 +56,14 @@
   /* hjelpeteksten ligger helt øverst (v0.63): tittel og «Bruksanvisning ›» på samme linje, så kortet blir lavt */
   #infocard:not(.manual) #infobody{padding:7px 12px;background:#121a2cf2}#infocard:not(.manual) #infobody .ilink{float:right;display:inline-block;margin:0 0 4px 10px;padding:4px 9px;font-size:12px}#infocard:not(.manual) #infobody span{margin-top:3px}
   #infocard.manual #infobody{max-height:72vh;overflow:auto;-webkit-overflow-scrolling:touch}
+  /* R14 liggende: knappene (◎, TA, HOPP, GREP) ligger i høyre kolonne; kortet holdes til venstre for dem og blir lavt */
+  @media (orientation:landscape) and (max-height:520px){
+    #infocard{right:max(200px,calc(env(safe-area-inset-right) + 200px));width:min(400px,calc(100vw - 200px - 290px));transform:translateX(calc(100% - 38px))}
+    #infocard.show{transform:translateX(0)}
+    #infocard:not(.show) #infobody{visibility:hidden}
+    #infocard #infobody{max-height:calc(100vh - 90px);overflow:auto;font-size:13px;line-height:1.3}
+    #infocard.manual #infobody{max-height:calc(100vh - 90px)}
+  }
   #infobody .ilink{display:block;margin-top:8px;padding:6px 10px;border:0;border-radius:8px;background:#ffffff22;color:#ffd9a0;font:700 13px system-ui;text-align:left}
   #infobody b{display:block;color:#ffd9a0;font-size:15px;margin-bottom:2px}#infobody span{display:block;margin-top:7px}
   #stam{position:fixed;width:46px;height:7px;margin:-22px 0 0 -23px;border-radius:4px;background:#0009;border:1px solid #fff6;display:none;z-index:3;pointer-events:none;overflow:hidden}
@@ -64,6 +72,11 @@
   #offscreen{position:fixed;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;background:#121a2ccc;border:2px solid #ffa940;display:none;align-items:center;justify-content:center;z-index:3;pointer-events:none}
   #offscreen svg{width:26px;height:26px}
   #compass{position:fixed;left:max(14px,env(safe-area-inset-left));top:max(104px,calc(env(safe-area-inset-top) + 94px));display:none;align-items:center;gap:8px;background:#121a2cdd;border:2px solid #ffa940;border-radius:999px;padding:5px 12px 5px 6px;color:#eef2fa;font:600 13px/1.2 system-ui;z-index:3;-webkit-tap-highlight-color:transparent}
+  #compass .ctxt{max-width:min(52vw,230px);white-space:normal;overflow-wrap:anywhere;hyphens:auto}
+  #compass:not(.mini){border-radius:22px}
+  @media (max-height:500px){#compass{top:max(54px,calc(env(safe-area-inset-top) + 48px))}}   /* liggende: bobla rett under HUD-linja, ikke over stikka */
+  #wcross{position:fixed;width:50px;height:50px;margin:-25px 0 0 -25px;display:none;z-index:3;pointer-events:none;filter:drop-shadow(0 2px 4px #000a)}#wcross svg{width:100%;height:100%}
+  #wmark{position:fixed;width:44px;height:44px;margin:-22px 0 0 -22px;display:none;z-index:3;pointer-events:none;filter:drop-shadow(0 1px 3px #000a)}#wmark svg{width:100%;height:100%}
   #compass.mini{padding:3px;gap:0;opacity:.8}#compass.mini .ctxt{display:none}#compass.mini .ring{width:34px;height:34px}
   #compass .ring{width:38px;height:38px;border-radius:50%;background:#ffffff14;display:flex;align-items:center;justify-content:center}
   #compass svg{width:26px;height:26px;transition:transform .08s linear}
@@ -167,7 +180,7 @@
   var v = String(Date.now());
   try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
   window.__assetV = v;
-  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic'];
+  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view'];
   var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
   document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
 })();

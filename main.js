@@ -22,6 +22,7 @@ import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4�
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
+import { createMarkerView } from './readable_view.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
@@ -107,7 +108,7 @@ addEventListener('touchstart', unlockAudio, { passive: true }); addEventListener
 // v0.87: etter «Neste nivå» lastes siden på nytt og lyden er låst til første trykk er løftet. Holder du stikka, kommer lyden sent: vis en liten knapp til lyden går
 {
   const pill = document.createElement('button'); pill.id = 'soundPill'; pill.textContent = '🔈 Trykk for lyd';
-  pill.style.cssText = 'position:fixed;left:50%;bottom:max(150px,calc(env(safe-area-inset-bottom) + 140px));transform:translateX(-50%);z-index:6;display:none;padding:10px 18px;border-radius:999px;border:2px solid #ffa94099;background:#121a2cdd;color:#ffd9a0;font:700 15px system-ui';
+  pill.style.cssText = 'position:fixed;left:50%;top:max(46px,calc(env(safe-area-inset-top) + 40px));transform:translateX(-50%);z-index:6;display:none;padding:7px 12px;border-radius:999px;border:2px solid #ffa94099;background:#121a2cdd;color:#ffd9a0;font:700 13px system-ui;white-space:nowrap';   // R14: rett under HUD-linja i midten, vekk fra figuren og TA/HOPP; skjules mens infokortet er ute
   document.body.appendChild(pill);
   const t0 = performance.now(); let logged = false;
   const running = () => audio?.ctx?.state === 'running';
@@ -115,7 +116,7 @@ addEventListener('touchstart', unlockAudio, { passive: true }); addEventListener
     const ok = running();
     if (ok && !logged) { logged = true; logEv('lyd klar', `${Math.round(performance.now() - t0)} ms etter oppstart`); }
     let inMenu = false; try { inMenu = menuOpen; } catch { /* startskjermen er ikke satt opp ennå */ }
-    pill.style.display = !ok && TOUCH && performance.now() - t0 > 1200 && !inMenu ? 'block' : 'none';
+    pill.style.display = !ok && TOUCH && performance.now() - t0 > 1200 && !inMenu && !document.getElementById('infocard')?.classList.contains('show') ? 'block' : 'none';
   }, 400);
 }
 // iPhone stopper lyden (suspended/interrupted) ved lås eller fanebytte: ta den opp igjen når fanen er synlig, og ved neste trykk (unlockAudio)
@@ -265,7 +266,7 @@ function material(b) {
 const woodKinds = new Set(['wood', 'woodpanel']);
 
 // brukslapper: små lapper med bruksanvisning ved ting som kan gjøre noe (brettets `hints`, bl.a. i treningsrommet). Vises når du er nær.
-let labelsOn = store.get('tlm.labels', true);
+let labelsOn = store.get('tlm.labels', true), markersOn = store.get('tlm.markers', true);
 const labels = [];
 function makeBadge() {                                         // liten «i»-merking som viser at tingen kan gjøre noe
   const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d');
@@ -309,7 +310,7 @@ function updateLabels() {
   for (const l of labels) { l.d = Math.hypot(player.x - l.pos[0], player.z - l.pos[2], (player.y - l.pos[1]) * 0.5); if (!near || l.d < near.d) near = l; }
   const on = labelsOn && mode === 'play' && labels.length > 0, tabOn = mode === 'play' && !won;
   for (const l of labels) {
-    const o = on ? Math.max(0, Math.min(1, (13 - l.d) / 4)) : 0;
+    const o = on && !(mv && mv.covered(l.pos[0], l.pos[1], l.pos[2])) ? Math.max(0, Math.min(1, (13 - l.d) / 4)) : 0;   // R14: ikke bak knapper
     l.sp.material.opacity += (o - l.sp.material.opacity) * 0.2; l.sp.visible = l.sp.material.opacity > 0.03;
   }
   infoCard.style.display = tabOn ? '' : 'none';
@@ -1172,12 +1173,32 @@ function stepCamAnim(dt) {
   cam.yaw = camAnim.from + camAnim.d * k; cam.pitch = camAnim.pf + (camAnim.pt - camAnim.pf) * k; if (camAnim.t >= 1) camAnim = null;
 }
 const compEl = $('compass'), compArrow = $('compArrow'), compTxt = $('compTxt');
-const goalArrow = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([[0, 0.5], [0.3, -0.25], [0, -0.1], [-0.3, -0.25]].map(([x, y]) => new THREE.Vector2(x, y)))),
-  new THREE.MeshBasicMaterial({ color: 0xffa940, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false }));
-goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visible = false;
+const arrowShape = new THREE.Shape([[0, 0.5], [0.3, -0.25], [0, -0.1], [-0.3, -0.25]].map(([x, y]) => new THREE.Vector2(x, y)));
+const arrowGeo = new THREE.ShapeGeometry(arrowShape);
+const arrowMat = (color, order) => { const m = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }); m.userData.order = order; return m; };
+const goalArrow = new THREE.Mesh(arrowGeo, arrowMat(0xff9a1f, 7));   // R14: full dekning, med hvit glorie og mørk kant så pila leses på lyse gulv og fra lavt kamera
+goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 7; goalArrow.visible = false;
+for (const [color, k, ord, z] of [[0x10151f, 1.5, 5, -0.004], [0xffffff, 1.28, 6, -0.002]]) { const o = new THREE.Mesh(arrowGeo, arrowMat(color)); o.scale.set(k, k, 1); o.renderOrder = ord; goalArrow.add(o); }
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
+const mv = createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay: () => mode === 'play' && !won, isOn: () => markersOn, logEv });   // R14: markører som holder seg unna knappene (readable.js, readable_view.js)
 let compKey = '', compShowUntil = 0, compIdleSince = 0;
 const bossFighting = () => bossOn && !!LEVEL.bossS && !LEVEL.bossS.gone && ['windup', 'charge', 'stunned', 'hit', 'tired'].includes(LEVEL.bossS.mode);   // under sjefkamp: skjul NESTE-pillen så varsel og tekst får plass
+// R14: infokortet skal aldri dekke HUD-en eller NESTE-bobla: kortet legges under HUD-en, og bobla under kortet (eller skjules når bruksanvisningen er åpen)
+const hudEl = $('hud');
+function topLayout() {
+  const open = infoCard.classList.contains('show'), cw = infoCard.offsetWidth, left = innerWidth - cw;
+  const hr = hudEl.getBoundingClientRect(), hudHit = open && left < hr.right && hr.width > 0;
+  const cardTop = hudHit ? Math.round(hr.bottom + 6) : null;
+  infoCard.style.top = cardTop === null ? '' : `${cardTop}px`;
+  let ct = ''; compEl.style.top = '';
+  if (open && compEl.style.display !== 'none') {
+    const cr = compEl.getBoundingClientRect(), natural = cr.top;
+    const top = cardTop === null ? infoCard.getBoundingClientRect().top : cardTop, bottom = top + infoCard.offsetHeight;
+    if (left < cr.left + cr.width && natural < bottom + 6 && natural + cr.height > top - 4) ct = `${Math.round(bottom + 6)}px`;
+  }
+  compEl.style.top = ct;
+  if (open && ct && infoCard.classList.contains('manual')) compEl.style.display = 'none';
+}
 function compassFrame(now) {
   document.body.classList.toggle('bossfight', bossFighting());
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
@@ -1188,15 +1209,19 @@ function compassFrame(now) {
     compEl.classList.toggle('mini', !(forced || now < compShowUntil || (idle && now - compIdleSince > 2500))); }
   compEl.style.display = show && (compassMode === 'both' || compassMode === 'compass' || forced) ? 'flex' : 'none';
   goalArrow.visible = show && player.onGround && (compassMode === 'both' || compassMode === 'arrow' || forced); goalArrowG.visible = goalArrow.visible;
-  if (!show) { goalArrowG.visible = false; return; }
+  topLayout();
+  if (!show) { goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); return; }
   const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
   compArrow.style.transform = `rotate(${ang}rad)`;
   const dy = t.y - player.y;
   $('compLbl').textContent = t.final ? T('compass.goal') : T('compass.next', { name: t.label.toUpperCase() });
   compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.act ? ` · ▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
-  goalArrowG.position.set(player.x + dx / dist * 1.4, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * 1.4);
-  goalArrowG.rotation.y = Math.atan2(-dx, -dz);
+  const lowCam = innerWidth > innerHeight; goalArrowG.scale.setScalar(lowCam ? 1.35 : 1);   // liggende: lavere kamera, så pila er større og hevet litt
+  const placeArrow = (d) => goalArrowG.position.set(player.x + dx / dist * d, player.y + (lowCam ? 0.14 : 0.07) + 0.01 * Math.sin(now / 200), player.z + dz / dist * d);
+  placeArrow(1.4); goalArrowG.rotation.y = Math.atan2(-dx, -dz);
+  if (goalArrow.visible && mv?.arrowFrame(placeArrow, ang, true)) goalArrow.visible = goalArrowG.visible = false;   // R14: bak en knapp, bak figuren eller utenfor skjermen: kantstilt pil i stedet (ellers flyttes gulvpila lenger fram)
+  else if (!goalArrow.visible) mv?.arrowFrame(null, 0, false);
 }
 compEl.addEventListener('pointerdown', (e) => { e.stopPropagation(); camToGoal(); });
 $('btnCenter').addEventListener('pointerdown', (e) => { e.stopPropagation(); camBehind(); });
@@ -1495,6 +1520,7 @@ const SETTINGS = [
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
   fl('beacon', 'hjelp', 'Lyssøyle over målet', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
+  fl('markers', 'hjelp', 'Tydelige markører (grep ▲, hylle, glatt, pil i kanten)', true, () => markersOn, kp('tlm.markers', (v) => { markersOn = v; logEv('markør', v ? 'på' : 'av'); })),
   fl('griphi', 'hjelp', 'Fremhev grep (oransje, pulserende)', false, () => gripHi, kp('tlm.griphi', (v) => { gripHi = v; })),
   ...(labels.length ? [fl('labels', 'hjelp', `Brukslapper ved ting${key('L')}`, true, () => labelsOn, kp('tlm.labels', (v) => { labelsOn = v; }))] : []),
   fl('cues', 'hjelp', `Lydtekst: vis tekst for lyder${key('V')}`, false, () => cuesOn, kp('tlm.cues', (v) => { cuesOn = v; })),
@@ -1955,7 +1981,7 @@ function render(now, dt) {
   updateCarryButton();
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
   poseHero(player, now, dt, mode); animateHero(player, now, dt); updateBubble(now); updateStam();
-  updateArc(); syncMade(); syncZips(); updateLabels();
+  updateArc(); syncMade(); syncZips(); updateLabels(); mv.update(now, dt);
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
   hero.stepOff = (hero.stepOff || 0) * Math.exp(-dt / 0.07) + (player.stepDy || 0); player.stepDy = 0;                     // trinnhopp: figuren glir opp i stedet for å poppe
@@ -2283,4 +2309,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { mv, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
