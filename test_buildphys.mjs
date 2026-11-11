@@ -67,6 +67,15 @@ r = run([P('A', 'block', 0.5, 0.75), P('B', 'block', 2.5, 0.75), P('C', 'block',
 r = run([P('A', 'block', 0.5, 0.75)], [], stairs); assert.equal(r.result, 'lost', 'halv trapp er ikke nok'); assert.equal(r.reason, 'stuck');
 r = run([], [], stairs); assert.equal(r.result, 'lost');
 
+// 6b) trappa som finnes som byggested i kontroll-brettet: tre klosser fra brettet gir veien opp, og delene finnes i brettet
+{
+  const lv = JSON.parse(fs.readFileSync('levels/kontroll.level.json', 'utf8')), site = lv.build.sites.find((q) => q.id === 'trapp1');
+  assert.ok(site, 'kontroll har trapp-byggested'); assert.ok(lv.build.parts.filter((q) => q.type === 'block').length >= 3, 'tre klosser å bygge trappa av');
+  const rr = run([P('A', 'block', 0.5, 0.75), P('B', 'block', 2.5, 0.75), P('C', 'block', 2.5, 2.25)], [], site); assert.equal(rr.result, 'won', 'trapp-stedet i brettet kan bygges');
+  assert.equal(run([], [], site).result, 'lost');
+  assert.ok(lv.boxes.some((b) => b.id === 'hylle_t' && b.max[1] === site.y + 3), 'hylla i verden ligger på samme høyde som dekket');
+}
+
 // 7) determinisme: samme bygg gir nøyaktig samme prøve og samme posisjoner
 const build = [P('a', 'plank_l', 0, 0), P('b', 'block', 1, 1.25), P('c', 'weight', -2, 1.25)], lk = [link('hinge', 'b', 'a', { x: 0, y: -0.75 }, { x: 1, y: 0.25 })];
 assert.equal(JSON.stringify(run(build, lk, wide)), JSON.stringify(run(build, lk, wide)), 'samme resultat to ganger');

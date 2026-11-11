@@ -670,6 +670,25 @@
    "material": "wood",
    "cp": false,
    "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    3.25,
+    0,
+    -20
+   ],
+   "max": [
+    9,
+    3,
+    -12
+   ],
+   "id": "hylle_t",
+   "kind": "chest",
+   "color": 11107408,
+   "material": "wood",
+   "cp": false,
+   "soft": false
   }
  ],
  "movables": [],
@@ -816,6 +835,35 @@
       "u1": 5.5
      }
     ]
+   },
+   {
+    "id": "trapp1",
+    "label": "Opp på hylla (trapp)",
+    "x": 0,
+    "y": 0,
+    "z": -16,
+    "w": 14,
+    "h": 8,
+    "start": {
+     "u": -6,
+     "v": 0
+    },
+    "goal": {
+     "u": 6,
+     "v": 3
+    },
+    "anchors": [],
+    "deck": [
+     {
+      "u0": -13,
+      "u1": 3.25
+     },
+     {
+      "u0": 3.25,
+      "u1": 9,
+      "top": 3
+     }
+    ]
    }
   ],
   "parts": [
@@ -851,6 +899,13 @@
     "id": "d5",
     "type": "weight",
     "x": -32,
+    "y": 0.9,
+    "z": -12
+   },
+   {
+    "id": "d6",
+    "type": "block",
+    "x": -26,
     "y": 0.9,
     "z": -12
    }
