@@ -17,6 +17,7 @@ import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
+import { createMarkerView } from './markers_view.js';
 import { followYaw, impactSpeed, landingClass } from './camera_util.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
@@ -256,7 +257,7 @@ function material(b) {
 const woodKinds = new Set(['wood', 'woodpanel']);
 
 // brukslapper: små lapper med bruksanvisning ved ting som kan gjøre noe (brettets `hints`, bl.a. i treningsrommet). Vises når du er nær.
-let labelsOn = store.get('tlm.labels', true);
+let labelsOn = store.get('tlm.labels', true), markersOn = store.get('tlm.markers', true);
 const labels = [];
 function makeBadge() {                                         // liten «i»-merking som viser at tingen kan gjøre noe
   const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d');
@@ -300,7 +301,7 @@ function updateLabels() {
   for (const l of labels) { l.d = Math.hypot(player.x - l.pos[0], player.z - l.pos[2], (player.y - l.pos[1]) * 0.5); if (!near || l.d < near.d) near = l; }
   const on = labelsOn && mode === 'play' && labels.length > 0, tabOn = mode === 'play' && !won;
   for (const l of labels) {
-    const o = on ? Math.max(0, Math.min(1, (13 - l.d) / 4)) : 0;
+    const o = on && !(mv && mv.covered(l.pos[0], l.pos[1], l.pos[2])) ? Math.max(0, Math.min(1, (13 - l.d) / 4)) : 0;   // R14: ikke bak knapper
     l.sp.material.opacity += (o - l.sp.material.opacity) * 0.2; l.sp.visible = l.sp.material.opacity > 0.03;
   }
   infoCard.style.display = tabOn ? '' : 'none';
@@ -1137,6 +1138,7 @@ const goalArrow = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([[0, 0.
   new THREE.MeshBasicMaterial({ color: 0xffa940, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false }));
 goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visible = false;
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
+const mv = createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay: () => mode === 'play' && !won, isOn: () => markersOn, logEv });   // R14: markører som holder seg unna knappene (markers.js, markers_view.js)
 let compKey = '', compShowUntil = 0, compIdleSince = 0;
 function compassFrame(now) {
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
@@ -1147,7 +1149,7 @@ function compassFrame(now) {
     compEl.classList.toggle('mini', !(forced || now < compShowUntil || (idle && now - compIdleSince > 2500))); }
   compEl.style.display = show && (compassMode === 'both' || compassMode === 'compass' || forced) ? 'flex' : 'none';
   goalArrow.visible = show && player.onGround && (compassMode === 'both' || compassMode === 'arrow' || forced); goalArrowG.visible = goalArrow.visible;
-  if (!show) { goalArrowG.visible = false; return; }
+  if (!show) { goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); return; }
   const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
   compArrow.style.transform = `rotate(${ang}rad)`;
@@ -1156,6 +1158,8 @@ function compassFrame(now) {
   compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.act ? ` · ▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
   goalArrowG.position.set(player.x + dx / dist * 1.4, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * 1.4);
   goalArrowG.rotation.y = Math.atan2(-dx, -dz);
+  if (goalArrow.visible && mv?.arrowFrame(goalArrowG.position, ang, true)) goalArrow.visible = goalArrowG.visible = false;   // R14: bak en knapp eller utenfor skjermen: kantstilt pil i stedet
+  else if (!goalArrow.visible) mv?.arrowFrame(null, 0, false);
 }
 compEl.addEventListener('pointerdown', (e) => { e.stopPropagation(); camToGoal(); });
 $('btnCenter').addEventListener('pointerdown', (e) => { e.stopPropagation(); camBehind(); });
@@ -1449,6 +1453,7 @@ const SETTINGS = [
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
   fl('beacon', 'hjelp', 'Lyssøyle over målet', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
+  fl('markers', 'hjelp', 'Tydelige markører (grep ▲, hylle, glatt, pil i kanten)', true, () => markersOn, kp('tlm.markers', (v) => { markersOn = v; logEv('markør', v ? 'på' : 'av'); })),
   fl('griphi', 'hjelp', 'Fremhev grep (oransje, pulserende)', false, () => gripHi, kp('tlm.griphi', (v) => { gripHi = v; })),
   ...(labels.length ? [fl('labels', 'hjelp', `Brukslapper ved ting${key('L')}`, true, () => labelsOn, kp('tlm.labels', (v) => { labelsOn = v; }))] : []),
   fl('cues', 'hjelp', `Lydtekst: vis tekst for lyder${key('V')}`, false, () => cuesOn, kp('tlm.cues', (v) => { cuesOn = v; })),
@@ -1864,7 +1869,7 @@ function render(now, dt) {
   updateCarryButton();
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
   poseHero(player, now, dt, mode); animateHero(player, now, dt); updateBubble(now); updateStam();
-  updateArc(); syncMade(); syncZips(); updateLabels();
+  updateArc(); syncMade(); syncZips(); updateLabels(); mv.update(now, dt);
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
   hero.stepOff = (hero.stepOff || 0) * Math.exp(-dt / 0.07) + (player.stepDy || 0); player.stepDy = 0;                     // trinnhopp: figuren glir opp i stedet for å poppe
