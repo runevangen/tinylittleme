@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.05** – Mykere skygger og lysbaking: mørke blobber under og ved møbler, i hjørner og en varm lysflekk fra vinduet gir mer ekte rom. Kan slås av i ⚙ → Spill (Myke skygger); Enkel grafikk og Lav profil er uendret.
 - **1.04** – Veikart: byggemekanikken er avklart som egen byggeskjerm (sideriss, snapping, testfigur, tau/tape/vekter, alltid en vanskelig alternativ vei) og delt i R24 (skall), R25 (2D-fysikk), R26 (ut i verdenen + to brett).
 
 - **1.04** – Belønning som varer: beste smuletall og tid huskes per nivå, 10/10 låser opp hatt/skjerf/sekk, og et lekerom-skap på startskjermen lar deg bytte tilbehør med ett trykk (stikke + TA/⚙).

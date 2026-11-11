@@ -39,10 +39,6 @@ Ferdig når: alle seks nivåene har 2–4 delmål, de fungerer med lagring/forts
 I skjermbildene er gulvet i nivå 2 en stor, nesten tom trebit med lite å lese skala av, den mørke badematta i nivå 1 flimrer/pikselerer (moiré på ripestruktur), og kjøkkengulvet er en jevn beige flate. Fiks mipmap/anisotropi/relieff-frekvens på matta og andre høyfrekvente teksturer, og strø småting for målestokk (smuler, hår, knapper, mynter, blyantstumper, flekker, fuger med skitt) med tetthet satt etter rom og kvalitet. Dette gjelder også BACKLOG «Detaljert rom». Filer: `look.js`, `props.js`, `scenes/` (dekor uten kollisjon), `main.js` (teksturinnstillinger).
 Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hverandre), start-skjermbildene i nivå 2 og 6 viser minst tre ting som gir skala, og FPS-målingen ligger innenfor 1 fps av før.
 
-### [ ] R17 · Mykere skygger og lysbaking: rommet skal sitte sammen
-Møbler og leker står fortsatt litt «limt» oppå gulvet; kontaktskygger finnes, men det mangler omgivelsesokklusjon i hjørner, under senger og bak skap, og lyset fra vinduet gir hard kant. Bak enkel, billig AO (mørk gradient i vertex-farge eller bakt blob under og ved vegg), mykere skyggekant (PCF/radius etter kvalitet) og varm lysflekk fra vinduet på gulvet. Kun på «Høy»; Enkel grafikk og Lav profil beholder dagens look. Filer: `look.js`, `atmos.js`, `grade.js`, `main.js` (SETTINGS-gruppe grafikk).
-Ferdig når: skjermbilder av nivå 2 og 5 før/etter viser tydelig mørkning i hjørner og under møbler, FPS-målingen faller under 2 fps, og lav profil slår det helt av (test i `test_perf.mjs`).
-
 ### [ ] R18 · Små stemmer i rommet: leker som lever og reagerer
 Rommene er stille mellom fiendene. Gi 3–5 rekvisitter små levende reaksjoner (vippehest gynger når du lander på den, tennisball ruller videre og piper, lekebil kan skyves og tuter, wind-up-leke går noen skritt og stopper, bokser med fjær spretter). Ingen ny kollisjonsmodell: gjenbruk flyttbare ting og lyd. Dette gjør Toy Story-følelsen konkret. Filer: `toys.js`, `props.js`, `audio.js`, `scenes/`, `logEv('leke', …)`.
 Ferdig når: hver av de nye lekene finnes i minst to nivåer, kan utløses med TA/HOPP/GREP uten tastatur, har egen lyd og lydtekst, og `walk_route` er fortsatt grønn.
@@ -60,6 +56,7 @@ Fortellingen og pilene forklarer mye, men første skjermbilde i hvert nivå vise
 Ferdig når: alle seks nivåene har sveip og delmål, sveipet kan hoppes over med ett trykk, tekst nevner knapper (ikke taster), og tester dekker at sveipet slutter og gir kontrollen tilbake.
 
 ## Ferdige punkter
+- [x] Mykere skygger og lysbaking: rommet skal sitte sammen (v1.05)
 - [x] Belønning som varer: stjerner, hatter og et rom å komme tilbake til (v1.04)
 - [x] Kart og kompass: aldri tapt i store rom (v1.02)
 - [x] Lesbarhet: verdensmarkører under knapper og tydelig hva som kan gripes (v1.00)
