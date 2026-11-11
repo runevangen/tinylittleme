@@ -5,7 +5,7 @@ Alle valg ligger i **én liste, `SETTINGS` i `main.js`**. Den styrer panelet, «
 ## Grupper
 | Gruppe | Innhold |
 |---|---|
-| **Spill** | Lysstråler, mørkere hjørner og småting på gulvet (R4, atmos.js; bare med Detaljert grafikk), Startskjerm (vis ved oppstart), Hovedmeny-knapp, Autolagring, ting kommer tilbake, to trykk på Lagre/Tilbake/Ting, tekniske tall (alltid, eller trykk på teksten øverst), brettvalg, Start på nytt |
+| **Spill** | Grafikk (Detaljert/Enkel), **Fargegradering** (`tlm.grade`: «Varm film» = Toy Story-lys med varm sol, kjølig fyll og kantlys, eller «Av»; **Fargefilter på skjermen** (`tlm.gradefilter`) slår det milde CSS-filteret av/på uten å miste lysene; laster siden på nytt; Enkel grafikk får aldri ekstra lys, clearcoat eller filter; valget logges som `grade` i rapporten), Lysstråler, mørkere hjørner og småting på gulvet (R4, atmos.js; bare med Detaljert grafikk), Startskjerm (vis ved oppstart), Hovedmeny-knapp, Autolagring, ting kommer tilbake, to trykk på Lagre/Tilbake/Ting, tekniske tall (alltid, eller trykk på teksten øverst), brettvalg, Start på nytt |
 | **Styring** | Kamerafølsomhet, stikke-dødsone, knappestørrelse, kast med dra, dobbelttrykk, ◎-knapp, grip kanten, vibrasjon |
 | **Kamera** | Følger retning, hjelper, utoning (+ synlighet), kameraavstand |
 | **Hjelp og tekst** | Retningshjelp (kompass/gulvpil/begge/av), tips etter 3 fall, fremhev grep, lapper, lydtekst, snakkebobler |

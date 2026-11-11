@@ -1,0 +1,18 @@
+import { gradeParams, GRADE_MODES, gradeTint } from './grade.js';
+let bad = 0; const ok = (c, m) => { if (!c) { bad++; console.log('FEIL: ' + m); } };
+const look = { exposure: 0.78, sun: 2 };
+const f = gradeParams(look, 'film'), o = gradeParams(look, 'off'), lo = gradeParams(look, 'film', true);
+ok(GRADE_MODES.includes('film') && GRADE_MODES.includes('off'), 'moduser');
+ok(o.exposure === 0.78 && o.sun === 2 && o.fill === 0 && o.rim === 0 && o.filter === '', 'off = uendret');
+ok(f.exposure >= look.exposure && f.exposure < look.exposure * 1.15, 'film: ikke mørkere, ikke utbrent');
+ok(f.fill > 0 && f.rim > 0 && f.filter.includes('saturate'), 'film har fyll, kantlys og filter');
+ok(lo.fill === 0 && lo.rim === 0 && lo.filter === '', 'Enkel grafikk: ingen ekstra lys/filter');
+ok(gradeParams({}, 'film').sun >= 3, 'standardverdier');
+ok(f.sunColor !== 0xffae55 && f.sunColor !== o.sunColor, 'varmere sol enn av');
+ok(f.fill >= 0.5 && f.rim >= 0.4 && f.env < o.env, 'fyll/kantlys merkbare, mindre miljølys');
+ok(!f.filter.includes('sepia') && f.filter.includes('contrast'), 'filter uten sepia (ikke ensfarget beige)');
+ok(gradeParams(look, 'film', false, false).filter === '' && gradeParams(look, 'film', false, false).fill > 0, 'filter kan slås av uten å miste lysene');
+ok(f.gloss > 1 && o.gloss === 1 && lo.gloss === 1 && f.tileRough > 0.8 && !o.tileRough, 'klarlakk-speiling og matte fliser bare i film');
+ok(gradeTint('bad', 'wall:tile') && gradeTint('kjokken2', 'floor:tile') && !gradeTint('bad', 'wall:tile', 0.5, 'off') && !gradeTint('soverom', 'wall:tile'), 'fargeaksent: bare film, bare kjente rom (nivå 4-6 følger grunnrommet)');
+if (bad) process.exit(1);
+console.log('grade: ok');

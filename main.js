@@ -10,6 +10,8 @@ import { buildPuzzleViews } from './puzzle_view.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
 import { makeAtmos } from './atmos.js';
+import { applyGrade } from './grade_apply.js';
+import { gradeTint } from './grade.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
@@ -190,7 +192,6 @@ const shHalf = devicePixelRatio > 2 || innerWidth < 700 ? 17 : 26;       // v0.7
 Object.assign(sun.shadow.camera, { left: -shHalf, right: shHalf, top: shHalf, bottom: -shHalf, near: 1, far: 220 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
-scene.add(new THREE.HemisphereLight(0xeaf1ff, 0xa5845c, 0.42));       // kjølig himmellys ovenfra, varmt gjenskinn fra gulvet
 
 // ---------- utseende: teksturer med relieff, bøker, kontaktskygger og støv (look.js) ----------
 const gfxLow = store.get('tlm.gfx', 'high') === 'low';
@@ -198,6 +199,18 @@ if (gfxLow) renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 const maxAniso = gfxLow ? 4 : Math.min(16, renderer.capabilities.getMaxAnisotropy());
 setAniso(maxAniso);
 const look = makeLook({ aniso: maxAniso, low: gfxLow });
+const gradeMode = store.get('tlm.grade', 'film');   // R1: Toy Story-lys (film) eller opprinnelig lys (off); lys i grade.js
+const grade = applyGrade({ renderer, scene, sun, canvas, look: LEVEL.look, mode: gradeMode, low: gfxLow, filterOn: store.get('tlm.gradefilter', true) !== false });
+const bigBox = (b, lim = 120) => Array.isArray(b.min) && Array.isArray(b.max) && Math.max(b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]) > lim;   // store flater: dempet clearcoat, ellers hvite glansflekker
+// Blank overflate (clearcoat) er dyrere enn Standard: bare med Grafikk «Detaljert» og ikke «Enkel»
+const glossy = (b, o, cc, ccr) => {
+  if (gfxLow) return std(o);
+  const big = bigBox(b), tall = grade.params.gloss > 1 && bigBox(b, 30);
+  if (tall && o.color != null) o = { ...o, color: new THREE.Color(o.color).multiplyScalar(0.8) };   // R1: store lyse flater (kjøleskap) dempes i film-lys, ellers klipper de til hvitt
+  const m = new THREE.MeshPhysicalMaterial({ ...o, clearcoat: big ? Math.min(cc, 0.35) : cc, clearcoatRoughness: big ? Math.max(ccr, 0.35) : ccr * (grade.params.gloss > 1 ? 0.4 : 1) });
+  if (grade.params.gloss > 1) { m.envMap = scene.environment; m.envMapIntensity = bigBox(b, 30) ? 1 : grade.params.gloss; }   // R1: klarlakken (store flate ting som kjøleskap: ingen ekstra speiling, ellers utbrent hvit) speiler miljøet tydelig (film-gradering)
+  return m;
+};
 const texMat = (set, o = {}) => std({ map: set.map.clone(), normalMap: set.normalMap ? set.normalMap.clone() : null, roughnessMap: set.roughnessMap ? set.roughnessMap.clone() : null, ...o });
 const eachMap = (mat, fn) => { for (const k of ['map', 'normalMap', 'roughnessMap']) if (mat[k]) fn(mat[k]); };
 
@@ -205,20 +218,23 @@ const eachMap = (mat, fn) => { for (const k of ['map', 'normalMap', 'roughnessMa
 const room = LEVEL.room;
 const std = (o) => new THREE.MeshStandardMaterial(o);
 
+const tileR = (r) => Math.max(r, grade.params.tileRough || 0);   // R1: fliser matte i film-gradering (ingen utbrent solspeiling)
 function material(b) {
-  const col = b.color ?? 0xcccccc;
+  let col = b.color ?? 0xcccccc;
   const kind = b.type === 'floor' || b.type === 'wall' ? `${b.type}:${b.material || 'default'}` : (b.material || b.type);
+  const c0 = new THREE.Color(col), tint = gradeTint(levelId, kind, (c0.r + c0.g + c0.b) / 3, gradeMode);   // R1: fargeaksent per rom (bare film)
+  if (tint) col = c0.multiply(new THREE.Color(...tint)).getHex();
   switch (kind) {
-    case 'floor:default': case 'floor:wood': return texMat(look.floor, { roughness: 1 });
-    case 'floor:tile': return texMat(look.tile, { color: col, roughness: 0.55 });
-    case 'wall:tile': return texMat(look.tile, { color: col, roughness: 0.7 });
+    case 'floor:default': case 'floor:wood': return texMat(look.floor, { ...(tint ? { color: col } : {}), roughness: 1 });
+    case 'floor:tile': return texMat(look.tile, { color: col, roughness: tileR(0.55), ...(grade.params.tileRough ? { roughnessMap: null } : {}) });
+    case 'wall:tile': return texMat(look.tile, { color: col, roughness: tileR(0.7), ...(grade.params.tileRough ? { roughnessMap: null } : {}) });
     case 'wall:default': case 'wall:plaster': case 'wall': return texMat(look.plaster, { color: col, roughness: 0.95 });
     case 'woodpanel': return texMat(look.panel, { color: col, roughness: 0.7 });       // stående panelbord
     case 'wood': return texMat(look.wood, { color: col, roughness: 0.55 });
     case 'book': return std({ color: col, roughness: 0.78 });
-    case 'plastic': return std({ color: col, roughness: 0.3, metalness: 0.1 });
-    case 'porcelain': return std({ color: col, roughness: 0.07 });
-    case 'ceramic': return std({ color: col, roughness: 0.15 });
+    case 'plastic': return glossy(b, { color: col, roughness: 0.3, metalness: 0.1 }, 0.7, 0.18);     // R1: blank plast
+    case 'porcelain': return glossy(b, { color: col, roughness: 0.1 }, 0.8, 0.12);
+    case 'ceramic': return glossy(b, { color: col, roughness: 0.15 }, 0.7, 0.15);
     case 'glass': return new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.04, transparent: true, opacity: 0.4, transmission: 0.6 });
     case 'metal': return std({ color: col, roughness: 0.22, metalness: 1 });
     case 'mirror': return std({ color: 0xffffff, roughness: 0.02, metalness: 1 });
@@ -385,7 +401,7 @@ for (const b of LEVEL.boxes) {
     const g = new THREE.Group(); g.position.set(...win.pos);
     g.rotation.y = { N: 0, S: Math.PI, E: -Math.PI / 2, W: Math.PI / 2 }[win.wall] ?? 0;
     const [ww, wh] = win.size;
-    g.add(new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ map: look.skyTex(), toneMapped: false })));
+    g.add(new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ map: look.skyTex(), color: 0xc4cfe0, toneMapped: false })));
     for (const [x, y, sx, sy] of [[0, wh / 2 + 0.4, ww + 1.6, 0.8], [0, -wh / 2 - 0.4, ww + 1.6, 0.8], [-ww / 2 - 0.4, 0, 0.8, wh], [ww / 2 + 0.4, 0, 0.8, wh], [0, 0, 0.4, wh]]) {
       const f = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, 0.7), frameMat); f.position.set(x, y, 0.3); g.add(f);
     }
@@ -951,6 +967,7 @@ function failAt(why = 'fall') {
 }
 addEventListener('pagehide', saveProgress);
 if (resumed) logEv('gjenopptatt');
+logEv('grade', gradeMode + (gfxLow ? ' (enkel: ingen kantlys/fyll/filter)' : ''));   // R1: hvilken gradering som kjører (rapporten)
 if (resumed) setTimeout(() => toast('Fortsetter der du var · ⚙ → Start på nytt for å begynne på nytt'), 1500);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveProgress(); });
 
@@ -987,6 +1004,7 @@ function restartAll() {
 }
 
 // ---------- modus: plan / fly ----------
+if (grade.params.gloss > 1) scene.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (m.isMeshPhysicalMaterial && m.clearcoat > 0 && !m.transparent && !m.envMap) { m.envMap = scene.environment; o.geometry.computeBoundingBox(); const bs = o.geometry.boundingBox.getSize(new THREE.Vector3()).multiply(o.getWorldScale(new THREE.Vector3())); m.envMapIntensity = Math.max(bs.x, bs.y, bs.z) > 30 ? 1 : grade.params.gloss; } });   // R1 (store flater får ikke ekstra speiling, ellers utbrent): all blank klarlakk (props.js m.m.) speiler miljøet tydelig
 const cam = { yaw: 0.35, pitch: viewMode === 'shoulder' ? 0.18 : viewMode === 'first' ? 0.05 : 0.3, dist: camDistSet, cur: viewMode === 'shoulder' ? shDist : camDistSet, target: new THREE.Vector3(...LEVEL.start) };
 let camLook = 0, camPitchBias = 0, camLift = 0, camUpTilt = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
@@ -1342,6 +1360,8 @@ const SETTINGS = [
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
+  sl('grade', 'spill', 'Fargegradering (Toy Story-lys, laster siden på nytt)', 'film', [['film', 'Varm film'], ['off', 'Av (opprinnelig lys)']], () => gradeMode, (v) => { if (v === gradeMode) return; logEv('grade', v); store.set('tlm.grade', v); setTimeout(() => location.reload(), 150); }),
+  fl('gradefilter', 'spill', 'Fargefilter på skjermen (Varm film; slå av om det går tregt)', true, () => store.get('tlm.gradefilter', true) !== false, (v) => { store.set('tlm.gradefilter', v); logEv('gradefilter', v ? 'på' : 'av'); grade.setFilter(v); }),
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
   ...(gfxLow ? [] : [
     fl('rays', 'spill', 'Lysstråler fra vinduet (Detaljert grafikk)', true, () => raysOn, kp('tlm.rays', (v) => { raysOn = v; logEv('lysstraaler', v ? 'på' : 'av'); })),
@@ -1925,6 +1945,7 @@ function render(now, dt) {
   camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
+  grade.follow(player, camera);
   renderer.render(scene, camera);
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
   $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :

@@ -19,10 +19,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R1 · Toy Story-lys og farge
-Varmere, mer mettet belysning og fargegradering som i Pixar: mykere nøkkellys med varm sol og kjølig fyll, litt mer kontrast i skyggene, blankere plast (clearcoat) på plast- og porselensflater, tydeligere kantlys. Må ikke gjøre rommene mørkere eller ulesbare, og FPS skal ikke falle merkbart (Grafikk «Enkel» skal fortsatt virke). Filer: `main.js` (lys, tonemapping), `look.js`, evt. `level.look` i scenene.
-Ferdig når: før/etter-skjermbilder av nivå 1, 2 og 3 viser tydelig varmere og mer levende bilde uten blomstring eller utbrente flater.
-
 ### [ ] R8 · Fortelling og målseremoni
 Korte fortellertekster (norsk/engelsk i `i18n.js`) i start av hvert nivå (kort kort-kort, ikke vegger av tekst), en bedre målskjerm med smuler, tid, maur knust og en tydelig «Neste nivå», og en liten avslutning etter nivå 6. Alt bruker knappenavn, ikke taster. Må kunne hoppes over med ett trykk.
 Ferdig når: flyten start → spill → mål → neste nivå føles komplett på mobil.
@@ -36,6 +32,7 @@ Se `docs/FIGUREN.md` og `BACKLOG.md`: føtter som tilpasser seg trinn, bedre hen
 Ferdig når: animasjonene leses tydelig i skjermbilder/serier og ingen eksisterende test brekker.
 
 ## Ferdige punkter
+- [x] Toy Story-lys og farge (v0.91)
 - [x] Nøkkel og lås (Zelda-gåte) (v0.90)
 - [x] Musikk og stemning per rom (v0.84)
 - [x] Fiender: flere slag (v0.83)
