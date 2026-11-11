@@ -2,6 +2,8 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.04** – Veikart: byggemekanikken er avklart som egen byggeskjerm (sideriss, snapping, testfigur, tau/tape/vekter, alltid en vanskelig alternativ vei) og delt i R24 (skall), R25 (2D-fysikk), R26 (ut i verdenen + to brett).
+
 - **1.04** – Belønning som varer: beste smuletall og tid huskes per nivå, 10/10 låser opp hatt/skjerf/sekk, og et lekerom-skap på startskjermen lar deg bytte tilbehør med ett trykk (stikke + TA/⚙).
 
 - **1.03** – Veikart: nye punkter R24 (byggemekanisme à la Poly Bridge: finn deler, bygg bro/trapp med fysikk) og R23 (delmål i hvert nivå), lagt øverst i køen.
