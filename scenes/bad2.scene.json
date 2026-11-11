@@ -367,6 +367,44 @@
       "group": "vask"
     },
     {
+      "id": "vask_bunn",
+      "material": "porcelain",
+      "color": "#b9d6e0",
+      "box": [
+        121,
+        145,
+        76,
+        76.6,
+        22,
+        42
+      ],
+      "confidence": 0.8,
+      "photos": [
+        4
+      ],
+      "group": "vask",
+      "note": "Bunnen i vasken: blålig og litt hevet, så det er tydelig at dette er en vask du kan hoppe ned i (ikke et usynlig hull)."
+    },
+    {
+      "id": "vask_sluk",
+      "material": "metal",
+      "color": "#3f464c",
+      "box": [
+        131,
+        135,
+        76.6,
+        77,
+        30,
+        34
+      ],
+      "confidence": 0.8,
+      "photos": [
+        4
+      ],
+      "group": "vask",
+      "note": "Sluket."
+    },
+    {
       "id": "skapknott_1",
       "kind": "knob",
       "material": "metal",

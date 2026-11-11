@@ -328,14 +328,16 @@ function carryControl(p, inp, dt, L) {
   }
   if (p.carryLatch) { if (!inp.carryHeld) p.carryLatch = false; return; }
   if (inp.carryHeld) {
-    if (inp.aim) { p.fx = inp.aim.dx; p.fz = inp.aim.dz; p.charge = P.throwMin + Math.max(0.02, inp.aim.k) * P.throwFull; p.aiming = true; return; }   // dra-og-slipp: retning og kraft fra fingeren
+    if (inp.aim) { p.fx = inp.aim.dx; p.fz = inp.aim.dz; p.charge = P.throwMin + Math.max(0.02, inp.aim.k) * P.throwFull; p.aimK = Math.max(p.aimK || 0, inp.aim.k); p.aiming = true; return; }   // dra-og-slipp: retning og kraft fra fingeren
     if (p.aiming) { p.aiming = false; p.charge = 0; }
     p.charge += dt; return;
   }
   p.aiming = false;
-  const c = p.charge; p.charge = 0;
+  const c = p.charge, ak = p.aimK || 0; p.charge = 0; p.aimK = 0;
   if (c <= 0) return;
-  if (c < P.throwMin) {
+  // v0.97: et litt for langt (eller litt dratt) trykk på «Rull ut»/«Smør» skal fortsatt bruke verktøyet, ikke kaste det. Bare et tydelig kast (lenge holdt eller langt dratt) kaster
+  const hint = p.carry?.tool ? toolHint(p, L) : null, toolTap = !!hint && !hint.startsWith('need') && ak < 0.35 && c < 0.9;
+  if (c < P.throwMin || toolTap) {
     const r = useTool(p, L);
     if (r === true) return;
     if (typeof r === 'string' && r.startsWith('zip-')) { (L.events ||= []).push({ type: 'toolhint', tool: 'zip', why: r }); return; }   // tråden kan ikke festes her: forklar, behold nålen

@@ -1894,7 +1894,7 @@ const perfMerge = { before: 0, after: 0 };
 }
 let perfFrames = 0, perfPending = true, perfLine = '';
 function applyLowProfile(on) {                       // slår av skygge-kart, støv, korn, lysstråler og ekstra lys; kommer tilbake når den slås av
-  lowOn = on; sun.castShadow = !on; grade.setLow(on); look.setDetail(!on); glow.visible = !on;
+  lowOn = on; sun.castShadow = !on; grade.setLow(on); look.setDetail(!on); glow.intensity = on ? 0 : 30;        // lysets antall endres ikke (ville tvunget alle shadere til å kompileres på nytt midt i spillet)
   perfPending = true; perfFrames = 0; logEv('lav profil', on ? 'på (ingen skygge-kart, støv, korn, lysstråler eller ekstra lys)' : 'av');
 }
 if (lowMode === 'on') { lowP.decide(null, 9, 1, 'on'); applyLowProfile(true); }
@@ -2177,9 +2177,27 @@ if (startWanted) showStart(); else showIntro();
 applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
 if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true); setTimeout(() => toast('PC: klikk i bildet for å styre blikket med musa (Esc slipper). WASD går, mellomrom hopper, venstre museknapp eller F tar, høyre eller E griper.'), 2500); }
+// v0.97: forvarming. three kompilerer shadere og laster opp teksturer først når noe kommer i syne, som gir et plutselig «stopp» (100-300 ms) første gang du ser nytt område eller en effekt. Gjør alt på forhånd, mens introskjermen vises
+function warmUp() {
+  const t0 = performance.now(); const hidden = [];
+  try {
+    scene.traverse((o) => { if (!o.visible && !o.isLight) { hidden.push(o); o.visible = true; } });
+    const seen = new Set();
+    scene.traverse((o) => { for (const m of [].concat(o.material || [])) for (const k of ['map', 'emissiveMap', 'roughnessMap', 'normalMap', 'bumpMap', 'alphaMap', 'aoMap']) { const t = m[k]; if (t && !seen.has(t)) { seen.add(t); try { renderer.initTexture(t); } catch { /* ikke støttet */ } } } });
+    renderer.compile(scene, camera);
+  } catch (e) { logEv('forvarming feilet', String(e.message || e)); }
+  for (const o of hidden) o.visible = false;
+  logEv('forvarming', `${Math.round(performance.now() - t0)} ms (shadere og teksturer klargjort)`);
+}
+requestAnimationFrame(() => setTimeout(warmUp, 50));
+let lastHitch = -99;
 let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
+  if (raw > 90 && raw < 3000 && mode === 'play' && !menuOpen && clock - lastHitch > 2) {          // v0.97: hakking logges med det som skjedde like før, så vi ser årsaken i neste rapport
+    lastHitch = clock; const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'lav fps').slice(-3).map((e) => e.type).join(', ');
+    logEv('hakk', `${Math.round(raw)} ms${near ? ' etter: ' + near : ''} · ${renderer.info.programs?.length ?? '?'} shadere, ${renderer.info.render.calls} tegnekall`);
+  }
   if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps${renderer.getPixelRatio() < basePr - 0.01 ? ' · ' + renderer.getPixelRatio().toFixed(2) + '×' : ''}`; perf.win = perf.winN = 0; } }
   { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
     if (mode === 'play' && !menuOpen) autoQC.feed(raw);
