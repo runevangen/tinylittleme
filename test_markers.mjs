@@ -1,5 +1,5 @@
 // node test_markers.mjs: R14, pilplassering (ren funksjon) og ugripbare flater
-import { placeMarker, edgePoint, inAny, inflate, ungrippableAhead, shelfIds } from './markers.js';
+import { placeMarker, edgePoint, inAny, inflate, ungrippableAhead, shelfIds, figureRect, pickArrowDistance } from './markers.js';
 let bad = 0; const ok = (c, m) => { if (!c) { bad++; console.log('FEIL', m); } };
 // iPhone 14 stående (390x844) og liggende (844x390) med knapper omtrent som i index.html
 const layouts = {
@@ -31,4 +31,12 @@ ok(ungrippableAhead(pl({ x: -3 }), [wall], k) === null, 'for langt unna');
 ok(ungrippableAhead(pl({ fx: -1 }), [wall], k) === null, 'ser bort fra veggen');
 const u = ungrippableAhead(pl({}), [wall], k); ok(u && u.nx === -1 && u.x === 1, 'markøren ligger på flaten med normal mot deg');
 ok(shelfIds([{ id: 'hylle' }, { id: 'g', grip: true }, { id: 'gulv' }], [shelf, gripB, { type: 'floor', id: 'gulv', min: [0, 0, 0], max: [1, 1, 1] }]).join() === 'hylle', 'bare ekte hyller får hyllekant');
+// figur og gulvpil
+{ const fr = figureRect({ x: 195, y: 380 }, { x: 195, y: 470 }); ok(fr && inAny(195, 420, [fr]) && fr.x1 - fr.x0 >= 68, 'figurrektangel dekker kroppen');
+  ok(figureRect(null, { x: 1, y: 2 }) === null, 'figurrektangel uten punkt gir null');
+  const spot = (d) => ({ x: 195, y: 470 - d * 40 });                              // pila rykker oppover skjermen jo lenger fram
+  ok(pickArrowDistance(spot, [1.4, 2.2, 3.0, 3.8], 390, 844, [fr]) === 3.0, 'pila flyttes lenger fram til den er fri for figuren');
+  ok(pickArrowDistance(spot, [1.4, 2.2], 390, 844, [fr]) === null, 'ingen fri avstand gir null (kantpil)');
+  ok(pickArrowDistance(() => null, [1.4], 390, 844, []) === null, 'bak kameraet gir null');
+  const r = placeMarker(195, 420, 390, 844, [inflate(fr, 18)]); ok(r.safe && !inAny(r.x, r.y, [fr]), 'markør på figuren flyttes utenfor figuren'); }
 console.log(bad ? `${bad} feil` : 'markør-tester grønne'); if (bad) process.exit(1);

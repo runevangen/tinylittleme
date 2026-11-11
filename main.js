@@ -102,7 +102,7 @@ addEventListener('touchstart', unlockAudio, { passive: true }); addEventListener
 // v0.87: etter «Neste nivå» lastes siden på nytt og lyden er låst til første trykk er løftet. Holder du stikka, kommer lyden sent: vis en liten knapp til lyden går
 {
   const pill = document.createElement('button'); pill.id = 'soundPill'; pill.textContent = '🔈 Trykk for lyd';
-  pill.style.cssText = 'position:fixed;left:50%;bottom:max(150px,calc(env(safe-area-inset-bottom) + 140px));transform:translateX(-50%);z-index:6;display:none;padding:10px 18px;border-radius:999px;border:2px solid #ffa94099;background:#121a2cdd;color:#ffd9a0;font:700 15px system-ui';
+  pill.style.cssText = 'position:fixed;left:50%;top:max(46px,calc(env(safe-area-inset-top) + 40px));transform:translateX(-50%);z-index:6;display:none;padding:7px 12px;border-radius:999px;border:2px solid #ffa94099;background:#121a2cdd;color:#ffd9a0;font:700 13px system-ui;white-space:nowrap';   // R14: rett under HUD-linja i midten, vekk fra figuren og TA/HOPP; skjules mens infokortet er ute
   document.body.appendChild(pill);
   const t0 = performance.now(); let logged = false;
   const running = () => audio?.ctx?.state === 'running';
@@ -110,7 +110,7 @@ addEventListener('touchstart', unlockAudio, { passive: true }); addEventListener
     const ok = running();
     if (ok && !logged) { logged = true; logEv('lyd klar', `${Math.round(performance.now() - t0)} ms etter oppstart`); }
     let inMenu = false; try { inMenu = menuOpen; } catch { /* startskjermen er ikke satt opp ennå */ }
-    pill.style.display = !ok && TOUCH && performance.now() - t0 > 1200 && !inMenu ? 'block' : 'none';
+    pill.style.display = !ok && TOUCH && performance.now() - t0 > 1200 && !inMenu && !document.getElementById('infocard')?.classList.contains('show') ? 'block' : 'none';
   }, 400);
 }
 // iPhone stopper lyden (suspended/interrupted) ved lås eller fanebytte: ta den opp igjen når fanen er synlig, og ved neste trykk (unlockAudio)
@@ -1140,6 +1140,22 @@ goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visibl
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
 const mv = createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay: () => mode === 'play' && !won, isOn: () => markersOn, logEv });   // R14: markører som holder seg unna knappene (markers.js, markers_view.js)
 let compKey = '', compShowUntil = 0, compIdleSince = 0;
+// R14: infokortet skal aldri dekke HUD-en eller NESTE-bobla: kortet legges under HUD-en, og bobla under kortet (eller skjules når bruksanvisningen er åpen)
+const hudEl = $('hud');
+function topLayout() {
+  const open = infoCard.classList.contains('show'), cw = infoCard.offsetWidth, left = innerWidth - cw;
+  const hr = hudEl.getBoundingClientRect(), hudHit = open && left < hr.right && hr.width > 0;
+  const cardTop = hudHit ? Math.round(hr.bottom + 6) : null;
+  infoCard.style.top = cardTop === null ? '' : `${cardTop}px`;
+  let ct = ''; compEl.style.top = '';
+  if (open && compEl.style.display !== 'none') {
+    const cr = compEl.getBoundingClientRect(), natural = cr.top;
+    const top = cardTop === null ? infoCard.getBoundingClientRect().top : cardTop, bottom = top + infoCard.offsetHeight;
+    if (left < cr.left + cr.width && natural < bottom + 6 && natural + cr.height > top - 4) ct = `${Math.round(bottom + 6)}px`;
+  }
+  compEl.style.top = ct;
+  if (open && ct && infoCard.classList.contains('manual')) compEl.style.display = 'none';
+}
 function compassFrame(now) {
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
   const forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6);
@@ -1149,6 +1165,7 @@ function compassFrame(now) {
     compEl.classList.toggle('mini', !(forced || now < compShowUntil || (idle && now - compIdleSince > 2500))); }
   compEl.style.display = show && (compassMode === 'both' || compassMode === 'compass' || forced) ? 'flex' : 'none';
   goalArrow.visible = show && player.onGround && (compassMode === 'both' || compassMode === 'arrow' || forced); goalArrowG.visible = goalArrow.visible;
+  topLayout();
   if (!show) { goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); return; }
   const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
@@ -1156,9 +1173,9 @@ function compassFrame(now) {
   const dy = t.y - player.y;
   $('compLbl').textContent = t.final ? T('compass.goal') : T('compass.next', { name: t.label.toUpperCase() });
   compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.act ? ` · ▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
-  goalArrowG.position.set(player.x + dx / dist * 1.4, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * 1.4);
-  goalArrowG.rotation.y = Math.atan2(-dx, -dz);
-  if (goalArrow.visible && mv?.arrowFrame(goalArrowG.position, ang, true)) goalArrow.visible = goalArrowG.visible = false;   // R14: bak en knapp eller utenfor skjermen: kantstilt pil i stedet
+  const placeArrow = (d) => goalArrowG.position.set(player.x + dx / dist * d, player.y + 0.03 + 0.01 * Math.sin(now / 200), player.z + dz / dist * d);
+  placeArrow(1.4); goalArrowG.rotation.y = Math.atan2(-dx, -dz);
+  if (goalArrow.visible && mv?.arrowFrame(placeArrow, ang, true)) goalArrow.visible = goalArrowG.visible = false;   // R14: bak en knapp, bak figuren eller utenfor skjermen: kantstilt pil i stedet (ellers flyttes gulvpila lenger fram)
   else if (!goalArrow.visible) mv?.arrowFrame(null, 0, false);
 }
 compEl.addEventListener('pointerdown', (e) => { e.stopPropagation(); camToGoal(); });

@@ -59,3 +59,20 @@ export function shelfIds(route = [], boxes = []) {
   const ok = new Set(boxes.filter((b) => b.type !== 'floor' && b.type !== 'wall' && !b.grip && !b.dyn).map((b) => b.id));
   return route.filter((w) => !w.grip && !w.via && ok.has(w.id)).map((w) => w.id);
 }
+
+// Figurens skjermrektangel ut fra hodet og føttene (skjermpunkter). Pil og markører holdes utenfor så de aldri dekker hovedpersonen.
+export function figureRect(head, feet, pad = 10) {
+  if (!head || !feet) return null;
+  const h = Math.max(40, Math.abs(feet.y - head.y)), half = Math.max(34, h * 0.4), cx = (head.x + feet.x) / 2;
+  return { x0: cx - half - pad, y0: Math.min(head.y, feet.y) - pad, x1: cx + half + pad, y1: Math.max(head.y, feet.y) + pad };
+}
+
+// Gulvpila prøves på stadig lengre avstand foran figuren til den havner på et fritt sted på skjermen (utenfor knapper og figur).
+// spot(d) gir skjermpunktet {x,y} (eller null bak kameraet) for avstand d. Returnerer første d som er fri, ellers null.
+export function pickArrowDistance(spot, dists, vw, vh, rects, margin = 14) {
+  for (const d of dists) {
+    const s = spot(d);
+    if (s && s.x > margin && s.x < vw - margin && s.y > margin && s.y < vh - margin && !inAny(s.x, s.y, rects)) return d;
+  }
+  return null;
+}

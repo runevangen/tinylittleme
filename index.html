@@ -66,6 +66,7 @@
   #compass .ctxt{max-width:min(52vw,230px);white-space:normal;overflow-wrap:anywhere;hyphens:auto}
   #compass:not(.mini){border-radius:22px}
   @media (max-height:500px){#compass{top:max(54px,calc(env(safe-area-inset-top) + 48px))}}   /* liggende: bobla rett under HUD-linja, ikke over stikka */
+  #wcross{position:fixed;width:50px;height:50px;margin:-25px 0 0 -25px;display:none;z-index:3;pointer-events:none;filter:drop-shadow(0 2px 4px #000a)}#wcross svg{width:100%;height:100%}
   #wmark{position:fixed;width:44px;height:44px;margin:-22px 0 0 -22px;display:none;z-index:3;pointer-events:none;filter:drop-shadow(0 1px 3px #000a)}#wmark svg{width:100%;height:100%}
   #compass.mini{padding:3px;gap:0;opacity:.8}#compass.mini .ctxt{display:none}#compass.mini .ring{width:34px;height:34px}
   #compass .ring{width:38px;height:38px;border-radius:50%;background:#ffffff14;display:flex;align-items:center;justify-content:center}
