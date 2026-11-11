@@ -1,0 +1,15 @@
+import { stepOffset, createReact, hangSway, fpsWatch } from './polish.js';
+let bad = 0; const ok = (c, m) => { if (!c) { bad++; console.log('FEIL', m); } };
+ok(stepOffset(null, 1) === 0, 'ingen flate');
+ok(Math.abs(stepOffset(1.1, 1) - 0.1) < 1e-9, 'trinn opp');
+ok(stepOffset(5, 1) === 0.28 && stepOffset(-5, 1) === -0.1, 'begrenset');
+const r = createReact(); ok(!r.update(0.1).active, 'hvile');
+r.trigger('stomp'); let o = r.update(0.2); ok(o.active && o.armsUp > 0.9 && o.sy > 1, 'stomp: jubel og strekk');
+o = r.update(0.4); ok(o.sy < 1.2 && o.sy > 0.8, 'stomp: sprett i grenser');
+o = r.update(0.6); ok(!o.active && o.sy === 1, 'stomp slutter');
+r.trigger('hurt'); o = r.update(0.05); ok(o.lean < -0.2 && o.crouch > 0.3, 'hurt: rykk bakover');
+let late = 0; for (let i = 0; i < 20; i++) late = r.update(0.05); ok(!late.active, 'hurt slutter');
+ok(hangSway(0, 0).legL > 0 && hangSway(1, 3, true).roll < 0, 'heng');
+const f = fpsWatch(30, 1000); let res; for (let i = 0; i < 40; i++) res = f.push(50) || res; ok(res && res.low && res.fps < 25, 'lav fps');
+const g = fpsWatch(30, 1000); res = null; for (let i = 0; i < 70; i++) res = g.push(16) || res; ok(res && !res.low, 'bra fps');
+if (bad) process.exit(1); console.log('polish ok');

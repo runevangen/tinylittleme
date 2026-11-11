@@ -11,6 +11,7 @@ import { makeAtmos } from './atmos.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
+import { stepOffset, createReact, hangSway, fpsWatch } from './polish.js';
 import { followYaw, impactSpeed, landingClass } from './camera_util.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
@@ -122,6 +123,7 @@ const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCen
 // ---------- hendelseslogg og FPS: brukes i testrapporten ----------
 const evLog = store.get('tlm.evlog', []);
 const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION }); if (evLog.length > 120) evLog.shift(); };
+const fpsW = fpsWatch(30, 3000);
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
 addEventListener('pagehide', () => store.set('tlm.evlog', evLog.slice(-120)));
 
@@ -523,6 +525,8 @@ function footstep(side, sp) {
   audio.step(surfaceOf(player.groundBox), Math.max(0.2, Math.min(1, 0.3 + 0.7 * sp / P.speed)), side);
 }
 
+const react = createReact();      // reaksjoner på maur (polish.js): jubel ved knus, rykk ved støt
+const footSm = { L: 0, R: 0 };   // glattet fothøyde over trinn/kanter
 const DIP_MAX = 0.17;   // hvor mye hoftene kan synke i hurk (landing/forberedelse)
 
 function poseHero(p, now, dt, mode) {
@@ -562,6 +566,17 @@ function poseHero(p, now, dt, mode) {
   const gaitN = { L: pathL.z / (A + 1e-6), R: pathR.z / (A + 1e-6) };
   pathL.z /= RIG_S; pathR.z /= RIG_S;          // rig-lokalt: figuren er skalert, så foten må flyttes tilsvarende mindre
   const gaitOn = ikGait && mode !== 'fly' && p.state === 'ground' && p.onGround && !p.skid;
+  // føtter som tilpasser seg trinn: hver fot løftes/senkes til flaten den faktisk treffer (bare i svingfasen og i standfasen, begrenset)
+  { const vs = Math.hypot(p.vx, p.vz), dx = vs > 0.12 ? p.vx / vs : Math.sin(hero.yaw), dz = vs > 0.12 ? p.vz / vs : Math.cos(hero.yaw);
+    for (const [key, f] of [['L', pathL], ['R', pathR]]) {
+      let off = 0;
+      if (gaitOn && stepAdapt && vs > 0.12 && f.y > 0.004) {            // svingfoten kikker litt fremover og går opp på/ned fra det den ser komme
+        const d = 0.6 + 0.2 * clampN(f.z * RIG_S, 0, 0.3), sf = surfaceBelow(LEVEL, p.x + dx * d, p.y + 0.3, p.z + dz * d, 0.04);
+        off = stepOffset(sf ? sf.top : null, p.y) * clampN(f.y / 0.02, 0, 1);
+      }
+      footSm[key] += (off - footSm[key]) * (1 - Math.exp(-dt / 0.04));
+      f.y += footSm[key] / RIG_S; f.pitch += -footSm[key] * 0.8;
+    } }
 
   // hurk: forberedelse før hopp (armene bak) og demping etter landing (armene frem). 0 = oppreist, 1 = dypt.
   const wDF = p.windup > 0 ? smooth3(clampN((P.jumpWindup - p.windup) / 0.07, 0, 1)) : 0;
@@ -595,8 +610,8 @@ function poseHero(p, now, dt, mode) {
     });
     bob = -0.05;
   } else if (p.state === 'hang' || p.state === 'zip') {
-    const sway = Math.sin(sec * 1.5);
-    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: 0.12 + sway * 0.1, hR: 0.22 - sway * 0.1, kL: 0.3, kR: 0.15, lean: sway * 0.03, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
+    const sway = Math.sin(sec * 1.5), hs = hangSway(sec, Math.hypot(p.vx, p.vz), false);
+    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: hs.legL, hR: hs.legR, kL: hs.kneeL, kR: hs.kneeR, lean: hs.lean, roll: hs.roll, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
   } else if (p.state === 'swing') {
     const k = clampN((p.vx * p.fx + p.vz * p.fz) * 0.1, -0.8, 0.8);
     Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: -0.5 * k + 0.2, hR: -0.5 * k + 0.4, kL: 0.5, kR: 0.8, lean: -0.25 * k, chest: -0.1 * k, hp: -0.15 });
@@ -678,6 +693,15 @@ function poseHero(p, now, dt, mode) {
     T.roll += clampN(-yawRate * 0.06 * kSp, -0.2, 0.2);                            // lener seg inn i svingen
     const [jx, jz] = axes();                                                       // hodet ser dit du styrer, litt før kroppen har snudd seg
     if (Math.hypot(jx, jz) > 0.2) { const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw); T.hy += clampN(angDiff(hero.yaw, Math.atan2(cy * jx - sy * jz, -sy * jx - cy * jz)), -0.8, 0.8) * 0.5; }
+  }
+
+  // reaksjoner (polish.js): jubel og sprett når en maur knuses, rykk og sammenkrøping når en støter deg
+  const rx = react.update(dt);
+  if (rx.active) {
+    if (rx.armsUp > 0) { T.aL = lerpN(T.aL, -2.9, rx.armsUp); T.aR = lerpN(T.aR, -2.9, rx.armsUp); T.zL = lerpN(T.zL, 0.45, rx.armsUp); T.zR = lerpN(T.zR, 0.45, rx.armsUp); T.eL = lerpN(T.eL, -0.3, rx.armsUp); T.eR = lerpN(T.eR, -0.3, rx.armsUp); T.fgL = T.fgR = 0.05; }
+    if (rx.flinch > 0) { T.aL = lerpN(T.aL, -0.7, rx.flinch); T.aR = lerpN(T.aR, -0.7, rx.flinch); T.zL = lerpN(T.zL, 0.9, rx.flinch); T.zR = lerpN(T.zR, 0.9, rx.flinch); T.eL = lerpN(T.eL, -0.9, rx.flinch); T.eR = lerpN(T.eR, -0.9, rx.flinch); T.fgL = T.fgR = 1.0; if (p.onGround && !ikGait) { T.kL += rx.crouch; T.kR += rx.crouch; } }
+    T.lean += rx.lean; T.twist += rx.spin; T.hy += rx.spin * 1.4; T.chest += rx.flinch * 0.2;
+    if (rx.flinch > 0) bob -= rx.crouch * 0.05;
   }
 
   // jevn overgang: armer/overkropp rolig, ben raskere; alt raskere i lufta og i hurk
@@ -1012,6 +1036,7 @@ let blobOn = store.get('tlm.blob', true);
 let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get('tlm.followstr', 1), fovSet = store.get('tlm.fov', 52), pitchBase = store.get('tlm.pitchbase', 0.26);
 let stickCurve = store.get('tlm.stickcurve', 1.3), inertia = store.get('tlm.inertia', 1), speedScale = store.get('tlm.speedscale', 1), qbtnOn = store.get('tlm.qbtn', true);
 const metrics = { swipes: 0, dragPx: 0, yawUser: 0, yawAuto: 0, stickT: 0, t: 0 };
+let stepAdapt = store.get('tlm.stepadapt', true), reactAnim = store.get('tlm.reactanim', true);
 let idleWink = store.get('tlm.idlewink', true), restBreath = store.get('tlm.restbreath', false);
 const mixSet = (ids, v) => { const mix = store.get('tlm.mix2', {}); for (const id of ids) { mix[id] = v; audio?.setLevel(id, v); } store.set('tlm.mix2', mix); };
 const mixGet = (id) => store.get('tlm.mix2', {})[id] ?? 1;
@@ -1345,6 +1370,8 @@ const SETTINGS = [
   rg('camdist', 'kamera', 'Kameraavstand', 5.5, 3, 9, 0.1, () => cam.dist, kp('tlm.camdist', (v) => { cam.dist = v; camDistSet = v; })),
   // Hjelp og tekst
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
+  fl('stepadapt', 'spill', 'Føttene tilpasser seg trinn og kanter', true, () => stepAdapt, kp('tlm.stepadapt', (v) => { stepAdapt = v; })),
+  fl('reactanim', 'spill', 'Figuren jubler (knuser maur) og rykker (maur støter)', true, () => reactAnim, kp('tlm.reactanim', (v) => { reactAnim = v; })),
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
   fl('beacon', 'hjelp', 'Lyssøyle over målet', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
@@ -1531,8 +1558,8 @@ function antEvent(ev) {
   if (ev.type === 'leap') { logEv('edderkopp hopper', ev.id); audio?.spiderleap(); }
   else if (ev.type === 'drop') { logEv('smule sluppet', ev.id); if (!store.get('tlm.seen.crumb', false)) { store.set('tlm.seen.crumb', true); toast('Bæreren slapp smula! Gå bort til den for å ta den'); } }
   else if (ev.type === 'crumb') { stats.carried++; logEv('bærer-smule tatt', ev.id); audio?.crumb(5, 99); buzz(20); setMood('happy', 1); cue('smule!'); toast(`Smule tatt  +${SCORE.carried} poeng`); }
-  if (ev.type === 'stomp') { stats.squashed++; logEv(ev.kind === 'spider' ? 'edderkopp knust' : 'maur knust', ev.id); audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], ev.kind === 'spider' ? 0x6a3a86 : ev.kind === 'carrier' ? 0x5f6b2a : 0x9a3a1e); }
-  else if (ev.type === 'hurt') { stats.hits++; logEv(ev.kind === 'spider' ? 'edderkopp støt' : 'maur støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${ev.kind === 'spider' ? 'Edderkoppen hoppet på deg' : 'En maur støtet deg'}  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
+  if (ev.type === 'stomp') { react.trigger('stomp'); stats.squashed++; logEv(ev.kind === 'spider' ? 'edderkopp knust' : 'maur knust', ev.id); audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], ev.kind === 'spider' ? 0x6a3a86 : ev.kind === 'carrier' ? 0x5f6b2a : 0x9a3a1e); }
+  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; logEv(ev.kind === 'spider' ? 'edderkopp støt' : 'maur støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${ev.kind === 'spider' ? 'Edderkoppen hoppet på deg' : 'En maur støtet deg'}  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
 }
 // smuler: plukk (R3). Små, rolige tilbakemeldinger: lyd, poeng, kort melding, gnister
 function crumbEvent(ev) {
@@ -1738,8 +1765,9 @@ function render(now, dt) {
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
   hero.stepOff = (hero.stepOff || 0) * Math.exp(-dt / 0.07) + (player.stepDy || 0); player.stepDy = 0;                     // trinnhopp: figuren glir opp i stedet for å poppe
-  hero.root.position.set(player.x, player.y - hero.stepOff, player.z); updateBlob(now);
-  hero.root.scale.set(1, 1, 1);                                  // ingen strekk/klem: det ga «puls» og sjøsyke
+  { const rx = react.out, on = reactAnim && rx.active;                      // bare korte, tydelige strekk/klem etter knus/støt (ikke konstant puls)
+    hero.root.position.set(player.x, player.y - hero.stepOff + (on ? rx.hop : 0), player.z); updateBlob(now);
+    hero.root.scale.set(on ? rx.sxz : 1, on ? rx.sy : 1, on ? rx.sxz : 1); }
 
   for (const { r, line, end } of ropes) {
     const a = new THREE.Vector3(r.x, r.y, r.z);
@@ -1983,6 +2011,7 @@ let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
   if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps`; perf.win = perf.winN = 0; } }
+  { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`); }
   if (!window.__paused && !menuOpen) update(dt);
   stepCamAnim(dt); compassFrame(now);
   render(now, dt);
@@ -1992,4 +2021,4 @@ requestAnimationFrame(frame);
 
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
-window.__game = { antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
