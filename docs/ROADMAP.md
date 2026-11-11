@@ -47,11 +47,8 @@ Ferdig når: hver av de nye lekene finnes i minst to nivåer, kan utløses med T
 Forrige ytelsespunkt tok tegnekall og lav profil, men ikke minne: alle teksturer lages i full oppløsning, og forvarming kan gi hakk eller krasj på eldre telefoner. Mål minnebruk (teksturstørrelser, geometrier, `renderer.info`), skaler prosedyreteksturer til 512/256 på «Lav profil», gjenbruk delte materialer/geometrier, dispose ved nivåbytte og legg et minnebudsjett i `perf_budget.js`. Filer: `perf_budget.js`, `look.js`, `props.js`, `main.js`, `test_perf.mjs`.
 Ferdig når: rapporten viser teksturminne og geometrier per nivå, lav profil bruker minst 40 % mindre teksturminne, nivåbytte 1→6 lekker ikke (antall geometrier/teksturer er stabilt i test), og ingen visuell feil sees i skjermbilde.
 
-### [ ] R22 · Mål-lesbarhet i start: spilleren skal vite hva de skal gjøre i 5 sekunder
-Fortellingen og pilene forklarer mye, men første skjermbilde i hvert nivå viser ofte bare figuren i et stort rom uten tydelig første mål. Legg inn en kort kamerasveip fra målet tilbake til figuren ved nivåstart (hoppes over med et trykk), en «første delmål»-markør (neste hylle, nøkkel eller flagg) og én kontekstuell hint-boble per nivå som nevner riktig knapp (TA, HOPP, GREP). Gjør tekst og kamera til data i `story.js`/nivåfila, ikke hardkodet. Filer: `story.js`, `camera_util.js`, `markers.js`, `levels/`, `main.js`, `logEv('intro', …)`.
-Ferdig når: alle seks nivåene har sveip og delmål, sveipet kan hoppes over med ett trykk, tekst nevner knapper (ikke taster), og tester dekker at sveipet slutter og gir kontrollen tilbake.
-
 ## Ferdige punkter
+- [x] Mål-lesbarhet i start: kamerasveip, første delmål og hint-boble (R22, v1.07)
 - [x] Fiendevariasjon utover maur: én ny skapning per romtype (v1.06)
 - [x] Mykere skygger og lysbaking: rommet skal sitte sammen (v1.05)
 - [x] Belønning som varer: stjerner, hatter og et rom å komme tilbake til (v1.04)
