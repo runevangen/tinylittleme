@@ -30,11 +30,15 @@ export function buildTrain() {
 }
 
 function buildRug(p, y) {
-  const g = new THREE.Group(), base = hexOf(p.color || '#c44'), str = hexOf(p.stripe || '#fff');
+  // Teppet skal være så tynt at føttene (ca. 0,1 høye) ikke forsvinner ned i det. Lagene skilles av polygonOffset i stedet for høyde, så de ikke flimrer.
+  const g = new THREE.Group(), base = hexOf(p.color || '#c44'), str = hexOf(p.stripe || '#fff'), T = 0.03;
   const layers = p.shape === 'round'
-    ? [[1, base], [0.8, str], [0.66, base], [0.32, str], [0.22, base]].map(([k, c], i) => [new THREE.CylinderGeometry(p.w / 2 * k, p.w / 2 * k, 0.1, 40), c, i])
-    : [[1, 1, base], [0.94, 0.7, str], [0.88, 0.4, base]].map(([kx, kz, c], i) => [new THREE.BoxGeometry(p.w * (kx === 1 ? 1 : kx), 0.1, p.d * (kz === 1 ? 1 : kz > 0.5 ? 0.82 : 0.58)), c, i]);
-  for (const [geo, c, i] of layers) { const m = mesh(geo, std(c, { roughness: 1 }), false); m.position.y = y + 0.05 + i * 0.012; g.add(m); }
+    ? [[1, base], [0.8, str], [0.66, base], [0.32, str], [0.22, base]].map(([k, c], i) => [new THREE.CylinderGeometry(p.w / 2 * k, p.w / 2 * k, T, 40), c, i])
+    : [[1, 1, base], [0.94, 0.7, str], [0.88, 0.4, base]].map(([kx, kz, c], i) => [new THREE.BoxGeometry(p.w * (kx === 1 ? 1 : kx), T, p.d * (kz === 1 ? 1 : kz > 0.5 ? 0.82 : 0.58)), c, i]);
+  for (const [geo, c, i] of layers) {
+    const m = mesh(geo, std(c, { roughness: 1, polygonOffset: true, polygonOffsetFactor: -(i + 1), polygonOffsetUnits: -(i + 1) }), false);
+    m.position.y = y + T / 2 + i * 0.004; g.add(m);
+  }
   g.position.x = p.x; g.position.z = p.z; if (p.rot) g.rotation.y = p.rot;
   return g;
 }
@@ -94,6 +98,9 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
   const cone = new THREE.Mesh(coneGeo, new THREE.MeshBasicMaterial({ color: 0xfff0c8, vertexColors: true, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
   cone.frustumCulled = false; cone.visible = false; scene.add(cone);
   const dirF = { x: 0, z: 1 };
+  // Lyset skal ALDRI slås av/på (visible): da endres antall lys i scenen og three kompilerer alle materialer på nytt (hakk på 300–600 ms). Er lykta mulig i dette brettet, står den alltid på med styrke 0, så forvarmingen tar den med.
+  const lampEver = V.twist?.type === 'lights' || ['night', 'dark'].includes(V.mood);
+  lampL.visible = lampEver;
 
   // rekvisitter
   const ducks = [];
@@ -152,7 +159,7 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
         lampL.position.set(p.x + ux * 0.25, hy, p.z + uz * 0.25); lampL.target.position.set(p.x + ux * 9, hy - 2.4, p.z + uz * 9);
         cone.position.copy(lampL.position); cone.lookAt(lampL.target.position);
       }
-      lampL.intensity = 80 * on; lampL.visible = on > 0.01;
+      lampL.intensity = 80 * on;
       cone.visible = on > 0.01 && mode !== 'plan'; cone.material.opacity = 0.16 * on;
       // vann og anda
       if (water) { water.visible = waterNow > 0.02; water.position.y = floorY + waterNow + Math.sin(now * 1.3) * 0.03; water.material.opacity = 0.5 + 0.08 * Math.sin(now * 0.9); }

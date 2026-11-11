@@ -2,6 +2,8 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.16** – Rettelser etter testrapport (nivå 6): (1) hakk på 300–600 ms hver gang lyset slås av/på: hjelmlykta ble skrudd av og på med `visible`, så antall lys endret seg og alle materialer ble kompilert på nytt; nå står lykta alltid i scenen (styrke 0) og tas med i forvarmingen. (2) Føttene forsvant under teppene: tepper er nå 0,03 tykke i stedet for ca. 0,15.
+
 - **1.14** – Integrasjon av R26 (byggeskjerm C: bygget flyttes ut i verdenen som solid, brettene bro og trapp med vanskelig alternativ vei) i main.
 - **1.13** – Integrasjon av R25 (byggeskjerm B: 2D-fysikk, testfigur, trapp-byggested i Kontroll) i main.
 - **1.12** – R25: testbrettet Kontroll har nå to byggesteder: bro over hullet og trapp av klosser opp på en hylle (PRØV virker på begge). Ny test for trappa og Playwright-sjekk av byggeskjermen på iPhone-størrelse (`tools/live_build.cjs`).
