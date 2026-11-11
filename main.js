@@ -14,6 +14,7 @@ import { makeAtmos } from './atmos.js';
 import { applyGrade } from './grade_apply.js';
 import { gradeTint } from './grade.js';
 import { buildHero, RIG_S } from './hero.js';
+import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4–6 som egne rom (stemning, hjelmlykt, vri)
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
@@ -411,7 +412,7 @@ for (const b of LEVEL.boxes) {
     const g = new THREE.Group(); g.position.set(...win.pos);
     g.rotation.y = { N: 0, S: Math.PI, E: -Math.PI / 2, W: Math.PI / 2 }[win.wall] ?? 0;
     const [ww, wh] = win.size;
-    g.add(new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ map: look.skyTex(), color: 0xc4cfe0, toneMapped: false })));
+    const skyPane = new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ map: look.skyTex(), color: 0xc4cfe0, toneMapped: false })); skyPane.userData.win = true; g.add(skyPane);   // win: stemningen (variant_view.js) farger himmelen
     for (const [x, y, sx, sy] of [[0, wh / 2 + 0.4, ww + 1.6, 0.8], [0, -wh / 2 - 0.4, ww + 1.6, 0.8], [-ww / 2 - 0.4, 0, 0.8, wh], [ww / 2 + 0.4, 0, 0.8, wh], [0, 0, 0.4, wh]]) {
       const f = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, 0.7), frameMat); f.position.set(x, y, 0.3); g.add(f);
     }
@@ -917,7 +918,7 @@ const bodyMeshes = LEVEL.bodies.map((b) => {
 // maur: én modell per patrulje (v0.77)
 const ANT_COL = [0x9a3a1e, 0x7a2a16, 0xb04a22, 0x8a3320];
 const antMeshes = (LEVEL.antList || []).map((t, i) => {
-  const a = t.type === 'spider' ? buildSpider() : t.type === 'carrier' ? buildCarrier() : buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb });   // R6: tre slag, hver med egen modell
+  const a = LEVEL.ants[i].skin === 'train' ? buildTrain() : t.type === 'spider' ? buildSpider() : t.type === 'carrier' ? buildCarrier() : buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb });   // R6: tre slag, hver med egen modell
   a.root.userData.antId = t.id; scene.add(a.root); if (!gfxLow) look.detailize(a.root);
   let drop = null; if (t.type === 'carrier') { drop = buildDropCrumb(); drop.visible = false; scene.add(drop); }                 // smula bæreren slipper når den knuses
   return { t, a, drop, rot: Math.atan2(-t.fz, t.fx) };
@@ -1397,6 +1398,9 @@ const SETTINGS = [
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
   sl('grade', 'spill', 'Fargegradering (Toy Story-lys, laster siden på nytt)', 'film', [['film', 'Varm film'], ['off', 'Av (opprinnelig lys)']], () => gradeMode, (v) => { if (v === gradeMode) return; logEv('grade', v); store.set('tlm.grade', v); setTimeout(() => location.reload(), 150); }),
   fl('gradefilter', 'spill', 'Fargefilter på skjermen (Varm film; slå av om det går tregt)', true, () => store.get('tlm.gradefilter', true) !== false, (v) => { store.set('tlm.gradefilter', v); logEv('gradefilter', v ? 'på' : 'av'); grade.setFilter(v); }),
+  fl('varmood', 'spill', 'Nivå 4–6: egen stemning (kveld, natt, hjelmlykt)', true, () => variantMoodOn, kp('tlm.varmood', (v) => { variantMoodOn = v; logEv('stemning', v ? 'på' : 'av'); })),
+  fl('vartwist', 'spill', 'Nivå 4–6: egen vri (vann som stiger, lys som slukkes, tog)', true, () => variantTwistOn, kp('tlm.vartwist', (v) => { variantTwistOn = v; logEv('vri', v ? 'på' : 'av'); })),
+  rg('lamp', 'admin', 'Hjelmlykt: styrke', 1, 0.3, 2.5, 0.1, () => lampPower, kp('tlm.lamp', (v) => { lampPower = v; }), { digits: 1 }),
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
   ...(gfxLow ? [] : [
     fl('rays', 'spill', 'Lysstråler fra vinduet (Detaljert grafikk)', true, () => raysOn, kp('tlm.rays', (v) => { raysOn = v; logEv('lysstraaler', v ? 'på' : 'av'); })),
@@ -1710,7 +1714,9 @@ function update(dt) {
   };
   jumpEdge = grabEdge = carryEdge = false;
   const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
+  variant.beforeStep(player, dt, mode === 'play' && !won);
   step(player, inp, dt, LEVEL);
+  variant.afterStep();
   if (antsOn) for (const ev of stepAnts(LEVEL, player, dt, mode === 'play' && !won)) antEvent(ev);
   if (puzzlesOn || puzzleOpenIds(LEVEL).length) for (const ev of stepPuzzles(LEVEL, dt, puzzlesOn && mode === 'play' && !won)) puzzleEvent(ev);
   if (puzzlesOn && mode === 'play' && !won) puzzleIntro();
@@ -1859,6 +1865,10 @@ function insideAny(x, y, z, m) {
 
 const camAhead = { x: 0, z: 0 };
 const dust = gfxLow ? null : look.makeDust(); if (dust) scene.add(dust.points);
+let variantMoodOn = store.get('tlm.varmood', true), variantTwistOn = store.get('tlm.vartwist', true), lampPower = store.get('tlm.lamp', 1);   // R12
+const variant = makeVariant({ scene, LEVEL, renderer, sun, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])),
+  opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, P, say: (k) => toast(T(k)), logEv } });
+if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
 function render(now, dt) {
   updateCarryButton();
@@ -1984,7 +1994,8 @@ function render(now, dt) {
     if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   { const xh = $('xhair'); if (xh) xh.style.display = viewMode === 'shoulder' && xhairOn && mode === 'play' ? 'block' : 'none'; }
   if (dust) { dust.points.visible = dustOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
-  if (atmos) atmos.update(now / 1000, { rays: raysOn, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
+  variant.update(now / 1000, dt, player, mode);
+  if (atmos) atmos.update(now / 1000, { rays: raysOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
@@ -2156,4 +2167,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { variant, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

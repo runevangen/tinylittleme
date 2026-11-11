@@ -33,6 +33,17 @@ Laget av grunnscenene med `tools/make_variants.mjs` (flytter møbler, legger til
 | Det vanskelige | krefter: du må hvile mellom klatringene, og alt over kurven er for høyt å falle fra | smal hylle over en fare, og 1,5 m fallhøyde på slutten | varme plater rett bak deg når du kommer opp, og to hopp 2 m over gulvet |
 | Gått av verktøyet | 43 s | 54 s | 56 s |
 
+### Egen stemning og vri per rom (R12)
+Nivå 4–6 er ikke bare ommøblert: hver har eget lys, egen palett, nye rekvisitter og én vri. Alt står som data i `variant` i scenen (satt opp i `tools/make_variants.mjs`, kopiert til brettet av `scene2level`), ikke som kopi av grunnscenen. Logikken ligger i `variant.js` (testes i `test_variant.mjs`), tegningen i `variant_view.js`, paletten i `TINTS` i `grade.js`.
+
+| | Nivå 4: Badet | Nivå 5: Barnerommet | Nivå 6: Kjøkkenet |
+|---|---|---|---|
+| Stemning | kveld: oransje sollys, korallfarger, rosa skygger | natt: blått månelys, indigo vegger, stjerner på veggene, **hjelmlykt** (lyskjegle foran figuren) | skumring i lilla og oker; når lyset slås av: mørkt, bare hjelmlykta lyser |
+| Vri | **vannet stiger** (16 s tørt, 9 s stiger, 6 s fullt, 9 s synker). Vading i vann: tregere og mister krefter. Klatre opp av vannet | **leketog** på skinner i rommet: patruljerer som en maur, hopp på lokomotivet (HOPP) eller gå utenom | **lyset slås av** (15 s på, 8 s av, med blink): følg hjelmlykta, lysskiltene og pilen |
+| Rekvisitter | koraller og lilla tepper, badeand med badering som flyter opp med vannet | rundt lekeløper-teppe, togskinner, stjernehimmel | kakeboks (rød, på gulvet, kan klatres på), to tepper |
+
+Valg i ⚙ → Spill: «Nivå 4–6: egen stemning» og «Nivå 4–6: egen vri» (begge på som standard); Admin: «Hjelmlykt: styrke».
+
 Ikke gjort ennå i nivå 4–6: nye gjenstander som *verktøy* (hårgelé, dopapirbånd, nål og tråd, stav) er ikke lagt inn som alternative løsninger. Gå-verktøyet kan ikke bruke dem, så de må prøves for hånd først.
 
 ## Slik lages og sjekkes et nivå

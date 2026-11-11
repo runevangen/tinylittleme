@@ -813,6 +813,25 @@
    "material": "ceramic",
    "cp": false,
    "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    27.6,
+    0,
+    -2.4
+   ],
+   "max": [
+    32.4,
+    2.8,
+    2.4
+   ],
+   "id": "kakeboks_gulv",
+   "kind": "cup",
+   "color": 13124156,
+   "material": "metal",
+   "cp": false,
+   "soft": false
   }
  ],
  "movables": [
@@ -1423,6 +1442,36 @@
    ]
   }
  ],
+ "variant": {
+  "mood": "dusk",
+  "twist": {
+   "type": "lights",
+   "on": 15,
+   "off": 8,
+   "blink": 1
+  },
+  "props": [
+   {
+    "type": "rug",
+    "x": 0,
+    "z": 0,
+    "w": 26,
+    "d": 6,
+    "color": "#e08a2e",
+    "stripe": "#fff0c8"
+   },
+   {
+    "type": "rug",
+    "x": -14,
+    "z": 18,
+    "w": 10,
+    "d": 10,
+    "shape": "round",
+    "color": "#2f9a8a",
+    "stripe": "#ffe9b0"
+   }
+  ]
+ },
  "collectibles": [
   {
    "id": "smule_1",
@@ -1675,7 +1724,7 @@
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 25,
-  "reachable": 21
+  "nodes": 26,
+  "reachable": 22
  }
 }

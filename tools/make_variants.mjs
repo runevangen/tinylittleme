@@ -29,6 +29,9 @@ const kit = (s) => ({
   k.add('handkle_ny_2', 'towel_hang', 'fabric', '#c9483b', [154, 157, 163, 199, 200, 216], { grip: true, onto: 'hylle', grip_drain: -0.3 });
   s.goal = { x: 172, y: 199, z: 232, on: 'hylle', note: 'Motgift-bit på den øverste hylla, i enden bak panelet (v0.88: flyttet bort fra det grønne håndkleet, så lyssøylen ikke dekker det)' };
   s.ants = [{ id: 'baerer_gulv', type: 'carrier', on: 'gulv', from: [92, 55], to: [242, 55] }, { id: 'edderkopp_dusj', type: 'spider', on: 'gulv', from: [42.5, 115] }];   // R6: bærer-maur og en edderkopp-vakt (fri flate rundt, langt fra start)
+  // R12: egen stemning. Kveldslys og korallfarger; vri: vannet stiger (vading = tregere og mister krefter, så klatre opp!). Rekvisitter er bare pynt (ingen kollisjon).
+  s.variant = { mood: 'evening', twist: { type: 'water', max: 4, dry: 16, rise: 9, hold: 6, drain: 9 },
+    props: [{ type: 'rug', x: 105, z: 195, w: 70, d: 38, color: '#e8574a', stripe: '#ffe2b8' }, { type: 'rug', x: 62, z: 90, w: 40, d: 40, shape: 'round', color: '#7a5cc8', stripe: '#f4d6ff' }, { type: 'duck', x: 150, z: 112, r: 9 }] };
   save('bad2', s);
 }
 
@@ -49,6 +52,11 @@ const kit = (s) => ({
   k.add('robot', 'cup', 'metal', '#9aa0a6', [24, 38, 150, 170, 268, 278], {});
   k.add('vimpel', 'box', 'paper', '#e0483e', [20, 240, 190, 192, 279, 279.6], { decor: true });
   s.goal = { x: 60, y: 150, z: 273, on: 'hylle_c', note: 'Motgift-bit på hylla i hjørnet, ved roboten' };
+  // R12: natt. Mørkt rom med lommelykt-kjegle fra hjelmen, stjerner i taket og et leketog som kjører på sporet midt i rommet (hopp på lokomotivet eller gå rundt).
+  { const sp = s.ants.find((x) => x.id === 'edderkopp_hjorne'); if (sp) sp.from = [172, 120]; const c = s.ants.find((x) => x.id === 'maur_gulv'); if (c) c.from = [125, 90]; }
+  s.ants.push({ id: 'tog', type: 'ant', skin: 'train', on: 'gulv', from: [104, 72], to: [104, 212], speed: 3.2 });
+  s.variant = { mood: 'night', twist: { type: 'train', ant: 'tog' },
+    props: [{ type: 'rug', x: 170, z: 200, w: 110, d: 90, shape: 'round', color: '#3b64c4', stripe: '#ffd45a' }, { type: 'track', from: [104, 72], to: [104, 212] }, { type: 'stars', count: 46 }] };
   save('barnerom2', s);
 }
 
@@ -75,6 +83,10 @@ const kit = (s) => ({
   { const m = s.ants.find((x) => x.id === 'maur_matte'); if (m) m.to = [m.from[0] + 55, m.from[1]]; }      // kassa står på matta nå: kortere patrulje (maurene må ha fri bane)
   // R7: gåten flyttes. Broen ruller ut mellom overskapet og den lille hylla (første hopp); platen ligger nærmere kanten enn i nivå 3. Nøkkelen arves.
   s.puzzles = [{ id: 'bro', key: 'noekkel', label: 'låsen', en: 'the lock', plate: { on: 'overskap', at: [205, 25], r: 10 }, bridge: { box: [142, 165, 195, 198, 3, 27], axis: 'x', anchor: 'max' } }];
+  // R12: kveld i kjøkkenet, og lyset slås av med jevne mellomrom: da lyser bare hjelmlykta (kjegle foran deg). Kakeboks på gulvet og løpere i fargerike striper.
+  k.add('kakeboks_gulv', 'cup', 'metal', '#c8423c', [318, 342, 0, 14, 138, 162], {});
+  s.variant = { mood: 'dusk', twist: { type: 'lights', on: 15, off: 8, blink: 1 },
+    props: [{ type: 'rug', x: 180, z: 150, w: 130, d: 30, color: '#e08a2e', stripe: '#fff0c8' }, { type: 'rug', x: 110, z: 240, w: 50, d: 50, shape: 'round', color: '#2f9a8a', stripe: '#ffe9b0' }] };
   save('kjokken2', s);
 }
 console.log('skrev scenes/bad2, barnerom2, kjokken2');

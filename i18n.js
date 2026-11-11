@@ -4,6 +4,7 @@ export const LANGS = [['nb', 'Norsk'], ['en', 'English']];
 
 const DICT = {
   nb: {
+    'var.water.up': 'Vannet stiger! Klatre opp på noe.', 'var.water.down': 'Vannet synker.', 'var.lights.off': 'Lyset gikk! Følg hjelmlykta.', 'var.lights.on': 'Lyset er på igjen.',
     'btn.take': 'TA', 'btn.drop': 'SLIPP', 'btn.place': 'SETT PÅ', 'btn.throw': 'KAST', 'btn.smear': 'SMØR', 'btn.unroll': 'RULL UT', 'btn.thread': 'TRÆ',
     'btn.tieTop': 'FEST OPPE', 'btn.tieEnd': 'FEST NEDE', 'btn.jump': 'HOPP', 'btn.grab': 'GREP',
     'hint.turn': 'Se mot {name} for å ta den ({look})', 'hint.look.touch': 'sveip', 'hint.look.pc': 'musa eller piltastene',
@@ -46,6 +47,7 @@ const DICT = {
     'menu.sure': 'Slette fremgangen? Trykk igjen', 'menu.nosave': 'Ingen lagret fremgang ennå', 'menu.byeTitle': 'Takk for nå!', 'menu.byeText': 'Fremgangen er lagret. Du kan lukke fanen eller bytte app. Neste gang fortsetter du der du var.', 'menu.back': 'Tilbake til menyen', 'menu.menu': 'Hovedmeny',
   },
   en: {
+    'var.water.up': 'The water is rising! Climb up onto something.', 'var.water.down': 'The water is going down.', 'var.lights.off': 'The lights went out! Follow your helmet lamp.', 'var.lights.on': 'The lights are back on.',
     'btn.take': 'TAKE', 'btn.drop': 'DROP', 'btn.place': 'PLACE', 'btn.throw': 'THROW', 'btn.smear': 'SMEAR', 'btn.unroll': 'UNROLL', 'btn.thread': 'THREAD',
     'btn.tieTop': 'TIE UP', 'btn.tieEnd': 'TIE DOWN', 'btn.jump': 'JUMP', 'btn.grab': 'GRAB',
     'hint.turn': 'Look at {name} to pick it up ({look})', 'hint.look.touch': 'swipe', 'hint.look.pc': 'mouse or arrow keys',

@@ -1864,5 +1864,43 @@
         168.8
       ]
     }
-  ]
+  ],
+  "variant": {
+    "mood": "evening",
+    "twist": {
+      "type": "water",
+      "max": 4,
+      "dry": 16,
+      "rise": 9,
+      "hold": 6,
+      "drain": 9
+    },
+    "props": [
+      {
+        "type": "rug",
+        "x": 105,
+        "z": 195,
+        "w": 70,
+        "d": 38,
+        "color": "#e8574a",
+        "stripe": "#ffe2b8"
+      },
+      {
+        "type": "rug",
+        "x": 62,
+        "z": 90,
+        "w": 40,
+        "d": 40,
+        "shape": "round",
+        "color": "#7a5cc8",
+        "stripe": "#f4d6ff"
+      },
+      {
+        "type": "duck",
+        "x": 150,
+        "z": 112,
+        "r": 9
+      }
+    ]
+  }
 }

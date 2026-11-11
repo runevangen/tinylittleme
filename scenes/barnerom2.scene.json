@@ -814,7 +814,7 @@
       "id": "maur_gulv",
       "on": "gulv",
       "from": [
-        105,
+        125,
         90
       ],
       "to": [
@@ -853,9 +853,24 @@
       "type": "spider",
       "on": "gulv",
       "from": [
-        125,
-        125
+        172,
+        120
       ]
+    },
+    {
+      "id": "tog",
+      "type": "ant",
+      "skin": "train",
+      "on": "gulv",
+      "from": [
+        104,
+        72
+      ],
+      "to": [
+        104,
+        212
+      ],
+      "speed": 3.2
     }
   ],
   "collectibles": [
@@ -939,5 +954,39 @@
         258.8
       ]
     }
-  ]
+  ],
+  "variant": {
+    "mood": "night",
+    "twist": {
+      "type": "train",
+      "ant": "tog"
+    },
+    "props": [
+      {
+        "type": "rug",
+        "x": 170,
+        "z": 200,
+        "w": 110,
+        "d": 90,
+        "shape": "round",
+        "color": "#3b64c4",
+        "stripe": "#ffd45a"
+      },
+      {
+        "type": "track",
+        "from": [
+          104,
+          72
+        ],
+        "to": [
+          104,
+          212
+        ]
+      },
+      {
+        "type": "stars",
+        "count": 46
+      }
+    ]
+  }
 }
