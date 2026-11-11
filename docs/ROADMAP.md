@@ -23,6 +23,30 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 Stor sjef-maur i nivå 6 (kjøkkenet), tre faser (patrulje, charge, stunned etter å ha truffet vegg/kasse så du kan hoppe på den), helsebar, tegnefilm-aktig animasjon, lyd og belønning (siste smule + en liten fanfare). Egen logikk i `ants.js` eller nytt `boss.js` med tester. Må være rettferdig på mobil.
 Ferdig når: en spiller kan slå sjefen med bare stikke + HOPP, og ruta går fortsatt.
 
+### [ ] R11 · Flagg og mål som ser ut som Toy Story-rekvisitter
+Startflagget (ved figuren i alle nivåer) er en flat, ulyst gul firkant med støyete tekstur og hvit stang som ser ut som en plassholder; målmarkøren og nøkkel/lås-merkene har samme preg. Bytt til blanke rekvisitter i barneskala (stoffflagg som vaier, små pyntebokstaver, glødende målring/fyrtårn med myk puls), lyst med samme materialer som resten (`look.js`/`grade.js`), og la flagget bli tent/slukket når et lagringspunkt tas. Enkel grafikk beholder en billig variant. Filer: `main.js` (flagg/mål), `look.js`, ev. ny `markers.js` (legges i `files` i `index.html`).
+Ferdig når: skjermbilder (iPhone 14) av nivå 1–6 viser flagg og mål uten støy og uten å dekke figuren, lagringspunkt lyser tydelig, og ruta går.
+
+### [ ] R12 · Nivå 4–6 skal føles som nye rom, ikke bare ommøblerte
+Nivå 4–6 er de samme rommene med flyttede ting (`tools/make_variants.mjs`) og ser ved første øyekast like ut som 1–3. Gi hver variant egen stemning: annen tid på døgnet (kveldslys, nattlys med lommelykt-kjegle fra hjelmen), annen fargepalett, nye rekvisitter (tepper, leketog, kakeboks, badeand-flåte) og én ny vri per rom (f.eks. vann som stiger i badet, lys som slås av i kjøkkenet). Settes opp som data i variantene, ikke som kopi av grunnscenen; nye valg i `SETTINGS` (gruppe Spill). Filer: `tools/make_variants.mjs`, `scenes/`, `atmos.js`, `grade.js`, `props.js`, `music.js` (ev. egen tema).
+Ferdig når: sidestilte skjermbilder av nivå 1/4, 2/5 og 3/6 er tydelig forskjellige, hver variant har en egen vri som kan løses med stikke + TA/HOPP/GREP, alle seks går i `walk_route`.
+
+### [ ] R13 · Gulv og overflater: moiré, tomme flater og skala
+I skjermbildene er gulvet i nivå 2 en stor, nesten tom trebit med lite å lese skala av, den mørke badematta i nivå 1 flimrer/pikselerer (moiré på ripestruktur), og kjøkkengulvet er en jevn beige flate. Fiks mipmap/anisotropi/relieff-frekvens på matta og andre høyfrekvente teksturer, og strø småting for målestokk (smuler, hår, knapper, mynter, blyantstumper, flekker, fuger med skitt) med tetthet satt etter rom og kvalitet. Dette gjelder også BACKLOG «Detaljert rom». Filer: `look.js`, `props.js`, `scenes/` (dekor uten kollisjon), `main.js` (teksturinnstillinger).
+Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hverandre), start-skjermbildene i nivå 2 og 6 viser minst tre ting som gir skala, og FPS-målingen ligger innenfor 1 fps av før.
+
+### [ ] R14 · Lesbarhet: verdensmarkører under knapper og tydelig hva som kan gripes
+(a) Pilene i verdenen (målpil, «neste»-pil, gule piler) tegnes ofte under TA/HOPP-knappene og blir halvt skjult (se kjøkkenet i nivå 6 der pilen ligger bak TA). Hold dem innenfor en trygg sone som unngår knappene og HUD-en, og kantstill dem mot skjermkanten med kontrastkant. (b) Fullfør BACKLOG «Grep-kode»: tydelig negativ markering av glatte/ugripbare flater, og tydeligere forskjell på grep, hylle og dekor. (c) Teksten i «NESTE»-bobla blir kuttet når nivånavn er lange: la den bryte linjer. Filer: `main.js` (HUD, pil), `look.js`, `i18n.js` om tekst endres.
+Ferdig når: skjermbilder (iPhone 14, stående og liggende) av nivå 1–6 viser ingen pil eller tekst delvis bak en knapp, glatte flater kan skilles fra grep uten å lese tekst, og `npm test` dekker pilplasseringen (ren funksjon).
+
+### [ ] R15 · Ytelse på eldre telefoner: budsjett og lav profil
+R10 sørger for at oppløsningen går ned ved lav FPS, men ingenting begrenser selve scenen. Mål antall tegnekall, trekanter, lys og skygger per nivå (`renderer.info`) og logg dem med `logEv`. Slå sammen statisk geometri (`BufferGeometryUtils.mergeGeometries`/instansering for smuler, fliser, bokser), gjenbruk materialer, deaktiver skygger og partikler utenfor synsfeltet, og legg et valg «Lav profil» i `SETTINGS` (gruppe Test) som kutter skygge-kart, støv, korn og ekstra lys når FPS er lav. Filer: `main.js`, `look.js`, `atmos.js`, `polish.js`, evt. ny `perf_budget.js` med test.
+Ferdig når: tegnekall og trekanter per nivå står i rapporten, nivå 6 har minst 30 % færre tegnekall enn i dag uten synlig forskjell på skjermbildene, Playwright med CPU-throttle (4×) holder jevn FPS i Lav profil, og ruta går.
+
+### [ ] R16 · Belønning som varer: stjerner, hatter og et rom å komme tilbake til
+Smulene (★ 0/10) gir i dag bare et tall på målskjermen. Gi dem verdi: hvert nivå husker beste smuletall og tid (autolagring), 10/10 gir et kosmetisk tilbehør til figuren (hatt, skjerf, sekk i annen farge; se BACKLOG «tilbehør å samle»), og et lite «lekerom»-skap på startskjermen viser det du har samlet og lar deg bytte med ett trykk. Alt med stikke/knapper, uten tastatur. Filer: `collect.js`, `hero.js`, `story.js`, `main.js` (startskjerm), nye valg i `SETTINGS`, `logEv('belønning', …)`.
+Ferdig når: etter å ha tatt alle smuler i et nivå ser spilleren et nytt tilbehør på figuren neste gang, valget huskes etter omlasting, tester dekker lagring og opplåsing, og skjermbilde av skapet er sjekket på iPhone 14.
+
 ## Ferdige punkter
 - [x] Fortelling og målseremoni (v0.92)
 - [x] Toy Story-lys og farge (v0.91)

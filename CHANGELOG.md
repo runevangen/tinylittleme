@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.94** – Veikartet fylt på med seks nye punkter (R11–R16): flagg og mål, egne rom i nivå 4–6, gulv uten moiré, lesbarhet bak knapper, ytelsesbudsjett og varig belønning.
 - **0.93** – Figur og bevegelse, siste polering (R10): figuren jubler og spretter når du knuser en maur (TA/HOPP som vanlig), rykker til når en maur støter deg, henger og svinger mer levende, og føttene tilpasser seg små trinn og kanter. Skrur av/på i ⚙ under Spill. Oppløsningen går automatisk ned om FPS blir lav.
 - **0.92** – Fortelling og målseremoni: korte fortellertekster i starten av hvert nivå (hopp over med ett trykk), målskjerm med smuler, tid og maur knust og en tydelig NESTE NIVÅ-knapp, og en liten avslutning etter siste nivå. Kan slås av i ⚙.
 **0.91** – **Toy Story-lys og farge (R1)**: varmere, mer mettet lys med varm sol, kjølig fyll og kantlys, blankere plast og porselen, og et mildt fargefilter. Kan slås av/på i ⚙ under Spill (Fargegradering og Fargefilter); Enkel grafikk får ingen ekstra lys. Ruta går fortsatt.
