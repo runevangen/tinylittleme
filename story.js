@@ -4,7 +4,7 @@ export const STORY_LEVELS = 6;
 export const storyKey = (n) => (n >= 1 && n <= STORY_LEVELS ? `story.${n}` : null);
 export const fmtTime = (s) => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60); return m ? `${m}:${String(s % 60).padStart(2, '0')}` : `${s} s`; };
 // Fortellingen vises ved friskt nivåstart (ikke ved gjenopptatt fremgang) og bare for de seks nivåene.
-export const shouldShowIntro = ({ n, enabled, resumed }) => !!enabled && !resumed && !!storyKey(n);
+export const shouldShowIntro = ({ n, enabled, resumed, seen }) => !!enabled && !resumed && !seen && !!storyKey(n);
 // Alt målskjermen trenger, uten DOM: sluttnivå, tid, maur knust, smuler, poeng, ny rekord.
 export function finishData({ n, nextExists, clock, stats, crumbs, crumbTotal, points, prevBest, flew }) {
   const total = crumbTotal || 0, all = total > 0 && crumbs >= total;

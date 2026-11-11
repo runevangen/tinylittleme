@@ -24,4 +24,6 @@ assert.ok(!finishData({ n: 2, nextExists: true, clock: 5, stats: {}, crumbs: 0, 
 assert.ok(!finishData({ n: 2, nextExists: true, clock: 5, stats: {}, crumbs: 0, crumbTotal: 0, points: 10, prevBest: 0, flew: true }).record, 'flymodus gir ingen rekord');
 lang = 'nb'; const h = winHTML(d, T); assert.ok(h.includes('1:23') && h.includes('4/4 ★') && h.includes('900') && h.includes('Ny rekord!'));
 assert.ok(!winHTML({ ...d, total: 0, record: false }, T).includes('Smuler'));
+assert.equal(shouldShowIntro({ n: 1, enabled: true, resumed: false, seen: true }), false);
+assert.equal(shouldShowIntro({ n: 1, enabled: true, resumed: false, seen: false }), true);
 console.log('fortelling-tester grønne');

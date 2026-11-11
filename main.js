@@ -1943,24 +1943,26 @@ addEventListener('resize', resize); resize();
 
 // ---------- fortelling (R8): kort tekst ved nivåstart og en avslutning etter nivå 6 (story.js) ----------
 function showIntro() {
-  const n = levelInfo?.n; if (!shouldShowIntro({ n, enabled: storyOn, resumed })) return;
+  const n = levelInfo?.n; if (!shouldShowIntro({ n, enabled: storyOn, resumed, seen: store.get(`tlm.storySeen.${levelId}`, false) })) return;
   menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; logEv('fortelling', `nivå ${n}`);
-  showCard($('story'), { title: T(`story.title.${n}`), text: T(`story.${n}`), btn: T('story.go'), skip: T('story.skip'), onDone: () => { menuOpen = false; } });
+  showCard($('story'), { title: T(`story.title.${n}`), text: T(`story.${n}`), btn: T('story.go'), skip: T('story.skip'), onDone: () => { menuOpen = false; store.set(`tlm.storySeen.${levelId}`, true); } });
 }
 function showEnding() {
   logEv('avslutning');
-  showCard($('story'), { title: T('story.endTitle'), text: T('story.end'), btn: T('story.endBtn'), onDone: () => { $('win').classList.add('hide'); showStart(); } });
+  showCard($('story'), { title: T('story.endTitle'), text: T('story.end'), btn: T('story.endBtn'), onDone: () => { gameDone = true; clearAllProgress(); store.set('tlm.level', 'bad'); $('win').classList.add('hide'); showStart(); } });
 }
 
 // ---------- startskjerm (v0.73): Nytt spill · Fortsett · Innstillinger · Avslutt ----------
 // Vises når siden åpnes uten ?level=… (en lenke med brett, «Neste nivå» og brettvelgeren hopper over den). Spillet står stille bak.
 let startScreenOn = store.get('tlm.startscreen', true), menuOpen = false;
 const startWanted = startScreenOn && levelParam === null && new URLSearchParams(location.search).get('start') !== '0';
-const hasProgress = () => resumed || clock > 4 || levelId !== 'bad' || Object.keys(store.get('tlm.cleared', {})).length > 0;
-function clearAllProgress() { try { Object.keys(localStorage).filter((k) => k.startsWith('tlm.progress.')).forEach((k) => localStorage.removeItem(k)); } catch { /* privat modus */ } }
+let gameDone = false;   // satt etter avslutningen: menyen viser da bare Nytt spill
+const hasProgress = () => !gameDone && (resumed || clock > 4 || levelId !== 'bad' || Object.keys(store.get('tlm.cleared', {})).length > 0);
+function clearAllProgress() { try { Object.keys(localStorage).filter((k) => k.startsWith('tlm.progress.') || k.startsWith('tlm.storySeen.')).forEach((k) => localStorage.removeItem(k)); } catch { /* privat modus */ } }
 function hideStart() { menuOpen = false; $('start').classList.add('hide'); document.body.classList.remove('instart'); }
 function newGame() {
   clearAllProgress(); logEv('nytt spill');
+  gameDone = false;
   if (levelId === 'bad') { restartAll(); hideStart(); toast('Nytt spill'); resumed = false; showIntro(); }
   else { noSave = true; goLevel('bad'); }                                  // laster nivå 1 på nytt (noSave: pagehide skal ikke skrive tilbake gammel fremgang)
 }
