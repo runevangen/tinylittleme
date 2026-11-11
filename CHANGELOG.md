@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **0.87** – **«Kopier tilbakemeldinger» også i ⚑-dialogen**, med antall uten sendt i parentes, så du slipper å gå via ⚙.
 - **0.86** – **Rettelser etter testrapport (kjøkken/barnerom)**: hylleboka i barnerommet er solid og smalere (du gikk gjennom den), håndklebåndet flimrer ikke lenger (z-fighting), kameraet blir inne i rommet (utenfor veggen forsvant figuren bak vinduskarmen), og grep/klatring er mer levende (hånden strekker seg og bena sparker i lufta, figuren tar imot når du tar tak, og henger ikke stille i ro). Ikke gjort: vasken i badet er fortsatt flat (se BACKLOG).
 - **0.86** – **Tydeligere knapper for tilbakemeldinger**: «Del tilbakemeldinger» og «Kopier tilbakemeldinger» i ⚙ (og i oversikten øverst). «Kopier innstillinger» er skilt ut som egen del som bare gjelder innstillingene.
 - **0.85** – **⚑ åpner skrivefeltet**: ⚑ åpner med markøren i tekstfeltet, med «⚑ Meld feil» og «💡 Legg til backloggen» (kommer som egen del i rapporten). Øverst i ⚙ står «N feil meldt · Del eller kopier til Claude»; telleren nullstilles når rapporten er delt eller kopiert.

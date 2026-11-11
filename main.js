@@ -1407,12 +1407,13 @@ const marks = [];
 // rask vurdering mens du spiller: ⚑ → velg tema → 👍 / 😐 / 😫 (havner i testrapporten med posisjon og innstillinger)
 {
   let tag = store.get('tlm.qtag', 'Styring'); const pop = $('qpop'), tags = ['Styring', 'Kamera', 'Hopp', 'Gange', 'Annet'];
-  const draw = () => { pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
-  pop.innerHTML = `<input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small>`;
+  const draw = () => { const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
+  pop.innerHTML = `<input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button>`;
   const qtext = () => { const el = $('qtext'), v = el.value.trim(); el.value = ''; return v; };
   pop.addEventListener('click', (e) => {
     e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tag) { tag = b.dataset.tag; store.set('tlm.qtag', tag); draw(); return; }
+    if (b.dataset.copy) { doShare(true).then((r) => { toast(r === 'kopiert' ? 'Tilbakemeldingene er kopiert. Lim dem inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis tilbakemeldingene'); if (r === 'kopiert') pop.classList.add('hide'); }); return; }
     if (b.dataset.mark) { markHere(`${tag}: ${qtext()}`.replace(/: $/, '')); pop.classList.add('hide'); return; }
     if (b.dataset.backlog) { const tx = qtext(); if (!tx) { toast('Skriv hva som skal i backloggen først'); $('qtext').focus(); return; } logEv('BACKLOGG', tx); updateMarkBadge(); toast(`Lagt til backloggen (${unsent('BACKLOGG')} ny)`); pop.classList.add('hide'); return; }
     if (b.dataset.r) { const tx = qtext(); logEv('vurdering', `${b.dataset.r} · ${tag}${tx ? ' · ' + tx : ''}`); pop.classList.add('hide'); toast(`Takk! Registrert: ${b.textContent} (${tag})`); }
