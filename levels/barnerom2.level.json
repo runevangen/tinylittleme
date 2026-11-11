@@ -997,7 +997,7 @@
    "id": "maur_gulv",
    "type": "carrier",
    "a": [
-    -9,
+    -5,
     0,
     -10
    ],
@@ -1038,17 +1038,66 @@
    "id": "edderkopp_hjorne",
    "type": "spider",
    "a": [
-    -5,
+    4.4,
     0,
-    -3
+    -4
    ],
    "b": [
-    -5,
+    4.4,
     0,
-    -3
+    -4
    ]
+  },
+  {
+   "id": "tog",
+   "a": [
+    -9.2,
+    0,
+    -13.6
+   ],
+   "b": [
+    -9.2,
+    0,
+    14.4
+   ],
+   "speed": 3.2,
+   "skin": "train"
   }
  ],
+ "variant": {
+  "mood": "night",
+  "twist": {
+   "type": "train",
+   "ant": "tog"
+  },
+  "props": [
+   {
+    "type": "rug",
+    "x": 4,
+    "z": 12,
+    "w": 22,
+    "d": 18,
+    "shape": "round",
+    "color": "#3b64c4",
+    "stripe": "#ffd45a"
+   },
+   {
+    "type": "track",
+    "from": [
+     -9.2,
+     -13.6
+    ],
+    "to": [
+     -9.2,
+     14.4
+    ]
+   },
+   {
+    "type": "stars",
+    "count": 46
+   }
+  ]
+ },
  "collectibles": [
   {
    "id": "smule_1",

@@ -290,8 +290,24 @@ const ants = (scene.ants || []).map((a) => {
   if (a.on && a.on !== 'gulv' && !on) throw new Error(`maur ${a.id}: fant ikke flaten ${a.on}`);
   const y = on ? uy(on.box[3]) : 0;
   const to = a.to || a.from;   // edderkopp: bare hjemmet (from)
-  return { id: a.id, ...(a.type && a.type !== 'ant' ? { type: a.type } : {}), a: [ux(a.from[0]), y, uz(a.from[1])], b: [ux(to[0]), y, uz(to[1])], ...(a.speed ? { speed: a.speed } : {}), ...(a.crumb ? { crumb: true } : {}) };
+  return { id: a.id, ...(a.type && a.type !== 'ant' ? { type: a.type } : {}), a: [ux(a.from[0]), y, uz(a.from[1])], b: [ux(to[0]), y, uz(to[1])], ...(a.speed ? { speed: a.speed } : {}), ...(a.crumb ? { crumb: true } : {}), ...(a.skin ? { skin: a.skin } : {}) };
 });
+
+// variant (R12, se variant.js): stemning, vri og rekvisitter for nivå 4–6. I scenen i cm, i brettet i enheter.
+const variant = scene.variant ? (() => {
+  const v = JSON.parse(JSON.stringify(scene.variant)), cm = (n) => +(n / U).toFixed(3);
+  if (v.twist?.max !== undefined) v.twist.max = cm(v.twist.max);
+  v.props = (v.props || []).map((p) => {
+    const q = { ...p };
+    if (q.x !== undefined) q.x = ux(q.x);
+    if (q.z !== undefined) q.z = uz(q.z);
+    for (const k of ['w', 'd', 'r', 'h']) if (q[k] !== undefined) q[k] = cm(q[k]);
+    if (q.from) q.from = [ux(q.from[0]), uz(q.from[1])];
+    if (q.to) q.to = [ux(q.to[0]), uz(q.to[1])];
+    return q;
+  });
+  return v;
+})() : undefined;
 
 // smuler (R3): { id, on: «gulv» eller id på en ting, at: [x, z] } i cm; y = flaten + litt (midten av smula)
 const collectibles = (scene.collectibles || []).map((c) => {
@@ -320,6 +336,7 @@ const level = {
   name: scene.name, ...(scene.rev ? { rev: scene.rev } : {}),
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ants,
+  ...(variant ? { variant } : {}),
   collectibles,
   ...(puzzles.length ? { puzzles } : {}),
   ropes: [],

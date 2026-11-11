@@ -31,10 +31,14 @@ const TINTS = {
   bad: { 'wall:tile': [0.5, 0.86, 1.0], 'floor:tile': [1.0, 0.74, 0.5], wood: [1.0, 0.8, 0.6] },        // kjølig aqua-vegger, varmt sandfarget gulv
   kjokken: { 'floor:tile': [1.0, 0.72, 0.5], 'wall:plaster': [0.55, 0.9, 0.72], 'wood:light': [0.5, 0.88, 0.95] },   // varmt terrakottagulv mot kjølige salviegrønne vegger og blågrå skap
   barnerom: { 'wall:plaster': [0.8, 0.92, 1.0], 'floor:wood': [1.0, 0.86, 0.68] },
+  // R12: nivå 4–6 har egen palett (kommer i tillegg til stemningen i variant.js): korall i badet, indigo i barnerommet, plomme og oker i kjøkkenet
+  bad2: { 'wall:tile': [1.0, 0.7, 0.66], 'floor:tile': [0.62, 0.78, 0.95], wood: [0.85, 0.7, 0.62] },
+  barnerom2: { 'wall:plaster': [0.55, 0.62, 1.0], 'floor:wood': [0.72, 0.74, 1.0], wood: [0.8, 0.8, 1.0] },
+  kjokken2: { 'floor:tile': [0.62, 0.8, 0.85], 'wall:plaster': [1.0, 0.72, 0.8], 'wood:light': [1.0, 0.82, 0.55], wood: [0.9, 0.75, 0.7] },
 };
 export function gradeTint(levelId, kind, lum = 0.5, mode = 'film') {
   if (mode !== 'film') return null;
-  const t = TINTS[String(levelId || '').replace(/\d+$/, '')];
+  const id = String(levelId || ''), t = TINTS[id] || TINTS[id.replace(/\d+$/, '')];
   if (!t) return null;
   return (kind === 'wood' && lum > 0.55 && t['wood:light']) || t[kind] || null;
 }

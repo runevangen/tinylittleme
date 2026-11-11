@@ -1093,6 +1093,22 @@
       ],
       "confidence": 1,
       "photos": []
+    },
+    {
+      "id": "kakeboks_gulv",
+      "kind": "cup",
+      "material": "metal",
+      "color": "#c8423c",
+      "box": [
+        318,
+        342,
+        0,
+        14,
+        138,
+        162
+      ],
+      "confidence": 1,
+      "photos": []
     }
   ],
   "hazards": [
@@ -1288,5 +1304,35 @@
         "anchor": "max"
       }
     }
-  ]
+  ],
+  "variant": {
+    "mood": "dusk",
+    "twist": {
+      "type": "lights",
+      "on": 15,
+      "off": 8,
+      "blink": 1
+    },
+    "props": [
+      {
+        "type": "rug",
+        "x": 180,
+        "z": 150,
+        "w": 130,
+        "d": 30,
+        "color": "#e08a2e",
+        "stripe": "#fff0c8"
+      },
+      {
+        "type": "rug",
+        "x": 110,
+        "z": 240,
+        "w": 50,
+        "d": 50,
+        "shape": "round",
+        "color": "#2f9a8a",
+        "stripe": "#ffe9b0"
+      }
+    ]
+  }
 }
