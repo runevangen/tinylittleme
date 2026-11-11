@@ -20,6 +20,7 @@ assert.ok(bm.enabled, 'bygg er på');
 assert.ok(!bm.active && !body.classList.contains('building'));
 bm.update(0.016, true); assert.ok(bm.open(), 'åpner ved byggested'); assert.ok(bm.active && body.classList.contains('building'), 'body.building satt');
 assert.ok(!bm.open(), 'ikke åpne to ganger');
+assert.ok(!bm.startTry() && !bm.running, 'PRØV uten deler starter ingenting (R25)');
 bm.close('test'); assert.ok(!bm.active && !body.classList.contains('building'), 'tilbake til spill: body.building fjernet');
 assert.ok(log.some(([t, d]) => t === 'bygg' && /^inn/.test(d)) && log.some(([t, d]) => t === 'bygg' && /^ut/.test(d)), 'inn og ut logges');
 play = false; bm.update(0.016, false); assert.ok(!bm.open(), 'ikke inn utenfor spill'); play = true;

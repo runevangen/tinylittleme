@@ -51,6 +51,10 @@ export const SOUND_LIST = [
   { id: 'boing', label: 'Leker: sprettboks', group: 'Leker' },
   { id: 'tick', label: 'Leker: wind-up tikker', group: 'Leker' },
   { id: 'crumb', label: 'Smule plukket', group: 'Hendelser' },
+  { id: 'bcreak', label: 'Bygg: planke knirker', group: 'Bygg' },
+  { id: 'bbreak', label: 'Bygg: brudd (planke, tape, tau)', group: 'Bygg' },
+  { id: 'bsplash', label: 'Bygg: testfiguren faller ned', group: 'Bygg' },
+  { id: 'bhop', label: 'Bygg: testfiguren hopper', group: 'Bygg' },
   { id: 'checkpoint', label: 'Sjekkpunkt', group: 'Hendelser' },
   { id: 'win', label: 'Mål', group: 'Hendelser' },
   { id: 'drip', label: 'Dryppende kran', group: 'Rom' },
@@ -223,6 +227,11 @@ export function createAudio(ctx, opts = {}) {
   const bossbump = () => use('bossbump', () => { tone({ freq: 90, freq2: 40, gain: 0.55, decay: 0.3 }); burst({ type: 'lowpass', freq: 600, gain: 0.5, decay: 0.3 }); [880, 1320, 990, 1480].forEach((f, k) => tone({ freq: f, type: 'triangle', gain: 0.05, decay: 0.2, delay: 0.25 + k * 0.1 })); });
   const fanfare = () => use('fanfare', () => { [[523, 0], [523, 0.14], [523, 0.28], [659, 0.42], [523, 0.6], [659, 0.78], [784, 0.96]].forEach(([f, t]) => { tone({ freq: f, type: 'triangle', gain: 0.13, decay: 0.32, delay: t }); tone({ freq: f * 2, type: 'sine', gain: 0.05, decay: 0.3, delay: t }); }); [1047, 1319, 1568].forEach((f) => tone({ freq: f, type: 'triangle', gain: 0.1, decay: 1.1, delay: 1.2 })); });
   const crumb = (n = 1, total = 10) => use('crumb', () => { const f = 880 * Math.pow(2, Math.min(n, 12) / 12); tone({ freq: f, type: 'triangle', gain: 0.1, decay: 0.16 }); tone({ freq: f * 1.5, type: 'sine', gain: 0.07, decay: 0.28, delay: 0.06 }); if (n >= total) [1047, 1319, 1568, 2093].forEach((g, k) => tone({ freq: g, type: 'triangle', gain: 0.08, decay: 0.4, delay: 0.14 + k * 0.08 })); });
+  // byggeskjermen (R25): knirk når en planke bøyer seg, brudd, plask og hopp for testfiguren
+  const bcreak = (amp = 1) => use('bcreak', () => { const a = Math.min(1.5, amp); tone({ freq: rnd(150, 190), freq2: rnd(230, 300), type: 'sawtooth', gain: 0.05 * (0.5 + a / 2), attack: 0.02, decay: 0.32 }); burst({ type: 'bandpass', freq: 900, gain: 0.05 * a, decay: 0.2 }); });
+  const bbreak = () => use('bbreak', () => { burst({ type: 'highpass', freq: 1800, gain: 0.35, decay: 0.12 }); tone({ freq: 190, freq2: 70, type: 'square', gain: 0.18, decay: 0.2 }); burst({ type: 'lowpass', freq: 600, gain: 0.3, decay: 0.3, delay: 0.05 }); });
+  const bsplash = () => use('bsplash', () => { burst({ type: 'lowpass', freq: 1100, freq2: 200, gain: 0.3, attack: 0.02, decay: 0.5 }); tone({ freq: 160, freq2: 70, gain: 0.3, decay: 0.3 }); tone({ freq: 520, freq2: 220, type: 'sine', gain: 0.08, decay: 0.3, delay: 0.1 }); });
+  const bhop = () => use('bhop', () => { tone({ freq: 330, freq2: 560, type: 'sine', gain: 0.1, decay: 0.12 }); });
   const checkpoint = () => use('checkpoint', () => { tone({ freq: 880, type: 'triangle', gain: 0.1, decay: 0.35 }); tone({ freq: 1320, type: 'triangle', gain: 0.07, decay: 0.45, delay: 0.08 }); });
   // leker (R18): små, runde lyder. amp 0–1 gir litt variasjon etter hvor hardt det skjedde.
   const squeak = (amp = 1) => use('squeak', () => { const f = rnd(1500, 1800); tone({ freq: f * 0.8, freq2: f * 1.5, type: 'sine', gain: 0.16 * (0.5 + amp / 2), attack: 0.004, decay: 0.09 }); tone({ freq: f * 1.6, freq2: f * 2.2, type: 'triangle', gain: 0.05, decay: 0.07, delay: 0.02 }); });
@@ -279,6 +288,10 @@ export function createAudio(ctx, opts = {}) {
       case 'boing': boing(); break;
       case 'tick': toyTick(); setTimeout(toyTick, 260); setTimeout(toyTick, 520); break;
       case 'crumb': crumb(3, 10); break;
+      case 'bcreak': bcreak(); break;
+      case 'bbreak': bbreak(); break;
+      case 'bsplash': bsplash(); break;
+      case 'bhop': bhop(); break;
       case 'checkpoint': checkpoint(); break;
       case 'win': win(); break;
       case 'drip': drip(-0.3); drip(0.3); break;
@@ -298,7 +311,7 @@ export function createAudio(ctx, opts = {}) {
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
     ctx, out: bus, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
-    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, bossroar, bossbump, fanfare, crumb, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
+    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, bossroar, bossbump, fanfare, crumb, bcreak, bbreak, bsplash, bhop, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },

@@ -39,6 +39,22 @@ const B2 = BL.createBuild(site, types, []); BL.restore(B2, { ...data, have: [...
 assert.deepEqual(BL.serialize(B2), data, 'samme bygg etter gjenoppretting'); assert.ok(!B2.have.includes('ukjent'));
 BL.restore(B2, null); assert.equal(B2.have.length, 0);
 
+// R25: koblinger (tape, ledd, tau): lages mellom plasserte deler, følger delene, angres, lagres
+const BK = BL.createBuild(site, { a: 'plank_s', b: 'block', w: 'weight' }, ['a', 'b', 'w']); BK.snap = false;
+assert.ok(BL.PART_TYPES.weight && BL.LINK_KINDS.join() === 'tape,hinge,rope');
+assert.ok(!BL.addLink(BK, 'tape', 'a', 'b').ok, 'delene må være plassert');
+BL.place(BK, 'a', 0, 0.25, 0); BL.place(BK, 'b', 0, 1.25, 0); BL.place(BK, 'w', 8, 3, 0);
+assert.equal(BL.addLink(BK, 'tape', 'a', 'b').ok, true, 'tape mellom deler som ligger inntil hverandre');
+assert.equal(BL.addLink(BK, 'tape', 'a', 'b').why, 'dup', 'ikke to like koblinger'); assert.equal(BL.addLink(BK, 'tape', 'a', 'w').why, 'far', 'tape krever at delene berører hverandre');
+assert.ok(BL.addLink(BK, 'rope', 'a', 'w').ok, 'tau kan gå over avstand'); assert.ok(BL.addLink(BK, 'hinge', 'b', null, { u: 0.2, v: 2.2 }).ok, 'ledd i underlaget ved delen');
+assert.equal(BL.addLink(BK, 'tape', 'a', null, { u: 9, v: 9 }).why, 'far', 'tape i underlaget krever at punktet er ved delen'); assert.equal(BK.links.length, 3);
+const e0 = BL.linkEnds(BK, BK.links[0]); BL.place(BK, 'b', 1, 1.25, 0); const e1 = BL.linkEnds(BK, BK.links[0]); assert.ok(near(e1[1].u - e0[1].u, 1), 'festepunktet følger delen når den flyttes');
+assert.equal(BL.topLink(BK, e1[0].u, e1[0].v).id, BK.links[0].id, 'treff på kobling');
+const ser = JSON.parse(JSON.stringify(BL.serialize(BK))); const BK2 = BL.createBuild(site, { a: 'plank_s', b: 'block', w: 'weight' }, []); BL.restore(BK2, ser); assert.deepEqual(BL.serialize(BK2), ser, 'koblinger overlever lagring');
+BL.restore(BK2, { ...ser, links: [...ser.links, { id: 'x', kind: 'tape', a: 'nope', la: { x: 0, y: 0 }, b: null, g: { u: 0, v: 0 } }, { id: 'y', kind: 'laser', a: 'a', la: { x: 0, y: 0 }, b: null, g: { u: 0, v: 0 } }] }); assert.equal(BK2.links.length, 3, 'ukjente koblinger ignoreres');
+BL.remove(BK, 'b'); assert.ok(BK.links.every((l) => l.a !== 'b' && l.b !== 'b'), 'koblinger til en fjernet del forsvinner'); assert.equal(BK.links.length, 1);
+assert.ok(BL.undo(BK) && BK.links.length === 3, 'angre henter tilbake koblingene'); assert.ok(BL.removeLink(BK, BK.links[0].id) && BK.links.length === 2); assert.ok(BL.reset(BK) && BK.links.length === 0 && BK.placed.length === 0, 'nullstill fjerner også koblinger');
+
 // kamera
 const view = BL.fitView(site, 390, 844, 24, 130, 160); const sc = BL.toScreen(view, 390, 844, 1, 2), w = BL.toWorld(view, 390, 844, sc.x, sc.y);
 assert.ok(near(w.u, 1, 1e-9) && near(w.v, 2, 1e-9), 'skjerm og verden går begge veier');
@@ -72,5 +88,5 @@ for (const f of fs.readdirSync('levels')) {
   assert.ok(lv.build.parts.length >= 2 && lv.build.sites.length >= 1, `${f}: bygg trenger sted og deler`);
 }
 // modulene er med i index.html
-const html = fs.readFileSync('index.html', 'utf8'); for (const m of ['build', 'build_logic']) assert.ok(html.includes(`'${m}'`), `${m} mangler i files`);
+const html = fs.readFileSync('index.html', 'utf8'); for (const m of ['build', 'build_logic', 'build_phys']) assert.ok(html.includes(`'${m}'`), `${m} mangler i files`);
 console.log('bygg-tester grønne');

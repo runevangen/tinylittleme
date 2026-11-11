@@ -13,7 +13,20 @@ export const PART_TYPES = {
   plank_s: { w: 4, h: 0.5, name: 'Kort planke', en: 'Short plank', color: '#d9a35f' },
   plank_l: { w: 8, h: 0.5, name: 'Lang planke', en: 'Long plank', color: '#c98a45' },
   block: { w: 1.5, h: 1.5, name: 'Kloss', en: 'Block', color: '#e0605a' },
+  weight: { w: 1.5, h: 1.5, name: 'Vekt', en: 'Weight', color: '#6f7b8c' },   // R25: tung (motvekt)
 };
+export const LINK_KINDS = ['tape', 'hinge', 'rope'];                   // R25: tape = stiv, ledd = svinger, tau = bare i strekk
+export const LINK_MAX = 0.75;                                          // tape/ledd: delene må ligge inntil hverandre (avstand mellom kulene)
+export const PR = 0.25;                                                // R25: kule-radius i modellen (alle deler er bygd av kuler)
+export const layout = (t) => {                                         // R25: kulene en del er bygd av (lokale koordinater); fysikken bruker samme oppsett
+  const ty = partType(t), pts = [];
+  if (ty.w >= ty.h * 2) { const n = Math.round(ty.w / (PR * 2)); for (let i = 0; i < n; i++) pts.push({ x: (i + 0.5) * ty.w / n - ty.w / 2, y: 0 }); }
+  else { const n = Math.max(1, Math.round(ty.w / (PR * 2))), m = Math.max(1, Math.round(ty.h / (PR * 2))); for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) pts.push({ x: (i + 0.5) * ty.w / n - ty.w / 2, y: (j + 0.5) * ty.h / m - ty.h / 2 }); }
+  return pts;
+};
+export const toWorldPt = (p, x, y) => { const c = Math.cos(p.rot || 0), s = Math.sin(p.rot || 0); return { u: p.u + x * c - y * s, v: p.v + x * s + y * c }; };
+export const toLocalPt = (p, u, v) => { const c = Math.cos(-(p.rot || 0)), s = Math.sin(-(p.rot || 0)), dx = u - p.u, dy = v - p.v; return { x: dx * c - dy * s, y: dx * s + dy * c }; };
+export const partPoints = (p) => layout(p.type).map((q) => toWorldPt(p, q.x, q.y));
 export const partType = (t) => PART_TYPES[t] || PART_TYPES.block;
 
 export const snapRot = (r) => { const k = Math.round(r / ROT_STEP) * ROT_STEP; return Math.abs(k) < 1e-9 ? 0 : k; };
@@ -52,11 +65,12 @@ export function hitPart(p, u, v, pad = 0.35) {
 // ---------- byggetilstand ----------
 // have: id-ene på delene spilleren har plukket (rekkefølge = brettet). types: id -> type.
 export function createBuild(site, types = {}, have = []) {
-  return { site, types, have: [...have], placed: [], history: [], snap: true };
+  return { site, types, have: [...have], placed: [], links: [], history: [], snap: true };
 }
 const placedOf = (B, id) => B.placed.find((p) => p.id === id);
 const clone = (placed) => placed.map((p) => ({ ...p }));
-const pushHist = (B) => { B.history.push(clone(B.placed)); if (B.history.length > 60) B.history.shift(); };
+const snapshot = (B) => ({ placed: clone(B.placed), links: B.links.map((l) => ({ ...l, la: l.la && { ...l.la }, lb: l.lb && { ...l.lb }, g: l.g && { ...l.g } })) });
+const pushHist = (B) => { B.history.push(snapshot(B)); if (B.history.length > 60) B.history.shift(); };
 
 export const inTray = (B) => B.have.filter((id) => !placedOf(B, id));
 export const partCount = (B) => B.have.length;
@@ -79,21 +93,69 @@ export function rotate(B, id, delta) {
 }
 export function remove(B, id) {          // tilbake i brettet
   const i = B.placed.findIndex((p) => p.id === id); if (i < 0) return false;
-  pushHist(B); B.placed.splice(i, 1); return true;
+  pushHist(B); B.placed.splice(i, 1); B.links = B.links.filter((l) => l.a !== id && l.b !== id); return true;
 }
-export function undo(B) { const h = B.history.pop(); if (!h) return false; B.placed = h; return true; }
-export function reset(B) { if (!B.placed.length) return false; pushHist(B); B.placed = []; return true; }
+export function undo(B) { const h = B.history.pop(); if (!h) return false; B.placed = h.placed; B.links = h.links; return true; }
+export function reset(B) { if (!B.placed.length && !B.links.length) return false; pushHist(B); B.placed = []; B.links = []; return true; }
+
+// ---------- R25: koblinger (tape, ledd, tau) ----------
+// { id, kind, a, la:{x,y}, b|null, lb:{x,y}|null, g:{u,v}|null }: a og b er del-id-er (lokale punkt følger delen), b = null: festet i underlaget i g.
+export function addLink(B, kind, aId, bId, groundPt) {
+  if (!LINK_KINDS.includes(kind)) return { ok: false, why: 'kind' };
+  const a = placedOf(B, aId), b = bId ? placedOf(B, bId) : null;
+  if (!a || (bId && !b) || aId === bId) return { ok: false, why: 'part' };
+  let la, lb = null, g = null;
+  if (b) {
+    if (B.links.some((l) => l.b && ((l.a === aId && l.b === bId) || (l.a === bId && l.b === aId)) && (l.kind === kind))) return { ok: false, why: 'dup' };
+    const pa = partPoints(a), pb = partPoints(b); let best = Infinity, ia = 0, ib = 0;
+    pa.forEach((x, i) => pb.forEach((y, j) => { const d = Math.hypot(x.u - y.u, x.v - y.v); if (d < best) { best = d; ia = i; ib = j; } }));
+    if (kind === 'rope') { la = { x: 0, y: 0 }; lb = { x: 0, y: 0 }; }
+    else {
+      if (best > LINK_MAX) return { ok: false, why: 'far' };
+      const m = { u: (pa[ia].u + pb[ib].u) / 2, v: (pa[ia].v + pb[ib].v) / 2 }; la = toLocalPt(a, m.u, m.v); lb = toLocalPt(b, m.u, m.v);
+    }
+  } else {
+    g = { u: groundPt.u, v: groundPt.v };
+    if (kind !== 'rope') { const near = Math.min(...partPoints(a).map((x) => Math.hypot(x.u - g.u, x.v - g.v))); if (near > LINK_MAX + 0.3) return { ok: false, why: 'far' }; }
+    la = kind === 'rope' ? { x: 0, y: 0 } : toLocalPt(a, g.u, g.v);
+  }
+  pushHist(B);
+  let n = 1; while (B.links.some((l) => l.id === 'k' + n)) n++;
+  const l = { id: 'k' + n, kind, a: aId, la, b: bId || null, lb, g }; B.links.push(l); return { ok: true, link: l };
+}
+export const linkEnds = (B, l) => {            // verdensposisjon til begge ender (til tegning og treff)
+  const a = placedOf(B, l.a), b = l.b ? placedOf(B, l.b) : null; if (!a) return null;
+  const pa = toWorldPt(a, l.la.x, l.la.y), pb = l.b ? (b ? toWorldPt(b, l.lb.x, l.lb.y) : null) : { u: l.g.u, v: l.g.v };
+  return pb ? [pa, pb] : null;
+};
+export function topLink(B, u, v, r = 0.6) {
+  for (let i = B.links.length - 1; i >= 0; i--) {
+    const e = linkEnds(B, B.links[i]); if (!e) continue;
+    const mx = (e[0].u + e[1].u) / 2, my = (e[0].v + e[1].v) / 2;
+    if (Math.hypot(u - mx, v - my) <= r || Math.hypot(u - e[0].u, v - e[0].v) <= r * 0.7 || Math.hypot(u - e[1].u, v - e[1].v) <= r * 0.7) return B.links[i];
+  }
+  return null;
+}
+export function removeLink(B, id) { const i = B.links.findIndex((l) => l.id === id); if (i < 0) return false; pushHist(B); B.links.splice(i, 1); return true; }
 export function topHit(B, u, v) { for (let i = B.placed.length - 1; i >= 0; i--) if (hitPart(B.placed[i], u, v)) return B.placed[i]; return null; }
 // flytt en del først i tegnerekkefølgen (øverst)
 export function raise(B, id) { const i = B.placed.findIndex((p) => p.id === id); if (i >= 0 && i < B.placed.length - 1) B.placed.push(B.placed.splice(i, 1)[0]); }
 
 // lagring: kun det som må overleve («Fortsett»)
-export const serialize = (B) => ({ have: [...B.have], placed: B.placed.map((p) => ({ id: p.id, u: +p.u.toFixed(3), v: +p.v.toFixed(3), rot: +p.rot.toFixed(4) })) });
+const r3 = (x) => +x.toFixed(3);
+export const serialize = (B) => ({
+  have: [...B.have], placed: B.placed.map((p) => ({ id: p.id, u: +p.u.toFixed(3), v: +p.v.toFixed(3), rot: +p.rot.toFixed(4) })),
+  links: B.links.map((l) => ({ id: l.id, kind: l.kind, a: l.a, la: { x: r3(l.la.x), y: r3(l.la.y) }, b: l.b, lb: l.lb && { x: r3(l.lb.x), y: r3(l.lb.y) }, g: l.g && { u: r3(l.g.u), v: r3(l.g.v) } })),
+});
 export function restore(B, data) {
   const known = new Set(Object.keys(B.types));
   B.have = (Array.isArray(data?.have) ? data.have : []).filter((id) => known.has(id));
   B.placed = (Array.isArray(data?.placed) ? data.placed : []).filter((p) => B.have.includes(p?.id) && Number.isFinite(p.u) && Number.isFinite(p.v))
     .map((p) => { const c = clampToSite(B.site, p.u, p.v); return { id: p.id, type: B.types[p.id], u: c.u, v: c.v, rot: Number.isFinite(p.rot) ? normRot(p.rot) : 0, anchored: false }; });
+  const ok = (q) => Number.isFinite(q?.x) && Number.isFinite(q?.y);
+  B.links = (Array.isArray(data?.links) ? data.links : []).filter((l) => LINK_KINDS.includes(l?.kind) && B.placed.some((p) => p.id === l.a) && ok(l.la)
+    && (l.b ? B.placed.some((p) => p.id === l.b) && ok(l.lb) : Number.isFinite(l.g?.u) && Number.isFinite(l.g?.v)))
+    .map((l) => ({ id: String(l.id), kind: l.kind, a: l.a, la: { x: l.la.x, y: l.la.y }, b: l.b || null, lb: l.b ? { x: l.lb.x, y: l.lb.y } : null, g: l.b ? null : { u: l.g.u, v: l.g.v } }));
   B.history = []; return B;
 }
 
