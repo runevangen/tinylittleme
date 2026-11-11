@@ -2,6 +2,7 @@
 // dette er bare utseendet. Brettet gir hver boks `kind` og evt. `group`; boksene i en gruppe tegnes som ÉN ting.
 import * as THREE from 'three';
 import { letterStack, letterTopY, studLayout, STUD_H, carWheel } from './toys.js';
+import { shrinkCanvas } from './perf_budget.js';
 
 const porcelain = (color = 0xf1eee6) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.06 });
 const chrome = () => new THREE.MeshStandardMaterial({ color: 0xe4e6e8, metalness: 1, roughness: 0.12 });
@@ -132,12 +133,13 @@ function sink(members) {
 
 // ---------- teksturer (tegnes i nettleseren, ingen bildefiler) ----------
 function rng(seed) { let a = seed; return () => { a = (a * 1664525 + 1013904223) % 4294967296; return a / 4294967296; }; }
-let ANISO = 4;
+let ANISO = 4, TEXLOW = false;
+export const setTexLow = (v) => { TEXLOW = !!v; };      // R21: små teksturer (halv størrelse) på Lav profil / Enkel grafikk
 export const setAniso = (n) => { ANISO = n; };      // settes fra main.js etter at maskinvaren er spurt (skarpere teksturer på skrå flater)
 function canvasTex(size, draw, { repeat = [1, 1], srgb = true } = {}) {
   const c = document.createElement('canvas'); c.width = c.height = size;
   draw(c.getContext('2d'), size);
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat); t.anisotropy = ANISO;
+  const t = new THREE.CanvasTexture(shrinkCanvas(c, TEXLOW, (w, h) => { const o = document.createElement('canvas'); o.width = w; o.height = h; return o; })); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat); t.anisotropy = ANISO;
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }

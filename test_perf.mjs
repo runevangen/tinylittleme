@@ -1,4 +1,5 @@
 import * as THREE from './lib/three.module.min.js';
+import { memStats, memOver, memLine, texBytes, disposeTree, shrinkCanvas, lowSide, MEM_BUDGET, LOW_TEX_CUT } from './perf_budget.js';
 import { mergeRigid, refsIn, movingNodes, mergeStatic, matSig, createLowProfile, overBudget, BUDGET, statsLine } from './perf_budget.js';
 let bad = 0; const ok = (c, m) => { if (!c) { bad++; console.log('FEIL', m); } };
 // sammenslåing: samme materiale blir ett mesh, andre blir stående
@@ -95,5 +96,38 @@ ok(/tegnekall 5/.test(statsLine({ calls: 5, tris: 6, lights: 2, shadowLights: 1,
     soft.update(true, false, true); ok(!soft.group.visible, `${id}: Enkel grafikk slår alt av`);
     if (id === 'barnerom') console.log(`softlight budsjett: ${calls} tegnekall, ${tris} trekanter (maks ${SOFT.budget.calls} / ${SOFT.budget.tris})`);
   }
+}
+// R21: teksturminne. Falsk lerret-DOM (ingen ekte tegning): størrelser og antall er det som telles
+{
+  const mkCanvas = () => { const c = { width: 0, height: 0, getContext: () => ({ imageSmoothingEnabled: true, drawImage() {}, createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {}, fillRect() {}, createLinearGradient: () => ({ addColorStop() {} }), createRadialGradient: () => ({ addColorStop() {} }), set fillStyle(v) {}, getImageData: (x, y, w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, fill() {}, arc() {}, ellipse() {}, save() {}, restore() {}, rect() {}, clip() {}, fillText() {}, clearRect() {}, set strokeStyle(v) {}, set lineWidth(v) {}, set lineCap(v) {}, set font(v) {}, set textAlign(v) {}, set textBaseline(v) {}, set lineJoin(v) {}, set globalAlpha(v) {}, set globalCompositeOperation(v) {}, set shadowBlur(v) {}, set shadowColor(v) {}, translate() {}, rotate() {}, scale() {}, closePath() {}, quadraticCurveTo() {}, bezierCurveTo() {}, arcTo() {}, roundRect() {}, strokeRect() {}, setTransform() {}, drawImage2() {} }) }; return c; };
+  globalThis.document = { createElement: mkCanvas };
+  ok(lowSide(1024) === 512 && lowSide(256) === 128 && lowSide(128) === 128 && lowSide(64) === 64, 'lowSide: halv fra 256 og opp, aldri under 128');
+  const big = mkCanvas(); big.width = 1024; big.height = 1024; ok(shrinkCanvas(big, true, (w, h) => { const o = mkCanvas(); o.width = w; o.height = h; return o; }).width === 512, 'shrinkCanvas halverer på lav');
+  ok(shrinkCanvas(big, false, () => null) === big, 'shrinkCanvas lar full være');
+  const { register } = await import('node:module');      // look.js importerer 'three' (import-map i nettleseren): pek den på den lokale kopien
+  register('data:text/javascript,' + encodeURIComponent(`export async function resolve(s, c, n) { return s === 'three' ? { url: ${JSON.stringify(new URL('./lib/three.module.min.js', import.meta.url).href)}, shortCircuit: true } : n(s, c); }`));
+  const { makeLook } = await import('./look.js');
+  const mem = (low) => { const sc = new THREE.Scene(), L = makeLook({ aniso: 4, low });
+    const mats = [L.floor, L.plaster, L.tile, L.wood, L.panel].filter(Boolean); const seen = []; for (const m of mats) for (const t of [m.map, m.normalMap, m.roughnessMap]) if (t) seen.push(t);
+    const mm = new THREE.MeshBasicMaterial(); const holder = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mm); sc.add(holder);
+    let b = 0; for (const t of new Set(seen)) b += texBytes(t); return { b, n: new Set(seen).size, L, mats }; };
+  const hi = mem(false), lo = mem(true);
+  ok(hi.n > 6 && lo.n > 4, `teksturer finnes (høy ${hi.n}, lav ${lo.n})`);
+  ok(lo.b <= hi.b * (1 - LOW_TEX_CUT), `lav profil: minst ${LOW_TEX_CUT * 100} % mindre teksturminne (${(hi.b / 1048576).toFixed(1)} MB til ${(lo.b / 1048576).toFixed(1)} MB)`);
+  console.log(`teksturminne look: full ${(hi.b / 1048576).toFixed(1)} MB, lav ${(lo.b / 1048576).toFixed(1)} MB`);
+  ok(hi.b / 1048576 <= MEM_BUDGET.texMB && lo.b / 1048576 <= MEM_BUDGET.texMBLow, 'look-teksturer innenfor minnebudsjett');
+  // nivåbytte 1→6: bygg og frigjør seks ganger; antallet teksturer/geometrier i scenen er stabilt (ingenting henger igjen)
+  const sc = new THREE.Scene(), counts = [];
+  for (let lv = 1; lv <= 6; lv++) {
+    const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(mkCanvas()) }); m.map.image.width = m.map.image.height = 256;
+    for (let i = 0; i < 20; i++) g.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), m));
+    sc.add(g); const s1 = memStats(sc); ok(s1.textures === 1 && s1.geometries === 20, `nivå ${lv}: delte materialer og egne geometrier telles riktig`);
+    let disposed = 0; g.traverse((o) => { if (o.geometry) o.geometry.addEventListener('dispose', () => disposed++); });
+    disposeTree(g); counts.push(memStats(sc)); ok(disposed === 20 && sc.children.length === 0, `nivå ${lv}: frigjort (${disposed} geometrier)`);
+  }
+  ok(counts.every((c) => c.textures === 0 && c.geometries === 0), 'scenen er tom etter hvert nivåbytte (ingen lekkasje 1→6)');
+  ok(memOver({ texMB: MEM_BUDGET.texMB + 1, geoMB: 1 }).length === 1 && memOver({ texMB: MEM_BUDGET.texMBLow + 1, geoMB: 1 }, true).length === 1 && memOver({ texMB: 1, geoMB: 1 }).length === 0, 'memOver');
+  ok(/teksturer 2 \(1\.0 MB\)/.test(memLine({ textures: 2, texMB: 1, geometries: 3, geoMB: 0.5, materials: 1 })), 'memLine');
+  delete globalThis.document;
 }
 if (bad) { console.log(bad, 'feil'); process.exit(1); } console.log('test_perf: ok');

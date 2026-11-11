@@ -5,12 +5,59 @@
 
 export const BUDGET = { calls: 220, tris: 60000, lights: 6 };   // anbefalt tak per bilde (inkl. skyggepass); over det logges en advarsel
 
+// R21: minnebudsjett (MB) for teksturer og geometrier; iPhone 8-klassen; målt i full kvalitet: 41 MB (bad) og 66 MB (kjokken2), med små teksturer 7 og 10 MB. Over det logges en advarsel.
+export const MEM_BUDGET = { texMB: 80, texMBLow: 24, geoMB: 20 };
+export const LOW_TEX_CUT = 0.4;                         // «Lav profil» skal bruke minst 40 % mindre teksturminne
+
+// R21: ett teksturminne-anslag i byte (RGBA8 + mipmap-kjede), uavhengig av GPU
+export function texBytes(t) {
+  const im = t && t.image; if (!im) return 0;
+  const w = im.width || im.videoWidth || 0, h = im.height || im.videoHeight || 0; if (!w || !h) return 0;
+  return Math.round(w * h * 4 * (t.generateMipmaps === false || t.minFilter === 1003 || t.minFilter === 1006 ? 1 : 4 / 3));
+}
+export const geoBytes = (g) => { let n = 0; for (const a of Object.values(g.attributes || {})) n += (a.array ? a.array.byteLength : 0); if (g.index && g.index.array) n += g.index.array.byteLength; return n; };
+const TEXKEYS = ['map', 'emissiveMap', 'roughnessMap', 'normalMap', 'bumpMap', 'alphaMap', 'aoMap', 'metalnessMap', 'clearcoatMap'];
+// Teller unike teksturer, materialer og geometrier under en node (delte ting telles én gang)
+export function memStats(root) {
+  const tex = new Set(), geo = new Set(), mat = new Set();
+  root.traverse((o) => {
+    if (o.geometry) geo.add(o.geometry);
+    for (const m of [].concat(o.material || [])) { mat.add(m); for (const k of TEXKEYS) if (m[k]) tex.add(m[k]); if (m.uniforms) for (const u of Object.values(m.uniforms)) if (u && u.value && u.value.isTexture) tex.add(u.value); }
+  });
+  let tb = 0, gb = 0; for (const t of tex) tb += texBytes(t); for (const g of geo) gb += geoBytes(g);
+  return { textures: tex.size, geometries: geo.size, materials: mat.size, texMB: tb / 1048576, geoMB: gb / 1048576 };
+}
+export function memOver(s, low = false, b = MEM_BUDGET) {
+  const w = []; const lim = low ? b.texMBLow : b.texMB;
+  if (s.texMB > lim) w.push(`teksturminne ${s.texMB.toFixed(1)} MB > ${lim} MB`);
+  if (s.geoMB > b.geoMB) w.push(`geometriminne ${s.geoMB.toFixed(1)} MB > ${b.geoMB} MB`);
+  return w;
+}
+export const memLine = (s) => `teksturer ${s.textures} (${s.texMB.toFixed(1)} MB), geometrier ${s.geometries} (${s.geoMB.toFixed(1)} MB), materialer ${s.materials}`;
+// Frigjør alt under en node (geometrier, materialer, teksturer) og fjerner den fra scenen: brukes ved nivåbytte i samme side
+export function disposeTree(root) {
+  const seen = new Set();
+  root.traverse((o) => {
+    if (o.geometry && !seen.has(o.geometry)) { seen.add(o.geometry); o.geometry.dispose(); }
+    for (const m of [].concat(o.material || [])) { if (seen.has(m)) continue; seen.add(m); for (const k of TEXKEYS) if (m[k] && !seen.has(m[k])) { seen.add(m[k]); m[k].dispose(); } m.dispose(); }
+  });
+  if (root.parent) root.parent.remove(root);
+  return seen.size;
+}
+// Lav profil: tegn teksturen i full størrelse, men lag GPU-versjonen i halv størrelse (sider fra 256 og opp, ned til minst 128). Returnerer samme lerret hvis ingenting gjøres.
+export function lowSide(side) { return side >= 256 ? Math.max(128, side >> 1) : side; }
+export function shrinkCanvas(c, low, make) {
+  if (!low) return c;
+  const w = lowSide(c.width), h = lowSide(c.height); if (w === c.width && h === c.height) return c;
+  const o = make(w, h), g = o.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(c, 0, 0, w, h); return o;
+}
+
 // mål fra renderer.info etter at et bilde er tegnet
 export function sceneStats(renderer, scene) {
   let meshes = 0, lights = 0, shadowLights = 0;
   scene.traverse((o) => { if (o.isMesh) meshes++; if (o.isLight && o.visible) { lights++; if (o.castShadow) shadowLights++; } });
   const i = renderer.info;
-  return { calls: i.render.calls, tris: i.render.triangles, meshes, lights, shadowLights, geos: i.memory.geometries, textures: i.memory.textures };
+  return { calls: i.render.calls, tris: i.render.triangles, meshes, lights, shadowLights, gpuGeos: i.memory.geometries, gpuTex: i.memory.textures, ...memStats(scene) };
 }
 export function overBudget(s, b = BUDGET) {
   const w = [];
