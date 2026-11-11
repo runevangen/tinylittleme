@@ -19,10 +19,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R8 · Fortelling og målseremoni
-Korte fortellertekster (norsk/engelsk i `i18n.js`) i start av hvert nivå (kort kort-kort, ikke vegger av tekst), en bedre målskjerm med smuler, tid, maur knust og en tydelig «Neste nivå», og en liten avslutning etter nivå 6. Alt bruker knappenavn, ikke taster. Må kunne hoppes over med ett trykk.
-Ferdig når: flyten start → spill → mål → neste nivå føles komplett på mobil.
-
 ### [ ] R9 · Sjef-maur i siste rom
 Stor sjef-maur i nivå 6 (kjøkkenet), tre faser (patrulje, charge, stunned etter å ha truffet vegg/kasse så du kan hoppe på den), helsebar, tegnefilm-aktig animasjon, lyd og belønning (siste smule + en liten fanfare). Egen logikk i `ants.js` eller nytt `boss.js` med tester. Må være rettferdig på mobil.
 Ferdig når: en spiller kan slå sjefen med bare stikke + HOPP, og ruta går fortsatt.
@@ -32,6 +28,7 @@ Se `docs/FIGUREN.md` og `BACKLOG.md`: føtter som tilpasser seg trinn, bedre hen
 Ferdig når: animasjonene leses tydelig i skjermbilder/serier og ingen eksisterende test brekker.
 
 ## Ferdige punkter
+- [x] Fortelling og målseremoni (v0.92)
 - [x] Toy Story-lys og farge (v0.91)
 - [x] Nøkkel og lås (Zelda-gåte) (v0.90)
 - [x] Musikk og stemning per rom (v0.84)
