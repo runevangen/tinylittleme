@@ -720,7 +720,7 @@
       "movable": "light",
       "confidence": 1,
       "photos": [],
-      "help": "Leker som lever\nDytt til bilen med stikka, så ruller den og tuter. TA den for å tute."
+      "help": "Leker som lever\nDytt til bilen med stikka, så ruller den og tuter. Hopp opp på den (HOPP) for å tute."
     },
     {
       "id": "leke_robot",

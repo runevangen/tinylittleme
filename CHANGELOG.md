@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.07** – Levende leker i nivå 2, 3, 5 og 6: tennisball (dytt), bil (TA), vippehest (HOPP på den), wind-up-robot (TA, slipp) og sprettboks (TA) svarer med lyd, lydtekst og bevegelse. Kan slås av i ⚙ → Spill.
 - **1.06** – Nye skapninger: hvert rom har sin egen trussel utover maur. De gir varsel i farge og lyd før de kan skade, og kan ufarliggjøres med stikke + TA/HOPP/GREP. Kan justeres i ⚙ → Spill.
 - **1.05** – Mykere skygger og lysbaking: mørke blobber under og ved møbler, i hjørner og en varm lysflekk fra vinduet gir mer ekte rom. Kan slås av i ⚙ → Spill (Myke skygger); Enkel grafikk og Lav profil er uendret.
 - **1.04** – Veikart: byggemekanikken er avklart som egen byggeskjerm (sideriss, snapping, testfigur, tau/tape/vekter, alltid en vanskelig alternativ vei) og delt i R24 (skall), R25 (2D-fysikk), R26 (ut i verdenen + to brett).
