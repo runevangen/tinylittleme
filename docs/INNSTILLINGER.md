@@ -34,3 +34,5 @@ Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»
 
 - **Tilbehør på figuren** (⚙ → Spill, `tlm.rewards`, standard på, R16): hatter, skjerf og sekk som låses opp ved å ta alle smulene i et nivå (nivå 1 til 6). Valget gjøres i lekerommet på startskjermen og huskes (`tlm.unlocks`, `tlm.equip`; beste smuler og tid i `tlm.best`). Admin: «Alt tilbehør åpent» (`tlm.rewardsall`). Logges som `belønning`.
 - **Myke skygger og lysflekk** (⚙ → Spill, tlm.softlight, standard på, R17, softlight.js + softlight_logic.js): bakte mørke blobber under og rundt faste ting og i gulvhjørnene, varm lysflekk fra vinduet og mykere skyggekant (sun.shadow.radius). Bare Detaljert grafikk; Enkel grafikk og Lav profil beholder dagens look (test_softlight.mjs). Logges som «myke skygger».
+
+- **Byggeskjerm: snapping** (⚙ → Spill, `tlm.buildsnap`, standard på, R24): delene snapper til rutenett og festepunkter i byggeskjermen (`build.js`, `build_logic.js`). Admin: `tlm.buildall` gir alle deler (test). Hendelser logges som `bygg`.
