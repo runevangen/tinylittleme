@@ -96,3 +96,11 @@ export function bridgeFarEnd(p) {
   c[ax] = far; c[o] = mid; return { x: c[0], y: c[1], z: c[2] };
 }
 export const bridgeMid = (p) => ({ x: (p.bridge.min[0] + p.bridge.max[0]) / 2, y: p.bridge.max[1], z: (p.bridge.min[2] + p.bridge.max[2]) / 2 });
+
+// står spilleren på flata med platen, eller på/ved selve broen (i høyde med den)? Ellers skal ikke bro-pila henge igjen (etter fall/respawn).
+export function nearBridge(p, p0) {
+  const b = p.bridge, pl = p.plate, m = 2.5;
+  const onBridge = p0.x >= b.min[0] - m && p0.x <= b.max[0] + m && p0.z >= b.min[2] - m && p0.z <= b.max[2] + m && p0.y - b.max[1] > -0.5 && p0.y - b.max[1] < 3;
+  const onFlat = p0.x >= pl.x0 - 0.3 && p0.x <= pl.x1 + 0.3 && p0.z >= pl.z0 - 0.3 && p0.z <= pl.z1 + 0.3 && p0.y - pl.y > -0.3 && p0.y - pl.y < PUZ.zoneUp;
+  return onBridge || onFlat;
+}

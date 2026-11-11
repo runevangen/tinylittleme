@@ -5,7 +5,7 @@ import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
-import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid } from './puzzle.js';
+import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid, nearBridge } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
@@ -1030,7 +1030,7 @@ function nextTarget() {
   const R = LEVEL.route, g = LEVEL.goal;
   if (puzzlesOn && mode === 'play' && bridgeGuide) {                              // R7: etter åpning peker pila på broen til du er over
     const e = bridgeFarEnd(bridgeGuide);
-    if (Math.hypot(player.x - e.x, player.z - e.z) < 2 || performance.now() > bridgeGuide.until) bridgeGuide = null;
+    if (Math.hypot(player.x - e.x, player.z - e.z) < 2 || performance.now() > bridgeGuide.until || !nearBridge(bridgeGuide, player)) bridgeGuide = null;   // også når du har falt/respawnet bort fra broen
     else return { x: e.x, y: e.y, z: e.z, label: T('puz.bridgeLbl'), final: false, act: '' };
   }
   if (puzzlesOn && mode === 'play') { const pt = puzzleTarget(LEVEL, player); if (pt) return { x: pt.x, y: pt.y, z: pt.z, label: T('puz.' + pt.key), final: false, act: pt.key === 'plate' ? T('btn.drop') : T('btn.take') }; }   // R7: nøkkel, så lås
