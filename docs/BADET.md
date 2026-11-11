@@ -21,6 +21,7 @@ Brettet ligger i `scenes/bad.scene.json` (tolkningen, mål i cm) og lages til `l
 - **Rute til motgiften (ingen hjelpetrinn):** gulv → klatre opp den flettede vaskekurven (GREP, 60 cm) → hopp til sisternen (80 cm) → vasken (84 cm) → tannglasset. Gått med ekte fysikk i Mario-stil, og målet nås.
 - **Kan også klatres:** blå og lilla badekåpe, buksa og de to håndklærne på panelveggen (opp til knaggrekka på 135 cm). Det er ikke en del av ruta ennå.
 - **Farer:** det tomme karet (grop) og do-skåla (skylles ned). Flisene er glatte, mattene er myke.
+- **Vasken (v0.88):** forsenket 8 cm (24 × 20 cm bunn) i en benkeplate av fire bokser; skapet er 76 cm, så toppen av det er vaskebunnen. Du kan hoppe ned og opp igjen. Smuler og småting ligger på kantene.
 - **Forenklet eller gjettet:** skråtaket er flatt, døra er lukket, vaskeskapet har to dører (tre i virkeligheten), speilskapets hyller er ikke modellert, og målene er anslått fra bildene (±15 cm).
 - **Neste steg:** flytte motgiften høyere (medisinskapet eller kurvene på hylla, 2 m) når det finnes en vei fra knaggrekka og opp; skråtak over karet; dusjslange som tau.
 

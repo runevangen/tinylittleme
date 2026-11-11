@@ -111,6 +111,25 @@ function tub(members) {
 }
 
 
+// vasken (v0.88): benkeplate av fire bokser rundt en ekte forsenkning. Hullet er mellom randboksene (venstre/høyre/foran) og bakstykket (vask_plate); bunnen er toppen av skapet under.
+function sink(members) {
+  const A = bounds(members), byId = (id) => members.find((m) => m.id === id);
+  const back = byId('vask_plate'), L = byId('vask_rim_v'), R = byId('vask_rim_h'), F = byId('vask_rim_f');
+  if (!back || !L || !R || !F) return null;
+  const h = A.s[1], hx0 = L.max[0], hx1 = R.min[0], hz0 = back.max[2], hz1 = F.min[2], hw = hx1 - hx0, hd = hz1 - hz0;
+  const g = new THREE.Group(), pw = porcelain(members[0].color), cr = chrome();
+  g.position.set(A.c[0], A.min[1], A.c[2]);
+  const outer = new THREE.Shape(); rrPath(outer, A.s[0] - 0.2, A.s[2] - 0.2, 0.7);
+  const hc = [(hx0 + hx1) / 2 - A.c[0], (hz0 + hz1) / 2 - A.c[2]];
+  const hp = new THREE.Path(); rrPath(hp, hw, hd, 1.4); const pts = hp.getPoints(24).map((q) => new THREE.Vector2(q.x + hc[0], q.y + hc[1])); outer.holes.push(new THREE.Path(pts));
+  const slab = mesh(extrudeUp(outer, h, 0.14), pw); g.add(slab);
+  const bowl = new THREE.Shape(pts); const bottom = mesh(extrudeUp(bowl, 0.06, 0), new THREE.MeshPhysicalMaterial({ color: 0xdfe3e4, roughness: 0.16, clearcoat: 1 })); bottom.position.y = 0.02; g.add(bottom);
+  const dz = hc[1] + hd * 0.18;
+  const drain = mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 16), cr, false); drain.position.set(hc[0], 0.1, dz); g.add(drain);
+  const wat = mesh(new THREE.CircleGeometry(1, 28), new THREE.MeshPhysicalMaterial({ color: 0x7fb9d2, roughness: 0.04, transparent: true, opacity: 0.5 }), false); wat.rotation.x = -Math.PI / 2; wat.scale.set(hw * 0.2, hd * 0.2, 1); wat.position.set(hc[0], 0.12, dz); g.add(wat);
+  return g;
+}
+
 // ---------- teksturer (tegnes i nettleseren, ingen bildefiler) ----------
 function rng(seed) { let a = seed; return () => { a = (a * 1664525 + 1013904223) % 4294967296; return a / 4294967296; }; }
 let ANISO = 4;
@@ -509,6 +528,7 @@ export function buildSingle(kind, size, opts = {}) {
 const BUILDERS = [
   [(ms) => ms.some((m) => m.kind === 'toilet_tank'), toilet],
   [(ms) => ms.every((m) => m.kind === 'tub'), tub],
+  [(ms) => ms.some((m) => m.id === 'vask_plate'), sink],
 ];
 // Tegn en gruppe bokser som én ting. Returnerer et Object3D, eller null hvis gruppen ikke har noen egen form (da tegnes boksene som vanlig).
 export function buildGroup(members) {

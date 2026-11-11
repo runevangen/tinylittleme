@@ -27,7 +27,7 @@ const kit = (s) => ({
   k.add('ny_hylle', 'chest', 'wood', '#c79a5e', [138, 185, 160, 163, 190, 232], { cp: true, help: 'Ny hylle\nHvil her til kreftene er fulle. Det siste håndkleet henger fra den øverste hylla.' });
   k.add('handkle_ny_1', 'towel_hang', 'fabric', '#e0a23a', [170, 184, 135, 163, 188, 190], { grip: true, onto: 'ny_hylle', grip_drain: -0.3 });
   k.add('handkle_ny_2', 'towel_hang', 'fabric', '#c9483b', [154, 157, 163, 199, 200, 216], { grip: true, onto: 'hylle', grip_drain: -0.3 });
-  s.goal = { x: 172, y: 199, z: 210, on: 'hylle', note: 'Motgift-bit på den øverste hylla, der den lille kurven sto' };
+  s.goal = { x: 172, y: 199, z: 232, on: 'hylle', note: 'Motgift-bit på den øverste hylla, i enden bak panelet (v0.88: flyttet bort fra det grønne håndkleet, så lyssøylen ikke dekker det)' };
   s.ants = [{ id: 'baerer_gulv', type: 'carrier', on: 'gulv', from: [92, 55], to: [242, 55] }, { id: 'edderkopp_dusj', type: 'spider', on: 'gulv', from: [42.5, 115] }];   // R6: bærer-maur og en edderkopp-vakt (fri flate rundt, langt fra start)
   save('bad2', s);
 }

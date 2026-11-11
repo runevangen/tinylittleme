@@ -56,12 +56,10 @@ export function formatReport(info) {
   L.push('');
   if (info.marks.length) {
     L.push('Markert av testeren:');
-    for (const m of info.marks) L.push(`- [${m.c} s] (${m.pos.join(', ')}) ${m.detail || '(ingen tekst)'}${m.lv ? ` · ${m.lv} · v${m.v}` : ''}`);
-    L.push('');
-  }
-  if (info.marksOld?.length) {                                   // v0.87: markeringer som allerede er sendt i en tidligere rapport (kan være rettet): vises tydelig adskilt
-    L.push('Allerede sendt tidligere (trolig rettet, ikke nye):');
-    for (const m of info.marksOld) L.push(`- [${m.c} s] (${m.pos.join(', ')}) ${m.detail || '(ingen tekst)'}${m.lv ? ` · ${m.lv} · v${m.v}` : m.v ? ` · v${m.v}` : ''}`);
+    for (const m of info.marks) {                         // v0.87: hver markering viser brettet og versjonen den ble gjort i (tiden starter på 0 for hvert brett), og eldre versjoner er merket, siden de kan være rettet
+      const tag = [m.lv, m.v && m.v !== info.version ? `fra v${m.v}, kan være rettet` : ''].filter(Boolean).join(' · ');
+      L.push(`- [${m.c} s${tag ? ' · ' + tag : ''}] (${m.pos.join(', ')}) ${m.detail || '(ingen tekst)'}`);
+    }
     L.push('');
   }
   if (info.backlog?.length) {
