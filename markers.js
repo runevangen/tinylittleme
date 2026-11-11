@@ -42,10 +42,11 @@ export function buildFlag(scene, { low = false } = {}) {
   root.add(base, pole, ball, cloth);
   // pyntebokstaver (små klosser) ved foten
   const colors = ['#ef476f', '#06a77d', '#f2a900'], letters = ['T', 'L', 'M'];
+  const blocks = [];
   letters.forEach((ch, i) => {
     const m = low ? new THREE.MeshLambertMaterial({ color: colors[i] }) : new THREE.MeshStandardMaterial({ map: letterTex(ch, colors[i]), roughness: 0.45 });
     const b = noDetailMesh(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), m)), a = i * 2.1 + 0.4;
-    b.position.set(Math.cos(a) * 0.62, 0.1, Math.sin(a) * 0.62); b.rotation.y = -a + (i - 1) * 0.5; root.add(b);
+    b.position.set(Math.cos(a) * 0.62, 0.1, Math.sin(a) * 0.62); b.rotation.y = -a + (i - 1) * 0.5; root.add(b); blocks.push(b);
   });
   // glød: ring på gulvet + lys (bare i detaljert grafikk)
   const ringMat = new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false });
@@ -55,7 +56,11 @@ export function buildFlag(scene, { low = false } = {}) {
   scene.add(root);
   return {
     root,
-    place(p) { root.position.set(p[0], p[1], p[2]); },
+    // p: gulvpunkt for stangen. ok(x, z): finnes det gulv her? Klosser uten gulv under skjules (henger aldri i lufta).
+    place(p, ok) {
+      root.position.set(p[0], p[1], p[2]);
+      for (const b of blocks) b.visible = !ok || ok(p[0] + b.position.x, p[2] + b.position.z);
+    },
     ignite: st.ignite, extinguish: st.extinguish, state: st.s,
     update(now, dt) {
       const o = st.update(Math.min(0.1, dt || 0.016)), t = now / 1000, pu = pulse(t, 2.6);
