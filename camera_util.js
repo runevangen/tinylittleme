@@ -68,4 +68,16 @@ export function anchorLook(cam, look, hero, fovDeg, lo, hi) {
   const a1 = ah - Math.atan(want * th);
   return [cam[0] + lx / lh * Math.cos(a1) * len, cam[1] + Math.sin(a1) * len, cam[2] + lz / lh * Math.cos(a1) * len];
 }
+// Sidestilling (R9): flytt blikkpunktet sidelengs så figuren havner på NDC x = xt (litt til venstre for midten, så den ikke havner ved ◎-knappen som sitter høyre for midten).
+// Små vinkler, så en flat forskyvning av blikkpunktet holder; maks `maxS` NDC så kameraet aldri svinger voldsomt. aspect = bredde/høyde.
+export function shiftLookX(cam, look, hero, fovDeg, aspect, xt, maxS = 0.15) {
+  const fx = look[0] - cam[0], fy = look[1] - cam[1], fz = look[2] - cam[2], fl = Math.hypot(fx, fy, fz), fh = Math.hypot(fx, fz);
+  if (fl < 1e-6 || fh < 1e-6) return look;
+  const f = [fx / fl, fy / fl, fz / fl], r = [-fz / fh, 0, fx / fh], th = Math.tan(fovDeg * Math.PI / 360) * aspect;
+  const v = [hero[0] - cam[0], hero[1] - cam[1], hero[2] - cam[2]], z = v[0] * f[0] + v[1] * f[1] + v[2] * f[2];
+  if (z < 0.1) return look;
+  const x0 = (v[0] * r[0] + v[2] * r[2]) / z / th, s = Math.max(-maxS, Math.min(maxS, x0 - xt)) * fl * th;   // look flyttes mot høyre => figuren går mot venstre
+  return [look[0] + r[0] * s, look[1], look[2] + r[2] * s];
+}
+export const BOSS_HERO_X = -0.05;
 export const BOSS_HERO_Y = [-0.26, 0.22];   // trygg skjermsone for figuren under sjefkamp (NDC y): over stikke/TA/HOPP/GREP/Tilbake nederst, under helsebar og varselstripe øverst

@@ -14,7 +14,7 @@ import { makeAtmos } from './atmos.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
-import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, BOSS_HERO_Y } from './camera_util.js';
+import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
@@ -1887,7 +1887,7 @@ function render(now, dt) {
     cam.cur += (d - cam.cur) * (d < cam.cur ? 0.5 : 0.08);
     if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur); camera.position.x += sdx; camera.position.z += sdz;
     { let lk = [cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0), cam.target.z + sdz];
-      if (camBossK > 0.02 && !SH) { const a = anchorLook([camera.position.x, camera.position.y, camera.position.z], lk, [player.x, player.y + 0.6, player.z], camera.fov, BOSS_HERO_Y[0], BOSS_HERO_Y[1]), w = Math.min(1, camBossK); lk = lk.map((v, i) => v + (a[i] - v) * w); }   // sjefkamp: figuren holdes over knappene og under varselstripen selv om veggen drar kameraet tett inn
+      if (camBossK > 0.02 && !SH) { const cp3 = [camera.position.x, camera.position.y, camera.position.z], h3 = [player.x, player.y + 0.6, player.z], a = shiftLookX(cp3, anchorLook(cp3, lk, h3, camera.fov, BOSS_HERO_Y[0], BOSS_HERO_Y[1]), h3, camera.fov, camera.aspect, BOSS_HERO_X), w = Math.min(1, camBossK); lk = lk.map((v, i) => v + (a[i] - v) * w); }   // sjefkamp: figuren holdes over knappene og under varselstripen selv om veggen drar kameraet tett inn
       camera.lookAt(lk[0], lk[1], lk[2]); } }
   }
   { const fp = viewFirst && mode === 'play', fov = fp ? 74 : viewMode === 'shoulder' ? fovSet + 8 : fovSet;
