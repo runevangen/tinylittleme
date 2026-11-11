@@ -27,10 +27,6 @@ Ferdig når: en spiller kan slå sjefen med bare stikke + HOPP, og ruta går for
 Startflagget (ved figuren i alle nivåer) er en flat, ulyst gul firkant med støyete tekstur og hvit stang som ser ut som en plassholder; målmarkøren og nøkkel/lås-merkene har samme preg. Bytt til blanke rekvisitter i barneskala (stoffflagg som vaier, små pyntebokstaver, glødende målring/fyrtårn med myk puls), lyst med samme materialer som resten (`look.js`/`grade.js`), og la flagget bli tent/slukket når et lagringspunkt tas. Enkel grafikk beholder en billig variant. Filer: `main.js` (flagg/mål), `look.js`, ev. ny `markers.js` (legges i `files` i `index.html`).
 Ferdig når: skjermbilder (iPhone 14) av nivå 1–6 viser flagg og mål uten støy og uten å dekke figuren, lagringspunkt lyser tydelig, og ruta går.
 
-### [ ] R12 · Nivå 4–6 skal føles som nye rom, ikke bare ommøblerte
-Nivå 4–6 er de samme rommene med flyttede ting (`tools/make_variants.mjs`) og ser ved første øyekast like ut som 1–3. Gi hver variant egen stemning: annen tid på døgnet (kveldslys, nattlys med lommelykt-kjegle fra hjelmen), annen fargepalett, nye rekvisitter (tepper, leketog, kakeboks, badeand-flåte) og én ny vri per rom (f.eks. vann som stiger i badet, lys som slås av i kjøkkenet). Settes opp som data i variantene, ikke som kopi av grunnscenen; nye valg i `SETTINGS` (gruppe Spill). Filer: `tools/make_variants.mjs`, `scenes/`, `atmos.js`, `grade.js`, `props.js`, `music.js` (ev. egen tema).
-Ferdig når: sidestilte skjermbilder av nivå 1/4, 2/5 og 3/6 er tydelig forskjellige, hver variant har en egen vri som kan løses med stikke + TA/HOPP/GREP, alle seks går i `walk_route`.
-
 ### [ ] R13 · Gulv og overflater: moiré, tomme flater og skala
 I skjermbildene er gulvet i nivå 2 en stor, nesten tom trebit med lite å lese skala av, den mørke badematta i nivå 1 flimrer/pikselerer (moiré på ripestruktur), og kjøkkengulvet er en jevn beige flate. Fiks mipmap/anisotropi/relieff-frekvens på matta og andre høyfrekvente teksturer, og strø småting for målestokk (smuler, hår, knapper, mynter, blyantstumper, flekker, fuger med skitt) med tetthet satt etter rom og kvalitet. Dette gjelder også BACKLOG «Detaljert rom». Filer: `look.js`, `props.js`, `scenes/` (dekor uten kollisjon), `main.js` (teksturinnstillinger).
 Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hverandre), start-skjermbildene i nivå 2 og 6 viser minst tre ting som gir skala, og FPS-målingen ligger innenfor 1 fps av før.
@@ -48,6 +44,7 @@ Smulene (★ 0/10) gir i dag bare et tall på målskjermen. Gi dem verdi: hvert 
 Ferdig når: etter å ha tatt alle smuler i et nivå ser spilleren et nytt tilbehør på figuren neste gang, valget huskes etter omlasting, tester dekker lagring og opplåsing, og skjermbilde av skapet er sjekket på iPhone 14.
 
 ## Ferdige punkter
+- [x] Nivå 4–6 skal føles som nye rom, ikke bare ommøblerte (v0.95)
 - [x] Fortelling og målseremoni (v0.92)
 - [x] Toy Story-lys og farge (v0.91)
 - [x] Nøkkel og lås (Zelda-gåte) (v0.90)
