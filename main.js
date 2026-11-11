@@ -18,6 +18,8 @@ import { makeAtmos } from './atmos.js';
 import { applyGrade } from './grade_apply.js';
 import { gradeTint } from './grade.js';
 import { buildHero, RIG_S } from './hero.js';
+import { recordRun, getEquipped, rt as rwT, accById } from './rewards.js';
+import { applyAccessories, updateAccessories, showCloset } from './rewards_view.js';
 import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4–6 som egne rom (stemning, hjelmlykt, vri)
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
@@ -137,6 +139,7 @@ let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
+let rewardsOn = store.get('tlm.rewards', true), rewardsAll = store.get('tlm.rewardsall', false);   // belønninger (R16)
 let bossOn = store.get('tlm.boss', true);   // sjef-maur (R9)
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', false), hudOpen = false, fpsOn = store.get('tlm.fps', false);
 // PC (v0.72): PUBG-styring som standard: WASD går, musa ser deg rundt (klikk i bildet låser pekeren), skulderkamera. Gjøres én gang; kan byttes tilbake i ⚙.
@@ -521,6 +524,8 @@ const flagV = buildFlag(scene, { low: gfxLow }), goalRing = buildGoalRing(scene,
 if (!gfxLow) look.detailize(scene);                                   // fint korn på alle flater i brettet (v0.76)
 const hero = buildHero(look);
 scene.add(hero.root);
+const refreshAccessories = () => applyAccessories(hero, rewardsOn ? getEquipped(store, rewardsAll) : {});   // R16: valgt tilbehør på figuren
+refreshAccessories();
 // rund skygge under figuren (som i Mario: viser hvor du lander) og landingsmarkør når du faller
 const blobTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, 'rgba(0,0,0,0.85)'); gr.addColorStop(0.55, 'rgba(0,0,0,0.5)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
 const flatMat = (o) => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide, ...o });
@@ -855,6 +860,7 @@ function updateStam() {                                   // krefter-stripe over
 }
 const F = { sm: 0.35, op: 0, bw: 0, bl: 0, eyeY: 1, pup: 1, blush: 0, sweat: 0 };       // glattede uttrykksverdier
 function animateHero(p, now, dt) {
+  updateAccessories(hero, dt);
   const sec = now / 1000, h = hero, f = h.face, st = p.state, sp = Math.hypot(p.vx, p.vz);
   h.mood.t = Math.max(0, h.mood.t - dt); const mood = h.mood.t > 0 ? h.mood.name : '';
   const climbing = st === 'climb' || st === 'hang' || st === 'mantle', falling = !p.onGround && p.vy < -7 && !climbing, rising = !p.onGround && p.vy > 3 && !climbing;
@@ -1455,6 +1461,8 @@ const SETTINGS = [
   fl('startscreen', 'spill', 'Vis startskjerm (Nytt spill / Fortsett) når spillet åpnes', true, () => startScreenOn, kp('tlm.startscreen', (v) => { startScreenOn = v; })),
   fl('puzzles', 'spill', 'Gåter (nøkkel og lås: en snarvei du åpner)', true, () => puzzlesOn, kp('tlm.puzzles', (v) => { puzzlesOn = v; })),
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
+  fl('rewards', 'spill', 'Tilbehør på figuren (hatter, skjerf, sekk du har samlet)', true, () => rewardsOn, kp('tlm.rewards', (v) => { rewardsOn = v; refreshAccessories(); logEv('belønning', v ? 'tilbehør på' : 'tilbehør av'); })),
+  fl('rewardsall', 'admin', 'Alt tilbehør åpent (test av lekerommet)', false, () => rewardsAll, kp('tlm.rewardsall', (v) => { rewardsAll = v; refreshAccessories(); })),
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
@@ -1854,11 +1862,12 @@ function update(dt) {
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
-    let d;
-    { const cl = store.get('tlm.cleared', {}), prevBest = cl[levelId] || 0, n = levelInfo?.n; if (!stats.flew) { cl[levelId] = Math.max(prevBest, points()); store.set('tlm.cleared', cl); store.set('tlm.done', false); const runs = store.get('tlm.runs', {}); runs[levelId] = { t: clock, ants: stats.squashed || 0, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL) }; store.set('tlm.runs', runs); }       // husk hvilke nivåer som er klart (beste poeng)
+    let d, rw = null;
+    { const cl = store.get('tlm.cleared', {}), prevBest = cl[levelId] || 0, n = levelInfo?.n; if (!stats.flew) { cl[levelId] = Math.max(prevBest, points()); store.set('tlm.cleared', cl); store.set('tlm.done', false); const runs = store.get('tlm.runs', {}); runs[levelId] = { t: clock, ants: stats.squashed || 0, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL) }; store.set('tlm.runs', runs);
+        rw = recordRun(store, { levelId, n, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL), t: clock, flew: stats.flew }); logEv('belønning', `beste ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}${rw.unlocked ? ', låste opp ' + rw.unlocked.id : ''}${rw.newBestTime ? ', ny beste tid' : ''}`); if (rw.unlocked) refreshAccessories(); }       // husk hvilke nivåer som er klart (beste poeng)
       d = finishData({ n, nextExists: !!nextLevel, clock, stats, crumbs: crumbCount(LEVEL), crumbTotal: crumbTotal(LEVEL), points: points(), prevBest, flew: stats.flew });
       $('winTitle').textContent = n ? (nextLevel ? T('win.level', { n }) : T('win.all')) : T('win.top');
-      $('winStats').innerHTML = winHTML(d, T); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
+      $('winStats').innerHTML = winHTML(d, T) + (rw?.unlocked && rewardsOn ? `<div class="wpts" style="font-size:17px;line-height:1.3">🎁 ${rwT(lang, 'rw.new', { name: rwT(lang, 'acc.' + rw.unlocked.id) })}</div>` : '') + (rw?.newBestTime ? `<div class="wpts" style="font-size:15px"><small>${rwT(lang, 'rw.newbest')}</small></div>` : ''); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
       const nb = $('nextLevel'); nb.style.display = nextLevel || (n && storyOn) ? '' : 'none';
       if (nextLevel) { nb.textContent = `${T('win.next')} →`; nb.onclick = () => goLevel(nextLevel.id); }
       else if (n && storyOn) { nb.textContent = `${T('win.ending')} →`; nb.onclick = showEnding; }
@@ -2252,6 +2261,7 @@ function showStart() {
   $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${T('menu.tagline')}</p>
     <button class="mbtn" id="mCont" ${has ? '' : 'disabled'}>${T('menu.continue')}<small>${has ? levelLabel : T('menu.nosave')}</small></button>
     <button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
+    <button class="mbtn sec" id="mToys">🧸 ${rwT(lang, 'rw.closet')}</button>
     <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
     <button class="mbtn sec" id="mQuit">${T('menu.quit')}</button>
     <div class="ver">v${VERSION}</div>`;
@@ -2263,6 +2273,7 @@ function showStart() {
     if (has && !armed) { armed = 1; $('mNew').classList.add('warn'); $('mNew').classList.remove('sec'); $('mNew').textContent = T('menu.sure'); setTimeout(() => { armed = 0; if ($('mNew')) { $('mNew').classList.remove('warn'); $('mNew').classList.toggle('sec', has); $('mNew').textContent = T('menu.new'); } }, 4000); return; }
     newGame();
   };
+  $('mToys').onclick = () => { logEv('belønning', 'lekerom åpnet'); showCloset($('start'), { st: store, lang, all: rewardsAll, levels: LEVELS, onChange: (e) => { refreshAccessories(); logEv('belønning', `valgt ${Object.values(e).filter(Boolean).join(',') || 'ingen'}`); }, onBack: showStart }); };
   $('mSet').onclick = () => { buildPanel(); $('help').classList.add('hide'); $('panel').classList.remove('hide'); };
   $('mQuit').onclick = quitGame;
 }
