@@ -977,6 +977,39 @@
       ]
     }
   ],
+  "goals": [
+    {
+      "id": "kasse",
+      "type": "reach",
+      "on": "lekekasse",
+      "gate": true,
+      "label": "Hopp opp på lekekassen",
+      "en": "Jump onto the toy box"
+    },
+    {
+      "id": "smuler",
+      "type": "crumbs",
+      "n": 5,
+      "label": "Samle 5 smuler",
+      "en": "Collect 5 crumbs"
+    },
+    {
+      "id": "maur",
+      "type": "stomp",
+      "n": 2,
+      "label": "Knus to maur",
+      "en": "Squash two ants"
+    },
+    {
+      "id": "vegg",
+      "type": "reach",
+      "on": "vegghylle",
+      "gate": true,
+      "after": "kasse",
+      "label": "Nå vegghylla",
+      "en": "Reach the wall shelf"
+    }
+  ],
   "variant": {
     "mood": "night",
     "twist": {

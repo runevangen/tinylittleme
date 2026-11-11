@@ -1188,6 +1188,49 @@
    "z": 23.76
   }
  ],
+ "goals": [
+  {
+   "id": "kasse",
+   "type": "reach",
+   "label": "Hopp opp på lekekassen",
+   "en": "Jump onto the toy box",
+   "gate": true,
+   "on": "lekekasse",
+   "x0": -28,
+   "x1": -13,
+   "z0": 15,
+   "z1": 23,
+   "top": 9.2
+  },
+  {
+   "id": "smuler",
+   "type": "crumbs",
+   "label": "Samle 5 smuler",
+   "en": "Collect 5 crumbs",
+   "n": 5
+  },
+  {
+   "id": "maur",
+   "type": "stomp",
+   "label": "Knus to maur",
+   "en": "Squash two ants",
+   "n": 2
+  },
+  {
+   "id": "vegg",
+   "type": "reach",
+   "label": "Nå vegghylla",
+   "en": "Reach the wall shelf",
+   "gate": true,
+   "after": "kasse",
+   "on": "vegghylle",
+   "x0": 27.2,
+   "x1": 30,
+   "z0": -1,
+   "z1": 18.4,
+   "top": 24.2
+  }
+ ],
  "ropes": [],
  "route": [
   {

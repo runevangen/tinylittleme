@@ -33,6 +33,10 @@ const kit = (s) => ({
   s.variant = { mood: 'evening', twist: { type: 'water', max: 4, dry: 16, rise: 9, hold: 6, drain: 9 },
     props: [{ type: 'rug', x: 105, z: 195, w: 70, d: 38, color: '#e8574a', stripe: '#ffe2b8' }, { type: 'rug', x: 62, z: 90, w: 40, d: 40, shape: 'round', color: '#7a5cc8', stripe: '#f4d6ff' }, { type: 'duck', x: 150, z: 112, r: 9 }] };
   s.ants.push({ id: 'traad_dusj', type: 'dangler', on: 'gulv', from: [42.5, 80] }, { id: 'traad_vask', type: 'dangler', on: 'gulv', from: [212.5, 75] });   // R19: nivå 4 = edderkopper i tråd fra taket (ingen pillbug)
+  s.goals = [{ id: 'kurv', type: 'reach', on: 'vaskekurv', gate: true, label: 'Klatre opp på vaskekurven', en: 'Climb the laundry basket' },
+    { id: 'hylle', type: 'reach', on: 'ny_hylle', gate: true, after: 'kurv', label: 'Nå den nye hylla', en: 'Reach the new shelf' },
+    { id: 'smuler', type: 'crumbs', n: 5, label: 'Samle 5 smuler', en: 'Collect 5 crumbs' },
+    { id: 'vokter', type: 'stomp', n: 1, label: 'Knus en vokter', en: 'Squash a guard' }];                                                         // R23: delmål (goals.js)
   save('bad2', s);
 }
 
@@ -59,6 +63,10 @@ const kit = (s) => ({
   s.variant = { mood: 'night', twist: { type: 'train', ant: 'tog' },
     props: [{ type: 'rug', x: 170, z: 200, w: 110, d: 90, shape: 'round', color: '#3b64c4', stripe: '#ffd45a' }, { type: 'track', from: [104, 72], to: [104, 212] }, { type: 'stars', count: 46 }] };
   s.ants.push({ id: 'traad_hylle', type: 'dangler', on: 'gulv', from: [155, 75] }, { id: 'pillbug_gulv', type: 'roller', on: 'gulv', from: [115, 135], to: [145, 135] });   // R19: nivå 5 = en tråd-edderkopp og en pillbug på den trange gulvstripa
+  s.goals = [{ id: 'kasse', type: 'reach', on: 'lekekasse', gate: true, label: 'Hopp opp på lekekassen', en: 'Jump onto the toy box' },
+    { id: 'smuler', type: 'crumbs', n: 5, label: 'Samle 5 smuler', en: 'Collect 5 crumbs' },
+    { id: 'maur', type: 'stomp', n: 2, label: 'Knus to maur', en: 'Squash two ants' },
+    { id: 'vegg', type: 'reach', on: 'vegghylle', gate: true, after: 'kasse', label: 'Nå vegghylla', en: 'Reach the wall shelf' }];                                                         // R23: delmål (goals.js)
   save('barnerom2', s);
 }
 
@@ -92,6 +100,10 @@ const kit = (s) => ({
   { const m = s.ants.find((x) => x.id === 'maur_gulv'); if (m) m.from = [135, m.from[1]]; }               // R9: bærer-mauren går ikke gjennom sjefens område (venstre del av rommet)
   s.boss = { id: 'sjef', on: 'gulv', from: [25, 110], to: [85, 110] };                                        // R9: sjef-maur på den åpne gulvflata til venstre (veggen og kjøleskapet står som vegger for støtet)
   s.ants.push({ id: 'traad_kjokken', type: 'dangler', on: 'gulv', from: [300, 165] });                          // R19: nivå 6 = pillbugen fra nivå 3 (arvet) pluss en tråd-edderkopp
+  s.goals = [{ id: 'smuler', type: 'crumbs', n: 6, label: 'Samle 6 smuler', en: 'Collect 6 crumbs' },
+    { id: 'sjef', type: 'boss', label: 'Slå sjef-mauren', en: 'Beat the boss ant' },
+    { id: 'bro', type: 'puzzle', puzzle: 'bro', label: 'Åpne snarveien med nøkkelen', en: 'Open the shortcut with the key' },
+    { id: 'skap', type: 'reach', on: 'overskap', gate: true, label: 'Nå overskapet', en: 'Reach the top cabinet' }];                                                         // R23: delmål (goals.js)
   save('kjokken2', s);
 }
 console.log('skrev scenes/bad2, barnerom2, kjokken2');

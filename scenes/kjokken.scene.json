@@ -1322,5 +1322,38 @@
         "anchor": "max"
       }
     }
+  ],
+  "goals": [
+    {
+      "id": "benk",
+      "type": "reach",
+      "label": "Kom opp på kjøkkenbenken",
+      "en": "Get up on the counter",
+      "on": "benk_v",
+      "gate": true
+    },
+    {
+      "id": "bro",
+      "type": "puzzle",
+      "label": "Åpne snarveien med nøkkelen",
+      "en": "Open the shortcut with the key",
+      "puzzle": "bro"
+    },
+    {
+      "id": "smuler",
+      "type": "crumbs",
+      "label": "Samle 6 smuler",
+      "en": "Collect 6 crumbs",
+      "n": 6
+    },
+    {
+      "id": "skap",
+      "type": "reach",
+      "label": "Nå overskapet",
+      "en": "Reach the top cabinet",
+      "on": "overskap",
+      "gate": true,
+      "after": "benk"
+    }
   ]
 }

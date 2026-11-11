@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.08** – Delmål (milepæler) i alle seks nivåer: panel under HUD-linja, pil mot aktivt delmål, lås på målet, lagring. Kan justeres i ⚙ → Spill/Hjelp/Admin.
 - **1.07** – Mål-lesbarhet i start: kort kamerasveip fra målet til figuren (trykk for å hoppe over), pil mot første delmål og en hint-boble som nevner riktig knapp (TA, HOPP, GREP).
 - **1.06** – Nye skapninger: hvert rom har sin egen trussel utover maur. De gir varsel i farge og lyd før de kan skade, og kan ufarliggjøres med stikke + TA/HOPP/GREP. Kan justeres i ⚙ → Spill.
 - **1.05** – Mykere skygger og lysbaking: mørke blobber under og ved møbler, i hjørner og en varm lysflekk fra vinduet gir mer ekte rom. Kan slås av i ⚙ → Spill (Myke skygger); Enkel grafikk og Lav profil er uendret.
