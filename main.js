@@ -11,7 +11,7 @@ import { makeAtmos } from './atmos.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
-import { stepOffset, createReact, hangSway, fpsWatch } from './polish.js';
+import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
 import { followYaw, impactSpeed, landingClass } from './camera_util.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
@@ -123,8 +123,10 @@ const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCen
 // ---------- hendelseslogg og FPS: brukes i testrapporten ----------
 const evLog = store.get('tlm.evlog', []);
 const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION }); if (evLog.length > 120) evLog.shift(); };
-const fpsW = fpsWatch(30, 3000);
-let autoQ = store.get('tlm.autoq', true), qSteps = 0;   // R10: vedvarende lav FPS gir lavere oppløsning (ett trinn om gangen, ned til 1×)
+const fpsW = fpsWatch(24, 3000);   // 24, ikke 30: iPhone i strømsparemodus låser til 30 fps og er frisk
+const autoQC = createAutoQ();      // polish.js: når oppløsningen går ned/opp (testet i test_polish.mjs)
+let resQ = store.get('tlm.resq', 'auto'); if (!['auto', 'full', 'mid', 'low'].includes(resQ)) resQ = 'auto';   // R10: auto = følger FPS (ned ved vedvarende lav, opp igjen når det går fint); ellers fast valg
+let autoQ = resQ === 'auto', qSteps = 0, basePr = 1;
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
 addEventListener('pagehide', () => store.set('tlm.evlog', evLog.slice(-120)));
 
@@ -180,6 +182,9 @@ scene.add(new THREE.HemisphereLight(0xeaf1ff, 0xa5845c, 0.42));       // kjølig
 // ---------- utseende: teksturer med relieff, bøker, kontaktskygger og støv (look.js) ----------
 const gfxLow = store.get('tlm.gfx', 'high') === 'low';
 if (gfxLow) renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+basePr = renderer.getPixelRatio();   // full oppløsning (autoq går ned fra og opp til denne)
+const applyRes = () => { const t = resQ === 'low' ? 1 : resQ === 'mid' ? Math.max(1, Math.round(basePr * 75) / 100) : basePr, np = Math.min(basePr, Math.max(1, t)); if (Math.abs(np - renderer.getPixelRatio()) > 0.005) { renderer.setPixelRatio(np); renderer.setSize(innerWidth, innerHeight, false); } };
+if (resQ !== 'auto') applyRes();
 const maxAniso = gfxLow ? 4 : Math.min(16, renderer.capabilities.getMaxAnisotropy());
 setAniso(maxAniso);
 const look = makeLook({ aniso: maxAniso, low: gfxLow });
@@ -1374,7 +1379,7 @@ const SETTINGS = [
   // Hjelp og tekst
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
   fl('stepadapt', 'spill', 'Føttene tilpasser seg trinn og kanter', true, () => stepAdapt, kp('tlm.stepadapt', (v) => { stepAdapt = v; })),
-  fl('autoq', 'test', 'Senk oppløsningen automatisk ved lav FPS', true, () => autoQ, kp('tlm.autoq', (v) => { autoQ = v; })),
+  sl('resq', 'test', 'Oppløsning (Auto senker ved lav FPS og skrur opp igjen)', 'auto', [['auto', 'Auto (følger FPS)'], ['full', 'Full (skarp)'], ['mid', 'Middels (75 %)'], ['low', 'Lav (1×, raskest)']], () => resQ, kp('tlm.resq', (v) => { resQ = v; autoQ = v === 'auto'; if (autoQ) autoQC.reset(); applyRes(); })),
   fl('reactanim', 'spill', 'Figuren jubler (knuser maur) og rykker (maur støter)', true, () => reactAnim, kp('tlm.reactanim', (v) => { reactAnim = v; })),
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
   fl('beacon', 'hjelp', 'Lyssøyle over målet', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
@@ -1881,7 +1886,7 @@ function render(now, dt) {
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
   $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
-    `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns}${crumbHud} · poeng ${points()}`;
+    `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns}${crumbHud} · poeng ${points()}${renderer.getPixelRatio() < basePr - 0.01 ? `\noppløsning ${renderer.getPixelRatio().toFixed(2)}× (⚙ → Test)` : ''}`;
 }
 
 // ---------- kamerahjelp: tone ut det som står i veien, og vis hvor figuren er når den er utenfor skjermen ----------
@@ -2014,9 +2019,11 @@ if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true)
 let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
-  if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps`; perf.win = perf.winN = 0; } }
+  if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps${renderer.getPixelRatio() < basePr - 0.01 ? ' · ' + renderer.getPixelRatio().toFixed(2) + '×' : ''}`; perf.win = perf.winN = 0; } }
   { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
-    if (fr && autoQ && mode === 'play' && !menuOpen && fr.low && fr.lowRuns >= 2) { const pr = renderer.getPixelRatio(), np = Math.max(1, Math.round(pr * 75) / 100); if (np < pr - 0.01) { renderer.setPixelRatio(np); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv('kvalitet ned', `oppløsning ${pr.toFixed(2)}× til ${np.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); } } }
+    if (mode === 'play' && !menuOpen) autoQC.feed(raw);
+    const dq = fr && mode === 'play' && !menuOpen ? autoQC.decide(fr, renderer.getPixelRatio(), autoQ, basePr) : null;
+    if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); toast(dq.dir === 'down' ? `Lavere oppløsning (${dq.pr.toFixed(2)}×) for jevnere bilde. ⚙ → Test → Oppløsning styrer det` : `Skarpere igjen (${dq.pr.toFixed(2)}×)`); } }
   if (!window.__paused && !menuOpen) update(dt);
   stepCamAnim(dt); compassFrame(now);
   render(now, dt);
