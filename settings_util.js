@@ -77,3 +77,36 @@ export function formatReport(info) {
   for (const e of info.events) L.push(`${String(e.c).padStart(6)} s  ${e.type}${e.detail ? ' ' + e.detail : ''}  (${e.pos.join(', ')}) ${e.st}`);
   return L.join('\n');
 }
+
+// ---------- gruppering av innstillingspanelet ----------
+// Rekkefølgen her er det spilleren ser. En streng er én innstilling (id i SETTINGS i main.js); {sub, ids} er en sammenfoldet undermeny i gruppa.
+// Nye innstillinger som ikke står her havner sist i sin egen `group` (fra SETTINGS), så det er trygt å glemme dem, men legg dem gjerne inn her.
+export const GROUPS = [
+  ['spill', 'Spill'], ['innhold', 'Innhold og utfordring'], ['styring', 'Styring'], ['figur', 'Figuren'], ['kamera', 'Kamera'],
+  ['grafikk', 'Grafikk og ytelse'], ['hjelp', 'Hjelp og veiledning'], ['lyd', 'Lyd og stemme'], ['test', 'Test og tilbakemelding'], ['admin', 'Admin'],
+];
+export const LAYOUT = {
+  spill: ['lang', 'autosave', 'startscreen', 'confirm2', 'lostreturn'],
+  innhold: ['puzzles', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['buildsnap', 'buildslow'] }],
+  styring: ['preset', 'help', 'stickfloat', 'stickcurve', 'stickdead', 'btnscale', 'speedscale', 'inertia', 'autograb', 'magnet', 'aimthrow', 'dbltap', 'vib',
+    { sub: 'Mus og tastatur (PC)', ids: ['pcbtns', 'mousesens', 'mouselook'] }],
+  figur: ['stepadapt', 'reactanim', 'idlewink'],
+  kamera: ['followstr', 'camdist', 'fov', 'pitchbase', 'lookahead', 'camassist', 'fade', 'fadeop', 'camsens', 'showcenter', 'blob', 'view',
+    { sub: 'Skulderkamera', ids: ['shdist', 'shoff', 'shside', 'xhair'] }],
+  grafikk: ['gfx', 'grade', 'gradefilter', 'softlight', 'ao', 'rays', 'dust', 'floordetail', 'clutter', 'resq', 'texsmall', 'lowprofile', 'fps'],
+  hjelp: ['goalarrow', 'compassmode', 'beacon', 'minimap', 'markers', 'griphi', 'failhint', 'bubbles', 'hudtech', 'puzcam', { sub: 'Nivåstart', ids: ['introsweep', 'intromark', 'introhint'] }],
+  lyd: ['sound', 'vol', 'music', 'musicvol', 'voice', 'voicevol', { sub: 'Pust og lydnivåer', ids: ['restbreath', 'mix_breath', 'mix_steps', 'mix_move', 'mix_things', 'mix_toys', 'mix_room'] }],
+  test: ['qbtn'],
+};
+export const layoutIds = () => Object.values(LAYOUT).flatMap((l) => l.flatMap((e) => (typeof e === 'string' ? [e] : e.ids)));
+// Setter group/sub på hver innstilling og sorterer lista etter oppsettet (ukjente id-er beholder sin gruppe og står sist). Admin røres ikke.
+export function applyLayout(settings) {
+  const rank = new Map(); let i = 0;
+  for (const [g, list] of Object.entries(LAYOUT)) for (const e of list) for (const id of (typeof e === 'string' ? [e] : e.ids)) {
+    rank.set(id, { g, sub: typeof e === 'string' ? null : e.sub, r: i++ });
+  }
+  for (const d of settings) { const r = rank.get(d.id); if (r && d.group !== 'admin') { d.group = r.g; d.sub = r.sub; } }
+  const order = new Map(settings.map((d, k) => [d, k]));
+  settings.sort((a, b) => (rank.get(a.id)?.r ?? 1e6 + order.get(a)) - (rank.get(b.id)?.r ?? 1e6 + order.get(b)));
+  return settings;
+}

@@ -2,6 +2,8 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.18** – Innstillingene er ryddet: ni tydelige grupper (Spill, Innhold og utfordring, Styring, Figuren, Kamera, Grafikk og ytelse, Hjelp og veiledning, Lyd og stemme, Test og tilbakemelding), sammenfoldede undermenyer (Byggeskjerm, Mus og tastatur, Skulderkamera, Nivåstart, Pust og lydnivåer) og et søkefelt øverst. Oppsettet ligger i `LAYOUT` i `settings_util.js` (testet).
+
 - **1.17** – Testrapport v1.16: lys-hakkene er borte (59 fps, shadere stabile på 45). Hjelmlykta i nivå 4–6 peker nå dit kameraet ser, så du kan løfte og senke den ved å dra opp/ned i bildet. Lysbudsjettet er 7 (lykta står alltid i scenen), så «OVER BUDSJETT» ikke lenger varsler uten grunn.
 
 - **1.16** – Rettelser etter testrapport (nivå 6): (1) hakk på 300–600 ms hver gang lyset slås av/på: hjelmlykta ble skrudd av og på med `visible`, så antall lys endret seg og alle materialer ble kompilert på nytt; nå står lykta alltid i scenen (styrke 0) og tas med i forvarmingen. (2) Føttene forsvant under teppene: tepper er nå 0,03 tykke i stedet for ca. 0,15.

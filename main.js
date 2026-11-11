@@ -39,7 +39,7 @@ import { createMarkerView } from './readable_view.js';
 import { createOverview } from './overview.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
-import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
+import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -1489,7 +1489,7 @@ const fl = (id, group, label, def, get, set, o = {}) => ({ id, group, type: 'boo
 const rg = (id, group, label, def, min, max, step, get, set, o = {}) => ({ id, group, type: 'range', label, def, min, max, step, get, set, ...o });
 const sl = (id, group, label, def, options, get, set, o = {}) => ({ id, group, type: 'select', label, def, options, get, set, ...o });
 const kp = (key, fn) => (v) => { fn(v); store.set(key, v); };
-const GROUPS = [['spill', 'Spill'], ['styring', 'Styring'], ['kamera', 'Kamera'], ['hjelp', 'Hjelp og tekst'], ['lyd', 'Lyd og stemme'], ['test', 'Test'], ['admin', 'Admin']];
+// GROUPS og rekkefølgen i panelet (LAYOUT) ligger i settings_util.js
 
 const ADMIN_TUNE = [
   ['stamina', 'Krefter: sekunder', 3, 20, 0.5], ['staminaRegen', 'Krefter: påfyll på bakken (s/s)', 0.5, 8, 0.1], ['exhaustT', 'Utmattet: skli-tid (s)', 0, 1.5, 0.05],
@@ -1627,6 +1627,7 @@ const SETTINGS = [
   // Admin: hoppinnstillinger og fininnstilling av mekanikker (verdiene lagres som egen «custom»)
   ...[...TUNE, ...ADMIN_TUNE].map(([k, label, min, max, st]) => ({ id: 'p_' + k, group: 'admin', type: 'range', label, min, max, step: st, get def() { return defOf(k); }, get: () => P[k], set: PSET(k), digits: 2 })),
 ];
+applyLayout(SETTINGS);
 const visible = (d) => d.group !== 'admin' || adminOn;
 
 function saveCustom() { const o = { autoGrab: P.autoGrab }; for (const [k] of [...TUNE, ...ADMIN_TUNE]) o[k] = P[k]; store.set('tlm.custom4', o); }
@@ -1689,11 +1690,12 @@ async function shareText(text, title) {
 function buildPanel() {
   const p = $('panel'), open = store.get('tlm.panelopen', { spill: true });
   const nChanged = changedSettings(SETTINGS.filter(visible)).length;
-  const row = (d) => {
+  const row0 = (d) => {
     if (d.type === 'bool') return `<label class="chk"><input type="checkbox" data-s="${d.id}"> ${d.label}</label>`;
     if (d.type === 'range') return `<label>${d.label}<span data-v="${d.id}"></span></label><input type="range" data-s="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}">`;
     return `<label>${d.label}</label><select data-s="${d.id}">${d.options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
   };
+  const row = (d) => `<div class="srow" data-q="${(d.label + ' ' + d.id).toLowerCase().replace(/"/g, '')}">${row0(d)}</div>`;   // innpakket så søket kan skjule enkeltrader
   const groupHtml = (g, title) => {
     const items = SETTINGS.filter((d) => d.group === g && visible(d));
     let extra = '';
@@ -1714,10 +1716,11 @@ function buildPanel() {
       <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. ${TOUCH ? 'Skyv stikken forsiktig for å gå forsiktig.' : 'Hold C for å gå forsiktig.'}<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke ${GREP}${key('Shift/E')} i riktig øyeblikk for å gripe kant eller tau.</small>
       <div class="row"><button id="lockAdmin">Lås admin</button></div>`;
     const n = changedSettings(items).length;
-    return `<details data-g="${g}" ${open[g] ? 'open' : ''}${g === 'admin' ? ' class="adm"' : ''}><summary>${title}${n ? ` <em>${n} endret</em>` : ''}</summary>${items.map(row).join('')}${extra}</details>`;
+    return `<details data-g="${g}" ${open[g] ? 'open' : ''}${g === 'admin' ? ' class="adm"' : ''}><summary>${title}${n ? ` <em>${n} endret</em>` : ''}</summary>${items.filter((d) => !d.sub).map(row).join('')}${[...new Set(items.filter((d) => d.sub).map((d) => d.sub))].map((sb) => { const si = items.filter((d) => d.sub === sb), sn = changedSettings(si).length; return `<details class="sub" data-sub="${g}:${sb}"><summary>${sb}${sn ? ` <em>${sn} endret</em>` : ''}</summary>${si.map(row).join('')}</details>`; }).join('')}${extra}</details>`;
   };
   p.innerHTML = `<div class="phead"><h3 id="pTitle">Innstillinger</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
     <div id="repHead" class="rhead">${repHeadHtml()}</div>
+    <input type="search" id="pSearch" placeholder="Søk i innstillinger" autocomplete="off" enterkeyhint="search">
     ${nChanged ? `<div class="pchg">${nChanged} innstilling${nChanged > 1 ? 'er' : ''} endret fra standard</div>` : ''}
     ${GROUPS.filter(([g]) => g !== 'admin' || adminOn).map(([g, t]) => groupHtml(g, t)).join('')}
     <div class="row"><button id="closePanel">Lukk</button></div>`;
@@ -1733,7 +1736,17 @@ function buildPanel() {
       if (d.id === 'preset') buildPanel();
     };
   }
-  p.querySelectorAll('details[data-g]').forEach((el) => el.addEventListener('toggle', () => { open[el.dataset.g] = el.open; store.set('tlm.panelopen', open); }));
+  const subOpen = store.get('tlm.subopen', {});
+  p.querySelectorAll('details[data-g]').forEach((el) => el.addEventListener('toggle', () => { if (el._prog) { el._prog = false; return; } open[el.dataset.g] = el.open; store.set('tlm.panelopen', open); }));
+  p.querySelectorAll('details[data-sub]').forEach((el) => { el.open = !!subOpen[el.dataset.sub]; el.addEventListener('toggle', () => { if (el._prog) { el._prog = false; return; } subOpen[el.dataset.sub] = el.open; store.set('tlm.subopen', subOpen); }); });
+  // søk: skjuler rader som ikke treffer og åpner gruppene som har treff; tomt søk gjenoppretter det du hadde åpent
+  const setOpen = (el, v) => { if (el.open !== v) { el._prog = true; el.open = v; } };
+  $('pSearch').oninput = (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    p.querySelectorAll('.srow').forEach((r) => { r.style.display = !q || r.dataset.q.includes(q) ? '' : 'none'; });
+    p.querySelectorAll('details[data-sub]').forEach((el) => { const hit = !q || [...el.querySelectorAll('.srow')].some((r) => r.style.display !== 'none'); el.style.display = hit ? '' : 'none'; setOpen(el, q ? hit : !!subOpen[el.dataset.sub]); });
+    p.querySelectorAll('details[data-g]').forEach((el) => { const hit = !q || [...el.querySelectorAll('.srow')].some((r) => r.style.display !== 'none'); el.style.display = hit ? '' : 'none'; setOpen(el, q ? hit : !!open[el.dataset.g]); });
+  };
   $('levelSel').value = levelId; $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
   confirmed($('pRestart'), 'Start på nytt', 0, () => { restartAll(); $('panel').classList.add('hide'); toast('Startet på nytt'); });
   $('pMenu').onclick = () => { $('panel').classList.add('hide'); showStart(); };
