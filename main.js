@@ -3,7 +3,7 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
-import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
+import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
 import { buildRoller, buildDangler, ROLLER_COL, DANGLER_COL } from './creatures_view.js';
@@ -37,7 +37,7 @@ import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './poli
 import { createMarkerView } from './readable_view.js';
 import { createOverview } from './overview.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
-import { mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
+import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
@@ -238,7 +238,9 @@ const applyRes = () => { const t = resQ === 'low' ? 1 : resQ === 'mid' ? Math.ma
 if (resQ !== 'auto') applyRes();
 const maxAniso = gfxLow ? 4 : Math.min(16, renderer.capabilities.getMaxAnisotropy());
 setAniso(maxAniso);
-const look = makeLook({ aniso: maxAniso, low: gfxLow });
+const texLow = gfxLow || lowMode === 'on' || store.get('tlm.texsmall', false) === true;   // R21: små (halve) prosedyreteksturer: Enkel grafikk, Lav profil «På» eller eget valg i ⚙ (kan ikke byttes midt i spillet, så siden lastes på nytt)
+setTexLow(texLow);
+const look = makeLook({ aniso: maxAniso, low: texLow });
 const gradeMode = store.get('tlm.grade', 'film');   // R1: Toy Story-lys (film) eller opprinnelig lys (off); lys i grade.js
 const grade = applyGrade({ renderer, scene, sun, canvas, look: LEVEL.look, mode: gradeMode, low: gfxLow, filterOn: store.get('tlm.gradefilter', true) !== false });
 const bigBox = (b, lim = 120) => Array.isArray(b.min) && Array.isArray(b.max) && Math.max(b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]) > lim;   // store flater: dempet clearcoat, ellers hvite glansflekker
@@ -1578,6 +1580,7 @@ const SETTINGS = [
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
   fl('stepadapt', 'spill', 'Føttene tilpasser seg trinn og kanter', true, () => stepAdapt, kp('tlm.stepadapt', (v) => { stepAdapt = v; })),
   sl('resq', 'test', 'Oppløsning (Auto senker ved lav FPS og skrur opp igjen)', 'auto', [['auto', 'Auto (følger FPS)'], ['full', 'Full (skarp)'], ['mid', 'Middels (75 %)'], ['low', 'Lav (1×, raskest)']], () => resQ, kp('tlm.resq', (v) => { resQ = v; autoQ = v === 'auto'; if (autoQ) autoQC.reset(); applyRes(); })),
+  fl('texsmall', 'test', 'Små teksturer: halv oppløsning på overflater, ca. 50 % mindre teksturminne (laster siden på nytt; alltid på med Enkel grafikk og Lav profil «På»)', false, () => texLow, (v) => { if (v === texLow) return; store.set('tlm.texsmall', v); logEv('teksturer', v ? 'små' : 'full'); setTimeout(() => location.reload(), 150); }),
   sl('lowprofile', 'test', 'Lav profil (ingen skygge-kart, støv, korn eller ekstra lys; Auto slår den på ved lav FPS)', 'auto', [['auto', 'Auto (ved lav FPS)'], ['off', 'Av'], ['on', 'På (alltid)']], () => lowMode, kp('tlm.lowprofile', (v) => { lowMode = v; if (v === 'auto') { if (lowOn) { lowP.reset(); applyLowProfile(false); } } else { lowP.decide(null, 9, 1, v); if (v === 'on' !== lowOn) applyLowProfile(v === 'on'); } })),
   fl('reactanim', 'spill', 'Figuren jubler (knuser maur) og rykker (maur støter)', true, () => reactAnim, kp('tlm.reactanim', (v) => { reactAnim = v; })),
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
@@ -2072,6 +2075,7 @@ const perfMerge = { before: 0, after: 0 };
 }
 let perfFrames = 0, perfPending = true, perfLine = '';
 function applyLowProfile(on) {                       // slår av skygge-kart, støv, korn, lysstråler og ekstra lys; kommer tilbake når den slås av
+  if (on && !texLow) { const r = shrinkSceneTextures(scene, (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }); logEv('teksturer', `krympet ${r.n} teksturer midt i spillet (−${r.savedMB.toFixed(1)} MB)`); }
   lowOn = on; sun.castShadow = !on; grade.setLow(on); look.setDetail(!on); glow.intensity = on ? 0 : 30;        // lysets antall endres ikke (ville tvunget alle shadere til å kompileres på nytt midt i spillet)
   perfPending = true; perfFrames = 0; logEv('lav profil', on ? 'på (ingen skygge-kart, støv, korn, lysstråler eller ekstra lys)' : 'av');
 }
@@ -2235,7 +2239,7 @@ function render(now, dt) {
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   grade.follow(player, camera);
   renderer.render(scene, camera);
-  if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + (lowOn ? ' · lav profil' : ''); const w = overBudget(st); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
+  if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const w = overBudget(st).concat(memOver(st, texLow || lowOn)); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
   goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, show: mode === 'play' && !won && !menuOpen }, now);
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
   $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :

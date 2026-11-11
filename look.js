@@ -1,13 +1,14 @@
 // Utseende (v0.62): prosedyre-teksturer med relieff (normal-kart) og ruhet, bøker med perm og sider,
 // kontaktskygger der ting står på noe, støv i lufta og himmel i vinduet. Bare utseende: ingen kollisjon her.
 import * as THREE from 'three';
+import { shrinkCanvas } from './perf_budget.js';
 
 export function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 const cv = (w, h = w) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
 
 export function makeLook({ aniso = 4, low = false } = {}) {
-  const tex = (c, srgb = true, rep = true) => {
-    const t = new THREE.CanvasTexture(c);
+  const tex = (c, srgb = true, rep = true, keep = false) => {        // R21: på Lav profil lages GPU-teksturen i halv størrelse (keep = allerede liten nok)
+    const t = new THREE.CanvasTexture(keep ? c : shrinkCanvas(c, low, cv));
     if (rep) t.wrapS = t.wrapT = THREE.RepeatWrapping;
     if (srgb) t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = aniso; return t;
@@ -72,7 +73,7 @@ export function makeLook({ aniso = 4, low = false } = {}) {
       stroke([[g, `rgba(255,246,226,${0.05 + r() * 0.07})`], [gr, `rgba(255,255,255,${0.2 + r() * 0.3})`], [gh, 'rgba(0,0,0,.1)']], pts, k);
     }
     for (let s = 0; s < 28; s++) { const x = r() * S, y = r() * S, rr = (30 + r() * 90) * k, rg = gr.createRadialGradient(x, y, 1, x, y, rr); rg.addColorStop(0, `rgba(${r() < 0.5 ? '255,255,255' : '0,0,0'},.16)`); rg.addColorStop(1, 'rgba(128,128,128,0)'); gr.fillStyle = rg; gr.fillRect(x - rr, y - rr, rr * 2, rr * 2); }   // slitt og blankt om hverandre
-    return { map: tex(c), normalMap: low ? null : normalFrom(h, 2.6), roughnessMap: tex(ro, false) };
+    return { map: tex(c, true, true, true), normalMap: low ? null : normalFrom(h, 2.6), roughnessMap: tex(ro, false, true, true) };
   })();
 
   // ---------- malt vegg: svak sjattering og «appelsinhud» fra malerullen ----------
