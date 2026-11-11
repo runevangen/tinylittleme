@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.13** – Integrasjon av R25 (byggeskjerm B: 2D-fysikk, testfigur, trapp-byggested i Kontroll) i main.
 - **1.12** – R25: testbrettet Kontroll har nå to byggesteder: bro over hullet og trapp av klosser opp på en hylle (PRØV virker på begge). Ny test for trappa og Playwright-sjekk av byggeskjermen på iPhone-størrelse (`tools/live_build.cjs`).
 - **1.11** – Mindre teksturminne på svake telefoner: Lav profil (også Auto ved lav FPS, midt i spillet) og «Små teksturer» i ⚙ → Test halverer overflate-teksturene. Teksturer og geometrier per nivå logges i rapporten.
 - **1.10** – Levende leker i nivå 2, 3, 5 og 6: tennisball (dytt), bil (TA), vippehest (HOPP på den), wind-up-robot (TA, slipp) og sprettboks (TA) svarer med lyd, lydtekst og bevegelse. Kan slås av i ⚙ → Spill.

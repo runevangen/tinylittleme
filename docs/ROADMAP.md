@@ -19,10 +19,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R25 · Byggeskjerm B: 2D-fysikk (planker, klosser, tau, tape, vekter) og testfigur
-Avhenger av R24. Egen ren logikkmodul `build_phys.js` (ingen three.js, helt testbar) med en liten, stabil 2D-modell i sideriss: stive planker og klosser, **ledd/tape** (stive eller svake festepunkter), **tau** (fjær/avstandsbegrensning som bare trekker), **vekter** (tunge deler/motvekt) og tyngdekraft; planker bøyer seg synlig (visuell nedbøyning) og kan brekke ved for stor last. PRØV starter simuleringen med en liten **testfigur eller kule** som krysser (ligner Poly Bridge); holder bygget, vises jubel, ellers ser man hvor det brakk og kan justere. Start enkelt: planker og klosser først i modulen, deretter tau, tape og vekter (hver for seg testet) så ikke ett punkt blir for stort. Fysikken skal være deterministisk (fast tidssteg) slik at tester og `walk_route`-beviset kan kjøre samme bygg. Lyd (knirk, brudd, plask) via `audio.js`. Tester: en korrekt bro bærer, en for svak faller, tau holder kun i strekk, motvekt veier opp, samme input gir samme resultat.
-Ferdig når: man kan bygge og teste en bro og en trapp i byggeskjermen på mobil, se dem bære eller falle på en lesbar måte, og alle fysikktester er grønne.
-
 ### [ ] R26 · Byggeskjerm C: bygget flyttes ut i verdenen, to brett og alternativ vei
 Avhenger av R24 og R25. Når PRØV lykkes, **flyttes bygget ut i verdenen som solid** (AABB-/rampe-kollisjonsflater som vanlig geometri i `physics.js` via en liten hekt) slik at den ekte figuren kan gå/klatre på det; visuell nedbøyning kan fakes. Bygget **lagres** med autolagring og gjenopprettes ved «Fortsett». Lag minst to brett: (1) en **bro over et gap** (f.eks. mellom to hyller eller over vasken) og (2) en **trapp av klosser/bøker** opp til noe høyt; bruk gjerne tau/tape/vekt i minst ett av dem. **Valgt av spilleren: det skal alltid finnes en alternativ vei som ikke krever bygging, men den skal være vanskelig** (lang omvei, krevende hopp/klatring eller risiko fra maur); bygging er den smarte snarveien og belønner leting etter deler. `walk_route` må bevise at målet kan nås uten bygging, og et eget testskript må bevise at en kjent god bygging (lagret som referanse i scenen) også gir en gyldig rute og at en dårlig bygging ikke blokkerer den alternative veien. Bygg-delmålet («bygg broen») kobles til `goals` (R23) når det finnes.
 Ferdig når: begge brettene kan fullføres både ved å bygge og via den vanskelige veien, bygget overlever lagre/fortsett, `walk_route` og `npm test` er grønne, og en tester på iPhone kan bygge en bro og gå over den.
@@ -32,6 +28,7 @@ I skjermbildene er gulvet i nivå 2 en stor, nesten tom trebit med lite å lese 
 Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hverandre), start-skjermbildene i nivå 2 og 6 viser minst tre ting som gir skala, og FPS-målingen ligger innenfor 1 fps av før.
 
 ## Ferdige punkter
+- [x] Byggeskjerm B: 2D-fysikk (planker, klosser, tau, tape, vekter) og testfigur (R25, v1.13)
 - [x] Ytelse: tekstur- og minnebudsjett for iPhone 8-klassen (R21, v1.11)
 - [x] Små stemmer i rommet: levende leker (R18, v1.10)
 - [x] Byggeskjerm A: skallet, egen modus, sideriss og snapping (R24, v1.09)
