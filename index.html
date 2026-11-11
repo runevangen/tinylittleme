@@ -42,6 +42,7 @@
   #hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#fffe;color:var(--ink);padding:6px 12px;border-radius:999px;font:600 13px system-ui;pointer-events:none}
   #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
   #toast.show{opacity:1}
+  #toast.low{top:28%;max-width:84vw;text-align:center;font-size:12px;padding:5px 12px;background:#0008}
   #infocard{position:fixed;right:0;top:max(6px,env(safe-area-inset-top));width:min(100vw,560px);box-sizing:border-box;display:flex;align-items:flex-start;transform:translateX(calc(100% - 38px));transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:6;pointer-events:none}
   #infocard.show{transform:translateX(0)}
   #infotab{pointer-events:auto;flex:none;width:38px;height:46px;border:0;border-radius:14px 0 0 14px;background:#121a2cdd;color:#ffd9a0;font:800 20px/1 Georgia,serif;font-style:italic;box-shadow:-2px 2px 6px #0004;border:2px solid #ffa940;border-right:0}
@@ -165,7 +166,7 @@
   var v = String(Date.now());
   try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
   window.__assetV = v;
-  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story'];
+  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story', 'polish'];
   var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
   document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
 })();

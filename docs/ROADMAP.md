@@ -23,14 +23,11 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 Stor sjef-maur i nivå 6 (kjøkkenet), tre faser (patrulje, charge, stunned etter å ha truffet vegg/kasse så du kan hoppe på den), helsebar, tegnefilm-aktig animasjon, lyd og belønning (siste smule + en liten fanfare). Egen logikk i `ants.js` eller nytt `boss.js` med tester. Må være rettferdig på mobil.
 Ferdig når: en spiller kan slå sjefen med bare stikke + HOPP, og ruta går fortsatt.
 
-### [ ] R10 · Figur og bevegelse: siste polering
-Se `docs/FIGUREN.md` og `BACKLOG.md`: føtter som tilpasser seg trinn, bedre heng/sving/klatring, hoppe-på-maur-animasjon (spretter), reaksjon når en maur støter deg, glede når du knuser den. Mål FPS på eldre telefoner.
-Ferdig når: animasjonene leses tydelig i skjermbilder/serier og ingen eksisterende test brekker.
-
 ## Ferdige punkter
 - [x] Fortelling og målseremoni (v0.92)
 - [x] Toy Story-lys og farge (v0.91)
 - [x] Nøkkel og lås (Zelda-gåte) (v0.90)
+- [x] Figur og bevegelse: siste polering (v0.93)
 - [x] Musikk og stemning per rom (v0.84)
 - [x] Fiender: flere slag (v0.83)
 - [x] Mørkere hjørner og lysstråler (v0.82)

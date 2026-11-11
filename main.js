@@ -16,6 +16,7 @@ import { gradeTint } from './grade.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
+import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
 import { followYaw, impactSpeed, landingClass } from './camera_util.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
@@ -144,6 +145,10 @@ const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCen
 // ---------- hendelseslogg og FPS: brukes i testrapporten ----------
 const evLog = store.get('tlm.evlog', []);
 const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION, lv: levelLabel }); if (evLog.length > 120) evLog.shift(); };
+const fpsW = fpsWatch(24, 3000);   // 24, ikke 30: iPhone i strømsparemodus låser til 30 fps og er frisk
+const autoQC = createAutoQ();      // polish.js: når oppløsningen går ned/opp (testet i test_polish.mjs)
+let resQ = store.get('tlm.resq', 'auto'); if (!['auto', 'full', 'mid', 'low'].includes(resQ)) resQ = 'auto';   // R10: auto = følger FPS (ned ved vedvarende lav, opp igjen når det går fint); ellers fast valg
+let autoQ = resQ === 'auto', qSteps = 0, basePr = 1, qToasted = false;
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
 addEventListener('pagehide', () => store.set('tlm.evlog', evLog.slice(-120)));
 
@@ -198,6 +203,9 @@ scene.add(sun, sun.target);
 // ---------- utseende: teksturer med relieff, bøker, kontaktskygger og støv (look.js) ----------
 const gfxLow = store.get('tlm.gfx', 'high') === 'low';
 if (gfxLow) renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+basePr = renderer.getPixelRatio();   // full oppløsning (autoq går ned fra og opp til denne)
+const applyRes = () => { const t = resQ === 'low' ? 1 : resQ === 'mid' ? Math.max(1, Math.round(basePr * 75) / 100) : basePr, np = Math.min(basePr, Math.max(1, t)); if (Math.abs(np - renderer.getPixelRatio()) > 0.005) { renderer.setPixelRatio(np); renderer.setSize(innerWidth, innerHeight, false); } };
+if (resQ !== 'auto') applyRes();
 const maxAniso = gfxLow ? 4 : Math.min(16, renderer.capabilities.getMaxAnisotropy());
 setAniso(maxAniso);
 const look = makeLook({ aniso: maxAniso, low: gfxLow });
@@ -560,6 +568,8 @@ function footstep(side, sp) {
   audio.step(surfaceOf(player.groundBox), Math.max(0.2, Math.min(1, 0.3 + 0.7 * sp / P.speed)), side);
 }
 
+const react = createReact();      // reaksjoner på maur (polish.js): jubel ved knus, rykk ved støt
+const footSm = { L: 0, R: 0 };   // glattet fothøyde over trinn/kanter
 const DIP_MAX = 0.17;   // hvor mye hoftene kan synke i hurk (landing/forberedelse)
 
 function poseHero(p, now, dt, mode) {
@@ -604,6 +614,17 @@ function poseHero(p, now, dt, mode) {
   const gaitN = { L: pathL.z / (A + 1e-6), R: pathR.z / (A + 1e-6) };
   pathL.z /= RIG_S; pathR.z /= RIG_S;          // rig-lokalt: figuren er skalert, så foten må flyttes tilsvarende mindre
   const gaitOn = ikGait && mode !== 'fly' && p.state === 'ground' && p.onGround && !p.skid;
+  // føtter som tilpasser seg trinn: hver fot løftes/senkes til flaten den faktisk treffer (bare i svingfasen og i standfasen, begrenset)
+  { const vs = Math.hypot(p.vx, p.vz), dx = vs > 0.12 ? p.vx / vs : Math.sin(hero.yaw), dz = vs > 0.12 ? p.vz / vs : Math.cos(hero.yaw);
+    for (const [key, f] of [['L', pathL], ['R', pathR]]) {
+      let off = 0;
+      if (gaitOn && stepAdapt && vs > 0.12 && f.y > 0.004) {            // svingfoten kikker litt fremover og går opp på/ned fra det den ser komme
+        const d = 0.6 + 0.2 * clampN(f.z * RIG_S, 0, 0.3), sf = surfaceBelow(LEVEL, p.x + dx * d, p.y + 0.3, p.z + dz * d, 0.04);
+        off = stepOffset(sf ? sf.top : null, p.y) * clampN(f.y / 0.02, 0, 1);
+      }
+      footSm[key] += (off - footSm[key]) * (1 - Math.exp(-dt / 0.04));
+      f.y += footSm[key] / RIG_S; f.pitch += -footSm[key] * 0.8;
+    } }
 
   // hurk: forberedelse før hopp (armene bak) og demping etter landing (armene frem). 0 = oppreist, 1 = dypt.
   const wDF = p.windup > 0 ? smooth3(clampN((P.jumpWindup - p.windup) / 0.07, 0, 1)) : 0;
@@ -634,18 +655,18 @@ function poseHero(p, now, dt, mode) {
       zL: 0.16, zR: -0.16,
       hL: lerpN(-0.3, -1.05, stepL), hR: lerpN(-0.3, -1.05, stepR), kL: lerpN(0.5, 1.5, stepL), kR: lerpN(0.5, 1.5, stepR),
       lean: 0.2 + 0.05 * tired, chest: 0.1, hp: -0.28, twist: 0.12 * s1 * m,
+      roll: 0.05 * s1 * m + (1 - m) * 0.015 * Math.sin(sec * 1.3), sway: 0.012 * s1 * m,   // vekten flyttes mot armen som trekker; i ro dingler han litt
     });
     { const id = 1 - m, a1 = Math.sin(sec * 1.9), a2 = Math.sin(sec * 2.7 + 1.3);       // i ro henger han ikke stille: puster, flytter vekten, leter etter fotfeste
       T.aL += id * 0.1 * a1; T.aR -= id * 0.1 * a1; T.hL += id * 0.12 * a2; T.hR -= id * 0.12 * a2; T.kL += id * 0.2 * (a2 + 1) / 2; T.kR += id * 0.2 * (1 - a2) / 2;
       T.twist += id * 0.06 * a1; T.lean += id * 0.015 * a2; T.chest += id * 0.03 * a1; T.hy += 0.25 * Math.sin(sec * 0.8) * id; }
-    bob = -0.05;
+    bob = -0.05 - 0.012 * Math.abs(s1) * m;
   } else if (p.state === 'hang' || p.state === 'zip') {
-    const sway = Math.sin(sec * 1.5);
-    const kk = Math.sin(sec * 2.3 + 0.7);
-    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: 0.12 + sway * 0.1 + 0.1 * kk, hR: 0.22 - sway * 0.1 - 0.1 * kk, kL: 0.3 + 0.25 * Math.max(0, kk), kR: 0.15 + 0.25 * Math.max(0, -kk), lean: sway * 0.03, chest: -0.05 + 0.02 * Math.sin(sec * 1.8), hp: -0.2, twist: sway * 0.05 });
+    const sway = Math.sin(sec * 1.5), hs = hangSway(sec, Math.hypot(p.vx, p.vz), false);   // heng: rolig dingling
+    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: hs.legL, hR: hs.legR, kL: hs.kneeL, kR: hs.kneeR, lean: hs.lean, roll: hs.roll, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
   } else if (p.state === 'swing') {
-    const k = clampN((p.vx * p.fx + p.vz * p.fz) * 0.1, -0.8, 0.8);
-    Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: -0.5 * k + 0.2, hR: -0.5 * k + 0.4, kL: 0.5, kR: 0.8, lean: -0.25 * k, chest: -0.1 * k, hp: -0.15 });
+    const k = clampN((p.vx * p.fx + p.vz * p.fz) * 0.1, -0.8, 0.8), ss = hangSway(sec * 1.4, Math.hypot(p.vx, p.vz), true);   // sving: stort pendel i bena, kroppen lener med farten
+    Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: ss.legL - 0.5 * k, hR: ss.legR - 0.5 * k, kL: ss.kneeL + 0.3, kR: ss.kneeR + 0.5, lean: -0.25 * k + ss.lean * 2, roll: ss.roll, chest: -0.1 * k, hp: -0.15, twist: 0.06 * Math.sin(sec * 2.1) });
   } else if (p.reach > 0) {
     const rt = clampN((hero.reachT || 0) / 0.25, 0, 1), fl = Math.sin(sec * 15), wv = Math.sin(sec * 11);   // armene strekker seg mer og mer, bena sparker, kroppen vrir seg mot grepet
     Object.assign(T, { aL: -2.55 - 0.3 * rt + 0.1 * wv, aR: -2.8 - 0.35 * rt - 0.1 * wv, eL: -0.3 + 0.25 * rt, eR: -0.25 + 0.2 * rt, hL: -0.6 + 0.35 * fl, hR: 0.3 - 0.35 * fl, kL: 0.9 + 0.45 * Math.max(0, fl), kR: 0.5 + 0.45 * Math.max(0, -fl),
@@ -730,6 +751,16 @@ function poseHero(p, now, dt, mode) {
     T.roll += clampN(-yawRate * 0.06 * kSp, -0.2, 0.2);                            // lener seg inn i svingen
     const [jx, jz] = axes();                                                       // hodet ser dit du styrer, litt før kroppen har snudd seg
     if (Math.hypot(jx, jz) > 0.2) { const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw); T.hy += clampN(angDiff(hero.yaw, Math.atan2(cy * jx - sy * jz, -sy * jx - cy * jz)), -0.8, 0.8) * 0.5; }
+  }
+
+  // reaksjoner (polish.js): jubel og sprett når en maur knuses, rykk og sammenkrøping når en støter deg
+  const rx = react.update(dt);
+  if (rx.active) {
+    if (rx.armsUp > 0) { T.aL = lerpN(T.aL, -2.9, rx.armsUp); T.aR = lerpN(T.aR, -2.9, rx.armsUp); T.zL = lerpN(T.zL, 0.45, rx.armsUp); T.zR = lerpN(T.zR, 0.45, rx.armsUp); T.eL = lerpN(T.eL, -0.3, rx.armsUp); T.eR = lerpN(T.eR, -0.3, rx.armsUp); T.fgL = T.fgR = 0.05; }
+    if (rx.flinch > 0) { T.aL = lerpN(T.aL, -1.5, rx.flinch); T.aR = lerpN(T.aR, -1.3, rx.flinch); T.zL = lerpN(T.zL, 0.35, rx.flinch); T.zR = lerpN(T.zR, 0.35, rx.flinch); T.eL = lerpN(T.eL, -1.7, rx.flinch); T.eR = lerpN(T.eR, -1.7, rx.flinch); T.hp += 0.3 * rx.flinch; T.fgL = T.fgR = 1.0; if (p.onGround && !ikGait) { T.kL += rx.crouch; T.kR += rx.crouch; }
+      if (p.onGround && ikGait) { T.zL += 0.1 * rx.flinch; T.zR -= 0.1 * rx.flinch; } }
+    T.lean += rx.lean; T.twist += rx.spin; T.hy += rx.spin * 1.4; T.chest += rx.flinch * 0.2;
+    if (rx.flinch > 0) bob -= rx.crouch * 0.16;   // synker tydelig sammen (også med IK-gange)
   }
 
   // jevn overgang: armer/overkropp rolig, ben raskere; alt raskere i lufta og i hurk
@@ -937,8 +968,8 @@ const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, s
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 
-function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+function toast(msg, low = false) {
+  const t = $('toast'); t.textContent = msg; t.classList.toggle('low', low); t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
 const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried);
@@ -1067,6 +1098,7 @@ let blobOn = store.get('tlm.blob', true);
 let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get('tlm.followstr', 1), fovSet = store.get('tlm.fov', 52), pitchBase = store.get('tlm.pitchbase', 0.26);
 let stickCurve = store.get('tlm.stickcurve', 1.3), inertia = store.get('tlm.inertia', 1), speedScale = store.get('tlm.speedscale', 1), qbtnOn = store.get('tlm.qbtn', true);
 const metrics = { swipes: 0, dragPx: 0, yawUser: 0, yawAuto: 0, stickT: 0, t: 0 };
+let stepAdapt = store.get('tlm.stepadapt', true), reactAnim = store.get('tlm.reactanim', true);
 let idleWink = store.get('tlm.idlewink', true), restBreath = store.get('tlm.restbreath', false);
 const mixSet = (ids, v) => { const mix = store.get('tlm.mix2', {}); for (const id of ids) { mix[id] = v; audio?.setLevel(id, v); } store.set('tlm.mix2', mix); };
 const mixGet = (id) => store.get('tlm.mix2', {})[id] ?? 1;
@@ -1411,6 +1443,9 @@ const SETTINGS = [
   rg('camdist', 'kamera', 'Kameraavstand', 5.5, 3, 9, 0.1, () => cam.dist, kp('tlm.camdist', (v) => { cam.dist = v; camDistSet = v; })),
   // Hjelp og tekst
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
+  fl('stepadapt', 'spill', 'Føttene tilpasser seg trinn og kanter', true, () => stepAdapt, kp('tlm.stepadapt', (v) => { stepAdapt = v; })),
+  sl('resq', 'test', 'Oppløsning (Auto senker ved lav FPS og skrur opp igjen)', 'auto', [['auto', 'Auto (følger FPS)'], ['full', 'Full (skarp)'], ['mid', 'Middels (75 %)'], ['low', 'Lav (1×, raskest)']], () => resQ, kp('tlm.resq', (v) => { resQ = v; autoQ = v === 'auto'; if (autoQ) autoQC.reset(); applyRes(); })),
+  fl('reactanim', 'spill', 'Figuren jubler (knuser maur) og rykker (maur støter)', true, () => reactAnim, kp('tlm.reactanim', (v) => { reactAnim = v; })),
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
   fl('beacon', 'hjelp', 'Lyssøyle over målet', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
@@ -1606,8 +1641,8 @@ function antEvent(ev) {
   if (ev.type === 'leap') { logEv('edderkopp hopper', ev.id); audio?.spiderleap(); }
   else if (ev.type === 'drop') { logEv('smule sluppet', ev.id); if (!store.get('tlm.seen.crumb', false)) { store.set('tlm.seen.crumb', true); toast('Bæreren slapp smula! Gå bort til den for å ta den'); } }
   else if (ev.type === 'crumb') { stats.carried++; logEv('bærer-smule tatt', ev.id); audio?.crumb(5, 99); buzz(20); setMood('happy', 1); cue('smule!'); toast(`Smule tatt  +${SCORE.carried} poeng`); }
-  if (ev.type === 'stomp') { stats.squashed++; logEv(ev.kind === 'spider' ? 'edderkopp knust' : 'maur knust', ev.id); audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], ev.kind === 'spider' ? 0x6a3a86 : ev.kind === 'carrier' ? 0x5f6b2a : 0x9a3a1e); }
-  else if (ev.type === 'hurt') { stats.hits++; logEv(ev.kind === 'spider' ? 'edderkopp støt' : 'maur støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${ev.kind === 'spider' ? 'Edderkoppen hoppet på deg' : 'En maur støtet deg'}  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
+  if (ev.type === 'stomp') { react.trigger('stomp'); stats.squashed++; logEv(ev.kind === 'spider' ? 'edderkopp knust' : 'maur knust', ev.id); audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], ev.kind === 'spider' ? 0x6a3a86 : ev.kind === 'carrier' ? 0x5f6b2a : 0x9a3a1e); }
+  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; logEv(ev.kind === 'spider' ? 'edderkopp støt' : 'maur støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${ev.kind === 'spider' ? 'Edderkoppen hoppet på deg' : 'En maur støtet deg'}  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
 }
 // første gang du står på flata der gåten ligger: én kort forklaring (bruker knappenavn)
 function puzzleIntro() {
@@ -1833,8 +1868,9 @@ function render(now, dt) {
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
   hero.stepOff = (hero.stepOff || 0) * Math.exp(-dt / 0.07) + (player.stepDy || 0); player.stepDy = 0;                     // trinnhopp: figuren glir opp i stedet for å poppe
-  hero.root.position.set(player.x, player.y - hero.stepOff, player.z); updateBlob(now);
-  hero.root.scale.set(1, 1, 1);                                  // ingen strekk/klem: det ga «puls» og sjøsyke
+  { const rx = react.out, on = reactAnim && rx.active;                      // bare korte, tydelige strekk/klem etter knus/støt (ikke konstant puls)
+    hero.root.position.set(player.x, player.y - hero.stepOff + (on ? rx.hop : 0), player.z); updateBlob(now);
+    hero.root.scale.set(on ? rx.sxz : 1, on ? rx.sy : 1, on ? rx.sxz : 1); }
 
   for (const { r, line, end } of ropes) {
     const a = new THREE.Vector3(r.x, r.y, r.z);
@@ -1957,7 +1993,7 @@ function render(now, dt) {
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
   $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
-    `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns}${crumbHud} · poeng ${points()}`;
+    `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns}${crumbHud} · poeng ${points()}${renderer.getPixelRatio() < basePr - 0.01 ? `\noppløsning ${renderer.getPixelRatio().toFixed(2)}× (⚙ → Test)` : ''}`;
 }
 
 // ---------- kamerahjelp: tone ut det som står i veien, og vis hvor figuren er når den er utenfor skjermen ----------
@@ -2104,7 +2140,11 @@ if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true)
 let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
-  if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps`; perf.win = perf.winN = 0; } }
+  if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps${renderer.getPixelRatio() < basePr - 0.01 ? ' · ' + renderer.getPixelRatio().toFixed(2) + '×' : ''}`; perf.win = perf.winN = 0; } }
+  { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
+    if (mode === 'play' && !menuOpen) autoQC.feed(raw);
+    const dq = fr && mode === 'play' && !menuOpen ? autoQC.decide(fr, renderer.getPixelRatio(), autoQ, basePr) : null;
+    if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); if (dq.dir === 'down' && !qToasted) { qToasted = true; toast('Lavere oppløsning for jevnere bilde. ⚙ → Test → Oppløsning styrer det', true); } } }   // én melding per økt, nede ved kanten så den ikke dekker målpilen; resten logges bare
   if (!window.__paused && !menuOpen) update(dt);
   stepCamAnim(dt); compassFrame(now);
   render(now, dt);
@@ -2116,4 +2156,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

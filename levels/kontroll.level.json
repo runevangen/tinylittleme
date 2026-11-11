@@ -537,6 +537,139 @@
    "material": "wood",
    "cp": false,
    "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -66,
+    0,
+    14
+   ],
+   "max": [
+    -62,
+    0.1,
+    22
+   ],
+   "id": "trapp_1",
+   "kind": "chest",
+   "color": 6258600,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -62,
+    0,
+    14
+   ],
+   "max": [
+    -58,
+    0.2,
+    22
+   ],
+   "id": "trapp_2",
+   "kind": "chest",
+   "color": 6258600,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -58,
+    0,
+    14
+   ],
+   "max": [
+    -54,
+    0.4,
+    22
+   ],
+   "id": "trapp_3",
+   "kind": "chest",
+   "color": 6258600,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -54,
+    0,
+    14
+   ],
+   "max": [
+    -50,
+    0.6,
+    22
+   ],
+   "id": "trapp_4",
+   "kind": "chest",
+   "color": 6258600,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -50,
+    0,
+    14
+   ],
+   "max": [
+    -46,
+    0.4,
+    22
+   ],
+   "id": "trapp_5",
+   "kind": "chest",
+   "color": 6258600,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -46,
+    0,
+    14
+   ],
+   "max": [
+    -42,
+    0.2,
+    22
+   ],
+   "id": "trapp_6",
+   "kind": "chest",
+   "color": 6258600,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -42,
+    0,
+    14
+   ],
+   "max": [
+    -38,
+    0.1,
+    22
+   ],
+   "id": "trapp_7",
+   "kind": "chest",
+   "color": 6258600,
+   "material": "wood",
+   "cp": false,
+   "soft": false
   }
  ],
  "movables": [],
@@ -604,6 +737,15 @@
     3.3,
     -13
    ]
+  },
+  {
+   "id": "trapp_1",
+   "text": "Trapp (fotløft)\nGå opp og ned: kantene er 0.5 til 1 cm, og føttene løftes til hver kant. Prøv også sakte og rolig gange.",
+   "pos": [
+    -64,
+    1,
+    18
+   ]
   }
  ],
  "hazards": [],
@@ -634,6 +776,8 @@
  "audio": {
   "reverb": 0.15
  },
+ "ants": [],
+ "collectibles": [],
  "ropes": [],
  "route": [
   {
@@ -690,7 +834,7 @@
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 23,
-  "reachable": 19
+  "nodes": 24,
+  "reachable": 20
  }
 }
