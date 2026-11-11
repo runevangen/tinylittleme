@@ -5,7 +5,7 @@ import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
-import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear } from './puzzle.js';
+import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
@@ -107,7 +107,7 @@ const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(m
 let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
-let puzzlesOn = store.get('tlm.puzzles', true);   // nøkkel og lås (R7)
+let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', false), hudOpen = false, fpsOn = store.get('tlm.fps', false);
@@ -951,7 +951,7 @@ function restartAll() {
   clearProgress(); failCells.clear();
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player);
-  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = 0; stats.flew = false; resetAnts(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL);
+  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = 0; stats.flew = false; resetAnts(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); bridgeGuide = null;
   won = false; clock = 0; placeFlag(); $('win').classList.add('hide'); setMode('play');
 }
 
@@ -1028,6 +1028,11 @@ const camBehind = () => turnCamera(Math.atan2(-player.fx, -player.fz), viewFirst
 let routeCur = 0;
 function nextTarget() {
   const R = LEVEL.route, g = LEVEL.goal;
+  if (puzzlesOn && mode === 'play' && bridgeGuide) {                              // R7: etter åpning peker pila på broen til du er over
+    const e = bridgeFarEnd(bridgeGuide);
+    if (Math.hypot(player.x - e.x, player.z - e.z) < 2 || performance.now() > bridgeGuide.until) bridgeGuide = null;
+    else return { x: e.x, y: e.y, z: e.z, label: T('puz.bridgeLbl'), final: false, act: '' };
+  }
   if (puzzlesOn && mode === 'play') { const pt = puzzleTarget(LEVEL, player); if (pt) return { x: pt.x, y: pt.y, z: pt.z, label: T('puz.' + pt.key), final: false, act: pt.key === 'plate' ? T('btn.drop') : T('btn.take') }; }   // R7: nøkkel, så lås
   if (R?.length > 1) {
     let i = -1;
@@ -1300,6 +1305,7 @@ const SETTINGS = [
   fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
   fl('startscreen', 'spill', 'Vis startskjerm (Nytt spill / Fortsett) når spillet åpnes', true, () => startScreenOn, kp('tlm.startscreen', (v) => { startScreenOn = v; })),
   fl('puzzles', 'spill', 'Gåter (nøkkel og lås: en snarvei du åpner)', true, () => puzzlesOn, kp('tlm.puzzles', (v) => { puzzlesOn = v; })),
+  fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
@@ -1544,12 +1550,14 @@ function antEvent(ev) {
 function puzzleIntro() {
   if (store.get('tlm.seen.puzzle', false) || !puzzleTotal(LEVEL)) return;
   const pt = puzzleTarget(LEVEL, player); if (!pt || !player.onGround) return;
-  store.set('tlm.seen.puzzle', true); toast(T('puz.intro', { take: TOUCH ? T('btn.take') : 'F' }));
+  store.set('tlm.seen.puzzle', true); toast(T('puz.intro', { take: TOUCH ? T('btn.take') : 'F', drop: TOUCH ? T('btn.drop') : 'F' }));
 }
 // gåter (R7): nøkkelen legges på platen og broen ruller ut. Rolige tilbakemeldinger: lyd, melding, logg
 function puzzleEvent(ev) {
   if (ev.type === 'placed') { logEv('gåte: nøkkel på plata', ev.id); audio?.pickup(); buzz(15); }
-  else if (ev.type === 'open') { logEv('gåte: åpnet', ev.id); audio?.crumb(9, 10); buzz(25); setMood('happy', 1); cue('klikk!'); toast(T('puz.bridge')); }
+  else if (ev.type === 'open') { logEv('gåte: åpnet', ev.id); audio?.crumb(9, 10); buzz(25); setMood('happy', 1); cue('klikk!'); toast(T('puz.bridge'));
+    const p = LEVEL.puzzleList.find((q) => q.id === ev.id);
+    if (p) { bridgeGuide = { ...p, until: performance.now() + 90000 }; if (puzCamOn) { const m = bridgeMid(p); turnCamera(Math.atan2(player.x - m.x, player.z - m.z), 0.5); setTimeout(() => { if (mode === 'play' && !won) camBehind(); }, 3600); } } }
   else if (ev.type === 'done') logEv('gåte: broen ute', ev.id);
 }
 // smuler: plukk (R3). Små, rolige tilbakemeldinger: lyd, poeng, kort melding, gnister

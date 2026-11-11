@@ -89,3 +89,10 @@ export function carryingKeyNear(L, p0, dist = 6) {
   for (const p of L.puzzleList || []) if (!p.open && p0.carry && p0.carry.id === p.key && Math.hypot(p0.x - p.plate.x, p0.z - p.plate.z) < dist && Math.abs(p0.y - p.plate.y) < 2) return p;
   return null;
 }
+
+// Enden av broen lengst fra platen (der du kommer over), til pila/kompasset etter at gåten er åpnet.
+export function bridgeFarEnd(p) {
+  const b = p.bridge, ax = b.axis === 'z' ? 2 : 0, o = 2 - ax, far = b.anchor === 'max' ? b.min[ax] : b.max[ax], mid = (b.min[o] + b.max[o]) / 2, c = [0, b.max[1], 0];
+  c[ax] = far; c[o] = mid; return { x: c[0], y: c[1], z: c[2] };
+}
+export const bridgeMid = (p) => ({ x: (p.bridge.min[0] + p.bridge.max[0]) / 2, y: p.bridge.max[1], z: (p.bridge.min[2] + p.bridge.max[2]) / 2 });

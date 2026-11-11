@@ -1,7 +1,7 @@
 // node test_puzzle.mjs: logikk for nøkkel og lås (R7), og at gåtene i nivå 3 og 6 er riktig bygd (nøkkel og plate på samme flate, bro fri for ting, ruta uendret).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { PUZ, initPuzzles, stepPuzzles, resetPuzzles, restorePuzzles, puzzleOpenIds, puzzleTarget, carryingKeyNear, keyOnPlate, bridgeBox } from './puzzle.js';
+import { PUZ, initPuzzles, stepPuzzles, resetPuzzles, restorePuzzles, puzzleOpenIds, puzzleTarget, carryingKeyNear, keyOnPlate, bridgeBox, bridgeFarEnd } from './puzzle.js';
 import { initBodies } from './physics.js';
 
 const mkLevel = () => ({
@@ -68,6 +68,7 @@ const put = (b, x, z) => { const dx = x - (b.min[0] + b.max[0]) / 2, dz = z - (b
     const ax = p.bridge.axis === 'z' ? 2 : 0, free = p.bridge.anchor === 'max' ? p.bridge.min[ax] : p.bridge.max[ax];
     const touch = L.boxes.find((b) => b.type !== 'floor' && b.type !== 'wall' && b.max[1] >= full.min[1] - 3 && b.max[1] <= full.max[1] + 3 && Math.abs((p.bridge.anchor === 'max' ? b.max[ax] : b.min[ax]) - free) < 1.3 && b.min[2 - ax] < full.max[2 - ax] && b.max[2 - ax] > full.min[2 - ax]);
     assert.ok(touch, `${lv}: broen når ikke over til en flate`);
+    const fe = bridgeFarEnd(p), ax2 = p.bridge.axis === 'z' ? 2 : 0; assert.ok(Math.abs([fe.x, fe.y, fe.z][ax2] - free) < 0.01, `${lv}: pila peker på broens frie ende`);
     // bare valgfri snarvei: ruta nevner ikke broen
     assert.ok(!(L.route || []).some((w) => w.id === `${p.id}_bro`), `${lv}: ruta skal ikke bruke broen`);
   }
