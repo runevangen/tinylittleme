@@ -26,14 +26,16 @@ const FRAME_MODES = ['windup', 'charge', 'stunned', 'hit', 'tired'];
 export function bossFrame(px, pz, bx, bz, mode) {
   const dx = bx - px, dz = bz - pz, sep = Math.hypot(dx, dz);
   if (!FRAME_MODES.includes(mode) || sep > 30) return { on: false, shift: 0, dist: 0, pitch: 0, yaw: null, sep };
-  const far = Math.min(1, Math.max(0, (sep - 3) / 6));            // 0 tett inntil, 1 på 9 m eller mer
-  const near = 1 - far;
+  const far = Math.min(1, Math.max(0, (sep - 2) / 2));            // 0 tett inntil (ryggen), 1 på 4 m eller mer
+  const near = 1 - far, mid = Math.min(1, Math.max(0, (sep - 6) / 2));   // mid: 0 til 6 m, 1 fra 8 m (flatere og lengre unna)
+  // Sjefen er ca. 6,8 m høy med krone og antenner. Kameraet går høyt og trekker ut så hele sjefen havner under HUD-baren og varselstripen øverst (ca. 140 px på iPhone),
+  // mens figuren blir under midten, utenfor ◎-knappen (verdiene er funnet med rutenett-søk og sjekkes projisert i test_bosscam.mjs).
   return {
     on: true, sep,
-    shift: 0.42 * far,                                           // fokus mot midtpunktet så begge er i bildet
-    dist: Math.min(9, sep * 0.55) * far + 3.2 * near + (mode === 'windup' || mode === 'charge' ? 11 * Math.min(1, Math.max(0, (sep - 2) / 4)) : 0),   // varsel/støt: sjefen er ca. 5 m høy, trekk ut så hele kroppen og kronen er med            // langt: trekk ut; tett: trekk ut og opp så sjefen ikke fyller skjermen
-    pitch: 0.2 * far + 0.48 * near + (mode === 'windup' || mode === 'charge' ? 0.04 : 0),
-    yaw: (mode === 'windup' || mode === 'charge' || mode === 'stunned') && sep > 1.5 ? Math.atan2(-dx, -dz) : null,   // under varsling/svimmel: kameraet bak figuren, blikk mot sjefen (figuren står da alltid foran sjefen, aldri skjult bak den)
+    shift: 0.75 * far * (1 - 0.5 * Math.min(1, Math.max(0, (sep - 14) / 14))),      // fokus mot sjefen så begge er i bildet
+    dist: 3.2 * near + far * Math.min(25, 13.5 + 1.3 * (sep - 3)),
+    pitch: 0.48 * near + far * (0.85 - 0.5 * mid),
+    yaw: sep > 1.5 ? Math.atan2(-dx, -dz) : null,                 // kameraet bak figuren med blikk mot sjefen (figuren står da alltid foran sjefen, aldri skjult bak den)
   };
 }
 
@@ -47,7 +49,7 @@ export function bossCamStep(s, f, B, p, yaw, dt, play = true) {
   if (f.yaw !== null && play) { const d = angleDiff(yaw, f.yaw); yaw += Math.max(-BOSS_YAW_RATE * dt, Math.min(BOSS_YAW_RATE * dt, d * 8 * dt)); }
   if (f.on && B) {
     const align = f.yaw === null ? 1 : Math.max(0, 1 - Math.abs(angleDiff(yaw, f.yaw)) / BOSS_ALIGN);
-    const dx = B.x - p.x, dz = B.z - p.z, len = Math.hypot(dx, dz) || 1, m = Math.min(len * s.shift, 4) * align / len;   // aldri mer enn 4 m, så figuren ikke glir ut nederst
+    const dx = B.x - p.x, dz = B.z - p.z, len = Math.hypot(dx, dz) || 1, m = Math.min(len * s.shift, 7) * align / len;   // aldri mer enn 7 m
     s.ox = dx * m; s.oz = dz * m;
   } else { s.ox *= 1 - kb; s.oz *= 1 - kb; }
   return yaw;

@@ -5,9 +5,9 @@ export function createBossBar(parent = document.body, jump = 'HOPP') {   // jump
   el.style.cssText = 'position:fixed;left:max(10px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 36px);z-index:5;pointer-events:none;display:none;text-align:left;font:700 12px system-ui;color:#fff;text-shadow:0 1px 3px #000;transition:opacity .3s;opacity:0';
   el.innerHTML = '<div class="bn" style="letter-spacing:.12em;margin-bottom:2px;font-size:11px">SJEF-MAUR</div><div class="bh" style="display:flex;gap:5px;justify-content:flex-start;padding:2px 8px;background:#0009;border-radius:999px"></div><div class="bs" style="margin-top:2px;font-weight:600;font-size:11px;opacity:.9"></div>';
   parent.appendChild(el);
-  const ban = document.createElement('div');                       // stor midtstilt varselstripe (mobil: lesbar på et blunk)
+  const ban = document.createElement('div');                       // varselstripe under helsebaren (mobil: lesbar på et blunk, holder sjefen og figuren fri; kameraet rammer sjefen under den)
   ban.id = 'bossbanner';
-  ban.style.cssText = 'position:fixed;left:50%;top:34%;transform:translateX(-50%);z-index:6;pointer-events:none;display:none;max-width:92vw;box-sizing:border-box;text-align:center;font:800 22px/1.15 system-ui;color:#fff;padding:9px 18px;border-radius:14px;border:3px solid #fff;text-shadow:0 2px 3px #000a;box-shadow:0 4px 18px #0008';
+  ban.style.cssText = 'position:fixed;left:50%;top:calc(max(10px,env(safe-area-inset-top)) + 88px);transform:translateX(-50%);z-index:6;pointer-events:none;display:none;white-space:nowrap;max-width:92vw;box-sizing:border-box;text-align:center;font:800 18px/1.1 system-ui;color:#fff;padding:5px 12px;border-radius:12px;border:2px solid #fff;text-shadow:0 2px 3px #000a;box-shadow:0 4px 18px #0008';
   parent.appendChild(ban);
   const hearts = el.querySelector('.bh'), status = el.querySelector('.bs');
   let shown = '', max = 0;
