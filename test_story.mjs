@@ -1,7 +1,7 @@
 // node test_story.mjs: fortelling og målseremoni (R8): tekster finnes for alle nivåer i begge språk, og logikken stemmer.
 import assert from 'node:assert/strict';
 import { makeT } from './i18n.js';
-import { storyKey, fmtTime, shouldShowIntro, finishData, winHTML, STORY_LEVELS } from './story.js';
+import { storyKey, fmtTime, shouldShowIntro, finishData, winHTML, STORY_LEVELS, starCount, totals, endHTML, heroSVG } from './story.js';
 
 assert.equal(fmtTime(7.4), '7 s'); assert.equal(fmtTime(75), '1:15'); assert.equal(fmtTime(-3), '0 s');
 assert.equal(storyKey(0), null); assert.equal(storyKey(7), null); assert.equal(storyKey(3), 'story.3');
@@ -20,6 +20,13 @@ for (const l of ['nb', 'en']) {
 }
 const d = finishData({ n: 6, nextExists: false, clock: 83, stats: { squashed: 3 }, crumbs: 4, crumbTotal: 4, points: 900, prevBest: 800, flew: false });
 assert.deepEqual([d.last, d.time, d.squashed, d.all, d.record], [true, '1:23', 3, true, true]);
+assert.ok(!finishData({ n: 3, nextExists: true, clock: 5, stats: {}, crumbs: 0, crumbTotal: 0, points: 1000, prevBest: 0 }).record, 'første gjennomspill er ingen rekord');
+assert.equal(starCount({ crumbs: 0, total: 10 }), 1); assert.equal(starCount({ crumbs: 10, total: 10 }), 3); assert.equal(starCount({ crumbs: 0, total: 0 }), 2);
+const tt = totals({ a: { t: 30, ants: 1, crumbs: 2, total: 4 }, b: { t: 45, ants: 2, crumbs: 4, total: 4 } }); assert.deepEqual([tt.time, tt.ants, tt.crumbs, tt.total], [75, 3, 6, 8]);
+assert.ok(endHTML(tt, T).includes('1:15') && heroSVG('cheer').includes('<svg'));
+assert.notEqual(T('story.go'), 'KOM IGJEN'); lang = 'en'; assert.equal(T('story.go'), "LET'S GO"); lang = 'nb';
+const src = (await import('node:fs')).readFileSync(new URL('./main.js', import.meta.url), 'utf8');
+assert.ok(src.includes("store.set('tlm.done', true)") && src.includes("store.get('tlm.done', false)") && src.includes("store.set('tlm.done', false)"), 'Fortsett-sperren er varig (tlm.done)');
 assert.ok(!finishData({ n: 2, nextExists: true, clock: 5, stats: {}, crumbs: 0, crumbTotal: 0, points: 10, prevBest: 50 }).record);
 assert.ok(!finishData({ n: 2, nextExists: true, clock: 5, stats: {}, crumbs: 0, crumbTotal: 0, points: 10, prevBest: 0, flew: true }).record, 'flymodus gir ingen rekord');
 lang = 'nb'; const h = winHTML(d, T); assert.ok(h.includes('1:23') && h.includes('4/4 ★') && h.includes('900') && h.includes('Ny rekord!'));

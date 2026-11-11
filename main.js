@@ -5,7 +5,7 @@ import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
-import { shouldShowIntro, finishData, winHTML, showCard } from './story.js';
+import { shouldShowIntro, finishData, winHTML, showCard, heroSVG, totals, endHTML } from './story.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
 import { makeAtmos } from './atmos.js';
@@ -1640,7 +1640,7 @@ function update(dt) {
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
-    { const cl = store.get('tlm.cleared', {}), prevBest = cl[levelId] || 0, n = levelInfo?.n; if (!stats.flew) { cl[levelId] = Math.max(prevBest, points()); store.set('tlm.cleared', cl); }       // husk hvilke nivåer som er klart (beste poeng)
+    { const cl = store.get('tlm.cleared', {}), prevBest = cl[levelId] || 0, n = levelInfo?.n; if (!stats.flew) { cl[levelId] = Math.max(prevBest, points()); store.set('tlm.cleared', cl); store.set('tlm.done', false); const runs = store.get('tlm.runs', {}); runs[levelId] = { t: clock, ants: stats.squashed || 0, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL) }; store.set('tlm.runs', runs); }       // husk hvilke nivåer som er klart (beste poeng)
       const d = finishData({ n, nextExists: !!nextLevel, clock, stats, crumbs: crumbCount(LEVEL), crumbTotal: crumbTotal(LEVEL), points: points(), prevBest, flew: stats.flew });
       $('winTitle').textContent = n ? (nextLevel ? T('win.level', { n }) : T('win.all')) : T('win.top');
       $('winStats').innerHTML = winHTML(d, T); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
@@ -1648,7 +1648,7 @@ function update(dt) {
       if (nextLevel) { nb.textContent = `${T('win.next')} →`; nb.onclick = () => goLevel(nextLevel.id); }
       else if (n && storyOn) { nb.textContent = `${T('win.ending')} →`; nb.onclick = showEnding; }
       $('again').textContent = T('win.again'); }
-    $('win').classList.remove('hide'); clearProgress();
+    $('win').classList.remove('hide'); $('winHero').innerHTML = heroSVG(d.stars >= 2 ? 'cheer' : 'hi'); $('winConfetti').innerHTML = Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 7) * 0.12}s;background:${['#ffd9a0', '#e85d4a', '#9fe0c8', '#8fb4ff'][i % 4]}"></i>`).join(''); clearProgress();
   }
 }
 
@@ -1945,24 +1945,25 @@ addEventListener('resize', resize); resize();
 function showIntro() {
   const n = levelInfo?.n; if (!shouldShowIntro({ n, enabled: storyOn, resumed, seen: store.get(`tlm.storySeen.${levelId}`, false) })) return;
   menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; logEv('fortelling', `nivå ${n}`);
-  showCard($('story'), { title: T(`story.title.${n}`), text: T(`story.${n}`), btn: T('story.go'), skip: T('story.skip'), onDone: () => { menuOpen = false; store.set(`tlm.storySeen.${levelId}`, true); } });
+  showCard($('story'), { art: heroSVG('hi'), title: T(`story.title.${n}`), text: T(`story.${n}`), btn: T('story.go'), skip: T('story.skip'), onDone: () => { menuOpen = false; store.set(`tlm.storySeen.${levelId}`, true); } });
 }
 function showEnding() {
   logEv('avslutning');
-  showCard($('story'), { title: T('story.endTitle'), text: T('story.end'), btn: T('story.endBtn'), onDone: () => { gameDone = true; clearAllProgress(); store.set('tlm.level', 'bad'); $('win').classList.add('hide'); showStart(); } });
+  const tt = totals(store.get('tlm.runs', {}));
+  showCard($('story'), { art: `<div class="sconf">${Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 7) * 0.12}s;background:${['#ffd9a0', '#e85d4a', '#9fe0c8', '#8fb4ff'][i % 4]}"></i>`).join('')}</div>` + heroSVG('cheer'), title: T('story.endTitle'), text: T('story.end'), extra: `<b class="stot">${T('story.endTotal')}</b>${endHTML(tt, T)}`, btn: T('story.endBtn'), onDone: () => { gameDone = true; clearAllProgress(); store.set('tlm.done', true); store.set('tlm.cleared', {}); store.set('tlm.level', 'bad'); $('win').classList.add('hide'); showStart(); } });
 }
 
 // ---------- startskjerm (v0.73): Nytt spill · Fortsett · Innstillinger · Avslutt ----------
 // Vises når siden åpnes uten ?level=… (en lenke med brett, «Neste nivå» og brettvelgeren hopper over den). Spillet står stille bak.
 let startScreenOn = store.get('tlm.startscreen', true), menuOpen = false;
 const startWanted = startScreenOn && levelParam === null && new URLSearchParams(location.search).get('start') !== '0';
-let gameDone = false;   // satt etter avslutningen: menyen viser da bare Nytt spill
+let gameDone = store.get('tlm.done', false);   // satt etter avslutningen: menyen viser da bare Nytt spill
 const hasProgress = () => !gameDone && (resumed || clock > 4 || levelId !== 'bad' || Object.keys(store.get('tlm.cleared', {})).length > 0);
-function clearAllProgress() { try { Object.keys(localStorage).filter((k) => k.startsWith('tlm.progress.') || k.startsWith('tlm.storySeen.')).forEach((k) => localStorage.removeItem(k)); } catch { /* privat modus */ } }
+function clearAllProgress() { try { Object.keys(localStorage).filter((k) => k.startsWith('tlm.progress.') || k.startsWith('tlm.storySeen.') || k === 'tlm.runs').forEach((k) => localStorage.removeItem(k)); } catch { /* privat modus */ } }
 function hideStart() { menuOpen = false; $('start').classList.add('hide'); document.body.classList.remove('instart'); }
 function newGame() {
   clearAllProgress(); logEv('nytt spill');
-  gameDone = false;
+  gameDone = false; store.set('tlm.done', false);
   if (levelId === 'bad') { restartAll(); hideStart(); toast('Nytt spill'); resumed = false; showIntro(); }
   else { noSave = true; goLevel('bad'); }                                  // laster nivå 1 på nytt (noSave: pagehide skal ikke skrive tilbake gammel fremgang)
 }

@@ -118,6 +118,15 @@
   #win .wrow{display:flex;justify-content:space-between;gap:24px;font:600 16px system-ui;background:#ffffff18;border-radius:10px;padding:7px 14px}
   #win .wpts{font:800 26px system-ui;color:#ffd9a0;margin-top:4px}#win .wpts small{display:block;font:700 13px system-ui;color:#9fe0c8}
   #win #nextLevel{font-size:18px;padding:15px 30px;box-shadow:0 3px 10px #0006}
+  .sconf{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  .sconf i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;opacity:.9;animation:conf 3.2s linear infinite}
+  @keyframes conf{to{transform:translateY(110vh) rotate(540deg)}}
+  .shero{width:84px;height:auto;animation:bob 1.6s ease-in-out infinite}.shero.cheer{animation-duration:.7s}
+  @keyframes bob{50%{transform:translateY(-8px)}}
+  .wstars{font-size:42px;letter-spacing:6px;color:#5a6378}.wstars span{display:inline-block}.wstars span.on{color:#ffd24a;text-shadow:0 0 12px #ffd24a99;animation:pop .5s both}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.4)}100%{transform:scale(1)}}
+  #story .wgrid{display:flex;flex-direction:column;gap:4px;min-width:min(260px,80vw)}#story .wrow{display:flex;justify-content:space-between;gap:24px;font:600 16px system-ui;background:#ffffff18;border-radius:10px;padding:7px 14px}
+  #story .stot{font:700 13px system-ui;color:#9fe0c8;text-transform:uppercase;letter-spacing:1px}
   #story{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 40%,#2b3550,#141a2c);color:#fff;text-align:center;touch-action:manipulation}
   #story .scard{max-width:min(420px,88vw);display:flex;flex-direction:column;align-items:center;gap:12px}
   #story h2{margin:0;font:800 clamp(26px,7vw,38px)/1.1 Georgia,serif;font-style:italic;color:#ffd9a0}
@@ -189,7 +198,7 @@
 <div id="panel" class="hide"></div>
 <div id="start" class="hide"></div>
 <div id="story" class="hide"></div>
-<div id="win" class="hide"><h1 id="winTitle">Du kom opp!</h1><div id="winStats"></div><button id="nextLevel" style="display:none">Neste nivå →</button><button id="again">Spill igjen</button></div>
+<div id="win" class="hide"><div id="winConfetti" class="sconf"></div><div id="winHero"></div><h1 id="winTitle">Du kom opp!</h1><div id="winStats"></div><button id="nextLevel" style="display:none">Neste nivå →</button><button id="again">Spill igjen</button></div>
 <div id="stick"><div id="knob"></div></div>
 <button class="tbtn" id="btnGrab">GREP</button>
 <button class="tbtn" id="btnCarry">TA</button>
