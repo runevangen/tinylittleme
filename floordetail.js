@@ -24,11 +24,11 @@ export function makeFloorDetail({ scene, LEVEL, floorY, quality = 'high', densit
   const put = (geo, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = false; m.receiveShadow = true; m.userData.noDetail = true; group.add(m); return m; };
   const pick = (a, v) => a[Math.floor(v * a.length) % a.length];
   for (const s of spots) {
-    const cs = Math.cos(s.rot), sn = Math.sin(s.rot), y = s.y, k = s.ring ? 2.4 : 1;   // ring-tingene (foran start) er større, så de leses tydelig på mobil
+    const cs = Math.cos(s.rot), sn = Math.sin(s.rot), y = s.y, k = s.ring ? 1.7 : 1;   // ring-tingene (foran start) er større, så de leses tydelig på mobil
     if (s.kind === 'stain') { const w = 1.2 + s.s * 2.2, m = put(G.flat, M.stain, s.x, y + 0.02, s.z, w, 1, w * (0.6 + s.a * 0.5)); m.rotation.y = s.rot; m.renderOrder = 1; }
     else if (s.kind === 'grout') { const m = put(G.flat, M.grout, s.x, y + 0.025, s.z, s.len, 1, 0.16 + s.a * 0.1); m.rotation.y = s.rot; m.renderOrder = 1; }
     else if (s.kind === 'crumbs') { const nk = 4 + Math.floor(s.a * 4); for (let i = 0; i < nk; i++) { const a = i * 2.4 + s.h * 6, d = (0.08 + (i % 3) * 0.14 * s.s) * k; const m = put(G.crumb, M.crumb, s.x + Math.cos(a) * d, y + 0.04 * k, s.z + Math.sin(a) * d, (0.7 + (i % 2) * 0.6) * k, 0.55 * k, 0.9 * k); m.rotation.y = a; } }
-    else if (s.kind === 'bead') { put(G.bead, pick(M.bead, s.c), s.x, y + 0.2 * s.s * k, s.z, s.s * k, s.s * 0.9 * k, s.s * k); }
+    else if (s.kind === 'bead') { const kb = k * (s.ring ? 0.65 : 1); put(G.bead, pick(M.bead, s.c), s.x, y + 0.2 * s.s * kb, s.z, s.s * kb, s.s * 0.9 * kb, s.s * kb); }
     else if (s.kind === 'pencil') {                                                  // blyantstumper: skaft, spiss med blyant
       const L = (1.2 + s.a * 0.7) * k, yy = y + 0.16 * k, rot = (m) => { m.rotation.y = s.rot; return m; };
       rot(put(G.body, pick(M.pencil, s.c), s.x, yy, s.z, L, k, k));

@@ -1,7 +1,7 @@
 // node test_floordetail.mjs: gulvdetaljer (R13): tetthet etter rom og kvalitet, målestokk-ring ved start, ingenting inni møbler, fuger på rutenettet
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { detailCount, pickDetails, hashStr, floorKind, TILE, KINDS, START_YAW, isMat } from './floordetail_logic.js';
+import { detailCount, pickDetails, hashStr, floorKind, TILE, KINDS, START_YAW, START_CAM, isMat, toScreen, floorAt } from './floordetail_logic.js';
 
 const fy = (L) => Math.max(0, ...L.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1]));
 const names = ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2'];
@@ -28,7 +28,14 @@ for (const id of names) {
   assert.ok(ringed.length >= 5, `${id}: ring (${ringed.length})`);
   const near = sp.filter((s) => { const d = Math.hypot(s.x - L.start[0], s.z - L.start[2]); return s.kind !== 'stain' && s.kind !== 'grout' && d >= 1.0 && d <= 13.5; });
   assert.ok(near.length >= 3, `${id}: minst tre ting for målestokk ved start (${near.length})`);
-  for (const s of ringed.filter((q) => Math.hypot(q.x - L.start[0], q.z - L.start[2]) > 4.4)) { let da = Math.abs(Math.atan2(s.z - L.start[2], s.x - L.start[0]) - base); da = Math.min(da, 2 * Math.PI - da); assert.ok(da < 1.3, `${id}: ring ligger foran kameraet`); }
+  // synsfelt ved start: projiser med start-kameraet (pitch 0.3, fov 52, mobil høyformat); minst 3 ulike gjenkjennelige slag innenfor bildet, i ulike avstander fra kamera-kanten
+  for (const dist of [5.0, 5.2, 5.5]) {
+    const cam = { ...START_CAM, dist }, vis = sp.filter((s) => { if (s.kind === 'stain' || s.kind === 'grout') return false; const p = toScreen(L.start[0], L.start[1] + 0.62, L.start[2], START_YAW, cam, s.x, s.y, s.z); return p && p[0] > 0.04 && p[0] < 0.96 && p[1] > 0.38 && p[1] < 0.92; });
+    assert.ok(vis.length >= 3, `${id}: minst tre ting i synsfeltet ved start (avstand ${dist}): ${vis.length}`);
+    assert.ok(new Set(vis.map((s) => s.kind)).size >= 2, `${id}: ulike slag i synsfeltet`);
+    if (id.startsWith('barnerom')) { const low = vis.filter((s) => toScreen(L.start[0], L.start[1] + 0.62, L.start[2], START_YAW, cam, s.x, s.y, s.z)[1] > 0.6); assert.ok(low.length >= 1, `${id}: noe i nedre halvdel (${dist})`); }
+  }
+  { const q = floorAt(L.start[0], L.start[1] + 0.62, L.start[2], START_YAW, START_CAM, 0.5, 0.6, L.start[1]), b = toScreen(L.start[0], L.start[1] + 0.62, L.start[2], START_YAW, START_CAM, q[0], L.start[1], q[1]); assert.ok(Math.abs(b[0] - 0.5) < 1e-6 && Math.abs(b[1] - 0.6) < 1e-6, 'floorAt og toScreen er hverandres inverse'); }
   const kinds = new Set(sp.map((s) => s.kind)); assert.ok(kinds.size >= 4, `${id}: variasjon (${[...kinds]})`);
 }
 // rommene skal ha ulik karakter: trebrettet har blyanter og viskelær, flisene fugeskitt

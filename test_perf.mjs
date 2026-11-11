@@ -97,6 +97,29 @@ ok(/tegnekall 5/.test(statsLine({ calls: 5, tris: 6, lights: 2, shadowLights: 1,
     if (id === 'barnerom') console.log(`softlight budsjett: ${calls} tegnekall, ${tris} trekanter (maks ${SOFT.budget.calls} / ${SOFT.budget.tris})`);
   }
 }
+// R13: gulvdetaljene (fdet) har et fast budsjett av tegnekall/trekanter etter sammenslåing, i alle brett, også på høyeste tetthet (Mange). Statisk telling, ingen GPU:
+// uten sammenslåing ville hvert småting vært et eget tegnekall. Ekte FPS på telefon er ikke målt her.
+{
+  const fs = await import('node:fs'), { register } = await import('node:module');
+  register('data:text/javascript,' + encodeURIComponent(`export async function resolve(s, c, n) { return s === 'three' ? { url: ${JSON.stringify(new URL('./lib/three.module.min.js', import.meta.url).href)}, shortCircuit: true } : n(s, c); }`));
+  const { makeFloorDetail } = await import('./floordetail.js'), { FDET } = await import('./floordetail_logic.js');
+  const fakeCtx = { createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, set fillStyle(v) {} };
+  globalThis.document = { createElement: () => ({ getContext: () => fakeCtx }) };
+  const rows = [];
+  for (const id of ['bad', 'barnerom', 'kjokken', 'poc', 'klatring', 'barnerom2', 'kjokken2', 'bad2']) for (const [q, dens] of [['high', 1.6], ['high', 1], ['mid', 1]]) {
+    const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), fy = Math.max(0, ...L.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1]));
+    const scene = new THREE.Scene(), fd = makeFloorDetail({ scene, LEVEL: L, floorY: fy, quality: q, density: dens, name: id });
+    const stat = () => { let calls = 0, tris = 0; fd.group.traverse((o) => { if (o.isMesh) { calls++; tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; } }); return { calls, tris }; };
+    const b4 = stat(), m = mergeStatic(THREE, fd.group, { cell: FDET.cell }), af = stat();
+    ok(af.calls <= FDET.budget.calls, `fdet ${id} ${q}/${dens}: ${af.calls} tegnekall > budsjett ${FDET.budget.calls} (${b4.calls} før sammenslåing)`);
+    ok(af.tris <= FDET.budget.tris, `fdet ${id} ${q}/${dens}: ${af.tris} trekanter > budsjett ${FDET.budget.tris}`);
+    ok(af.calls === m.after && af.calls < b4.calls, `fdet ${id} ${q}/${dens}: sammenslåing gir færre kall (${b4.calls} til ${af.calls})`);
+    ok(af.tris === b4.tris, `fdet ${id}: sammenslåing endrer ikke trekanttallet`);
+    rows.push({ id, q, dens, b4, af });
+  }
+  const d1 = rows.filter((r) => r.q === 'high' && r.dens === 1);
+  console.log(`fdet budsjett (statisk, uten GPU): standard tetthet ${Math.min(...d1.map((r) => r.af.calls))}-${Math.max(...d1.map((r) => r.af.calls))} tegnekall etter sammenslåing (${Math.min(...d1.map((r) => r.b4.calls))}-${Math.max(...d1.map((r) => r.b4.calls))} uten), maks ${Math.max(...rows.map((r) => r.af.calls))} / ${Math.max(...rows.map((r) => r.af.tris))} trekanter (budsjett ${FDET.budget.calls} / ${FDET.budget.tris})`);
+}
 // R21: teksturminne. Falsk lerret-DOM (ingen ekte tegning): størrelser og antall er det som telles
 {
   const mkCanvas = () => { const c = { width: 0, height: 0, getContext: () => ({ imageSmoothingEnabled: true, drawImage() {}, createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {}, fillRect() {}, createLinearGradient: () => ({ addColorStop() {} }), createRadialGradient: () => ({ addColorStop() {} }), set fillStyle(v) {}, getImageData: (x, y, w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, fill() {}, arc() {}, ellipse() {}, save() {}, restore() {}, rect() {}, clip() {}, fillText() {}, clearRect() {}, set strokeStyle(v) {}, set lineWidth(v) {}, set lineCap(v) {}, set font(v) {}, set textAlign(v) {}, set textBaseline(v) {}, set lineJoin(v) {}, set globalAlpha(v) {}, set globalCompositeOperation(v) {}, set shadowBlur(v) {}, set shadowColor(v) {}, translate() {}, rotate() {}, scale() {}, closePath() {}, quadraticCurveTo() {}, bezierCurveTo() {}, arcTo() {}, roundRect() {}, strokeRect() {}, setTransform() {}, drawImage2() {} }) }; return c; };
