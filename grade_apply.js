@@ -14,6 +14,7 @@ export function applyGrade({ renderer, scene, sun, canvas, look, mode = 'film', 
   if (canvas) canvas.style.filter = p.filter;
   return {
     mode, params: p,
+    setLow(on) { fill.visible = rim.visible = !on; },     // R15 Lav profil: ingen ekstra retningslys (færre lys i hver piksel)
     setFilter(on) { if (canvas) canvas.style.filter = on && !low && mode === 'film' ? gradeParams(look, mode, low, true).filter : ''; },
     // fyll og kantlys følger figuren; kantlyset ligger alltid bakfra sett fra kameraet
     follow(target, camera) {
