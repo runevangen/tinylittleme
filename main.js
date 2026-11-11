@@ -7,6 +7,7 @@ import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb,
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid, nearBridge } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
+import { buildFlag, buildGoalRing } from './markers.js';
 import { shouldShowIntro, finishData, winHTML, showCard, heroSVG, totals, endHTML } from './story.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
@@ -503,15 +504,8 @@ const beacon = new THREE.Group(); beacon.position.set(LEVEL.goal[0], LEVEL.goal[
   beacon.add(core, ghost, halo); beacon.userData = { core, ghost, halo };
 }
 
-// lagringsflagg
-const flag = new THREE.Group();
-{
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.4, 8), new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.4 }));
-  pole.position.y = 0.7;
-  const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.38), new THREE.MeshStandardMaterial({ color: 0xffb703, side: THREE.DoubleSide, roughness: 0.7 }));
-  cloth.position.set(0.3, 1.2, 0);
-  flag.add(pole, cloth); scene.add(flag);
-}
+// lagringsflagg og målring (R11: markers.js)
+const flagV = buildFlag(scene, { low: gfxLow }), goalRing = buildGoalRing(scene, LEVEL.goal, { low: gfxLow });
 
 // ---------- figur ----------
 if (!gfxLow) look.detailize(scene);                                   // fint korn på alle flater i brettet (v0.76)
@@ -973,7 +967,7 @@ function toast(msg, low = false) {
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
 const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried);
-function placeFlag() { flag.position.set(save.pos[0], save.pos[1], save.pos[2]); }
+function placeFlag() { flagV.place(save.pos); }
 placeFlag();
 
 // ---------- autolagring: fremgangen huskes per brett, så en kort mobiløkt kan fortsette der du var ----------
@@ -995,7 +989,7 @@ function failAt(why = 'fall') {
     save.pos = pr.save; Object.assign(stats, pr.stats || {}); clock = pr.clock; autoPos = okAt(pr.auto) ? pr.auto : null;
     for (const [k, v] of pr.fails || []) failCells.set(k, v);
     stats.crumbs = restoreCollected(LEVEL, pr.crumbs); restorePuzzles(LEVEL, pr.puzzles);
-    resetPlayer(player, ...(autoPos || save.pos)); placeFlag(); resumed = true;
+    resetPlayer(player, ...(autoPos || save.pos)); placeFlag(); if (stats.saves > 0) flagV.ignite(true); resumed = true;
   }
 }
 addEventListener('pagehide', saveProgress);
@@ -1007,8 +1001,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) saveP
 function doSave() {
   if (mode !== 'play') return toast('Gå ut av plan-/flymodus først');
   if (!player.onGround) return toast('Stå støtt for å lagre');
-  save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag(); audio?.checkpoint(); saveProgress();
-  logEv('lagret'); toast(`Lagringspunkt satt  −${SCORE.save} poeng`);
+  save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag(); flagV.ignite(); audio?.checkpoint(); saveProgress();
+  logEv('lagret'); logEv('flagg tent', 'lagringspunkt'); toast(`Lagringspunkt satt  −${SCORE.save} poeng`);
 }
 function goBack() {
   if (mode !== 'play') return;
@@ -1033,7 +1027,7 @@ function restartAll() {
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player);
   save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = 0; stats.flew = false; resetAnts(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); bridgeGuide = null;
-  won = false; clock = 0; placeFlag(); $('win').classList.add('hide'); setMode('play');
+  won = false; clock = 0; placeFlag(); flagV.extinguish(); $('win').classList.add('hide'); setMode('play');
 }
 
 // ---------- modus: plan / fly ----------
@@ -1722,7 +1716,7 @@ function update(dt) {
   }
   musicFrame(); audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
-  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); saveProgress(); logEv('sjekkpunkt'); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
+  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); flagV.ignite(); saveProgress(); logEv('sjekkpunkt'); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
   if (player.y < LEVEL.deathY) { failAt('falt'); resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
     logEv(ev.type, ev.id || ev.tool || ev.why || '');
@@ -1920,7 +1914,7 @@ function render(now, dt) {
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;
   { const u = beacon.userData, pu = 0.5 + 0.5 * Math.sin(now * 0.0025), near = Math.min(1, Math.hypot(player.x - LEVEL.goal[0], player.y - LEVEL.goal[1], player.z - LEVEL.goal[2]) / 6);   // dempes når du står ved målet
     beacon.visible = beaconOn && !won && mode !== 'plan'; u.core.material.opacity = (0.42 + 0.16 * pu) * near; u.ghost.material.opacity = (0.26 + 0.1 * pu) * near; u.halo.material.opacity = (0.65 + 0.3 * pu) * near; u.halo.material.rotation = now * 0.0004; beacon.rotation.y = now * 0.0006; }
-  flag.children[1].rotation.y = Math.sin(now * 0.004) * 0.25;
+  flagV.update(now, dt); goalRing.update(now, !won && mode !== 'plan');
 
   let desired, look;
   if (mode === 'plan') {
