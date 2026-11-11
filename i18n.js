@@ -21,6 +21,9 @@ const DICT = {
     'manual.take': '{take}: ta og slipp ting. Knappen skifter navn når tingen kan brukes (SMØR, RULL UT, TRÆ …). Hold inne og dra ned for å sikte og kaste mot hårkorset.',
     'manual.cam': '{center}: sentrer kameraet (også dobbelttrykk). Trykk på kompasset for å snu mot neste hinder.',
     'manual.menu': 'Tilbake henter lagringspunktet. ⋯: Lagre (setter lagringspunkt) og Ting ↺ (setter tingene tilbake). ⚙: innstillinger, brett og testrapport. Trykk på teksten øverst til venstre for høyde, tid og poeng. Fremgangen lagres automatisk.',
+    'puz.key': 'NØKKELEN', 'puz.plate': 'LÅSEN', 'puz.bridgeLbl': 'BROEN', 'puz.takeKey': 'Nøkkel! Gå bort til den og trykk {take}',
+    'puz.keyPlate': 'Legg nøkkelen på den gylne platen: trykk {place}', 'puz.bridge': 'Klikk! En bro ruller ut: snarveien er åpen',
+    'puz.intro': 'En gylden nøkkel ligger her. Ta den med {take}, gå til den gylne platen og sett den fra deg med {drop}: det åpner en snarvei.',
     'compass.goal': 'MÅL', 'compass.next': 'NESTE: {name}',
     'toast.threaded': 'Nålen er trædd. Gå til et høyt sted ved en kant og trykk {tieTop}.',
     'toast.tiedTop': 'Tråden er festet her. Gå dit den skal ende (lavere) og trykk {tieEnd}.',
@@ -50,6 +53,9 @@ const DICT = {
     'manual.take': '{take}: pick up and put down things. The button changes name when the item can be used (SMEAR, UNROLL, THREAD …). Hold and drag down to aim and throw at the crosshair.',
     'manual.cam': '{center}: center the camera (double-tap too). Tap the compass to turn toward the next obstacle.',
     'manual.menu': 'Back recalls the save point. ⋯: Save (sets a save point) and Things ↺ (puts things back). ⚙: settings, level and test report. Tap the text at the top left for height, time and points. Progress is saved automatically.',
+    'puz.key': 'THE KEY', 'puz.plate': 'THE LOCK', 'puz.bridgeLbl': 'THE BRIDGE', 'puz.takeKey': 'A key! Walk up to it and press {take}',
+    'puz.keyPlate': 'Put the key on the golden plate: press {place}', 'puz.bridge': 'Click! A bridge rolls out: the shortcut is open',
+    'puz.intro': 'A golden key lies here. Pick it up with {take}, walk to the golden plate and put it down with {drop}: it opens a shortcut.',
     'compass.goal': 'GOAL', 'compass.next': 'NEXT: {name}',
     'toast.threaded': 'The needle is threaded. Go to a high spot at an edge and press {tieTop}.',
     'toast.tiedTop': 'The thread is tied here. Go where it should end (lower) and press {tieEnd}.',
@@ -65,7 +71,7 @@ const DICT = {
 
 // Visningsnavn per kind (ting i brettet). Ukjent kind: kallerens reserve (id).
 export const NAMES = {
-  needle: ['Nål', 'Needle'], spool: ['Trådsnelle', 'Spool of thread'], gel_bottle: ['Hårgelé', 'Hair gel'], gel: ['Gelé', 'Gel'], roll: ['Dopapirrull', 'Toilet roll'],
+  key: ['Nøkkel', 'Key'], needle: ['Nål', 'Needle'], spool: ['Trådsnelle', 'Spool of thread'], gel_bottle: ['Hårgelé', 'Hair gel'], gel: ['Gelé', 'Gel'], roll: ['Dopapirrull', 'Toilet roll'],
   paper_strip: ['Papirbånd', 'Paper strip'], paper_pile: ['Dopapirhaug', 'Paper pile'], qtip: ['Ørepinne', 'Cotton swab'], sponge: ['Svamp', 'Sponge'],
   towel: ['Håndkle', 'Towel'], towel_hang: ['Håndkle', 'Towel'], towel_hang_: ['Håndkle', 'Towel'], cup: ['Tannglass', 'Tooth glass'], toothbrush: ['Tannbørste', 'Toothbrush'],
   tube: ['Tannkrem', 'Toothpaste'], bottle: ['Flaske', 'Bottle'], shaver: ['Barbermaskin', 'Shaver'], basket: ['Vaskekurv', 'Laundry basket'], hamper: ['Kurv', 'Basket'], toyblock: ['Kloss', 'Block'], letterblock: ['Bokstavkloss', 'Letter block'], legoblock: ['Legokloss', 'Brick'], toycar: ['Leketøysbil', 'Toy car'], bag: ['Toalettveske', 'Toiletry bag'],

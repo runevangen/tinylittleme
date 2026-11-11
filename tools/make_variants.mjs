@@ -73,6 +73,8 @@ const kit = (s) => ({
   s.goal = { x: 76, y: 190, z: 44, on: 'kjoleskap', note: 'Motgift-bit på toppen av kjøleskapet' };
   s.ants.push({ id: 'edderkopp_skap', type: 'spider', on: 'gulv', from: [90, 185] });                         // R6: ekstra edderkopp-vakt i nivå 6
   { const m = s.ants.find((x) => x.id === 'maur_matte'); if (m) m.to = [m.from[0] + 55, m.from[1]]; }      // kassa står på matta nå: kortere patrulje (maurene må ha fri bane)
+  // R7: gåten flyttes. Broen ruller ut mellom overskapet og den lille hylla (første hopp); platen ligger nærmere kanten enn i nivå 3. Nøkkelen arves.
+  s.puzzles = [{ id: 'bro', key: 'noekkel', label: 'låsen', en: 'the lock', plate: { on: 'overskap', at: [205, 25], r: 10 }, bridge: { box: [142, 165, 195, 198, 3, 27], axis: 'x', anchor: 'max' } }];
   save('kjokken2', s);
 }
 console.log('skrev scenes/bad2, barnerom2, kjokken2');

@@ -53,6 +53,7 @@ export const KINDS = {
   paper_pile:   { shaped: true,  desc: 'haug med dopapir: soft: true (fast myk flate)' },
   needle:       { shaped: true,  desc: 'nål: movable light + tool: "needle" (trædes med en trådsnelle til en taubane)' },
   spool:        { shaped: true,  desc: 'trådsnelle: movable light + tool: "spool" + thread: true' },
+  key:          { shaped: true,  desc: 'nøkkel (R7): movable light, ca. 14×3×6 cm; brukes i en gåte (`puzzles` i scenen) og legges på en plate for å rulle ut en bro' },
   gel_bottle:   { shaped: true,  desc: 'hårgelé: movable light + tool: "gel"' },
 };
 export const MATERIALS = ['wood', 'woodpanel', 'tile', 'porcelain', 'ceramic', 'plastic', 'fabric', 'paper', 'metal', 'glass', 'mirror', 'wicker', 'book', 'plaster'];

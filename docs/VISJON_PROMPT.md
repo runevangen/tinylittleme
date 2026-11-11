@@ -61,6 +61,7 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `paper_pile` | ja | haug med dopapir: soft: true (fast myk flate) |
 | `needle` | ja | nål: movable light + tool: "needle" (trædes med en trådsnelle til en taubane) |
 | `spool` | ja | trådsnelle: movable light + tool: "spool" + thread: true |
+| `key` | ja | nøkkel (R7): movable light, ca. 14×3×6 cm; brukes i en gåte (`puzzles` i scenen) og legges på en plate for å rulle ut en bro |
 | `gel_bottle` | ja | hårgelé: movable light + tool: "gel" |
 
 ## Felt per ting

@@ -300,6 +300,18 @@ const collectibles = (scene.collectibles || []).map((c) => {
   return { id: c.id, x: ux(c.at[0]), y: round((on ? uy(on.box[3]) : 0) + CRUMB.lift), z: uz(c.at[1]) };
 });
 
+// gåter (R7): { id, key: id på en løs ting (kind «key»), plate: { on, at: [x, z], r }, bridge: { box: [x0,x1,y0,y1,z0,z1], axis: 'x'|'z', anchor: 'min'|'max' } } i cm.
+// Platen ligger på flata `on` (toppen av tingen); broen vokser ut fra anchor-enden når nøkkelen legges på platen. Gåten er en valgfri snarvei: ruta bruker den ikke.
+const puzzles = (scene.puzzles || []).map((p) => {
+  const on = scene.objects.find((o) => o.id === p.plate.on);
+  if (!on) throw new Error(`gåte ${p.id}: fant ikke flata ${p.plate.on}`);
+  if (!scene.objects.some((o) => o.id === p.key && o.movable)) throw new Error(`gåte ${p.id}: nøkkelen ${p.key} må være en løs ting (movable)`);
+  const [a, b, , d, e, f] = on.box, [bx0, bx1, by0, by1, bz0, bz1] = p.bridge.box;
+  return { id: p.id, key: p.key, ...(p.label ? { label: p.label } : {}), ...(p.en ? { en: p.en } : {}),
+    plate: { x: ux(p.plate.at[0]), y: uy(d), z: uz(p.plate.at[1]), r: round((p.plate.r || 10) / U), on: p.plate.on, x0: ux(a), x1: ux(b), z0: uz(e), z1: uz(f) },
+    bridge: { min: [ux(bx0), uy(by0), uz(bz0)], max: [ux(bx1), uy(by1), uz(bz1)], axis: p.bridge.axis || 'x', anchor: p.bridge.anchor || 'max' } };
+});
+
 const finalSeen = reachable();
 const solvable = finalSeen.has(goalIdx());
 
@@ -309,6 +321,7 @@ const level = {
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ants,
   collectibles,
+  ...(puzzles.length ? { puzzles } : {}),
   ropes: [],
   route,
   start, goal,
