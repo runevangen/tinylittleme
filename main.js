@@ -77,8 +77,8 @@ const SUN = LEVEL.sun || [28, 60, -24];
 let audio = null, music = null, musicMood = 'calm';
 let soundMuted = store.get('tlm.muted', false);
 function primeVoice() { try { if (hasTTS) speechSynthesis.speak(Object.assign(new SpeechSynthesisUtterance(' '), { volume: 0 })); } catch { /* ok */ } }
-function unlockAudio() {
-  primeVoice();
+function unlockAudio(e) {
+  if (!e || ['pointerdown', 'keydown', 'touchend'].includes(e.type)) primeVoice();      // (de nye hendelsene touchstart/pointerup/click gjelder bare lydmotoren)
   if (!audio) {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -90,7 +90,22 @@ function unlockAudio() {
   }
   audio?.resume();
 }
-addEventListener('pointerdown', unlockAudio); addEventListener('keydown', unlockAudio); addEventListener('touchend', unlockAudio, { passive: true });
+for (const ev of ['pointerdown', 'pointerup', 'keydown', 'click']) addEventListener(ev, unlockAudio);
+addEventListener('touchstart', unlockAudio, { passive: true }); addEventListener('touchend', unlockAudio, { passive: true });   // iPhone låser opp lyden først når fingeren løftes (touchend/pointerup/click): prøv ved alle
+// v0.87: etter «Neste nivå» lastes siden på nytt og lyden er låst til første trykk er løftet. Holder du stikka, kommer lyden sent: vis en liten knapp til lyden går
+{
+  const pill = document.createElement('button'); pill.id = 'soundPill'; pill.textContent = '🔈 Trykk for lyd';
+  pill.style.cssText = 'position:fixed;left:50%;bottom:max(150px,calc(env(safe-area-inset-bottom) + 140px));transform:translateX(-50%);z-index:6;display:none;padding:10px 18px;border-radius:999px;border:2px solid #ffa94099;background:#121a2cdd;color:#ffd9a0;font:700 15px system-ui';
+  document.body.appendChild(pill);
+  const t0 = performance.now(); let logged = false;
+  const running = () => audio?.ctx?.state === 'running';
+  setInterval(() => {
+    const ok = running();
+    if (ok && !logged) { logged = true; logEv('lyd klar', `${Math.round(performance.now() - t0)} ms etter oppstart`); }
+    let inMenu = false; try { inMenu = menuOpen; } catch { /* startskjermen er ikke satt opp ennå */ }
+    pill.style.display = !ok && TOUCH && performance.now() - t0 > 1200 && !inMenu ? 'block' : 'none';
+  }, 400);
+}
 // iPhone stopper lyden (suspended/interrupted) ved lås eller fanebytte: ta den opp igjen når fanen er synlig, og ved neste trykk (unlockAudio)
 document.addEventListener('visibilitychange', () => { if (!document.hidden) audio?.resume(); });
 addEventListener('pageshow', () => audio?.resume());
@@ -121,7 +136,7 @@ const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCen
 
 // ---------- hendelseslogg og FPS: brukes i testrapporten ----------
 const evLog = store.get('tlm.evlog', []);
-const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION }); if (evLog.length > 120) evLog.shift(); };
+const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION, lv: levelLabel }); if (evLog.length > 120) evLog.shift(); };
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
 addEventListener('pagehide', () => store.set('tlm.evlog', evLog.slice(-120)));
 
@@ -362,6 +377,7 @@ for (const b of LEVEL.boxes) {
   ceil.rotation.x = Math.PI / 2; ceil.position.set(ox, room.height, oz); ceil.receiveShadow = true; scene.add(ceil);
 
   const frameMat = std({ color: 0xf0ead8, roughness: 0.5 });
+  frameMat.polygonOffset = true; frameMat.polygonOffsetFactor = 2; frameMat.polygonOffsetUnits = 2;       // v0.87: rammen ligger i samme høyde som vinduskarmen (flimret der du står); karmen vinner nå
   for (const win of LEVEL.windows || []) {
     const g = new THREE.Group(); g.position.set(...win.pos);
     g.rotation.y = { N: 0, S: Math.PI, E: -Math.PI / 2, W: Math.PI / 2 }[win.wall] ?? 0;
@@ -968,7 +984,7 @@ function restartAll() {
 
 // ---------- modus: plan / fly ----------
 const cam = { yaw: 0.35, pitch: viewMode === 'shoulder' ? 0.18 : viewMode === 'first' ? 0.05 : 0.3, dist: camDistSet, cur: viewMode === 'shoulder' ? shDist : camDistSet, target: new THREE.Vector3(...LEVEL.start) };
-let camLook = 0, camPitchBias = 0, camLift = 0, camAssist = store.get('tlm.camassist', true);
+let camLook = 0, camPitchBias = 0, camLift = 0, camUpTilt = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
 const planCam = { yaw: 0.6, pitch: 0.7, dist: 55, pivot: new THREE.Vector3(8, 15, 0) };
 if (levelName) {                                   // mindre rom: nærmere og mer ovenfra
@@ -1105,7 +1121,7 @@ canvas.addEventListener('pointermove', (e) => {
   }
   camAnim = null; c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000; metrics.dragPx += Math.abs(dx) + Math.abs(dy); metrics.yawUser += Math.abs(dx * 0.006 * camSens);
   c.pitch += dy * 0.005 * camSens * (camInvY && mode !== 'plan' ? -1 : 1);
-  const lim = mode === 'plan' ? [-0.3, 1.5] : viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35];
+  const lim = mode === 'plan' ? [-0.3, 1.5] : viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.85, 1.2] : [-0.85, 1.35];
   c.pitch = Math.min(lim[1], Math.max(lim[0], c.pitch));
 });
 let lastTap = { t: 0, x: 0, y: 0 };
@@ -1128,7 +1144,7 @@ canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoom(Math.exp(e.de
 document.addEventListener('mousemove', (e) => {
   if (document.pointerLockElement !== canvas || mode !== 'play') return;
   cam.yaw -= e.movementX * 0.0022 * camSens * mouseSens; lastDrag = performance.now() / 1000; camAnim = null;
-  const lim = viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35];
+  const lim = viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.85, 1.2] : [-0.85, 1.35];
   cam.pitch = Math.min(lim[1], Math.max(lim[0], cam.pitch + e.movementY * 0.0018 * camSens * mouseSens * (camInvY ? -1 : 1)));
 });
 canvas.addEventListener('mousedown', (e) => { if (document.pointerLockElement !== canvas) return; if (e.button === 0) { touch.carry = true; carryEdge = true; } if (e.button === 2) { touch.grab = true; grabEdge = true; } });
@@ -1437,7 +1453,7 @@ function buildReportInfo() {
     fps: perf.n ? `${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms` : 'fps ukjent',
     pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), state: player.state, target: t.final ? 'målet' : t.label, stats: { ...stats },
     changed: changedSettings(SETTINGS.filter((d) => d.group !== 'admin' || true).map((d) => ({ id: d.id, label: d.label, def: d.def, get: d.get }))),
-    marks: evLog.filter((e) => e.type === 'MARKERT').slice(-10), backlog: evLog.filter((e) => e.type === 'BACKLOGG').slice(-10), events: evLog.slice(-30),
+    marks: evLog.filter((e) => e.type === 'MARKERT' && !e.sent).slice(-10), marksOld: evLog.filter((e) => e.type === 'MARKERT' && e.sent).slice(-3), backlog: evLog.filter((e) => e.type === 'BACKLOGG').slice(-10), events: evLog.slice(-30),
     ratings: evLog.filter((e) => e.type === 'vurdering').slice(-12),
     metrics: (() => { const mn = Math.max(metrics.t / 60, 0.05); return `sveip ${metrics.swipes} (${(metrics.swipes / mn).toFixed(1)}/min), dratt ${Math.round(metrics.dragPx)} px, kamera dreid av deg ${metrics.yawUser.toFixed(1)} rad og automatisk ${metrics.yawAuto.toFixed(1)} rad, stikke i bruk ${Math.round(100 * metrics.stickT / Math.max(metrics.t, 0.1))} % av ${mn.toFixed(1)} min`; })(),
   };
@@ -1563,7 +1579,7 @@ function crumbEvent(ev) {
 function update(dt) {
   if (P.faceCam && mode === 'play') {                                  // PC: piltastene ser deg rundt (WASD går)
     const yawIn = (held('ArrowLeft') ? 1 : 0) - (held('ArrowRight') ? 1 : 0), pitchIn = (held('ArrowDown') ? 1 : 0) - (held('ArrowUp') ? 1 : 0);
-    if (yawIn || pitchIn) { camAnim = null; lastDrag = performance.now() / 1000; cam.yaw += yawIn * 1.9 * camSens * dt; const lim = viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.45, 1.2] : [-0.35, 1.35]; cam.pitch = Math.min(lim[1], Math.max(lim[0], cam.pitch + pitchIn * 1.2 * camSens * dt)); }
+    if (yawIn || pitchIn) { camAnim = null; lastDrag = performance.now() / 1000; cam.yaw += yawIn * 1.9 * camSens * dt; const lim = viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.85, 1.2] : [-0.85, 1.35]; cam.pitch = Math.min(lim[1], Math.max(lim[0], cam.pitch + pitchIn * 1.2 * camSens * dt)); }
   }
   const [ix, iz] = axes();
   if (mode === 'plan') {
@@ -1847,18 +1863,23 @@ function render(now, dt) {
     const RM = LEVEL.room, keepIn = !!RM && Number.isFinite(RM.x0) && player.x > RM.x0 && player.x < RM.x1 && player.z > RM.z0 && player.z < RM.z1;
     const inRoom = (x, y, z) => !keepIn || (x > RM.x0 + 0.4 && x < RM.x1 - 0.4 && z > RM.z0 + 0.4 && z < RM.z1 - 0.4 && y < (RM.height || 1e9) - 0.4);
     const clearAt = (dv, dd) => { const x = cam.target.x + dv.x * dd + sdx, y = cam.target.y + dv.y * dd, z = cam.target.z + dv.z * dd + sdz; return !insideAny(x, y, z, 0.25) && inRoom(x, y, z); };
+    // v0.87: ved lav kameravinkel sjekkes hele strekningen fra figuren til kameraet, ikke bare endepunktet (ellers kan kameraet havne under en tynn bordplate)
+    const clearPath = (dv, dd) => { if (!clearAt(dv, dd)) return false; if (dv.y > 0.15) return true; for (let k = 0.6; k < dd; k += 0.3) if (!clearAt(dv, k)) return false; return true; };
     let liftT = 0;
-    if (camAssist && mode !== 'fly' && !clearAt(dirAt(cam.pitch + camPitchBias), baseDist)) {         // noe i veien på full avstand: prøv en høyere vinkel
-      for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + o); if (clearAt(dirAt(pp), baseDist)) { liftT = pp - cam.pitch - camPitchBias; break; } }
+    if (camAssist && mode !== 'fly' && !clearPath(dirAt(cam.pitch + camPitchBias), baseDist)) {         // noe i veien på full avstand: prøv en høyere vinkel
+      for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + o); if (clearPath(dirAt(pp), baseDist)) { liftT = pp - cam.pitch - camPitchBias; break; } }
     }
     camLift += (liftT - camLift) * (liftT > camLift ? 1 - Math.pow(0.02, dt) : 1 - Math.pow(0.2, dt));
     const pitchNow = Math.min(1.3, cam.pitch + camPitchBias + camLift);
+    // v0.87: ser du selv oppover (dro kameraet ned) mens noe under hindrer kameraet, løftes kameraet som før, men blikket tiltes opp i stedet for å bli tvunget ned igjen (stå på et bord og se mot taket)
+    const userUp = cam.pitch < 0.1 && performance.now() / 1000 - lastDrag < 8 && mode !== 'fly';
+    camUpTilt += ((userUp ? Math.tan(Math.min(0.8, Math.max(0, camLift))) * cam.cur : 0) - camUpTilt) * (1 - Math.pow(0.1, dt));
     const cp = Math.cos(pitchNow), dir = new THREE.Vector3(Math.sin(cam.yaw) * cp, Math.sin(pitchNow), Math.cos(cam.yaw) * cp);
     let d = baseDist;
-    for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { if (clearAt(dir, d)) break; }
+    for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { if (clearPath(dir, d)) break; }
     cam.cur += (d - cam.cur) * (d < cam.cur ? 0.5 : 0.08);
     if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur); camera.position.x += sdx; camera.position.z += sdz;
-    camera.lookAt(cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0), cam.target.z + sdz); }
+    camera.lookAt(cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0) + camUpTilt, cam.target.z + sdz); }
   }
   { const fp = viewFirst && mode === 'play', fov = fp ? 74 : viewMode === 'shoulder' ? fovSet + 8 : fovSet;
     for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
@@ -2014,7 +2035,8 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-window.__camDbg = () => ({ camLook, camPitchBias, camLift, cur: cam.cur, pitch: cam.pitch });
+window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing: som om du nettopp dro i kameraet
+window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
 window.__game = { antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

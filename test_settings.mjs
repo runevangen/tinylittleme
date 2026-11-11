@@ -25,8 +25,8 @@ assert.ok(parseSettings('{"tag":"annet","values":{}}', defs).error);
 const rep = formatReport({
   version: '9.9', level: 'Bad', when: 'i dag', device: 'iPhone', screen: '390×844 @3x', touch: true, preset: 'Prince', clock: 120, points: 950,
   fps: '58 fps snitt, verste bilde 40 ms', pos: [1, 2, 3], state: 'ground', target: 'håndkle', stats: { saves: 1, respawns: 2, broken: 0, resets: 0, hard: 1, flew: false },
-  changed: changedSettings(defs), marks: [{ c: 33, pos: [1, 2, 3], detail: 'kom ikke opp' }],
+  changed: changedSettings(defs), marks: [{ c: 33, pos: [1, 2, 3], detail: 'kom ikke opp', lv: 'Nivå 5 · Barnerom', v: '9.9' }], marksOld: [{ c: 12, pos: [4, 5, 6], detail: 'gammel feil', lv: 'Nivå 2 · Barnerom', v: '9.8' }],
   events: [{ c: 30, type: 'tilbake', detail: 'falt', pos: [0, 0, 0], st: 'air' }],
 });
-for (const s of ['v9.9', 'Bad', 'Valg B: 0.9 (standard 0.5)', 'kom ikke opp', 'tilbake falt', 'neste: håndkle', '58 fps']) assert.ok(rep.includes(s), `rapporten har «${s}»`);
+for (const s of ['v9.9', 'Bad', 'Valg B: 0.9 (standard 0.5)', 'kom ikke opp', 'tilbake falt', 'neste: håndkle', '58 fps', 'Nivå 5 · Barnerom · v9.9', 'Allerede sendt tidligere', 'gammel feil']) assert.ok(rep.includes(s), `rapporten har «${s}»`);
 console.log('innstillings-tester grønne');
