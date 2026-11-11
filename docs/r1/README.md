@@ -1,24 +1,17 @@
 # R1: Toy Story-lys, før/etter
 
-Bildene viser «Av» (`_av`) mot «Varm film» (`_film`), samme posisjon, iPhone 14-utsnitt, ekte kjøring (`?level=...`, programvare-GL).
+Bildene ligger i denne mappen: `n<nivå>_v<vinkel>_<av|film>.png` (iPhone 14, 390x664, programvare-GL, `?level=...`). Vinkel 0 = startbildet, 1 = kameraet snudd 2,4 rad (~140 grader), 2 = snudd 1,8 rad til. Nivå 1 = Bad, 2 = Barnerom, 3 = Kjøkken. «av» = Fargegradering Av, «film» = Varm film.
 
-- Nivå 1 (Bad): `n1_start_av.png` / `n1_start_film.png`. Grå fliser blir varme krem-fliser, sol og skygge får tydelig varm/kjølig kontrast.
-- Nivå 2 (Barnerom): `n2_start_av.png` / `n2_start_film.png`. Kameraet startet før *utenfor* veggen (z=29,3 mot vegg ved z=28), så figuren var skjult. Kameraet holdes nå innenfor rommet (`inRoom` i `main.js`), og utsnittet viser gulv, ball, flagg og figur.
-- Nivå 3 (Kjøkken): `n3_start_av.png` / `n3_start_film.png`.
-- Klarlakk: `n2_ball_av.png` / `n2_ball_film.png` (ballen tett på: tydelig speilende glansflekk og rikere farge i film). Film-modus speiler miljøet kraftigere i blank plast/porselen (envMapIntensity 1,7) og har skarpere klarlakk.
+## Rettet etter kritikk (runde 1)
+- **Utbrente flater:** fliser (gulv og vegg) har ingen roughnessMap og minst roughness 0,9 i film-modus, så solspeilingen klipper ikke lenger. Sol er bare x1,05 (var x1,25), kantlys 0,5 (var 1,1), fyll 0,6 (var 0,9). Store lyse kasser (kjøleskapet i Kjøkken) dempes til 0,8 i farge og får ikke ekstra miljøspeiling. Vinduet har dempet lysstyrke (ikke ren hvit). Målt andel helt hvite piksler (alle kanaler >= 250) i alle 18 bilder: 0 til 0,4 %, likt med «Av».
+- **Palett:** sepia er fjernet fra filteret, fliser er ikke lenger tonet varme (Bad beholder hvit/kjølig porselen), solfargen er 0xffd8a0 (var 0xffae55), hemiGround 0xa88a66 (var 0xd9873f). Lokalfargene (oransje figur, rødt, gult, grønt) bærer metningen.
+- **Ytelse:** CSS-filteret (nå bare `saturate(1.18) contrast(1.04)`) er et eget valg i ⚙ (Spill: «Fargefilter på skjermen»). Av betyr ingen filter, men lysene beholdes. Enkel grafikk har aldri filter.
 
-Målt i utsnittet over HUD/knapper (snitt R/B, metning):
-
-| Nivå | R/B av -> film | Metning av -> film |
-|---|---|---|
-| 1 Bad | 1,17 -> 1,40 | 0,162 -> 0,302 |
-| 2 Barnerom | 1,56 -> 2,10 | 0,366 -> 0,518 |
-| 3 Kjøkken | 1,14 -> 1,32 | 0,146 -> 0,252 |
-
-Ingen utbrente flater i bildene (hvit speiling på store flater er dempet og miljøspeilingen er begrenset til klarlakk-materialer).
+## Målt (utsnitt uten HUD, snitt over 3 vinkler, `av -> film`)
+Metning (HSV): Bad 0,120 -> 0,123; Barnerom 0,289 -> 0,352; Kjøkken 0,147 -> 0,171. Hvite piksler: se over. Film-modus er altså ikke mer ensfarget enn «Av»; forskjellen mellom rommene (hvitt bad, trebrunt barnerom, kremfarget kjøkken) bevares.
 
 ## Ytelse
-FPS i programvare-GL er ikke representativt, så det er ikke brukt som bevis. I stedet er det ekstra arbeidet begrenset:
-- Grafikk «Enkel» får ingen ekstra lys, ingen clearcoat (vanlig Standard-materiale) og ingen CSS-filter.
-- Grafikk «Detaljert»: 2 ekstra lys uten skygge, clearcoat bare på plast/porselen/keramikk (store flater har dempet clearcoat), og ett CSS-filter på canvaset.
-- Går det tregt på en gammel telefon: slå Fargegradering til «Av», eller Grafikk til «Enkel». FPS-visning i ⚙ → Test gir tall fra ekte telefon.
+FPS i programvare-GL er ikke representativt, så det er ikke målt og brukes ikke som bevis. Ikke målt på ekte iPhone. Det ekstra arbeidet er begrenset:
+- Grafikk «Enkel»: ingen ekstra lys, ingen clearcoat, ingen filter.
+- Grafikk «Detaljert»: 2 ekstra lys uten skygge, clearcoat bare på plast/porselen/keramikk, og et mildt CSS-filter som kan slås av under ⚙ uten å miste lysene.
+- Tregt på en gammel telefon: slå av Fargefilter, deretter Fargegradering «Av», eller Grafikk «Enkel». FPS-visning i ⚙ -> Test gir tall fra ekte telefon.

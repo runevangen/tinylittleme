@@ -2,8 +2,8 @@
 import * as THREE from 'three';
 import { gradeParams } from './grade.js';
 
-export function applyGrade({ renderer, scene, sun, canvas, look, mode = 'film', low = false }) {
-  const p = gradeParams(look, mode, low);
+export function applyGrade({ renderer, scene, sun, canvas, look, mode = 'film', low = false, filterOn = true }) {
+  const p = gradeParams(look, mode, low, filterOn);
   renderer.toneMappingExposure = p.exposure;
   scene.environmentIntensity = p.env;
   sun.intensity = p.sun; sun.color.setHex(p.sunColor);
@@ -14,6 +14,7 @@ export function applyGrade({ renderer, scene, sun, canvas, look, mode = 'film', 
   if (canvas) canvas.style.filter = p.filter;
   return {
     mode, params: p,
+    setFilter(on) { if (canvas) canvas.style.filter = on && !low && mode === 'film' ? gradeParams(look, mode, low, true).filter : ''; },
     // fyll og kantlys følger figuren; kantlyset ligger alltid bakfra sett fra kameraet
     follow(target, camera) {
       if (!p.fill && !p.rim) return;

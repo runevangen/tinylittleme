@@ -172,13 +172,15 @@ const maxAniso = gfxLow ? 4 : Math.min(16, renderer.capabilities.getMaxAnisotrop
 setAniso(maxAniso);
 const look = makeLook({ aniso: maxAniso, low: gfxLow });
 const gradeMode = store.get('tlm.grade', 'film');   // R1: Toy Story-lys (film) eller opprinnelig lys (off); lys i grade.js
-const grade = applyGrade({ renderer, scene, sun, canvas, look: LEVEL.look, mode: gradeMode, low: gfxLow });
-const bigBox = (b) => Array.isArray(b.box) && Math.max(b.box[1] - b.box[0], b.box[3] - b.box[2], b.box[5] - b.box[4]) > 120;   // store flater: dempet clearcoat, ellers hvite glansflekker
+const grade = applyGrade({ renderer, scene, sun, canvas, look: LEVEL.look, mode: gradeMode, low: gfxLow, filterOn: store.get('tlm.gradefilter', true) !== false });
+const bigBox = (b, lim = 120) => Array.isArray(b.min) && Array.isArray(b.max) && Math.max(b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]) > lim;   // store flater: dempet clearcoat, ellers hvite glansflekker
 // Blank overflate (clearcoat) er dyrere enn Standard: bare med Grafikk «Detaljert» og ikke «Enkel»
 const glossy = (b, o, cc, ccr) => {
   if (gfxLow) return std(o);
-  const big = bigBox(b), m = new THREE.MeshPhysicalMaterial({ ...o, clearcoat: big ? Math.min(cc, 0.35) : cc, clearcoatRoughness: big ? Math.max(ccr, 0.35) : ccr * (grade.params.gloss > 1 ? 0.4 : 1) });
-  if (grade.params.gloss > 1) { m.envMap = scene.environment; m.envMapIntensity = grade.params.gloss; }   // R1: klarlakken speiler miljøet tydelig (film-gradering)
+  const big = bigBox(b), tall = grade.params.gloss > 1 && bigBox(b, 30);
+  if (tall && o.color != null) o = { ...o, color: new THREE.Color(o.color).multiplyScalar(0.8) };   // R1: store lyse flater (kjøleskap) dempes i film-lys, ellers klipper de til hvitt
+  const m = new THREE.MeshPhysicalMaterial({ ...o, clearcoat: big ? Math.min(cc, 0.35) : cc, clearcoatRoughness: big ? Math.max(ccr, 0.35) : ccr * (grade.params.gloss > 1 ? 0.4 : 1) });
+  if (grade.params.gloss > 1) { m.envMap = scene.environment; m.envMapIntensity = bigBox(b, 30) ? 1 : grade.params.gloss; }   // R1: klarlakken (store flate ting som kjøleskap: ingen ekstra speiling, ellers utbrent hvit) speiler miljøet tydelig (film-gradering)
   return m;
 };
 const texMat = (set, o = {}) => std({ map: set.map.clone(), normalMap: set.normalMap ? set.normalMap.clone() : null, roughnessMap: set.roughnessMap ? set.roughnessMap.clone() : null, ...o });
@@ -188,14 +190,14 @@ const eachMap = (mat, fn) => { for (const k of ['map', 'normalMap', 'roughnessMa
 const room = LEVEL.room;
 const std = (o) => new THREE.MeshStandardMaterial(o);
 
-const warm = (c) => (grade.params.warmTile ? new THREE.Color(c).multiply(new THREE.Color(...grade.params.warmTile)) : c);   // R1: grå fliser blir varme krem-fliser i film-gradering
+const tileR = (r) => Math.max(r, grade.params.tileRough || 0);   // R1: fliser matte i film-gradering (ingen utbrent solspeiling)
 function material(b) {
   const col = b.color ?? 0xcccccc;
   const kind = b.type === 'floor' || b.type === 'wall' ? `${b.type}:${b.material || 'default'}` : (b.material || b.type);
   switch (kind) {
     case 'floor:default': case 'floor:wood': return texMat(look.floor, { roughness: 1 });
-    case 'floor:tile': return texMat(look.tile, { color: warm(col), roughness: 0.55 });
-    case 'wall:tile': return texMat(look.tile, { color: warm(col), roughness: 0.7 });
+    case 'floor:tile': return texMat(look.tile, { color: col, roughness: tileR(0.55), ...(grade.params.tileRough ? { roughnessMap: null } : {}) });
+    case 'wall:tile': return texMat(look.tile, { color: col, roughness: tileR(0.7), ...(grade.params.tileRough ? { roughnessMap: null } : {}) });
     case 'wall:default': case 'wall:plaster': case 'wall': return texMat(look.plaster, { color: col, roughness: 0.95 });
     case 'woodpanel': return texMat(look.panel, { color: col, roughness: 0.7 });       // stående panelbord
     case 'wood': return texMat(look.wood, { color: col, roughness: 0.55 });
@@ -368,7 +370,7 @@ for (const b of LEVEL.boxes) {
     const g = new THREE.Group(); g.position.set(...win.pos);
     g.rotation.y = { N: 0, S: Math.PI, E: -Math.PI / 2, W: Math.PI / 2 }[win.wall] ?? 0;
     const [ww, wh] = win.size;
-    g.add(new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ map: look.skyTex(), toneMapped: false })));
+    g.add(new THREE.Mesh(new THREE.PlaneGeometry(ww, wh), new THREE.MeshBasicMaterial({ map: look.skyTex(), color: 0xc4cfe0, toneMapped: false })));
     for (const [x, y, sx, sy] of [[0, wh / 2 + 0.4, ww + 1.6, 0.8], [0, -wh / 2 - 0.4, ww + 1.6, 0.8], [-ww / 2 - 0.4, 0, 0.8, wh], [ww / 2 + 0.4, 0, 0.8, wh], [0, 0, 0.4, wh]]) {
       const f = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, 0.7), frameMat); f.position.set(x, y, 0.3); g.add(f);
     }
@@ -947,7 +949,7 @@ function restartAll() {
 }
 
 // ---------- modus: plan / fly ----------
-if (grade.params.gloss > 1) scene.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (m.isMeshPhysicalMaterial && m.clearcoat > 0 && !m.transparent) { m.envMap = scene.environment; m.envMapIntensity = grade.params.gloss; } });   // R1: all blank klarlakk (props.js m.m.) speiler miljøet tydelig
+if (grade.params.gloss > 1) scene.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (m.isMeshPhysicalMaterial && m.clearcoat > 0 && !m.transparent && !m.envMap) { m.envMap = scene.environment; o.geometry.computeBoundingBox(); const bs = o.geometry.boundingBox.getSize(new THREE.Vector3()).multiply(o.getWorldScale(new THREE.Vector3())); m.envMapIntensity = Math.max(bs.x, bs.y, bs.z) > 30 ? 1 : grade.params.gloss; } });   // R1 (store flater får ikke ekstra speiling, ellers utbrent): all blank klarlakk (props.js m.m.) speiler miljøet tydelig
 const cam = { yaw: 0.35, pitch: viewMode === 'shoulder' ? 0.18 : viewMode === 'first' ? 0.05 : 0.3, dist: camDistSet, cur: viewMode === 'shoulder' ? shDist : camDistSet, target: new THREE.Vector3(...LEVEL.start) };
 let camLook = 0, camPitchBias = 0, camLift = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
@@ -1295,6 +1297,7 @@ const SETTINGS = [
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
   sl('grade', 'spill', 'Fargegradering (Toy Story-lys, laster siden på nytt)', 'film', [['film', 'Varm film'], ['off', 'Av (opprinnelig lys)']], () => gradeMode, (v) => { if (v === gradeMode) return; logEv('grade', v); store.set('tlm.grade', v); setTimeout(() => location.reload(), 150); }),
+  fl('gradefilter', 'spill', 'Fargefilter på skjermen (Varm film; slå av om det går tregt)', true, () => store.get('tlm.gradefilter', true) !== false, (v) => { store.set('tlm.gradefilter', v); logEv('gradefilter', v ? 'på' : 'av'); grade.setFilter(v); }),
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
   fl('hudtech', 'spill', 'Vis alltid tekniske tall (høyde, tid, poeng). Ellers: trykk på teksten øverst', false, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
   // Styring
