@@ -87,6 +87,8 @@ const kit = (s) => ({
   k.add('kakeboks_gulv', 'cup', 'metal', '#c8423c', [318, 342, 0, 14, 138, 162], {});
   s.variant = { mood: 'dusk', twist: { type: 'lights', on: 15, off: 8, blink: 1 },
     props: [{ type: 'rug', x: 180, z: 150, w: 130, d: 30, color: '#e08a2e', stripe: '#fff0c8' }, { type: 'rug', x: 110, z: 240, w: 50, d: 50, shape: 'round', color: '#2f9a8a', stripe: '#ffe9b0' }] };
+  { const m = s.ants.find((x) => x.id === 'maur_gulv'); if (m) m.from = [135, m.from[1]]; }               // R9: bærer-mauren går ikke gjennom sjefens område (venstre del av rommet)
+  s.boss = { id: 'sjef', on: 'gulv', from: [25, 110], to: [85, 110] };                                        // R9: sjef-maur på den åpne gulvflata til venstre (veggen og kjøleskapet står som vegger for støtet)
   save('kjokken2', s);
 }
 console.log('skrev scenes/bad2, barnerom2, kjokken2');

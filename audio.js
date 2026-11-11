@@ -42,6 +42,9 @@ export const SOUND_LIST = [
   { id: 'anthit', label: 'Maur støter deg', group: 'Hendelser' },
   { id: 'spiderhiss', label: 'Edderkopp varsler (hveser)', group: 'Hendelser' },
   { id: 'spiderleap', label: 'Edderkopp hopper', group: 'Hendelser' },
+  { id: 'bossroar', label: 'Sjef-maur varsler / stormer', group: 'Hendelser' },
+  { id: 'bossbump', label: 'Sjef-maur smeller i veggen', group: 'Hendelser' },
+  { id: 'fanfare', label: 'Sjef-maur slått (fanfare)', group: 'Hendelser' },
   { id: 'crumb', label: 'Smule plukket', group: 'Hendelser' },
   { id: 'checkpoint', label: 'Sjekkpunkt', group: 'Hendelser' },
   { id: 'win', label: 'Mål', group: 'Hendelser' },
@@ -211,6 +214,9 @@ export function createAudio(ctx, opts = {}) {
   const anthit = () => use('anthit', () => { tone({ freq: 330, freq2: 170, type: 'square', gain: 0.1, decay: 0.2 }); burst({ type: 'bandpass', freq: 2200, gain: 0.16, decay: 0.07 }); });
   const spiderhiss = () => use('spiderhiss', () => { burst({ type: 'bandpass', freq: 5200, freq2: 3000, gain: 0.2, attack: 0.02, decay: 0.32 }); tone({ freq: 220, freq2: 260, type: 'sawtooth', gain: 0.04, decay: 0.3 }); });
   const spiderleap = () => use('spiderleap', () => { tone({ freq: 260, freq2: 620, type: 'triangle', gain: 0.14, decay: 0.18 }); burst({ type: 'highpass', freq: 3000, gain: 0.1, decay: 0.12 }); tone({ freq: 120, freq2: 70, gain: 0.2, decay: 0.12, delay: 0.5 }); });
+  const bossroar = (charge = false) => use('bossroar', () => { tone({ freq: charge ? 150 : 95, freq2: charge ? 260 : 150, type: 'sawtooth', gain: 0.16, decay: charge ? 0.35 : 0.7 }); burst({ type: 'lowpass', freq: 700, freq2: 300, gain: 0.3, decay: charge ? 0.4 : 0.8 }); tone({ freq: 70, freq2: 50, type: 'square', gain: 0.1, decay: 0.5, delay: 0.1 }); });
+  const bossbump = () => use('bossbump', () => { tone({ freq: 90, freq2: 40, gain: 0.55, decay: 0.3 }); burst({ type: 'lowpass', freq: 600, gain: 0.5, decay: 0.3 }); [880, 1320, 990, 1480].forEach((f, k) => tone({ freq: f, type: 'triangle', gain: 0.05, decay: 0.2, delay: 0.25 + k * 0.1 })); });
+  const fanfare = () => use('fanfare', () => { [[523, 0], [523, 0.14], [523, 0.28], [659, 0.42], [523, 0.6], [659, 0.78], [784, 0.96]].forEach(([f, t]) => { tone({ freq: f, type: 'triangle', gain: 0.13, decay: 0.32, delay: t }); tone({ freq: f * 2, type: 'sine', gain: 0.05, decay: 0.3, delay: t }); }); [1047, 1319, 1568].forEach((f) => tone({ freq: f, type: 'triangle', gain: 0.1, decay: 1.1, delay: 1.2 })); });
   const crumb = (n = 1, total = 10) => use('crumb', () => { const f = 880 * Math.pow(2, Math.min(n, 12) / 12); tone({ freq: f, type: 'triangle', gain: 0.1, decay: 0.16 }); tone({ freq: f * 1.5, type: 'sine', gain: 0.07, decay: 0.28, delay: 0.06 }); if (n >= total) [1047, 1319, 1568, 2093].forEach((g, k) => tone({ freq: g, type: 'triangle', gain: 0.08, decay: 0.4, delay: 0.14 + k * 0.08 })); });
   const checkpoint = () => use('checkpoint', () => { tone({ freq: 880, type: 'triangle', gain: 0.1, decay: 0.35 }); tone({ freq: 1320, type: 'triangle', gain: 0.07, decay: 0.45, delay: 0.08 }); });
   const win = () => use('win', () => [523, 659, 784, 1047].forEach((f, k) => tone({ freq: f, type: 'triangle', gain: 0.12, decay: 0.5, delay: k * 0.11 })));
@@ -253,6 +259,9 @@ export function createAudio(ctx, opts = {}) {
       case 'anthit': anthit(); break;
       case 'spiderhiss': spiderhiss(); break;
       case 'spiderleap': spiderleap(); break;
+      case 'bossroar': bossroar(); break;
+      case 'bossbump': bossbump(); break;
+      case 'fanfare': fanfare(); break;
       case 'crumb': crumb(3, 10); break;
       case 'checkpoint': checkpoint(); break;
       case 'win': win(); break;
@@ -273,7 +282,7 @@ export function createAudio(ctx, opts = {}) {
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
     ctx, out: bus, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
-    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, crumb, checkpoint, win, drip, hum,
+    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, bossroar, bossbump, fanfare, crumb, checkpoint, win, drip, hum,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },

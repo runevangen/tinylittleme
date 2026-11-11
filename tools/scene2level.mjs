@@ -308,6 +308,8 @@ const variant = scene.variant ? (() => {
   });
   return v;
 })() : undefined;
+// sjef-maur (R9): { id, on: «gulv» eller flate, from: [x, z], to: [x, z], hp? } i cm
+const boss = scene.boss ? (() => { const b = scene.boss, on = b.on && b.on !== 'gulv' ? scene.objects.find((o) => o.id === b.on) : null, y = on ? uy(on.box[3]) : 0; return { id: b.id || 'sjef', a: [ux(b.from[0]), y, uz(b.from[1])], b: [ux(b.to[0]), y, uz(b.to[1])], ...(b.hp ? { hp: b.hp } : {}) }; })() : null;
 
 // smuler (R3): { id, on: «gulv» eller id på en ting, at: [x, z] } i cm; y = flaten + litt (midten av smula)
 const collectibles = (scene.collectibles || []).map((c) => {
@@ -337,6 +339,7 @@ const level = {
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ants,
   ...(variant ? { variant } : {}),
+  ...(boss ? { boss } : {}),
   collectibles,
   ...(puzzles.length ? { puzzles } : {}),
   ropes: [],

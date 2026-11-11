@@ -9,6 +9,9 @@ import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, 
 import { buildPuzzleViews } from './puzzle_view.js';
 import { buildFlag, buildGoalRing } from './markers.js';
 import { shouldShowIntro, finishData, winHTML, showCard, heroSVG, totals, endHTML } from './story.js';
+import { initBoss, resetBoss, stepBoss } from './boss.js';   // R9: sjef-maur i siste rom (egen logikk, modell og helsebar)
+import { buildBoss, buildPrize } from './boss_model.js';
+import { createBossBar } from './boss_ui.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
 import { makeAtmos } from './atmos.js';
@@ -19,7 +22,7 @@ import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4�
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
-import { followYaw, impactSpeed, landingClass } from './camera_util.js';
+import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
@@ -133,6 +136,7 @@ let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
+let bossOn = store.get('tlm.boss', true);   // sjef-maur (R9)
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', false), hudOpen = false, fpsOn = store.get('tlm.fps', false);
 // PC (v0.72): PUBG-styring som standard: WASD går, musa ser deg rundt (klikk i bildet låser pekeren), skulderkamera. Gjøres én gang; kan byttes tilbake i ⚙.
 if (!TOUCH && !store.get('tlm.pcpubg1', false)) { store.set('tlm.pcpubg1', true); store.set('tlm.preset4', 'pubg'); store.set('tlm.view3', 'shoulder'); store.set('tlm.custom4', {}); }
@@ -175,7 +179,7 @@ function toggleSound() {
 }
 
 // ---------- poeng ----------
-const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2, hardLand: 3, antHit: 4, crumb: CRUMB.points, carried: 5 };
+const SCORE = { start: 1000, save: 25, respawn: 10, broken: 5, resetThings: 15, perTenSeconds: 2, hardLand: 3, antHit: 4, crumb: CRUMB.points, carried: 5, boss: 25 };
 
 // ---------- renderer / scene ----------
 const canvas = $('c');
@@ -906,7 +910,7 @@ function animateHero(p, now, dt) {
 }
 
 // ---------- tilstand ----------
-initBodies(LEVEL); initAnts(LEVEL); initCollect(LEVEL); initPuzzles(LEVEL);
+initBodies(LEVEL); initAnts(LEVEL); initBoss(LEVEL); initCollect(LEVEL); initPuzzles(LEVEL);
 const bodyMeshes = LEVEL.bodies.map((b) => {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
@@ -921,6 +925,9 @@ const antMeshes = (LEVEL.antList || []).map((t, i) => {
   let drop = null; if (t.type === 'carrier') { drop = buildDropCrumb(); drop.visible = false; scene.add(drop); }                 // smula bæreren slipper når den knuses
   return { t, a, drop, rot: Math.atan2(-t.fz, t.fx) };
 });
+// sjef-maur (R9): én stor modell, premien (gyllen smule) og helsebaren
+const bossMesh = LEVEL.bossS ? (() => { const m = buildBoss(), prize = buildPrize(); prize.visible = false; scene.add(m.root, prize); if (!gfxLow) look.detailize(m.root); return { ...m, prize, rot: 0 }; })() : null;
+const bossBar = LEVEL.bossS ? createBossBar(document.body, TOUCH ? T('btn.jump') : 'Mellomrom') : null;
 // smuler (R3): gylne smuler som flyter og snurrer; tatt = skjult
 const puzzleViews = buildPuzzleViews(scene, LEVEL);                                                                              // R7: plate og bro
 const crumbMeshes = (LEVEL.crumbList || []).map((c) => { const m = buildCrumb(); m.root.position.set(c.x, c.y, c.z); scene.add(m.root); return { c, m }; });
@@ -963,15 +970,28 @@ function spawnShards(pos, color) {
 
 const player = newPlayer(...LEVEL.start);
 const save = { pos: [...LEVEL.start] };
-const stats = { saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
+const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 
+// Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
+const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
+let heroXray = false;
+function heroSeen(check) {
+  let want = false;
+  if (check) {
+    _hv.set(player.x, player.y + 0.6, player.z); _hd.copy(_hv).sub(camera.position); const dist = _hd.length(); _hd.normalize();
+    _ray.set(camera.position, _hd); _ray.far = dist;
+    const hits = _ray.intersectObject(bossMesh.root, true); want = hits.length > 0 && hits[0].distance < dist - 0.25;
+  }
+  if (want === heroXray) return; heroXray = want;
+  hero.root.traverse((o) => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) { if (m.userData.dt0 === undefined) m.userData.dt0 = m.depthTest; m.depthTest = want ? false : m.userData.dt0; } o.renderOrder = want ? 40 : 0; });
+}
 function toast(msg, low = false) {
   const t = $('toast'); t.textContent = msg; t.classList.toggle('low', low); t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
-const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried);
+const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried + (stats.boss || 0) * SCORE.boss);
 let camReady = false;       // cam er deklarert lenger ned
 function placeFlag() {          // flagget settes ved siden av figuren (ikke under beina), og bare der det finnes gulv
   const [x, y, z] = save.pos, ok = (px, pz) => { const s = surfaceBelow(LEVEL, px, y + 0.1, pz, 0.12); return !!s && Math.abs(s.top - y) < 0.06; };
@@ -1049,7 +1069,7 @@ function restartAll() {
   clearProgress(); failCells.clear();
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player);
-  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = 0; stats.flew = false; resetAnts(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); bridgeGuide = null;
+  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = stats.boss = 0; stats.flew = false; resetAnts(LEVEL); resetBoss(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); bridgeGuide = null;
   won = false; clock = 0; placeFlag(); flagV.extinguish(); $('win').classList.add('hide'); setMode('play');
 }
 
@@ -1057,6 +1077,7 @@ function restartAll() {
 if (grade.params.gloss > 1) scene.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (m.isMeshPhysicalMaterial && m.clearcoat > 0 && !m.transparent && !m.envMap) { m.envMap = scene.environment; o.geometry.computeBoundingBox(); const bs = o.geometry.boundingBox.getSize(new THREE.Vector3()).multiply(o.getWorldScale(new THREE.Vector3())); m.envMapIntensity = Math.max(bs.x, bs.y, bs.z) > 30 ? 1 : grade.params.gloss; } });   // R1 (store flater får ikke ekstra speiling, ellers utbrent): all blank klarlakk (props.js m.m.) speiler miljøet tydelig
 const camReady0 = (camReady = true);
 const cam = { yaw: 0.35, pitch: viewMode === 'shoulder' ? 0.18 : viewMode === 'first' ? 0.05 : 0.3, dist: camDistSet, cur: viewMode === 'shoulder' ? shDist : camDistSet, target: new THREE.Vector3(...LEVEL.start) };
+let camBossOx = 0, camBossOz = 0, camBossK = 0, camBossShift = 0, camBossDist = 0, camBossPitch = 0;   // sjef-kamera (R9), glattet
 let camLook = 0, camPitchBias = 0, camLift = 0, camUpTilt = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
 const planCam = { yaw: 0.6, pitch: 0.7, dist: 55, pivot: new THREE.Vector3(8, 15, 0) };
@@ -1156,9 +1177,11 @@ const goalArrow = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([[0, 0.
 goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visible = false;
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
 let compKey = '', compShowUntil = 0, compIdleSince = 0;
+const bossFighting = () => bossOn && !!LEVEL.bossS && !LEVEL.bossS.gone && ['windup', 'charge', 'stunned', 'hit', 'tired'].includes(LEVEL.bossS.mode);   // under sjefkamp: skjul NESTE-pillen så varsel og tekst får plass
 function compassFrame(now) {
+  document.body.classList.toggle('bossfight', bossFighting());
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
-  const forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6);
+  const forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6) && !bossFighting();
   { const key = (t.final ? '!' : '') + t.label, idle = player.onGround && Math.hypot(player.vx, player.vz) < 0.3;       // v0.75: bare pila til vanlig; teksten vises ved nytt mål, tips, og når du står stille
     if (key !== compKey) { compKey = key; compShowUntil = now + 6000; }
     if (!idle) compIdleSince = now; else if (!compIdleSince) compIdleSince = now;
@@ -1410,6 +1433,7 @@ const SETTINGS = [
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
+  fl('boss', 'hjelp', 'Sjef-maur i siste rom (nivå 6): av = ingen sjef', true, () => bossOn, kp('tlm.boss', (v) => { bossOn = v; logEv('sjef', v ? 'på' : 'av'); })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
@@ -1681,6 +1705,21 @@ function puzzleEvent(ev) {
     if (p) { bridgeGuide = { ...p, until: performance.now() + 90000 }; if (puzCamOn) { const m = bridgeMid(p); turnCamera(Math.atan2(player.x - m.x, player.z - m.z), 0.5); setTimeout(() => { if (mode === 'play' && !won) camBehind(); }, 3600); } } }
   else if (ev.type === 'done') logEv('gåte: broen ute', ev.id);
 }
+// sjef-maur (R9): varsel, støt i veggen, skade, seier og premie
+function bossEvent(ev) {
+  const seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); toast(msg); } };
+  const J = TOUCH ? T('btn.jump') : 'Mellomrom';
+  if (ev.type === 'alert') { logEv('sjef varsler', ev.id); audio?.bossroar(false); music?.duck(0.5, 1); buzz(30); seen('boss', 'Sjef-maur! Den varsler, så stormer den rett fram. Stikk til siden. Smeller den i veggen, eller blir sliten, er den svimmel: hopp på ryggen'); }
+  else if (ev.type === 'charge') { logEv('sjef stormer', ev.id); audio?.bossroar(true); buzz(40); }
+  else if (ev.type === 'bump') { logEv('sjef svimmel', ev.id); audio?.bossbump(); music?.duck(0.4, 1.2); buzz(60); setMood('happy', 1); cue('bom!'); spawnShards([ev.x, ev.y + 1, ev.z], 0xc8c0b0); seen('boss2', `Den er svimmel! Hopp på ryggen (${J}) mens stjernene går rundt`); }
+  else if (ev.type === 'tired') { logEv(ev.worn ? 'sjef slumper' : 'sjef sliten', ev.id); if (ev.worn) { cue('sliten!'); setMood('happy', 0.8); seen('boss4', `Den er helt utslitt og svimmel! Hopp på ryggen (${J})`); } }
+  else if (ev.type === 'hit') { logEv('sjef truffet', `${ev.hp} igjen`); audio?.squash(); buzz(40); setMood('happy', 1.6); cue(ev.hp > 0 ? 'au!' : 'seier!'); spawnShards([ev.x, ev.y, ev.z], 0x7c1f14); }
+  else if (ev.type === 'phase') { logEv('sjef fase', ev.phase); toast(ev.phase === 3 ? 'Rasende!' : 'Sint!'); }
+  else if (ev.type === 'clang') { logEv('sjef pansret'); audio?.anthit(); buzz(20); seen('boss3', 'Ryggen er for hard nå. Vent til den er svimmel'); }
+  else if (ev.type === 'hurt') { stats.hits++; logEv('sjef støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(80); setMood('hurt', 1); toast(`Au! −${SCORE.antHit}`); }
+  else if (ev.type === 'defeat') { stats.squashed++; logEv('SJEF SLÅTT', ev.id); audio?.fanfare(); music?.duck(0.2, 3); buzz([40, 60, 40, 60, 120]); setMood('happy', 6); cue('SJEF SLÅTT!'); toast('Du slo sjef-mauren! Ta den gylne smula'); for (let i = 0; i < 3; i++) spawnShards([ev.x + (i - 1) * 0.8, ev.y + 1.4, ev.z], [0xffc83a, 0xe23a3a, 0x3aa0e2][i]); }
+  else if (ev.type === 'prize') { stats.boss++; logEv('sjef-smule tatt', ev.id); audio?.crumb(12, 12); buzz(30); setMood('happy', 3); cue('siste smule!'); toast(`Den siste smula! +${SCORE.boss} poeng`); spawnShards([ev.x, ev.y, ev.z], 0xffc83a); }
+}
 // smuler: plukk (R3). Små, rolige tilbakemeldinger: lyd, poeng, kort melding, gnister
 function crumbEvent(ev) {
   stats.crumbs = ev.n; logEv('smule', `${ev.id} ${ev.n}/${ev.total}`); audio?.crumb(ev.n, ev.total); buzz(15); setMood('happy', 0.9); spawnShards([ev.x, ev.y, ev.z], 0xffc83a);
@@ -1739,6 +1778,7 @@ function update(dt) {
   if (antsOn) for (const ev of stepAnts(LEVEL, player, dt, mode === 'play' && !won)) antEvent(ev);
   if (puzzlesOn || puzzleOpenIds(LEVEL).length) for (const ev of stepPuzzles(LEVEL, dt, puzzlesOn && mode === 'play' && !won)) puzzleEvent(ev);
   if (puzzlesOn && mode === 'play' && !won) puzzleIntro();
+  if (bossOn && LEVEL.bossS) for (const ev of stepBoss(LEVEL, player, dt, mode === 'play' && !won)) bossEvent(ev);
   if (crumbsOn) for (const ev of stepCollect(LEVEL, player, dt, mode === 'play' && !won)) crumbEvent(ev);
   if (autoCam && !P.faceCam && !viewFirst && mode === 'play' && !camAnim && ['ground', 'air'].includes(player.state) && performance.now() / 1000 - lastDrag > 1.1) {      // Mario-stil: kameraet svinger rolig bak deg
     const k = player.onGround ? 1 : 0.5, sp0 = Math.hypot(player.vx, player.vz);
@@ -1851,7 +1891,7 @@ function cueFrame(pre) {
 // R5: stemningen i musikken følger faren (en maur ser deg) og målet
 function musicFrame() {
   if (!music) return;
-  const m = moodFor({ alerted: antsOn && (LEVEL.antList || []).some((a) => a.alive && a.alerted), won });
+  const m = moodFor({ alerted: (antsOn && (LEVEL.antList || []).some((a) => a.alive && a.alerted)) || (bossOn && !!LEVEL.bossS?.alerted), won });
   if (m !== musicMood) { musicMood = m; music.setMood(m); logEv('musikk', m); }
 }
 // lyder som følger av hva som skjedde i dette bildet
@@ -1937,6 +1977,14 @@ function render(now, dt) {
     const want = Math.atan2(-t.fz, t.fx); let dr = want - m.rot; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); m.rot += dr * Math.min(1, dt * 10); a.root.rotation.y = m.rot;
     a.update(t.phase, t.speedNow || 0, t.squash, t.alerted, t);
   }
+  if (bossMesh) {                                                  // sjef-maur: modell, premie og helsebar
+    const B = LEVEL.bossS, on = bossOn;
+    bossMesh.root.visible = on && !B.gone; bossMesh.root.position.set(B.x, B.y, B.z);
+    const want = Math.atan2(-B.fz, B.fx); let dr = want - bossMesh.rot; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); bossMesh.rot += dr * Math.min(1, dt * (B.mode === 'windup' ? 14 : 8)); bossMesh.root.rotation.y = bossMesh.rot;
+    bossMesh.update(B, clock); if (!on) bossMesh.root.visible = false;
+    const pz = B.prize; bossMesh.prize.visible = on && !!pz && !pz.taken; if (bossMesh.prize.visible) { bossMesh.prize.position.set(pz.x, pz.y + 0.35 + Math.sin(clock * 3) * 0.12, pz.z); bossMesh.prize.rotation.y = clock * 1.8; }
+    bossBar.update(on ? B : null, mode === 'play' && !won && (B.mode !== 'patrol' || Math.hypot(player.x - B.x, player.z - B.z) < 22));
+  }
   for (const { b, mesh, size } of bodyMeshes) {
     mesh.visible = b.alive;
     if (b.kind === 'needle' && mesh.userData.thread && mesh.userData.on !== !!b.threaded) { mesh.userData.on = !!b.threaded; mesh.userData.thread(!!b.threaded); }
@@ -1994,19 +2042,23 @@ function render(now, dt) {
     const settled = player.onGround || ['hang', 'mantle', 'swing', 'climb'].includes(player.state) || mode === 'fly';
     if (settled) camFocusY += (player.y - camFocusY) * (1 - Math.pow(0.08, dt));        // følg rolig når du står
     else camFocusY = Math.min(player.y + 0.9, Math.max(player.y - 0.9, camFocusY));       // i lufta: ikke følg hvert hopp
-    const kxz = 1 - Math.pow(0.04, dt);
+    const kxz = 1 - Math.pow(0.04 - 0.0395 * Math.min(1, camBossK), dt);       // under sjefkamp følger kameraet figuren nesten uten forsinkelse (støt fra sjefen kaster figuren langt)
     { const la = lookAheadOn && mode === 'play' && player.state === 'ground' ? 0.17 : 0, ka = 1 - Math.pow(0.25, dt);       // se litt foran figuren i gangretningen (mer av det du går mot)
       camAhead.x += (player.vx * la - camAhead.x) * ka; camAhead.z += (player.vz * la - camAhead.z) * ka; }
     cam.target.x += (player.x + camAhead.x - cam.target.x) * kxz; cam.target.z += (player.z + camAhead.z - cam.target.z) * kxz;
     // kameraassistanse: se der du lander (fall) og opp mot neste grep (klatring), og løft deg over vegger i stedet for å bli trukket tett inn
     const falling = !player.onGround && player.vy < -6 && !['hang', 'mantle', 'swing', 'climb', 'zip'].includes(player.state);
     const climbing = ['climb', 'hang'].includes(player.state);
-    const lookT = camAssist ? (falling ? -0.9 : climbing ? 0.8 : 0) : 0, pitchT = camAssist ? (falling ? 0.14 : climbing ? -0.08 : 0) : 0;
+    { const B = bossOn && LEVEL.bossS && !LEVEL.bossS.gone && !won ? LEVEL.bossS : null, f = B ? bossFrame(player.x, player.z, B.x, B.z, B.mode) : { on: false, shift: 0, dist: 0, pitch: 0, yaw: null };
+      const bs = { k: camBossK, shift: camBossShift, dist: camBossDist, pitch: camBossPitch, ox: camBossOx, oz: camBossOz };
+      cam.yaw = bossCamStep(bs, f, B, player, cam.yaw, dt, mode === 'play');
+      camBossK = bs.k; camBossShift = bs.shift; camBossDist = bs.dist; camBossPitch = bs.pitch; camBossOx = bs.ox; camBossOz = bs.oz; }
+    const lookT = camAssist ? (falling ? -0.9 : climbing ? 0.8 : 0) : 0, pitchT = (camAssist ? (falling ? 0.14 : climbing ? -0.08 : 0) : 0);
     const ka = 1 - Math.pow(0.15, dt);
     camLook += (lookT - camLook) * ka; camPitchBias += (pitchT - camPitchBias) * ka;
     cam.target.y = camFocusY + 0.62 + camLook;
-    const SH = viewMode === 'shoulder', baseDist = SH ? shDist : cam.dist;
-    const sdx = SH ? shSide * shOff * Math.cos(cam.yaw) : 0, sdz = SH ? -shSide * shOff * Math.sin(cam.yaw) : 0;       // sideforskyvning: kameraet over skulderen
+    const SH = viewMode === 'shoulder', baseDist = (SH ? shDist : cam.dist) + camBossDist;
+    const sdx = (SH ? shSide * shOff * Math.cos(cam.yaw) : 0) + camBossOx, sdz = (SH ? -shSide * shOff * Math.sin(cam.yaw) : 0) + camBossOz;       // sideforskyvning: kameraet over skulderen
     const dirAt = (pitch) => { const c = Math.cos(pitch); return new THREE.Vector3(Math.sin(cam.yaw) * c, Math.sin(pitch), Math.cos(cam.yaw) * c); };
     // v0.86: kameraet blir inne i rommet (ikke utenfor veggen / over taket): bak et vindu eller en vegg ble figuren borte bak karmen eller veggen
     const RM = LEVEL.room, keepIn = !!RM && Number.isFinite(RM.x0) && player.x > RM.x0 && player.x < RM.x1 && player.z > RM.z0 && player.z < RM.z1;
@@ -2015,11 +2067,11 @@ function render(now, dt) {
     // v0.87: ved lav kameravinkel sjekkes hele strekningen fra figuren til kameraet, ikke bare endepunktet (ellers kan kameraet havne under en tynn bordplate)
     const clearPath = (dv, dd) => { if (!clearAt(dv, dd)) return false; if (dv.y > 0.15) return true; for (let k = 0.6; k < dd; k += 0.3) if (!clearAt(dv, k)) return false; return true; };
     let liftT = 0;
-    if (camAssist && mode !== 'fly' && !clearPath(dirAt(cam.pitch + camPitchBias), baseDist)) {         // noe i veien på full avstand: prøv en høyere vinkel
-      for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + o); if (clearPath(dirAt(pp), baseDist)) { liftT = pp - cam.pitch - camPitchBias; break; } }
+    if (camAssist && mode !== 'fly' && !clearPath(dirAt(cam.pitch + camPitchBias + camBossPitch), baseDist)) {         // noe i veien på full avstand: prøv en høyere vinkel
+      for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + camBossPitch + o); if (clearPath(dirAt(pp), baseDist)) { liftT = pp - cam.pitch - camPitchBias - camBossPitch; break; } }
     }
     camLift += (liftT - camLift) * (liftT > camLift ? 1 - Math.pow(0.02, dt) : 1 - Math.pow(0.2, dt));
-    const pitchNow = Math.min(1.3, cam.pitch + camPitchBias + camLift);
+    const pitchNow = Math.min(1.3, cam.pitch + camPitchBias + camBossPitch + camLift);
     // v0.87: ser du selv oppover (dro kameraet ned) mens noe under hindrer kameraet, løftes kameraet som før, men blikket tiltes opp i stedet for å bli tvunget ned igjen (stå på et bord og se mot taket)
     const userUp = cam.pitch < 0.1 && performance.now() / 1000 - lastDrag < 8 && mode !== 'fly';
     camUpTilt += ((userUp ? Math.tan(Math.min(0.8, Math.max(0, camLift))) * cam.cur : 0) - camUpTilt) * (1 - Math.pow(0.1, dt));
@@ -2028,7 +2080,9 @@ function render(now, dt) {
     for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { if (clearPath(dir, d)) break; }
     cam.cur += (d - cam.cur) * (d < cam.cur ? 0.5 : 0.08);
     if (!window.__camLock) { camera.position.copy(cam.target).addScaledVector(dir, cam.cur); camera.position.x += sdx; camera.position.z += sdz;
-    camera.lookAt(cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0) + camUpTilt, cam.target.z + sdz); }
+    { let lk = [cam.target.x + sdx, cam.target.y + (SH ? 0.12 : 0) + camUpTilt, cam.target.z + sdz];
+      if (camBossK > 0.02 && !SH) { const cp3 = [camera.position.x, camera.position.y, camera.position.z], h3 = [player.x, player.y + 0.6, player.z], a = shiftLookX(cp3, anchorLook(cp3, lk, h3, camera.fov, BOSS_HERO_Y[0], BOSS_HERO_Y[1]), h3, camera.fov, camera.aspect, BOSS_HERO_X), w = Math.min(1, camBossK); lk = lk.map((v, i) => v + (a[i] - v) * w); }   // sjefkamp: figuren holdes over knappene og under varselstripen selv om veggen drar kameraet tett inn
+      camera.lookAt(lk[0], lk[1], lk[2]); } }
   }
   { const fp = viewFirst && mode === 'play', fov = fp ? 74 : viewMode === 'shoulder' ? fovSet + 8 : fovSet;
     for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
@@ -2038,6 +2092,7 @@ function render(now, dt) {
   variant.update(now / 1000, dt, player, mode);
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
+  heroSeen(bossMesh && bossOn && !LEVEL.bossS.gone && camBossK > 0.05 && mode === 'play' && !viewFirst);
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   grade.follow(player, camera);
