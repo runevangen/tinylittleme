@@ -1062,6 +1062,34 @@
    ],
    "speed": 3.2,
    "skin": "train"
+  },
+  {
+   "id": "traad_hylle",
+   "type": "dangler",
+   "a": [
+    1,
+    0,
+    -13
+   ],
+   "b": [
+    1,
+    0,
+    -13
+   ]
+  },
+  {
+   "id": "pillbug_gulv",
+   "type": "roller",
+   "a": [
+    -7,
+    0,
+    -1
+   ],
+   "b": [
+    -1,
+    0,
+    -1
+   ]
   }
  ],
  "variant": {

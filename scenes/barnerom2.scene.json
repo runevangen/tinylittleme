@@ -871,6 +871,28 @@
         212
       ],
       "speed": 3.2
+    },
+    {
+      "id": "traad_hylle",
+      "type": "dangler",
+      "on": "gulv",
+      "from": [
+        155,
+        75
+      ]
+    },
+    {
+      "id": "pillbug_gulv",
+      "type": "roller",
+      "on": "gulv",
+      "from": [
+        115,
+        135
+      ],
+      "to": [
+        145,
+        135
+      ]
     }
   ],
   "collectibles": [
