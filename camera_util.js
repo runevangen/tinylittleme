@@ -33,6 +33,22 @@ export function bossFrame(px, pz, bx, bz, mode) {
     shift: 0.42 * far,                                           // fokus mot midtpunktet så begge er i bildet
     dist: Math.min(9, sep * 0.55) * far + 3.2 * near,            // langt: trekk ut; tett: trekk ut og opp så sjefen ikke fyller skjermen
     pitch: 0.2 * far + 0.48 * near,
-    yaw: (mode === 'windup' || mode === 'charge' || mode === 'stunned') && sep > 4 ? Math.atan2(-dx, -dz) : null,   // under varsling: se mot sjefen
+    yaw: (mode === 'windup' || mode === 'charge' || mode === 'stunned') && sep > 1.5 ? Math.atan2(-dx, -dz) : null,   // under varsling/svimmel: kameraet bak figuren, blikk mot sjefen (figuren står da alltid foran sjefen, aldri skjult bak den)
   };
+}
+
+// Glatter og styrer sjef-kameraet ett steg. s = { k, shift, dist, pitch, ox, oz } (muteres), f = bossFrame(...), B = {x,z} eller null, p = {x,z}.
+// Fokus flyttes bare så mye som kameraet allerede ser mot sjefen (ellers havner figuren utenfor bildet i smalt portrettformat), og yaw dreies raskt nok til å rekke varselet.
+// Returnerer ny yaw.
+export const BOSS_YAW_RATE = 5, BOSS_ALIGN = 0.5;
+export function bossCamStep(s, f, B, p, yaw, dt, play = true) {
+  const kb = 1 - Math.pow(f.on ? 0.05 : 0.15, dt);
+  s.k += ((f.on ? 1 : 0) - s.k) * kb; s.shift += (f.shift - s.shift) * kb; s.dist += (f.dist - s.dist) * kb; s.pitch += (f.pitch - s.pitch) * kb;
+  if (f.yaw !== null && play) { const d = angleDiff(yaw, f.yaw); yaw += Math.max(-BOSS_YAW_RATE * dt, Math.min(BOSS_YAW_RATE * dt, d * 8 * dt)); }
+  if (f.on && B) {
+    const align = f.yaw === null ? 1 : Math.max(0, 1 - Math.abs(angleDiff(yaw, f.yaw)) / BOSS_ALIGN);
+    const dx = B.x - p.x, dz = B.z - p.z, len = Math.hypot(dx, dz) || 1, m = Math.min(len * s.shift, 4) * align / len;   // aldri mer enn 4 m, så figuren ikke glir ut nederst
+    s.ox = dx * m; s.oz = dz * m;
+  } else { s.ox *= 1 - kb; s.oz *= 1 - kb; }
+  return yaw;
 }

@@ -14,7 +14,7 @@ import { makeAtmos } from './atmos.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
-import { followYaw, impactSpeed, landingClass, bossFrame, angleDiff } from './camera_util.js';
+import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff } from './camera_util.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
@@ -1848,10 +1848,10 @@ function render(now, dt) {
     // kameraassistanse: se der du lander (fall) og opp mot neste grep (klatring), og løft deg over vegger i stedet for å bli trukket tett inn
     const falling = !player.onGround && player.vy < -6 && !['hang', 'mantle', 'swing', 'climb', 'zip'].includes(player.state);
     const climbing = ['climb', 'hang'].includes(player.state);
-    { const B = bossOn && LEVEL.bossS && !LEVEL.bossS.gone && !won ? LEVEL.bossS : null, f = B ? bossFrame(player.x, player.z, B.x, B.z, B.mode) : { on: false, shift: 0, dist: 0, pitch: 0, yaw: null }, kb = 1 - Math.pow(f.on ? 0.05 : 0.15, dt);
-      camBossK += ((f.on ? 1 : 0) - camBossK) * kb; camBossShift += (f.shift - camBossShift) * kb; camBossDist += (f.dist - camBossDist) * kb; camBossPitch += (f.pitch - camBossPitch) * kb;
-      if (f.yaw !== null && mode === 'play') cam.yaw += Math.max(-1 * dt, Math.min(1 * dt, angleDiff(cam.yaw, f.yaw) * 1.6 * dt)) * camBossK;
-      if (f.on && B) { camBossOx = (B.x - player.x) * camBossShift; camBossOz = (B.z - player.z) * camBossShift; } else { camBossOx *= 1 - kb; camBossOz *= 1 - kb; } }
+    { const B = bossOn && LEVEL.bossS && !LEVEL.bossS.gone && !won ? LEVEL.bossS : null, f = B ? bossFrame(player.x, player.z, B.x, B.z, B.mode) : { on: false, shift: 0, dist: 0, pitch: 0, yaw: null };
+      const bs = { k: camBossK, shift: camBossShift, dist: camBossDist, pitch: camBossPitch, ox: camBossOx, oz: camBossOz };
+      cam.yaw = bossCamStep(bs, f, B, player, cam.yaw, dt, mode === 'play');
+      camBossK = bs.k; camBossShift = bs.shift; camBossDist = bs.dist; camBossPitch = bs.pitch; camBossOx = bs.ox; camBossOz = bs.oz; }
     const lookT = camAssist ? (falling ? -0.9 : climbing ? 0.8 : 0) : 0, pitchT = (camAssist ? (falling ? 0.14 : climbing ? -0.08 : 0) : 0);
     const ka = 1 - Math.pow(0.15, dt);
     camLook += (lookT - camLook) * ka; camPitchBias += (pitchT - camPitchBias) * ka;
