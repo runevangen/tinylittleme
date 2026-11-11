@@ -22,6 +22,7 @@ import { createBuildMode } from './build.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
 import { makeAtmos } from './atmos.js';
+import { makeFloorDetail } from './floordetail.js';
 import { makeSoftLight } from './softlight.js';
 import { applyGrade } from './grade_apply.js';
 import { gradeTint } from './grade.js';
@@ -179,6 +180,8 @@ const fpsW = fpsWatch(24, 3000);   // 24, ikke 30: iPhone i strømsparemodus lå
 const autoQC = createAutoQ();      // polish.js: når oppløsningen går ned/opp (testet i test_polish.mjs)
 let resQ = store.get('tlm.resq', 'auto'); if (!['auto', 'full', 'mid', 'low'].includes(resQ)) resQ = 'auto';   // R10: auto = følger FPS (ned ved vedvarende lav, opp igjen når det går fint); ellers fast valg
 let lowMode = store.get('tlm.lowprofile', 'auto'); if (!['off', 'auto', 'on'].includes(lowMode)) lowMode = 'auto';   // R15 Lav profil: av / auto (når FPS er lav) / på
+const fdDens = +store.get('tlm.fdens', 1) || 1;   // R13: gulvdetaljer (floordetail.js): blyanter, perler, flekker, fugeskitt; tetthet etter rom og kvalitet (halvert med Lav profil «På», tom med Enkel grafikk)
+let floorDetailOn = store.get('tlm.floordetail', true);
 const lowP = createLowProfile(); let lowOn = false;
 let autoQ = resQ === 'auto', qSteps = 0, basePr = 1, qToasted = false;
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
@@ -1541,6 +1544,8 @@ const SETTINGS = [
     fl('rays', 'spill', 'Lysstråler fra vinduet (Detaljert grafikk)', true, () => raysOn, kp('tlm.rays', (v) => { raysOn = v; logEv('lysstraaler', v ? 'på' : 'av'); })),
     fl('ao', 'spill', 'Mørkere hjørner og kontaktskygger (Detaljert grafikk)', true, () => aoOn, kp('tlm.ao', (v) => { aoOn = v; logEv('hjorner', v ? 'på' : 'av'); })),
     fl('softlight', 'spill', 'Myke skygger og lysflekk: mørke hjørner og under møbler, varm flekk fra vinduet (Detaljert grafikk, ikke Lav profil)', true, () => softOn, kp('tlm.softlight', (v) => { softOn = v; logEv('myke skygger', v ? 'på' : 'av'); })),
+    fl('floordetail', 'spill', 'Gulvdetaljer: blyantstumper, perler, flekker og skitt i fugene for målestokk (Detaljert grafikk)', true, () => floorDetailOn, kp('tlm.floordetail', (v) => { floorDetailOn = v; logEv('gulvdetaljer', v ? 'på' : 'av'); })),
+    sl('fdens', 'admin', 'Gulvdetaljer: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(fdDens), (v) => { if (+v === +fdDens) return; store.set('tlm.fdens', +v); logEv('gulvdetaljer', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     fl('clutter', 'spill', 'Småting på gulv og hyller: smuler, knapper, hår (Detaljert grafikk)', true, () => clutterOn, kp('tlm.clutter', (v) => { clutterOn = v; logEv('smating', v ? 'på' : 'av'); }))]),
   fl('hudtech', 'spill', 'Vis alltid tekniske tall (høyde, tid, poeng). Ellers: trykk på teksten øverst', false, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
   // Styring
@@ -2061,6 +2066,8 @@ const variant = makeVariant({ scene, LEVEL, renderer, sun, floorY: Math.max(0, .
   opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, P, say: (k) => toast(T(k)), logEv } });
 if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
+const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
+if (fdet) logEv('gulvdetaljer', `${fdet.count} stk`);
 const soft = gfxLow ? null : makeSoftLight({ THREE, scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun, sunDir: SUN, renderer });   // R17: myke skygger og lysbaking (softlight.js)
 // ---------- R15: budsjett og lav profil (perf_budget.js) ----------
 const perfMerge = { before: 0, after: 0 };
@@ -2076,7 +2083,7 @@ const perfMerge = { before: 0, after: 0 };
       const m = mergeRigid(THREE, am.a.root, keep); perfMerge.before += m.before; perfMerge.after += m.after;
     } catch (e) { console.warn('maur ikke slått sammen', e); }
   }
-  for (const r of [csHolder, atmos?.groups.ao, atmos?.groups.clutter, soft?.group]) if (r) { const m = mergeStatic(THREE, r, { cell: r === soft?.group ? 80 : 40 }); perfMerge.before += m.before; perfMerge.after += m.after; }
+  for (const r of [csHolder, atmos?.groups.ao, atmos?.groups.clutter, fdet?.group, soft?.group]) if (r) { const m = mergeStatic(THREE, r, { cell: r === soft?.group || r === fdet?.group ? 80 : 40 }); perfMerge.before += m.before; perfMerge.after += m.after; }
 }
 let perfFrames = 0, perfPending = true, perfLine = '';
 function applyLowProfile(on) {                       // slår av skygge-kart, støv, korn, lysstråler og ekstra lys; kommer tilbake når den slås av
@@ -2237,6 +2244,7 @@ function render(now, dt) {
   if (dust) { dust.points.visible = dustOn && !lowOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
   variant.update(now / 1000, dt, player, mode);
   if (soft) soft.update(softOn, lowOn, gfxLow);
+  if (fdet) fdet.update(floorDetailOn && !lowOn && mode !== 'plan');
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(dt, mode === 'play' && !won && !menuOpen && !ov.active); updateFades(dt); updateOffscreen();
   heroSeen(bossMesh && bossOn && !LEVEL.bossS.gone && camBossK > 0.05 && mode === 'play' && !viewFirst);
