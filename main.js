@@ -6,6 +6,7 @@ import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt } from './pr
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { makeLook } from './look.js';
 import { applyGrade } from './grade_apply.js';
+import { gradeTint } from './grade.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
@@ -192,10 +193,12 @@ const std = (o) => new THREE.MeshStandardMaterial(o);
 
 const tileR = (r) => Math.max(r, grade.params.tileRough || 0);   // R1: fliser matte i film-gradering (ingen utbrent solspeiling)
 function material(b) {
-  const col = b.color ?? 0xcccccc;
+  let col = b.color ?? 0xcccccc;
   const kind = b.type === 'floor' || b.type === 'wall' ? `${b.type}:${b.material || 'default'}` : (b.material || b.type);
+  const c0 = new THREE.Color(col), tint = gradeTint(levelId, kind, (c0.r + c0.g + c0.b) / 3, gradeMode);   // R1: fargeaksent per rom (bare film)
+  if (tint) col = c0.multiply(new THREE.Color(...tint)).getHex();
   switch (kind) {
-    case 'floor:default': case 'floor:wood': return texMat(look.floor, { roughness: 1 });
+    case 'floor:default': case 'floor:wood': return texMat(look.floor, { ...(tint ? { color: col } : {}), roughness: 1 });
     case 'floor:tile': return texMat(look.tile, { color: col, roughness: tileR(0.55), ...(grade.params.tileRough ? { roughnessMap: null } : {}) });
     case 'wall:tile': return texMat(look.tile, { color: col, roughness: tileR(0.7), ...(grade.params.tileRough ? { roughnessMap: null } : {}) });
     case 'wall:default': case 'wall:plaster': case 'wall': return texMat(look.plaster, { color: col, roughness: 0.95 });

@@ -24,3 +24,17 @@ export function gradeParams(look = {}, mode = 'film', low = false, filterOn = tr
     filter: low || !filterOn ? '' : FILTER,                 // eget valg (gradefilter); Enkel grafikk: aldri filter (billig)
   };
 }
+
+// Fargeaksenter per rom (bare film-modus): grå/beige flater får en tydelig farge, så varmt (gulv, vegg) og kjølig (fliser, skap) står mot hverandre.
+// Multiplikator på flatens farge (r,g,b, lineær) uten å gjøre den lysere, så ingenting brenner ut. Barnerom har allerede sterke lokalfarger.
+const TINTS = {
+  bad: { 'wall:tile': [0.5, 0.86, 1.0], 'floor:tile': [1.0, 0.74, 0.5], wood: [1.0, 0.8, 0.6] },        // kjølig aqua-vegger, varmt sandfarget gulv
+  kjokken: { 'floor:tile': [1.0, 0.72, 0.5], 'wall:plaster': [0.55, 0.9, 0.72], 'wood:light': [0.5, 0.88, 0.95] },   // varmt terrakottagulv mot kjølige salviegrønne vegger og blågrå skap
+  barnerom: { 'wall:plaster': [0.8, 0.92, 1.0], 'floor:wood': [1.0, 0.86, 0.68] },
+};
+export function gradeTint(levelId, kind, lum = 0.5, mode = 'film') {
+  if (mode !== 'film') return null;
+  const t = TINTS[String(levelId || '').replace(/\d+$/, '')];
+  if (!t) return null;
+  return (kind === 'wood' && lum > 0.55 && t['wood:light']) || t[kind] || null;
+}

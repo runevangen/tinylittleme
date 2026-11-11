@@ -1,4 +1,4 @@
-import { gradeParams, GRADE_MODES } from './grade.js';
+import { gradeParams, GRADE_MODES, gradeTint } from './grade.js';
 let bad = 0; const ok = (c, m) => { if (!c) { bad++; console.log('FEIL: ' + m); } };
 const look = { exposure: 0.78, sun: 2 };
 const f = gradeParams(look, 'film'), o = gradeParams(look, 'off'), lo = gradeParams(look, 'film', true);
@@ -13,5 +13,6 @@ ok(f.fill >= 0.5 && f.rim >= 0.4 && f.env < o.env, 'fyll/kantlys merkbare, mindr
 ok(!f.filter.includes('sepia') && f.filter.includes('contrast'), 'filter uten sepia (ikke ensfarget beige)');
 ok(gradeParams(look, 'film', false, false).filter === '' && gradeParams(look, 'film', false, false).fill > 0, 'filter kan slås av uten å miste lysene');
 ok(f.gloss > 1 && o.gloss === 1 && lo.gloss === 1 && f.tileRough > 0.8 && !o.tileRough, 'klarlakk-speiling og matte fliser bare i film');
+ok(gradeTint('bad', 'wall:tile') && gradeTint('kjokken2', 'floor:tile') && !gradeTint('bad', 'wall:tile', 0.5, 'off') && !gradeTint('soverom', 'wall:tile'), 'fargeaksent: bare film, bare kjente rom (nivå 4-6 følger grunnrommet)');
 if (bad) process.exit(1);
 console.log('grade: ok');
