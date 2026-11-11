@@ -39,10 +39,6 @@ Ferdig når: hver av de nye lekene finnes i minst to nivåer, kan utløses med T
 Maur og sjef-maur er de eneste fiendene. Legg til to enkle, lesbare til: f.eks. en pillbug/kakerlakk som ruller seg sammen (kan dyttes) og en edderkopp i tråd som henger fra tak og må passeres i takt. Hver med tydelig varsel (farge, lyd), maks én mekanikk, og en måte å ufarliggjøre den med stikke + TA/HOPP. Fordel dem ulikt i nivå 3–6 slik at hvert rom har sin egen trussel. Filer: `foes.js`, `ants.js` (gjenbruk), `kinds.js`, `scenes/`, `main.js` (SETTINGS under Spill), `logEv('fiende', …)`.
 Ferdig når: nivå 3–6 har minst én ny fiendetype hver, ingen kan drepe uten at spilleren ser varsel i minst 0,5 s, tester dekker varselstiming og nullstilling, og ruta går med `walk_route`.
 
-### [ ] R20 · Kart og kompass: aldri tapt i store rom
-Nivå 4–6 er store og lik pil mot målet er det eneste som hjelper. Legg til et lite minikart (⚙-valg, av som standard på «Enkel») og en trykk-for-oversikt-knapp som flyr kamera opp og viser rommet, mål, lagringsflagg og uoppdagede smuler som prikker i 3 sekunder. Alt med ett trykk, ingen tastatur, ikke over HUD-en eller knappene (se `readable.js`, `markers.js`). Filer: nytt modul `overview.js` (legg i `index.html` `files`), `markers.js`, `camera_util.js`, `main.js`, `logEv('oversikt', …)`.
-Ferdig når: oversikten viser seg på iPhone 14 uten å overlappe TA/HOPP/GREP og returnerer til samme kameravinkel, tester dekker kartkoordinater, og skjermbilde er sjekket i nivå 6.
-
 ### [ ] R21 · Ytelse: tekstur- og minnebudsjett for iPhone 8-klassen
 Forrige ytelsespunkt tok tegnekall og lav profil, men ikke minne: alle teksturer lages i full oppløsning, og forvarming kan gi hakk eller krasj på eldre telefoner. Mål minnebruk (teksturstørrelser, geometrier, `renderer.info`), skaler prosedyreteksturer til 512/256 på «Lav profil», gjenbruk delte materialer/geometrier, dispose ved nivåbytte og legg et minnebudsjett i `perf_budget.js`. Filer: `perf_budget.js`, `look.js`, `props.js`, `main.js`, `test_perf.mjs`.
 Ferdig når: rapporten viser teksturminne og geometrier per nivå, lav profil bruker minst 40 % mindre teksturminne, nivåbytte 1→6 lekker ikke (antall geometrier/teksturer er stabilt i test), og ingen visuell feil sees i skjermbilde.
@@ -52,6 +48,7 @@ Fortellingen og pilene forklarer mye, men første skjermbilde i hvert nivå vise
 Ferdig når: alle seks nivåene har sveip og delmål, sveipet kan hoppes over med ett trykk, tekst nevner knapper (ikke taster), og tester dekker at sveipet slutter og gir kontrollen tilbake.
 
 ## Ferdige punkter
+- [x] Kart og kompass: aldri tapt i store rom (v1.02)
 - [x] Lesbarhet: verdensmarkører under knapper og tydelig hva som kan gripes (v1.00)
 - [x] Sjef-maur i siste rom (v0.99)
 - [x] Flagg og mål som ser ut som Toy Story-rekvisitter (v0.98)
