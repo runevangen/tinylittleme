@@ -31,10 +31,6 @@ Ferdig når: alle seks nivåene har 2–4 delmål, de fungerer med lagring/forts
 I skjermbildene er gulvet i nivå 2 en stor, nesten tom trebit med lite å lese skala av, den mørke badematta i nivå 1 flimrer/pikselerer (moiré på ripestruktur), og kjøkkengulvet er en jevn beige flate. Fiks mipmap/anisotropi/relieff-frekvens på matta og andre høyfrekvente teksturer, og strø småting for målestokk (smuler, hår, knapper, mynter, blyantstumper, flekker, fuger med skitt) med tetthet satt etter rom og kvalitet. Dette gjelder også BACKLOG «Detaljert rom». Filer: `look.js`, `props.js`, `scenes/` (dekor uten kollisjon), `main.js` (teksturinnstillinger).
 Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hverandre), start-skjermbildene i nivå 2 og 6 viser minst tre ting som gir skala, og FPS-målingen ligger innenfor 1 fps av før.
 
-### [ ] R16 · Belønning som varer: stjerner, hatter og et rom å komme tilbake til
-Smulene (★ 0/10) gir i dag bare et tall på målskjermen. Gi dem verdi: hvert nivå husker beste smuletall og tid (autolagring), 10/10 gir et kosmetisk tilbehør til figuren (hatt, skjerf, sekk i annen farge; se BACKLOG «tilbehør å samle»), og et lite «lekerom»-skap på startskjermen viser det du har samlet og lar deg bytte med ett trykk. Alt med stikke/knapper, uten tastatur. Filer: `collect.js`, `hero.js`, `story.js`, `main.js` (startskjerm), nye valg i `SETTINGS`, `logEv('belønning', …)`.
-Ferdig når: etter å ha tatt alle smuler i et nivå ser spilleren et nytt tilbehør på figuren neste gang, valget huskes etter omlasting, tester dekker lagring og opplåsing, og skjermbilde av skapet er sjekket på iPhone 14.
-
 ### [ ] R17 · Mykere skygger og lysbaking: rommet skal sitte sammen
 Møbler og leker står fortsatt litt «limt» oppå gulvet; kontaktskygger finnes, men det mangler omgivelsesokklusjon i hjørner, under senger og bak skap, og lyset fra vinduet gir hard kant. Bak enkel, billig AO (mørk gradient i vertex-farge eller bakt blob under og ved vegg), mykere skyggekant (PCF/radius etter kvalitet) og varm lysflekk fra vinduet på gulvet. Kun på «Høy»; Enkel grafikk og Lav profil beholder dagens look. Filer: `look.js`, `atmos.js`, `grade.js`, `main.js` (SETTINGS-gruppe grafikk).
 Ferdig når: skjermbilder av nivå 2 og 5 før/etter viser tydelig mørkning i hjørner og under møbler, FPS-målingen faller under 2 fps, og lav profil slår det helt av (test i `test_perf.mjs`).
@@ -56,6 +52,7 @@ Fortellingen og pilene forklarer mye, men første skjermbilde i hvert nivå vise
 Ferdig når: alle seks nivåene har sveip og delmål, sveipet kan hoppes over med ett trykk, tekst nevner knapper (ikke taster), og tester dekker at sveipet slutter og gir kontrollen tilbake.
 
 ## Ferdige punkter
+- [x] Belønning som varer: stjerner, hatter og et rom å komme tilbake til (v1.04)
 - [x] Kart og kompass: aldri tapt i store rom (v1.02)
 - [x] Lesbarhet: verdensmarkører under knapper og tydelig hva som kan gripes (v1.00)
 - [x] Sjef-maur i siste rom (v0.99)

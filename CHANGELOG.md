@@ -2,6 +2,8 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.04** – Belønning som varer: beste smuletall og tid huskes per nivå, 10/10 låser opp hatt/skjerf/sekk, og et lekerom-skap på startskjermen lar deg bytte tilbehør med ett trykk (stikke + TA/⚙).
+
 - **1.03** – Veikart: nye punkter R24 (byggemekanisme à la Poly Bridge: finn deler, bygg bro/trapp med fysikk) og R23 (delmål i hvert nivå), lagt øverst i køen.
 
 - **1.02** – Kart og kompass: minikart (⚙-valg) og en OVERSIKT-knapp som flyr kamera opp og viser rom, mål, flagg og uoppdagede smuler i 3 sekunder, uten å dekke TA/HOPP/GREP.

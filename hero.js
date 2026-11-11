@@ -173,7 +173,7 @@ export function buildHero(look = {}) {
   const L = { armL: arm(-1), armR: arm(1), legL: leg(-1), legR: leg(1) };
   const cur = { aL: 0, aR: 0, zL: 0, zR: 0, eL: 0, eR: 0, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0, lzL: 0, lzR: 0, roll: 0, sway: 0, fgL: 0.4, fgR: 0.4 };
   const hero = { root, body, chest, head, ...L, cur, yaw: 0, ph: 0, gph: 0, accLean: 0, bob: 0, pv: null, ikW: 0, hipY: 0.46,
-    face, tailA, tailB, packG, helmet, sec: { a: 0, av: 0, b: 0, bv: 0, pk: 0, pkv: 0 }, mood: { name: '', t: 0 }, look: { x: 0, y: 0, tx: 0, ty: 0, t: 0 }, blink: { t: 2, v: 0 }, idleT: 0, talkT: 0 };
+    face, tailA, tailB, packG, helmet, M, headS, sec: { a: 0, av: 0, b: 0, bv: 0, pk: 0, pkv: 0 }, mood: { name: '', t: 0 }, look: { x: 0, y: 0, tx: 0, ty: 0, t: 0 }, blink: { t: 2, v: 0 }, idleT: 0, talkT: 0 };
   root.traverse((o) => { if (o.isMesh && o.castShadow !== false) o.castShadow = true; });
   return hero;
 }
