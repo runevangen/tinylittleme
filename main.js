@@ -1957,7 +1957,7 @@ const variant = makeVariant({ scene, LEVEL, renderer, sun, floorY: Math.max(0, .
   opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, P, say: (k) => toast(T(k)), logEv } });
 if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
-const soft = gfxLow ? null : makeSoftLight({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun, sunDir: SUN });   // R17: myke skygger og lysbaking (softlight.js)
+const soft = gfxLow ? null : makeSoftLight({ THREE, scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun, sunDir: SUN, renderer });   // R17: myke skygger og lysbaking (softlight.js)
 // ---------- R15: budsjett og lav profil (perf_budget.js) ----------
 const perfMerge = { before: 0, after: 0 };
 {
@@ -1972,7 +1972,7 @@ const perfMerge = { before: 0, after: 0 };
       const m = mergeRigid(THREE, am.a.root, keep); perfMerge.before += m.before; perfMerge.after += m.after;
     } catch (e) { console.warn('maur ikke slått sammen', e); }
   }
-  for (const r of [csHolder, atmos?.groups.ao, atmos?.groups.clutter, soft?.group]) if (r) { const m = mergeStatic(THREE, r, { cell: 40 }); perfMerge.before += m.before; perfMerge.after += m.after; }
+  for (const r of [csHolder, atmos?.groups.ao, atmos?.groups.clutter, soft?.group]) if (r) { const m = mergeStatic(THREE, r, { cell: r === soft?.group ? 80 : 40 }); perfMerge.before += m.before; perfMerge.after += m.after; }
 }
 let perfFrames = 0, perfPending = true, perfLine = '';
 function applyLowProfile(on) {                       // slår av skygge-kart, støv, korn, lysstråler og ekstra lys; kommer tilbake når den slås av

@@ -75,4 +75,25 @@ ok(/tegnekall 5/.test(statsLine({ calls: 5, tris: 6, lights: 2, shadowLights: 1,
   const l4 = createLowProfile(); ok(l4.decide(null, 2, 1, 'on') === true && l4.active, 'på: alltid'); ok(l4.decide(null, 2, 1, 'off') === false && !l4.active, 'av: slår av');
   const l5 = createLowProfile(); ok(l5.decide(W(5), 1, 1, 'auto', false) === null && l5.decide(W(5), 1, 1, 'auto', false) === null && l5.decide(W(5), 1, 1, 'auto', false) === null && !l5.active, 'ikke under oppvarming');
 }
+// R17: softlight (myke skygger) har et fast budsjett av tegnekall/trekanter etter sammenslåing, i alle brett; beviser tapet mot FPS-kravet
+{
+  const fs = await import('node:fs'), { makeSoftLight } = await import('./softlight.js'), { SOFT } = await import('./softlight_logic.js');
+  const fakeCtx = { createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, set fillStyle(v) {} };
+  globalThis.document = { createElement: () => ({ getContext: () => fakeCtx }) };
+  for (const id of ['bad', 'barnerom', 'kjokken', 'poc', 'klatring', 'barnerom2', 'kjokken2', 'bad2']) {
+    const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), fy = Math.max(0, ...L.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1]));
+    const scene = new THREE.Scene(), sun = { shadow: { radius: 1 } }, renderer = { shadowMap: { type: THREE.PCFSoftShadowMap } };
+    const soft = makeSoftLight({ THREE, scene, LEVEL: L, floorY: fy, sun, sunDir: L.sun || [28, 60, -24], renderer });
+    const m = mergeStatic(THREE, soft.group, { cell: 80 });
+    let calls = 0, tris = 0; soft.group.traverse((o) => { if (o.isMesh) { calls++; tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; } });
+    ok(calls <= SOFT.budget.calls, `softlight ${id}: ${calls} tegnekall > budsjett ${SOFT.budget.calls} (${m.before} før sammenslåing)`);
+    ok(tris <= SOFT.budget.tris, `softlight ${id}: ${tris} trekanter > budsjett ${SOFT.budget.tris}`);
+    ok(m.after <= m.before && calls === m.after, `softlight ${id}: sammenslåing gir færre kall (${m.before} til ${m.after})`);
+    // av/på: lav profil og Enkel grafikk beholder dagens look (ingen tegnekall fra softlight, PCFSoft, radius 1); på gir PCF (radius virker bare der)
+    soft.update(true, false, false); ok(soft.group.visible && sun.shadow.radius === SOFT.shadowRadius && renderer.shadowMap.type === THREE.PCFShadowMap, `${id}: på gir synlig + PCFShadowMap + radius`);
+    soft.update(true, true, false); ok(!soft.group.visible && sun.shadow.radius === SOFT.shadowRadiusOff && renderer.shadowMap.type === THREE.PCFSoftShadowMap, `${id}: lav profil slår alt av`);
+    soft.update(true, false, true); ok(!soft.group.visible, `${id}: Enkel grafikk slår alt av`);
+    if (id === 'barnerom') console.log(`softlight budsjett: ${calls} tegnekall, ${tris} trekanter (maks ${SOFT.budget.calls} / ${SOFT.budget.tris})`);
+  }
+}
 if (bad) { console.log(bad, 'feil'); process.exit(1); } console.log('test_perf: ok');

@@ -2,7 +2,7 @@
 // Plan = bakte mørke «blobber» (omgivelsesokklusjon) og varme lysflekker; alt flate, myke ellipser rett over underlaget.
 import { beamPlan } from './atmos_logic.js';
 
-export const SOFT = { maxBlobs: 90, shadowRadius: 3.2, shadowRadiusOff: 1 };
+export const SOFT = { maxBlobs: 90, shadowRadius: 3.2, shadowRadiusOff: 1, budget: { calls: 13, tris: 400 } };   // budget: maks ekstra tegnekall/trekanter fra softlight etter sammenslåing (testes i test_perf.mjs)
 const solid = (b) => b.type !== 'floor' && b.type !== 'wall' && !b.dyn && !b.carried && b.type !== 'book';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -17,12 +17,12 @@ export function planBlobs(L, floorY, sun = [28, 60, -24], max = SOFT.maxBlobs) {
     const base = b.min[1];
     const stands = base <= floorY + 0.05 || boxes.some((c) => c !== b && Math.abs(c.max[1] - base) < 0.06 && c.min[0] < b.max[0] && c.max[0] > b.min[0] && c.min[2] < b.max[2] && c.max[2] > b.min[2]);
     if (!stands) continue;
-    const m = clamp(Math.min(sx, sz) * 0.45 + sy * 0.12, 0.7, 2.6);                  // høyere og bredere ting gir bredere mørk sone
+    const m = clamp(Math.min(sx, sz) * 0.6 + sy * 0.2, 1.1, 3.6);                  // høyere og bredere ting gir bredere mørk sone
     const nearWall = Math.min(b.min[0] - room.x0, room.x1 - b.max[0], b.min[2] - room.z0, room.z1 - b.max[2]) < 1.2;
-    out.push({ kind: 'under', x: (b.min[0] + b.max[0]) / 2 + lx * m * 0.25, y: base, z: (b.min[2] + b.max[2]) / 2 + lz * m * 0.25, rx: sx / 2 + m, rz: sz / 2 + m, op: clamp(0.5 + sy * 0.012, 0.5, 0.64) * (nearWall ? 1.1 : 1), h: sy });
+    out.push({ kind: 'under', x: (b.min[0] + b.max[0]) / 2 + lx * m * 0.25, y: base, z: (b.min[2] + b.max[2]) / 2 + lz * m * 0.25, rx: sx / 2 + m * 1.6, rz: sz / 2 + m * 1.6, op: clamp(0.72 + sy * 0.012, 0.72, 0.85) * (nearWall ? 1.1 : 1), h: sy });
   }
-  const cr = Math.min(6.5, Math.min(room.x1 - room.x0, room.z1 - room.z0) * 0.22);   // gulvhjørner
-  for (const [cx, cz] of [[room.x0, room.z0], [room.x1, room.z0], [room.x0, room.z1], [room.x1, room.z1]]) out.push({ kind: 'corner', x: cx, y: floorY, z: cz, rx: cr, rz: cr, op: 0.6, h: 0 });
+  const cr = Math.min(8, Math.min(room.x1 - room.x0, room.z1 - room.z0) * 0.28);   // gulvhjørner
+  for (const [cx, cz] of [[room.x0, room.z0], [room.x1, room.z0], [room.x0, room.z1], [room.x1, room.z1]]) out.push({ kind: 'corner', x: cx, y: floorY, z: cz, rx: cr, rz: cr, op: 0.8, h: 0 });
   out.sort((a, b) => b.rx * b.rz * b.op - a.rx * a.rz * a.op);
   return out.slice(0, max);
 }
@@ -40,6 +40,8 @@ export function planGlows(L, floorY, sun = [28, 60, -24]) {
   return out;
 }
 
+// Skyggekant: radius leses bare av PCFShadowMap (PCFSoftShadowMap i three r170 ignorerer den), så myke skygger bytter til PCFShadowMap.
 // Skygge-radius etter kvalitet: av (lav profil, Enkel grafikk eller valget av) gir dagens kant.
 export const shadowRadius = (on, low) => (on && !low ? SOFT.shadowRadius : SOFT.shadowRadiusOff);
 export const softActive = (on, low, gfxLow) => !!on && !low && !gfxLow;
+export const softShadowType = (on, low, gfxLow) => (softActive(on, low, gfxLow) ? 'pcf' : 'pcfsoft');

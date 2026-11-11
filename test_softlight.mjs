@@ -8,7 +8,7 @@ for (const id of ['bad', 'barnerom', 'kjokken', 'poc', 'klatring', 'barnerom2', 
   const sun = L.sun || [28, 60, -24], bl = planBlobs(L, fy, sun), gl = planGlows(L, fy, sun);
   assert.ok(bl.length >= 4 && bl.length <= SOFT.maxBlobs, `${id}: blobber (${bl.length})`);
   assert.equal(bl.filter((b) => b.kind === 'corner').length, 4, `${id}: fire hjørner`);
-  for (const b of bl) { assert.ok(b.op > 0 && b.op <= 0.75 && b.rx > 0 && b.rz > 0, `${id}: gyldig blob`); assert.ok(b.x > room.x0 - 3 && b.x < room.x1 + 3 && b.z > room.z0 - 3 && b.z < room.z1 + 3, `${id}: blob i rommet`); }
+  for (const b of bl) { assert.ok(b.op > 0 && b.op <= 0.95 && b.rx > 0 && b.rz > 0, `${id}: gyldig blob`); assert.ok(b.x > room.x0 - 3 && b.x < room.x1 + 3 && b.z > room.z0 - 3 && b.z < room.z1 + 3, `${id}: blob i rommet`); }
   assert.equal(gl.length, (L.windows || []).length, `${id}: én lysflekk per vindu`);
   for (const g of gl) assert.ok(g.x >= room.x0 && g.x <= room.x1 && g.z >= room.z0 && g.z <= room.z1 && g.y === fy, `${id}: lysflekk på gulvet`);
 }
