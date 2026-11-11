@@ -2,6 +2,8 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.03** – Veikart: nye punkter R24 (byggemekanisme à la Poly Bridge: finn deler, bygg bro/trapp med fysikk) og R23 (delmål i hvert nivå), lagt øverst i køen.
+
 - **1.02** – Kart og kompass: minikart (⚙-valg) og en OVERSIKT-knapp som flyr kamera opp og viser rom, mål, flagg og uoppdagede smuler i 3 sekunder, uten å dekke TA/HOPP/GREP.
 - **1.01** – Veikartet fylt på med seks nye punkter (R17–R22): lysbaking/AO, levende leker, flere fiendeslag, minikart/oversikt, minnebudsjett for gamle telefoner og tydeligere start i hvert nivå.
 - **1.00** – Lesbarhet: pila mot målet holdes unna TA/HOPP/GREP-knappene og HUD-en (kantstilt med mørk kant), grep har svevende ▲, hyller har teal kant, glatte flater har glansstriper og rød ✕ når du hopper mot noe du ikke kan gripe; NESTE-bobla bryter linjer. Av/på i ⚙ → Hjelp.
