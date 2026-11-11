@@ -76,6 +76,7 @@ Gjenstår / til sparring:
 - [ ] Personvern: behandle på enhet eller slett umiddelbart etter tolkning.
 
 ## Teknisk
+- [ ] **«Send til Claude» fra spillet (Supabase):** knapp i ⚑-dialogen og ⚙ som sender tilbakemeldingene (samme tekst som «Kopier tilbakemeldinger») til tabellen `tlm_feedback`, slik at brukeren slipper å lime inn. Tabellen skal bare tillate nye rader fra spillet (RLS, kun insert med anon-nøkkel, grenser for lengde og antall), og Claude leser den når brukeren ber om det. Valgfritt senere: planlagt oppgave som sjekker tabellen automatisk. Må gjøres på PC (oppsett i Supabase). Avklar først: nytt prosjekt eller eksisterende.
 - [ ] Boten forstår klatring og farer. I dag hopp, rekk ut, tau og hazards.
 - [ ] Portere fysikk til Unity/Godot (`physics.js` er uten DOM).
 - [ ] Flerspiller (langt frem).
