@@ -1640,8 +1640,9 @@ function update(dt) {
   const g = LEVEL.goal;
   if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
+    let d;
     { const cl = store.get('tlm.cleared', {}), prevBest = cl[levelId] || 0, n = levelInfo?.n; if (!stats.flew) { cl[levelId] = Math.max(prevBest, points()); store.set('tlm.cleared', cl); store.set('tlm.done', false); const runs = store.get('tlm.runs', {}); runs[levelId] = { t: clock, ants: stats.squashed || 0, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL) }; store.set('tlm.runs', runs); }       // husk hvilke nivåer som er klart (beste poeng)
-      const d = finishData({ n, nextExists: !!nextLevel, clock, stats, crumbs: crumbCount(LEVEL), crumbTotal: crumbTotal(LEVEL), points: points(), prevBest, flew: stats.flew });
+      d = finishData({ n, nextExists: !!nextLevel, clock, stats, crumbs: crumbCount(LEVEL), crumbTotal: crumbTotal(LEVEL), points: points(), prevBest, flew: stats.flew });
       $('winTitle').textContent = n ? (nextLevel ? T('win.level', { n }) : T('win.all')) : T('win.top');
       $('winStats').innerHTML = winHTML(d, T); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
       const nb = $('nextLevel'); nb.style.display = nextLevel || (n && storyOn) ? '' : 'none';
