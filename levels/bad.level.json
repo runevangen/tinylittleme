@@ -253,7 +253,7 @@
    ],
    "max": [
     8.9,
-    16,
+    15.2,
     -15.8
    ],
    "id": "vaskeskap",
@@ -267,19 +267,80 @@
    "type": "porcelain",
    "min": [
     -7.5,
-    16,
+    15.2,
     -25
+   ],
+   "max": [
+    9.3,
+    16.8,
+    -20.6
+   ],
+   "id": "vask_plate",
+   "kind": "vanity_top",
+   "group": "vask",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -7.5,
+    15.2,
+    -20.6
+   ],
+   "max": [
+    -2.3,
+    16.8,
+    -15.4
+   ],
+   "id": "vask_rim_v",
+   "kind": "vanity_top",
+   "group": "vask",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    2.5,
+    15.2,
+    -20.6
    ],
    "max": [
     9.3,
     16.8,
     -15.4
    ],
-   "id": "vask_plate",
+   "id": "vask_rim_h",
    "kind": "vanity_top",
+   "group": "vask",
    "color": 15460575,
    "material": "porcelain",
-   "cp": true,
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -2.3,
+    15.2,
+    -16.6
+   ],
+   "max": [
+    2.5,
+    16.8,
+    -15.4
+   ],
+   "id": "vask_rim_f",
+   "kind": "vanity_top",
+   "group": "vask",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
    "soft": false
   },
   {
@@ -304,14 +365,14 @@
   {
    "type": "fabric",
    "min": [
-    1.7,
+    2.7,
     16.8,
-    -23.4
+    -24
    ],
    "max": [
-    4.7,
+    5.3,
     17.2,
-    -20.6
+    -21.6
    ],
    "id": "vaskeklut",
    "kind": "towel",
@@ -1787,9 +1848,9 @@
   },
   {
    "id": "smule_3",
-   "x": -1.74,
+   "x": -3.3,
    "y": 17.6,
-   "z": -16.74
+   "z": -21.2
   },
   {
    "id": "smule_4",
@@ -1799,9 +1860,9 @@
   },
   {
    "id": "smule_5",
-   "x": 5.76,
+   "x": 7.9,
    "y": 17.6,
-   "z": -16.74
+   "z": -21.2
   },
   {
    "id": "smule_6",
@@ -1874,7 +1935,7 @@
    "x0": -7.5,
    "x1": 9.3,
    "z0": -25,
-   "z1": -15.4,
+   "z1": -20.6,
    "top": 16.8
   },
   {
@@ -1940,7 +2001,7 @@
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 36,
-  "reachable": 12
+  "nodes": 40,
+  "reachable": 16
  }
 }

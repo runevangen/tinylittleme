@@ -50,9 +50,9 @@
   "goal": {
     "x": 172,
     "y": 199,
-    "z": 210,
+    "z": 232,
     "on": "hylle",
-    "note": "Motgift-bit på den øverste hylla, der den lille kurven sto"
+    "note": "Motgift-bit på den øverste hylla, i enden bak panelet (v0.88: flyttet bort fra det grønne håndkleet, så lyssøylen ikke dekker det)"
   },
   "windows": [
     {
@@ -274,7 +274,7 @@
         97,
         177,
         28,
-        80,
+        76,
         0,
         46
       ],
@@ -292,9 +292,31 @@
       "box": [
         95,
         179,
-        80,
+        76,
         84,
         0,
+        22
+      ],
+      "confidence": 0.8,
+      "photos": [
+        3,
+        4
+      ],
+      "group": "vask",
+      "cp": true,
+      "note": "Benkeplata er delt i fire så vasken er forsenket 8 cm (24 x 20 cm bunn): bak (denne, med kran), venstre, høyre og foran. Skapet under er 76 cm: toppen er vaskebunnen."
+    },
+    {
+      "id": "vask_rim_v",
+      "kind": "vanity_top",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        95,
+        121,
+        76,
+        84,
+        22,
         48
       ],
       "confidence": 0.8,
@@ -302,7 +324,47 @@
         3,
         4
       ],
-      "cp": true
+      "group": "vask"
+    },
+    {
+      "id": "vask_rim_h",
+      "kind": "vanity_top",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        145,
+        179,
+        76,
+        84,
+        22,
+        48
+      ],
+      "confidence": 0.8,
+      "photos": [
+        3,
+        4
+      ],
+      "group": "vask"
+    },
+    {
+      "id": "vask_rim_f",
+      "kind": "vanity_top",
+      "material": "porcelain",
+      "color": "#ebe8df",
+      "box": [
+        121,
+        145,
+        76,
+        84,
+        42,
+        48
+      ],
+      "confidence": 0.8,
+      "photos": [
+        3,
+        4
+      ],
+      "group": "vask"
     },
     {
       "id": "skapknott_1",
@@ -408,12 +470,12 @@
       "material": "fabric",
       "color": "#b9a68c",
       "box": [
-        141,
-        156,
+        146,
+        159,
         84,
         86,
-        8,
-        22
+        5,
+        17
       ],
       "confidence": 0.7,
       "photos": [
@@ -1740,6 +1802,14 @@
     },
     {
       "id": "smule_3",
+      "on": "hylle",
+      "at": [
+        161.3,
+        198.8
+      ]
+    },
+    {
+      "id": "smule_4",
       "on": "vaskekurv",
       "at": [
         146.3,
@@ -1747,7 +1817,7 @@
       ]
     },
     {
-      "id": "smule_4",
+      "id": "smule_5",
       "on": "ny_hylle",
       "at": [
         146.3,
@@ -1755,19 +1825,11 @@
       ]
     },
     {
-      "id": "smule_5",
-      "on": "hylle",
-      "at": [
-        161.3,
-        228.8
-      ]
-    },
-    {
       "id": "smule_6",
       "on": "hylle",
       "at": [
-        161.3,
-        198.8
+        176.3,
+        213.8
       ]
     },
     {

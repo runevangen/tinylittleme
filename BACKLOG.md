@@ -64,7 +64,7 @@ Gjenstår / til sparring:
 - [~] **Listverk (v0.61):** fotlist, taklist og gerikt (lister og foringer) med profil i Soverom (rundt rommet og vinduet). `kind`: `listverk`, `fotlist`, `taklist`, `gerikt`. Gjenstår: bruke i badet (foringer rundt dør/vindu og fliskant), dørfôr/vannbrett som egne profiler, og lister som klatrekanter.
 - [ ] Flytte motgiften til toppen av speilskapet når klatring finnes.
 - [ ] Motgift-varianter: A) bit = ferdig kapittel, B) vann stiger, rømme til døra.
-- [ ] **Vasken i badet er flat (testrapport v0.84, nivå 1):** bygges som en flat plate med tegnet bunn; trenger ekte forsenkning (kantbokser rundt + lavere bunn), og smulene/tannkrem/sjekkpunkt på `vask_plate` må flyttes med. Gjelder også nivå 4 (`bad2`).
+- [x] **Vasken i badet er flat (testrapport v0.84 og v0.86, nivå 1 og 4) – gjort i v0.88:** benkeplata er fire bokser (`vask_plate`, `vask_rim_v/h/f`, gruppe `vask`) rundt en 8 cm dyp forsenkning; bunnen er toppen av skapet (76 cm). Tegnes som én form med hull (`sink` i `props.js`). (Gammel beskrivelse følger:) bygges som en flat plate med tegnet bunn; trenger ekte forsenkning (kantbokser rundt + lavere bunn), og smulene/tannkrem/sjekkpunkt på `vask_plate` må flyttes med. Gjelder også nivå 4 (`bad2`).
 - [~] Vask (forsenkning), karets avrundede ende og skråtak: *utseendet* er på plass fra v0.18–0.19 (`props.js`: do, kar, vask, småting). Kollisjonen er fortsatt bokser: vasken er flat å gå på, karet har rettvinklede vegger. Skråtak mangler. Venter på bildene for å rette formene (hvilken ende er rund osv.).
 - [ ] Neste rom: lekerom (legoknotter som tak), stue, kjøkken.
 - [ ] Åpne spørsmål om motgift-biter: bæres mellom rom? antall? bonusting? (`docs/BADET.md`)

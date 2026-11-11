@@ -253,7 +253,7 @@
    ],
    "max": [
     8.9,
-    16,
+    15.2,
     -15.8
    ],
    "id": "vaskeskap",
@@ -267,19 +267,80 @@
    "type": "porcelain",
    "min": [
     -7.5,
-    16,
+    15.2,
     -25
+   ],
+   "max": [
+    9.3,
+    16.8,
+    -20.6
+   ],
+   "id": "vask_plate",
+   "kind": "vanity_top",
+   "group": "vask",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -7.5,
+    15.2,
+    -20.6
+   ],
+   "max": [
+    -2.3,
+    16.8,
+    -15.4
+   ],
+   "id": "vask_rim_v",
+   "kind": "vanity_top",
+   "group": "vask",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    2.5,
+    15.2,
+    -20.6
    ],
    "max": [
     9.3,
     16.8,
     -15.4
    ],
-   "id": "vask_plate",
+   "id": "vask_rim_h",
    "kind": "vanity_top",
+   "group": "vask",
    "color": 15460575,
    "material": "porcelain",
-   "cp": true,
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -2.3,
+    15.2,
+    -16.6
+   ],
+   "max": [
+    2.5,
+    16.8,
+    -15.4
+   ],
+   "id": "vask_rim_f",
+   "kind": "vanity_top",
+   "group": "vask",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": false,
    "soft": false
   },
   {
@@ -304,14 +365,14 @@
   {
    "type": "fabric",
    "min": [
-    1.7,
+    2.7,
     16.8,
-    -23.4
+    -24
    ],
    "max": [
-    4.7,
+    5.3,
     17.2,
-    -20.6
+    -21.6
    ],
    "id": "vaskeklut",
    "kind": "towel",
@@ -1862,27 +1923,27 @@
   },
   {
    "id": "smule_3",
+   "x": 5.76,
+   "y": 40.6,
+   "z": 14.76
+  },
+  {
+   "id": "smule_4",
    "x": 2.76,
    "y": 12.8,
    "z": 10.26
   },
   {
-   "id": "smule_4",
+   "id": "smule_5",
    "x": 2.76,
    "y": 33.4,
    "z": 19.26
   },
   {
-   "id": "smule_5",
-   "x": 5.76,
-   "y": 40.6,
-   "z": 20.76
-  },
-  {
    "id": "smule_6",
-   "x": 5.76,
+   "x": 8.76,
    "y": 40.6,
-   "z": 14.76
+   "z": 17.76
   },
   {
    "id": "smule_7",
@@ -1996,7 +2057,7 @@
  "goal": [
   7.9,
   39.8,
-  17
+  21.4
  ],
  "deathY": -15,
  "room": {
@@ -2042,7 +2103,7 @@
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 37,
+  "nodes": 41,
   "reachable": 20
  }
 }
