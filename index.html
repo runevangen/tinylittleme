@@ -27,6 +27,16 @@
   #btnCarry.ready.use{animation:taready 1s ease-in-out infinite alternate}@keyframes taready{to{box-shadow:0 0 0 8px #ffd27a66}}
   #btnCarry.long{font-size:11.5px;line-height:1.05;text-align:center;padding:0 6px}
   .nocenter #btnCenter{display:none!important}
+  #btnMap{right:max(118px,calc(env(safe-area-inset-right) + 118px));bottom:312px;width:54px;height:54px;background:#1d2433b0}body.mobile #btnMap{bottom:308px}body.bossfight #btnMap{display:none!important}
+  #btnMap.on{background:#2a7f62cc}
+  @media (orientation:landscape) and (max-height:520px){#btnMap,body.mobile #btnMap{right:max(182px,calc(env(safe-area-inset-right) + 182px));bottom:246px}}   /* liggende: ved siden av ◎, ellers havner den over skjermkanten */
+  #minimap{position:fixed;border-radius:50%;border:2px solid #ffa940aa;box-sizing:border-box;z-index:3;touch-action:none;-webkit-tap-highlight-color:transparent}
+  #ovdots{position:fixed;left:0;top:0;pointer-events:none}
+  /* oversikten (R20): stikke, knapper og bobler skjules mens rommet vises, så prikkene aldri havner under TA/HOPP/GREP eller HUD-en */
+  body.ovview #stick,body.ovview .tbtn,body.ovview #bar,body.ovview #more,body.ovview #compass,body.ovview #hint,body.ovview #qbtn,body.ovview #qpop,body.ovview #infocard,body.ovview #soundPill,body.ovview #minimap,body.ovview #stam,body.ovview #wmark,body.ovview #offscreen,body.ovview #toast{visibility:hidden!important}
+  #ovhint{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);background:#121a2ccc;color:#ffd9a0;border:2px solid #ffa940;padding:8px 16px;border-radius:999px;font:600 14px system-ui;pointer-events:none;display:none;z-index:4}
+  body.ovview #ovhint{display:block}
+  body.bossfight #minimap{display:none!important}
   .tbtn{transform:scale(var(--bs,1))}
   #hud{cursor:pointer;-webkit-tap-highlight-color:transparent;position:fixed;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));color:#fff;font:600 12px/1.35 ui-monospace,monospace;background:#0008;padding:6px 9px;border-radius:9px;white-space:pre}
   #bar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 16px);z-index:5}
@@ -180,7 +190,7 @@
   var v = String(Date.now());
   try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
   window.__assetV = v;
-  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view'];
+  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic'];
   var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
   document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
 })();
@@ -215,10 +225,12 @@
 <div id="start" class="hide"></div>
 <div id="story" class="hide"></div>
 <div id="win" class="hide"><div id="winConfetti" class="sconf"></div><div id="winHero"></div><h1 id="winTitle">Du kom opp!</h1><div id="winStats"></div><button id="nextLevel" style="display:none">Neste nivå →</button><button id="again">Spill igjen</button></div>
+<div id="ovhint">Trykk for å gå videre</div>
 <div id="stick"><div id="knob"></div></div>
 <button class="tbtn" id="btnGrab">GREP</button>
 <button class="tbtn" id="btnCarry">TA</button>
 <button class="tbtn" id="btnCenter" aria-label="Sentrer kamera">◎</button>
+<button class="tbtn" id="btnMap" aria-label="Oversikt"><svg viewBox="-12 -12 24 24" width="28" height="28"><path d="M-9 -6 L-3 -9 L3 -6 L9 -9 L9 6 L3 9 L-3 6 L-9 9 Z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M-3 -9 V6 M3 -6 V9" stroke="#fff" stroke-width="1.4"/><circle cx="5" cy="-1" r="2.2" fill="#3df0b0"/></svg></button>
 <button class="tbtn" id="btnJump">HOPP</button>
 <div id="more" class="hide">
   <button id="bSave">Lagre</button>
