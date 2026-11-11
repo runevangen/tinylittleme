@@ -23,6 +23,7 @@ import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
 import { createMarkerView } from './readable_view.js';
+import { createOverview } from './overview.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
@@ -267,6 +268,7 @@ const woodKinds = new Set(['wood', 'woodpanel']);
 
 // brukslapper: små lapper med bruksanvisning ved ting som kan gjøre noe (brettets `hints`, bl.a. i treningsrommet). Vises når du er nær.
 let labelsOn = store.get('tlm.labels', true), markersOn = store.get('tlm.markers', true);
+let miniOn = store.get('tlm.minimap', null);   // R20: minikart; av som standard på «Enkel» grafikk (eldre telefoner)
 const labels = [];
 function makeBadge() {                                         // liten «i»-merking som viser at tingen kan gjøre noe
   const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d');
@@ -1181,6 +1183,7 @@ goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 7; goalArrow.visibl
 for (const [color, k, ord, z] of [[0x10151f, 1.5, 5, -0.004], [0xffffff, 1.28, 6, -0.002]]) { const o = new THREE.Mesh(arrowGeo, arrowMat(color)); o.scale.set(k, k, 1); o.renderOrder = ord; goalArrow.add(o); }
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
 const mv = createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay: () => mode === 'play' && !won, isOn: () => markersOn, logEv });   // R14: markører som holder seg unna knappene (readable.js, readable_view.js)
+const ov = createOverview({ scene, camera, LEVEL, player, mv, $, getYaw: () => cam.yaw, getSave: () => save.pos, getSaves: () => stats.saves, crumbsOn: () => crumbsOn, miniOn: () => (miniOn ?? !gfxLow), isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, logEv, toast });   // R20: minikart og oversikt (overview.js, overview_logic.js)
 let compKey = '', compShowUntil = 0, compIdleSince = 0;
 const bossFighting = () => bossOn && !!LEVEL.bossS && !LEVEL.bossS.gone && ['windup', 'charge', 'stunned', 'hit', 'tired'].includes(LEVEL.bossS.mode);   // under sjefkamp: skjul NESTE-pillen så varsel og tekst får plass
 // R14: infokortet skal aldri dekke HUD-en eller NESTE-bobla: kortet legges under HUD-en, og bobla under kortet (eller skjules når bruksanvisningen er åpen)
@@ -1520,6 +1523,7 @@ const SETTINGS = [
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
   fl('beacon', 'hjelp', 'Lyssøyle over målet', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
+  fl('minimap', 'hjelp', 'Minikart øverst til venstre (trykk på det for oversikt; av som standard med Enkel grafikk)', true, () => miniOn ?? !gfxLow, kp('tlm.minimap', (v) => { miniOn = v; logEv('minikart', v ? 'på' : 'av'); })),
   fl('markers', 'hjelp', 'Tydelige markører (grep ▲, hylle, glatt, pil i kanten)', true, () => markersOn, kp('tlm.markers', (v) => { markersOn = v; logEv('markør', v ? 'på' : 'av'); })),
   fl('griphi', 'hjelp', 'Fremhev grep (oransje, pulserende)', false, () => gripHi, kp('tlm.griphi', (v) => { gripHi = v; })),
   ...(labels.length ? [fl('labels', 'hjelp', `Brukslapper ved ting${key('L')}`, true, () => labelsOn, kp('tlm.labels', (v) => { labelsOn = v; }))] : []),
@@ -2117,7 +2121,7 @@ function render(now, dt) {
   if (dust) { dust.points.visible = dustOn && !lowOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
   variant.update(now / 1000, dt, player, mode);
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
-  camera.updateMatrixWorld(); updateFades(dt); updateOffscreen();
+  ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); updateFades(dt); updateOffscreen();
   heroSeen(bossMesh && bossOn && !LEVEL.bossS.gone && camBossK > 0.05 && mode === 'play' && !viewFirst);
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
@@ -2298,7 +2302,7 @@ function frame(now) {
     const dq = fr && mode === 'play' && !menuOpen ? autoQC.decide(fr, renderer.getPixelRatio(), autoQ, basePr) : null;
     { const lp = fr && mode === 'play' && !menuOpen ? lowP.decide(fr, renderer.getPixelRatio(), 1, lowMode, autoQC.warm) : null; if (lp !== null) { applyLowProfile(lp); if (lp && lowMode === 'auto') toast('Lav profil på for jevnere bilde. ⚙ → Test → Lav profil styrer det', true); } }
     if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); if (dq.dir === 'down' && !qToasted) { qToasted = true; toast('Lavere oppløsning for jevnere bilde. ⚙ → Test → Oppløsning styrer det', true); } } }   // én melding per økt, nede ved kanten så den ikke dekker målpilen; resten logges bare
-  if (!window.__paused && !menuOpen) update(dt);
+  if (!window.__paused && !menuOpen && !ov.active) update(dt);   // R20: spillet venter mens oversikten vises
   stepCamAnim(dt); compassFrame(now);
   render(now, dt);
   requestAnimationFrame(frame);
@@ -2309,4 +2313,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { mv, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { mv, ov, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
