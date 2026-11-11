@@ -967,21 +967,26 @@ function toast(msg, low = false) {
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
 const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried);
+let camReady = false;       // cam er deklarert lenger ned
 function placeFlag() {          // flagget settes ved siden av figuren (ikke under beina), og bare der det finnes gulv
   const [x, y, z] = save.pos, ok = (px, pz) => { const s = surfaceBelow(LEVEL, px, y + 0.1, pz, 0.12); return !!s && Math.abs(s.top - y) < 0.06; };
+  // plassering i skjermrom: foran-til-venstre for figuren sett fra kameraet, bort fra knappesonen (TA/HOPP/GREP nede til høyre, stikka nede til venstre)
+  const yaw = camReady ? cam.yaw : 0.35, rx = Math.cos(yaw), rz = -Math.sin(yaw), fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  const dirs = [[-0.7, 0.7], [-1, 0.2], [0, 1], [-1, -0.4], [-0.4, 1], [-0.9, 0.9], [0.5, 1], [1, 0.6]];   // [høyre, frem] i skjermrom
   let best = [x, y, z], found = false;
-  for (const r of [0.95, 1.2]) {
-    for (let i = 0; i < 8 && !found; i++) {
-      const a = 0.8 + i * Math.PI / 4, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r;
+  for (const r of [1.1, 1.4, 0.95]) {
+    for (const [sx, sf] of dirs) {
+      const l = Math.hypot(sx, sf), dx = (rx * sx + fx * sf) / l, dz = (rz * sx + fz * sf) / l, px = x + dx * r, pz = z + dz * r;
       const base = surfaceBelow(LEVEL, px, y + 0.1, pz, 0.4);
-      if (base && Math.abs(base.top - y) < 0.06 && ok(px, pz) && freeAt(LEVEL, px, y + 0.5, pz)) { best = [px, y, pz]; found = true; }
+      if (base && Math.abs(base.top - y) < 0.06 && ok(px, pz) && freeAt(LEVEL, px, y + 0.5, pz)) { best = [px, y, pz]; found = true; break; }
     }
     if (found) break;
   }
-  flagV.place(best, found ? ok : () => false);       // ingen trygg plass: stang ved beina, uten klosser
+  flagV.place(best, found ? ok : () => false);       // ingen trygg plass: stang ved beina, uten klosser og uten glødring
 }
 function lightFlag(why, quiet = false) { flagV.ignite(quiet); if (!quiet) logEv('flagg tent', why); }
 placeFlag();
+{ const g = LEVEL.goal; goalRing.clip((px, pz) => { const s = surfaceBelow(LEVEL, px, g[1] + 0.1, pz, 0.12); return !!s && Math.abs(s.top - g[1]) < 0.12; }); }
 
 // ---------- autolagring: fremgangen huskes per brett, så en kort mobiløkt kan fortsette der du var ----------
 const progKey = `tlm.progress.${levelId}${LEVEL.rev ? '.r' + LEVEL.rev : ''}`;       // rev: brettet er bygd om (gammel fremgang passer ikke lenger)
@@ -1045,6 +1050,7 @@ function restartAll() {
 
 // ---------- modus: plan / fly ----------
 if (grade.params.gloss > 1) scene.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (m.isMeshPhysicalMaterial && m.clearcoat > 0 && !m.transparent && !m.envMap) { m.envMap = scene.environment; o.geometry.computeBoundingBox(); const bs = o.geometry.boundingBox.getSize(new THREE.Vector3()).multiply(o.getWorldScale(new THREE.Vector3())); m.envMapIntensity = Math.max(bs.x, bs.y, bs.z) > 30 ? 1 : grade.params.gloss; } });   // R1 (store flater får ikke ekstra speiling, ellers utbrent): all blank klarlakk (props.js m.m.) speiler miljøet tydelig
+const camReady0 = (camReady = true);
 const cam = { yaw: 0.35, pitch: viewMode === 'shoulder' ? 0.18 : viewMode === 'first' ? 0.05 : 0.3, dist: camDistSet, cur: viewMode === 'shoulder' ? shDist : camDistSet, target: new THREE.Vector3(...LEVEL.start) };
 let camLook = 0, camPitchBias = 0, camLift = 0, camUpTilt = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp

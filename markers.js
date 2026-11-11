@@ -25,6 +25,25 @@ function letterTex(ch, bg) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
+function glowTex(rgb = '255,214,120') {
+  const c = cv(128), g = c.getContext('2d'), rg = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  rg.addColorStop(0, `rgba(${rgb},0.95)`); rg.addColorStop(0.3, `rgba(${rgb},0.5)`); rg.addColorStop(0.65, `rgba(${rgb},0.15)`); rg.addColorStop(1, `rgba(${rgb},0)`);
+  g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+// Største radius (opptil rmax) der det finnes gulv i alle retninger rundt (x, z); 0 hvis ingen.
+export function floorRadius(x, z, ok, rmax) {
+  if (!ok) return rmax;
+  let best = 0;
+  for (const r of [0.45, 0.7, 1.0, 1.3, 1.7, 2.1]) {
+    if (r > rmax) break;
+    let all = true;
+    for (let i = 0; i < 12 && all; i++) { const a = i * Math.PI / 6; if (!ok(x + Math.cos(a) * r, z + Math.sin(a) * r)) all = false; }
+    if (!all) break; best = r;
+  }
+  return best;
+}
+
 export function buildFlag(scene, { low = false } = {}) {
   const root = new THREE.Group(), st = createFlagState();
   const base = noDetailMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.4, 0.14, low ? 12 : 24), mat(low, { color: 0x3d7be0, clearcoat: true })));
@@ -48,9 +67,13 @@ export function buildFlag(scene, { low = false } = {}) {
     const b = noDetailMesh(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), m)), a = i * 2.1 + 0.4;
     b.position.set(Math.cos(a) * 0.62, 0.1, Math.sin(a) * 0.62); b.rotation.y = -a + (i - 1) * 0.5; root.add(b); blocks.push(b);
   });
-  // glød: ring på gulvet + lys (bare i detaljert grafikk)
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false });
-  const ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.95, low ? 20 : 40), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.03; ring.renderOrder = 4; root.add(ring);
+  // glød: myk radial-gradient på gulvet (bare der det finnes gulv) + stjerneglød rundt kula + lys (detaljert grafikk)
+  const ringMat = new THREE.MeshBasicMaterial({ map: glowTex(), color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false, blending: THREE.AdditiveBlending });
+  const ring = new THREE.Mesh(new THREE.CircleGeometry(1, low ? 16 : 32), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.03; ring.renderOrder = 4; ring.visible = false; root.add(ring);
+  const starMat = new THREE.SpriteMaterial({ map: glowTex('255,230,150'), transparent: true, opacity: 0, depthWrite: false, depthTest: false, fog: false, blending: THREE.AdditiveBlending });
+  const star = new THREE.Sprite(starMat); star.position.y = 1.62; star.scale.setScalar(0.9); star.renderOrder = 9; root.add(star);
+  let cap = 0;
+  const lo = new THREE.Color(low ? 0x8a7f7d : 0x8c8c90), hi = new THREE.Color(low ? 0xe8453c : 0xffffff), ballLo = new THREE.Color(0x8d8670), ballHi = new THREE.Color(0xffc83d);
   const light = low ? null : new THREE.PointLight(0xffb45a, 0, 7);
   if (light) { light.position.y = 1.2; root.add(light); }
   scene.add(root);
@@ -60,15 +83,19 @@ export function buildFlag(scene, { low = false } = {}) {
     place(p, ok) {
       root.position.set(p[0], p[1], p[2]);
       for (const b of blocks) b.visible = !ok || ok(p[0] + b.position.x, p[2] + b.position.z);
+      cap = floorRadius(p[0], p[2], ok, 1.7); ring.visible = cap >= 0.7;
     },
     ignite: st.ignite, extinguish: st.extinguish, state: st.s,
     update(now, dt) {
       const o = st.update(Math.min(0.1, dt || 0.016)), t = now / 1000, pu = pulse(t, 2.6);
-      ringMat.opacity = o.lit * (0.35 + 0.2 * pu) + o.burst * 0.5; ring.scale.setScalar(1 + o.burst * 0.8 + 0.05 * pu);
+      ringMat.opacity = Math.min(1, o.lit * (0.55 + 0.25 * pu) + o.burst * 0.6); ring.scale.setScalar(Math.max(0.01, Math.min(cap, 1.15 + o.burst * 0.55 + 0.06 * pu)));
+      starMat.opacity = Math.min(1, o.lit * (0.55 + 0.25 * pu) + o.burst * 0.5); star.scale.setScalar(0.7 + 0.25 * pu + o.burst * 0.8); star.visible = o.lit > 0.02 || o.burst > 0;
       if (light) light.intensity = o.glow * (1.6 + 0.5 * pu) * 6;
-      if (!low) cloth.material.emissiveIntensity = 0.06 + 0.4 * o.lit + 0.5 * o.burst;
-      ball.material.emissiveIntensity = 0.3 + o.glow;
-      if (low) cloth.material.color.setHex(o.lit > 0.5 ? 0xe8453c : 0xb86b66);
+      // slukket: grått, dempet tøy og matt kule; tent: full farge og glød
+      cloth.material.color.copy(lo).lerp(hi, o.lit);
+      if (!low) cloth.material.emissiveIntensity = 0.5 * o.lit + 0.5 * o.burst;
+      ball.material.emissiveIntensity = 0.05 + 1.2 * o.lit + o.burst;
+      ball.material.color.copy(ballLo).lerp(ballHi, o.lit);
       if (!low) {
         const p = geo.attributes.position.array;
         for (let i = 0; i < p.length; i += 3) p[i + 2] = clothWave(rest[i] / W, rest[i + 1], t, 0.08);
@@ -91,13 +118,15 @@ export function buildGoalRing(scene, pos, { low = false } = {}) {
   const stars = [];
   if (!low) for (let i = 0; i < 6; i++) { const s = noDetailMesh(new THREE.Mesh(new THREE.OctahedronGeometry(0.1), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffe066 : 0x8ffff0 }))); stars.push(s); root.add(s); }
   scene.add(root);
+  let cap = 2.1;
   return {
     root,
+    clip(ok) { cap = floorRadius(pos[0], pos[2], ok, 2.1); r1.visible = r2.visible = cap >= 1.55; },
     update(now, visible = true) {
       root.visible = visible; if (!visible) return;
       const t = now / 1000, pu = pulse(t, 2.2);
-      m1.opacity = 0.4 + 0.3 * pu; r1.scale.setScalar(1 + 0.04 * pu);
-      const k = (t * 0.5) % 1; r2.scale.setScalar(1 + k * 0.7); m2.opacity = 0.55 * (1 - k);
+      m1.opacity = 0.4 + 0.3 * pu; r1.scale.setScalar(Math.min(1 + 0.04 * pu, cap / 1.5));
+      const k = (t * 0.5) % 1; const s2 = Math.min(1 + k * 0.7, cap / 1.25); r2.scale.setScalar(s2); m2.opacity = 0.55 * (1 - k);
       stars.forEach((s, i) => { const a = t * 0.9 + i * Math.PI / 3; s.position.set(Math.cos(a) * 1.3, 0.5 + 0.25 * Math.sin(t * 2 + i), Math.sin(a) * 1.3); s.rotation.y = t * 2 + i; });
     },
   };
