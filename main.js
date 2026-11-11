@@ -1053,9 +1053,11 @@ const goalArrow = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([[0, 0.
 goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 5; goalArrow.visible = false;
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
 let compKey = '', compShowUntil = 0, compIdleSince = 0;
+const bossFighting = () => bossOn && !!LEVEL.bossS && !LEVEL.bossS.gone && ['windup', 'charge', 'stunned', 'hit', 'tired'].includes(LEVEL.bossS.mode);   // under sjefkamp: skjul NESTE-pillen så varsel og tekst får plass
 function compassFrame(now) {
+  document.body.classList.toggle('bossfight', bossFighting());
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
-  const forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6);
+  const forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6) && !bossFighting();
   { const key = (t.final ? '!' : '') + t.label, idle = player.onGround && Math.hypot(player.vx, player.vz) < 0.3;       // v0.75: bare pila til vanlig; teksten vises ved nytt mål, tips, og når du står stille
     if (key !== compKey) { compKey = key; compShowUntil = now + 6000; }
     if (!idle) compIdleSince = now; else if (!compIdleSince) compIdleSince = now;
@@ -1547,14 +1549,14 @@ function antEvent(ev) {
 function bossEvent(ev) {
   const seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); toast(msg); } };
   const J = TOUCH ? T('btn.jump') : 'Mellomrom';
-  if (ev.type === 'alert') { logEv('sjef varsler', ev.id); audio?.bossroar(false); music?.duck(0.5, 1); buzz(30); seen('boss', 'Sjef-maur! Den varsler før den stormer: gå til siden så den smeller i veggen'); }
+  if (ev.type === 'alert') { logEv('sjef varsler', ev.id); audio?.bossroar(false); music?.duck(0.5, 1); buzz(30); seen('boss', 'Sjef-maur! Den varsler, så stormer den rett fram. Stikk til siden. Smeller den i veggen, eller blir sliten, er den svimmel: hopp på ryggen'); }
   else if (ev.type === 'charge') { logEv('sjef stormer', ev.id); audio?.bossroar(true); buzz(40); }
   else if (ev.type === 'bump') { logEv('sjef svimmel', ev.id); audio?.bossbump(); music?.duck(0.4, 1.2); buzz(60); setMood('happy', 1); cue('bom!'); spawnShards([ev.x, ev.y + 1, ev.z], 0xc8c0b0); seen('boss2', `Den er svimmel! Hopp på ryggen (${J}) mens stjernene går rundt`); }
-  else if (ev.type === 'tired') { logEv(ev.worn ? 'sjef slumper' : 'sjef sliten', ev.id); if (ev.worn) { cue('sliten!'); setMood('happy', 0.8); } }
+  else if (ev.type === 'tired') { logEv(ev.worn ? 'sjef slumper' : 'sjef sliten', ev.id); if (ev.worn) { cue('sliten!'); setMood('happy', 0.8); seen('boss4', `Den er helt utslitt og svimmel! Hopp på ryggen (${J})`); } }
   else if (ev.type === 'hit') { logEv('sjef truffet', `${ev.hp} igjen`); audio?.squash(); buzz(40); setMood('happy', 1.6); cue(ev.hp > 0 ? 'au!' : 'seier!'); spawnShards([ev.x, ev.y, ev.z], 0x7c1f14); }
   else if (ev.type === 'phase') { logEv('sjef fase', ev.phase); toast(ev.phase === 3 ? 'Sjefen er rasende! Den er raskere nå' : 'Sjefen er sint! Den er litt raskere nå'); }
   else if (ev.type === 'clang') { logEv('sjef pansret'); audio?.anthit(); buzz(20); seen('boss3', 'Ryggen er for hard nå. Vent til den er svimmel'); }
-  else if (ev.type === 'hurt') { stats.hits++; logEv('sjef støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(80); setMood('hurt', 1); toast(`Au! Sjefen traff deg  −${SCORE.antHit} poeng. Gå til siden når den varsler`); }
+  else if (ev.type === 'hurt') { stats.hits++; logEv('sjef støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(80); setMood('hurt', 1); toast(`Au! Sjefen traff deg  −${SCORE.antHit} poeng. Stikk til siden når den varsler`); }
   else if (ev.type === 'defeat') { stats.squashed++; logEv('SJEF SLÅTT', ev.id); audio?.fanfare(); music?.duck(0.2, 3); buzz([40, 60, 40, 60, 120]); setMood('happy', 6); cue('SJEF SLÅTT!'); toast('Du slo sjef-mauren! Ta den gylne smula'); for (let i = 0; i < 3; i++) spawnShards([ev.x + (i - 1) * 0.8, ev.y + 1.4, ev.z], [0xffc83a, 0xe23a3a, 0x3aa0e2][i]); }
   else if (ev.type === 'prize') { stats.boss++; logEv('sjef-smule tatt', ev.id); audio?.crumb(12, 12); buzz(30); setMood('happy', 3); cue('siste smule!'); toast(`Den siste smula! +${SCORE.boss} poeng`); spawnShards([ev.x, ev.y, ev.z], 0xffc83a); }
 }

@@ -13,7 +13,7 @@ export const BOSS = {
   windup: [1.1, 0.9, 0.75],                         // varseltid før støtet (s)
   lock: 0.65,                                       // andel av varseltida den følger deg; så låses retningen
   charge: [9, 10.5, 12], ramp: 0.35, maxCharge: 17, // støtfart, opptrapping (s), lengste støt før den gir opp
-  stun: [3.6, 3.1, 2.7], tired: 1.1, cool: 1.4,     // svimmel-tid, pust etter bom, ro mellom angrep
+  stun: [4.8, 4.2, 3.7], tired: 1.1, cool: 1.4,     // svimmel-tid, pust etter bom, ro mellom angrep
   hitTime: 1.5, bounce: 12.5, clang: 8,             // «au»-tid etter skade; sprett når du knuser den / lander på den uten at den er svimmel
   knock: 11, knockUp: 7, lockPlayer: 0.35,          // støt mot deg: fart bort, opp og tid uten styring
   dying: 2.2, prizeArm: 1.2, prizeR: 1.5,           // dødsanimasjon (s), tid før premien kan tas, plukke-radius

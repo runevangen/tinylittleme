@@ -39,7 +39,8 @@
   #bar button,.pill{font:600 13px system-ui;padding:9px 12px;border:0;border-radius:999px;background:#fffd;color:var(--ink);box-shadow:0 1px 4px #0004}
   #bar button.on{background:var(--accent)}
   #hint{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);background:#fffe;color:var(--ink);padding:6px 12px;border-radius:999px;font:600 13px system-ui;pointer-events:none}
-  #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:999px;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
+  #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;color:#fff;padding:8px 14px;border-radius:18px;max-width:90vw;box-sizing:border-box;text-align:center;font:600 14px system-ui;pointer-events:none;opacity:0;transition:opacity .25s}
+  body.bossfight #toast{top:calc(max(10px,env(safe-area-inset-top)) + 170px)}
   #toast.show{opacity:1}
   #infocard{position:fixed;right:0;top:max(6px,env(safe-area-inset-top));width:min(100vw,560px);box-sizing:border-box;display:flex;align-items:flex-start;transform:translateX(calc(100% - 38px));transition:transform .35s cubic-bezier(.2,.8,.2,1);z-index:6;pointer-events:none}
   #infocard.show{transform:translateX(0)}

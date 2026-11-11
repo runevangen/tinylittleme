@@ -25,6 +25,11 @@ for (const mode of ['windup', 'stunned']) for (const { sep, a, y0 } of cases) {
     const tag = `${mode} sep ${sep} vinkel ${a} yaw0 ${y0} t ${t.toFixed(2)}`;
     assert.ok(Math.abs(h.x) < 0.95 && Math.abs(h.y) < 0.95, `figuren i bildet: ${tag} (${h.x.toFixed(2)},${h.y.toFixed(2)})`);
     if (t >= 0.8 && sep <= 12) assert.ok(Math.abs(b.x) < 1 && b.y > -1 && b.y < 1, `sjefen i bildet: ${tag} (${b.x.toFixed(2)},${b.y.toFixed(2)})`);
+    if (t >= 0.8 && mode === 'windup' && sep >= 5) {              // hele sjefen (krone ca. 6 m opp når den reiser seg, bein ±3 m) skal være med, ikke bare midten
+      const top = view(s, yaw, p, B.x, 6.8, B.z), side = view(s, yaw, p, B.x + Math.cos(a) * 3, 0, B.z - Math.sin(a) * 3), side2 = view(s, yaw, p, B.x - Math.cos(a) * 3, 0, B.z + Math.sin(a) * 3);
+      assert.ok(top.z > 0.5 && top.y < 0.97, `sjefens krone klippet: ${tag} (${top.y.toFixed(2)})`);
+      for (const q of [side, side2]) assert.ok(Math.abs(q.x) < 1.15, `sjefens bein klippet: ${tag} (${q.x.toFixed(2)})`);
+    }
     if (t >= 0.8 && mode === 'stunned') {                        // linja kamera -> figur skal ikke gå gjennom sjefens sirkel
       const dx = -h.cx, dz = -h.cz, l2 = dx * dx + dz * dz, tt = Math.max(0, Math.min(1, ((B.x - h.cx) * dx + (B.z - h.cz) * dz) / l2));
       const dd = Math.hypot(h.cx + dx * tt - B.x, h.cz + dz * tt - B.z);

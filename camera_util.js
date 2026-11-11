@@ -31,8 +31,8 @@ export function bossFrame(px, pz, bx, bz, mode) {
   return {
     on: true, sep,
     shift: 0.42 * far,                                           // fokus mot midtpunktet så begge er i bildet
-    dist: Math.min(9, sep * 0.55) * far + 3.2 * near,            // langt: trekk ut; tett: trekk ut og opp så sjefen ikke fyller skjermen
-    pitch: 0.2 * far + 0.48 * near,
+    dist: Math.min(9, sep * 0.55) * far + 3.2 * near + (mode === 'windup' || mode === 'charge' ? 11 * Math.min(1, Math.max(0, (sep - 2) / 4)) : 0),   // varsel/støt: sjefen er ca. 5 m høy, trekk ut så hele kroppen og kronen er med            // langt: trekk ut; tett: trekk ut og opp så sjefen ikke fyller skjermen
+    pitch: 0.2 * far + 0.48 * near + (mode === 'windup' || mode === 'charge' ? 0.04 : 0),
     yaw: (mode === 'windup' || mode === 'charge' || mode === 'stunned') && sep > 1.5 ? Math.atan2(-dx, -dz) : null,   // under varsling/svimmel: kameraet bak figuren, blikk mot sjefen (figuren står da alltid foran sjefen, aldri skjult bak den)
   };
 }
