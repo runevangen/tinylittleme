@@ -25,8 +25,8 @@ body.building #panel{z-index:10}
 #bld .chip i{display:block;border-radius:3px;border:2px solid #0006}
 #bld .chip.used{opacity:.3}
 #bld .hint{position:absolute;left:0;right:0;top:calc(max(8px,env(safe-area-inset-top)) + 58px);text-align:center;color:#ffd9a0;font:600 13px system-ui;pointer-events:none;padding:0 12px;text-shadow:0 1px 3px #000}
-#btnBuild{position:fixed;left:50%;transform:translateX(-50%);bottom:max(210px,calc(env(safe-area-inset-bottom) + 200px));z-index:4;height:50px;padding:0 22px;border-radius:25px;border:2px solid #3df0b0;background:#2a7f62dd;color:#fff;font:800 16px system-ui;display:none;touch-action:manipulation}
-@media (orientation:landscape) and (max-height:520px){#btnBuild{bottom:auto;top:max(60px,calc(env(safe-area-inset-top) + 52px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .chip{height:40px}#bld button{height:40px}}
+#btnBuild{position:fixed;left:50%;transform:translateX(-50%);top:calc(max(8px,env(safe-area-inset-top)) + 64px);z-index:4;height:50px;padding:0 22px;border-radius:25px;border:2px solid #3df0b0;background:#2a7f62dd;color:#fff;font:800 16px system-ui;display:none;touch-action:manipulation}
+@media (orientation:landscape) and (max-height:520px){#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
 export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH }) {
