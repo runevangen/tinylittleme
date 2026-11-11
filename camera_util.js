@@ -19,3 +19,20 @@ export function followYaw(yaw, vx, vz, speed0, dt, opt = {}) {
 export const impactSpeed = (vy, h, g) => Math.sqrt(Math.max(0, vy * vy + 2 * Math.abs(g) * Math.max(0, h)));
 // Farge på landingsmarkøren: 'ok' (tåler det), 'hard' (bedøvet), 'knock' (tilbake til lagringspunkt)
 export const landingClass = (v, hardLand, knockV) => (v >= knockV ? 'knock' : v >= hardLand ? 'hard' : 'ok');
+
+// Sjef-kamera (R9): holder både figur og sjef i bildet når sjefen kjemper, og løfter kameraet over sjefen når du står tett inntil.
+// Returnerer { on, shift (andel av vektoren figur->sjef som kameraets fokus flyttes), dist (ekstra avstand), pitch (ekstra vinkel), yaw (ønsket retning eller null) }.
+const FRAME_MODES = ['windup', 'charge', 'stunned', 'hit', 'tired'];
+export function bossFrame(px, pz, bx, bz, mode) {
+  const dx = bx - px, dz = bz - pz, sep = Math.hypot(dx, dz);
+  if (!FRAME_MODES.includes(mode) || sep > 30) return { on: false, shift: 0, dist: 0, pitch: 0, yaw: null, sep };
+  const far = Math.min(1, Math.max(0, (sep - 3) / 6));            // 0 tett inntil, 1 på 9 m eller mer
+  const near = 1 - far;
+  return {
+    on: true, sep,
+    shift: 0.42 * far,                                           // fokus mot midtpunktet så begge er i bildet
+    dist: Math.min(9, sep * 0.55) * far + 3.2 * near,            // langt: trekk ut; tett: trekk ut og opp så sjefen ikke fyller skjermen
+    pitch: 0.2 * far + 0.48 * near,
+    yaw: (mode === 'windup' || mode === 'charge' || mode === 'stunned') && sep > 4 ? Math.atan2(-dx, -dz) : null,   // under varsling: se mot sjefen
+  };
+}

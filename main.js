@@ -14,7 +14,7 @@ import { makeAtmos } from './atmos.js';
 import { buildHero, RIG_S } from './hero.js';
 import { createVoice } from './voice.js';
 import { makeT, LANGS } from './i18n.js';
-import { followYaw, impactSpeed, landingClass } from './camera_util.js';
+import { followYaw, impactSpeed, landingClass, bossFrame, angleDiff } from './camera_util.js';
 import { changedSettings, exportSettings, parseSettings, formatReport } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
@@ -960,6 +960,7 @@ function restartAll() {
 
 // ---------- modus: plan / fly ----------
 const cam = { yaw: 0.35, pitch: viewMode === 'shoulder' ? 0.18 : viewMode === 'first' ? 0.05 : 0.3, dist: camDistSet, cur: viewMode === 'shoulder' ? shDist : camDistSet, target: new THREE.Vector3(...LEVEL.start) };
+let camBossOx = 0, camBossOz = 0, camBossK = 0, camBossShift = 0, camBossDist = 0, camBossPitch = 0;   // sjef-kamera (R9), glattet
 let camLook = 0, camPitchBias = 0, camLift = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
 const planCam = { yaw: 0.6, pitch: 0.7, dist: 55, pivot: new THREE.Vector3(8, 15, 0) };
@@ -1847,20 +1848,24 @@ function render(now, dt) {
     // kameraassistanse: se der du lander (fall) og opp mot neste grep (klatring), og løft deg over vegger i stedet for å bli trukket tett inn
     const falling = !player.onGround && player.vy < -6 && !['hang', 'mantle', 'swing', 'climb', 'zip'].includes(player.state);
     const climbing = ['climb', 'hang'].includes(player.state);
-    const lookT = camAssist ? (falling ? -0.9 : climbing ? 0.8 : 0) : 0, pitchT = camAssist ? (falling ? 0.14 : climbing ? -0.08 : 0) : 0;
+    { const B = bossOn && LEVEL.bossS && !LEVEL.bossS.gone && !won ? LEVEL.bossS : null, f = B ? bossFrame(player.x, player.z, B.x, B.z, B.mode) : { on: false, shift: 0, dist: 0, pitch: 0, yaw: null }, kb = 1 - Math.pow(f.on ? 0.05 : 0.15, dt);
+      camBossK += ((f.on ? 1 : 0) - camBossK) * kb; camBossShift += (f.shift - camBossShift) * kb; camBossDist += (f.dist - camBossDist) * kb; camBossPitch += (f.pitch - camBossPitch) * kb;
+      if (f.yaw !== null && mode === 'play') cam.yaw += Math.max(-1 * dt, Math.min(1 * dt, angleDiff(cam.yaw, f.yaw) * 1.6 * dt)) * camBossK;
+      if (f.on && B) { camBossOx = (B.x - player.x) * camBossShift; camBossOz = (B.z - player.z) * camBossShift; } else { camBossOx *= 1 - kb; camBossOz *= 1 - kb; } }
+    const lookT = camAssist ? (falling ? -0.9 : climbing ? 0.8 : 0) : 0, pitchT = (camAssist ? (falling ? 0.14 : climbing ? -0.08 : 0) : 0);
     const ka = 1 - Math.pow(0.15, dt);
     camLook += (lookT - camLook) * ka; camPitchBias += (pitchT - camPitchBias) * ka;
     cam.target.y = camFocusY + 0.62 + camLook;
-    const SH = viewMode === 'shoulder', baseDist = SH ? shDist : cam.dist;
-    const sdx = SH ? shSide * shOff * Math.cos(cam.yaw) : 0, sdz = SH ? -shSide * shOff * Math.sin(cam.yaw) : 0;       // sideforskyvning: kameraet over skulderen
+    const SH = viewMode === 'shoulder', baseDist = (SH ? shDist : cam.dist) + camBossDist;
+    const sdx = (SH ? shSide * shOff * Math.cos(cam.yaw) : 0) + camBossOx, sdz = (SH ? -shSide * shOff * Math.sin(cam.yaw) : 0) + camBossOz;       // sideforskyvning: kameraet over skulderen
     const dirAt = (pitch) => { const c = Math.cos(pitch); return new THREE.Vector3(Math.sin(cam.yaw) * c, Math.sin(pitch), Math.cos(cam.yaw) * c); };
     const clearAt = (dv, dd) => !insideAny(cam.target.x + dv.x * dd + sdx, cam.target.y + dv.y * dd, cam.target.z + dv.z * dd + sdz, 0.25);
     let liftT = 0;
-    if (camAssist && mode !== 'fly' && !clearAt(dirAt(cam.pitch + camPitchBias), baseDist)) {         // noe i veien på full avstand: prøv en høyere vinkel
-      for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + o); if (clearAt(dirAt(pp), baseDist)) { liftT = pp - cam.pitch - camPitchBias; break; } }
+    if (camAssist && mode !== 'fly' && !clearAt(dirAt(cam.pitch + camPitchBias + camBossPitch), baseDist)) {         // noe i veien på full avstand: prøv en høyere vinkel
+      for (let o = 0.12; o <= 0.96; o += 0.12) { const pp = Math.min(1.3, cam.pitch + camPitchBias + camBossPitch + o); if (clearAt(dirAt(pp), baseDist)) { liftT = pp - cam.pitch - camPitchBias - camBossPitch; break; } }
     }
     camLift += (liftT - camLift) * (liftT > camLift ? 1 - Math.pow(0.02, dt) : 1 - Math.pow(0.2, dt));
-    const pitchNow = Math.min(1.3, cam.pitch + camPitchBias + camLift);
+    const pitchNow = Math.min(1.3, cam.pitch + camPitchBias + camBossPitch + camLift);
     const cp = Math.cos(pitchNow), dir = new THREE.Vector3(Math.sin(cam.yaw) * cp, Math.sin(pitchNow), Math.cos(cam.yaw) * cp);
     let d = baseDist;
     for (; d > (SH ? 0.8 : 1.1); d -= 0.2) { if (!insideAny(cam.target.x + dir.x * d + sdx, cam.target.y + dir.y * d, cam.target.z + dir.z * d + sdz, 0.25)) break; }

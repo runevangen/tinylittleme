@@ -2,8 +2,8 @@
 export function createBossBar(parent = document.body, jump = 'HOPP') {   // jump: knappenavn (HOPP på mobil, Mellomrom på tastatur)
   const el = document.createElement('div');
   el.id = 'bossbar';
-  el.style.cssText = 'position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 240px);transform:translateX(-50%);z-index:5;pointer-events:none;display:none;text-align:center;font:700 12px system-ui;color:#fff;text-shadow:0 1px 3px #000;transition:opacity .3s;opacity:0';
-  el.innerHTML = '<div class="bn" style="letter-spacing:.12em;margin-bottom:3px">SJEF-MAUR</div><div class="bh" style="display:flex;gap:5px;justify-content:center;padding:4px 10px;background:#0009;border-radius:999px"></div><div class="bs" style="margin-top:3px;font-weight:600;font-size:11px;opacity:.9"></div>';
+  el.style.cssText = 'position:fixed;left:max(10px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 36px);z-index:5;pointer-events:none;display:none;text-align:left;font:700 12px system-ui;color:#fff;text-shadow:0 1px 3px #000;transition:opacity .3s;opacity:0';
+  el.innerHTML = '<div class="bn" style="letter-spacing:.12em;margin-bottom:2px;font-size:11px">SJEF-MAUR</div><div class="bh" style="display:flex;gap:5px;justify-content:flex-start;padding:2px 8px;background:#0009;border-radius:999px"></div><div class="bs" style="margin-top:2px;font-weight:600;font-size:11px;opacity:.9"></div>';
   parent.appendChild(el);
   const hearts = el.querySelector('.bh'), status = el.querySelector('.bs');
   let shown = '', max = 0;
@@ -18,7 +18,7 @@ export function createBossBar(parent = document.body, jump = 'HOPP') {   // jump
       if (b.maxHp !== max) { max = b.maxHp; shown = ''; }
       const key = b.hp + ':' + b.mode;
       if (key === shown) return; shown = key;
-      let h = ''; for (let i = 0; i < max; i++) h += `<span style="font-size:20px;line-height:1;filter:${i < b.hp ? 'none' : 'grayscale(1) opacity(.45)'}">${i < b.hp ? '❤️' : '❤️'}</span>`;
+      let h = ''; for (let i = 0; i < max; i++) h += `<span style="font-size:15px;line-height:1;filter:${i < b.hp ? 'none' : 'grayscale(1) opacity(.45)'}">${i < b.hp ? '❤️' : '❤️'}</span>`;
       hearts.innerHTML = h; status.textContent = STATUS[b.mode] || '';
     },
   };
