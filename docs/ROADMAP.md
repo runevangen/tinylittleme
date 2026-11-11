@@ -31,15 +31,12 @@ Ferdig når: begge brettene kan fullføres både ved å bygge og via den vanskel
 I skjermbildene er gulvet i nivå 2 en stor, nesten tom trebit med lite å lese skala av, den mørke badematta i nivå 1 flimrer/pikselerer (moiré på ripestruktur), og kjøkkengulvet er en jevn beige flate. Fiks mipmap/anisotropi/relieff-frekvens på matta og andre høyfrekvente teksturer, og strø småting for målestokk (smuler, hår, knapper, mynter, blyantstumper, flekker, fuger med skitt) med tetthet satt etter rom og kvalitet. Dette gjelder også BACKLOG «Detaljert rom». Filer: `look.js`, `props.js`, `scenes/` (dekor uten kollisjon), `main.js` (teksturinnstillinger).
 Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hverandre), start-skjermbildene i nivå 2 og 6 viser minst tre ting som gir skala, og FPS-målingen ligger innenfor 1 fps av før.
 
-### [ ] R18 · Små stemmer i rommet: leker som lever og reagerer
-Rommene er stille mellom fiendene. Gi 3–5 rekvisitter små levende reaksjoner (vippehest gynger når du lander på den, tennisball ruller videre og piper, lekebil kan skyves og tuter, wind-up-leke går noen skritt og stopper, bokser med fjær spretter). Ingen ny kollisjonsmodell: gjenbruk flyttbare ting og lyd. Dette gjør Toy Story-følelsen konkret. Filer: `toys.js`, `props.js`, `audio.js`, `scenes/`, `logEv('leke', …)`.
-Ferdig når: hver av de nye lekene finnes i minst to nivåer, kan utløses med TA/HOPP/GREP uten tastatur, har egen lyd og lydtekst, og `walk_route` er fortsatt grønn.
-
 ### [ ] R21 · Ytelse: tekstur- og minnebudsjett for iPhone 8-klassen
 Forrige ytelsespunkt tok tegnekall og lav profil, men ikke minne: alle teksturer lages i full oppløsning, og forvarming kan gi hakk eller krasj på eldre telefoner. Mål minnebruk (teksturstørrelser, geometrier, `renderer.info`), skaler prosedyreteksturer til 512/256 på «Lav profil», gjenbruk delte materialer/geometrier, dispose ved nivåbytte og legg et minnebudsjett i `perf_budget.js`. Filer: `perf_budget.js`, `look.js`, `props.js`, `main.js`, `test_perf.mjs`.
 Ferdig når: rapporten viser teksturminne og geometrier per nivå, lav profil bruker minst 40 % mindre teksturminne, nivåbytte 1→6 lekker ikke (antall geometrier/teksturer er stabilt i test), og ingen visuell feil sees i skjermbilde.
 
 ## Ferdige punkter
+- [x] Små stemmer i rommet: levende leker (R18, v1.10)
 - [x] Byggeskjerm A: skallet, egen modus, sideriss og snapping (R24, v1.09)
 - [x] Delmål (milepæler) i hvert nivå (R23, v1.08)
 - [x] Mål-lesbarhet i start: kamerasveip, første delmål og hint-boble (R22, v1.07)

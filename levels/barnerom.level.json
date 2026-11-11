@@ -713,6 +713,97 @@
    ],
    "weight": "light",
    "breakable": false
+  },
+  {
+   "id": "leke_bil",
+   "kind": "toycar",
+   "material": "plastic",
+   "color": 14698558,
+   "min": [
+    -5,
+    0,
+    -14.8
+   ],
+   "max": [
+    -0.2,
+    2.2,
+    -12.4
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "leke_robot",
+   "kind": "windup",
+   "material": "metal",
+   "color": 3832789,
+   "min": [
+    4.4,
+    0,
+    -14
+   ],
+   "max": [
+    6.4,
+    2.8,
+    -12.4
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "leke_tennisball",
+   "kind": "tennisball",
+   "material": "fabric",
+   "color": 13951319,
+   "min": [
+    1,
+    0,
+    -8
+   ],
+   "max": [
+    3.6,
+    2.6,
+    -5.4
+   ],
+   "weight": "light",
+   "breakable": false,
+   "round": true
+  },
+  {
+   "id": "leke_hest",
+   "kind": "rockinghorse",
+   "material": "wood",
+   "color": 12157514,
+   "min": [
+    -4.4,
+    0,
+    -2.4
+   ],
+   "max": [
+    0.4,
+    3.2,
+    -0.4
+   ],
+   "weight": "heavy",
+   "breakable": false
+  },
+  {
+   "id": "leke_sprettboks",
+   "kind": "jackbox",
+   "material": "plastic",
+   "color": 15905076,
+   "min": [
+    5.2,
+    0,
+    -6
+   ],
+   "max": [
+    8,
+    2.8,
+    -3.2
+   ],
+   "weight": "medium",
+   "breakable": false
   }
  ],
  "decor": [
@@ -854,6 +945,24 @@
     24,
     30.5,
     23.5
+   ]
+  },
+  {
+   "id": "leke_bil",
+   "text": "Leker som lever\nDytt til bilen med stikka, så ruller den og tuter. Hopp opp på den (HOPP) for å tute.",
+   "pos": [
+    -2.6,
+    3.1,
+    -13.6
+   ]
+  },
+  {
+   "id": "leke_hest",
+   "text": "Vippehest\nHopp opp på hesten (HOPP) så gynger den. TA wind-up-roboten og slipp den, så går den.",
+   "pos": [
+    -2,
+    4.1,
+    -1.4
    ]
   }
  ],

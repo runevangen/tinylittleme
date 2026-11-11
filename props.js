@@ -2,6 +2,7 @@
 // dette er bare utseendet. Brettet gir hver boks `kind` og evt. `group`; boksene i en gruppe tegnes som ÉN ting.
 import * as THREE from 'three';
 import { letterStack, letterTopY, studLayout, STUD_H, carWheel } from './toys.js';
+import { TOY_BUILDERS } from './toys_view.js';          // R18: levende leker (tennisball, vippehest, wind-up, sprettboks)
 
 const porcelain = (color = 0xf1eee6) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.06 });
 const chrome = () => new THREE.MeshStandardMaterial({ color: 0xe4e6e8, metalness: 1, roughness: 0.12 });
@@ -528,7 +529,7 @@ const SINGLE = {
 };
 // ting fra scene: bruk det vi har (kind, ellers materialet). Returnerer en gruppe sentrert i boksen, eller null.
 export function buildSingle(kind, size, opts = {}) {
-  const fn = SINGLE[kind]; if (!fn) return null;
+  const fn = SINGLE[kind] || TOY_BUILDERS[kind]; if (!fn) return null;
   const [sx, sy, sz] = size, o = { color: opts.color ?? 0xcccccc, id: opts.id || '', material: opts.material };
   const g = fn(sx, sy, sz, o); return g;
 }

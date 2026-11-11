@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.10** – Levende leker i nivå 2, 3, 5 og 6: tennisball (dytt), bil (TA), vippehest (HOPP på den), wind-up-robot (TA, slipp) og sprettboks (TA) svarer med lyd, lydtekst og bevegelse. Kan slås av i ⚙ → Spill.
 - **1.09** – Byggeskjerm (BYGG-knappen vises ved et byggested): dra deler fra raden nederst opp i bildet, roter, angre, nullstill; snapping til rutenett og festepunkter. Ny test for inn/ut av byggemodus.
 - **1.08** – Delmål (milepæler) i alle seks nivåer: panel under HUD-linja, pil mot aktivt delmål, lås på målet, lagring. Kan justeres i ⚙ → Spill/Hjelp/Admin.
 - **1.07** – Mål-lesbarhet i start: kort kamerasveip fra målet til figuren (trykk for å hoppe over), pil mot første delmål og en hint-boble som nevner riktig knapp (TA, HOPP, GREP).
