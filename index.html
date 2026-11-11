@@ -152,6 +152,10 @@
   .wstars{font-size:42px;letter-spacing:6px;color:#5a6378}.wstars span{display:inline-block}.wstars span.on{color:#ffd24a;text-shadow:0 0 12px #ffd24a99;animation:pop .5s both}
   @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.4)}100%{transform:scale(1)}}
   #story .wgrid{display:flex;flex-direction:column;gap:4px;min-width:min(260px,80vw)}#story .wrow{display:flex;justify-content:space-between;gap:24px;font:600 16px system-ui;background:#ffffff18;border-radius:10px;padding:7px 14px}
+  #introsw{position:fixed;inset:0;z-index:8;touch-action:manipulation;display:flex;align-items:flex-end;justify-content:center;padding-bottom:max(100px,calc(env(safe-area-inset-bottom) + 90px))}
+  #introsw b{font:700 14px system-ui;color:#fff;background:#000a;padding:8px 16px;border-radius:999px}
+  #introhint{position:fixed;left:122px;right:10px;top:max(152px,calc(env(safe-area-inset-top) + 144px));transform:translateY(-8px);max-width:340px;box-sizing:border-box;background:#121a2ce8;color:#eef2fa;border:2px solid #ffa940;border-radius:16px;padding:8px 12px;font:600 13px/1.35 system-ui;text-align:center;pointer-events:none;opacity:0;transition:opacity .35s,transform .35s;z-index:5}
+  #introhint.show{opacity:1;transform:none}#introhint small{display:block;font:800 11px system-ui;letter-spacing:1px;color:#ffd9a0;margin-bottom:3px}
   #story .stot{font:700 13px system-ui;color:#9fe0c8;text-transform:uppercase;letter-spacing:1px}
   #story{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 40%,#2b3550,#141a2c);color:#fff;text-align:center;touch-action:manipulation}
   #story .scard{max-width:min(420px,88vw);display:flex;flex-direction:column;align-items:center;gap:12px}
@@ -190,7 +194,7 @@
   var v = String(Date.now());
   try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
   window.__assetV = v;
-  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view'];
+  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view', 'intro', 'intro_view'];
   var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
   document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
 })();
@@ -224,6 +228,8 @@
 <div id="panel" class="hide"></div>
 <div id="start" class="hide"></div>
 <div id="story" class="hide"></div>
+<div id="introsw" class="hide"></div>
+<div id="introhint" class="hide"></div>
 <div id="win" class="hide"><div id="winConfetti" class="sconf"></div><div id="winHero"></div><h1 id="winTitle">Du kom opp!</h1><div id="winStats"></div><button id="nextLevel" style="display:none">Neste nivå →</button><button id="again">Spill igjen</button></div>
 <div id="ovhint">Trykk for å gå videre</div>
 <div id="stick"><div id="knob"></div></div>

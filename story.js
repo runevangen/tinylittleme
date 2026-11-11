@@ -35,3 +35,12 @@ export function showCard(el, { title, text, btn, skip, onDone, art = '', extra =
   el.onclick = end; el.querySelector('.sgo').onclick = end;
   return end;
 }
+
+// R22: start-lesbarhet som data. Per nivå: hint-bobla (i18n-nøkkel med {jump} {take} {grab}), valgfri `first` (id i ruta) for første delmål, og sveipets tider (sek).
+// Uten `first` brukes første flate i ruta som ligger høyere enn start. Alle tekster nevner knappene, ikke taster.
+export const INTRO_SWEEP = { hold: 1.1, travel: 2.3 };
+export const INTRO = {
+  1: { hint: 'intro.hint.1' }, 2: { hint: 'intro.hint.2' }, 3: { hint: 'intro.hint.3' },
+  4: { hint: 'intro.hint.4' }, 5: { hint: 'intro.hint.5' }, 6: { hint: 'intro.hint.6' },
+};
+export const introKey = (n) => (INTRO[n] ? INTRO[n].hint : null);

@@ -10,7 +10,9 @@ import { buildRoller, buildDangler, ROLLER_COL, DANGLER_COL } from './creatures_
 import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid, nearBridge } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
 import { buildFlag, buildGoalRing } from './markers.js';
-import { shouldShowIntro, finishData, winHTML, showCard, heroSVG, totals, endHTML } from './story.js';
+import { introKey, shouldShowIntro, finishData, winHTML, showCard, heroSVG, totals, endHTML } from './story.js';
+import { firstTarget, reachedFirst, createSweep, sweepPose } from './intro.js';
+import { createIntroView } from './intro_view.js';
 import { initBoss, resetBoss, stepBoss } from './boss.js';   // R9: sjef-maur i siste rom (egen logikk, modell og helsebar)
 import { buildBoss, buildPrize } from './boss_model.js';
 import { createBossBar } from './boss_ui.js';
@@ -140,6 +142,7 @@ let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
 let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
+let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
@@ -1194,6 +1197,19 @@ const goalArrow = new THREE.Mesh(arrowGeo, arrowMat(0xff9a1f, 7));   // R14: ful
 goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 7; goalArrow.visible = false;
 for (const [color, k, ord, z] of [[0x10151f, 1.5, 5, -0.004], [0xffffff, 1.28, 6, -0.002]]) { const o = new THREE.Mesh(arrowGeo, arrowMat(color)); o.scale.set(k, k, 1); o.renderOrder = ord; goalArrow.add(o); }
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
+const introV = createIntroView({ scene, $, T, low: gfxLow });
+let introSweep = null, introTgt = null, introHintT = 0;   // R22: sveip, første delmål og hint-tid
+function introEnd(skipped) {
+  introSweep = null; introV.hideSweep(); menuOpen = false; logEv('intro', skipped ? 'sveip hoppet over' : 'sveip ferdig');
+  if (introHintOn && introKey(levelInfo?.n)) { const nm = introTgt ? ((lang === 'en' && introTgt.en) || introTgt.label || nameOfId(introTgt.id).replace(/_/g, ' ')) : ''; introV.showHint(introTgt && introMarkOn ? T('intro.first', { name: nm.toUpperCase() }) : '', T(introKey(levelInfo.n), { jump: TOUCH ? T('btn.jump') : 'mellomrom', take: TA, grab: GREP })); introHintT = 10; }
+}
+function introBegin() {            // kalles ved friskt nivåstart (etter fortellerkortet), ikke ved Fortsett
+  const n = levelInfo?.n; if (!n || !introKey(n)) return;
+  introTgt = firstTarget(LEVEL.route, LEVEL.start, n); introV.setTarget(introTgt); introV.markerOn(introMarkOn); introV.hideHint();
+  logEv('intro', introTgt ? `første delmål: ${introTgt.id}` : 'ingen første delmål');
+  if (introSweepOn && mode === 'play') { menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; introSweep = createSweep(); introV.showSweep(() => { introSweep?.skip(); }); }
+  else introEnd(false);
+}
 const mv = createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay: () => mode === 'play' && !won, isOn: () => markersOn, logEv });   // R14: markører som holder seg unna knappene (readable.js, readable_view.js)
 const ov = createOverview({ scene, camera, LEVEL, player, mv, $, getYaw: () => cam.yaw, getSave: () => save.pos, getSaves: () => stats.saves, crumbsOn: () => crumbsOn, miniOn: () => (miniOn ?? !gfxLow), isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, logEv, toast });   // R20: minikart og oversikt (overview.js, overview_logic.js)
 let compKey = '', compShowUntil = 0, compIdleSince = 0;
@@ -1472,6 +1488,9 @@ const SETTINGS = [
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
   fl('rewards', 'spill', 'Tilbehør på figuren (hatter, skjerf, sekk du har samlet)', true, () => rewardsOn, kp('tlm.rewards', (v) => { rewardsOn = v; refreshAccessories(); logEv('belønning', v ? 'tilbehør på' : 'tilbehør av'); })),
   fl('rewardsall', 'admin', 'Alt tilbehør åpent (test av lekerommet)', false, () => rewardsAll, kp('tlm.rewardsall', (v) => { rewardsAll = v; refreshAccessories(); })),
+  fl('introsweep', 'hjelp', 'Nivåstart: kort kamerasveip fra målet tilbake til figuren (trykk for å hoppe over)', true, () => introSweepOn, kp('tlm.introsweep', (v) => { introSweepOn = v; })),
+  fl('intromark', 'hjelp', 'Nivåstart: pil over første delmål (neste hylle, kasse eller kurv)', true, () => introMarkOn, kp('tlm.intromark', (v) => { introMarkOn = v; if (!v) introV.markerOn(false); })),
+  fl('introhint', 'hjelp', 'Nivåstart: hint-boble som nevner riktig knapp', true, () => introHintOn, kp('tlm.introhint', (v) => { introHintOn = v; if (!v) introV.hideHint(); })),
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
@@ -2143,6 +2162,17 @@ function render(now, dt) {
       if (camBossK > 0.02 && !SH) { const cp3 = [camera.position.x, camera.position.y, camera.position.z], h3 = [player.x, player.y + 0.6, player.z], a = shiftLookX(cp3, anchorLook(cp3, lk, h3, camera.fov, BOSS_HERO_Y[0], BOSS_HERO_Y[1]), h3, camera.fov, camera.aspect, BOSS_HERO_X), w = Math.min(1, camBossK); lk = lk.map((v, i) => v + (a[i] - v) * w); }   // sjefkamp: figuren holdes over knappene og under varselstripen selv om veggen drar kameraet tett inn
       camera.lookAt(lk[0], lk[1], lk[2]); } }
   }
+  if (introSweep) {          // R22: kamerasveip fra målet tilbake til figuren; ett trykk hopper over
+    const r = introSweep.update(dt);
+    if (r.done) introEnd(introSweep.s.skipped);
+    else { const f = new THREE.Vector3(); camera.getWorldDirection(f); const np = camera.position.toArray(), nl = [np[0] + f.x * cam.cur, np[1] + f.y * cam.cur, np[2] + f.z * cam.cur];
+      const o = sweepPose({ e: r.e, goal: [LEVEL.goal[0], LEVEL.goal[1] + 0.8, LEVEL.goal[2]], hero: [player.x, player.y + 0.62, player.z], yaw: cam.yaw, pitch: 0.45, dist: 16, nPos: np, nLook: nl, room: LEVEL.room });
+      camera.position.set(...o.pos); camera.lookAt(...o.look); }
+  }
+  if (introTgt && introV) {
+    introV.update(now); if (introHintT > 0) { introHintT -= dt; if (introHintT <= 0) introV.hideHint(); }
+    if (!introSweep && introMarkOn && reachedFirst(introTgt, player) && mode === 'play') { introV.markerOn(false); introV.hideHint(); introHintT = 0; logEv('intro', 'første delmål nådd'); introTgt = null; }
+  }
   { const fp = viewFirst && mode === 'play', fov = fp ? 74 : viewMode === 'shoulder' ? fovSet + 8 : fovSet;
     for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
     if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
@@ -2249,9 +2279,9 @@ addEventListener('resize', resize); resize();
 
 // ---------- fortelling (R8): kort tekst ved nivåstart og en avslutning etter nivå 6 (story.js) ----------
 function showIntro() {
-  const n = levelInfo?.n; if (!shouldShowIntro({ n, enabled: storyOn, resumed, seen: store.get(`tlm.storySeen.${levelId}`, false) })) return;
+  const n = levelInfo?.n; if (!shouldShowIntro({ n, enabled: storyOn, resumed, seen: store.get(`tlm.storySeen.${levelId}`, false) })) { if (!resumed) introBegin(); return; }
   menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; logEv('fortelling', `nivå ${n}`);
-  showCard($('story'), { art: heroArt('hi'), title: T(`story.title.${n}`), text: T(`story.${n}`), btn: T('story.go'), skip: T('story.skip'), onDone: () => { menuOpen = false; store.set(`tlm.storySeen.${levelId}`, true); } });
+  showCard($('story'), { art: heroArt('hi'), title: T(`story.title.${n}`), text: T(`story.${n}`), btn: T('story.go'), skip: T('story.skip'), onDone: () => { menuOpen = false; store.set(`tlm.storySeen.${levelId}`, true); introBegin(); } });
 }
 function showEnding() {
   logEv('avslutning');
