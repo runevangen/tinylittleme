@@ -23,10 +23,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 Stor sjef-maur i nivå 6 (kjøkkenet), tre faser (patrulje, charge, stunned etter å ha truffet vegg/kasse så du kan hoppe på den), helsebar, tegnefilm-aktig animasjon, lyd og belønning (siste smule + en liten fanfare). Egen logikk i `ants.js` eller nytt `boss.js` med tester. Må være rettferdig på mobil.
 Ferdig når: en spiller kan slå sjefen med bare stikke + HOPP, og ruta går fortsatt.
 
-### [ ] R11 · Flagg og mål som ser ut som Toy Story-rekvisitter
-Startflagget (ved figuren i alle nivåer) er en flat, ulyst gul firkant med støyete tekstur og hvit stang som ser ut som en plassholder; målmarkøren og nøkkel/lås-merkene har samme preg. Bytt til blanke rekvisitter i barneskala (stoffflagg som vaier, små pyntebokstaver, glødende målring/fyrtårn med myk puls), lyst med samme materialer som resten (`look.js`/`grade.js`), og la flagget bli tent/slukket når et lagringspunkt tas. Enkel grafikk beholder en billig variant. Filer: `main.js` (flagg/mål), `look.js`, ev. ny `markers.js` (legges i `files` i `index.html`).
-Ferdig når: skjermbilder (iPhone 14) av nivå 1–6 viser flagg og mål uten støy og uten å dekke figuren, lagringspunkt lyser tydelig, og ruta går.
-
 ### [ ] R13 · Gulv og overflater: moiré, tomme flater og skala
 I skjermbildene er gulvet i nivå 2 en stor, nesten tom trebit med lite å lese skala av, den mørke badematta i nivå 1 flimrer/pikselerer (moiré på ripestruktur), og kjøkkengulvet er en jevn beige flate. Fiks mipmap/anisotropi/relieff-frekvens på matta og andre høyfrekvente teksturer, og strø småting for målestokk (smuler, hår, knapper, mynter, blyantstumper, flekker, fuger med skitt) med tetthet satt etter rom og kvalitet. Dette gjelder også BACKLOG «Detaljert rom». Filer: `look.js`, `props.js`, `scenes/` (dekor uten kollisjon), `main.js` (teksturinnstillinger).
 Ferdig når: matta i nivå 1 flimrer ikke i bevegelse (sjekk to bilder etter hverandre), start-skjermbildene i nivå 2 og 6 viser minst tre ting som gir skala, og FPS-målingen ligger innenfor 1 fps av før.
@@ -40,6 +36,7 @@ Smulene (★ 0/10) gir i dag bare et tall på målskjermen. Gi dem verdi: hvert 
 Ferdig når: etter å ha tatt alle smuler i et nivå ser spilleren et nytt tilbehør på figuren neste gang, valget huskes etter omlasting, tester dekker lagring og opplåsing, og skjermbilde av skapet er sjekket på iPhone 14.
 
 ## Ferdige punkter
+- [x] Flagg og mål som ser ut som Toy Story-rekvisitter (v0.98)
 - [x] Ytelse på eldre telefoner: budsjett og lav profil (v0.96)
 - [x] Nivå 4–6 skal føles som nye rom, ikke bare ommøblerte (v0.95)
 - [x] Fortelling og målseremoni (v0.92)

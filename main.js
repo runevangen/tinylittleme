@@ -7,6 +7,7 @@ import { buildGroup, buildSingle, roundedBoxGeo, setAniso, buildAnt, buildCrumb,
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid, nearBridge } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
+import { buildFlag, buildGoalRing } from './markers.js';
 import { shouldShowIntro, finishData, winHTML, showCard, heroSVG, totals, endHTML } from './story.js';
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
@@ -508,15 +509,8 @@ const beacon = new THREE.Group(); beacon.position.set(LEVEL.goal[0], LEVEL.goal[
   beacon.add(core, ghost, halo); beacon.userData = { core, ghost, halo };
 }
 
-// lagringsflagg
-const flag = new THREE.Group();
-{
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.4, 8), new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.4 }));
-  pole.position.y = 0.7;
-  const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.38), new THREE.MeshStandardMaterial({ color: 0xffb703, side: THREE.DoubleSide, roughness: 0.7 }));
-  cloth.position.set(0.3, 1.2, 0);
-  flag.add(pole, cloth); scene.add(flag);
-}
+// lagringsflagg og målring (R11: markers.js)
+const flagV = buildFlag(scene, { low: gfxLow }), goalRing = buildGoalRing(scene, LEVEL.goal, { low: gfxLow });
 
 // ---------- figur ----------
 if (!gfxLow) look.detailize(scene);                                   // fint korn på alle flater i brettet (v0.76)
@@ -978,8 +972,26 @@ function toast(msg, low = false) {
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
 const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried);
-function placeFlag() { flag.position.set(save.pos[0], save.pos[1], save.pos[2]); }
+let camReady = false;       // cam er deklarert lenger ned
+function placeFlag() {          // flagget settes ved siden av figuren (ikke under beina), og bare der det finnes gulv
+  const [x, y, z] = save.pos, ok = (px, pz) => { const s = surfaceBelow(LEVEL, px, y + 0.1, pz, 0.12); return !!s && Math.abs(s.top - y) < 0.06; };
+  // plassering i skjermrom: foran-til-venstre for figuren sett fra kameraet, bort fra knappesonen (TA/HOPP/GREP nede til høyre, stikka nede til venstre)
+  const yaw = camReady ? cam.yaw : 0.35, rx = Math.cos(yaw), rz = -Math.sin(yaw), fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  const dirs = [[-0.7, 0.7], [-1, 0.2], [0, 1], [-1, -0.4], [-0.4, 1], [-0.9, 0.9], [0.5, 1], [1, 0.6]];   // [høyre, frem] i skjermrom
+  let best = [x, y, z], found = false;
+  for (const r of [1.1, 1.4, 0.95]) {
+    for (const [sx, sf] of dirs) {
+      const l = Math.hypot(sx, sf), dx = (rx * sx + fx * sf) / l, dz = (rz * sx + fz * sf) / l, px = x + dx * r, pz = z + dz * r;
+      const base = surfaceBelow(LEVEL, px, y + 0.1, pz, 0.4);
+      if (base && Math.abs(base.top - y) < 0.06 && ok(px, pz) && freeAt(LEVEL, px, y + 0.5, pz)) { best = [px, y, pz]; found = true; break; }
+    }
+    if (found) break;
+  }
+  flagV.place(best, found ? ok : () => false);       // ingen trygg plass: stang ved beina, uten klosser og uten glødring
+}
+function lightFlag(why, quiet = false) { flagV.ignite(quiet); if (!quiet) logEv('flagg tent', why); }
 placeFlag();
+{ const g = LEVEL.goal; goalRing.clip((px, pz) => { const s = surfaceBelow(LEVEL, px, g[1] + 0.1, pz, 0.12); return !!s && Math.abs(s.top - g[1]) < 0.12; }); }
 
 // ---------- autolagring: fremgangen huskes per brett, så en kort mobiløkt kan fortsette der du var ----------
 const progKey = `tlm.progress.${levelId}${LEVEL.rev ? '.r' + LEVEL.rev : ''}`;       // rev: brettet er bygd om (gammel fremgang passer ikke lenger)
@@ -1000,7 +1012,7 @@ function failAt(why = 'fall') {
     save.pos = pr.save; Object.assign(stats, pr.stats || {}); clock = pr.clock; autoPos = okAt(pr.auto) ? pr.auto : null;
     for (const [k, v] of pr.fails || []) failCells.set(k, v);
     stats.crumbs = restoreCollected(LEVEL, pr.crumbs); restorePuzzles(LEVEL, pr.puzzles);
-    resetPlayer(player, ...(autoPos || save.pos)); placeFlag(); resumed = true;
+    resetPlayer(player, ...(autoPos || save.pos)); placeFlag(); if (stats.saves > 0) flagV.ignite(true); resumed = true;
   }
 }
 addEventListener('pagehide', saveProgress);
@@ -1012,7 +1024,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) saveP
 function doSave() {
   if (mode !== 'play') return toast('Gå ut av plan-/flymodus først');
   if (!player.onGround) return toast('Stå støtt for å lagre');
-  save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag(); audio?.checkpoint(); saveProgress();
+  save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag(); lightFlag('lagringspunkt'); audio?.checkpoint(); saveProgress();
   logEv('lagret'); toast(`Lagringspunkt satt  −${SCORE.save} poeng`);
 }
 function goBack() {
@@ -1038,11 +1050,12 @@ function restartAll() {
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player);
   save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = 0; stats.flew = false; resetAnts(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); bridgeGuide = null;
-  won = false; clock = 0; placeFlag(); $('win').classList.add('hide'); setMode('play');
+  won = false; clock = 0; placeFlag(); flagV.extinguish(); $('win').classList.add('hide'); setMode('play');
 }
 
 // ---------- modus: plan / fly ----------
 if (grade.params.gloss > 1) scene.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : []; for (const m of ms) if (m.isMeshPhysicalMaterial && m.clearcoat > 0 && !m.transparent && !m.envMap) { m.envMap = scene.environment; o.geometry.computeBoundingBox(); const bs = o.geometry.boundingBox.getSize(new THREE.Vector3()).multiply(o.getWorldScale(new THREE.Vector3())); m.envMapIntensity = Math.max(bs.x, bs.y, bs.z) > 30 ? 1 : grade.params.gloss; } });   // R1 (store flater får ikke ekstra speiling, ellers utbrent): all blank klarlakk (props.js m.m.) speiler miljøet tydelig
+const camReady0 = (camReady = true);
 const cam = { yaw: 0.35, pitch: viewMode === 'shoulder' ? 0.18 : viewMode === 'first' ? 0.05 : 0.3, dist: camDistSet, cur: viewMode === 'shoulder' ? shDist : camDistSet, target: new THREE.Vector3(...LEVEL.start) };
 let camLook = 0, camPitchBias = 0, camLift = 0, camUpTilt = 0, camAssist = store.get('tlm.camassist', true);
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
@@ -1734,7 +1747,7 @@ function update(dt) {
   }
   musicFrame(); audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
-  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); saveProgress(); logEv('sjekkpunkt'); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
+  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); lightFlag('sjekkpunkt'); saveProgress(); logEv('sjekkpunkt'); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
   if (player.y < LEVEL.deathY) { failAt('falt'); resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
     logEv(ev.type, ev.id || ev.tool || ev.why || '');
@@ -1958,7 +1971,7 @@ function render(now, dt) {
   goal.rotation.y = now * 0.002; goal.position.y = LEVEL.goal[1] + 0.35 + Math.sin(now * 0.003) * 0.12;
   { const u = beacon.userData, pu = 0.5 + 0.5 * Math.sin(now * 0.0025), near = Math.min(1, Math.hypot(player.x - LEVEL.goal[0], player.y - LEVEL.goal[1], player.z - LEVEL.goal[2]) / 6);   // dempes når du står ved målet
     beacon.visible = beaconOn && !won && mode !== 'plan'; u.core.material.opacity = (0.42 + 0.16 * pu) * near; u.ghost.material.opacity = (0.26 + 0.1 * pu) * near; u.halo.material.opacity = (0.65 + 0.3 * pu) * near; u.halo.material.rotation = now * 0.0004; beacon.rotation.y = now * 0.0006; }
-  flag.children[1].rotation.y = Math.sin(now * 0.004) * 0.25;
+  flagV.update(now, dt); goalRing.update(now, !won && mode !== 'plan');
 
   let desired, look;
   if (mode === 'plan') {
@@ -2215,4 +2228,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
