@@ -52,6 +52,16 @@ export function shrinkCanvas(c, low, make) {
   const o = make(w, h), g = o.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(c, 0, 0, w, h); return o;
 }
 
+// R21: krymper teksturene som allerede finnes i scenen (Lav profil slått på midt i spillet, f.eks. av Auto ved lav FPS). Hver tekstur krympes bare én gang; GPU-kopien frigjøres og lastes opp igjen i liten størrelse.
+export function shrinkSceneTextures(root, make) {
+  const seen = new Set(); let before = 0, after = 0, n = 0;
+  root.traverse((o) => { for (const m of [].concat(o.material || [])) for (const k of TEXKEYS) { const t = m[k]; if (!t || seen.has(t)) continue; seen.add(t);
+    const im = t.image; if (!im || t.userData.shrunk || !im.getContext) continue;
+    const c = shrinkCanvas(im, true, make); t.userData.shrunk = true; if (c === im) continue;
+    before += texBytes(t); t.dispose(); t.image = c; t.needsUpdate = true; after += texBytes(t); n++; } });
+  return { n, savedMB: (before - after) / 1048576 };
+}
+
 // mål fra renderer.info etter at et bilde er tegnet
 export function sceneStats(renderer, scene) {
   let meshes = 0, lights = 0, shadowLights = 0;
