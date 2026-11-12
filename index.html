@@ -28,6 +28,10 @@
   #btnCarry.ready.use{animation:taready 1s ease-in-out infinite alternate}@keyframes taready{to{box-shadow:0 0 0 8px #ffd27a66}}
   #btnCarry.long{font-size:11.5px;line-height:1.05;text-align:center;padding:0 6px}
   .nocenter #btnCenter{display:none!important}
+  .nomapbtn #btnMap{display:none!important}
+  /* ◎ og kart-knappen: ingen forstørret trykkflate (den var med på å treffe dem ved et uhell når man egentlig tok HOPP/TA), og litt dempet så de ikke lokker */
+  #btnCenter::after,#btnMap::after{inset:0}
+  #btnCenter,#btnMap{opacity:.72}
   #btnMap{right:max(118px,calc(env(safe-area-inset-right) + 118px));bottom:312px;width:54px;height:54px;background:#1d2433b0}body.mobile #btnMap{bottom:308px}body.bossfight #btnMap{display:none!important}
   #btnMap.on{background:#2a7f62cc}
   @media (orientation:landscape) and (max-height:520px){#btnMap,body.mobile #btnMap{right:max(182px,calc(env(safe-area-inset-right) + 182px));bottom:246px}}   /* liggende: ved siden av ◎, ellers havner den over skjermkanten */

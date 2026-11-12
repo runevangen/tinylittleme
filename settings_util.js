@@ -88,10 +88,10 @@ export const GROUPS = [
 export const LAYOUT = {
   spill: ['lang', 'autosave', 'startscreen', 'confirm2', 'lostreturn'],
   innhold: ['puzzles', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['buildsnap', 'buildslow'] }],
-  styring: ['preset', 'help', 'stickfloat', 'stickcurve', 'stickdead', 'btnscale', 'speedscale', 'inertia', 'autograb', 'magnet', 'aimthrow', 'dbltap', 'vib',
+  styring: ['preset', 'help', 'stickfloat', 'stickcurve', 'stickdead', 'btnscale', 'speedscale', 'inertia', 'autograb', 'magnet', 'aimthrow', 'dbltap', 'showcenter', 'showmapbtn', 'vib',
     { sub: 'Mus og tastatur (PC)', ids: ['pcbtns', 'mousesens', 'mouselook'] }],
   figur: ['stepadapt', 'reactanim', 'idlewink'],
-  kamera: ['followstr', 'camdist', 'fov', 'pitchbase', 'lookahead', 'camassist', 'fade', 'fadeop', 'camsens', 'showcenter', 'blob', 'view',
+  kamera: ['followstr', 'camdist', 'fov', 'pitchbase', 'lookahead', 'camassist', 'fade', 'fadeop', 'camsens', 'blob', 'view',
     { sub: 'Skulderkamera', ids: ['shdist', 'shoff', 'shside', 'xhair'] }],
   grafikk: ['gfx', 'grade', 'gradefilter', 'softlight', 'ao', 'rays', 'dust', 'floordetail', 'clutter', 'resq', 'texsmall', 'lowprofile', 'fps'],
   hjelp: ['goalarrow', 'shortcuthint', 'compassmode', 'beacon', 'minimap', 'markers', 'griphi', 'failhint', 'bubbles', 'hudtech', 'puzcam', { sub: 'Nivåstart', ids: ['introsweep', 'intromark', 'introhint'] }],

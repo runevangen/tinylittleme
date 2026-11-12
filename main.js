@@ -157,7 +157,7 @@ const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(m
 // ---------- innstillinger som flagg (selve lista og panelet står lenger ned: SETTINGS) ----------
 let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
-let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
+let showMapBtn = store.get('tlm.showmapbtn', true), showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
@@ -182,7 +182,7 @@ let viewFirst = viewMode === 'first', shDist = store.get('tlm.shdist', 3), shOff
 let edgeGuardOn = store.get('tlm.edgeguard', true), autoJumpOn = store.get('tlm.autojump', true), lookAheadOn = store.get('tlm.lookahead', true), dustOn = store.get('tlm.dust', true), raysOn = store.get('tlm.rays', true), aoOn = store.get('tlm.ao', true), clutterOn = store.get('tlm.clutter', true), softOn = store.get('tlm.softlight', true);   // v0.62: kanthjelp, kamera som ser foran deg, støv i lufta
 let airSteadyOn = store.get('tlm.airsteady', true), magnetOn = store.get('tlm.magnet', true), holdGrabOn = store.get('tlm.holdgrab', true);   // v0.65: stabilisering i lufta
 let compassMode = store.get('tlm.compassmode', store.get('tlm.compass', true) === false ? 'off' : 'both');   // both | compass | arrow | off
-const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; $('qbtn').style.display = qbtnOn ? 'flex' : 'none'; };
+const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCenter); document.body.classList.toggle('nomapbtn', !showMapBtn); document.documentElement.style.setProperty('--bs', btnScale); $('fps').style.display = fpsOn ? 'block' : 'none'; $('qbtn').style.display = qbtnOn ? 'flex' : 'none'; };
 
 // ---------- hendelseslogg og FPS: brukes i testrapporten ----------
 const evLog = store.get('tlm.evlog', []);
@@ -1585,6 +1585,7 @@ const SETTINGS = [
   ...(!TOUCH ? [fl('mouselook', 'styring', 'Musestyring (klikk i bildet: mus ser deg rundt, venstre = TA, høyre = GREP)', true, () => mouseLook, kp('tlm.mouselook', (v) => { mouseLook = v; if (!v && document.pointerLockElement) document.exitPointerLock(); }))] : []),
   fl('aimthrow', 'styring', 'Kast med dra og slipp (hold TA, dra ned)', true, () => aimThrowOn, kp('tlm.aimthrow', (v) => { aimThrowOn = v; })),
   fl('dbltap', 'styring', 'Dobbelttrykk på skjermen sentrerer kameraet', true, () => dblTapOn, kp('tlm.dbltap', (v) => { dblTapOn = v; })),
+  fl('showmapbtn', 'styring', 'Vis kart-knappen (oversikt) ved siden av ◎. Av = ingen knapp; minikartet øverst virker fortsatt', true, () => showMapBtn, kp('tlm.showmapbtn', (v) => { showMapBtn = v; applyUiFlags(); })),
   fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', true, () => showCenter, kp('tlm.showcenter', (v) => { showCenter = v; applyUiFlags(); })),
   fl('edgeguard', 'styring', TOUCH ? 'Kanthjelp: stopp ved kanten når du skyver stikken forsiktig' : 'Kanthjelp: stopp ved kanten når du går forsiktig (C)', true, () => edgeGuardOn, kp('tlm.edgeguard', (v) => { edgeGuardOn = v; reapplyKnobs(); })),
   fl('autojump', 'styring', TOUCH ? 'Kanthjelp: hopp av seg selv over gap når du løper (stikken helt ut)' : 'Kanthjelp: hopp av seg selv over gap når du løper mot kanten', true, () => autoJumpOn, kp('tlm.autojump', (v) => { autoJumpOn = v; reapplyKnobs(); })),

@@ -11,9 +11,9 @@ Panelet har et **søkefelt** øverst (skjuler rader som ikke treffer og åpner g
 |---|---|
 | **Spill** | Språk, autolagring, startskjerm, trykk to ganger, ting kommer tilbake; Brett-velger, Start på nytt, Hovedmeny |
 | **Innhold og utfordring** | Gåter, delmål, smuler, tilbehør, fortelling, maur, sjef, skapninger, levende leker, nivå 4–6 stemning og vri; undermeny **Byggeskjerm** (snapping, sakte film) |
-| **Styring** | Styringsstil, hjelp-nivå, stikke (flytende/kurve/dødsone), knappestørrelse, gangfart, treghet, grip kanten, sikte-hjelp, kast, dobbelttrykk, vibrasjon; undermeny **Mus og tastatur (PC)** |
+| **Styring** | Styringsstil, hjelp-nivå, stikke (flytende/kurve/dødsone), knappestørrelse, gangfart, treghet, grip kanten, sikte-hjelp, kast, dobbelttrykk, **◎-knappen** og **kart-knappen** (kan skjules hver for seg), vibrasjon; undermeny **Mus og tastatur (PC)** |
 | **Figuren** | Føttene tilpasser seg trinn, jubel/rykk, blunking |
-| **Kamera** | Følging, avstand, synsfelt, vinkel, ser foran, hjelper, utoning, følsomhet, ◎-knapp, skygge under figuren, kamerasyn; undermeny **Skulderkamera** |
+| **Kamera** | Følging, avstand, synsfelt, vinkel, ser foran, hjelper, utoning, følsomhet, skygge under figuren, kamerasyn; undermeny **Skulderkamera** |
 | **Grafikk og ytelse** | Grafikknivå, fargegradering og -filter, myke skygger, mørke hjørner, lysstråler, støv, gulvdetaljer, småting, oppløsning, små teksturer, lav profil, FPS |
 | **Hjelp og veiledning** | Pil/kompass mot delmål, retningshjelp, lyssøyle, minikart, markører, grep, tips etter fall, snakkebobler, tekniske tall, gåte-kamerasveip; undermeny **Nivåstart** |
 | **Lyd og stemme** | Hovedvolum, lyd, musikk (+ volum), stemme (+ volum); undermeny **Pust og lydnivåer** (pust, skritt, hopp, ting, leker, romlyd) |

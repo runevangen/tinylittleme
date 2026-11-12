@@ -483,7 +483,7 @@ const SINGLE = {
   },
   towel_hang(sx, sy, sz, o) {                                        // håndkle som henger langs en vegg: klatrbart
     const g = new THREE.Group(), tt = terryTex().clone(); tt.repeat.set(Math.max(1, sz / 3), Math.max(1, sy / 3)); tt.needsUpdate = true;
-    const mat = new THREE.MeshStandardMaterial({ color: o.color, map: tt, bumpMap: tt, bumpScale: 1.4, roughness: 1 });
+    const mat = new THREE.MeshStandardMaterial({ color: o.color, map: tt, bumpMap: tt, bumpScale: 1.4, roughness: 1, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });   // skyves litt bakover: der håndkleet har samme topp som knaggrekka (v1.32) flimret halve flata (z-fighting)
     g.add(mesh(roundedBoxGeo(sx, sy, sz, Math.min(sx, sz) * 0.3, Math.min(0.15, sx * 0.3)), mat)); g.children[0].position.y = -sy / 2;
     const band = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
     if (!/kape|bukse|jakke/i.test(o.id)) for (const f of [0.12, 0.88]) { const b = mesh(new THREE.BoxGeometry(sx + 0.08, sy * 0.05, Math.max(0.05, sz - 0.04)), band, false); b.position.y = -sy / 2 + sy * f; g.add(b); }   // håndklær har striper; klær har ikke
