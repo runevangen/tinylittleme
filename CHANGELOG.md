@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.37** – Løpende behandling av innmeldte saker: runneren er lagret i repoet (`tools/roadmap_runner.workflow.js`, tar `args.items`), og rutinen for å hente, prioritere og kjøre tester-saker står i `docs/TILBAKEMELDING.md` og `CLAUDE.md`.
 - **1.36** – Veikart: tre saker fra tester (Rune): R37 (solide perler), R38 (pustelyd av som standard) og R35b (siste shader som kompileres midt i spillet).
 - **1.35** – Fra tester (Rune): ◎-knappen (sentrer kamera) og kartknappen (oversikt) er borte fra skjermen som standard, så de ikke tar plass ved TA/HOPP/GREP. Kan slås på igjen i ⚙ → Styring.
 - **1.34** – Svar fra Claude og tellere (R36): når en tester-sak er rettet får testeren et kort svar i spillet (⚑ lyser grønt, melding ved start, svar i ⚑-boksen), og ⚑-boksen viser «Du har meldt N · M rettet» og en felles teller uten navn. Av/på i ⚙ → Test. Nye regler i CLAUDE.md: tester-saker først, og automatisk svar etter utlegging. Testes på iPhone.
