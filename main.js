@@ -3,7 +3,7 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
-import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT } from './feedback_send.js';
+import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT, fetchInbox, markRead, unreadReplies, statsLines } from './feedback_send.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
@@ -161,6 +161,7 @@ let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.ai
 let showMapBtn = store.get('tlm.showmapbtn', true), showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
+let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let shaderWarm = store.get('tlm.shaderwarm', true);   // R35: full tegning av alt under forvarmingen (admin)
 let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true), buildSeeHint = store.get('tlm.buildsee', true);   // R24: byggeskjermen
@@ -1548,6 +1549,7 @@ const SETTINGS = [
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, wind-up og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
+  fl('replies', 'test', 'Vis svar og tellere fra Claude (⚑-boksen)', true, () => repliesOn, kp('tlm.replies', (v) => { repliesOn = v; if (v) refreshInbox(false); else renderInbox(); })),
   fl('kick', 'spill', 'Sprettboksen kaster figuren bort når den popper under ham', true, () => KICK.on, kp('tlm.kick', (v) => { KICK.on = v; logEv('leke', v ? 'sprettbokskast på' : 'sprettbokskast av'); })),
   rg('kickspeed', 'admin', 'Sprettboks-kast: fart bort fra boksen', 5.5, 0, 9, 0.5, () => KICK.speed, kp('tlm.kickspeed', (v) => { KICK.speed = v; }), { digits: 1 }),
   rg('kickup', 'admin', 'Sprettboks-kast: fart opp', 11, 4, 16, 0.5, () => KICK.up, kp('tlm.kickup', (v) => { KICK.up = v; }), { digits: 1 }),
@@ -1677,7 +1679,7 @@ const marks = [];
 {
   let tag = store.get('tlm.qtag', 'Styring'); const pop = $('qpop'), tags = ['Styring', 'Kamera', 'Hopp', 'Gange', 'Annet'];
   const draw = () => { const qc = $('qcode'); if (qc) qc.style.display = validCode(store.get('tlm.tcode', '')) ? 'none' : 'block'; const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
-  pop.innerHTML = `<input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang)" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button>`;
+  pop.innerHTML = `<div id="qinbox"></div><input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang)" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button>`;
   const qtext = () => { const el = $('qtext'), v = el.value.trim(); el.value = ''; return v; };
   pop.addEventListener('click', (e) => {
     e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
@@ -1689,7 +1691,7 @@ const marks = [];
     if (b.dataset.r) { const tx = qtext(); logEv('vurdering', `${b.dataset.r} · ${tag}${tx ? ' · ' + tx : ''}`); pop.classList.add('hide'); toast(`Takk! Registrert: ${b.textContent} (${tag})`); }
   });
   pop.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'qtext') { e.preventDefault(); pop.querySelector('[data-mark]').click(); } });
-  $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); draw(); if (!pop.classList.contains('hide')) setTimeout(() => $('qtext').focus(), 30); });
+  $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); draw(); if (!pop.classList.contains('hide')) refreshInbox(true); if (!pop.classList.contains('hide')) setTimeout(() => $('qtext').focus(), 30); });
   document.addEventListener('pointerdown', (e) => { if (!pop.classList.contains('hide') && !pop.contains(e.target) && e.target !== $('qbtn')) pop.classList.add('hide'); });
 }
 const unsent = (type) => evLog.filter((e) => e.type === type && !e.sent).length, markCount = () => unsent('MARKERT');
@@ -1698,6 +1700,31 @@ function repHeadHtml() { const f = markCount(), b = unsent('BACKLOGG'); return f
 function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); updateMarkBadge(); toast(`Feil meldt (${markCount()} totalt). Husk å sende rapporten etterpå.`); }
 function markSent() { for (const e of evLog) if (e.type === 'MARKERT' || e.type === 'BACKLOGG') e.sent = true; updateMarkBadge(); }
 const doShare = async (copyOnly) => { const t = reportText(); { const rb = $('reportBox'); if (rb) rb.value = t; } let r; if (copyOnly) { try { await navigator.clipboard.writeText(t); r = 'kopiert'; } catch { r = 'vis'; } } else r = await shareText(t, `tinylittleme v${VERSION} testrapport`); if (r === 'delt' || r === 'kopiert') markSent(); return r; };
+// Svar fra Claude og tellere (R36): hentes når spillet starter og når ⚑ åpnes; ⚑ lyser grønt når det er et ulest svar.
+let inbox = null, inboxToast = false;
+const escH = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function renderInbox() {
+  const el = $('qinbox'), btn = $('qbtn'); if (!el || !btn) return;
+  const unread = inbox ? inbox.replies.filter((r) => r.fresh).length : 0;
+  btn.classList.toggle('hasreply', repliesOn && unread > 0);
+  if (!repliesOn || !inbox) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const lines = statsLines(inbox), rs = inbox.replies.slice(0, 3);
+  el.style.display = 'block';
+  el.innerHTML = lines.map((l) => `<div class="qs1">${escH(l)}</div>`).join('') + rs.map((r) => `<div class="qrep${r.fresh ? ' new' : ''}">✉ ${r.version ? 'v' + escH(r.version) + ': ' : ''}${escH(r.message)}</div>`).join('');
+}
+async function refreshInbox(opened) {
+  const code = store.get('tlm.tcode', '');
+  if (!repliesOn || !validCode(code)) { inbox = null; renderInbox(); return; }
+  const got = await fetchInbox(code); if (!got) return;
+  const seen = new Set((inbox?.replies || []).filter((r) => !r.fresh && r.read).map((r) => r.id));
+  got.replies.forEach((r) => { r.fresh = !r.read && !seen.has(r.id); });
+  inbox = got; renderInbox();
+  const fresh = inbox.replies.filter((r) => r.fresh);
+  if (fresh.length && !inboxToast && !opened) { inboxToast = true; toast(`✉ Svar fra Claude: ${fresh[0].message}`); logEv('svar', `${fresh.length} nytt`); }
+  if (fresh.length && opened) { markRead(code, fresh.map((r) => r.id)); fresh.forEach((r) => { r.read = true; }); $('qbtn').classList.remove('hasreply'); }
+}
+setTimeout(() => refreshInbox(false), 4000);
+
 // «Send til Claude» (v1.27): sender rapporten + teksten direkte til tabellen tlm_feedback (se feedback_send.js, docs/TILBAKEMELDING.md).
 let sending = false;
 async function sendToClaude(body) {
@@ -1709,7 +1736,7 @@ async function sendToClaude(body) {
   sending = true; toast('Sender …');
   const res = await sendFeedback(built.row);
   sending = false;
-  if (res.ok) { markSent(); logEv('sendt', `til Claude (${built.row.report.length} tegn)`); toast('Sendt! Takk, Claude ser den.'); return 'ok'; }
+  if (res.ok) { markSent(); logEv('sendt', `til Claude (${built.row.report.length} tegn)`); toast('Sendt! Takk, Claude ser den.'); refreshInbox(true); return 'ok'; }
   logEv('sendfeil', `${res.reason} ${res.status ?? ''}`);
   toast(REASON_TEXT[res.reason] || REASON_TEXT.feil); return res.reason;
 }

@@ -36,3 +36,24 @@ assert.ok(/'feedback_send'/.test(fs.readFileSync('index.html', 'utf8')), 'feedba
 const role = JSON.parse(Buffer.from(FEEDBACK.key.split('.')[1], 'base64url').toString()).role;
 assert.equal(role, 'anon', 'nøkkelen i spillet må være anon, aldri service_role');
 console.log('feedback: ok');
+
+// ---------- R36: innboks og tellere ----------
+import { parseInbox, fetchInbox, markRead, unreadReplies, statsLines } from './feedback_send.js';
+assert.equal(parseInbox(null), null); assert.equal(parseInbox({ ok: false }), null, 'ugyldig kode gir ingen innboks');
+const inb = parseInbox({ ok: true, me: { sent: 4, fixed: 2, working: 1 }, all: { sent: 14, fixed: 9, testers: 3 },
+  replies: [{ id: 'a', version: '1.30', message: 'Rettet i v1.30', read: false, at: 'x' }, { id: 'b', message: 'x'.repeat(999), read: true }, { id: '', message: 'uten id' }, { id: 'c', message: '' }] });
+assert.equal(inb.replies.length, 2, 'svar uten id eller tekst filtreres bort'); assert.equal(inb.replies[1].message.length, 300);
+assert.equal(unreadReplies(inb).length, 1);
+assert.deepEqual(statsLines(inb), ['Du har meldt 4 · 2 rettet · 1 under arbeid', 'Sammen har dere meldt 14, og 9 er rettet']);
+assert.ok(statsLines(parseInbox({ ok: true, me: {}, all: {}, replies: [] }))[0].includes('ikke meldt noe ennå'));
+assert.equal(statsLines(parseInbox({ ok: true, me: { sent: 1, fixed: 0 }, all: { sent: 1, fixed: 0, testers: 1 } })).length, 1, 'felles teller skjules når bare én tester');
+assert.equal(parseInbox({ ok: true, me: { sent: -5, fixed: 'x' }, all: {}, replies: [] }).me.sent, 0, 'tall saneres');
+// kall mot funksjonene: riktig adresse og kode i små bokstaver
+let call; const okFetch = (data) => async (url, init) => { call = { url, body: JSON.parse(init.body) }; return { ok: true, status: 200, json: async () => data }; };
+const got = await fetchInbox(' Rune ', { fetchFn: okFetch({ ok: true, me: { sent: 1 }, all: {}, replies: [] }) });
+assert.equal(call.url, `${FEEDBACK.url}/rest/v1/rpc/tlm_my_inbox`); assert.equal(call.body.c, 'rune'); assert.equal(got.me.sent, 1);
+assert.equal(await fetchInbox('rune', { fetchFn: async () => { throw new Error('offline'); } }), null, 'uten nett: ingen innboks, ingen feil');
+assert.equal(await fetchInbox('rune', { fetchFn: async () => ({ ok: false, status: 500 }) }), null);
+assert.equal(await markRead('rune', [], { fetchFn: okFetch(1) }), 0, 'ingen ids: ingen kall');
+assert.equal(await markRead('Rune', ['a'], { fetchFn: okFetch(1) }), 1); assert.deepEqual(call.body, { c: 'rune', ids: ['a'] });
+console.log('feedback inbox: ok');

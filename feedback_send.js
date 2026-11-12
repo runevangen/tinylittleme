@@ -59,3 +59,57 @@ export const REASON_TEXT = {
   feil: 'Kunne ikke sende. Prøv igjen, eller bruk «Kopier tilbakemeldinger».',
   tom: 'Det er ingenting å sende ennå. Skriv noe eller marker en feil først.',
 };
+
+// ---------- svar fra Claude + tellere (R36) ----------
+// Innboksen hentes med en sikker funksjon i Supabase (tlm_my_inbox) som bare gir tall og svartekster til den som har koden.
+async function rpc(name, args, { fetchFn = globalThis.fetch, cfg = FEEDBACK, timeoutMs = 8000 } = {}) {
+  const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
+  try {
+    const res = await fetchFn(`${cfg.url}/rest/v1/rpc/${name}`, {
+      method: 'POST',
+      headers: { apikey: cfg.key, Authorization: `Bearer ${cfg.key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(args), signal: ctl?.signal,
+    });
+    if (!res.ok) return { ok: false, status: res.status };
+    return { ok: true, data: await res.json() };
+  } catch { return { ok: false, status: 0 }; } finally { if (timer) clearTimeout(timer); }
+}
+
+const num = (v) => (Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);
+// Gjør svaret fra serveren trygt å vise (kutter lengde, tvinger tall og tekst)
+export function parseInbox(d) {
+  if (!d || d.ok !== true) return null;
+  const m = d.me || {}, a = d.all || {};
+  return {
+    me: { sent: num(m.sent), fixed: num(m.fixed), working: num(m.working) },
+    all: { sent: num(a.sent), fixed: num(a.fixed), testers: num(a.testers) },
+    replies: (Array.isArray(d.replies) ? d.replies : []).slice(0, 20).map((r) => ({
+      id: String(r.id || ''), version: String(r.version || '').slice(0, 20), message: String(r.message || '').slice(0, 300), read: !!r.read, at: String(r.at || ''),
+    })).filter((r) => r.id && r.message),
+  };
+}
+export async function fetchInbox(code, opts) {
+  const r = await rpc('tlm_my_inbox', { c: cleanCode(code) }, opts);
+  if (!r.ok) return null;
+  return parseInbox(r.data);
+}
+export async function markRead(code, ids, opts) {
+  if (!ids?.length) return 0;
+  const r = await rpc('tlm_mark_read', { c: cleanCode(code), ids }, opts);
+  return r.ok ? num(r.data) : 0;
+}
+export const unreadReplies = (inbox) => (inbox?.replies || []).filter((r) => !r.read);
+
+// Telleren som vises i ⚑-boksen: motiverer ved å vise at meldingene fører til noe. Ingen navn, bare tall.
+export function statsLines(inbox) {
+  if (!inbox) return [];
+  const { me, all } = inbox, out = [];
+  if (me.sent > 0) {
+    const parts = [`Du har meldt ${me.sent}`, `${me.fixed} rettet`];
+    if (me.working > 0) parts.push(`${me.working} under arbeid`);
+    out.push(parts.join(' · '));
+  } else out.push('Du har ikke meldt noe ennå. Trykk ⚑ → skriv → Send til Claude.');
+  if (all.sent > 0 && all.testers > 1) out.push(`Sammen har dere meldt ${all.sent}, og ${all.fixed} er rettet`);
+  return out;
+}
