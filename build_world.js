@@ -38,6 +38,13 @@ export function partSlabs(part) {
   return out;
 }
 
+// R30: støtta (fulcrum) under dreiepunktet til en vippe: en smal søyle fra underlaget (eller `site.drop` enheter ned, til gulvet i rommet) opp til undersiden av planken
+export function fulcrum(site, part, w = 1) {
+  const hd = siteDepth(site) / 2, top = part.v - 0.3, bot = -(site.drop || 0);
+  if (top - bot < 0.3) return null;
+  return { type: 'wood', id: `bygg_${site.id}_${part.id}_stotte`, built: site.id, material: 'wood', color: 0x3fa89b, min: [site.x + part.u - w / 2, site.y + bot, site.z - hd], max: [site.x + part.u + w / 2, site.y + top, site.z + hd] };
+}
+
 // alle kollisjonsflater et bygg gir, i verdenskoordinater (samme format som `box()` i physics.js)
 export function buildSolids(site, placed) {
   const hd = siteDepth(site) / 2, out = [];
@@ -47,6 +54,7 @@ export function buildSolids(site, placed) {
       out.push({ type: t.solid || 'wood', id: `bygg_${site.id}_${p.id}`, built: site.id, material: 'wood', color: parseInt(String(t.color).slice(1), 16) || 0xc98a45,
         min: [site.x + s.u0, site.y + s.v0, site.z - hd], max: [site.x + s.u1, site.y + s.v1, site.z + hd] });
     }
+    if (t.pivot) { const f = fulcrum(site, p); if (f) out.push(f); }
   }
   return out;
 }

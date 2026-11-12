@@ -7,7 +7,7 @@ import {
   addLink, removeLink, topLink, linkEnds, LINK_KINDS, twistRot, fitView, clampScale, toScreen, toWorld, canEnterBuild, nearestSite, initParts, partTypes, gotPartIds, stepParts, restoreParts, snapPoint, siteAnchors, ROT_STEP,
 } from './build_logic.js';
 import { createSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
-import { applyBuilt, clearBuilt, liftOut, builtCount } from './build_world.js';   // R26: bygget flyttes ut i verdenen
+import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum } from './build_world.js';   // R26: bygget flyttes ut i verdenen
 
 const css = `
 #bld{position:fixed;inset:0;z-index:7;display:none;background:linear-gradient(#26324bfa,#141a2cff);touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font:600 14px system-ui}
@@ -37,7 +37,7 @@ body.building #panel{z-index:10}
 @media (orientation:landscape) and (max-height:520px){#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true }) {
+export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -49,7 +49,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   const TOPPX = () => (innerHeight <= 520 ? 100 : 130), BOTPX = () => (innerHeight <= 520 ? 110 : 160);
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [];   // R25: PRØV
-  const solved = new Set();
+  const solved = new Set(); let seeShown = false;
   const committed = new Map();               // R26: stedets id -> bygget (som tekst) som står i verdenen akkurat nå
   const worldPlaced = new Map();             // stedets id -> delene slik de ligger etter at de har satt seg
   const worldMeshes = new Map();             // stedets id -> three-gruppe med de ferdige delene
@@ -59,6 +59,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     for (const p of worldPlaced.get(site.id) || []) {
       const t = partType(p.type), m = new THREE.Mesh(new THREE.BoxGeometry(t.w, t.h, hd), new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.65, metalness: p.type === 'weight' ? 0.5 : 0 }));
       m.position.set(site.x + p.u, site.y + p.v, site.z); m.rotation.z = p.rot || 0; g.add(m);
+      if (t.pivot) { const f = fulcrum(site, p); if (f) { const fm = new THREE.Mesh(new THREE.BoxGeometry(f.max[0] - f.min[0], f.max[1] - f.min[1], f.max[2] - f.min[2]), new THREE.MeshStandardMaterial({ color: f.color, roughness: 0.7 })); fm.position.set((f.min[0] + f.max[0]) / 2, (f.min[1] + f.max[1]) / 2, (f.min[2] + f.max[2]) / 2); g.add(fm); } }
     }
     scene.add(g); worldMeshes.set(site.id, g);
   }
@@ -141,6 +142,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
       const t = partType(p.type), pts = corners(p).map((c) => sx(c.u, c.v));
       g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath();
       g2.globalAlpha = p === (drag && drag.part) ? 0.8 : 1; g2.fillStyle = t.color; g2.fill(); g2.lineWidth = sel === p.id || linkFrom === p.id ? 4 : 2; g2.strokeStyle = sel === p.id || linkFrom === p.id ? '#fff' : '#2a1d10'; g2.stroke(); g2.globalAlpha = 1;
+      if (t.pivot) drawPivot(p, sx);
       if (p.anchored) { const c = sx(p.u, p.v); g2.beginPath(); g2.arc(c.x, c.y, 4, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); }
     }
     drawLinks(B, sx);
@@ -154,6 +156,11 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   }
 
   const LINK_COL = { tape: '#f3e36b', hinge: '#ffffff', rope: '#c79a5a' };
+  function drawPivot(c, sx) {            // R30: støtta under dreiepunktet til en vippe (trekant) og selve dreiepunktet
+    const q = sx(c.u, c.v), h = Math.max(14, view.scale * 1.6), w = Math.max(9, view.scale * 0.7);
+    g2.beginPath(); g2.moveTo(q.x, q.y); g2.lineTo(q.x - w, q.y + h); g2.lineTo(q.x + w, q.y + h); g2.closePath(); g2.fillStyle = '#2d6f67'; g2.fill(); g2.lineWidth = 2; g2.strokeStyle = '#0d2f2b'; g2.stroke();
+    g2.beginPath(); g2.arc(q.x, q.y, 5, 0, 7); g2.fillStyle = '#fff'; g2.fill(); g2.strokeStyle = '#0d2f2b'; g2.stroke();
+  }
   function drawLinks(B, sx) {
     for (const l of B.links) {
       const e = linkEnds(B, l); if (!e) continue; const a = sx(e[0].u, e[0].v), b = sx(e[1].u, e[1].v), isSel = selLink === l.id;
@@ -172,6 +179,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     const pose = sim.pose(), sc = view.scale;
     for (const p of pose.parts) {
       const t = partType(p.type);
+      if (t.pivot) { const m = p.pts[(p.pts.length - 1) / 2]; drawPivot({ u: m.u, v: m.v }, sx); }
       if (p.kind === 'chain') {
         for (const seg of p.segs) {
           if (!seg.length) continue; const pts = seg.map((q) => sx(q.u, q.v));
@@ -265,7 +273,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
       if (over) { if (ex) { remove(B, drag.id); logEv('bygg', `tilbake i brettet ${drag.id}`); onChange?.(); } sel = null; }
       else {
         const moved = ex ? Math.hypot(drag.part.u - drag.before.u, drag.part.v - drag.before.v) > 0.05 : true;
-        if (moved) { const p = place(B, drag.id, drag.part.u, drag.part.v, drag.part.rot); logEv('bygg', `${drag.fromTray ? 'plasser' : 'flytt'} ${drag.id} ${p.anchored ? 'festet' : 'rutenett'}`); buzz?.(8); onChange?.(); }
+        if (moved) { const p = place(B, drag.id, drag.part.u, drag.part.v, drag.part.rot); logEv('bygg', `${drag.fromTray ? 'plasser' : 'flytt'} ${drag.id} (${p.type}) ${p.anchored ? 'festet' : 'rutenett'}`); buzz?.(8); if (drag.fromTray && partType(p.type).pivot && getSeeHint() && !seeShown) { seeShown = true; toast(T('build.seesawHint')); } onChange?.(); }
       }
       drag = null; trayRender();
     }
@@ -280,7 +288,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     undo: () => { const B = getB(active); if (undo(B)) { logEv('bygg', 'angre'); sel = null; trayRender(); onChange?.(); } },
     reset: () => { const B = getB(active); if (reset(B)) { logEv('bygg', 'nullstill'); sel = null; trayRender(); onChange?.(); } },
     try: () => (sim ? stopSim('stopp') : startSim()),
-    rotl: () => rot(-ROT_STEP), rotr: () => rot(ROT_STEP),
+    rotl: () => rot(ROT_STEP), rotr: () => rot(-ROT_STEP),   // R30: ↺ dreier mot klokka (positiv vinkel i sideriss med v oppover), ↻ med klokka
     fit: () => { view = fitView(active, W, H, 24, TOPPX(), BOTPX()); },
     snap: () => { setSnap(!getSnap()); const B = getB(active); B.snap = getSnap(); labels(); logEv('bygg', `snapping ${getSnap() ? 'på' : 'av'}`); },
     del: () => { const B = getB(active); if (selLink && removeLink(B, selLink)) { logEv('bygg', `fjernet ${selLink}`); selLink = null; onChange?.(); } else if (sel && remove(B, sel)) { logEv('bygg', `tilbake i brettet ${sel}`); sel = null; trayRender(); onChange?.(); } },

@@ -48,8 +48,8 @@ const lv = (id) => JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')
   assert.ok(walkAcross(true).x > site.x + 6 && Math.abs(walkAcross(true).y - site.y) < 0.6, 'går over broen');
   assert.ok(walkAcross(false).x < site.x, 'uten bro stopper figuren ved kanten (gapet kan ikke krysses ved å gå)');
 }
-// 4) begge brettene: byggestedet er med delene, referansebygget består prøven i 2D-fysikken, og ruta via bygget går i ekte fysikk
-for (const id of ['bro', 'trapp']) {
+// 4) alle fire byggebrettene (R26: bro og trapp, R30: vippe og kjøkkenbro): byggestedet er med delene, referansebygget består prøven i 2D-fysikken, og ruta via bygget går i ekte fysikk
+for (const id of ['bro', 'trapp', 'vippe', 'kjokkenbro']) {
   const L = lv(id), site = L.build.sites[0]; assert.ok(site.ref?.placed?.length && site.ref.route, `${id}: referansebygg og rute i brettet`);
   const types = Object.fromEntries(L.build.parts.map((q) => [q.id, q.type]));
   const need = {}; for (const p of site.ref.placed) need[p.type] = (need[p.type] || 0) + 1; for (const [t, n] of Object.entries(need)) assert.ok(L.build.parts.filter((q) => q.type === t).length >= n, `${id}: nok deler av typen ${t} å finne i rommet`);
@@ -66,5 +66,13 @@ for (const id of ['bro', 'trapp']) {
   // og et halvt bygg (uten bro) hjelper ikke: ruta via bygget går ikke uten delene
   const none = walkRoute(null, { level: L, route }); assert.ok(!none.ok, `${id}: uten bygget går ikke snarveien`);
   void types;
+}
+// 5) R30: vippa i verden: støtta (fulcrum) under dreiepunktet er en solid søyle, og den prøvde vippa blir en rampe
+{
+  const L = lv('vippe'), site = L.build.sites[0], sp = BP.settledPlaced({ site, placed: site.ref.placed, links: [] }), v = sp[0];
+  assert.ok(Math.abs(v.rot) > 0.15 && Math.abs(v.rot) < 0.4, `vippa legger seg skrått (${v.rot.toFixed(2)} rad)`);
+  const solids = BW.buildSolids(site, sp), f = solids.find((b) => b.id.endsWith('_stotte')); assert.ok(f, 'støtte under vippa');
+  assert.ok(f.min[1] < site.y - 7 && f.max[1] < site.y + v.v, 'støtta når ned til gulvet i rommet og ligger under planken'); assert.ok(solids.length > 5, 'planken er en rampe av skiver');
+  assert.equal(BW.fulcrum({ id: 's', x: 0, y: 0, z: 0, w: 10, h: 5 }, { id: 'p', u: 0, v: 0.2 }), null, 'ingen støtte om planken ligger rett på underlaget');
 }
 console.log('bygg-i-verden-tester grønne');

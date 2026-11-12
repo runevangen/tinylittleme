@@ -1,0 +1,352 @@
+{
+ "name": "Vippa over gapet",
+ "units": "cm",
+ "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
+ "validate": true,
+ "source": {
+  "note": "Byggebrett (R30, barnerom): et gap foran en hylle som er 10 cm høyere. Den smarte veien er å bygge en vippe (stiv planke som svinger på midten og legger seg skrått ned på begge hyllene); den harde veien er langt rundt og opp den smale trappa til høyre."
+ },
+ "room": {
+  "width": 520,
+  "depth": 200,
+  "height": 240,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b98a",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#dfe9ef"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "start": {
+  "x": 40,
+  "z": 160
+ },
+ "goal": {
+  "x": 405,
+  "y": 74,
+  "z": 80,
+  "on": "s2",
+  "note": "Flagget står øverst på s2."
+ },
+ "windows": [
+  {
+   "wall": "N",
+   "z": 260,
+   "y": 130,
+   "w": 120,
+   "h": 70
+  }
+ ],
+ "hazards": [],
+ "objects": [
+  {
+   "id": "a1",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#e07a5f",
+   "box": [
+    60,
+    100,
+    0,
+    10,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "a2",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#f2b84b",
+   "box": [
+    100,
+    140,
+    0,
+    20,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "a3",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#81b29a",
+   "box": [
+    140,
+    180,
+    0,
+    30,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "hylleA",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#6c8ebf",
+   "box": [
+    180,
+    260,
+    0,
+    40,
+    40,
+    120
+   ],
+   "confidence": 1,
+   "cp": true
+  },
+  {
+   "id": "hylleB",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#6c8ebf",
+   "box": [
+    292.5,
+    345,
+    0,
+    50,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "s1",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#e07a5f",
+   "box": [
+    345,
+    385,
+    0,
+    62,
+    40,
+    120
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "s2",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#f2b84b",
+   "box": [
+    385,
+    425,
+    0,
+    74,
+    40,
+    120
+   ],
+   "confidence": 1,
+   "cp": true
+  },
+  {
+   "id": "c3",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#b56576",
+   "box": [
+    430,
+    458,
+    0,
+    60,
+    60,
+    100
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "c2",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#81b29a",
+   "box": [
+    463,
+    490,
+    0,
+    40,
+    60,
+    100
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "c1",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#e07a5f",
+   "box": [
+    495,
+    520,
+    0,
+    20,
+    60,
+    100
+   ],
+   "confidence": 1
+  }
+ ],
+ "look": {
+  "exposure": 0.95,
+  "sun": 2.6
+ },
+ "audio": {
+  "reverb": 0.14
+ },
+ "ants": [
+  {
+   "id": "maur_gulv",
+   "on": "gulv",
+   "from": [
+    250,
+    160
+   ],
+   "to": [
+    360,
+    160
+   ]
+  }
+ ],
+ "goals": [
+  {
+   "id": "bygg",
+   "type": "flag",
+   "flag": "vippe1",
+   "label": "Bygg en vippe over gapet (BYGG-knappen)",
+   "en": "Build a seesaw over the gap (BUILD button)"
+  },
+  {
+   "id": "flagg",
+   "type": "reach",
+   "on": "s2",
+   "label": "Nå flagget øverst",
+   "en": "Reach the flag on top",
+   "gate": true
+  }
+ ],
+ "build": {
+  "sites": [
+   {
+    "id": "vippe1",
+    "label": "Gapet foran den høye hylla (vippe)",
+    "at": [
+     276.25,
+     80
+    ],
+    "y": 40,
+    "w": 100,
+    "h": 60,
+    "d": 20,
+    "drop": 40,
+    "anchors": [
+     [
+      0,
+      6.25
+     ]
+    ],
+    "deck": [
+     [
+      -47.5,
+      -16.25
+     ],
+     [
+      16.25,
+      47.5,
+      10
+     ]
+    ],
+    "start": [
+     -40,
+     0
+    ],
+    "goal": [
+     40,
+     10
+    ],
+    "ref": {
+     "placed": [
+      {
+       "id": "v1",
+       "type": "seesaw",
+       "u": 0,
+       "v": 1.25,
+       "rot": 0.2618
+      }
+     ],
+     "links": [],
+     "surfaces": [],
+     "route": [
+      "gulv",
+      "a1",
+      "a2",
+      "a3",
+      "hylleA",
+      "hylleB",
+      "s1",
+      "s2"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "v1",
+    "type": "seesaw",
+    "on": "gulv",
+    "at": [
+     300,
+     170
+    ]
+   },
+   {
+    "id": "v2",
+    "type": "plank_s",
+    "on": "a1",
+    "at": [
+     80,
+     80
+    ]
+   },
+   {
+    "id": "v3",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     120,
+     180
+    ]
+   },
+   {
+    "id": "v4",
+    "type": "weight",
+    "on": "gulv",
+    "at": [
+     200,
+     180
+    ]
+   },
+   {
+    "id": "v5",
+    "type": "plank_s",
+    "on": "hylleA",
+    "at": [
+     220,
+     80
+    ]
+   }
+  ]
+ }
+}

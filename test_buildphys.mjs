@@ -89,3 +89,24 @@ sim = BP.createSim({ site: lvl, placed: [P('a', 'plank_l', 0, 0)], links: [] });
 // ugyldig kobling hoppes over og krasjer ikke
 assert.doesNotThrow(() => run([P('a', 'block', 0, 5)], [link('tape', 'x', 'y', { x: 0, y: 0 }, { x: 0, y: 0 })], wide, { maxT: 1 }));
 console.log('bygg-fysikk-tester grønne');
+// R30: vippa (seesaw): fast dreiepunkt i midten, bærer testfiguren fra den lave til den høye hylla, svinger rundt midten
+{
+  const lv = JSON.parse(fs.readFileSync('levels/vippe.level.json', 'utf8')), site = lv.build.sites[0], V = (rot) => [P('v1', 'seesaw', 0, 1.25, rot)];
+  assert.ok(BL.partType('seesaw').pivot && BL.partType('seesaw').w === 8, 'vippa er en egen deltype');
+  assert.ok(lv.build.parts.some((q) => q.type === 'seesaw'), 'vippa finnes i rommet');
+  const ok = run(V(0.2618), [], site);
+  assert.equal(ok.result, 'won', `vippa på skrå over gapet bærer figuren (${ok.reason})`); assert.equal(ok.breaks.length, 0); assert.equal(ok.linkBreaks.length, 0, 'dreiepunktet holder');
+  assert.equal(run([], [], site).result, 'lost', 'uten bygg består ikke prøven');
+  // dreiepunktet er skjult i visningen, men holder midten av planken på plass mens endene svinger
+  const sim = settle(V(0.2618), [], site, 2); const pose = sim.pose(); assert.equal(pose.links.length, 0, 'det skjulte dreiepunktet tegnes ikke som ledd');
+  const pts = pose.parts[0].pts, mid = pts[(pts.length - 1) / 2]; assert.ok(Math.hypot(mid.u, mid.v - 1.25) < 0.05, 'midten ligger fast ved dreiepunktet');
+  // fri vippe uten underlag i nærheten: en tung vekt teipet til ene enden får den til å vippe ned på den siden (den svinger rundt midten, glir ikke bort)
+  const free = { id: 'f', w: 24, h: 12, deck: [{ u0: -12, u1: -9 }, { u0: 9, u1: 12 }], start: { u: -11, v: 0 }, goal: { u: 11, v: 0 } };
+  const placed = [P('v1', 'seesaw', 0, 4, 0), P('w', 'weight', -3, 5.0, 0)], tape = [link('tape', 'w', 'v1', { x: 0, y: -0.75 }, { x: -3, y: 0.25 })];
+  const tip = BP.settledPlaced({ site: free, placed, links: tape }, { secs: 1.5 }).find((p) => p.id === 'v1');
+  assert.ok(tip.rot > 0.3 && Math.abs(tip.u) < 1 && Math.abs(tip.v - 4) < 1, `vippa tipper ned mot vekta (rot ${tip.rot.toFixed(2)}) og blir ved dreiepunktet`);
+  const bare = BP.settledPlaced({ site: free, placed: [P('v1', 'seesaw', 0, 4, 0)], links: [] }, { secs: 1.5 })[0]; assert.ok(Math.abs(bare.rot) < 0.1, 'uten vekt blir den liggende rett');
+  // determinisme
+  assert.equal(JSON.stringify(BP.settledPlaced({ site, placed: V(0.2618), links: [] })), JSON.stringify(BP.settledPlaced({ site, placed: V(0.2618), links: [] })));
+}
+console.log('vippe-tester grønne');
