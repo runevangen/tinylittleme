@@ -8,9 +8,9 @@ export const FEEDBACK = {
 };
 export const LIMITS = { version: 20, level: 40, body: 4000, report: 60000, ua: 300 };
 export const KINDS = ['feil', 'ide', 'vurdering', 'rapport'];
-export const CODE_RE = /^[A-Za-z0-9_-]{6,24}$/;
+export const CODE_RE = /^[a-z0-9_-]{4,24}$/;   // små bokstaver (koden gjøres om til små bokstaver), 4–24 tegn
 
-export const cleanCode = (s) => String(s ?? '').trim();
+export const cleanCode = (s) => String(s ?? '').trim().toLowerCase();   // «Rune», «rune » og «RUNE» er samme kode
 export const validCode = (s) => CODE_RE.test(cleanCode(s));
 
 const cut = (v, n) => String(v ?? '').slice(0, n);

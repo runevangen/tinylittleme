@@ -1797,7 +1797,7 @@ function buildPanel() {
   if ($('lockAdmin')) $('lockAdmin').onclick = () => { adminOn = false; store.set('tlm.admin', false); buildPanel(); toast('Admin låst'); };
   // test
   $('testerCode').value = store.get('tlm.tcode', '');
-  $('testerCode').onchange = () => { const v = cleanCode($('testerCode').value); store.set('tlm.tcode', v); if (v && !validCode(v)) toast('Koden ser feil ut (6–24 tegn: bokstaver, tall, - og _)'); };
+  $('testerCode').onchange = () => { const v = cleanCode($('testerCode').value); store.set('tlm.tcode', v); if (v && !validCode(v)) toast('Koden ser feil ut (4–24 tegn: bokstaver, tall, - og _)'); };
   $('bSend').onclick = () => { $('testerCode').onchange(); const tx = $('markText').value.trim(); sendToClaude(tx).then((r) => { if (r === 'ok') { $('markText').value = ''; $('reportBox').value = reportText(); } }); };
   $('bMark').onclick = () => { markHere($('markText').value.trim()); $('markText').value = ''; $('reportBox').value = reportText(); };
   $('bCopyRep').onclick = () => doShare(true).then((r) => { toast(r === 'kopiert' ? 'Tilbakemeldingene er kopiert. Lim dem inn til Claude' : 'Kunne ikke kopiere: åpne «Vis tilbakemeldingene» og kopier teksten'); if (r === 'vis') $('reportBox').closest('details').open = true; });

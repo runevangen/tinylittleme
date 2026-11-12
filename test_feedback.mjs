@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import { buildPayload, sendFeedback, validCode, LIMITS, FEEDBACK, REASON_TEXT } from './feedback_send.js';
 
 assert.ok(validCode('tlm-7c3e8e5d') && validCode(' tlm-7c3e8e5d '), 'gyldig kode (trimmes)');
+assert.ok(validCode('Rune') && validCode('ANKI') && validCode(' Anki '), 'korte navn og store bokstaver er ok');
+assert.equal(buildPayload({ code: 'Rune', body: 'x' }).row.tester_code, 'rune', 'koden sendes med små bokstaver');
 for (const bad of ['', 'abc', 'x'.repeat(25), 'tlm 123456', 'æøå12345', null]) assert.ok(!validCode(bad), 'ugyldig kode: ' + bad);
 
 assert.equal(buildPayload({ code: 'nei', body: 'x' }).error, 'kode');
