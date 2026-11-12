@@ -72,7 +72,7 @@ export function stepToys(S, L, p, dt) {
     // landet på toppen (HOPP)
     if (landed && p.groundBox === b) {
       if (t.kind === 'rockinghorse') { t.rock = TOY.rockT; t.ph = 0; out('rock', impact); }
-      else if (t.kind === 'jackbox') { t.pop = TOY.popT; out('pop', impact); }
+      else if (t.kind === 'jackbox') { t.pop = TOY.popT; out('pop', impact); ev[ev.length - 1].onTop = true; }
       else if (t.kind === 'toycar' && hasCooled(t, TOY.honkCool)) out('honk', impact);
     }
     // dyttet: målt flytting siden forrige bilde

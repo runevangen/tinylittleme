@@ -857,7 +857,8 @@ function sub(p, inp, dt, L) {
     const eff = -vyBefore * (p.groundBox?.soft ? P.softFactor : 1);          // myke flater tar av for fallet
     p.landImpact = eff; p.landT = 0; p.vaulting = false;
     if (P.landK > 0 && eff > P.landMin) p.recover = Math.min(P.landMax, (eff - P.landMin) * P.landK);
-    if (eff >= P.knockV) p.knockout = true;                                   // for hardt: tilbake til lagringspunktet
+    if (p.safeT > 0) { /* R34: uskadd etter kast fra sprettboks */ }
+    else if (eff >= P.knockV) p.knockout = true;                                   // for hardt: tilbake til lagringspunktet
     else if (eff >= P.hardLand) { p.recover = Math.max(p.recover, P.stunTime); p.hardLands++; }   // bedøvet en stund
   }
 

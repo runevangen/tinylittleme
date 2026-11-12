@@ -1,6 +1,7 @@
 // Figurens stemme: korte replikker som sies (nettleserens talesyntese) og vises i en snakkeboble.
 // All logikk om hva som sies, når og hvor ofte ligger her (uten DOM), så den kan testes i Node.
 export const LINES = {
+  thrown:     { say: ['Wææh!', 'Hjelp, en klovn!', 'Oi oi oi!'], gap: 5, p: 1 },
   hardland:   { say: ['Au!', 'Uff!', 'Oi, det svei!'], gap: 6, p: 1 },
   knockout:   { say: ['Aj aj aj!', 'Det var for langt ned!'], gap: 6, p: 1, prio: true },
   fall:       { say: ['Hjelp!', 'Neeei!', 'Uææ!'], gap: 10, p: 0.9 },

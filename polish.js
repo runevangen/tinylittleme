@@ -21,6 +21,7 @@ export function createReact() {
     trigger(kind) {
       if (kind === 'stomp') { s.kind = 'stomp'; s.t = 0; s.dur = 0.9; }
       else if (kind === 'hurt') { s.kind = 'hurt'; s.t = 0; s.dur = 0.8; }
+      else if (kind === 'thrown') { s.kind = 'thrown'; s.t = 0; s.dur = 1.1; }   // R34: kastet av sprettboksen: armene opp
     },
     update(dt) {
       s.t += dt;
@@ -35,6 +36,9 @@ export function createReact() {
         out.armsUp = smooth(clamp(u / 0.15, 0, 1)) * (1 - smooth(clamp((u - 0.7) / 0.3, 0, 1)));
         out.hop = 0.2 * Math.sin(clamp(u / 0.45, 0, 1) * Math.PI);   // tydelig sprett (ca. 20 cm) som på en trampoline
         out.spin = 0.5 * Math.sin(u * Math.PI * 2) * (1 - u);                      // lite jubel-vrid i overkroppen
+      } else if (s.kind === 'thrown') {
+        out.armsUp = smooth(clamp(u / 0.12, 0, 1)) * (1 - smooth(clamp((u - 0.7) / 0.3, 0, 1)));
+        out.spin = 0.4 * Math.sin(u * Math.PI * 2) * (1 - u);
       } else {
         const hit = Math.exp(-u * 5);                                              // rykk med en gang, så demper det
         out.flinch = hit; out.lean = -0.5 * hit; out.crouch = 0.6 * hit;

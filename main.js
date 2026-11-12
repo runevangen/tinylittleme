@@ -35,7 +35,8 @@ import { applyAccessories, updateAccessories, showCloset, previewSVG } from './r
 import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4–6 som egne rom (stemning, hjelmlykt, vri)
 import { createVoice } from './voice.js';
 import { createShortcutWatch, resetShortcutWatch, stepShortcutWatch } from './shortcut.js';   // R29: verktøy-genveier (hårgelé-trapper i nivå 4–6)
-import { createToyLife, resetToys, stepToys, TOY, TOY_SOUND, TOY_CUE } from './toys_live.js';   // R18: leker som lever og reagerer
+import { createToyLife, resetToys, stepToys, TOY, TOY_SOUND, TOY_CUE } from './toys_live.js';
+import { KICK, tryKick, tickKick } from './toy_kick.js';   // R34: sprettboksen kaster figuren   // R18: leker som lever og reagerer
 import { animateToy } from './toys_view.js';
 import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
@@ -164,6 +165,7 @@ let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buil
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let toysOn = store.get('tlm.toys', true);   // R18
 TOY.windT = store.get('tlm.toywind', TOY.windT);
+KICK.on = store.get('tlm.kick', KICK.on); KICK.speed = store.get('tlm.kickspeed', KICK.speed); KICK.up = store.get('tlm.kickup', KICK.up); KICK.safeT = store.get('tlm.kicksafe', KICK.safeT);   // R34
 let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let goalsOn = store.get('tlm.goals', true), goalArrowOn = store.get('tlm.goalarrow', true), goalLockOn = store.get('tlm.goallock', true);   // delmål (R23)
@@ -1542,6 +1544,10 @@ const SETTINGS = [
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, wind-up og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
+  fl('kick', 'spill', 'Sprettboksen kaster figuren bort når den popper under ham', true, () => KICK.on, kp('tlm.kick', (v) => { KICK.on = v; logEv('leke', v ? 'sprettbokskast på' : 'sprettbokskast av'); })),
+  rg('kickspeed', 'admin', 'Sprettboks-kast: fart bort fra boksen', 5.5, 0, 9, 0.5, () => KICK.speed, kp('tlm.kickspeed', (v) => { KICK.speed = v; }), { digits: 1 }),
+  rg('kickup', 'admin', 'Sprettboks-kast: fart opp', 11, 4, 16, 0.5, () => KICK.up, kp('tlm.kickup', (v) => { KICK.up = v; }), { digits: 1 }),
+  rg('kicksafe', 'admin', 'Sprettboks-kast: uskadd-tid etter kastet (sekunder)', 1.6, 0, 4, 0.2, () => KICK.safeT, kp('tlm.kicksafe', (v) => { KICK.safeT = v; }), { digits: 1 }),
   rg('toywind', 'admin', 'Levende leker: hvor lenge wind-up-roboten går (sekunder)', 2.6, 1, 6, 0.2, () => TOY.windT, kp('tlm.toywind', (v) => { TOY.windT = v; }), { digits: 1 }),
   fl('creatures', 'spill', 'Nye skapninger (pillbug som ruller, edderkopp i tråd): av = bare maur', true, () => creaturesOn, kp('tlm.creatures', (v) => { creaturesOn = v; LEVEL.noCreatures = !v; logEv('fiende', v ? 'skapninger på' : 'skapninger av'); })),
   rg('creaturewarn', 'admin', 'Nye skapninger: varseltid (faktor, 1 = standard)', 1, 0.7, 2.5, 0.1, () => creatureWarn, kp('tlm.creaturewarn', (v) => { creatureWarn = v; CREATURE_TUNE.warn = v; }), { digits: 1 }),
@@ -2001,7 +2007,12 @@ function update(dt) {
     logEv('genvei', `${ev.id} ${ev.act === 'top' ? 'oppe' : 'første trinn'}`);
     if (shortcutHintOn) { if (ev.act === 'top') { audio?.checkpoint(); buzz(25); toast(T('toast.shortcutTop')); } else toast(T('toast.shortcutStep', { jump: T('btn.jump') })); }
   }
+  tickKick(player, dt);
   if (toysOn) for (const ev of stepToys(toyLife, LEVEL, player, dt)) {                // R18: små stemmer i rommet
+    if (ev.act === 'pop' && ev.onTop && mode === 'play') {                              // R34: står du på sprettboksen når den popper, kastes du bort
+      const k = tryKick(player, LEVEL.bodies.find((b) => b.id === ev.id));
+      if (k) { logEv('leke', `${ev.id} kast ${k.dist.toFixed(1)} v=${Math.hypot(k.vx, k.vz).toFixed(1)}/${k.vy.toFixed(1)}`); react.trigger('thrown'); say('thrown'); setMood('hurt', 0.6); buzz(30); cue('wææh!'); }
+    }
     const snd = TOY_SOUND[ev.act]; if (snd === 'squeak') audio?.squeak(ev.amp); else if (snd === 'honk') audio?.honk(ev.amp); else if (snd === 'creak') audio?.creak(ev.amp); else if (snd === 'boing') audio?.boing(ev.amp); else if (snd === 'tick') audio?.toyTick();
     if (ev.act !== 'tick') { logEv('leke', `${ev.id} ${ev.act}`); cue(TOY_CUE[ev.act] || ev.act); if (ev.act !== 'stop') buzz(12); }
   }
