@@ -185,6 +185,7 @@ export function createAudio(ctx, opts = {}) {
     burst({ type: 'lowpass', freq: 400, gain: 0.3 * i, decay: 0.15 });
     if (i > 0.3) { breath('out', 0.5 + 0.5 * i, 0.3, 0.05); bump(0.2 * i); }
   });
+  const roll = () => use('land', () => { burst({ type: 'bandpass', freq: 500, freq2: 1400, gain: 0.16, attack: 0.05, decay: 0.3 }); tone({ freq: 70, freq2: 45, gain: 0.3, decay: 0.12 }); breath('out', 0.7, 0.3, 0.05); tone({ freq: 60, freq2: 40, gain: 0.22, decay: 0.1, delay: 0.32 }); bump(0.15); });   // R39: rulle ved landing: raslende skuring + to dunk
   const grab = () => use('grab', () => { breath('in', 0.6, 0.12); burst({ freq: 1800, q: 0.8, gain: 0.14, decay: 0.05 }); tone({ freq: 140, gain: 0.2, decay: 0.07 }); bump(0.08); });
   const mantle = () => use('mantle', () => { breath('out', 0.9, 0.7); burst({ type: 'lowpass', freq: 900, gain: 0.14, attack: 0.1, decay: 0.55 }); tone({ freq: 80, freq2: 55, gain: 0.28, decay: 0.12, delay: 0.7 }); bump(0.3); });
   const reach = () => use('reach', () => burst({ type: 'highpass', freq: 1200, freq2: 3500, gain: 0.1, attack: 0.03, decay: 0.12 }));
@@ -313,7 +314,7 @@ export function createAudio(ctx, opts = {}) {
   // ---- styring -------------------------------------------------------------
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
-    ctx, out: bus, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
+    ctx, out: bus, step, land, roll, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
     pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, bossroar, bossbump, fanfare, crumb, bcreak, bbreak, bsplash, bhop, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)

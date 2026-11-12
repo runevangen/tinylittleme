@@ -90,7 +90,7 @@ export const LAYOUT = {
   innhold: ['puzzles', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['buildsnap', 'buildslow'] }],
   styring: ['preset', 'help', 'stickfloat', 'stickcurve', 'stickdead', 'btnscale', 'speedscale', 'inertia', 'autograb', 'magnet', 'aimthrow', 'dbltap', 'showcenter', 'showmapbtn', 'vib',
     { sub: 'Mus og tastatur (PC)', ids: ['pcbtns', 'mousesens', 'mouselook'] }],
-  figur: ['stepadapt', 'reactanim', 'idlewink'],
+  figur: ['stepadapt', 'reactanim', 'idlewink', 'shimmy', 'roll', 'careful', 'ropeheavy'],
   kamera: ['followstr', 'camdist', 'fov', 'pitchbase', 'lookahead', 'camassist', 'fade', 'fadeop', 'camsens', 'blob', 'view',
     { sub: 'Skulderkamera', ids: ['shdist', 'shoff', 'shside', 'xhair'] }],
   grafikk: ['gfx', 'grade', 'gradefilter', 'softlight', 'ao', 'rays', 'dust', 'floordetail', 'clutter', 'resq', 'texsmall', 'lowprofile', 'fps'],

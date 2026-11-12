@@ -20,10 +20,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R39 · Finpuss av Prince: kant, landing, forsiktig gange og tau
-Fra BACKLOG «Finpuss av Prince». Fire små forbedringer av figurens bevegelse (`hero.js`, `physics.js`, `main.js`, `docs/FIGUREN.md`/`STYRING.md`): (1) **kant-shimmy**: hengende i en kant kan figuren gå sidelengs med stikka; (2) **rulle/ta imot ved landing**: etter hard landing (ikke farlig) med stikka i fart rulles det i stedet for å stoppe, med egen lyd og kort uskadd-tid; (3) **forsiktig gange**: lett stikke går sakte og stopper ved kanten uten å falle (bygger på kanthjelpen, `docs/STYRING.md`); (4) **tau-sving som føles tyngre**: lengre periode, mer treghet og fart i utsvinget. Verdier i `SETTINGS` (finjustering i admin), `logEv`, ren logikk i testbar funksjon/modul. Må virke med stikke + TA/HOPP/GREP, ingen tastatur. Skal ikke gjøre ruta kortere eller umulig: `walk_route` uendret grønn, og bot-testene (R32) grønne.
-Ferdig når: de fire tingene finnes og kan slås av/justeres i ⚙, tester dekker kant-shimmy, rulle ved landing, forsiktig gange (stopper ved kant) og tau-treghet, `walk_route` og `npm test` grønne, ingen ny shader/økning i tegnekall (R35-budsjettet holder). Merk i CHANGELOG at følelsen testes på iPhone (R27).
-
 ### [ ] R41 · Flere kombinasjoner: svamp + vann, håndkle + håndkle, papirhaug, stavhopp-animasjon
 Fra BACKLOG «Kombineringsmotor» og «Klatrehjelp». I dag er bare nål + tråd = taubane hardkodet (`physics.js`: `useTool`, `useZip`). Lag en liten **tabell over egenskaper og regler** (BotW/Scribblenauts-stil) i en egen testbar modul, og legg inn minst tre nye kombinasjoner: **svamp + vann** (svamp suger og blir tung/myk landing), **håndkle + håndkle** (knytt til lengre tau/klatreflate) og **papirhaug som presses sammen** (blir lavere trinn). Dessuten **stavhopp-animasjon** for staven. Hver kombinasjon bruker TA/HOPP/GREP, har hint-tekst som nevner knappene, lyd og lydtekst, og `logEv('kombo', …)`. Ingen kombinasjon skal være nødvendig for å fullføre et nivå (alternativ vei finnes), og `walk_route`/bot må kunne bevise både med og uten.
 Ferdig når: regeltabellen finnes med tester (egenskap → regel → resultat), tre nye kombinasjoner kan utløses i minst ett nivå hver, stavhopp har animasjon, `walk_route`, bot-tester og `npm test` grønne.
@@ -37,6 +33,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Finpuss av Prince: kant-shimmy, rulle ved landing, forsiktig gange, tyngre tau, finpuss.js (R39, v1.44; følelsen testes på iPhone)
 - [x] Figurens bevegelse: snu med skritt, tråkke over små hindre, nye poser i heng/sving/veggglid, hero_move.js (R40, v1.43; følelsen testes på iPhone)
 - [x] Siste shader midt i spillet forvarmes: gjennomsiktige utoningskopier, nye shaderprogram logges med nøkkel (R35b, v1.40; fra tester: Rune; ekte ms-forbedring testes på iPhone)
 - [x] Perlene i gulvdetaljene er solide kuler (R37, v1.39; fra tester: Rune)
