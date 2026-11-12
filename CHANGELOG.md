@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.41** – Rapport over siste 24 timer lagt i `docs/RAPPORT_24T.md` (versjoner, tester-saker og linjer kode).
 - **1.40** – Siste shader som kompilerte midt i spillet forvarmes nå (gjennomsiktige utoningskopier), og nye shaderprogram logges med nøkkel (R35b, fra tester: Rune).
 - **1.39** – Perlene i gulvdetaljene er nå solide små kuler (R37, fra tester: Rune): figuren stoppes av eller glir av dem i stedet for å gå gjennom.
 - **1.38** – Pustelyd er av som standard (R38, fra tester): egen innstilling «Pustelyd» i ⚙ → Lyd og stemme slår all pustelyd av/på; animasjon og andre lyder er uendret.
