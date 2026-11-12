@@ -145,7 +145,7 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
       scene.environmentIntensity = base.env * L(1, m.envMul);
       sun.intensity = base.sun * L(1, m.sunMul); if (m.sunColor !== null) sun.color.copy(base.sunC).lerp(tmp.setHex(m.sunColor), w); else sun.color.copy(base.sunC);
       if (hemi) { hemi.intensity = base.hemi * L(1, m.hemiMul); if (m.hemiSky !== null) { hemi.color.copy(base.hemiSky).lerp(tmp.setHex(m.hemiSky), w); hemi.groundColor.copy(base.hemiGround).lerp(tmp2.setHex(m.hemiGround), w); } }
-      dirs.forEach((d, i) => { d.intensity = base.dirs[i] * L(1, m.fill); });
+      dirs.forEach((d, i) => { d.intensity = d.userData.off ? 0 : base.dirs[i] * L(1, m.fill); });   // R35: Lav profil nuller fyll/kantlys via userData.off
       if (base.bg) { scene.background.copy(base.bg).lerp(tmp.setHex(m.bg), w); }
       if (base.fog) { scene.fog.color.copy(base.fog).lerp(tmp.setHex(m.bg), w); }
       for (const x of wins) x.m.color.copy(x.c).lerp(tmp.setHex(m.win), w);
