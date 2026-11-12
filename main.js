@@ -40,6 +40,7 @@ import { KICK, tryKick, tickKick } from './toy_kick.js';   // R34: sprettboksen 
 import { animateToy } from './toys_view.js';
 import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
+import { MOVE, createTurnSteps, createStepOver, gripPose, effectiveStepUp } from './hero_move.js';
 import { createMarkerView } from './readable_view.js';
 import { createOverview } from './overview.js';
 import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, approach, landingEvent } from './landing.js';
@@ -625,6 +626,7 @@ function footstep(side, sp) {
 
 const react = createReact();      // reaksjoner på maur (polish.js): jubel ved knus, rykk ved støt
 const footSm = { L: 0, R: 0 };   // glattet fothøyde over trinn/kanter
+const turnSteps = createTurnSteps(), stepOverAnim = createStepOver();   // R40 (hero_move.js): snu med skritt, tråkke over hinder
 const DIP_MAX = 0.17;   // hvor mye hoftene kan synke i hurk (landing/forberedelse)
 
 function poseHero(p, now, dt, mode) {
@@ -665,7 +667,7 @@ function poseHero(p, now, dt, mode) {
   const u = (gph / (Math.PI * 2)) % 1, idleW = clampN(1 - sp / 0.35, 0, 1);
   const pathL = footPath(u, sFrac, A, lift), pathR = footPath((u + 0.5) % 1, sFrac, A, lift);
   for (const f of [pathL, pathR]) { f.z *= 1 - idleW; f.y *= 1 - idleW; f.pitch *= 1 - idleW; }
-  if (ownGait && p.onGround) { const tw = idleW * clampN((Math.abs(yawRate) - 1) / 3, 0, 1), sn = Math.sin(gph); pathL.y += 0.035 * tw * Math.max(0, sn); pathR.y += 0.035 * tw * Math.max(0, -sn); }   // løfter føttene når han snur seg på stedet
+  if (ownGait && p.onGround && !turnStepsOn) { const tw = idleW * clampN((Math.abs(yawRate) - 1) / 3, 0, 1), sn = Math.sin(gph); pathL.y += 0.035 * tw * Math.max(0, sn); pathR.y += 0.035 * tw * Math.max(0, -sn); }   // løfter føttene når han snur seg på stedet
   const gaitN = { L: pathL.z / (A + 1e-6), R: pathR.z / (A + 1e-6) };
   pathL.z /= RIG_S; pathR.z /= RIG_S;          // rig-lokalt: figuren er skalert, så foten må flyttes tilsvarende mindre
   const gaitOn = ikGait && mode !== 'fly' && p.state === 'ground' && p.onGround && !p.skid;
@@ -680,6 +682,14 @@ function poseHero(p, now, dt, mode) {
       footSm[key] += (off - footSm[key]) * (1 - Math.exp(-dt / 0.04));
       f.y += footSm[key] / RIG_S; f.pitch += -footSm[key] * 0.8;
     } }
+  // R40: snu på stedet med små skritt (annenhver fot løftes og svinger ut), og tråkke over små hindre (fremste fot løftes over kanten)
+  { const standing = ownGait && gaitOn && sp < MOVE.standSpeed && mode === 'play';
+    const ts = turnSteps.update(dt, { yawRate, standing, on: turnStepsOn });
+    if (ts.stepped) logEv('snusteg', `${ts.dir > 0 ? 'venstre' : 'høyre'} #${ts.steps}`);
+    if (ts.active) { pathL.y += ts.liftL; pathR.y += ts.liftR; T.lzL = ts.spreadL; T.lzR = ts.spreadR; T.twist += ts.twist; }
+    if (stepOverOn && p.stepDy > 0 && gaitOn && stepOverAnim.trigger(p.stepDy, Math.max(P.stepUp, MOVE.stepOverMax))) logEv('trinn', `${p.stepDy.toFixed(2)} over hinder`);
+    const so = stepOverAnim.update(dt);
+    if (so.active) { const lf = Math.min(so.lift, 0.3) / RIG_S; (so.foot ? pathR : pathL).y += lf; (so.foot ? pathL : pathR).y += lf * 0.35; T.lean += so.lean; } }
 
   // hurk: forberedelse før hopp (armene bak) og demping etter landing (armene frem). 0 = oppreist, 1 = dypt.
   const wDF = p.windup > 0 ? smooth3(clampN((P.jumpWindup - p.windup) / 0.07, 0, 1)) : 0;
@@ -792,6 +802,12 @@ function poseHero(p, now, dt, mode) {
     }
     if (p.carry) { T.aL = T.aR = -1.25; T.eL = T.eR = -0.95; T.zL = 0.1; T.zR = -0.1; T.lean -= 0.04; }       // holder tingen foran seg
     else if (p.pushT > 0) { T.lean += 0.22; T.chest += 0.1; T.aL = T.aR = -1.4; T.eL = T.eR = -0.2; }          // lener seg inn i det han dytter
+  }
+  if (gripPosesOn && mode !== 'fly') {                                 // R40: nye poser for heng, veggglid og sving (hender som tar tak, vekt og holdning følger farten)
+    const gs = p.state === 'hang' || p.state === 'zip' ? 'hang' : p.state === 'swing' ? 'swing' : !p.onGround && p.sliding && !p.reach ? 'slide' : '';
+    if (gs) Object.assign(T, gripPose(gs, { sec, speed: Math.hypot(p.vx, p.vz), signed: p.vx * p.fx + p.vz * p.fz, tired: clampN(1 - p.stam / (P.stamina * 0.4), 0, 1), vy: p.vy }));
+    if (gs && hero.gripPoseWas !== gs) logEv('grepspose', gs);
+    hero.gripPoseWas = gs;
   }
   if ((hero.catchT || 0) > 0 && (p.state === 'climb' || p.state === 'hang')) {                     // tar imot: albuene bøyes og kroppen dypper, så strammer han seg opp igjen
     const g = hero.catchT, g2 = g * g;
@@ -1195,6 +1211,7 @@ let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get
 let stickCurve = store.get('tlm.stickcurve', 1.3), inertia = store.get('tlm.inertia', 1), speedScale = store.get('tlm.speedscale', 1), qbtnOn = store.get('tlm.qbtn', true);
 const metrics = { swipes: 0, dragPx: 0, yawUser: 0, yawAuto: 0, stickT: 0, t: 0 };
 let stepAdapt = store.get('tlm.stepadapt', true), reactAnim = store.get('tlm.reactanim', true);
+let turnStepsOn = store.get('tlm.turnsteps', true), stepOverOn = store.get('tlm.stepover', true), gripPosesOn = store.get('tlm.gripposes', true);
 let breathSound = store.get('tlm.breathsound', false);                        // R38: pustelyd av som standard (egen lagringsnøkkel)
 let idleWink = store.get('tlm.idlewink', true), restBreath = store.get('tlm.restbreath', false);
 const mixSet = (ids, v) => { const mix = store.get('tlm.mix2', {}); for (const id of ids) { mix[id] = v; audio?.setLevel(id, v); } store.set('tlm.mix2', mix); };
@@ -1446,6 +1463,7 @@ const TUNE = [
   ['reachAbove', 'Grep: ekstra rekkevidde opp', 0, 1.5, 0.05], ['ropeReach', 'Tau-rekkevidde', 0.8, 3.5, 0.1],
 ];
 const P0_SNAPSHOT = { ...P };
+let smallStepH = store.get('tlm.smallstep', MOVE.stepOverMax);   // R40
 let presetName = store.get('tlm.preset4', DEFAULT_PRESET);
 if (!PRESETS[presetName]) presetName = 'prince';
 applyPreset(presetName);
@@ -1455,6 +1473,7 @@ function reapplyKnobs() {
   const base = PRESETS[presetName] || {}, b = (k) => base[k] ?? P0_SNAPSHOT[k];
   const lv = { none: { coyote: 0.1, jumpBuffer: 0.08, reachSnap: 0.3, stepUp: 0, autoGrab: false }, normal: { coyote: 0.14, jumpBuffer: 0.12, reachSnap: 0.45, stepUp: b('stepUp'), autoGrab: base.autoGrab ?? false }, much: { coyote: 0.22, jumpBuffer: 0.2, reachSnap: 0.7, stepUp: Math.max(0.6, b('stepUp')), autoGrab: true } }[helpLevel] || {};
   Object.assign(P, lv);
+  P.stepUp = effectiveStepUp(lv.stepUp, smallStepH, helpLevel !== 'none');   // R40: små hindre (≤ smallStepH) tråkkes alltid over
   P.edgeGuard = edgeGuardOn && helpLevel !== 'none'; P.autoJump = autoJumpOn && helpLevel !== 'none';       // kanthjelp: stopp ved kanten (forsiktig) og hopp selv over gap (løp)
   P.airSteady = airSteadyOn && helpLevel !== 'none'; P.magnet = magnetOn && helpLevel !== 'none'; P.holdGrab = holdGrabOn && helpLevel !== 'none';   // stabilisering i lufta: demping, sikte-hjelp, hold GREP
   P.accel = b('accel') * inertia; P.decel = b('decel') * inertia; P.turnDecel = b('turnDecel') * inertia; P.speed = b('speed') * speedScale;
@@ -1622,6 +1641,10 @@ const SETTINGS = [
   rg('camdist', 'kamera', 'Kameraavstand', 5.5, 3, 9, 0.1, () => cam.dist, kp('tlm.camdist', (v) => { cam.dist = v; camDistSet = v; })),
   // Hjelp og tekst
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
+  fl('turnsteps', 'spill', 'Figuren snur med små skritt når du snur raskt på stedet', true, () => turnStepsOn, kp('tlm.turnsteps', (v) => { turnStepsOn = v; })),
+  fl('stepover', 'spill', 'Figuren løfter foten over små hindre han tråkker opp på', true, () => stepOverOn, kp('tlm.stepover', (v) => { stepOverOn = v; })),
+  fl('gripposes', 'spill', 'Nye poser i heng, sving og veggglid (hender som tar tak)', true, () => gripPosesOn, kp('tlm.gripposes', (v) => { gripPosesOn = v; })),
+  { id: 'smallstep', group: 'admin', type: 'range', label: 'Hinder under denne høyden tråkkes over uten hopp (0 = av)', min: 0, max: 0.4, step: 0.01, def: MOVE.stepOverMax, get: () => smallStepH, set: (v) => { smallStepH = v; store.set('tlm.smallstep', v); reapplyKnobs(); }, digits: 2 },
   fl('stepadapt', 'spill', 'Føttene tilpasser seg trinn og kanter', true, () => stepAdapt, kp('tlm.stepadapt', (v) => { stepAdapt = v; })),
   sl('resq', 'test', 'Oppløsning (Auto senker ved lav FPS og skrur opp igjen)', 'auto', [['auto', 'Auto (følger FPS)'], ['full', 'Full (skarp)'], ['mid', 'Middels (75 %)'], ['low', 'Lav (1×, raskest)']], () => resQ, kp('tlm.resq', (v) => { resQ = v; autoQ = v === 'auto'; if (autoQ) autoQC.reset(); applyRes(); })),
   fl('texsmall', 'test', 'Små teksturer: halv oppløsning på overflater, ca. 50 % mindre teksturminne (laster siden på nytt; alltid på med Enkel grafikk og Lav profil «På»)', false, () => texLow, (v) => { if (v === texLow) return; store.set('tlm.texsmall', v); logEv('teksturer', v ? 'små' : 'full'); setTimeout(() => location.reload(), 150); }),
