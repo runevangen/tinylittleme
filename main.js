@@ -1568,6 +1568,8 @@ const SETTINGS = [
   fl('gradefilter', 'spill', 'Fargefilter på skjermen (Varm film; slå av om det går tregt)', true, () => store.get('tlm.gradefilter', true) !== false, (v) => { store.set('tlm.gradefilter', v); logEv('gradefilter', v ? 'på' : 'av'); grade.setFilter(v); }),
   fl('varmood', 'spill', 'Nivå 4–6: egen stemning (kveld, natt, hjelmlykt)', true, () => variantMoodOn, kp('tlm.varmood', (v) => { variantMoodOn = v; logEv('stemning', v ? 'på' : 'av'); })),
   fl('vartwist', 'spill', 'Nivå 4–6: egen vri (vann som stiger, lys som slukkes, tog)', true, () => variantTwistOn, kp('tlm.vartwist', (v) => { variantTwistOn = v; logEv('vri', v ? 'på' : 'av'); })),
+  sl('flood', 'spill', 'Nivå 4: stigende vann (vannet stiger sakte, du må klatre høyere enn det; druknet = tilbake til lagringspunktet)', 'av', [['av', 'Av (vanlig vann)'], ['rolig', 'Rolig'], ['vanlig', 'Vanlig'], ['rask', 'Rask']], () => floodMode, (v) => { floodMode = v; store.set('tlm.flood', v); logEv('flood', `valg: ${v}`); }),
+  rg('floodrate', 'admin', 'Stigende vann: fartsfaktor (1 = standard)', 1, 0.5, 2.5, 0.1, () => floodMult, kp('tlm.floodrate', (v) => { floodMult = v; }), { digits: 1 }),
   rg('lamp', 'admin', 'Hjelmlykt: styrke', 1, 0.3, 2.5, 0.1, () => lampPower, kp('tlm.lamp', (v) => { lampPower = v; }), { digits: 1 }),
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
   ...(gfxLow ? [] : [
@@ -2180,9 +2182,12 @@ function insideAny(x, y, z, m) {
 
 const camAhead = { x: 0, z: 0 };
 const dust = gfxLow ? null : look.makeDust(); if (dust) scene.add(dust.points);
+let floodMode = store.get('tlm.flood', 'av'), floodMult = store.get('tlm.floodrate', 1);   // R42: stigende vann i nivå 4 (variant.js: floodCfg)
 let variantMoodOn = store.get('tlm.varmood', true), variantTwistOn = store.get('tlm.vartwist', true), lampPower = store.get('tlm.lamp', 1);   // R12
 const variant = makeVariant({ scene, LEVEL, renderer, sun, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])),
-  opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, aim: () => cam.pitch, P, say: (k) => toast(T(k)), logEv } });
+  opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, aim: () => cam.pitch, P, say: (k) => toast(T(k, { jump: T('btn.jump'), grab: T('btn.grab') })), logEv,
+    flood: () => floodMode, floodMult: () => floodMult,
+    onDrown: () => { failAt('druknet'); audio?.splash?.('pit'); buzz(60); say('knockout'); resetPlayer(player, ...save.pos); stats.respawns++; variant.restartFlood(); toast(T('flood.drown', { jump: T('btn.jump'), grab: T('btn.grab') }) + `  −${SCORE.respawn} poeng`); } } });
 if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
 const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });

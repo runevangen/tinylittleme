@@ -1206,7 +1206,7 @@
         185,
         196,
         199,
-        138,
+        190,
         236
       ],
       "confidence": 0.7,
@@ -1214,25 +1214,6 @@
         1,
         3
       ]
-    },
-    {
-      "id": "hyllekonsoll_1",
-      "kind": "box",
-      "material": "metal",
-      "color": "#1c1c1c",
-      "box": [
-        165,
-        185,
-        190,
-        196,
-        140,
-        142
-      ],
-      "confidence": 0.7,
-      "photos": [
-        1
-      ],
-      "decor": true
     },
     {
       "id": "hyllekonsoll_2",
@@ -1252,25 +1233,6 @@
         1
       ],
       "decor": true
-    },
-    {
-      "id": "kurv_stor_aapen",
-      "kind": "hamper",
-      "material": "wicker",
-      "color": "#b88a4a",
-      "box": [
-        158,
-        184,
-        199,
-        228,
-        140,
-        188
-      ],
-      "confidence": 0.7,
-      "photos": [
-        1,
-        3
-      ]
     },
     {
       "id": "handklestang",
@@ -1683,6 +1645,160 @@
       "decor": true
     },
     {
+      "id": "trapp_bad_1",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9a86c",
+      "box": [
+        74,
+        86,
+        0,
+        19,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true,
+      "help": "Den harde veien\nEsker som trapp: hopp (HOPP) opp trinn for trinn til medisinskapet. Ingen klatring, men det krever presise hopp."
+    },
+    {
+      "id": "trapp_bad_2",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#c99556",
+      "box": [
+        86,
+        98,
+        0,
+        38,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_3",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#b98446",
+      "box": [
+        98,
+        110,
+        0,
+        57,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_4",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#a8753a",
+      "box": [
+        110,
+        122,
+        0,
+        76,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_5",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9a86c",
+      "box": [
+        122,
+        134,
+        0,
+        95,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_6",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#c99556",
+      "box": [
+        134,
+        146,
+        0,
+        114,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_7",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#b98446",
+      "box": [
+        146,
+        158,
+        0,
+        133,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_8",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#a8753a",
+      "box": [
+        158,
+        170,
+        0,
+        152,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_9",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9a86c",
+      "box": [
+        170,
+        182,
+        0,
+        171,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
       "id": "kurv_liten_aapen",
       "kind": "hamper",
       "material": "wicker",
@@ -1899,7 +2015,7 @@
       "id": "smule_1",
       "on": "vaskekurv",
       "at": [
-        146.3,
+        161.3,
         146.3
       ]
     },
@@ -2009,6 +2125,26 @@
       "en": "Squash a guard"
     }
   ],
+  "alts": [
+    {
+      "id": "trapp_bad",
+      "label": "Den harde veien: hopp opp eskene, over medisinskapet og til den øverste hylla uten å klatre",
+      "en": "The hard way: jump up the crates, across the medicine cabinet and onto the top shelf without climbing",
+      "path": [
+        "trapp_bad_1",
+        "trapp_bad_2",
+        "trapp_bad_3",
+        "trapp_bad_4",
+        "trapp_bad_5",
+        "trapp_bad_6",
+        "trapp_bad_7",
+        "trapp_bad_8",
+        "trapp_bad_9",
+        "medisinskap",
+        "hylle"
+      ]
+    }
+  ],
   "variant": {
     "mood": "evening",
     "twist": {
@@ -2017,7 +2153,10 @@
       "dry": 16,
       "rise": 9,
       "hold": 6,
-      "drain": 9
+      "drain": 9,
+      "flood": {
+        "max": 70
+      }
     },
     "props": [
       {

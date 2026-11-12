@@ -27,6 +27,7 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
   s.source.interpreted_by += '. Ommøblert for nivå 4 (kurven flyttet, ny hylle, to nye håndklær).';
   k.set('vaskekurv', { box: [140, 182, 0, 60, 140, 184], help: 'Vaskekurven er flyttet\nNå står den under knaggene. Klatre opp på den (GREP), og videre opp badekåpa til knaggrekka.' });
   k.set('dopapir', { box: [60, 70, 80, 90, 4, 14] });                                       // rullen ligger på sisternen nå
+  k.del('kurv_knagg', 'knagg_hylle', 'medisin_handkle');                                  // R42: nivå 1 sin klatrevei til medisinskapet (kurv ved knaggene, hylle, håndkle) brukes ikke her: nivå 4 har sin egen (vaskekurv, ny hylle)
   k.del('bukse', 'kurv_liten_aapen');                                                       // buksa er tatt ned, og den lille kurven er flyttet ned på gulvet
   k.add('kurv_liten_aapen', 'hamper', 'wicker', '#b88a4a', [46, 70, 0, 23, 150, 190], {});
   k.set('badekape_bla', { box: [176, 185, 60, 135, 144, 158], onto: 'knaggrekke', grip_drain: -0.6, help: 'Badekåpa\nKlatre fra kurven og opp til knaggrekka. Det er et langt tak: start med fulle krefter.' });
@@ -39,13 +40,16 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
   s.goal = { x: 172, y: 199, z: 232, on: 'hylle', note: 'Motgift-bit på den øverste hylla, i enden bak panelet (v0.88: flyttet bort fra det grønne håndkleet, så lyssøylen ikke dekker det)' };
   s.ants = [{ id: 'baerer_gulv', type: 'carrier', on: 'gulv', from: [92, 55], to: [242, 55] }, { id: 'edderkopp_dusj', type: 'spider', on: 'gulv', from: [42.5, 115] }];   // R6: bærer-maur og en edderkopp-vakt (fri flate rundt, langt fra start)
   // R12: egen stemning. Kveldslys og korallfarger; vri: vannet stiger (vading = tregere og mister krefter, så klatre opp!). Rekvisitter er bare pynt (ingen kollisjon).
-  s.variant = { mood: 'evening', twist: { type: 'water', max: 4, dry: 16, rise: 9, hold: 6, drain: 9 },
+  s.variant = { mood: 'evening', twist: { type: 'water', max: 4, dry: 16, rise: 9, hold: 6, drain: 9, flood: { max: 70 } },   // R42: flood = valgfri stigende-vann-variant (⚙ → Spill → «Nivå 4: stigende vann»), 70 cm dypt til slutt
+   
     props: [{ type: 'rug', x: 105, z: 195, w: 70, d: 38, color: '#e8574a', stripe: '#ffe2b8' }, { type: 'rug', x: 62, z: 90, w: 40, d: 40, shape: 'round', color: '#7a5cc8', stripe: '#f4d6ff' }, { type: 'duck', x: 150, z: 112, r: 9 }] };
   s.ants.push({ id: 'traad_dusj', type: 'dangler', on: 'gulv', from: [42.5, 80] }, { id: 'traad_vask', type: 'dangler', on: 'gulv', from: [212.5, 75] });   // R19: nivå 4 = edderkopper i tråd fra taket (ingen pillbug)
   s.goals = [{ id: 'kurv', type: 'reach', on: 'vaskekurv', gate: true, label: 'Klatre opp på vaskekurven', en: 'Climb the laundry basket' },
     { id: 'hylle', type: 'reach', on: 'ny_hylle', gate: true, after: 'kurv', label: 'Nå den nye hylla', en: 'Reach the new shelf' },
     { id: 'smuler', type: 'crumbs', n: 5, label: 'Samle 5 smuler', en: 'Collect 5 crumbs' },
     { id: 'vokter', type: 'stomp', n: 1, label: 'Knus en vokter', en: 'Squash a guard' }];                                                         // R23: delmål (goals.js)
+  // R42: den harde veien uten klatring arves fra nivå 1 (eskene opp til medisinskapet), og fortsetter med et hopp over til den øverste hylla der motgiften ligger.
+  s.alts = [{ id: 'trapp_bad', label: 'Den harde veien: hopp opp eskene, over medisinskapet og til den øverste hylla uten å klatre', en: 'The hard way: jump up the crates, across the medicine cabinet and onto the top shelf without climbing', path: [...s.alts[0].path.slice(0, -1), 'medisinskap', 'hylle'] }];
   addShortcut(s, k, { id: 'gele_bad', bottle: 'hargele_bad', bottleAt: [92, 210], stand: [106.5, 152.5], face: [1, 0], join: 'vaskekurv', steps: [[110, 125, 142.5, 162.5, 27], [125, 140, 142.5, 162.5, 47]],
     label: 'Smør hårgelé og klatre opp trinnene til vaskekurven', en: 'Smear hair gel and climb the steps to the laundry basket',
     help: 'Hårgelé\nTa flaska (TA), bær den til det høye trinnet ved vaskekurven og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.',

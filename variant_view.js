@@ -1,7 +1,7 @@
 // Nivå 4–6 som egne rom (R12): tegner og styrer stemning, hjelmlykt, rekvisitter og vri (vann, lys, tog) fra `variant` i brettet.
 // Logikken (tider, nivåer, blanding) ligger i variant.js og testes der. Bare utseende, unntatt vading (tregere og mister krefter i vann).
 import * as THREE from 'three';
-import { moodAt, waterLevel, waterPhase, isWading, WADE, lightLevel, lightsPhase } from './variant.js';
+import { moodAt, waterLevel, waterPhase, isWading, WADE, lightLevel, lightsPhase, floodCfg, floodLevel, floodPhase, floodStep } from './variant.js';
 
 const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...o });
 const mesh = (geo, mat, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.castShadow = shadow; m.receiveShadow = true; return m; };
@@ -82,7 +82,7 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
   if (!V) return off;
   const moodsOn = opts.moods || (() => true), twistsOn = opts.twists || (() => true), lampOpt = opts.lamp || (() => 1), aimOpt = opts.aim || (() => 0.26), say = opts.say || (() => ''), logEv = opts.logEv || (() => {});
   const room = LEVEL.room, group = new THREE.Group(); scene.add(group);
-  let vt = 0, wadeSaved = null, phase = null, waterNow = 0, wading = false, lightNow = 1, starsMat = null, prevWading = false;
+  let vt = 0, ft = 0, under = 0, floodWas = false, deepWas = false, drownN = 0, wadeSaved = null, phase = null, waterNow = 0, wading = false, lightNow = 1, starsMat = null, prevWading = false;
 
   // grunnverdier (fra grade.js og main.js) som stemningen blander fra
   const hemi = scene.children.find((o) => o.isHemisphereLight), dirs = scene.children.filter((o) => o.isDirectionalLight && o !== sun);
@@ -126,11 +126,20 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
       if (!active) return;
       vt += dt;
       if (V.twist?.type === 'water' && twistsOn()) {
-        waterNow = waterLevel(vt, V.twist);
+        const fc = floodCfg(opts.flood ? opts.flood() : 'av', V.twist, opts.floodMult ? opts.floodMult() : 1);   // R42: stigende vann i stedet for det jevne tidevannet
+        if (fc) ft += dt; else { ft = 0; under = 0; }
+        waterNow = fc ? floodLevel(ft, fc) : waterLevel(vt, V.twist);
+        if (fc) {
+          const st = floodStep(under, dt, p.y, floorY, waterNow, fc); under = st.under;
+          const ph = floodPhase(ft, fc); if (ph !== phase) { phase = ph; if (ph === 'stiger') { say('flood.up'); logEv('flood', `vannet stiger (${opts.flood()})`); } else if (ph === 'full') logEv('flood', 'vannet har nådd toppen'); }
+          if (st.warn !== deepWas) { deepWas = st.warn; if (st.warn) { say('flood.deep'); logEv('flood', 'hodet under vann'); } }
+          if (st.drowned) { drownN++; logEv('flood', `druknet (${drownN})`); under = 0; ft = 0; waterNow = 0; deepWas = false; phase = null; if (opts.onDrown) opts.onDrown(); }
+        } else if (floodWas) { floodWas = false; phase = null; }
+        floodWas = !!fc;
         wading = isWading(p.y, floorY, waterNow) && !['climb', 'hang', 'mantle', 'zip', 'swing'].includes(p.state);
         if (wading && opts.P) { wadeSaved = opts.P.speed; opts.P.speed = wadeSaved * WADE.speed; p.stam = Math.max(0, p.stam - WADE.drain * dt); }
         if (wading !== prevWading) { prevWading = wading; logEv('vri', wading ? 'vader' : 'tørr'); }
-        const ph = waterPhase(vt, V.twist); if (ph !== phase) { phase = ph; if (ph === 'stiger') { say('var.water.up'); logEv('vri', 'vannet stiger'); } else if (ph === 'tørr') logEv('vri', 'vannet er borte'); }
+        const ph = fc ? null : waterPhase(vt, V.twist); if (ph !== null && ph !== phase) { phase = ph; if (ph === 'stiger') { say('var.water.up'); logEv('vri', 'vannet stiger'); } else if (ph === 'tørr') logEv('vri', 'vannet er borte'); }
       } else { waterNow = 0; wading = false; }
       if (V.twist?.type === 'lights' && twistsOn()) {
         const ph = lightsPhase(vt, V.twist); if (ph !== phase) { phase = ph; say(ph === 'mørkt' ? 'var.lights.off' : 'var.lights.on'); logEv('vri', ph === 'mørkt' ? 'lyset slukket' : 'lyset tent'); }
@@ -165,7 +174,9 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
       if (water) { water.visible = waterNow > 0.02; water.position.y = floorY + waterNow + Math.sin(now * 1.3) * 0.03; water.material.opacity = 0.5 + 0.08 * Math.sin(now * 0.9); }
       for (const d of ducks) { const lvl = Math.max(0, waterNow); d.position.y = floorY + lvl + (lvl > 0.05 ? Math.sin(now * 1.6 + d.position.x) * 0.06 : 0); d.rotation.y = lvl > 0.05 ? now * 0.15 : 0; }
     },
-    info: () => ({ mood: V.mood, twist: V.twist?.type, t: +vt.toFixed(1), water: +waterNow.toFixed(2), light: lightNow, wading }),
+    restartFlood() { ft = 0; under = 0; deepWas = false; phase = null; },
+    get flood() { return floodWas; },
+    info: () => ({ mood: V.mood, twist: V.twist?.type, t: +vt.toFixed(1), flood: floodWas, drowned: drownN, water: +waterNow.toFixed(2), light: lightNow, wading }),
   };
   return api;
 }
