@@ -2,16 +2,23 @@
 
 Alle valg ligger i **én liste, `SETTINGS` i `main.js`**. Den styrer panelet, «endret fra standard», eksport/import, «Alt til standard» og testrapporten. Legg nye valg inn der så lenge det er mulig (`fl` = av/på, `rg` = glidebryter, `sl` = valgliste). Gi hvert valg `group`, standardverdi og `get`/`set`. Rene hjelpefunksjoner (endret-liste, eksport/import, rapport) står i `settings_util.js` og testes i `test_settings.mjs`.
 
-## Grupper
+## Grupper og rekkefølge (v1.18)
+Rekkefølgen og grupperingen i panelet styres av `GROUPS` og `LAYOUT` i `settings_util.js` (ikke av hvor innstillingen står i `SETTINGS`). `applyLayout(SETTINGS)` setter `group`/`sub` og sorterer. **Ny innstilling:** legg den i `SETTINGS` som før (med en `group`), og legg id-en til i riktig gruppe i `LAYOUT` (gjerne i en `{ sub, ids }`-undermeny hvis den sjelden brukes). Glemmer du `LAYOUT`, havner den sist i sin egen `group`, så ingenting forsvinner. En test (`test_settings.mjs`) passer på at id-ene i `LAYOUT` finnes og ikke står to ganger.
+
+Panelet har et **søkefelt** øverst (skjuler rader som ikke treffer og åpner gruppene med treff), og undermenyer (sammenfoldet, husker åpen/lukket i `tlm.subopen`).
+
 | Gruppe | Innhold |
 |---|---|
-| **Spill** | **Nivå 4–6: egen stemning** (`varmood`) og **egen vri** (`vartwist`) (R12, `variant.js`), **Føttene tilpasser seg trinn og kanter** (`stepadapt`) og **Figuren jubler/rykker** (`reactanim`) (R10, `polish.js`), Grafikk (Detaljert/Enkel), **Fargegradering** (`tlm.grade`: «Varm film» = Toy Story-lys med varm sol, kjølig fyll og kantlys, eller «Av»; **Fargefilter på skjermen** (`tlm.gradefilter`) slår det milde CSS-filteret av/på uten å miste lysene; laster siden på nytt; Enkel grafikk får aldri ekstra lys, clearcoat eller filter; valget logges som `grade` i rapporten), Lysstråler, mørkere hjørner og småting på gulvet (R4, atmos.js; bare med Detaljert grafikk), Startskjerm (vis ved oppstart), Hovedmeny-knapp, Autolagring, ting kommer tilbake, to trykk på Lagre/Tilbake/Ting, tekniske tall (alltid, eller trykk på teksten øverst), brettvalg, Start på nytt |
-| **Styring** | Kamerafølsomhet, stikke-dødsone, knappestørrelse, kast med dra, dobbelttrykk, ◎-knapp, grip kanten, vibrasjon |
-| **Kamera** | Følger retning, hjelper, utoning (+ synlighet), kameraavstand |
-| **Hjelp og tekst** | Retningshjelp (kompass/gulvpil/begge/av), tips etter 3 fall, fremhev grep, lapper, lydtekst, snakkebobler |
-| **Lyd og stemme** | Hovedvolum, lyd på, **musikk** (av/på og volum; tema per rom i `music.js`), stemme, stemmevolum, **pust** (volum og «rolig pust når du står stille»), skritt, hopp/landing/fall, ting og romlyd (volum), og knapper for å høre pust, skritt og hopp. Hele lydmikseren (hver enkelt lyd) ligger bak admin. |
-| **Test** | Hoppfølelse (Prince/Klassisk/Spenning), FPS, **Oppløsning** (`resq`, R10: Auto følger FPS ned og opp, eller fast Full/Middels/Lav), **Lav profil** (`lowprofile`, R15: Auto/Av/På; kutter skygge-kart, støv, korn, lysstråler og ekstra lys),  **Marker her**, **Del rapport**, kopier/lim inn innstillinger, Alt til standard |
-| **Admin** (skjult) | Alle hoppverdier og mekanikk-verdier (krefter, klatring, kast, hard landing, taubane …), lydmikser og etterklang, Plan/Fly, hjelpeobjekter |
+| **Spill** | Språk, autolagring, startskjerm, trykk to ganger, ting kommer tilbake; Brett-velger, Start på nytt, Hovedmeny |
+| **Innhold og utfordring** | Gåter, delmål, smuler, tilbehør, fortelling, maur, sjef, skapninger, levende leker, nivå 4–6 stemning og vri; undermeny **Byggeskjerm** (snapping, sakte film) |
+| **Styring** | Styringsstil, hjelp-nivå, stikke (flytende/kurve/dødsone), knappestørrelse, gangfart, treghet, grip kanten, sikte-hjelp, kast, dobbelttrykk, vibrasjon; undermeny **Mus og tastatur (PC)** |
+| **Figuren** | Føttene tilpasser seg trinn, jubel/rykk, blunking |
+| **Kamera** | Følging, avstand, synsfelt, vinkel, ser foran, hjelper, utoning, følsomhet, ◎-knapp, skygge under figuren, kamerasyn; undermeny **Skulderkamera** |
+| **Grafikk og ytelse** | Grafikknivå, fargegradering og -filter, myke skygger, mørke hjørner, lysstråler, støv, gulvdetaljer, småting, oppløsning, små teksturer, lav profil, FPS |
+| **Hjelp og veiledning** | Pil/kompass mot delmål, retningshjelp, lyssøyle, minikart, markører, grep, tips etter fall, snakkebobler, tekniske tall, gåte-kamerasveip; undermeny **Nivåstart** |
+| **Lyd og stemme** | Hovedvolum, lyd, musikk (+ volum), stemme (+ volum); undermeny **Pust og lydnivåer** (pust, skritt, hopp, ting, leker, romlyd) |
+| **Test og tilbakemelding** | Vurderingsknappen ⚑, marker her, del/kopier rapport og innstillinger, alt til standard |
+| **Admin** (skjult) | Alle hoppverdier og mekanikk-verdier, lydmikser og etterklang, Plan/Fly, hjelpeobjekter, byggestyrke m.m. |
 
 ## Admin
 Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»-tittelen, eller åpne siden med `?admin=1` (`?admin=0` slår av). Valget huskes. Dette er **skjuling, ikke sikkerhet**: alt ligger i nettleseren. Skal admin låses på ordentlig, må det til en tjener.

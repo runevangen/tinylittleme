@@ -2,7 +2,15 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
-- **1.16** – Backloggen ryddet etter veikartet (R13–R26): ferdige punkter krysset av, restpunkter oppdatert. Rekkefølgen i endringsloggen rettet.
+- **1.20** – Backloggen ryddet etter veikartet (R13–R26): ferdige punkter krysset av, restpunkter oppdatert. Rekkefølgen i endringsloggen rettet.
+- **1.19** – Innstillinger: «✕ Lukk»-knapp øverst i panelet. Den følger med når du scroller, så du slipper å gå helt ned.
+
+- **1.18** – Innstillingene er ryddet: ni tydelige grupper (Spill, Innhold og utfordring, Styring, Figuren, Kamera, Grafikk og ytelse, Hjelp og veiledning, Lyd og stemme, Test og tilbakemelding), sammenfoldede undermenyer (Byggeskjerm, Mus og tastatur, Skulderkamera, Nivåstart, Pust og lydnivåer) og et søkefelt øverst. Oppsettet ligger i `LAYOUT` i `settings_util.js` (testet).
+
+- **1.17** – Testrapport v1.16: lys-hakkene er borte (59 fps, shadere stabile på 45). Hjelmlykta i nivå 4–6 peker nå dit kameraet ser, så du kan løfte og senke den ved å dra opp/ned i bildet. Lysbudsjettet er 7 (lykta står alltid i scenen), så «OVER BUDSJETT» ikke lenger varsler uten grunn.
+
+- **1.16** – Rettelser etter testrapport (nivå 6): (1) hakk på 300–600 ms hver gang lyset slås av/på: hjelmlykta ble skrudd av og på med `visible`, så antall lys endret seg og alle materialer ble kompilert på nytt; nå står lykta alltid i scenen (styrke 0) og tas med i forvarmingen. (2) Føttene forsvant under teppene: tepper er nå 0,03 tykke i stedet for ca. 0,15.
+
 - **1.15** – Integrasjon av R13 i main (v1.14). Gulv og overflater (R13): blyantstumper, viskelær, perler, smulehauger, flekker og fugeskitt gir målestokk (de tre-seks nærmest start er større og ligger foran figuren); badematta er grovere og uten relieffkart, så den ikke flimrer. ⚙ → Spill: «Gulvdetaljer». Start-ringen plasseres nå etter hvor tingene havner på skjermen (start-kameraet, mobil høyformat), slik at minst tre ting gir skala i start-bildet (testet ved projisering). Tegnekall-budsjett for gulvdetaljene (statisk telling uten GPU, test_perf.mjs): ca. 26–34 tegnekall etter sammenslåing mot 113–188 uten, høyst 36 / ca. 10 800 trekanter på høyeste tetthet. Ærlig: ekte FPS og om matta flimrer i bevegelse er IKKE målt (ingen GPU her; bare to stillbilder med liten kamerabevegelse sammenlignet) og må bekreftes på iPhone.
 - **1.14** – Integrasjon av R26 (byggeskjerm C: bygget flyttes ut i verdenen som solid, brettene bro og trapp med vanskelig alternativ vei) i main.
 - **1.13** – Integrasjon av R25 (byggeskjerm B: 2D-fysikk, testfigur, trapp-byggested i Kontroll) i main.
