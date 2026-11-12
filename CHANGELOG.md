@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.47** – Veikart: R44 (zoom i byggeskjermen), fra tester: Rune.
 - **1.46** – R42: motgiften høyere opp i badet (speilskap med klatrevei og vanskeligere alt-vei) og vann-variant som kan slås på.
 - **1.45** – R41: kombinasjoner (svamp + vann, håndkle + håndkle, papirhaug) i regeltabell `combos.js`, og stavhopp-animasjon (`vault_anim.js`).
 - **1.44** – R39: finpuss av Prince: kant-shimmy, rulle ved landing, forsiktig gange og tyngre tau (`finpuss.js`, justeres i ⚙). Følelsen testes på iPhone.
