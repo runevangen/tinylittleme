@@ -2,6 +2,8 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.19** – Innstillinger: «✕ Lukk»-knapp øverst i panelet. Den følger med når du scroller, så du slipper å gå helt ned.
+
 - **1.18** – Innstillingene er ryddet: ni tydelige grupper (Spill, Innhold og utfordring, Styring, Figuren, Kamera, Grafikk og ytelse, Hjelp og veiledning, Lyd og stemme, Test og tilbakemelding), sammenfoldede undermenyer (Byggeskjerm, Mus og tastatur, Skulderkamera, Nivåstart, Pust og lydnivåer) og et søkefelt øverst. Oppsettet ligger i `LAYOUT` i `settings_util.js` (testet).
 
 - **1.17** – Testrapport v1.16: lys-hakkene er borte (59 fps, shadere stabile på 45). Hjelmlykta i nivå 4–6 peker nå dit kameraet ser, så du kan løfte og senke den ved å dra opp/ned i bildet. Lysbudsjettet er 7 (lykta står alltid i scenen), så «OVER BUDSJETT» ikke lenger varsler uten grunn.
