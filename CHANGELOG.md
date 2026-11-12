@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.40** – Siste shader som kompilerte midt i spillet forvarmes nå (gjennomsiktige utoningskopier), og nye shaderprogram logges med nøkkel (R35b, fra tester: Rune).
 - **1.39** – Perlene i gulvdetaljene er nå solide små kuler (R37, fra tester: Rune): figuren stoppes av eller glir av dem i stedet for å gå gjennom.
 - **1.38** – Pustelyd er av som standard (R38, fra tester): egen innstilling «Pustelyd» i ⚙ → Lyd og stemme slår all pustelyd av/på; animasjon og andre lyder er uendret.
 - **1.37** – Løpende behandling av innmeldte saker: runneren er lagret i repoet (`tools/roadmap_runner.workflow.js`, tar `args.items`), og rutinen for å hente, prioritere og kjøre tester-saker står i `docs/TILBAKEMELDING.md` og `CLAUDE.md`.

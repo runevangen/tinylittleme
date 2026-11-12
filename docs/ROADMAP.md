@@ -20,15 +20,12 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R35b · Fra tester: Rune · Siste shader som kompileres midt i spillet
-Oppfølging av R35 (testrapport v1.34, nivå 3 Kjøkken, iPhone): hakk er nå maks 480 ms mot 2910 ms før, men rapporten viser «shadere 61 ved start, 62 nå (+1 etter forvarming)» og hakk 480 ms ved 222 s. Finn hva som utløser den ene siste shaderen (logg materialet/programnøkkelen når antallet øker; sammenlign hendelsen like før: fiende `roller` (pillbug) alert/roll/stop i nivå 3, musikk-bytte, landing, utsnitt) og forvarm den i `shaderwarm.js`, slik at antallet er uendret etter forvarming i en lengre økt. Utvid testen til å dekke fiender (rullende bille), musikkbytte og alle seks nivåene + nivå 7.
-Ferdig når: en test (Playwright, iPhone 14, programvare-GL ok) viser at `renderer.info.programs.length` er uendret etter forvarming gjennom en økt i nivå 3 og 7 med fiender, hopp, landing og oversikt; ingen økning i tegnekall eller teksturminne; `npm test` grønn. Ekte ms-forbedring bekreftes på iPhone.
-
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Siste shader midt i spillet forvarmes: gjennomsiktige utoningskopier, nye shaderprogram logges med nøkkel (R35b, v1.40; fra tester: Rune; ekte ms-forbedring testes på iPhone)
 - [x] Perlene i gulvdetaljene er solide kuler (R37, v1.39; fra tester: Rune)
 - [x] Pustelyd av som standard, egen innstilling i Lyd og stemme (R38, v1.38; fra tester)
 - [x] Svar fra Claude og tellere for testere (R36, v1.34)
