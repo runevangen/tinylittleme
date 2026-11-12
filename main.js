@@ -44,7 +44,7 @@ import { createMarkerView } from './readable_view.js';
 import { createOverview } from './overview.js';
 import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, approach, landingEvent } from './landing.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
-import { programCount, warmRender, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
+import { programCount, programKeys, warmRender, warmFades, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
@@ -2528,7 +2528,7 @@ applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
 if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true); setTimeout(() => toast('PC: klikk i bildet for å styre blikket med musa (Esc slipper). WASD går, mellomrom hopper, venstre museknapp eller F tar, høyre eller E griper.'), 2500); }
 // v0.97: forvarming. three kompilerer shadere og laster opp teksturer først når noe kommer i syne, som gir et plutselig «stopp» (100-300 ms) første gang du ser nytt område eller en effekt. Gjør alt på forhånd, mens introskjermen vises
-const shw = createShaderWatch(() => programCount(renderer));   // R35: teller shaderprogram etter forvarmingen
+const shw = createShaderWatch(() => programCount(renderer), () => programKeys(renderer));   // R35: teller shaderprogram etter forvarmingen
 function warmUp() {
   const t0 = performance.now(); const hidden = [];
   try {
@@ -2536,7 +2536,8 @@ function warmUp() {
     const seen = new Set();
     scene.traverse((o) => { for (const m of [].concat(o.material || [])) for (const k of ['map', 'emissiveMap', 'roughnessMap', 'normalMap', 'bumpMap', 'alphaMap', 'aoMap']) { const t = m[k]; if (t && !seen.has(t)) { seen.add(t); try { renderer.initTexture(t); } catch { /* ikke støttet */ } } } });
     renderer.compile(scene, camera);
-    if (shaderWarm) warmRender(renderer, scene, camera);   // R35: compile() tar ikke med variantene i gjennomsiktighetspasset (glass, målflasken): én full tegning gjør det
+    if (shaderWarm) { warmRender(renderer, scene, camera); const nf = warmFades(fadeEntries, (e) => { setFadeMats(e, true); for (const c of e.clone.values()) for (const mt of [].concat(c)) { mt.opacity = fadeOp; mt.depthWrite = false; } }, (e) => setFadeMats(e, false), () => warmRender(renderer, scene, camera)); logEv('forvarming', `utoning: ${nf} ting`); }   // R35b: også de gjennomsiktige utoningskopiene
+    // R35: compile() tar ikke med variantene i gjennomsiktighetspasset (glass, målflasken): én full tegning gjør det
   } catch (e) { logEv('forvarming feilet', String(e.message || e)); }
   for (const o of hidden) o.visible = false;
   shw.mark();
@@ -2551,7 +2552,7 @@ function frame(now) {
     lastHitch = clock; const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'lav fps').slice(-3).map((e) => e.type).join(', ');
     logEv('hakk', `${Math.round(raw)} ms${near ? ' etter: ' + near : ''} · ${renderer.info.programs?.length ?? '?'} shadere, ${renderer.info.render.calls} tegnekall`);
   }
-  if ((++shwN & 15) === 0) { const ev = shw.tick(); if (ev) { const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'shadere').slice(-3).map((e) => e.type).join(', '); logEv('shadere', `${ev.from} til ${ev.to} (start ${ev.base})${near ? ' etter: ' + near : ''}`); } }   // R35: hver ny shader etter forvarmingen logges med det som skjedde like før
+  if ((++shwN & 15) === 0) { const ev = shw.tick(); if (ev) { const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'shadere').slice(-3).map((e) => e.type).join(', '); logEv('shadere', `${ev.from} til ${ev.to} (start ${ev.base})${ev.keys && ev.keys.length ? ' nye: ' + ev.keys.join(' ') : ''}${near ? ' etter: ' + near : ''}`); } }   // R35: hver ny shader etter forvarmingen logges med det som skjedde like før
   if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps${renderer.getPixelRatio() < basePr - 0.01 ? ' · ' + renderer.getPixelRatio().toFixed(2) + '×' : ''}`; perf.win = perf.winN = 0; } }
   { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
     if (mode === 'play' && !menuOpen) autoQC.feed(raw);
@@ -2569,4 +2570,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { shw, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

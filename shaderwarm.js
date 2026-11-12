@@ -14,6 +14,16 @@ export function warmRender(renderer, scene, camera) {
   return touched.length;
 }
 
+// R35b: ting som tones ut (vegger/gardiner mellom kamera og figur) får en gjennomsiktig kopi av materialet (transparent=true gir en annen shadernøkkel),
+// og kopien kompilerte først første gang noe kom i veien midt i spillet. Slå på utoning for ALLE, tegn ett bilde, slå av og tøm kopiene (programmene blir i hurtigbufferen).
+// entries: liste med fade-oppføringer; on(e)/off(e) bytter materialer; render() tegner. Returnerer antall oppføringer. Gjenoppretter også ved feil.
+export function warmFades(entries, on, off, render) {
+  const done = [];
+  try { for (const e of entries) { on(e); done.push(e); } render(); }
+  finally { for (const e of done) { off(e); if (e.clone && e.clone.clear) e.clone.clear(); if (e.orig && e.orig.clear) e.orig.clear(); } }
+  return done.length;
+}
+
 // Lav profil skal ikke endre noe som inngår i shader-nøkkelen (da kompileres alle materialer på nytt midt i spillet).
 // I stedet for sun.castShadow = false: behold skyggelyset, men gi skygge-kartet bittelite størrelse og et kamera som ikke ser noe
 // (ingen skyggetegning, ingen kartminne). Skyggen kommer tilbake ved å gjenopprette størrelse og kamera. Forventer sun.shadow med camera og mapSize.
@@ -28,12 +38,15 @@ export function setSunShadowLow(sun, on, normal) {
 }
 
 // Følger antall shaderprogram etter forvarmingen. tick() kalles ofte (billig) og gir en hendelse når antallet har økt.
-export function createShaderWatch(count) {
-  let base = null, last = null, grew = 0;
+// R35b: describe (valgfri) gir en liste med korte programnøkler; ved økning rapporteres de nye (ev.keys), så rapporten viser hvilket materiale som ga den siste shaderen.
+export const programKeys = (renderer) => (renderer && renderer.info && renderer.info.programs ? renderer.info.programs.map((p) => `${p.name || ''}#${keyHash(String(p.cacheKey || p.id || ''))}`) : []);
+export function keyHash(str) { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0; return h.toString(36); }
+export function createShaderWatch(count, describe) {
+  let base = null, last = null, grew = 0, known = new Set();
   return {
-    mark() { base = last = count(); return base; },
+    mark() { base = last = count(); if (describe) known = new Set(describe()); return base; },
     get base() { return base; }, get now() { return last; }, get grew() { return grew; },
-    tick(near = '') { if (base === null) return null; const n = count(); if (n <= last) { last = Math.min(last, n); return null; } const ev = { from: last, to: n, base, near }; grew += n - last; last = n; return ev; },
+    tick(near = '') { if (base === null) return null; const n = count(); if (n <= last) { last = Math.min(last, n); return null; } const ev = { from: last, to: n, base, near }; if (describe) { const now = describe(), fresh = now.filter((k) => !known.has(k)); fresh.forEach((k) => known.add(k)); ev.keys = fresh.slice(0, 6); } grew += n - last; last = n; return ev; },
     line() { return base === null ? 'ikke forvarmet' : `${base} ved start, ${last} nå${last > base ? ` (+${last - base} etter forvarming)` : ''}`; },
   };
 }
