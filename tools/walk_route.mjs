@@ -6,13 +6,14 @@ import fs from 'node:fs';
 import { P, newPlayer, step, applyPreset, initBodies, inHazard } from '../physics.js';
 import { shortcutsOf, shortcutRoute, gateRoute, toolBoxes } from '../shortcut.js';
 
-export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [] } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
-  applyPreset(preset); Object.assign(P, { edgeGuard: true, autoJump: true, airSteady: true, magnet: true, holdGrab: true });
+export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [], helpers = true, only = null, wallJump = true, trace = null } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
+  applyPreset(preset); Object.assign(P, { edgeGuard: helpers, autoJump: helpers, airSteady: helpers, magnet: helpers, holdGrab: helpers }); if (only) for (const k of only) P[k] = true;   // R32: helpers=false = streng modus (ingen sikte-hjelp)
+  if (!wallJump) Object.assign(P, { wallKick: 0, wallUp: 0 });                                                                      // R32: wallJump=false = ingen veggsprang
   const L = level ? JSON.parse(JSON.stringify(level)) : JSON.parse(fs.readFileSync(levelPath, 'utf8')); initBodies(L); for (const b of extraBoxes) L.boxes.push(JSON.parse(JSON.stringify(b)));
   const R = route || L.route || []; if (R.length < 2) return { ok: false, why: 'brettet har ingen rute' };
   const p = newPlayer(...L.start), idle = { mx: 0, mz: 0, jumpPressed: false, jumpHeld: false, grabPressed: false, grabHeld: false };
   let t = 0, fail = null; const log = [];
-  const tick = (inp) => { step(p, { ...idle, ...inp }, 1 / 60, L); t++; if (inHazard(L, p)) fail = `fare: ${inHazard(L, p).id}`; else if (p.knockout) fail = 'for hardt fall'; else if (p.y < L.deathY) fail = 'falt ut'; };
+  const tick = (inp) => { step(p, { ...idle, ...inp }, 1 / 60, L); t++; if (trace && t % 6 === 0) trace.push([+(t / 60).toFixed(2), +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), p.state]); if (inHazard(L, p)) fail = `fare: ${inHazard(L, p).id}`; else if (p.knockout) fail = 'for hardt fall'; else if (p.y < L.deathY) fail = 'falt ut'; };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const near = (n, m = 0.35) => [clamp(p.x, Math.min(n.x0 + m, (n.x0 + n.x1) / 2), Math.max(n.x1 - m, (n.x0 + n.x1) / 2)), clamp(p.z, Math.min(n.z0 + m, (n.z0 + n.z1) / 2), Math.max(n.z1 - m, (n.z0 + n.z1) / 2))];
   const on = (n) => p.onGround && Math.abs(p.y - n.top) < 0.06 && p.x > n.x0 - 0.32 && p.x < n.x1 + 0.32 && p.z > n.z0 - 0.32 && p.z < n.z1 + 0.32;
@@ -93,12 +94,12 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario', level 
 
 // R29: verktøy-genveier. Bevis at (1) første trinn ikke kan nås uten verktøyet, (2) målet nås via genveien med verktøyet (gelfeltet lages av den ekte fysikken),
 // og (3) den vanlige ruta uten verktøy også når målet, og er lengre (secs) enn genveien.
-export function walkShortcut(levelPath, sc, { level = null } = {}) {
+export function walkShortcut(levelPath, sc, { level = null, ...opts } = {}) {   // R32: opts (helpers, only, wallJump, trace) går videre til walkRoute
   const L = level || JSON.parse(fs.readFileSync(levelPath, 'utf8')), out = { id: sc.id, ok: false, why: '' };
   const gate = gateRoute(L, sc), route = shortcutRoute(L, sc); if (!gate || !route) return { ...out, why: 'finner ikke trinnene eller flata genveien ender på' };
-  const plain = walkRoute(levelPath, { level: L }), noTool = walkRoute(levelPath, { level: L, route: gate }), tb = toolBoxes(L, sc);
+  const plain = walkRoute(levelPath, { ...opts, level: L }), noTool = walkRoute(levelPath, { ...opts, level: L, route: gate }), tb = toolBoxes(L, sc);
   if (!tb.boxes.length) return { ...out, why: tb.why };
-  const withTool = walkRoute(levelPath, { level: L, route, extraBoxes: tb.boxes });
+  const withTool = walkRoute(levelPath, { ...opts, level: L, route, extraBoxes: tb.boxes });
   Object.assign(out, { plain, noTool, withTool, gel: tb.boxes.length });
   if (!plain.ok) out.why = `den vanlige ruta går ikke: ${plain.why}`;
   else if (noTool.ok) out.why = 'første trinn kan nås uten verktøyet (for lavt)';

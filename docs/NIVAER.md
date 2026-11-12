@@ -127,3 +127,15 @@ Hvert variantrom har en genvei med verktøy (`shortcuts` i brettet, satt opp med
 - **Spill og logg:** første trinn og toppen gir et varsel (⚙ → Hjelp → «Verktøy-genveier», `tlm.shortcuthint`) og logges som `genvei` (`<id> første trinn` / `<id> oppe`). Gel, bånd og taubane logges som før som `use`.
 - **Ny genvei:** legg `addShortcut(s, k, { … })` i `make_variants.mjs` (flaske, trinn i cm, hvor figuren står når den smører, `join`), kjør `make_variants` og `scene2level`, og gå ruta. Hold bane for maur fri for trinnene (`test_scene.mjs` sier fra).
 
+
+## Boten: klatring, verktøy og bygging (R32)
+`node tools/bot.mjs levels/<navn>.level.json [--verbose] [--svg rute.svg] [--json]` går **alle** veiene i et brett med den ekte fysikken (`tools/bot.mjs`, testet i `test_bot.mjs`; bygger på `walkRoute` i `tools/walk_route.mjs`):
+- `ruta`: den vanlige ruta, med klatring (GREP mot klatreflater, kantgrep, hvile mellom klatringene) og hopp.
+- `genvei:<id>`: verktøy-genveiene fra R29 (hårgelé). Beviser at første trinn ikke kan nås uten verktøyet, at ruta med verktøyet går, og bruker gelfeltet fysikken faktisk lager.
+- `bygg:<id>`: byggesnarveiene fra R30 (bro, trapp, vippe, kjøkkenbro). Referansebygget må bestå PRØV i 2D-fysikken, bygget settes inn som faste flater i verden, og ruta via bygget går.
+- **To nivåer av menneskelige evner:** *streng* = uten sikte-hjelp (kantvakt, luftstøtte, magnet) og uten veggsprang, bare det en spiller klarer med stikke + HOPP + GREP (autohopp og «hold GREP» regnes som at spilleren trykker riktig). *Løs* = alle hjelpemidler på, slik spillet står som standard. Kreftene (stamina) og hvilepausene er de samme begge steder: de ligger i fysikken.
+- **Dommer:** `BESTÅR_STRENG` (alt går), `BESTÅR_LØS` (går bare med hjelpemidler: vurder om brettet er for knapt), `FEIL` (kort rute som ikke går, avslutter med 2) og `TIL_GJENNOMGANG` (lang rute som ikke går, avslutter med 3: ≥ 10 steg eller ≥ 120 enheter gange). På en lang rute kan det like gjerne være boten som er for dum, så et menneske må se på den (spill den, eller se SVG-sporet) før brettet endres. Lista over det som skal gjennomgås skrives ut sist, med årsak.
+- **Veggsprang (avgjort):** spillere *kan* bruke det (fysikken har det), men et brett skal aldri kreve det. Boten bruker det aldri, og streng modus slår det av (`wallKick`/`wallUp` = 0). `test_bot.mjs` viser at alle ruter går uten.
+- **Vis ruta:** `--verbose` skriver ett trinn per linje (flate, høyde, klatre/hopp/gå). `--svg rute.svg` tegner et sideriss av rommet med botens spor (rød linje = gikk, oransje = feilet der den stoppet) og kan åpnes i nettleser.
+- **Dekning:** Kontroll og alle seks nivåene (og byggebrettene) består i streng modus. Kontroll fikk en ekte rute (trinn → plattformer) i stedet for gulv → siste plattform. `test_bot.mjs` krever at hvert brett med rute er med i lista, så et nytt brett må legges inn der.
+- **Legge til et nytt brett:** lag ruta som vanlig, kjør `node tools/bot.mjs levels/<navn>.level.json`, og legg id-en i `ids` i `test_bot.mjs`. `solve.mjs` (tilfeldig søk) er uendret og gjelder fortsatt prototyper uten rute; `--nowalljump` finnes der.
