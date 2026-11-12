@@ -19,6 +19,33 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
+### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
+Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
+Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
+
+### [ ] R28 · Fallgrenser varslet
+Landingsmarkør/kontaktskygge under figuren i fall, vindlyd og lett FOV-økning mot fallterskelen, og tre tydelige landingsklasser (myk, hard, farlig) med egen lyd, lydtekst og figurreaksjon. Data/terskler i egen ren modul (`landing.js`) med tester; hekter i `main.js`; verdier i `SETTINGS` (grupper: Spill/Hjelp, finjustering i admin); `logEv('landing', …)`. Må fungere med stikke + TA/HOPP/GREP, uten tastatur. Ikke endre fysikken i `physics.js` utover å lese fallhøyde/fart. Av/på i ⚙.
+Ferdig når: markør og vind vises i et fall på iPhone (Kontroll-brettet har fall-tårn), de tre landingsklassene har tester, `walk_route` er uendret grønn, og FPS er ikke dårligere (tegnekall-budsjett).
+
+### [ ] R29 · Verktøy-løsninger i nivå 4–6
+Variantrommene skal ha egne gåter som bruker verktøy: hårgelé, dopapirbånd, nål og tråd (taubane), stav, og løse ting man må flytte selv. Minst én verktøy-løsning per rom (4, 5, 6), lagt i grunnscene/variant-oppskriften (`tools/make_variants.mjs`), ikke som engangs-hack. `walk_route` må bevise at målet kan nås både med verktøyet og via en lengre/vanskeligere vei uten. Tekst og hint nevner knappene.
+Ferdig når: nivå 4–6 har hver minst én verktøy-gåte, `walk_route` er grønn for alle seks nivåer, og `npm test` dekker verktøyene.
+
+### [ ] R30 · Flere byggebrett og byggedeler
+Bygger på R24–R26: minst ett nytt byggebrett per romtype (barnerom og kjøkken, f.eks. vippe over avgrunn, bro til kjøleskap), og minst én ny del (vippe, fjær eller trinse) i `build_phys.js` med tester. Hvert brett har fortsatt en vanskelig alternativ vei uten bygging bevist med `walk_route`, og referansebygg som gir gyldig rute. Delmål (`goals`) kobles til byggingen.
+Ferdig når: nye brett og del kan bygges og prøves på iPhone, lagres/gjenopprettes, og alle tester og `walk_route` er grønne.
+
+### [ ] R31 · Nytt rom: lekerom (nivå 7)
+Lekerom med legoknotter som tak/gulv, egen fiende, egen musikk, 2–4 delmål, en verktøy-gåte og et byggested. Lages som grunnscene med `tools/scene2level.mjs`, gås med `walk_route`, ny fortelling og intro (R22), og med i nivåvalg, «Neste nivå» og målskjerm. Avhenger av R29 og R30.
+Ferdig når: nivå 7 kan spilles fra startskjerm til mål på iPhone, `walk_route` og `npm test` er grønne, og versjon/CHANGELOG er oppdatert.
+
+### [ ] R32 · Bot som klatrer og bruker verktøy
+Boten (`tools/solve.mjs`/`walk_route`) skal forstå klatring, verktøy (R29) og bygging (R30), begrenset til menneskelige evner (to-nivå validering: streng/løs), vise ruten, og sende feil på lange ruter til menneskelig gjennomgang. Avgjør og dokumenter om veggsprang er tillatt. Avhenger av R29.
+Ferdig når: boten løser Kontroll og alle seks nivåene med verktøy og klatring, den streng/løse modusen er testet, og `docs/NIVAER.md` forklarer bruken.
+
+### [ ] R33 · «Send til Claude» fra spillet (Supabase) — venter på PC
+Se BACKLOG «Teknisk». Må gjøres på PC; ikke i runneren.
+
 ## Ferdige punkter
 - [x] Gulv og overflater: gulvdetaljer for målestokk og matter uten moiré (R13, v1.15; ekte FPS og flimmer i bevegelse må bekreftes på iPhone)
 - [x] Byggeskjerm C: bygget flyttes ut i verdenen, to brett (bro og trapp) og vanskelig alternativ vei (R26, v1.14)
