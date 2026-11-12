@@ -311,6 +311,45 @@
    "material": "wood",
    "cp": true,
    "soft": false
+  },
+  {
+   "type": "paper",
+   "min": [
+    -34,
+    0,
+    12.4
+   ],
+   "max": [
+    -26,
+    5.6,
+    16
+   ],
+   "id": "papirhaug_hoy",
+   "kind": "paper_pile",
+   "color": 16513782,
+   "material": "paper",
+   "cp": false,
+   "soft": true,
+   "compress": true
+  },
+  {
+   "type": "ceramic",
+   "min": [
+    29,
+    0,
+    14.4
+   ],
+   "max": [
+    37,
+    1.6,
+    22.4
+   ],
+   "id": "vannskal",
+   "kind": "water_bowl",
+   "color": 10275814,
+   "material": "ceramic",
+   "cp": false,
+   "soft": false
   }
  ],
  "movables": [
@@ -427,6 +466,42 @@
    "weight": "light",
    "breakable": false,
    "tool": "roll"
+  },
+  {
+   "id": "handkle_k1",
+   "kind": "towel",
+   "material": "fabric",
+   "color": 5935032,
+   "min": [
+    8,
+    18,
+    -2
+   ],
+   "max": [
+    10.8,
+    18.8,
+    0
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "handkle_k2",
+   "kind": "towel",
+   "material": "fabric",
+   "color": 12081770,
+   "min": [
+    11.6,
+    18,
+    -2
+   ],
+   "max": [
+    14.4,
+    18.8,
+    0
+   ],
+   "weight": "light",
+   "breakable": false
   }
  ],
  "decor": [],
@@ -556,6 +631,33 @@
     20.9,
     -7
    ]
+  },
+  {
+   "id": "papirhaug_hoy",
+   "text": "Papirhaug, 28 cm\nFor høy å hoppe på. Bær noe tungt (en våt svamp) hit og trykk PRESS: haugen blir et lavt trinn.",
+   "pos": [
+    -30,
+    6.5,
+    14.2
+   ]
+  },
+  {
+   "id": "vannskal",
+   "text": "Vannskål\nBær svampen hit og trykk SUG: den suger vann og blir tung og myk.",
+   "pos": [
+    33,
+    2.5,
+    18.4
+   ]
+  },
+  {
+   "id": "handkle_k1",
+   "text": "Håndklær\nBær det ene (TA) bort til det andre og trykk KNYT. Gå til kanten og trykk HENG TAU: du klatrer ned i stedet for å falle.",
+   "pos": [
+    9.4,
+    19.7,
+    -1
+   ]
   }
  ],
  "hazards": [],
@@ -586,6 +688,8 @@
  "audio": {
   "reverb": 0.15
  },
+ "ants": [],
+ "collectibles": [],
  "ropes": [],
  "route": [
   {
@@ -682,7 +786,7 @@
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 13,
-  "reachable": 12
+  "nodes": 15,
+  "reachable": 14
  }
 }

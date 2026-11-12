@@ -361,7 +361,11 @@
       "confidence": 1,
       "note": "Står øverst på tårnet. Bær den til kanten og trykk F: et bånd ruller ned. Det tåler et tak i ca. 7 s.",
       "help": "Dopapirrull\nBær den (TA) til en kant og trykk RULL UT: et bånd ruller ned. Klatre i det, men det revner etter ca. 7 s."
-    }
+    },
+    {"id": "papirhaug_hoy", "kind": "paper_pile", "material": "paper", "color": "#fbfaf6", "box": [30, 70, 0, 28, 212, 230], "soft": true, "compress": true, "confidence": 1, "note": "R41: for høy til å hoppe opp på (28 cm). Presses sammen av en tung ting du bærer (våt svamp): blir 14 cm og et trinn opp til hylla. Alternativ til ørepinnen.", "help": "Papirhaug, 28 cm\nFor høy å hoppe på. Bær noe tungt (en våt svamp) hit og trykk PRESS: haugen blir et lavt trinn."},
+    {"id": "vannskal", "kind": "water_bowl", "material": "ceramic", "color": "#9ccbe6", "box": [345, 385, 0, 8, 222, 262], "confidence": 1, "note": "R41: vann. Bær svampen hit og trykk SUG: den blir våt, tung og myk.", "help": "Vannskål\nBær svampen hit og trykk SUG: den suger vann og blir tung og myk."},
+    {"id": "handkle_k1", "kind": "towel", "material": "fabric", "color": "#5a8fb8", "box": [240, 254, 90, 94, 140, 150], "movable": "light", "confidence": 1, "note": "R41: to løse håndklær øverst på tårnet. Bær det ene til det andre og trykk KNYT; gå til sørkanten (z=180) og trykk HENG TAU: et langt tau ned til gulvet.", "help": "Håndklær\nBær det ene (TA) bort til det andre og trykk KNYT. Gå til kanten og trykk HENG TAU: du klatrer ned i stedet for å falle."},
+    {"id": "handkle_k2", "kind": "towel", "material": "fabric", "color": "#b85a6a", "box": [258, 272, 90, 94, 140, 150], "movable": "light", "confidence": 1}
   ],
   "look": {
     "exposure": 1.0,

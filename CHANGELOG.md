@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.45** – R41: kombinasjoner (svamp + vann, håndkle + håndkle, papirhaug) i regeltabell `combos.js`, og stavhopp-animasjon (`vault_anim.js`).
 - **1.44** – R39: finpuss av Prince: kant-shimmy, rulle ved landing, forsiktig gange og tyngre tau (`finpuss.js`, justeres i ⚙). Følelsen testes på iPhone.
 - **1.43** – R40: figuren snur med små skritt, tråkker over små hindre og har nye poser i heng/sving/veggglid (`hero_move.js`, av/på i ⚙). Følelsen testes på iPhone.
 - **1.42** – Veikart: R39 (finpuss av Prince), R40 (figurens bevegelse), R41 (flere kombinasjoner) og R42 (motgiften høyere opp, vann-variant).

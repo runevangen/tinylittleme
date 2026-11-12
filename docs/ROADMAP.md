@@ -20,10 +20,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R41 · Flere kombinasjoner: svamp + vann, håndkle + håndkle, papirhaug, stavhopp-animasjon
-Fra BACKLOG «Kombineringsmotor» og «Klatrehjelp». I dag er bare nål + tråd = taubane hardkodet (`physics.js`: `useTool`, `useZip`). Lag en liten **tabell over egenskaper og regler** (BotW/Scribblenauts-stil) i en egen testbar modul, og legg inn minst tre nye kombinasjoner: **svamp + vann** (svamp suger og blir tung/myk landing), **håndkle + håndkle** (knytt til lengre tau/klatreflate) og **papirhaug som presses sammen** (blir lavere trinn). Dessuten **stavhopp-animasjon** for staven. Hver kombinasjon bruker TA/HOPP/GREP, har hint-tekst som nevner knappene, lyd og lydtekst, og `logEv('kombo', …)`. Ingen kombinasjon skal være nødvendig for å fullføre et nivå (alternativ vei finnes), og `walk_route`/bot må kunne bevise både med og uten.
-Ferdig når: regeltabellen finnes med tester (egenskap → regel → resultat), tre nye kombinasjoner kan utløses i minst ett nivå hver, stavhopp har animasjon, `walk_route`, bot-tester og `npm test` grønne.
-
 ### [ ] R42 · Motgiften høyere opp i badet og varianter
 Fra BACKLOG «Flytte motgiften til toppen av speilskapet» og «Motgift-varianter»/«Badet på nytt». I Bad (nivå 1 og 4): flytt motgiften opp til speilskapet/medisinskap med klatrevei fra knaggrekka (nytt delmål i `goals`), og legg inn **en variant** der vann stiger sakte og man må rømme (nivå 4, valgfri vanskelighetsgrad via `SETTINGS`). Lag/endre grunnscenen (`scenes/bad*.scene.json`) og kjør `node tools/make_variants.mjs`; alternativ vei uten klatring finnes og er vanskeligere. Dusjslange som tau hvis det lar seg gjøre med eksisterende tau-fysikk. Tekster i `i18n.js` (nb/en) som nevner knappene.
 Ferdig når: motgiften kan nås fra knaggrekka via klatring i begge bad-nivåene og via den vanskelige veien, vann-varianten kan slås på og avgjøres (rømme eller tape), `walk_route` grønn for alle nivåer og `npm test` grønn; delmålene er oppdatert og målskjermen viser dem.
@@ -33,6 +29,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Flere kombinasjoner: svamp + vann, håndkle + håndkle, papirhaug, stavhopp-animasjon, combos.js, vault_anim.js (R41, v1.45)
 - [x] Finpuss av Prince: kant-shimmy, rulle ved landing, forsiktig gange, tyngre tau, finpuss.js (R39, v1.44; følelsen testes på iPhone)
 - [x] Figurens bevegelse: snu med skritt, tråkke over små hindre, nye poser i heng/sving/veggglid, hero_move.js (R40, v1.43; følelsen testes på iPhone)
 - [x] Siste shader midt i spillet forvarmes: gjennomsiktige utoningskopier, nye shaderprogram logges med nøkkel (R35b, v1.40; fra tester: Rune; ekte ms-forbedring testes på iPhone)

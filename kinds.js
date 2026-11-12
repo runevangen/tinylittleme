@@ -54,7 +54,8 @@ export const KINDS = {
   // klatrehjelp
   qtip:         { shaped: true,  desc: 'ørepinne (stav): movable light + pole: 1.5' },
   sponge:       { shaped: true,  desc: 'svamp: movable light + soft: true' },
-  paper_pile:   { shaped: true,  desc: 'haug med dopapir: soft: true (fast myk flate)' },
+  water_bowl:   { shaped: true,  desc: 'vannskål (R41): lav, fast boks med vann; en svamp du bærer og TA-trykker ved den blir våt (tung og myk)' },
+  paper_pile:   { shaped: true,  desc: 'haug med dopapir: soft: true (fast myk flate); compress: true = kan presses sammen til halv høyde av en tung ting du bærer (R41)' },
   needle:       { shaped: true,  desc: 'nål: movable light + tool: "needle" (trædes med en trådsnelle til en taubane)' },
   spool:        { shaped: true,  desc: 'trådsnelle: movable light + tool: "spool" + thread: true' },
   key:          { shaped: true,  desc: 'nøkkel (R7): movable light, ca. 14×3×6 cm; brukes i en gåte (`puzzles` i scenen) og legges på en plate for å rulle ut en bro' },
