@@ -19,10 +19,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R34 · Sprettboksen kaster figuren
-Fra testrapport (tester Rune, v1.28, nivå 3 Kjøkken, iPhone): «Når sprett opp trollet kommer så burde jeg bli kastet bort.» Sprettboksen (`leke_sprettboks`, R18, `toys_live.js`) popper i dag med lyd og bevegelse, men figuren som står på den påvirkes ikke. La popp gi figuren et tydelig kast (opp og litt bort fra boksen, retning fra boksens midte), kort «uskadd»-tid så han ikke fanges igjen, og en liten figurreaksjon (arme opp, rop) og lydtekst. Kastets styrke og av/på i `SETTINGS` (finjustering i admin), `logEv('leke', …)`. Må virke med stikke + TA/HOPP/GREP, og ikke gjøre at man kastes ut av brettet eller forbi målet på en urettferdig måte: sjekk alle brett med sprettboks, og at `walk_route` er uendret grønn. Ren logikk (kastvektor, avstand fra boks) i testbar modul eller funksjon.
-Ferdig når: figuren som står på sprettboksen i nivå 3/6 (og andre brett med den) kastes tydelig når den popper, tester dekker kastvektor, kort uskadd-tid og at figuren som ikke står på boksen ikke påvirkes, `walk_route` og `npm test` er grønne.
-
 ### [ ] R35 · Færre hakk: forvarm shadere og hold antallet stabilt
 Fra testrapport (v1.28, nivå 3 Kjøkken, iPhone 18.7, 57 fps snitt): hakk på 2910 ms (ved 13 s), 444, 500, 542 og 587 ms tidlig i økta, og antall shadere stiger for hver gang (42 → 50 → 54 → 56 → 57 → 60). Det tyder på at shadere kompileres midt i spillet fordi `forvarming` (perf_budget/main.js) ikke dekker alle materialer og effekter (nye materialtyper fra R13/R18/R28/R30, oversikt-kamera, lykt, landingsmarkør, bygg, sprettboks-effekt osv.). Finn hva som utløser hver ny shader (logg program-antall i `logEv('hakk', …)` finnes allerede), forvarm dem under lasting/introen (f.eks. `renderer.compile` med alle materialer og lysoppsett, eller skjult ramme per materialtype), og begrens uten å øke tegnekall eller minne. Sikre også at det ikke kommer nye shadere når spilleren åpner oversikt, berører en lek, lander hardt eller starter bygging.
 Ferdig når: en test (Playwright, iPhone 14, programvare-GL er ok siden vi teller programmer, ikke ms) spiller en økt i nivå 3 med oversikt, lek-pop, hopp og landing og viser at `renderer.info.programs.length` er uendret etter forvarmingen; rapport/logg viser antall shadere ved start og etter økta; ingen økning i tegnekall eller teksturminne; alle tester grønne. Ekte ms-forbedring bekreftes på iPhone (merkes «testes på iPhone»).
@@ -32,6 +28,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Sprettboksen kaster figuren som står på den: toy_kick.js, uskadd-tid, SETTINGS (R34, v1.30; må prøves på iPhone)
 - [x] «Send til Claude» (R33): tilbakemelding direkte fra spillet til Supabase med tester-kode (v1.27)
 - [x] Nytt rom: lekerom (nivå 7) med legoknotter, egen fiende, musikk, delmål, verktøy-gåte og byggested (R31, v1.26; må prøves på iPhone)
 - [x] Bot som klatrer og bruker verktøy: `tools/bot.mjs` med streng/løs modus, bevist på Kontroll (R32, v1.25)
