@@ -70,7 +70,7 @@ export const SOUND_LIST = [
 ];
 
 export function createAudio(ctx, opts = {}) {
-  let volume = opts.volume ?? 0.7, muted = false;
+  let volume = opts.volume ?? 0.7, muted = false, breathOn = opts.breath === true;   // R38: pustelyd er av som standard
   const master = ctx.createGain(); master.gain.value = volume;
   const comp = ctx.createDynamicsCompressor();
   comp.threshold.value = -14; comp.knee.value = 12; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.2;
@@ -138,7 +138,8 @@ export function createAudio(ctx, opts = {}) {
   }
 
   // ---- pust --------------------------------------------------------------
-  function breath(kind, intensity, dur, delay = 0) {
+  function breath(kind, intensity, dur, delay = 0, force = false) {
+    if (!breathOn && !force) return;                                  // R38: pust av = ingen pustelyd (andre lyder uendret)
     const t = now() + delay, k = clamp(intensity, 0, 1);
     const peak = ((kind === 'in' ? 0.03 : 0.04) + 0.2 * Math.pow(k, 1.3)) * 0.8;   // roligere enn før
     const att = kind === 'in' ? dur * 0.6 : dur * 0.18;
@@ -155,7 +156,7 @@ export function createAudio(ctx, opts = {}) {
   let effort = 0, bphase = 0;
   const bump = (x) => { effort = clamp(effort + x, 0, 1); };
   function tick(dt, st = {}) {
-    if (!st.active) return;
+    if (!st.active || !breathOn) return;
     use('breath', () => tickBreath(dt, st));
   }
   function tickBreath(dt, st) {
@@ -268,7 +269,7 @@ export function createAudio(ctx, opts = {}) {
       case 'land': land('wood', 16); break;
       case 'windup': windup(); break;
       case 'jump': jump(); break;
-      case 'breath': use('breath', () => { breath('in', 0.7, 0.5); breath('out', 0.7, 0.6, 0.55); }); break;
+      case 'breath': use('breath', () => { breath('in', 0.7, 0.5, 0, true); breath('out', 0.7, 0.6, 0.55, true); }); break;
       case 'grab': grab(); break;
       case 'mantle': mantle(); break;
       case 'reach': reach(); break;
@@ -316,6 +317,7 @@ export function createAudio(ctx, opts = {}) {
     pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, bossroar, bossbump, fanfare, crumb, bcreak, bbreak, bsplash, bhop, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
+    setBreath: (on) => { breathOn = !!on; }, isBreath: () => breathOn,
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },
     setMuted: (m) => { muted = !!m; apply(); },
     setReverb: (v) => { wet.gain.value = v; },

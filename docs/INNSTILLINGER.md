@@ -16,7 +16,7 @@ Panelet har et **søkefelt** øverst (skjuler rader som ikke treffer og åpner g
 | **Kamera** | Følging, avstand, synsfelt, vinkel, ser foran, hjelper, utoning, følsomhet, skygge under figuren, kamerasyn; undermeny **Skulderkamera** |
 | **Grafikk og ytelse** | Grafikknivå, fargegradering og -filter, myke skygger, mørke hjørner, lysstråler, støv, gulvdetaljer, småting, oppløsning, små teksturer, lav profil, FPS |
 | **Hjelp og veiledning** | Pil/kompass mot delmål, retningshjelp, lyssøyle, minikart, markører, grep, tips etter fall, snakkebobler, tekniske tall, gåte-kamerasveip; undermeny **Nivåstart** |
-| **Lyd og stemme** | Hovedvolum, lyd, musikk (+ volum), stemme (+ volum); undermeny **Pust og lydnivåer** (pust, skritt, hopp, ting, leker, romlyd) |
+| **Lyd og stemme** | Hovedvolum, lyd, musikk (+ volum), stemme (+ volum); undermeny **Pust og lydnivåer** (pustelyd av/på (av som standard, R38), pust-volum, skritt, hopp, ting, leker, romlyd) |
 | **Test og tilbakemelding** | Vurderingsknappen ⚑, marker her, del/kopier rapport og innstillinger, alt til standard |
 | **Admin** (skjult) | Alle hoppverdier og mekanikk-verdier, lydmikser og etterklang, Plan/Fly, hjelpeobjekter, byggestyrke m.m. |
 
