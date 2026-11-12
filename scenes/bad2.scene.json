@@ -1753,6 +1753,61 @@
       "grip": true,
       "onto": "hylle",
       "grip_drain": -0.3
+    },
+    {
+      "id": "hargele_bad",
+      "kind": "gel_bottle",
+      "material": "plastic",
+      "color": "#8fd8ee",
+      "box": [
+        90,
+        94,
+        0,
+        10,
+        208,
+        212
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "light",
+      "tool": "gel",
+      "help": "Hårgelé\nTa flaska (TA), bær den til det høye trinnet ved vaskekurven og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir."
+    },
+    {
+      "id": "gele_bad_trinn_1",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9a86c",
+      "box": [
+        110,
+        125,
+        0,
+        27,
+        142.5,
+        162.5
+      ],
+      "confidence": 1,
+      "photos": [],
+      "shortcut": true,
+      "help": "Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), så klatrer du opp og går videre til vaskekurven. Den lange veien går fortsatt."
+    },
+    {
+      "id": "gele_bad_trinn_2",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#c99556",
+      "box": [
+        125,
+        140,
+        0,
+        47,
+        142.5,
+        162.5
+      ],
+      "confidence": 1,
+      "photos": [],
+      "shortcut": true,
+      "cp": true
     }
   ],
   "hazards": [
@@ -1991,5 +2046,27 @@
         "r": 9
       }
     ]
-  }
+  },
+  "shortcuts": [
+    {
+      "id": "gele_bad",
+      "tool": "gel",
+      "item": "hargele_bad",
+      "label": "Smør hårgelé og klatre opp trinnene til vaskekurven",
+      "en": "Smear hair gel and climb the steps to the laundry basket",
+      "stand": [
+        106.5,
+        152.5
+      ],
+      "face": [
+        1,
+        0
+      ],
+      "steps": [
+        "gele_bad_trinn_1",
+        "gele_bad_trinn_2"
+      ],
+      "join": "vaskekurv"
+    }
+  ]
 }

@@ -31,6 +31,7 @@ import { recordRun, getEquipped, rt as rwT, accById } from './rewards.js';
 import { applyAccessories, updateAccessories, showCloset, previewSVG } from './rewards_view.js';
 import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4–6 som egne rom (stemning, hjelmlykt, vri)
 import { createVoice } from './voice.js';
+import { createShortcutWatch, resetShortcutWatch, stepShortcutWatch } from './shortcut.js';   // R29: verktøy-genveier (hårgelé-trapper i nivå 4–6)
 import { createToyLife, resetToys, stepToys, TOY, TOY_SOUND, TOY_CUE } from './toys_live.js';   // R18: leker som lever og reagerer
 import { animateToy } from './toys_view.js';
 import { makeT, LANGS } from './i18n.js';
@@ -159,6 +160,7 @@ TOY.windT = store.get('tlm.toywind', TOY.windT);
 let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let goalsOn = store.get('tlm.goals', true), goalArrowOn = store.get('tlm.goalarrow', true), goalLockOn = store.get('tlm.goallock', true);   // delmål (R23)
+let shortcutHintOn = store.get('tlm.shortcuthint', true);   // verktøy-genveier (R29): varsel når du bruker en genvei
 let rewardsOn = store.get('tlm.rewards', true), rewardsAll = store.get('tlm.rewardsall', false);   // belønninger (R16)
 let bossOn = store.get('tlm.boss', true);   // sjef-maur (R9)
 let camDistSet = store.get('tlm.camdist', 5.5), hudTech = store.get('tlm.hudtech', false), hudOpen = false, fpsOn = store.get('tlm.fps', false);
@@ -950,6 +952,7 @@ const bodyMeshes = LEVEL.bodies.map((b) => {
   mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); if (!gfxLow) look.detailize(mesh);
   return { b, mesh, size: [sx, sy, sz] };
 });
+const shortcutWatch = createShortcutWatch(LEVEL);   // R29 (shortcut.js)
 const toyLife = createToyLife(LEVEL); toyLife.on = toysOn;   // R18: leker som lever (toys_live.js): reagerer på dytt, landing og TA/slipp
 // maur: én modell per patrulje (v0.77)
 LEVEL.noCreatures = !creaturesOn; CREATURE_TUNE.warn = creatureWarn;     // R19
@@ -1098,13 +1101,13 @@ function stepLost(dt) {
 function resetThings() {
   if (mode !== 'play') return;
   if (!(LEVEL.bodies || []).some((b) => !b.alive || b.min.some((v, i) => Math.abs(v - b.home.min[i]) > 0.05))) return toast('Alt står på plass');
-  logEv('ting nullstilt'); resetBodies(LEVEL, player); resetToys(toyLife); stats.resets++; say('reset');
+  logEv('ting nullstilt'); resetBodies(LEVEL, player); resetToys(toyLife); resetShortcutWatch(shortcutWatch); stats.resets++; say('reset');
   toast(`Ting satt tilbake  −${SCORE.resetThings} poeng`);
 }
 function restartAll() {
   clearProgress(); failCells.clear(); bld.resetAll();
   resetPlayer(player, ...LEVEL.start);
-  resetBodies(LEVEL, player); resetToys(toyLife);
+  resetBodies(LEVEL, player); resetToys(toyLife); resetShortcutWatch(shortcutWatch);
   save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = stats.boss = 0; stats.flew = false; resetAnts(LEVEL); resetBoss(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); resetGoals(LEVEL); bridgeGuide = null;
   won = false; clock = 0; placeFlag(); flagV.extinguish(); $('win').classList.add('hide'); setMode('play');
 }
@@ -1511,6 +1514,7 @@ const SETTINGS = [
   fl('puzzles', 'spill', 'Gåter (nøkkel og lås: en snarvei du åpner)', true, () => puzzlesOn, kp('tlm.puzzles', (v) => { puzzlesOn = v; })),
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
   fl('goals', 'spill', 'Delmål (milepæler: panel øverst, jubel når et delmål er klart)', true, () => goalsOn, kp('tlm.goals', (v) => { goalsOn = v; goalView?.setOn(v); logEv('delmål', v ? 'på' : 'av'); })),
+  fl('shortcuthint', 'hjelp', 'Verktøy-genveier: varsel når du klatrer en trapp med hårgelé (nivå 4–6)', true, () => shortcutHintOn, kp('tlm.shortcuthint', (v) => { shortcutHintOn = v; logEv('genvei', v ? 'varsel på' : 'varsel av'); })),
   fl('goalarrow', 'hjelp', 'Pila og kompasset peker mot aktivt delmål', true, () => goalArrowOn, kp('tlm.goalarrow', (v) => { goalArrowOn = v; logEv('delmål', v ? 'pil følger delmål' : 'pil følger ruta'); })),
   fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; logEv('delmål', v ? 'lås på' : 'lås av'); })),
   fl('rewards', 'spill', 'Tilbehør på figuren (hatter, skjerf, sekk du har samlet)', true, () => rewardsOn, kp('tlm.rewards', (v) => { rewardsOn = v; refreshAccessories(); logEv('belønning', v ? 'tilbehør på' : 'tilbehør av'); })),
@@ -1949,6 +1953,10 @@ function update(dt) {
     else if (ev.type === 'autojump') { buzz(15); if (!store.get('tlm.seen.autojump', false)) { store.set('tlm.seen.autojump', true); toast(TOUCH ? 'Hoppet av seg selv: stikken helt ut mot en kant = hopp over. Skyv forsiktig for å stoppe ved kanten.' : 'Hoppet av seg selv over gapet. Hold C for å gå forsiktig og stoppe ved kanten.'); } }
     else if (ev.type === 'edgestop') { buzz(10); if (!store.get('tlm.seen.edgestop', false)) { store.set('tlm.seen.edgestop', true); toast(TOUCH ? 'Stopper ved kanten. Skyv stikken helt ut for å hoppe over eller gå utfor.' : 'Stopper ved kanten. Slipp C for å gå utfor.'); } }
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
+  }
+  if (LEVEL.shortcuts?.length && mode === 'play') for (const ev of stepShortcutWatch(shortcutWatch, player)) {           // R29: genvei med verktøy
+    logEv('genvei', `${ev.id} ${ev.act === 'top' ? 'oppe' : 'første trinn'}`);
+    if (shortcutHintOn) { if (ev.act === 'top') { audio?.checkpoint(); buzz(25); toast(T('toast.shortcutTop')); } else toast(T('toast.shortcutStep', { jump: T('btn.jump') })); }
   }
   if (toysOn) for (const ev of stepToys(toyLife, LEVEL, player, dt)) {                // R18: små stemmer i rommet
     const snd = TOY_SOUND[ev.act]; if (snd === 'squeak') audio?.squeak(ev.amp); else if (snd === 'honk') audio?.honk(ev.amp); else if (snd === 'creak') audio?.creak(ev.amp); else if (snd === 'boing') audio?.boing(ev.amp); else if (snd === 'tick') audio?.toyTick();

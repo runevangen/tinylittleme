@@ -1195,6 +1195,95 @@
       ],
       "confidence": 1,
       "photos": []
+    },
+    {
+      "id": "hargele_kjokken",
+      "kind": "gel_bottle",
+      "material": "plastic",
+      "color": "#8fd8ee",
+      "box": [
+        88,
+        92,
+        0,
+        10,
+        253,
+        257
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "light",
+      "tool": "gel",
+      "help": "Hårgelé\nTa flaska (TA), bær den til det høye trinnet ved benken og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir."
+    },
+    {
+      "id": "gele_kjokken_trinn_1",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9a86c",
+      "box": [
+        275,
+        310,
+        0,
+        27,
+        122,
+        142
+      ],
+      "confidence": 1,
+      "photos": [],
+      "shortcut": true,
+      "help": "Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), klatre opp og gå trappa til benken. Den lange veien via kassa og håndkleet går fortsatt."
+    },
+    {
+      "id": "gele_kjokken_trinn_2",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#c99556",
+      "box": [
+        275,
+        310,
+        0,
+        45,
+        102,
+        122
+      ],
+      "confidence": 1,
+      "photos": [],
+      "shortcut": true
+    },
+    {
+      "id": "gele_kjokken_trinn_3",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#b98446",
+      "box": [
+        275,
+        310,
+        0,
+        63,
+        82,
+        102
+      ],
+      "confidence": 1,
+      "photos": [],
+      "shortcut": true
+    },
+    {
+      "id": "gele_kjokken_trinn_4",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#a8753a",
+      "box": [
+        275,
+        310,
+        0,
+        80,
+        62,
+        82
+      ],
+      "confidence": 1,
+      "photos": [],
+      "shortcut": true,
+      "cp": true
     }
   ],
   "hazards": [
@@ -1245,7 +1334,7 @@
         125
       ],
       "to": [
-        320,
+        250,
         125
       ],
       "type": "carrier"
@@ -1276,11 +1365,11 @@
       "type": "roller",
       "on": "gulv",
       "from": [
-        260,
+        318,
         95
       ],
       "to": [
-        330,
+        348,
         95
       ]
     },
@@ -1484,5 +1573,29 @@
       85,
       110
     ]
-  }
+  },
+  "shortcuts": [
+    {
+      "id": "gele_kjokken",
+      "tool": "gel",
+      "item": "hargele_kjokken",
+      "label": "Smør hårgelé og klatre trappa opp til kjøkkenbenken",
+      "en": "Smear hair gel and climb the stairs up to the counter",
+      "stand": [
+        292.5,
+        146.5
+      ],
+      "face": [
+        0,
+        -1
+      ],
+      "steps": [
+        "gele_kjokken_trinn_1",
+        "gele_kjokken_trinn_2",
+        "gele_kjokken_trinn_3",
+        "gele_kjokken_trinn_4"
+      ],
+      "join": "benk_o"
+    }
+  ]
 }
