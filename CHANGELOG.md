@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.42** – Veikart: R39 (finpuss av Prince), R40 (figurens bevegelse), R41 (flere kombinasjoner) og R42 (motgiften høyere opp, vann-variant).
 - **1.41** – Rapport over siste 24 timer lagt i `docs/RAPPORT_24T.md` (versjoner, tester-saker og linjer kode).
 - **1.40** – Siste shader som kompilerte midt i spillet forvarmes nå (gjennomsiktige utoningskopier), og nye shaderprogram logges med nøkkel (R35b, fra tester: Rune).
 - **1.39** – Perlene i gulvdetaljene er nå solide små kuler (R37, fra tester: Rune): figuren stoppes av eller glir av dem i stedet for å gå gjennom.
