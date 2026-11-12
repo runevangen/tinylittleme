@@ -1,7 +1,7 @@
 // node test_floordetail.mjs: gulvdetaljer (R13): tetthet etter rom og kvalitet, målestokk-ring ved start, ingenting inni møbler, fuger på rutenettet
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { detailCount, pickDetails, hashStr, floorKind, TILE, KINDS, START_YAW, START_CAM, isMat, toScreen, floorAt } from './floordetail_logic.js';
+import { detailCount, pickDetails, hashStr, floorKind, TILE, KINDS, BEAD, beadBoxes, beadRadius, routeClear, START_YAW, START_CAM, isMat, toScreen, floorAt } from './floordetail_logic.js';
 
 const fy = (L) => Math.max(0, ...L.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1]));
 const names = ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke'];
@@ -42,6 +42,47 @@ for (const id of names) {
 const kinds = (id) => { const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')); return pickDetails(L, fy(L), hashStr(id + ':fd'), { count: 80, ring: 6 }).map((s) => s.kind); };
 assert.ok(kinds('barnerom').filter((k) => k === 'pencil').length > kinds('kjokken').filter((k) => k === 'pencil').length, 'blyanter mest i barnerommet');
 assert.ok(kinds('kjokken').includes('grout') && !kinds('barnerom').includes('grout'), 'fugeskitt bare på flis');
+// R37: perlene er solide kuler som aldri står på ruta
+import { P, newPlayer, step, applyPreset, initBodies } from './physics.js';
+import { walkRoute } from './tools/walk_route.mjs';
+const idle = { mx: 0, mz: 0, jumpPressed: false, jumpHeld: false, grabPressed: false, grabHeld: false };
+let nBeads = 0;
+for (const f of fs.readdirSync('levels').filter((x) => x.endsWith('.level.json')).sort()) {
+  const id = f.replace('.level.json', ''), file = `levels/${f}`, L = JSON.parse(fs.readFileSync(file, 'utf8')); if (!L.room) continue;
+  for (const dens of [0.5, 1, 1.6]) {
+    const sp = pickDetails(L, fy(L), hashStr(id + ':fd'), { count: detailCount(L.room, 'high', dens), ring: 6 }), bb = beadBoxes(sp), keep = routeClear(L); nBeads += bb.length;
+    assert.equal(bb.length, sp.filter((s) => s.kind === 'bead').length, `${id}: en boks per perle`);
+    for (const [i, b] of bb.entries()) {
+      const r = (b.max[0] - b.min[0]) / 2; assert.ok(b.round && b.bead && !b.dyn && r >= 0.15 && r <= 0.5, `${id}: liten statisk kule (r=${r})`);
+      const cx = (b.min[0] + b.max[0]) / 2, cz = (b.min[2] + b.max[2]) / 2;
+      assert.ok(!keep.some((q) => cx > q[0] && cx < q[1] && cz > q[2] && cz < q[3]), `${id}: ${b.id} står nær en flate på ruta`);
+      assert.ok(Math.hypot(cx - L.start[0], cz - L.start[2]) >= 1.5 && Math.hypot(cx - L.goal[0], cz - L.goal[2]) >= 6, `${id}: ikke ved start/mål`);
+      assert.ok(Math.abs(b.min[1] - fy(L)) < 0.4 || sp.filter((s) => s.kind === 'bead')[i].onMat, `${id}: perla ligger på gulvet`);
+      for (const c of bb.slice(i + 1)) assert.ok(Math.hypot(cx - (c.min[0] + c.max[0]) / 2, cz - (c.min[2] + c.max[2]) / 2) >= BEAD.gap - 1e-6, `${id}: perler for tett`);
+    }
+    // den ekte fysikken: gå rett på en perle (ingen sikte-hjelp) og bli stoppet/gli av, mens uten perle går figuren rett gjennom punktet
+    if (dens === 1 && bb[0]) {
+      const b = bb[0], cx = (b.min[0] + b.max[0]) / 2, cz = (b.min[2] + b.max[2]) / 2;
+      const run = (withBead) => {
+        applyPreset('mario'); Object.assign(P, { edgeGuard: false, autoJump: false, airSteady: false, magnet: false, holdGrab: false });
+        const W = { boxes: [{ id: 'gulv', type: 'floor', min: [-50, -5, -50], max: [50, 0, 50] }], movables: [], deathY: -50, start: [0, 0, 0] }; initBodies(W);
+        const bx = JSON.parse(JSON.stringify(b)), r = (b.max[0] - b.min[0]) / 2; bx.min = [3 - r, 0, -r]; bx.max = [3 + r, 2 * r, r]; if (withBead) W.boxes.push(bx);
+        const p = newPlayer(0, 0, 0); let maxY = 0, minX = 99;
+        for (let i = 0; i < 20; i++) step(p, { ...idle }, 1 / 60, W);
+        for (let i = 0; i < 240; i++) { step(p, { ...idle, mx: 1 }, 1 / 60, W); maxY = Math.max(maxY, p.y); }
+        return { x: p.x, z: p.z, maxY };
+      };
+      const free = run(false), hit = run(true);
+      assert.ok(free.x > 5, 'fri gange går forbi'); if (process.env.V) console.log(id, free, hit);
+      assert.ok(hit.x < free.x - 0.5 || hit.maxY > 0.05 || Math.abs(hit.z) > 0.05, `${id}: perla stopper/løfter/skyver figuren sidelengs (x ${hit.x.toFixed(2)} mot ${free.x.toFixed(2)}, z ${hit.z.toFixed(2)})`);
+      assert.ok(hit.maxY < 0.2 + 2 * BEAD.r * 1.5 + 0.3, 'ingen kantgrep/klatring på kula');
+    }
+  }
+  // walk_route uendret grønn med perlene som faste kuler på gulvet
+  const sp = pickDetails(L, fy(L), hashStr(id + ':fd'), { count: detailCount(L.room, 'high', 1.6), ring: 6 }), plain = walkRoute(file, {}), withB = walkRoute(file, { extraBoxes: beadBoxes(sp) });
+  assert.equal(withB.ok, plain.ok, `${id}: ruta med perler (${withB.why}) som uten (${plain.why})`);
+}
+assert.ok(nBeads >= 20, `perler i brettene (${nBeads})`);
 // registrert i index.html (ny modul)
 const idx = fs.readFileSync('index.html', 'utf8');
 for (const f of ['floordetail', 'floordetail_logic']) assert.ok(idx.includes(`'${f}'`), `${f} i files i index.html`);

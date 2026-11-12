@@ -197,6 +197,7 @@ let resQ = store.get('tlm.resq', 'auto'); if (!['auto', 'full', 'mid', 'low'].in
 let lowMode = store.get('tlm.lowprofile', 'auto'); if (!['off', 'auto', 'on'].includes(lowMode)) lowMode = 'auto';   // R15 Lav profil: av / auto (når FPS er lav) / på
 const fdDens = +store.get('tlm.fdens', 1) || 1;   // R13: gulvdetaljer (floordetail.js): blyanter, perler, flekker, fugeskitt; tetthet etter rom og kvalitet (halvert med Lav profil «På», tom med Enkel grafikk)
 let floorDetailOn = store.get('tlm.floordetail', true);
+let beadSolidOn = store.get('tlm.beadsolid', true);   // R37: perlene i gulvdetaljene er solide små kuler (kan stås på/glis av)
 const legoDens = +store.get('tlm.legodens', 1) || 1; let legoOn = store.get('tlm.lego', true);   // R31: legoknotter på gulv og tak i lekerommet (lekerom_view.js)
 const lowP = createLowProfile(); let lowOn = false;
 let autoQ = resQ === 'auto', qSteps = 0, basePr = 1, qToasted = false;
@@ -1574,6 +1575,7 @@ const SETTINGS = [
     fl('ao', 'spill', 'Mørkere hjørner og kontaktskygger (Detaljert grafikk)', true, () => aoOn, kp('tlm.ao', (v) => { aoOn = v; logEv('hjorner', v ? 'på' : 'av'); })),
     fl('softlight', 'spill', 'Myke skygger og lysflekk: mørke hjørner og under møbler, varm flekk fra vinduet (Detaljert grafikk, ikke Lav profil)', true, () => softOn, kp('tlm.softlight', (v) => { softOn = v; logEv('myke skygger', v ? 'på' : 'av'); })),
     fl('floordetail', 'spill', 'Gulvdetaljer: blyantstumper, perler, flekker og skitt i fugene for målestokk (Detaljert grafikk)', true, () => floorDetailOn, kp('tlm.floordetail', (v) => { floorDetailOn = v; logEv('gulvdetaljer', v ? 'på' : 'av'); })),
+    fl('beadsolid', 'spill', 'Perler på gulvet er solide: du stoppes av dem og kan stå på dem (Detaljert grafikk)', true, () => beadSolidOn, kp('tlm.beadsolid', (v) => { beadSolidOn = v; logEv('perler', v ? 'solide' : 'gjennomtrengelige'); })),
     fl('lego', 'spill', 'Legoknotter på gulv og tak i lekerommet, nivå 7 (Detaljert grafikk)', true, () => legoOn, kp('tlm.lego', (v) => { legoOn = v; logEv('legoknotter', v ? 'på' : 'av'); })),
     sl('legodens', 'admin', 'Legoknotter: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(legoDens), (v) => { if (+v === +legoDens) return; store.set('tlm.legodens', +v); logEv('legoknotter', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     sl('fdens', 'admin', 'Gulvdetaljer: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(fdDens), (v) => { if (+v === +fdDens) return; store.set('tlm.fdens', +v); logEv('gulvdetaljer', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
@@ -2184,7 +2186,7 @@ const variant = makeVariant({ scene, LEVEL, renderer, sun, floorY: Math.max(0, .
 if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
 const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
-if (fdet) logEv('gulvdetaljer', `${fdet.count} stk`);
+if (fdet) logEv('gulvdetaljer', `${fdet.count} stk, ${fdet.beads.length} perler`);
 const leke = gfxLow ? null : makeLekerom({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: legoDens });   // R31: legoknotter (2 tegnekall, ikke slått sammen)
 if (leke?.count) logEv('lekerom', `${leke.count} knotter, ${leke.calls} tegnekall, ${leke.tris} trekanter`);
 const soft = gfxLow ? null : makeSoftLight({ THREE, scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun, sunDir: SUN, renderer });   // R17: myke skygger og lysbaking (softlight.js)
@@ -2365,7 +2367,7 @@ function render(now, dt) {
   if (dust) { dust.points.visible = dustOn && !lowOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
   variant.update(now / 1000, dt, player, mode);
   if (soft) soft.update(softOn, lowOn, gfxLow);
-  if (fdet) fdet.update(floorDetailOn && !lowOn && mode !== 'plan');
+  if (fdet) { fdet.update(floorDetailOn && !lowOn && mode !== 'plan'); const sol = floorDetailOn && !lowOn && beadSolidOn; if (sol !== fdet.solid) logEv('perler', sol ? `${fdet.beads.length} solide` : 'ikke solide'); fdet.setSolid(sol); }   // R37
   if (leke) leke.update(legoOn && !lowOn && mode !== 'plan');
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(dt, mode === 'play' && !won && !menuOpen && !ov.active); updateFades(dt); updateOffscreen();
