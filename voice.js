@@ -3,6 +3,7 @@
 export const LINES = {
   thrown:     { say: ['Wææh!', 'Hjelp, en klovn!', 'Oi oi oi!'], gap: 5, p: 1 },
   hardland:   { say: ['Au!', 'Uff!', 'Oi, det svei!'], gap: 6, p: 1 },
+  roll:       { say: ['Og rull!', 'Hoppla, rulle!', 'Der satt den.'], gap: 8, p: 0.8 },
   knockout:   { say: ['Aj aj aj!', 'Det var for langt ned!'], gap: 6, p: 1, prio: true },
   fall:       { say: ['Hjelp!', 'Neeei!', 'Uææ!'], gap: 10, p: 0.9 },
   softland:   { say: ['Myk landing!', 'Puh, det gikk bra.'], gap: 12, p: 0.8 },

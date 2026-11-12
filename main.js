@@ -42,6 +42,7 @@ import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
 import { createMarkerView } from './readable_view.js';
 import { createOverview } from './overview.js';
+import { FIN, rollProgress } from './finpuss.js';   // R39: finpuss av Prince (kant-shimmy, rulle, forsiktig gange, tyngre tau)
 import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, approach, landingEvent } from './landing.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { programCount, programKeys, warmRender, warmFades, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
@@ -170,6 +171,8 @@ let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let toysOn = store.get('tlm.toys', true);   // R18
 TOY.windT = store.get('tlm.toywind', TOY.windT);
 KICK.on = store.get('tlm.kick', KICK.on); KICK.speed = store.get('tlm.kickspeed', KICK.speed); KICK.up = store.get('tlm.kickup', KICK.up); KICK.safeT = store.get('tlm.kicksafe', KICK.safeT);   // R34
+let shimmyOn = store.get('tlm.shimmy', true), rollOn = store.get('tlm.roll', true), carefulOn = store.get('tlm.careful', true), ropeHeavyOn = store.get('tlm.ropeheavy', true);   // R39: finpuss av Prince
+for (const [k, id] of [['shimmySpeed', 'shimspeed'], ['rollSafe', 'rollsafe'], ['carefulMul', 'carefulmul'], ['ropeG', 'ropeg'], ['ropePush', 'ropepush'], ['ropeLag', 'ropelag']]) FIN[k] = store.get('tlm.' + id, FIN[k]);
 let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let goalsOn = store.get('tlm.goals', true), goalArrowOn = store.get('tlm.goalarrow', true), goalLockOn = store.get('tlm.goallock', true);   // delmål (R23)
@@ -717,8 +720,9 @@ function poseHero(p, now, dt, mode) {
       T.twist += id * 0.06 * a1; T.lean += id * 0.015 * a2; T.chest += id * 0.03 * a1; T.hy += 0.25 * Math.sin(sec * 0.8) * id; }
     bob = -0.05 - 0.012 * Math.abs(s1) * m;
   } else if (p.state === 'hang' || p.state === 'zip') {
-    const sway = Math.sin(sec * 1.5), hs = hangSway(sec, Math.hypot(p.vx, p.vz), false);   // heng: rolig dingling
-    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: hs.legL, hR: hs.legR, kL: hs.kneeL, kR: hs.kneeR, lean: hs.lean, roll: hs.roll, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
+    const sway = Math.sin(sec * 1.5), hm = p.state === 'hang' ? clampN(Math.abs(p.hangMove || 0) / FIN.shimmySpeed, 0, 1) : 0, hs = hangSway(sec, Math.hypot(p.vx, p.vz) + 2 * hm, false);   // heng: rolig dingling (R39: bena og hender følger med når han går sidelengs)
+    hero.shimPh = (hero.shimPh || 0) + hm * dt * 7; const shp = Math.sin(hero.shimPh) * hm;                                 // hendene bytter på å ta tak
+    Object.assign(T, { aL: -3.05 + 0.18 * shp, aR: -3.05 - 0.18 * shp, eL: -0.12, eR: -0.12, hL: hs.legL, hR: hs.legR, lean: hs.lean, roll: hs.roll, chest: -0.05, hp: -0.2, twist: sway * 0.05 + 0.12 * shp, kL: hs.kneeL + 0.15 * hm * Math.max(0, shp), kR: hs.kneeR + 0.15 * hm * Math.max(0, -shp) });
   } else if (p.state === 'swing') {
     const k = clampN((p.vx * p.fx + p.vz * p.fz) * 0.1, -0.8, 0.8), ss = hangSway(sec * 1.4, Math.hypot(p.vx, p.vz), true);   // sving: stort pendel i bena, kroppen lener med farten
     Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: ss.legL - 0.5 * k, hR: ss.legR - 0.5 * k, kL: ss.kneeL + 0.3, kR: ss.kneeR + 0.5, lean: -0.25 * k + ss.lean * 2, roll: ss.roll, chest: -0.1 * k, hp: -0.15, twist: 0.06 * Math.sin(sec * 2.1) });
@@ -798,6 +802,10 @@ function poseHero(p, now, dt, mode) {
     T.eL -= 0.9 * g2; T.eR -= 0.9 * g2; T.chest += 0.16 * g2; T.lean += 0.1 * g2; T.hL += 0.35 * g2 * Math.sin(sec * 12); T.hR -= 0.35 * g2 * Math.sin(sec * 12); T.kL += 0.5 * g2; T.kR += 0.5 * g2; bob -= 0.08 * g2;
   }
   if (!p.skid && p.state !== 'mantle' && p.state !== 'hang' && p.state !== 'swing' && mode !== 'fly' && p.onGround) T.lean += hero.accLean;
+  if (p.rollT > 0 && p.state === 'ground' && mode !== 'fly') {                                     // R39: rulle ved landing: kroppen krøller seg sammen fremover og reiser seg igjen
+    const rp = rollProgress(p.rollT), rs = Math.sin(Math.PI * rp);
+    T.lean = 0.95 * rs; T.chest = 0.7 * rs; T.hp = 0.4 * rs; T.aL = T.aR = -0.9 * rs; T.eL = T.eR = -1.3 * rs; T.hL = T.hR = -1.1 * rs; T.kL = T.kR = 1.6 * rs; T.roll = 0; bob -= 0.1 * rs;
+  }
 
   // fingrene: knyttet rundt det han holder eller henger i, løst knyttet i løp, åpne når han rekker ut
   T.fgL = T.fgR = p.carry || ['hang', 'climb', 'swing', 'zip', 'mantle'].includes(p.state) ? 1.2 : p.reach > 0 || (!p.onGround && p.vy < -8) ? 0.05 : 0.35 + 0.55 * kSp * (p.onGround ? 1 : 0);
@@ -1456,6 +1464,7 @@ function reapplyKnobs() {
   const lv = { none: { coyote: 0.1, jumpBuffer: 0.08, reachSnap: 0.3, stepUp: 0, autoGrab: false }, normal: { coyote: 0.14, jumpBuffer: 0.12, reachSnap: 0.45, stepUp: b('stepUp'), autoGrab: base.autoGrab ?? false }, much: { coyote: 0.22, jumpBuffer: 0.2, reachSnap: 0.7, stepUp: Math.max(0.6, b('stepUp')), autoGrab: true } }[helpLevel] || {};
   Object.assign(P, lv);
   P.edgeGuard = edgeGuardOn && helpLevel !== 'none'; P.autoJump = autoJumpOn && helpLevel !== 'none';       // kanthjelp: stopp ved kanten (forsiktig) og hopp selv over gap (løp)
+  P.shimmy = shimmyOn; P.rollOn = rollOn && helpLevel !== 'none'; P.carefulOn = carefulOn && helpLevel !== 'none'; P.ropeHeavy = ropeHeavyOn;   // R39: finpuss
   P.airSteady = airSteadyOn && helpLevel !== 'none'; P.magnet = magnetOn && helpLevel !== 'none'; P.holdGrab = holdGrabOn && helpLevel !== 'none';   // stabilisering i lufta: demping, sikte-hjelp, hold GREP
   P.accel = b('accel') * inertia; P.decel = b('decel') * inertia; P.turnDecel = b('turnDecel') * inertia; P.speed = b('speed') * speedScale;
 }
@@ -1598,6 +1607,16 @@ const SETTINGS = [
   fl('showmapbtn', 'styring', 'Vis kart-knappen (oversikt) ved siden av ◎. Av = ingen knapp; minikartet øverst virker fortsatt', false, () => showMapBtn, kp('tlm.showmapbtn2', (v) => { showMapBtn = v; applyUiFlags(); })),
   fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', false, () => showCenter, kp('tlm.showcenter2', (v) => { showCenter = v; applyUiFlags(); })),
   fl('edgeguard', 'styring', TOUCH ? 'Kanthjelp: stopp ved kanten når du skyver stikken forsiktig' : 'Kanthjelp: stopp ved kanten når du går forsiktig (C)', true, () => edgeGuardOn, kp('tlm.edgeguard', (v) => { edgeGuardOn = v; reapplyKnobs(); })),
+  fl('shimmy', 'styring', TOUCH ? 'Kant-shimmy: heng i en kant og skyv stikken sidelengs for å gå langs den' : 'Kant-shimmy: heng i en kant og gå sidelengs langs den (A/D)', true, () => shimmyOn, kp('tlm.shimmy', (v) => { shimmyOn = v; reapplyKnobs(); logEv('finpuss', 'shimmy ' + (v ? 'på' : 'av')); })),
+  fl('roll', 'styring', TOUCH ? 'Rulle ved landing: lander du hardt i fart og skyver stikken, ruller du i stedet for å bli bedøvd' : 'Rulle ved landing: lander du hardt i fart og styrer, ruller du i stedet for å bli bedøvd', true, () => rollOn, kp('tlm.roll', (v) => { rollOn = v; reapplyKnobs(); logEv('finpuss', 'rulle ' + (v ? 'på' : 'av')); })),
+  fl('careful', 'styring', TOUCH ? 'Forsiktig gange: lett stikke gir rolig gange (stopper ved kanten med Kanthjelp)' : 'Forsiktig gange: lett styring gir rolig gange (stopper ved kanten med Kanthjelp)', true, () => carefulOn, kp('tlm.careful', (v) => { carefulOn = v; reapplyKnobs(); logEv('finpuss', 'forsiktig gange ' + (v ? 'på' : 'av')); })),
+  fl('ropeheavy', 'styring', 'Tyngre tau: lengre sving med mer treghet og fart i utsvinget', true, () => ropeHeavyOn, kp('tlm.ropeheavy', (v) => { ropeHeavyOn = v; reapplyKnobs(); logEv('finpuss', 'tungt tau ' + (v ? 'på' : 'av')); })),
+  rg('shimspeed', 'admin', 'Kant-shimmy: fart sidelengs (enheter/s)', 1.1, 0.4, 2.5, 0.1, () => FIN.shimmySpeed, kp('tlm.shimspeed', (v) => { FIN.shimmySpeed = v; }), { digits: 1 }),
+  rg('rollsafe', 'admin', 'Rulle: uskadd-tid etter rullen (sekunder)', 0.9, 0, 3, 0.1, () => FIN.rollSafe, kp('tlm.rollsafe', (v) => { FIN.rollSafe = v; }), { digits: 1 }),
+  rg('carefulmul', 'admin', 'Forsiktig gange: fartsfaktor ved lett stikke', 0.7, 0.3, 1, 0.05, () => FIN.carefulMul, kp('tlm.carefulmul', (v) => { FIN.carefulMul = v; }), { digits: 2 }),
+  rg('ropeg', 'admin', 'Tau: tyngdekraft på svingen (lavere = lengre periode)', 0.8, 0.4, 1, 0.05, () => FIN.ropeG, kp('tlm.ropeg', (v) => { FIN.ropeG = v; }), { digits: 2 }),
+  rg('ropepush', 'admin', 'Tau: fart fra stikka i utsvinget (faktor)', 1.2, 0.6, 2, 0.05, () => FIN.ropePush, kp('tlm.ropepush', (v) => { FIN.ropePush = v; }), { digits: 2 }),
+  rg('ropelag', 'admin', 'Tau: treghet i stikka (sekunder)', 0.22, 0, 0.8, 0.02, () => FIN.ropeLag, kp('tlm.ropelag', (v) => { FIN.ropeLag = v; }), { digits: 2 }),
   fl('autojump', 'styring', TOUCH ? 'Kanthjelp: hopp av seg selv over gap når du løper (stikken helt ut)' : 'Kanthjelp: hopp av seg selv over gap når du løper mot kanten', true, () => autoJumpOn, kp('tlm.autojump', (v) => { autoJumpOn = v; reapplyKnobs(); })),
   fl('airsteady', 'styring', TOUCH ? 'I lufta: demp skjelving på stikken' : 'I lufta: demp små rykk i styringen', true, () => airSteadyOn, kp('tlm.airsteady', (v) => { airSteadyOn = v; reapplyKnobs(); })),
   fl('magnet', 'styring', 'I lufta: sikte-hjelp (trekkes svakt mot grep, kanter og tau du nesten treffer)', true, () => magnetOn, kp('tlm.magnet', (v) => { magnetOn = v; reapplyKnobs(); })),
@@ -2038,6 +2057,8 @@ function update(dt) {
     else if (ev.type === 'toolhint') toast(ev.tool === 'needle' ? T('toast.needSpool', { thread: T('btn.thread') }) : ev.tool === 'spool' ? T('toast.needNeedle', { thread: T('btn.thread') }) : ev.tool === 'zip' ? ({ 'zip-flat': T('toast.zipFlat'), 'zip-far': T('toast.zipFar'), 'zip-blocked': T('toast.zipBlocked') }[ev.why] || T('toast.zipStand', { tieTop: T('btn.tieTop') })) : ev.tool === 'gel' ? T('toast.needGel', { smear: T('btn.smear'), drop: T('btn.drop') }) : T('toast.needRoll', { unroll: T('btn.unroll'), drop: T('btn.drop') }));
     else if (ev.type === 'autojump') { buzz(15); if (!store.get('tlm.seen.autojump', false)) { store.set('tlm.seen.autojump', true); toast(TOUCH ? 'Hoppet av seg selv: stikken helt ut mot en kant = hopp over. Skyv forsiktig for å stoppe ved kanten.' : 'Hoppet av seg selv over gapet. Hold C for å gå forsiktig og stoppe ved kanten.'); } }
     else if (ev.type === 'edgestop') { buzz(10); if (!store.get('tlm.seen.edgestop', false)) { store.set('tlm.seen.edgestop', true); toast(TOUCH ? 'Stopper ved kanten. Skyv stikken helt ut for å hoppe over eller gå utfor.' : 'Stopper ved kanten. Slipp C for å gå utfor.'); } }
+    else if (ev.type === 'shimmy') { logEv('shimmy'); buzz(8); if (!store.get('tlm.seen.shimmy', false)) { store.set('tlm.seen.shimmy', true); toast(TOUCH ? `Du kan gå sidelengs i kanten: skyv stikken til siden. ${T('btn.jump')} hiver deg opp.` : 'Du kan gå sidelengs i kanten (A/D). Mellomrom hiver deg opp.'); } }
+    else if (ev.type === 'roll') { logEv('rulle', `v=${ev.v}`); audio?.roll(); buzz(20); cue('rulle'); setMood('happy', 0.8); say('roll'); if (!store.get('tlm.seen.roll', false)) { store.set('tlm.seen.roll', true); toast('Rullet! Fart og stikke i landingen gjør at du ikke blir bedøvd.'); } }
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
   }
   if (LEVEL.shortcuts?.length && mode === 'play') for (const ev of stepShortcutWatch(shortcutWatch, player)) {           // R29: genvei med verktøy
@@ -2132,12 +2153,12 @@ function cueFrame(pre) {
   voiceFrame(pre);
   if (landWarn) {
     const ev = landingEvent(pre.vy, p.landImpact, ...landTh(), landMinV);
-    if (ev && !pre.onGround && p.onGround) {
+    if (ev && !pre.onGround && p.onGround && !(p.rollT > 0)) {   // R39: rullet landing meldes som «rulle»
       logEv('landing', `${ev.cls} ${ev.v}`); cue(ev.cue);
       if (ev.cls === 'soft' && ev.v > landMinV + 2) setMood('happy', 0.6);
     }
   } else if (!pre.onGround && p.onGround && pre.vy < -9) cue(p.landImpact >= P.hardLand ? 'hard landing' : 'landing');
-  if (p.landImpact >= P.hardLand && !pre.onGround && p.onGround) buzz(45);
+  if (p.landImpact >= P.hardLand && !pre.onGround && p.onGround && !(p.rollT > 0)) buzz(45);
   if ((pre.state !== 'hang' && p.state === 'hang') || (pre.state !== 'climb' && p.state === 'climb')) buzz(14);
   if (pre.state !== 'hang' && p.state === 'hang') cue('tak i kanten');
   if (!pre.carry && p.carry) cue('tok tingen');
@@ -2156,7 +2177,7 @@ function audioFrame(pre, dt) {
   const p = player, sp = Math.hypot(p.vx, p.vz), surf = surfaceOf(p.groundBox);
   if (pre.windup === 0 && p.windup > 0) audio.windup();                                       // tar sats
   if (pre.onGround && !p.onGround && p.vy > 5) audio.jump();                                  // avspark
-  if (!pre.onGround && p.onGround && pre.vy < -3) audio.land(surf, -pre.vy, landWarn ? landClass(p.landImpact, ...landTh()) : 'soft');   // landing (R28: egen lyd per klasse)
+  if (!pre.onGround && p.onGround && pre.vy < -3) audio.land(surf, -pre.vy, landWarn && !(p.rollT > 0) ? landClass(p.landImpact, ...landTh()) : 'soft');   // landing (R28: egen lyd per klasse)
   if (pre.state !== 'hang' && p.state === 'hang') audio.grab();
   if (pre.state !== 'climb' && p.state === 'climb') audio.grab();
   if (pre.state !== 'swing' && p.state === 'swing') audio.grab();
