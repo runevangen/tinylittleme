@@ -310,6 +310,8 @@ const variant = scene.variant ? (() => {
   });
   return v;
 })() : undefined;
+// legoknotter (R31, se lekerom_logic.js): { floor, ceiling, color, ceilColor, plates: [[x0, x1, z0, z1, farge]] } i cm i scenen, i enheter i brettet
+const lego = scene.lego ? { ...scene.lego, plates: (scene.lego.plates || []).map(([a, b, c, d, col]) => [ux(a), ux(b), uz(c), uz(d), col]) } : undefined;
 // sjef-maur (R9): { id, on: «gulv» eller flate, from: [x, z], to: [x, z], hp? } i cm
 const boss = scene.boss ? (() => { const b = scene.boss, on = b.on && b.on !== 'gulv' ? scene.objects.find((o) => o.id === b.on) : null, y = on ? uy(on.box[3]) : 0; return { id: b.id || 'sjef', a: [ux(b.from[0]), y, uz(b.from[1])], b: [ux(b.to[0]), y, uz(b.to[1])], ...(b.hp ? { hp: b.hp } : {}) }; })() : null;
 
@@ -376,6 +378,7 @@ const level = {
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ants,
   ...(variant ? { variant } : {}),
+  ...(lego ? { lego } : {}),
   ...(boss ? { boss } : {}),
   collectibles,
   ...(build ? { build } : {}),

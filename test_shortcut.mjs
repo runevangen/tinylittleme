@@ -10,7 +10,7 @@ import { KINDS, TOOLS } from './kinds.js';
 const lv = (id) => JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8'));
 for (const id of ['bad', 'barnerom', 'kjokken']) assert.equal(lv(id).shortcuts, undefined, `${id}: grunnrommene har ingen genvei`);
 const tools = new Set();
-for (const id of ['bad2', 'barnerom2', 'kjokken2']) {
+for (const id of ['bad2', 'barnerom2', 'kjokken2', 'leke']) {
   const L = lv(id), list = shortcutsOf(L); assert.ok(list.length >= 1, `${id}: minst én verktøy-gåte`);
   for (const sc of list) {
     tools.add(sc.tool); assert.ok(TOOLS.includes(sc.tool), `${id}: kjent verktøy`);

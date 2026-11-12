@@ -4,7 +4,7 @@ import { makeT } from './i18n.js';
 import { storyKey, fmtTime, shouldShowIntro, finishData, winHTML, STORY_LEVELS, starCount, totals, endHTML, heroSVG } from './story.js';
 
 assert.equal(fmtTime(7.4), '7 s'); assert.equal(fmtTime(75), '1:15'); assert.equal(fmtTime(-3), '0 s');
-assert.equal(storyKey(0), null); assert.equal(storyKey(7), null); assert.equal(storyKey(3), 'story.3');
+assert.equal(storyKey(0), null); assert.equal(storyKey(8), null); assert.equal(storyKey(3), 'story.3');
 assert.ok(shouldShowIntro({ n: 1, enabled: true, resumed: false }));
 assert.ok(!shouldShowIntro({ n: 1, enabled: false, resumed: false }) && !shouldShowIntro({ n: 1, enabled: true, resumed: true }) && !shouldShowIntro({ n: undefined, enabled: true, resumed: false }));
 
@@ -18,7 +18,7 @@ for (const l of ['nb', 'en']) {
   }
   for (const k of ['story.go', 'story.skip', 'story.endTitle', 'story.end', 'story.endBtn', 'win.time', 'win.ants', 'win.crumbs', 'win.points', 'win.record', 'win.next', 'win.ending', 'win.again', 'win.all', 'win.top']) assert.notEqual(T(k), k, `${l}:${k}`);
 }
-const d = finishData({ n: 6, nextExists: false, clock: 83, stats: { squashed: 3 }, crumbs: 4, crumbTotal: 4, points: 900, prevBest: 800, flew: false });
+const d = finishData({ n: 7, nextExists: false, clock: 83, stats: { squashed: 3 }, crumbs: 4, crumbTotal: 4, points: 900, prevBest: 800, flew: false });
 assert.deepEqual([d.last, d.time, d.squashed, d.all, d.record], [true, '1:23', 3, true, true]);
 assert.ok(!finishData({ n: 3, nextExists: true, clock: 5, stats: {}, crumbs: 0, crumbTotal: 0, points: 1000, prevBest: 0 }).record, 'første gjennomspill er ingen rekord');
 assert.equal(starCount({ crumbs: 0, total: 10 }), 1); assert.equal(starCount({ crumbs: 10, total: 10 }), 3); assert.equal(starCount({ crumbs: 0, total: 0 }), 2);

@@ -23,6 +23,8 @@ import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, 
 import { makeLook } from './look.js';
 import { makeAtmos } from './atmos.js';
 import { makeFloorDetail } from './floordetail.js';
+import { makeLekerom, buildSoldier } from './lekerom_view.js';   // R31: lekerommet (nivå 7): legoknotter på gulv og tak, tinnsoldat
+import { isSoldier } from './lekerom_logic.js';
 import { makeSoftLight } from './softlight.js';
 import { applyGrade } from './grade_apply.js';
 import { gradeTint } from './grade.js';
@@ -71,7 +73,7 @@ const store = {
 };
 
 // Brett: ?level=bad (eller barnerom/kjokken/soverom …). Uten parameter åpnes brettet du sist spilte; første gang nivå 1.
-// De seks første er nivåene (n = nivånummer, stigende vanskelighetsgrad; 4–6 er de samme rommene ommøblert); resten er ekstra- og prøverom.
+// De syv første er nivåene (n = nivånummer, stigende vanskelighetsgrad; 4–6 er de samme rommene ommøblert); resten er ekstra- og prøverom.
 const LEVELS = [
   { id: 'bad', n: 1, label: 'Nivå 1: Badet', short: 'Nivå 1 · Bad' },
   { id: 'barnerom', n: 2, label: 'Nivå 2: Barnerommet', short: 'Nivå 2 · Barnerom' },
@@ -79,6 +81,7 @@ const LEVELS = [
   { id: 'bad2', n: 4, label: 'Nivå 4: Badet, ommøblert', short: 'Nivå 4 · Bad' },
   { id: 'barnerom2', n: 5, label: 'Nivå 5: Barnerommet, ommøblert', short: 'Nivå 5 · Barnerom' },
   { id: 'kjokken2', n: 6, label: 'Nivå 6: Kjøkkenet, ryddet om', short: 'Nivå 6 · Kjøkken' },
+  { id: 'leke', n: 7, label: 'Nivå 7: Lekerommet', short: 'Nivå 7 · Lekerom' },
   { id: 'bro', label: 'Bygg 1: Hyllebroen (bygg en bro, eller ta den harde veien)', short: 'Bygg · Bro' },
   { id: 'trapp', label: 'Bygg 2: Klossetrappa (bygg en trapp, eller ta den harde veien)', short: 'Bygg · Trapp' },
   { id: 'vippe', label: 'Bygg 3: Vippa over gapet (barnerom: bygg en vippe, eller ta den harde veien)', short: 'Bygg · Vippe' },
@@ -187,6 +190,7 @@ let resQ = store.get('tlm.resq', 'auto'); if (!['auto', 'full', 'mid', 'low'].in
 let lowMode = store.get('tlm.lowprofile', 'auto'); if (!['off', 'auto', 'on'].includes(lowMode)) lowMode = 'auto';   // R15 Lav profil: av / auto (når FPS er lav) / på
 const fdDens = +store.get('tlm.fdens', 1) || 1;   // R13: gulvdetaljer (floordetail.js): blyanter, perler, flekker, fugeskitt; tetthet etter rom og kvalitet (halvert med Lav profil «På», tom med Enkel grafikk)
 let floorDetailOn = store.get('tlm.floordetail', true);
+const legoDens = +store.get('tlm.legodens', 1) || 1; let legoOn = store.get('tlm.lego', true);   // R31: legoknotter på gulv og tak i lekerommet (lekerom_view.js)
 const lowP = createLowProfile(); let lowOn = false;
 let autoQ = resQ === 'auto', qSteps = 0, basePr = 1, qToasted = false;
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
@@ -963,7 +967,7 @@ const toyLife = createToyLife(LEVEL); toyLife.on = toysOn;   // R18: leker som l
 LEVEL.noCreatures = !creaturesOn; CREATURE_TUNE.warn = creatureWarn;     // R19
 const ANT_COL = [0x9a3a1e, 0x7a2a16, 0xb04a22, 0x8a3320];
 const antMeshes = (LEVEL.antList || []).map((t, i) => {
-  const a = LEVEL.ants[i].skin === 'train' ? buildTrain() : t.type === 'roller' ? buildRoller() : t.type === 'dangler' ? buildDangler({ ceil: LEVEL.room?.height ?? 48 }) : t.type === 'spider' ? buildSpider() : t.type === 'carrier' ? buildCarrier() : buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb });   // R6: tre slag, hver med egen modell
+  const a = LEVEL.ants[i].skin === 'train' ? buildTrain() : isSoldier(LEVEL.ants[i]) ? buildSoldier() : t.type === 'roller' ? buildRoller() : t.type === 'dangler' ? buildDangler({ ceil: LEVEL.room?.height ?? 48 }) : t.type === 'spider' ? buildSpider() : t.type === 'carrier' ? buildCarrier() : buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb });   // R6: tre slag, hver med egen modell
   a.root.userData.antId = t.id; scene.add(a.root); if (!gfxLow) look.detailize(a.root);
   let drop = null; if (t.type === 'carrier') { drop = buildDropCrumb(); drop.visible = false; scene.add(drop); }                 // smula bæreren slipper når den knuses
   return { t, a, drop, rot: Math.atan2(-t.fz, t.fx) };
@@ -1555,6 +1559,8 @@ const SETTINGS = [
     fl('ao', 'spill', 'Mørkere hjørner og kontaktskygger (Detaljert grafikk)', true, () => aoOn, kp('tlm.ao', (v) => { aoOn = v; logEv('hjorner', v ? 'på' : 'av'); })),
     fl('softlight', 'spill', 'Myke skygger og lysflekk: mørke hjørner og under møbler, varm flekk fra vinduet (Detaljert grafikk, ikke Lav profil)', true, () => softOn, kp('tlm.softlight', (v) => { softOn = v; logEv('myke skygger', v ? 'på' : 'av'); })),
     fl('floordetail', 'spill', 'Gulvdetaljer: blyantstumper, perler, flekker og skitt i fugene for målestokk (Detaljert grafikk)', true, () => floorDetailOn, kp('tlm.floordetail', (v) => { floorDetailOn = v; logEv('gulvdetaljer', v ? 'på' : 'av'); })),
+    fl('lego', 'spill', 'Legoknotter på gulv og tak i lekerommet, nivå 7 (Detaljert grafikk)', true, () => legoOn, kp('tlm.lego', (v) => { legoOn = v; logEv('legoknotter', v ? 'på' : 'av'); })),
+    sl('legodens', 'admin', 'Legoknotter: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(legoDens), (v) => { if (+v === +legoDens) return; store.set('tlm.legodens', +v); logEv('legoknotter', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     sl('fdens', 'admin', 'Gulvdetaljer: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(fdDens), (v) => { if (+v === +fdDens) return; store.set('tlm.fdens', +v); logEv('gulvdetaljer', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     fl('clutter', 'spill', 'Småting på gulv og hyller: smuler, knapper, hår (Detaljert grafikk)', true, () => clutterOn, kp('tlm.clutter', (v) => { clutterOn = v; logEv('smating', v ? 'på' : 'av'); }))]),
   fl('hudtech', 'spill', 'Vis alltid tekniske tall (høyde, tid, poeng). Ellers: trykk på teksten øverst', false, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
@@ -1824,6 +1830,11 @@ function creatureEvent(ev) {
   else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${roller ? 'Pillbuggen rullet over deg' : 'Edderkoppen falt ned på deg'}  −${SCORE.antHit} poeng. Hopp på den (${J}) for å knuse den`); }
 }
 function antEvent(ev) {
+  if (ev.id && isSoldier(LEVEL.ants?.find((a) => a.id === ev.id))) {            // R31: tinnsoldaten (egen fiende i nivå 7): egne meldinger og logg, ellers som en maur
+    logEv(ev.type === 'stomp' ? 'tinnsoldat knust' : ev.type === 'hurt' ? 'tinnsoldat støt' : 'tinnsoldat ' + ev.type, ev.id);
+    if (ev.type === 'alert' && !store.get('tlm.seen.soldier', false)) { store.set('tlm.seen.soldier', true); toast(T('leke.soldier', { jump: TOUCH ? T('btn.jump') : 'Mellomrom' })); }
+    ev = { ...ev, kind: 'ant', soldier: true };
+  }
   if (ev.kind === 'roller' || ev.kind === 'dangler') { creatureEvent(ev); return; }          // R19 (creatures.js)
   if (ev.type === 'alert' && ev.kind === 'spider') { if (!store.get('tlm.seen.spider', false)) { store.set('tlm.seen.spider', true); toast(`En edderkopp-vakt! Den dukker og hopper: rygg unna, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); } audio?.spiderhiss(); }
   else if (ev.type === 'alert' && !store.get('tlm.seen.ant', false)) { store.set('tlm.seen.ant', true); toast(`En maur! Unngå den, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); }
@@ -2106,6 +2117,8 @@ if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
 const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
 if (fdet) logEv('gulvdetaljer', `${fdet.count} stk`);
+const leke = gfxLow ? null : makeLekerom({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: legoDens });   // R31: legoknotter (2 tegnekall, ikke slått sammen)
+if (leke?.count) logEv('lekerom', `${leke.count} knotter, ${leke.calls} tegnekall, ${leke.tris} trekanter`);
 const soft = gfxLow ? null : makeSoftLight({ THREE, scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun, sunDir: SUN, renderer });   // R17: myke skygger og lysbaking (softlight.js)
 // ---------- R15: budsjett og lav profil (perf_budget.js) ----------
 const perfMerge = { before: 0, after: 0 };
@@ -2285,6 +2298,7 @@ function render(now, dt) {
   variant.update(now / 1000, dt, player, mode);
   if (soft) soft.update(softOn, lowOn, gfxLow);
   if (fdet) fdet.update(floorDetailOn && !lowOn && mode !== 'plan');
+  if (leke) leke.update(legoOn && !lowOn && mode !== 'plan');
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(dt, mode === 'play' && !won && !menuOpen && !ov.active); updateFades(dt); updateOffscreen();
   heroSeen(bossMesh && bossOn && !LEVEL.bossS.gone && camBossK > 0.05 && mode === 'play' && !viewFirst);
