@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.29** – Veikart: R34 (sprettboksen kaster figuren) og R35 (færre hakk: forvarm shadere), fra første tilbakemelding sendt direkte fra spillet.
 - **1.28** – Tester-koder kan være korte navn (4–24 tegn) og er uavhengige av store/små bokstaver («Rune» = «rune»).
 - **1.27** – «Send til Claude» (R33): testbrukere kan sende tilbakemelding direkte fra spillet (⚑-boksen eller ⚙ → Test) med en tester-kode, uten å lime inn. Lagres i Supabase (`tlm_feedback`), kun innsetting med gyldig kode (RLS), grense mot spam. Se `docs/TILBAKEMELDING.md`. Testes på iPhone: ⚑ → kode → Send.
 - **1.26** – R31: nytt rom, lekerom (nivå 7) med legoknotter, egen fiende, musikk, delmål, verktøy-gåte og byggested; `test_lekerom.mjs`.
