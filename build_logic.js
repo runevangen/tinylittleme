@@ -3,6 +3,8 @@
 // Delene spilleren har plukket (`build.parts`) ligger i et brett; de dras ut, snappes til rutenett/festepunkter,
 // roteres, angres og nullstilles. Ingen fysikk ennå (R25): her bare plassering.
 
+import { clampZoom } from './build_zoom.js';
+
 export const GRID = 0.5;                 // rutenett (enheter)
 export const ROT_STEP = Math.PI / 12;    // rotasjonstrinn: 15 grader
 export const SNAP_R = 0.7;               // hvor nær et festepunkt delen snapper
@@ -44,10 +46,10 @@ export function siteAnchors(site) {
 export const clampToSite = (site, u, v) => ({ u: Math.min(site.w / 2, Math.max(-site.w / 2, u)), v: Math.min(site.h, Math.max(0, v)) });
 
 // snapping: nærmeste festepunkt (om i nærheten), ellers rutenett. Slått av: fri plassering (men innenfor stedet).
-export function snapPoint(site, u, v, { snap = true, grid = GRID } = {}) {
+export function snapPoint(site, u, v, { snap = true, grid = GRID, snapR = SNAP_R } = {}) {
   const c = clampToSite(site, u, v);
   if (!snap) return { ...c, anchored: false };
-  let best = null, bd = SNAP_R;
+  let best = null, bd = snapR;
   for (const a of siteAnchors(site)) { const d = Math.hypot(a.u - c.u, a.v - c.v); if (d < bd) { bd = d; best = a; } }
   if (best) return { u: best.u, v: best.v, anchored: true };
   return { ...clampToSite(site, snapG(c.u, grid), snapG(c.v, grid)), anchored: false };
@@ -82,7 +84,7 @@ export function addPart(B, id) { if (!B.have.includes(id)) B.have.push(id); retu
 // legg en del fra brettet (eller flytt en som ligger der). Returnerer den plasserte delen, eller null om den ikke finnes/ikke er plukket.
 export function place(B, id, u, v, rot) {
   if (!B.have.includes(id)) return null;
-  const s = snapPoint(B.site, u, v, { snap: B.snap }), ex = placedOf(B, id);
+  const s = snapPoint(B.site, u, v, { snap: B.snap, grid: B.grid || GRID, snapR: B.snapR || SNAP_R }), ex = placedOf(B, id);
   pushHist(B);
   const r = normRot(B.snap ? snapRot(rot ?? ex?.rot ?? 0) : (rot ?? ex?.rot ?? 0));
   if (ex) { ex.u = s.u; ex.v = s.v; ex.rot = r; ex.anchored = s.anchored; return ex; }
@@ -169,7 +171,7 @@ export function fitView(site, w, h, pad = 24, top = 0, bot = 0) {     // skala (
   const sc = Math.max(4, Math.min((w - pad * 2) / Math.max(1, site.w), (h - top - bot - pad * 2) / Math.max(1, site.h + 2)));
   return { scale: sc, cu: 0, cv: site.h / 2, oy: (top - bot) / 2 };
 }
-export const clampScale = (s) => Math.min(80, Math.max(6, s));
+export const clampScale = clampZoom;   // R44: grensene bor i build_zoom.js (maks økt fra 80)
 export const toScreen = (view, w, h, u, v) => ({ x: w / 2 + (u - view.cu) * view.scale, y: h / 2 + (view.oy || 0) - (v - view.cv) * view.scale });
 export const toWorld = (view, w, h, x, y) => ({ u: view.cu + (x - w / 2) / view.scale, v: view.cv - (y - h / 2 - (view.oy || 0)) / view.scale });
 

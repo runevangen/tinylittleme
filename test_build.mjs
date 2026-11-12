@@ -59,7 +59,7 @@ assert.ok(BL.undo(BK) && BK.links.length === 3, 'angre henter tilbake koblingene
 const view = BL.fitView(site, 390, 844, 24, 130, 160); const sc = BL.toScreen(view, 390, 844, 1, 2), w = BL.toWorld(view, 390, 844, sc.x, sc.y);
 assert.ok(near(w.u, 1, 1e-9) && near(w.v, 2, 1e-9), 'skjerm og verden går begge veier');
 assert.ok(view.scale * site.w <= 390, 'hele stedet er med i bildet på iPhone');
-assert.ok(BL.clampScale(1000) <= 80 && BL.clampScale(0) >= 6);
+assert.ok(BL.clampScale(1000) <= 240 && BL.clampScale(0) >= 6);
 assert.ok(near(BL.twistRot(0.1, 0.2, 0.5), 0.4), 'to-fingers vri');
 
 // inn og ut av modus
@@ -88,5 +88,5 @@ for (const f of fs.readdirSync('levels')) {
   assert.ok(lv.build.parts.length >= 2 && lv.build.sites.length >= 1, `${f}: bygg trenger sted og deler`);
 }
 // modulene er med i index.html
-const html = fs.readFileSync('index.html', 'utf8'); for (const m of ['build', 'build_logic', 'build_phys']) assert.ok(html.includes(`'${m}'`), `${m} mangler i files`);
+const html = fs.readFileSync('index.html', 'utf8'); for (const m of ['build', 'build_logic', 'build_zoom', 'build_phys']) assert.ok(html.includes(`'${m}'`), `${m} mangler i files`);
 console.log('bygg-tester grønne');
