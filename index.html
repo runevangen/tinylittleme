@@ -142,7 +142,11 @@
   #start .mbtn:active{transform:scale(.97)}
   #start .ver{margin-top:10px;font:600 11px ui-monospace,monospace;color:#9fb0cc}
   body.instart #panel{z-index:10}
-  #win{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1d2433d0;color:#fff;text-align:center;gap:8px;z-index:8}
+  #win{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:#1d2433d0;color:#fff;text-align:center;gap:8px;z-index:8;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(12px,env(safe-area-inset-top)) 0 0}
+  #win #winHero{margin-top:auto}
+  /* knappene ligger i en rad som blir stående nederst, også når innholdet er høyere enn skjermen (liggende mobil): «Neste nivå» skal alltid kunne trykkes */
+  #win #winBtns{position:sticky;bottom:0;margin-bottom:auto;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;width:100%;box-sizing:border-box;padding:10px 12px max(12px,env(safe-area-inset-bottom));background:linear-gradient(#1d243300,#1d2433f2 38%);z-index:2}
+  #win #winBtns button{margin-top:0}
   #win h1{margin:0;font-size:clamp(24px,8vw,34px);padding:0 12px}
   #win #again{background:#ffffff26;color:#fff}
   #win button{font:700 15px system-ui;padding:11px 22px;border:0;border-radius:999px;background:var(--accent);color:var(--ink);margin-top:6px}
@@ -150,6 +154,7 @@
   #win .wrow{display:flex;justify-content:space-between;gap:24px;font:600 16px system-ui;background:#ffffff18;border-radius:10px;padding:7px 14px}
   #win .wpts{font:800 26px system-ui;color:#ffd9a0;margin-top:4px}#win .wpts small{display:block;font:700 13px system-ui;color:#9fe0c8}
   #win #nextLevel{font-size:18px;padding:15px 30px;box-shadow:0 3px 10px #0006}
+  @media (orientation:landscape) and (max-height:520px){#win{gap:4px}#win #winHero{display:none}#win h1{font-size:24px;margin-top:auto}#win .wrow{font-size:14px;padding:5px 12px}#win .wpts{font-size:22px}}
   .sconf{position:absolute;inset:0;overflow:hidden;pointer-events:none}
   .sconf i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;opacity:.9;animation:conf 3.2s linear infinite}
   @keyframes conf{to{transform:translateY(110vh) rotate(540deg)}}
@@ -236,7 +241,7 @@
 <div id="story" class="hide"></div>
 <div id="introsw" class="hide"></div>
 <div id="introhint" class="hide"></div>
-<div id="win" class="hide"><div id="winConfetti" class="sconf"></div><div id="winHero"></div><h1 id="winTitle">Du kom opp!</h1><div id="winStats"></div><button id="nextLevel" style="display:none">Neste nivå →</button><button id="again">Spill igjen</button></div>
+<div id="win" class="hide"><div id="winConfetti" class="sconf"></div><div id="winHero"></div><h1 id="winTitle">Du kom opp!</h1><div id="winStats"></div><div id="winBtns"><button id="nextLevel" style="display:none">Neste nivå →</button><button id="again">Spill igjen</button></div></div>
 <div id="ovhint">Trykk for å gå videre</div>
 <div id="stick"><div id="knob"></div></div>
 <button class="tbtn" id="btnGrab">GREP</button>

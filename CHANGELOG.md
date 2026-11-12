@@ -2,6 +2,8 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.31** – Målskjermen på liggende mobil: «Neste nivå» og «Spill igjen» ligger nå i en rad som er festet nederst og alltid synlig, resten av skjermen kan rulles, og skjermen er kompaktere (ingen figur, mindre tekst) når høyden er under 520 px.
+
 - **1.30** – R34: sprettboksen kaster figuren som står på den (retning fra boksens midte, kort uskadd-tid, valg i innstillinger).
 - **1.29** – Veikart: R34 (sprettboksen kaster figuren) og R35 (færre hakk: forvarm shadere), fra første tilbakemelding sendt direkte fra spillet.
 - **1.28** – Tester-koder kan være korte navn (4–24 tegn) og er uavhengige av store/små bokstaver («Rune» = «rune»).
