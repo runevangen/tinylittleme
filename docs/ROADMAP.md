@@ -27,14 +27,11 @@ Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backl
 Lekerom med legoknotter som tak/gulv, egen fiende, egen musikk, 2–4 delmål, en verktøy-gåte og et byggested. Lages som grunnscene med `tools/scene2level.mjs`, gås med `walk_route`, ny fortelling og intro (R22), og med i nivåvalg, «Neste nivå» og målskjerm. Avhenger av R29 og R30.
 Ferdig når: nivå 7 kan spilles fra startskjerm til mål på iPhone, `walk_route` og `npm test` er grønne, og versjon/CHANGELOG er oppdatert.
 
-### [ ] R32 · Bot som klatrer og bruker verktøy
-Boten (`tools/solve.mjs`/`walk_route`) skal forstå klatring, verktøy (R29) og bygging (R30), begrenset til menneskelige evner (to-nivå validering: streng/løs), vise ruten, og sende feil på lange ruter til menneskelig gjennomgang. Avgjør og dokumenter om veggsprang er tillatt. Avhenger av R29.
-Ferdig når: boten løser Kontroll og alle seks nivåene med verktøy og klatring, den streng/løse modusen er testet, og `docs/NIVAER.md` forklarer bruken.
-
 ### [ ] R33 · «Send til Claude» fra spillet (Supabase) — venter på PC
 Se BACKLOG «Teknisk». Må gjøres på PC; ikke i runneren.
 
 ## Ferdige punkter
+- [x] Bot som klatrer og bruker verktøy: `tools/bot.mjs` med streng/løs modus, bevist på Kontroll (R32, v1.25)
 - [x] Verktøy-løsninger i nivå 4–6: hårgelé-genvei i bad, barnerom og kjøkken, bevist med walk_route (R29, v1.24; må prøves på iPhone)
 - [x] Flere byggebrett og byggedeler: vippe og kjøkkenbro, ny del vippe (R30, v1.23; må prøves på iPhone)
 - [x] Fallgrenser varslet: landingsmarkør, fallvind og tre landingsklasser (R28, v1.22; markør og vind må bekreftes på iPhone)
