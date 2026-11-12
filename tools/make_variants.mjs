@@ -11,6 +11,15 @@ const kit = (s) => ({
   add: (id, kind, material, color, box, extra = {}) => s.objects.push({ id, kind, material, color, box, confidence: 1, photos: [], ...extra }),
 });
 
+
+// ---------- R29: verktøy-genveier. En trapp av trinn (merket `shortcut`: ikke en del av den vanlige ruta) der første trinn er for høyt til å hoppe opp på, men går an med hårgelé.
+// steps: [[x0, x1, z0, z1, topp]] i cm, første trinn nærmest flaska. Den vanlige ruta er den lengre veien uten verktøyet. Bevises av tools/walk_route.mjs (og test_shortcut.mjs).
+const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, label, en, help, stepHelp }) => {
+  k.add(bottle, 'gel_bottle', 'plastic', '#8fd8ee', [bottleAt[0] - 2, bottleAt[0] + 2, 0, 10, bottleAt[1] - 2, bottleAt[1] + 2], { movable: 'light', tool: 'gel', help });
+  const ids = steps.map(([x0, x1, z0, z1, top], i) => { const sid = `${id}_trinn_${i + 1}`; k.add(sid, 'crate', 'wood', ['#d9a86c', '#c99556', '#b98446', '#a8753a'][i % 4], [x0, x1, 0, top, z0, z1], { shortcut: true, ...(i === 0 && stepHelp ? { help: stepHelp } : {}), ...(i === steps.length - 1 ? { cp: true } : {}) }); return sid; });
+  (s.shortcuts ||= []).push({ id, tool: 'gel', item: bottle, label, en, stand, face, steps: ids, join });
+};
+
 // ---------- Nivå 4: Badet, ommøblert. Vaskekurven står under knaggene, og motgiften er flyttet opp på den øverste hylla (2 m). ----------
 {
   const s = load('bad'), k = kit(s);
@@ -37,6 +46,10 @@ const kit = (s) => ({
     { id: 'hylle', type: 'reach', on: 'ny_hylle', gate: true, after: 'kurv', label: 'Nå den nye hylla', en: 'Reach the new shelf' },
     { id: 'smuler', type: 'crumbs', n: 5, label: 'Samle 5 smuler', en: 'Collect 5 crumbs' },
     { id: 'vokter', type: 'stomp', n: 1, label: 'Knus en vokter', en: 'Squash a guard' }];                                                         // R23: delmål (goals.js)
+  addShortcut(s, k, { id: 'gele_bad', bottle: 'hargele_bad', bottleAt: [92, 210], stand: [106.5, 152.5], face: [1, 0], join: 'vaskekurv', steps: [[110, 125, 142.5, 162.5, 27], [125, 140, 142.5, 162.5, 47]],
+    label: 'Smør hårgelé og klatre opp trinnene til vaskekurven', en: 'Smear hair gel and climb the steps to the laundry basket',
+    help: 'Hårgelé\nTa flaska (TA), bær den til det høye trinnet ved vaskekurven og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.',
+    stepHelp: 'Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), så klatrer du opp og går videre til vaskekurven. Den lange veien går fortsatt.' });
   save('bad2', s);
 }
 
@@ -67,6 +80,10 @@ const kit = (s) => ({
     { id: 'smuler', type: 'crumbs', n: 5, label: 'Samle 5 smuler', en: 'Collect 5 crumbs' },
     { id: 'maur', type: 'stomp', n: 2, label: 'Knus to maur', en: 'Squash two ants' },
     { id: 'vegg', type: 'reach', on: 'vegghylle', gate: true, after: 'kasse', label: 'Nå vegghylla', en: 'Reach the wall shelf' }];                                                         // R23: delmål (goals.js)
+  addShortcut(s, k, { id: 'gele_barn', bottle: 'hargele_barn', bottleAt: [165, 250], stand: [272.5, 214.5], face: [0, -1], join: 'skrivebord', steps: [[255, 290, 190, 210, 27], [255, 290, 170, 190, 46], [255, 290, 150, 170, 64]],
+    label: 'Smør hårgelé og klatre opp trinnene til skrivebordet', en: 'Smear hair gel and climb the steps to the desk',
+    help: 'Hårgelé\nTa flaska (TA), bær den til det høye trinnet foran skrivebordet og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.',
+    stepHelp: 'Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), klatre opp og gå trappa til skrivebordet. Den lange veien via leke- og bokhyllene går fortsatt.' });
   save('barnerom2', s);
 }
 
@@ -104,6 +121,11 @@ const kit = (s) => ({
     { id: 'sjef', type: 'boss', label: 'Slå sjef-mauren', en: 'Beat the boss ant' },
     { id: 'bro', type: 'puzzle', puzzle: 'bro', label: 'Åpne snarveien med nøkkelen', en: 'Open the shortcut with the key' },
     { id: 'skap', type: 'reach', on: 'overskap', gate: true, label: 'Nå overskapet', en: 'Reach the top cabinet' }];                                                         // R23: delmål (goals.js)
+  { const m = s.ants.find((x) => x.id === 'maur_gulv'); if (m) m.to = [250, m.from[1]]; const r = s.ants.find((x) => x.id === 'pillbug_gulv'); if (r) { r.from = [318, r.from[1]]; r.to = [348, r.to[1]]; } }   // R29: trappa til benken står der bærer-mauren og pillbuggen gikk: kortere bane for bæreren, pillbuggen rullet til høyre for trappa
+  addShortcut(s, k, { id: 'gele_kjokken', bottle: 'hargele_kjokken', bottleAt: [90, 255], stand: [292.5, 146.5], face: [0, -1], join: 'benk_o', steps: [[275, 310, 122, 142, 27], [275, 310, 102, 122, 45], [275, 310, 82, 102, 63], [275, 310, 62, 82, 80]],
+    label: 'Smør hårgelé og klatre trappa opp til kjøkkenbenken', en: 'Smear hair gel and climb the stairs up to the counter',
+    help: 'Hårgelé\nTa flaska (TA), bær den til det høye trinnet ved benken og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.',
+    stepHelp: 'Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), klatre opp og gå trappa til benken. Den lange veien via kassa og håndkleet går fortsatt.' });
   save('kjokken2', s);
 }
 console.log('skrev scenes/bad2, barnerom2, kjokken2');

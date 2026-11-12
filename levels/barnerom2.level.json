@@ -693,6 +693,66 @@
    "material": "metal",
    "cp": false,
    "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    21,
+    0,
+    10
+   ],
+   "max": [
+    28,
+    5.4,
+    14
+   ],
+   "id": "gele_barn_trinn_1",
+   "kind": "crate",
+   "color": 14264428,
+   "material": "wood",
+   "cp": false,
+   "soft": false,
+   "shortcut": true
+  },
+  {
+   "type": "wood",
+   "min": [
+    21,
+    0,
+    6
+   ],
+   "max": [
+    28,
+    9.2,
+    10
+   ],
+   "id": "gele_barn_trinn_2",
+   "kind": "crate",
+   "color": 13210966,
+   "material": "wood",
+   "cp": false,
+   "soft": false,
+   "shortcut": true
+  },
+  {
+   "type": "wood",
+   "min": [
+    21,
+    0,
+    2
+   ],
+   "max": [
+    28,
+    12.8,
+    6
+   ],
+   "id": "gele_barn_trinn_3",
+   "kind": "crate",
+   "color": 12158022,
+   "material": "wood",
+   "cp": true,
+   "soft": false,
+   "shortcut": true
   }
  ],
  "movables": [
@@ -861,6 +921,25 @@
    ],
    "weight": "medium",
    "breakable": false
+  },
+  {
+   "id": "hargele_barn",
+   "kind": "gel_bottle",
+   "material": "plastic",
+   "color": 9427182,
+   "min": [
+    2.6,
+    0,
+    21.6
+   ],
+   "max": [
+    3.4,
+    2,
+    22.4
+   ],
+   "weight": "light",
+   "breakable": false,
+   "tool": "gel"
   }
  ],
  "decor": [
@@ -1054,6 +1133,24 @@
     -2,
     4.1,
     -1.4
+   ]
+  },
+  {
+   "id": "hargele_barn",
+   "text": "Hårgelé\nTa flaska (TA), bær den til det høye trinnet foran skrivebordet og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.",
+   "pos": [
+    3,
+    2.9,
+    22
+   ]
+  },
+  {
+   "id": "gele_barn_trinn_1",
+   "text": "Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), klatre opp og gå trappa til skrivebordet. Den lange veien via leke- og bokhyllene går fortsatt.",
+   "pos": [
+    24.5,
+    6.3,
+    12
    ]
   }
  ],
@@ -1338,6 +1435,29 @@
    "z0": -1,
    "z1": 18.4,
    "top": 24.2
+  }
+ ],
+ "shortcuts": [
+  {
+   "id": "gele_barn",
+   "tool": "gel",
+   "item": "hargele_barn",
+   "label": "Smør hårgelé og klatre opp trinnene til skrivebordet",
+   "en": "Smear hair gel and climb the steps to the desk",
+   "stand": [
+    24.5,
+    14.9
+   ],
+   "face": [
+    0,
+    -1
+   ],
+   "steps": [
+    "gele_barn_trinn_1",
+    "gele_barn_trinn_2",
+    "gele_barn_trinn_3"
+   ],
+   "join": "skrivebord"
   }
  ],
  "ropes": [],

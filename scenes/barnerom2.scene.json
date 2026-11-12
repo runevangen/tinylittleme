@@ -872,6 +872,78 @@
       "confidence": 1,
       "photos": [],
       "decor": true
+    },
+    {
+      "id": "hargele_barn",
+      "kind": "gel_bottle",
+      "material": "plastic",
+      "color": "#8fd8ee",
+      "box": [
+        163,
+        167,
+        0,
+        10,
+        248,
+        252
+      ],
+      "confidence": 1,
+      "photos": [],
+      "movable": "light",
+      "tool": "gel",
+      "help": "Hårgelé\nTa flaska (TA), bær den til det høye trinnet foran skrivebordet og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir."
+    },
+    {
+      "id": "gele_barn_trinn_1",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9a86c",
+      "box": [
+        255,
+        290,
+        0,
+        27,
+        190,
+        210
+      ],
+      "confidence": 1,
+      "photos": [],
+      "shortcut": true,
+      "help": "Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), klatre opp og gå trappa til skrivebordet. Den lange veien via leke- og bokhyllene går fortsatt."
+    },
+    {
+      "id": "gele_barn_trinn_2",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#c99556",
+      "box": [
+        255,
+        290,
+        0,
+        46,
+        170,
+        190
+      ],
+      "confidence": 1,
+      "photos": [],
+      "shortcut": true
+    },
+    {
+      "id": "gele_barn_trinn_3",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#b98446",
+      "box": [
+        255,
+        290,
+        0,
+        64,
+        150,
+        170
+      ],
+      "confidence": 1,
+      "photos": [],
+      "shortcut": true,
+      "cp": true
     }
   ],
   "hazards": [
@@ -1130,5 +1202,28 @@
         "count": 46
       }
     ]
-  }
+  },
+  "shortcuts": [
+    {
+      "id": "gele_barn",
+      "tool": "gel",
+      "item": "hargele_barn",
+      "label": "Smør hårgelé og klatre opp trinnene til skrivebordet",
+      "en": "Smear hair gel and climb the steps to the desk",
+      "stand": [
+        272.5,
+        214.5
+      ],
+      "face": [
+        0,
+        -1
+      ],
+      "steps": [
+        "gele_barn_trinn_1",
+        "gele_barn_trinn_2",
+        "gele_barn_trinn_3"
+      ],
+      "join": "skrivebord"
+    }
+  ]
 }

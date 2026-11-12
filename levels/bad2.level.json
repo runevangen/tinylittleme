@@ -1068,6 +1068,46 @@
    "grip": true,
    "onto": "hylle",
    "gripDrain": -0.3
+  },
+  {
+   "type": "wood",
+   "min": [
+    -4.5,
+    0,
+    3.5
+   ],
+   "max": [
+    -1.5,
+    5.4,
+    7.5
+   ],
+   "id": "gele_bad_trinn_1",
+   "kind": "crate",
+   "color": 14264428,
+   "material": "wood",
+   "cp": false,
+   "soft": false,
+   "shortcut": true
+  },
+  {
+   "type": "wood",
+   "min": [
+    -1.5,
+    0,
+    3.5
+   ],
+   "max": [
+    1.5,
+    9.4,
+    7.5
+   ],
+   "id": "gele_bad_trinn_2",
+   "kind": "crate",
+   "color": 13210966,
+   "material": "wood",
+   "cp": true,
+   "soft": false,
+   "shortcut": true
   }
  ],
  "movables": [
@@ -1215,6 +1255,25 @@
    ],
    "weight": "medium",
    "breakable": false
+  },
+  {
+   "id": "hargele_bad",
+   "kind": "gel_bottle",
+   "material": "plastic",
+   "color": 9427182,
+   "min": [
+    -8.5,
+    0,
+    16.6
+   ],
+   "max": [
+    -7.7,
+    2,
+    17.4
+   ],
+   "weight": "light",
+   "breakable": false,
+   "tool": "gel"
   }
  ],
  "decor": [
@@ -1722,6 +1781,24 @@
     33.5,
     17.2
    ]
+  },
+  {
+   "id": "hargele_bad",
+   "text": "Hårgelé\nTa flaska (TA), bær den til det høye trinnet ved vaskekurven og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.",
+   "pos": [
+    -8.1,
+    2.9,
+    17
+   ]
+  },
+  {
+   "id": "gele_bad_trinn_1",
+   "text": "Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), så klatrer du opp og går videre til vaskekurven. Den lange veien går fortsatt.",
+   "pos": [
+    -3,
+    6.3,
+    5.5
+   ]
   }
  ],
  "hazards": [
@@ -2115,6 +2192,28 @@
    "label": "Knus en vokter",
    "en": "Squash a guard",
    "n": 1
+  }
+ ],
+ "shortcuts": [
+  {
+   "id": "gele_bad",
+   "tool": "gel",
+   "item": "hargele_bad",
+   "label": "Smør hårgelé og klatre opp trinnene til vaskekurven",
+   "en": "Smear hair gel and climb the steps to the laundry basket",
+   "stand": [
+    -5.2,
+    5.5
+   ],
+   "face": [
+    1,
+    0
+   ],
+   "steps": [
+    "gele_bad_trinn_1",
+    "gele_bad_trinn_2"
+   ],
+   "join": "vaskekurv"
   }
  ],
  "ropes": [],

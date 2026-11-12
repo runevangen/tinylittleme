@@ -52,7 +52,7 @@ for (const o of scene.objects) {
     decor.push({ shape: 'box', id: o.id, kind: o.kind, pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
     continue;
   }
-  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), ...(o.face ? { face: o.face } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.grip ? { grip: true } : {}), ...(o.onto ? { onto: o.onto } : {}), ...(o.grip_drain !== undefined ? { gripDrain: o.grip_drain } : {}) }));
+  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), ...(o.face ? { face: o.face } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.shortcut ? { shortcut: true } : {}), ...(o.grip ? { grip: true } : {}), ...(o.onto ? { onto: o.onto } : {}), ...(o.grip_drain !== undefined ? { gripDrain: o.grip_drain } : {}) }));
 }
 const hazards = (scene.hazards || []).map((h) => {
   const [a, b, c, d, e, f] = h.box;
@@ -75,13 +75,14 @@ const fromBox = (b) => ({ id: b.id, x0: b.min[0], x1: b.max[0], z0: b.min[2], z1
 nodes.push({ id: 'gulv', x0, x1, z0, z1, top: 0 });
 for (const b of boxes) {
   if (b.type === 'floor' || b.type === 'wall') continue;
+  if (b.shortcut) continue;                                  // R29: trinn i en verktøy-genvei er ikke en del av den vanlige ruta (de krever verktøyet)
   if (b.max[1] < 0.6) continue;                              // matter o.l. regnes som gulv
   if (b.max[0] - b.min[0] < MIN_NODE || b.max[2] - b.min[2] < MIN_NODE) continue;
   // en topp som er dekket av noe annet (skapet under benkeplata) kan du ikke stå på: ikke en flate i rutekartet
   const area = (b.max[0] - b.min[0]) * (b.max[2] - b.min[2]);
   // … men stikker en stripe frem (trinnet i en skuffetrapp), er stripa flaten
   const ovl = (c) => Math.max(0, Math.min(b.max[0], c.max[0]) - Math.max(b.min[0], c.min[0])) * Math.max(0, Math.min(b.max[2], c.max[2]) - Math.max(b.min[2], c.min[2]));
-  const cover = boxes.filter((c) => c !== b && c.type !== 'floor' && c.type !== 'wall' && c.min[1] < b.max[1] + 1 && c.max[1] > b.max[1] + 0.01 && ovl(c) >= 0.6 * area).sort((p, q) => ovl(q) - ovl(p))[0];
+  const cover = boxes.filter((c) => c !== b && !c.shortcut && c.type !== 'floor' && c.type !== 'wall' && c.min[1] < b.max[1] + 1 && c.max[1] > b.max[1] + 0.01 && ovl(c) >= 0.6 * area).sort((p, q) => ovl(q) - ovl(p))[0];
   if (cover) {
     const strips = [];
     if (cover.min[0] <= b.min[0] + 0.01 && cover.max[0] >= b.max[0] - 0.01) { strips.push({ x0: b.min[0], x1: b.max[0], z0: b.min[2], z1: cover.min[2] }, { x0: b.min[0], x1: b.max[0], z0: cover.max[2], z1: b.max[2] }); }
@@ -360,6 +361,12 @@ const build = scene.build ? {
   }),
 } : null;
 
+// verktøy-genveier (R29, se shortcut.js): { id, tool, item, label, en, stand: [x, z] cm, face: [dx, dz], steps: [id på trinn], join: id på flata i ruta der genveien ender }
+const shortcuts = (scene.shortcuts || []).map((c) => {
+  for (const id of [c.item, ...c.steps, c.join]) if (!scene.objects.some((o) => o.id === id)) throw new Error(`genvei ${c.id}: fant ikke ${id}`);
+  return { id: c.id, tool: c.tool, item: c.item, label: c.label, ...(c.en ? { en: c.en } : {}), stand: [ux(c.stand[0]), uz(c.stand[1])], face: c.face, steps: c.steps, join: c.join };
+});
+
 const finalSeen = reachable();
 const solvable = finalSeen.has(goalIdx());
 
@@ -374,6 +381,7 @@ const level = {
   ...(build ? { build } : {}),
   ...(puzzles.length ? { puzzles } : {}),
   ...(goals.length ? { goals } : {}),
+  ...(shortcuts.length ? { shortcuts } : {}),
   ropes: [],
   route,
   start, goal,

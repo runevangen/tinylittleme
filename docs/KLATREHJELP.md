@@ -54,7 +54,7 @@ Første kombinasjon i spillet. Prøverommet har en **nål** og en **trådsnelle*
 Kun én taubane per nål; ny tråd erstatter den gamle. Trykk TA på samme sted som første feste for å angre og legge fra deg nålen.
 
 ## Det som ikke er med ennå
-- Verktøy er ikke merket i bildene: bare prøverommet har dem foreløpig.
+- Verktøy er ikke merket i bildene: prøverommet og nivå 4–6 (hårgelé-trapper, se NIVAER.md) har dem foreløpig.
 - Grep-flater i badet fra bildene: hvilke gjenstander som er klatrbare er ikke bestemt (se backlogg). Flatetypen `slick` (glatt, kan ikke klatres) finnes ikke som grep-type ennå.
 - Flere kombinasjoner (svamp + vann, håndkle + håndkle …). Taubane: «skyte opp» tråden mot et høyt punkt, tråd som kan klatres, og en lyd/animasjon for selve sklien. Boten bruker den ikke.
 - Stavhopp-animasjon (kroppen bruker vanlig hoppose).

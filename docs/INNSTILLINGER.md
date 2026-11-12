@@ -44,6 +44,7 @@ Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»
 - **Myke skygger og lysflekk** (⚙ → Spill, tlm.softlight, standard på, R17, softlight.js + softlight_logic.js): bakte mørke blobber under og rundt faste ting og i gulvhjørnene, varm lysflekk fra vinduet og mykere skyggekant (sun.shadow.radius). Bare Detaljert grafikk; Enkel grafikk og Lav profil beholder dagens look (test_softlight.mjs). Logges som «myke skygger».
 
 - **Delmål** (⚙ → Spill, `tlm.goals`, standard på, R23): panel under HUD-linja med ett aktivt delmål; trykk på det for hele lista. Av = ingen panel, ingen telling, ingen lås.
+- **Verktøy-genveier** (⚙ → Hjelp, `tlm.shortcuthint`, standard på, R29, `shortcut.js`): varsel når du kommer opp på første trinn og på toppen av en hårgelé-trapp i nivå 4–6. Logges som `genvei` (også «varsel på/av»).
 - **Pila peker mot aktivt delmål** (⚙ → Hjelp, `tlm.goalarrow`, standard på): kompass og gulvpil følger delmålet (flate, nærmeste smule, nærmeste maur, sjef). Av = pila følger ruta som før.
 - **Delmål som låser målet** (⚙ → Admin, `tlm.goallock`, standard på): delmål merket `gate` (alltid på ruta) må være klare før målet åpner; ellers vises «Målet er låst». Flymodus omgår låsen. Logges som `delmål`-hendelse («lås på/av»).
 - **Byggeskjerm: snapping** (⚙ → Spill, `tlm.buildsnap`, standard på, R24): delene snapper til rutenett og festepunkter i byggeskjermen (`build.js`, `build_logic.js`). Admin: `tlm.buildall` gir alle deler (test). Hendelser logges som `bygg`.

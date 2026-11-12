@@ -23,10 +23,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
-### [ ] R29 · Verktøy-løsninger i nivå 4–6
-Variantrommene skal ha egne gåter som bruker verktøy: hårgelé, dopapirbånd, nål og tråd (taubane), stav, og løse ting man må flytte selv. Minst én verktøy-løsning per rom (4, 5, 6), lagt i grunnscene/variant-oppskriften (`tools/make_variants.mjs`), ikke som engangs-hack. `walk_route` må bevise at målet kan nås både med verktøyet og via en lengre/vanskeligere vei uten. Tekst og hint nevner knappene.
-Ferdig når: nivå 4–6 har hver minst én verktøy-gåte, `walk_route` er grønn for alle seks nivåer, og `npm test` dekker verktøyene.
-
 ### [ ] R31 · Nytt rom: lekerom (nivå 7)
 Lekerom med legoknotter som tak/gulv, egen fiende, egen musikk, 2–4 delmål, en verktøy-gåte og et byggested. Lages som grunnscene med `tools/scene2level.mjs`, gås med `walk_route`, ny fortelling og intro (R22), og med i nivåvalg, «Neste nivå» og målskjerm. Avhenger av R29 og R30.
 Ferdig når: nivå 7 kan spilles fra startskjerm til mål på iPhone, `walk_route` og `npm test` er grønne, og versjon/CHANGELOG er oppdatert.
@@ -39,6 +35,7 @@ Ferdig når: boten løser Kontroll og alle seks nivåene med verktøy og klatrin
 Se BACKLOG «Teknisk». Må gjøres på PC; ikke i runneren.
 
 ## Ferdige punkter
+- [x] Verktøy-løsninger i nivå 4–6: hårgelé-genvei i bad, barnerom og kjøkken, bevist med walk_route (R29, v1.24; må prøves på iPhone)
 - [x] Flere byggebrett og byggedeler: vippe og kjøkkenbro, ny del vippe (R30, v1.23; må prøves på iPhone)
 - [x] Fallgrenser varslet: landingsmarkør, fallvind og tre landingsklasser (R28, v1.22; markør og vind må bekreftes på iPhone)
 - [x] Gulv og overflater: gulvdetaljer for målestokk og matter uten moiré (R13, v1.15; ekte FPS og flimmer i bevegelse må bekreftes på iPhone)
