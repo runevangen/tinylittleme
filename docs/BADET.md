@@ -18,12 +18,14 @@ Brettet ligger i `scenes/bad.scene.json` (tolkningen, mål i cm) og lages til `l
  └───────────────────────────────────────────────┴──────────┘
             sør: dør med tre fyllinger
 ```
-- **Rute til motgiften (ingen hjelpetrinn):** gulv → klatre opp den flettede vaskekurven (GREP, 60 cm) → hopp til sisternen (80 cm) → vasken (84 cm) → tannglasset. Gått med ekte fysikk i Mario-stil, og målet nås.
+- **Rute til motgiften (R42, ingen hjelpetrinn):** gulv → kurven ved knaggene (GREP, 60 cm) → badekåpa opp til knaggrekka (135 cm) → hylla ved knaggene → håndkleet (GREP) opp til toppen av medisinskapet (190 cm), der motgiften ligger. Gått med ekte fysikk i Mario-stil, og målet nås. Delmål: kurven, knaggrekka, 5 smuler. Den gamle veien (vaskekurven i vest, sisternen, vasken) står igjen som sideveg.
+- **Den harde veien (R42):** ni esker som trapp (19 cm per trinn) fra gulvet til medisinskapet, bare hopp (HOPP), ingen klatring (`alts` i brettet, bevist av `walk_route` og `test_badet.mjs`). Den har flere steg enn klatreruta. I nivå 4 fortsetter den med et hopp fra medisinskapet til den øverste hylla.
+- **Stigende vann (R42, nivå 4):** ⚙ → Spill → «Nivå 4: stigende vann» (Av / Rolig / Vanlig / Rask). Vannet står tørt en stund, stiger så jevnt til 70 cm og blir stående. Er hodet under vann i mer enn 2,5 s, drukner du: tilbake til lagringspunktet (−10 poeng) og vannet starter på nytt. Du rømmer ved å klatre høyere enn vannet: kurven (60 cm) går under, knaggrekka og eskene ligger over. Admin: «Stigende vann: fartsfaktor». Logg: `logEv('flood', …)`.
 - **Kan også klatres:** blå og lilla badekåpe, buksa og de to håndklærne på panelveggen (opp til knaggrekka på 135 cm). Det er ikke en del av ruta ennå.
 - **Farer:** det tomme karet (grop) og do-skåla (skylles ned). Flisene er glatte, mattene er myke.
 - **Vasken (v0.88):** forsenket 8 cm (24 × 20 cm bunn) i en benkeplate av fire bokser; skapet er 76 cm, så toppen av det er vaskebunnen. Du kan hoppe ned og opp igjen. Smuler og småting ligger på kantene.
 - **Forenklet eller gjettet:** skråtaket er flatt, døra er lukket, vaskeskapet har to dører (tre i virkeligheten), speilskapets hyller er ikke modellert, og målene er anslått fra bildene (±15 cm).
-- **Neste steg:** flytte motgiften høyere (medisinskapet eller kurvene på hylla, 2 m) når det finnes en vei fra knaggrekka og opp; skråtak over karet; dusjslange som tau.
+- **Neste steg:** skråtak over karet; dusjslange som tau (ikke gjort i R42: tau-fysikken er ikke koblet til scenemodellen ennå).
 
 Resten av dette dokumentet er det opprinnelige designutkastet (før bildene).
 

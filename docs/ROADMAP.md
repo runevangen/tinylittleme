@@ -20,15 +20,12 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R42 · Motgiften høyere opp i badet og varianter
-Fra BACKLOG «Flytte motgiften til toppen av speilskapet» og «Motgift-varianter»/«Badet på nytt». I Bad (nivå 1 og 4): flytt motgiften opp til speilskapet/medisinskap med klatrevei fra knaggrekka (nytt delmål i `goals`), og legg inn **en variant** der vann stiger sakte og man må rømme (nivå 4, valgfri vanskelighetsgrad via `SETTINGS`). Lag/endre grunnscenen (`scenes/bad*.scene.json`) og kjør `node tools/make_variants.mjs`; alternativ vei uten klatring finnes og er vanskeligere. Dusjslange som tau hvis det lar seg gjøre med eksisterende tau-fysikk. Tekster i `i18n.js` (nb/en) som nevner knappene.
-Ferdig når: motgiften kan nås fra knaggrekka via klatring i begge bad-nivåene og via den vanskelige veien, vann-varianten kan slås på og avgjøres (rømme eller tape), `walk_route` grønn for alle nivåer og `npm test` grønn; delmålene er oppdatert og målskjermen viser dem.
-
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Motgiften høyere opp i badet (speilskap, klatrevei, alt-vei) og vann-variant (R42, v1.46)
 - [x] Flere kombinasjoner: svamp + vann, håndkle + håndkle, papirhaug, stavhopp-animasjon, combos.js, vault_anim.js (R41, v1.45)
 - [x] Finpuss av Prince: kant-shimmy, rulle ved landing, forsiktig gange, tyngre tau, finpuss.js (R39, v1.44; følelsen testes på iPhone)
 - [x] Figurens bevegelse: snu med skritt, tråkke over små hindre, nye poser i heng/sving/veggglid, hero_move.js (R40, v1.43; følelsen testes på iPhone)

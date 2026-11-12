@@ -4,7 +4,7 @@ Seks nivåer med stigende vanskelighetsgrad: tre rom (nivå 1–3), og de samme 
 
 | | Nivå 1: Badet | Nivå 2: Barnerommet | Nivå 3: Kjøkkenet |
 |---|---|---|---|
-| Fil | `scenes/bad.scene.json` | `scenes/barnerom.scene.json` | `scenes/kjokken.scene.json` |
+| Fil | `scenes/bad.scene.json` (R42: motgiften på medisinskapet, 190 cm; vei via kurv, badekåpe, knaggrekke og håndkle; hard vei med esker) | `scenes/barnerom.scene.json` | `scenes/kjokken.scene.json` |
 | Kilde | tolket fra fire bilder | oppdiktet for spillet | oppdiktet for spillet |
 | Steg i ruta | 5 | 12 | 16 |
 | Klatringer | 1 (vaskekurv, 60 cm) | 1 (gardin, 34 cm) | 2 (kjøkkenhåndkle 34 cm, hvitløksflette 48 cm: tar nesten alle kreftene) |

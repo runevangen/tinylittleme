@@ -119,5 +119,10 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop()
     console.log(w.ok ? `GENVEI ${sc.id}: uten verktøy kommer du ikke opp på første trinn; med ${sc.tool} går ruta på ${w.withTool.secs} s; den vanlige veien tar ${w.plain.secs} s` : `GENVEI ${sc.id} FEILER: ${w.why}`);
     if (!w.ok) bad = true;
   }
+  for (const a of JSON.parse(fs.readFileSync(file, 'utf8')).alts || []) {            // R42: harde veier uten klatring
+    const w = walkRoute(file, { route: a.route });
+    console.log(w.ok ? `HARD VEI ${a.id}: går uten klatring på ${w.secs} s` : `HARD VEI ${a.id} FEILER: ${w.why}`);
+    if (!w.ok) bad = true;
+  }
   process.exit(bad ? 2 : 0);
 }

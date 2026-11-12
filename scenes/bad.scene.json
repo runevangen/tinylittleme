@@ -48,11 +48,11 @@
     "note": "Rett innenfor døra"
   },
   "goal": {
-    "x": 164,
-    "y": 96,
-    "z": 10,
-    "on": "tannglass",
-    "note": "Motgift-bit på tannglasset"
+    "x": 177,
+    "y": 190,
+    "z": 162,
+    "on": "medisinskap",
+    "note": "Motgift-bit på toppen av medisinskapet (R42: flyttet opp fra tannglasset). Vei: kurv ved knaggene, badekåpa, knaggrekka, hylla, håndkleet. Hard vei: eskene."
   },
   "windows": [
     {
@@ -1068,7 +1068,8 @@
         1,
         2,
         3
-      ]
+      ],
+      "cp": true
     },
     {
       "id": "badekape_bla",
@@ -1078,8 +1079,8 @@
       "box": [
         176,
         185,
-        28,
-        130,
+        60,
+        135,
         144,
         158
       ],
@@ -1090,7 +1091,9 @@
         3
       ],
       "grip": true,
-      "grip_drain": -0.6
+      "grip_drain": -0.6,
+      "onto": "knaggrekke",
+      "help": "Badekåpa\nKlatre opp til knaggrekka (hold GREP). Det er et langt tak: start med fulle krefter."
     },
     {
       "id": "badekape_lilla",
@@ -1100,7 +1103,7 @@
       "box": [
         174,
         185,
-        45,
+        62,
         130,
         158,
         174
@@ -1122,7 +1125,7 @@
       "box": [
         177,
         185,
-        35,
+        62,
         128,
         174,
         184
@@ -1224,7 +1227,7 @@
         185,
         196,
         199,
-        138,
+        190,
         236
       ],
       "confidence": 0.7,
@@ -1232,25 +1235,6 @@
         1,
         3
       ]
-    },
-    {
-      "id": "hyllekonsoll_1",
-      "kind": "box",
-      "material": "metal",
-      "color": "#1c1c1c",
-      "box": [
-        165,
-        185,
-        190,
-        196,
-        140,
-        142
-      ],
-      "confidence": 0.7,
-      "photos": [
-        1
-      ],
-      "decor": true
     },
     {
       "id": "hyllekonsoll_2",
@@ -1270,25 +1254,6 @@
         1
       ],
       "decor": true
-    },
-    {
-      "id": "kurv_stor_aapen",
-      "kind": "hamper",
-      "material": "wicker",
-      "color": "#b88a4a",
-      "box": [
-        158,
-        184,
-        199,
-        228,
-        140,
-        188
-      ],
-      "confidence": 0.7,
-      "photos": [
-        1,
-        3
-      ]
     },
     {
       "id": "kurv_liten_aapen",
@@ -1717,6 +1682,217 @@
         2
       ],
       "decor": true
+    },
+    {
+      "id": "kurv_knagg",
+      "kind": "hamper",
+      "material": "wicker",
+      "color": "#a9794a",
+      "box": [
+        140,
+        182,
+        0,
+        60,
+        140,
+        184
+      ],
+      "confidence": 1,
+      "photos": [],
+      "grip": true,
+      "onto": "kurv_knagg",
+      "grip_drain": -0.7,
+      "help": "Ny vei til motgiften\nMotgiften ligger nå på toppen av medisinskapet. Klatre opp på kurven (GREP) og videre opp badekåpa til knaggrekka."
+    },
+    {
+      "id": "knagg_hylle",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#c79a5e",
+      "box": [
+        150,
+        180,
+        130,
+        135,
+        166,
+        188
+      ],
+      "confidence": 1,
+      "photos": [],
+      "cp": true,
+      "help": "Hylle ved knaggene\nHvil her. Håndkleet henger ned fra medisinskapet: gå rundt det, hold GREP og klatre opp."
+    },
+    {
+      "id": "medisin_handkle",
+      "kind": "towel_hang",
+      "material": "fabric",
+      "color": "#e0a23a",
+      "box": [
+        164,
+        170,
+        135,
+        190,
+        174,
+        182
+      ],
+      "confidence": 1,
+      "photos": [],
+      "grip": true,
+      "onto": "medisinskap",
+      "grip_drain": -0.5
+    },
+    {
+      "id": "trapp_bad_1",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9a86c",
+      "box": [
+        74,
+        86,
+        0,
+        19,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true,
+      "help": "Den harde veien\nEsker som trapp: hopp (HOPP) opp trinn for trinn til medisinskapet. Ingen klatring, men det krever presise hopp."
+    },
+    {
+      "id": "trapp_bad_2",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#c99556",
+      "box": [
+        86,
+        98,
+        0,
+        38,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_3",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#b98446",
+      "box": [
+        98,
+        110,
+        0,
+        57,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_4",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#a8753a",
+      "box": [
+        110,
+        122,
+        0,
+        76,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_5",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9a86c",
+      "box": [
+        122,
+        134,
+        0,
+        95,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_6",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#c99556",
+      "box": [
+        134,
+        146,
+        0,
+        114,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_7",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#b98446",
+      "box": [
+        146,
+        158,
+        0,
+        133,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_8",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#a8753a",
+      "box": [
+        158,
+        170,
+        0,
+        152,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
+    },
+    {
+      "id": "trapp_bad_9",
+      "kind": "crate",
+      "material": "wood",
+      "color": "#d9a86c",
+      "box": [
+        170,
+        182,
+        0,
+        171,
+        116,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "alt": true
     }
   ],
   "hazards": [
@@ -1779,82 +1955,82 @@
   "collectibles": [
     {
       "id": "smule_1",
-      "on": "vaskekurv",
+      "on": "kurv_knagg",
       "at": [
-        11.3,
-        56.3
+        161.3,
+        146.3
       ]
     },
     {
       "id": "smule_2",
-      "on": "do_tank",
+      "on": "kurv_knagg",
       "at": [
-        78.8,
-        11.3
+        146.3,
+        176.3
       ]
     },
     {
       "id": "smule_3",
-      "on": "vask_plate",
+      "on": "medisinskap",
       "at": [
-        116,
-        19
+        176.3,
+        146.3
       ]
     },
     {
       "id": "smule_4",
-      "on": "vaskekurv",
+      "on": "gulv",
       "at": [
-        41.3,
-        26.3
+        11.3,
+        71.3
       ]
     },
     {
       "id": "smule_5",
-      "on": "vask_plate",
+      "on": "gulv",
       "at": [
-        172,
-        19
+        48.8,
+        153.8
       ]
     },
     {
       "id": "smule_6",
-      "on": "do_tank",
+      "on": "gulv",
       "at": [
-        56.3,
-        11.3
+        71.3,
+        93.8
       ]
     },
     {
       "id": "smule_7",
       "on": "gulv",
       "at": [
-        11.3,
-        146.3
+        131.3,
+        168.8
       ]
     },
     {
       "id": "smule_8",
       "on": "gulv",
       "at": [
-        146.3,
-        138.8
+        48.8,
+        236.3
       ]
     },
     {
       "id": "smule_9",
       "on": "gulv",
       "at": [
-        71.3,
-        78.8
+        153.8,
+        236.3
       ]
     },
     {
       "id": "smule_10",
       "on": "gulv",
       "at": [
-        71.3,
-        168.8
+        11.3,
+        123.8
       ]
     }
   ],
@@ -1862,10 +2038,19 @@
     {
       "id": "kurv",
       "type": "reach",
-      "label": "Klatre opp på vaskekurven",
-      "en": "Climb the laundry basket",
-      "on": "vaskekurv",
+      "label": "Klatre opp på kurven ved knaggene",
+      "en": "Climb the basket by the hooks",
+      "on": "kurv_knagg",
       "gate": true
+    },
+    {
+      "id": "knagg",
+      "type": "reach",
+      "label": "Nå knaggrekka",
+      "en": "Reach the hook rail",
+      "on": "knaggrekke",
+      "gate": true,
+      "after": "kurv"
     },
     {
       "id": "smuler",
@@ -1873,15 +2058,25 @@
       "label": "Samle 5 smuler",
       "en": "Collect 5 crumbs",
       "n": 5
-    },
+    }
+  ],
+  "alts": [
     {
-      "id": "vask",
-      "type": "reach",
-      "label": "Nå vasken",
-      "en": "Reach the sink",
-      "on": "vask_plate",
-      "gate": true,
-      "after": "kurv"
+      "id": "trapp_bad",
+      "label": "Den harde veien: hopp opp eskene til medisinskapet uten å klatre",
+      "en": "The hard way: jump up the crates to the medicine cabinet without climbing",
+      "path": [
+        "trapp_bad_1",
+        "trapp_bad_2",
+        "trapp_bad_3",
+        "trapp_bad_4",
+        "trapp_bad_5",
+        "trapp_bad_6",
+        "trapp_bad_7",
+        "trapp_bad_8",
+        "trapp_bad_9",
+        "medisinskap"
+      ]
     }
   ]
 }

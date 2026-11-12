@@ -52,6 +52,31 @@ export function waterPhase(t, cfg) {
 export function isWading(footY, floorY, level, margin = 0.1) { return level > 0.15 && footY < floorY + level - margin; }
 export const WADE = { speed: 0.55, drain: 0.7 };   // fartsfaktor og kraft-tap per sekund
 
+// R42: stigende vann (valgfri vanskelighetsgrad i nivå 4). Vannet står stille et par sekunder, så stiger det jevnt (enheter per sekund) opp til `max` og blir stående.
+// Står hodet under vann lenger enn `grace` sekunder, druknet du: tilbake til lagringspunktet, og vannet starter på nytt. Rømme = klatre høyere enn vannet kommer (kurv, badekåpe, knaggrekke, trapp).
+export const FLOOD_MODES = ['av', 'rolig', 'vanlig', 'rask'];
+export const FLOOD = {
+  rolig:  { delay: 30, rate: 0.10 },
+  vanlig: { delay: 18, rate: 0.16 },
+  rask:   { delay: 10, rate: 0.26 },
+  max: 14, depth: 1.1, grace: 2.5,                // 14 enheter = 70 cm: kurven (60 cm) går under, knaggrekka (135 cm) og trappa over
+};
+// Gyldig innstilling → { delay, rate, max, depth, grace } (rate ganges med `mult` fra admin-valget), ellers null (= av).
+export function floodCfg(mode, twist = {}, mult = 1) {
+  const m = FLOOD[mode]; if (!m || !FLOOD_MODES.includes(mode) || mode === 'av') return null;
+  return { delay: m.delay, rate: m.rate * (mult > 0 ? mult : 1), max: twist.flood?.max ?? FLOOD.max, depth: FLOOD.depth, grace: FLOOD.grace };
+}
+export function floodLevel(t, cfg) { return cfg ? Math.min(cfg.max, Math.max(0, t - cfg.delay) * cfg.rate) : 0; }
+export function floodPhase(t, cfg) { return !cfg ? 'av' : t < cfg.delay ? 'tørr' : floodLevel(t, cfg) >= cfg.max ? 'full' : 'stiger'; }
+// Ett steg: footY/floorY = føttene og gulvet, level = vannstand over gulvet, `under` = sekunder med hodet under vann så langt.
+// Returnerer { under, drowned, warn } der warn = hodet er under vann nå (varsel), drowned = fristen er ute.
+export function floodStep(under, dt, footY, floorY, level, cfg) {
+  if (!cfg) return { under: 0, drowned: false, warn: false };
+  const head = level - (footY - floorY) > cfg.depth;
+  const u = head ? under + dt : Math.max(0, under - dt * 2);
+  return { under: u, drowned: u >= cfg.grace, warn: head };
+}
+
 // Vri: lyset slås av. cfg = { on, off, blink } i sekunder. Gir 1 (lys) og 0 (mørkt), med blink før det slukkes og før det tennes.
 export const LIGHTS = { on: 15, off: 8, blink: 1.0 };
 export function lightsCfg(c = {}) { return { ...LIGHTS, ...c }; }

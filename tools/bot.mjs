@@ -45,6 +45,7 @@ function runPlan(L, levelPath, plan, mode) {
 export function plansOf(L) {
   const plans = [{ id: 'ruta', kind: 'ruta', route: L.route }];
   for (const sc of shortcutsOf(L)) plans.push({ id: `genvei:${sc.id}`, kind: 'genvei', sc, route: shortcutRoute(L, sc) });
+  for (const a of L.alts || []) plans.push({ id: `hard:${a.id}`, kind: 'hard', route: a.route });                       // R42: harde veier uten klatring
   for (const site of L.build?.sites || []) {
     if (!site.ref?.placed?.length || !site.ref.route) continue;
     const route = BW.refRoute(L, site), sim = BP.runSim({ site, placed: site.ref.placed, links: site.ref.links });

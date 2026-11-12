@@ -27,8 +27,8 @@ for (const id of ids) {
   assert.equal(r.review.length, 0);
   for (const p of r.plans) { kinds.add(p.kind); assert.ok(p.streng.ok && p.løs.ok, `${id}/${p.id}`); assert.ok(p.streng.trace.length > 10, 'sporet er tatt opp'); }
 }
-assert.deepEqual([...kinds].sort(), ['bygg', 'genvei', 'ruta'], 'boten går ruta, verktøy-genveier og byggesnarveier');
-assert.deepEqual(botSolve(path('bad2')).plans.map((p) => p.id), ['ruta', 'genvei:gele_bad']);
+assert.deepEqual([...kinds].sort(), ['bygg', 'genvei', 'hard', 'ruta'], 'boten går ruta, verktøy-genveier, byggesnarveier og harde veier uten klatring (R42)');
+assert.deepEqual(botSolve(path('bad2')).plans.map((p) => p.id), ['ruta', 'genvei:gele_bad', 'hard:trapp_bad']);
 assert.deepEqual(botSolve(path('bro')).plans.map((p) => p.id), ['ruta', 'bygg:bro1']);
 assert.ok(lv('kontroll').route.length >= 6, 'Kontroll har en ekte rute (trinn og plattformer), ikke bare gulv → mål');
 
