@@ -175,8 +175,10 @@ export function createAudio(ctx, opts = {}) {
   // ---- bevegelse ---------------------------------------------------------
   const windup = () => use('windup', () => { breath('in', 0.65, 0.13); burst({ type: 'lowpass', freq: 700, gain: 0.1, attack: 0.04, decay: 0.1 }); });             // tar sats: kort innpust + tøy
   const jump = () => use('jump', () => { breath('out', 0.85, 0.15); tone({ freq: 90, freq2: 55, gain: 0.3, decay: 0.08 }); burst({ freq: 900, q: 1, gain: 0.12, decay: 0.05 }); bump(0.12); });   // avspark + «hup»
-  const land = (kind, impact) => use('land', () => {
+  const land = (kind, impact, cls = 'soft') => use('land', () => {      // cls (R28): 'soft' | 'hard' | 'danger' gir egen lyd
     const i = clamp((impact - 3) / 22, 0, 1);
+    if (cls === 'hard') { tone({ freq: 48, freq2: 28, gain: 0.45, decay: 0.3 }); burst({ type: 'lowpass', freq: 320, gain: 0.3, decay: 0.28 }); breath('out', 0.9, 0.35, 0.08); }
+    if (cls === 'danger') { tone({ freq: 40, freq2: 22, gain: 0.6, decay: 0.5 }); burst({ type: 'lowpass', freq: 600, gain: 0.45, decay: 0.45 }); burst({ freq: 2200, q: 0.8, gain: 0.2, decay: 0.12 }); bump(0.5); }
     (STEP[kind] || STEP.wood)(0.45 + 0.8 * i, 0);
     tone({ freq: 62, freq2: 35, gain: 0.5 * (0.2 + i), decay: 0.18 });
     burst({ type: 'lowpass', freq: 400, gain: 0.3 * i, decay: 0.15 });
@@ -202,7 +204,7 @@ export function createAudio(ctx, opts = {}) {
     l.g.gain.setTargetAtTime(level, t, 0.06);
     if (freq) l.f.frequency.setTargetAtTime(freq, t, 0.08);
   }
-  const fall = (speed) => setLoop('wind', () => loopNoise(500, 0.7, 'bandpass'), clamp((speed - 5) / 18, 0, 1) * 0.22, 350 + speed * 45);
+  const fall = (speed, k = 1) => setLoop('wind', () => loopNoise(500, 0.7, 'bandpass'), clamp((speed - 5) / 18, 0, 1) * 0.22 * k, 350 + speed * 45 * (1 + 0.3 * (k - 1)));   // k (R28): faktor på vinden mot fallterskelen
   const skid = (level) => setLoop('skid', () => loopNoise(2400, 8, 'bandpass'), clamp(level, 0, 1) * 0.1, 2000 + level * 700);
   const scrape = (level) => setLoop('scrape', () => loopNoise(700, 1, 'lowpass'), clamp(level, 0, 1) * 0.25, 500 + level * 500);
 

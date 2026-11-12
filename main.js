@@ -37,6 +37,7 @@ import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
 import { createMarkerView } from './readable_view.js';
 import { createOverview } from './overview.js';
+import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, approach, landingEvent } from './landing.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
@@ -557,7 +558,9 @@ const blobTex = (() => { const c = document.createElement('canvas'); c.width = c
 const flatMat = (o) => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide, ...o });
 const blob = new THREE.Mesh(new THREE.CircleGeometry(1, 28), flatMat({ map: blobTex })); blob.rotation.x = -Math.PI / 2; blob.renderOrder = 2; blob.visible = false; scene.add(blob);
 const landRing = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 40), flatMat({ color: 0xffffff })); landRing.rotation.x = -Math.PI / 2; landRing.renderOrder = 3; landRing.visible = false; scene.add(landRing);
-const LAND_COL = { ok: 0xffffff, hard: 0xffa940, knock: 0xff4b3e };
+// R28: terskler for landingsklassene (uendelige i Klassisk/Snappy = alltid myk) og glatt synsfelt-økning i fall
+const landTh = () => [Number.isFinite(P.hardLand) ? P.hardLand : Infinity, Number.isFinite(P.knockV) ? P.knockV : Infinity];
+let landWarn = store.get('tlm.landwarn', true), landFovMax = store.get('tlm.landfov', 6), landWindMul = store.get('tlm.landwind', 1), landMinV = store.get('tlm.landmin', 9), landFovCur = 0;
 function updateBlob(now) {
   const p = player, off = () => { blob.visible = landRing.visible = false; };
   if (!blobOn || mode !== 'play' || ['climb', 'hang', 'swing', 'zip', 'mantle'].includes(p.state)) return off();
@@ -567,9 +570,9 @@ function updateBlob(now) {
   blob.visible = true; blob.position.set(p.x, s.top + 0.03, p.z); blob.scale.setScalar(r * 1.15); blob.material.opacity = 0.8 * (1 - Math.min(0.75, h / 16));
   const falling = !p.onGround && p.vy < -3 && h > 1.2;
   if (!falling) { landRing.visible = false; return; }
-  const v = impactSpeed(p.vy, h, P.gravity) * (s.soft ? P.softFactor : 1), cls = landingClass(v, P.hardLand, P.knockV);
-  landRing.visible = true; landRing.position.set(p.x, s.top + 0.05, p.z); landRing.material.color.setHex(LAND_COL[cls]);
-  landRing.scale.setScalar(0.55 + (cls === 'ok' ? 0.05 : 0.18) * Math.sin(now / 110)); landRing.material.opacity = cls === 'ok' ? 0.55 : 0.95;
+  const [hv, dv] = landTh(), v = impactAt(p.vy, h, P.gravity, s.soft, P.softFactor), cls = landClass(v, hv, dv), ms = markerStyle(cls, now);
+  landRing.visible = true; landRing.position.set(p.x, s.top + 0.05, p.z); landRing.material.color.setHex(ms.color);
+  landRing.scale.setScalar(ms.scale); landRing.material.opacity = ms.opacity;
 }
 
 // To-ledds bein-IK i sagittalplanet: gitt hoftehøyde og ankelens posisjon (z fremover, y opp) → hofte- og kneledd.
@@ -1595,6 +1598,10 @@ const SETTINGS = [
   fl('reactanim', 'spill', 'Figuren jubler (knuser maur) og rykker (maur støter)', true, () => reactAnim, kp('tlm.reactanim', (v) => { reactAnim = v; })),
   fl('idlewink', 'spill', 'Figuren snur seg og blunker når du står stille i 3 s', true, () => idleWink, kp('tlm.idlewink', (v) => { idleWink = v; })),
   fl('beacon', 'hjelp', 'Lyssøyle over målet', true, () => beaconOn, kp('tlm.beacon', (v) => { beaconOn = v; })),
+  fl('landwarn', 'hjelp', 'Fallvarsel: vind og synsfelt øker mot hard landing, egen lyd og tekst for myk, hard og farlig landing', true, () => landWarn, kp('tlm.landwarn', (v) => { landWarn = v; logEv('fallvarsel', v ? 'på' : 'av'); })),
+  rg('landfov', 'admin', 'Fallvarsel: synsfelt-økning mot fallterskelen (grader)', 6, 0, 14, 1, () => landFovMax, kp('tlm.landfov', (v) => { landFovMax = v; }), { digits: 0 }),
+  rg('landwind', 'admin', 'Fallvarsel: ekstra fallvind (faktor, 0 = som før)', 1, 0, 2, 0.1, () => landWindMul, kp('tlm.landwind', (v) => { landWindMul = v; }), { digits: 1 }),
+  rg('landmin', 'admin', 'Fallvarsel: minste landingsfart som gir lydtekst og logg', 9, 4, 16, 1, () => landMinV, kp('tlm.landmin', (v) => { landMinV = v; }), { digits: 0 }),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
   fl('minimap', 'hjelp', 'Minikart øverst til venstre (trykk på det for oversikt; av som standard med Enkel grafikk)', true, () => miniOn ?? !gfxLow, kp('tlm.minimap', (v) => { miniOn = v; logEv('minikart', v ? 'på' : 'av'); })),
   fl('markers', 'hjelp', 'Tydelige markører (grep ▲, hylle, glatt, pil i kanten)', true, () => markersOn, kp('tlm.markers', (v) => { markersOn = v; logEv('markør', v ? 'på' : 'av'); })),
@@ -2031,7 +2038,13 @@ function voiceFrame(pre) {
 function cueFrame(pre) {
   const p = player;
   voiceFrame(pre);
-  if (!pre.onGround && p.onGround && pre.vy < -9) cue(p.landImpact >= P.hardLand ? 'hard landing' : 'landing');
+  if (landWarn) {
+    const ev = landingEvent(pre.vy, p.landImpact, ...landTh(), landMinV);
+    if (ev && !pre.onGround && p.onGround) {
+      logEv('landing', `${ev.cls} ${ev.v}`); cue(ev.cue);
+      if (ev.cls === 'soft' && ev.v > landMinV + 2) setMood('happy', 0.6);
+    }
+  } else if (!pre.onGround && p.onGround && pre.vy < -9) cue(p.landImpact >= P.hardLand ? 'hard landing' : 'landing');
   if (p.landImpact >= P.hardLand && !pre.onGround && p.onGround) buzz(45);
   if ((pre.state !== 'hang' && p.state === 'hang') || (pre.state !== 'climb' && p.state === 'climb')) buzz(14);
   if (pre.state !== 'hang' && p.state === 'hang') cue('tak i kanten');
@@ -2051,7 +2064,7 @@ function audioFrame(pre, dt) {
   const p = player, sp = Math.hypot(p.vx, p.vz), surf = surfaceOf(p.groundBox);
   if (pre.windup === 0 && p.windup > 0) audio.windup();                                       // tar sats
   if (pre.onGround && !p.onGround && p.vy > 5) audio.jump();                                  // avspark
-  if (!pre.onGround && p.onGround && pre.vy < -3) audio.land(surf, -pre.vy);                  // landing
+  if (!pre.onGround && p.onGround && pre.vy < -3) audio.land(surf, -pre.vy, landWarn ? landClass(p.landImpact, ...landTh()) : 'soft');   // landing (R28: egen lyd per klasse)
   if (pre.state !== 'hang' && p.state === 'hang') audio.grab();
   if (pre.state !== 'climb' && p.state === 'climb') audio.grab();
   if (pre.state !== 'swing' && p.state === 'swing') audio.grab();
@@ -2060,7 +2073,7 @@ function audioFrame(pre, dt) {
   if (!pre.reach && p.reach > 0) audio.reach();
   if (!pre.carry && p.carry) audio.pickup();
   if (pre.carry && !p.carry) audio.drop(surf);
-  audio.fall(p.state === 'air' && p.vy < 0 ? -p.vy : 0);                                      // fallvind
+  { const fs = p.state === 'air' && p.vy < 0 ? -p.vy : 0; audio.fall(fs, landWarn ? windBoost(fs, landTh()[0], landWindMul) : 1); }                                      // fallvind
   audio.skid(p.skid ? Math.min(1, sp / P.speed) : 0);
   let moved = 0; (LEVEL.bodies || []).forEach((b, i) => { if (b.alive && !b.carried) moved += Math.abs(b.min[0] + b.min[2] - pre.bodies[i]); });
   audio.scrape(Math.min(1, moved / (dt * 3)));                                               // dytting
@@ -2251,9 +2264,11 @@ function render(now, dt) {
     introV.update(now); if (introHintT > 0) { introHintT -= dt; if (introHintT <= 0) introV.hideHint(); }
     if (!introSweep && introMarkOn && reachedFirst(introTgt, player) && mode === 'play') { introV.markerOn(false); introV.hideHint(); introHintT = 0; logEv('intro', 'første delmål nådd'); introTgt = null; }
   }
-  { const fp = viewFirst && mode === 'play', fov = fp ? 74 : viewMode === 'shoulder' ? fovSet + 8 : fovSet;
+  { const fs = landWarn && mode === 'play' && !player.onGround && player.state === 'air' && player.vy < 0 ? -player.vy : 0;
+    landFovCur = approach(landFovCur, fovTarget(fs, landTh()[0], landFovMax), dt);
+    const fp = viewFirst && mode === 'play', fov = (fp ? 74 : viewMode === 'shoulder' ? fovSet + 8 : fovSet) + landFovCur;
     for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
-    if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
+    if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   { const xh = $('xhair'); if (xh) xh.style.display = viewMode === 'shoulder' && xhairOn && mode === 'play' ? 'block' : 'none'; }
   if (dust) { dust.points.visible = dustOn && !lowOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
   variant.update(now / 1000, dt, player, mode);
