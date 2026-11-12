@@ -27,10 +27,6 @@ Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backl
 Variantrommene skal ha egne gåter som bruker verktøy: hårgelé, dopapirbånd, nål og tråd (taubane), stav, og løse ting man må flytte selv. Minst én verktøy-løsning per rom (4, 5, 6), lagt i grunnscene/variant-oppskriften (`tools/make_variants.mjs`), ikke som engangs-hack. `walk_route` må bevise at målet kan nås både med verktøyet og via en lengre/vanskeligere vei uten. Tekst og hint nevner knappene.
 Ferdig når: nivå 4–6 har hver minst én verktøy-gåte, `walk_route` er grønn for alle seks nivåer, og `npm test` dekker verktøyene.
 
-### [ ] R30 · Flere byggebrett og byggedeler
-Bygger på R24–R26: minst ett nytt byggebrett per romtype (barnerom og kjøkken, f.eks. vippe over avgrunn, bro til kjøleskap), og minst én ny del (vippe, fjær eller trinse) i `build_phys.js` med tester. Hvert brett har fortsatt en vanskelig alternativ vei uten bygging bevist med `walk_route`, og referansebygg som gir gyldig rute. Delmål (`goals`) kobles til byggingen.
-Ferdig når: nye brett og del kan bygges og prøves på iPhone, lagres/gjenopprettes, og alle tester og `walk_route` er grønne.
-
 ### [ ] R31 · Nytt rom: lekerom (nivå 7)
 Lekerom med legoknotter som tak/gulv, egen fiende, egen musikk, 2–4 delmål, en verktøy-gåte og et byggested. Lages som grunnscene med `tools/scene2level.mjs`, gås med `walk_route`, ny fortelling og intro (R22), og med i nivåvalg, «Neste nivå» og målskjerm. Avhenger av R29 og R30.
 Ferdig når: nivå 7 kan spilles fra startskjerm til mål på iPhone, `walk_route` og `npm test` er grønne, og versjon/CHANGELOG er oppdatert.
@@ -43,6 +39,7 @@ Ferdig når: boten løser Kontroll og alle seks nivåene med verktøy og klatrin
 Se BACKLOG «Teknisk». Må gjøres på PC; ikke i runneren.
 
 ## Ferdige punkter
+- [x] Flere byggebrett og byggedeler: vippe og kjøkkenbro, ny del vippe (R30, v1.23; må prøves på iPhone)
 - [x] Fallgrenser varslet: landingsmarkør, fallvind og tre landingsklasser (R28, v1.22; markør og vind må bekreftes på iPhone)
 - [x] Gulv og overflater: gulvdetaljer for målestokk og matter uten moiré (R13, v1.15; ekte FPS og flimmer i bevegelse må bekreftes på iPhone)
 - [x] Byggeskjerm C: bygget flyttes ut i verdenen, to brett (bro og trapp) og vanskelig alternativ vei (R26, v1.14)

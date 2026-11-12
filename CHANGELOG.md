@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.23** – R30: to nye byggebrett (vippe, kjøkkenbro) og ny byggedel vippe (`build_phys.js`), med alternativ vei og referansebygg.
 - **1.22** – R28: fallgrenser varslet (`landing.js`: landingsklasser myk/hard/farlig, landingsmarkør, fallvind og synsfelt; valg i ⚙).
 - **1.21** – Veikart: nye punkter R27–R33 (spilletest-runde, fallgrenser, verktøy-løsninger i nivå 4–6, flere byggebrett, lekerom, klatrende bot, send-til-Claude).
 - **1.20** – Backloggen ryddet etter veikartet (R13–R26): ferdige punkter krysset av, restpunkter oppdatert. Rekkefølgen i endringsloggen rettet.
