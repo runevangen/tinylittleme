@@ -14,13 +14,15 @@ export const PART_TYPES = {
   plank_l: { w: 8, h: 0.5, name: 'Lang planke', en: 'Long plank', color: '#c98a45' },
   block: { w: 1.5, h: 1.5, name: 'Kloss', en: 'Block', color: '#e0605a' },
   weight: { w: 1.5, h: 1.5, name: 'Vekt', en: 'Weight', color: '#6f7b8c' },   // R25: tung (motvekt)
+  seesaw: { w: 8, h: 0.5, name: 'Vippe', en: 'Seesaw', color: '#3fa89b', pivot: true },   // R30: planke som svinger rundt midten (festet i en liten støtte under midtpunktet)
 };
 export const LINK_KINDS = ['tape', 'hinge', 'rope'];                   // R25: tape = stiv, ledd = svinger, tau = bare i strekk
 export const LINK_MAX = 0.75;                                          // tape/ledd: delene må ligge inntil hverandre (avstand mellom kulene)
 export const PR = 0.25;                                                // R25: kule-radius i modellen (alle deler er bygd av kuler)
 export const layout = (t) => {                                         // R25: kulene en del er bygd av (lokale koordinater); fysikken bruker samme oppsett
   const ty = partType(t), pts = [];
-  if (ty.w >= ty.h * 2) { const n = Math.round(ty.w / (PR * 2)); for (let i = 0; i < n; i++) pts.push({ x: (i + 0.5) * ty.w / n - ty.w / 2, y: 0 }); }
+  if (ty.pivot) { const n = Math.round(ty.w / (PR * 2)); for (let i = 0; i <= n; i++) pts.push({ x: (i - n / 2) * (ty.w - PR * 2) / n, y: 0 }); }   // R30: odde antall kuler, så én kule sitter nøyaktig på dreiepunktet (midten)
+  else if (ty.w >= ty.h * 2) { const n = Math.round(ty.w / (PR * 2)); for (let i = 0; i < n; i++) pts.push({ x: (i + 0.5) * ty.w / n - ty.w / 2, y: 0 }); }
   else { const n = Math.max(1, Math.round(ty.w / (PR * 2))), m = Math.max(1, Math.round(ty.h / (PR * 2))); for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) pts.push({ x: (i + 0.5) * ty.w / n - ty.w / 2, y: (j + 0.5) * ty.h / m - ty.h / 2 }); }
   return pts;
 };

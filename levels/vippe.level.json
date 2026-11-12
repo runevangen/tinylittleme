@@ -1,0 +1,528 @@
+{
+ "name": "Vippa over gapet",
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -52,
+    -2,
+    -20
+   ],
+   "max": [
+    52,
+    0,
+    20
+   ],
+   "id": "gulv",
+   "color": 14268810,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -53,
+    0,
+    -20
+   ],
+   "max": [
+    -52,
+    48,
+    20
+   ],
+   "id": "vegg_v",
+   "color": 14674415,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    52,
+    0,
+    -20
+   ],
+   "max": [
+    53,
+    48,
+    20
+   ],
+   "id": "vegg_o",
+   "color": 14674415,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -52,
+    0,
+    -21
+   ],
+   "max": [
+    52,
+    48,
+    -20
+   ],
+   "id": "vegg_n",
+   "color": 14674415,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -52,
+    0,
+    20
+   ],
+   "max": [
+    52,
+    48,
+    21
+   ],
+   "id": "vegg_s",
+   "color": 14674415,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    -40,
+    0,
+    -12
+   ],
+   "max": [
+    -32,
+    2,
+    4
+   ],
+   "id": "a1",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -32,
+    0,
+    -12
+   ],
+   "max": [
+    -24,
+    4,
+    4
+   ],
+   "id": "a2",
+   "kind": "chest",
+   "color": 15906891,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -24,
+    0,
+    -12
+   ],
+   "max": [
+    -16,
+    6,
+    4
+   ],
+   "id": "a3",
+   "kind": "chest",
+   "color": 8499866,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -16,
+    0,
+    -12
+   ],
+   "max": [
+    0,
+    8,
+    4
+   ],
+   "id": "hylleA",
+   "kind": "chest",
+   "color": 7114431,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    6.5,
+    0,
+    -12
+   ],
+   "max": [
+    17,
+    10,
+    4
+   ],
+   "id": "hylleB",
+   "kind": "chest",
+   "color": 7114431,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    17,
+    0,
+    -12
+   ],
+   "max": [
+    25,
+    12.4,
+    4
+   ],
+   "id": "s1",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    25,
+    0,
+    -12
+   ],
+   "max": [
+    33,
+    14.8,
+    4
+   ],
+   "id": "s2",
+   "kind": "chest",
+   "color": 15906891,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    34,
+    0,
+    -8
+   ],
+   "max": [
+    39.6,
+    12,
+    0
+   ],
+   "id": "c3",
+   "kind": "chest",
+   "color": 11887990,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    40.6,
+    0,
+    -8
+   ],
+   "max": [
+    46,
+    8,
+    0
+   ],
+   "id": "c2",
+   "kind": "chest",
+   "color": 8499866,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    47,
+    0,
+    -8
+   ],
+   "max": [
+    52,
+    4,
+    0
+   ],
+   "id": "c1",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  }
+ ],
+ "movables": [],
+ "decor": [],
+ "hints": [],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    0,
+    26,
+    -19.95
+   ],
+   "size": [
+    24,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 0.95,
+  "sun": 2.6
+ },
+ "audio": {
+  "reverb": 0.14
+ },
+ "ants": [
+  {
+   "id": "maur_gulv",
+   "a": [
+    -2,
+    0,
+    12
+   ],
+   "b": [
+    20,
+    0,
+    12
+   ]
+  }
+ ],
+ "collectibles": [],
+ "build": {
+  "sites": [
+   {
+    "id": "vippe1",
+    "label": "Gapet foran den høye hylla (vippe)",
+    "x": 3.25,
+    "y": 8,
+    "z": -4,
+    "w": 20,
+    "h": 12,
+    "anchors": [
+     {
+      "u": 0,
+      "v": 1.25
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.25
+     },
+     {
+      "u0": 3.25,
+      "u1": 9.5,
+      "top": 2
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 2
+    },
+    "d": 4,
+    "drop": 8,
+    "ref": {
+     "placed": [
+      {
+       "id": "v1",
+       "type": "seesaw",
+       "u": 0,
+       "v": 1.25,
+       "rot": 0.2618
+      }
+     ],
+     "links": [],
+     "surfaces": [],
+     "route": [
+      "gulv",
+      "a1",
+      "a2",
+      "a3",
+      "hylleA",
+      "hylleB",
+      "s1",
+      "s2"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "v1",
+    "type": "seesaw",
+    "x": 8,
+    "y": 0.9,
+    "z": 14
+   },
+   {
+    "id": "v2",
+    "type": "plank_s",
+    "x": -36,
+    "y": 2.9,
+    "z": -4
+   },
+   {
+    "id": "v3",
+    "type": "block",
+    "x": -28,
+    "y": 0.9,
+    "z": 16
+   },
+   {
+    "id": "v4",
+    "type": "weight",
+    "x": -12,
+    "y": 0.9,
+    "z": 16
+   },
+   {
+    "id": "v5",
+    "type": "plank_s",
+    "x": -8,
+    "y": 8.9,
+    "z": -4
+   }
+  ]
+ },
+ "goals": [
+  {
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg en vippe over gapet (BYGG-knappen)",
+   "en": "Build a seesaw over the gap (BUILD button)",
+   "flag": "vippe1"
+  },
+  {
+   "id": "flagg",
+   "type": "reach",
+   "label": "Nå flagget øverst",
+   "en": "Reach the flag on top",
+   "gate": true,
+   "on": "s2",
+   "x0": 25,
+   "x1": 33,
+   "z0": -12,
+   "z1": 4,
+   "top": 14.8
+  }
+ ],
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -52,
+   "x1": 52,
+   "z0": -20,
+   "z1": 20,
+   "top": 0
+  },
+  {
+   "id": "c1",
+   "x0": 47,
+   "x1": 52,
+   "z0": -8,
+   "z1": 0,
+   "top": 4
+  },
+  {
+   "id": "c2",
+   "x0": 40.6,
+   "x1": 46,
+   "z0": -8,
+   "z1": 0,
+   "top": 8
+  },
+  {
+   "id": "c3",
+   "x0": 34,
+   "x1": 39.6,
+   "z0": -8,
+   "z1": 0,
+   "top": 12
+  },
+  {
+   "id": "s2",
+   "x0": 25,
+   "x1": 33,
+   "z0": -12,
+   "z1": 4,
+   "top": 14.8
+  }
+ ],
+ "start": [
+  -44,
+  0,
+  12
+ ],
+ "goal": [
+  29,
+  14.8,
+  -4
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -52,
+  "x1": 52,
+  "z0": -20,
+  "z1": 20,
+  "height": 48,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b98a",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#dfe9ef"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "note": "Byggebrett (R30, barnerom): et gap foran en hylle som er 10 cm høyere. Den smarte veien er å bygge en vippe (stiv planke som svinger på midten og legger seg skrått ned på begge hyllene); den harde veien er langt rundt og opp den smale trappa til høyre."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 11,
+  "reachable": 11
+ }
+}

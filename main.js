@@ -80,6 +80,8 @@ const LEVELS = [
   { id: 'kjokken2', n: 6, label: 'Nivå 6: Kjøkkenet, ryddet om', short: 'Nivå 6 · Kjøkken' },
   { id: 'bro', label: 'Bygg 1: Hyllebroen (bygg en bro, eller ta den harde veien)', short: 'Bygg · Bro' },
   { id: 'trapp', label: 'Bygg 2: Klossetrappa (bygg en trapp, eller ta den harde veien)', short: 'Bygg · Trapp' },
+  { id: 'vippe', label: 'Bygg 3: Vippa over gapet (barnerom: bygg en vippe, eller ta den harde veien)', short: 'Bygg · Vippe' },
+  { id: 'kjokkenbro', label: 'Bygg 4: Bro til kjøleskapet (kjøkken: bygg en bro, eller ta den harde veien)', short: 'Bygg · Kjøkkenbro' },
   { id: 'soverom', label: 'Ekstra: Soverom (håndlaget)', short: 'Soverom' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
   { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
@@ -153,7 +155,7 @@ let showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.s
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
-let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true);   // R24: byggeskjermen
+let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true), buildSeeHint = store.get('tlm.buildsee', true);   // R24: byggeskjermen
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let toysOn = store.get('tlm.toys', true);   // R18
 TOY.windT = store.get('tlm.toywind', TOY.windT);
@@ -1011,7 +1013,7 @@ const save = { pos: [...LEVEL.start] };
 const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
-const bld = createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
+const bld = createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
 
 // Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
 const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
@@ -1523,6 +1525,7 @@ const SETTINGS = [
   fl('introhint', 'hjelp', 'Nivåstart: hint-boble som nevner riktig knapp', true, () => introHintOn, kp('tlm.introhint', (v) => { introHintOn = v; if (!v) introV.hideHint(); })),
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
   fl('buildsnap', 'spill', 'Byggeskjerm: delene snapper til rutenett og festepunkter', true, () => buildSnap, kp('tlm.buildsnap', (v) => { buildSnap = v; })),
+  fl('buildsee', 'hjelp', 'Byggeskjerm: hint om vippa når du legger den ut (den har dreiepunkt på midten: legg den over gapet og rotér den skrått)', true, () => buildSeeHint, kp('tlm.buildsee', (v) => { buildSeeHint = v; })),
   fl('buildslow', 'spill', 'Byggeskjerm: PRØV i sakte film (lettere å se hvor det bøyer og brekker)', false, () => buildSlow, kp('tlm.buildslow', (v) => { buildSlow = v; })),
   rg('buildstrength', 'admin', 'Byggeskjerm: hvor sterkt bygget er (faktor på brekkgrensene, 1 = standard)', 1, 0.5, 2, 0.1, () => buildStrength, kp('tlm.buildstrength', (v) => { buildStrength = v; }), { digits: 1 }),
   fl('buildworld', 'admin', 'Byggeskjerm: et prøvd bygg står i verden som solid (figuren kan gå på det)', true, () => buildWorld, kp('tlm.buildworld', (v) => { buildWorld = v; })),

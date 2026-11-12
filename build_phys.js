@@ -17,10 +17,11 @@ export const MAX_T = 30;                // lengste prøve (s)
 export const MATERIAL = {
   plank_s: { m: 0.5, alpha: 0.12, snap: 0.9 },
   plank_l: { m: 0.5, alpha: 0.03, snap: 0.9 },
+  seesaw: { m: 0.5, alpha: 0.6, snap: 3 },   // R30: stiv planke (bøyer seg lite) med fast dreiepunkt i midten
   block: { m: 1, alpha: 1 },
   weight: { m: 5, alpha: 1 },
 };
-export const LINK_SNAP = { tape: 1000, hinge: 6000, rope: 1100 };   // kraft (masse·enhet/s²) som får koblingen til å ryke; en vekt henger med 1440, en kloss med 288, så tau og tape ryker av en hengende vekt, ledd holder
+export const LINK_SNAP = { tape: 1000, hinge: 6000, rope: 1100, pivot: 30000 };   // kraft (masse·enhet/s²) som får koblingen til å ryke; en vekt henger med 1440, en kloss med 288, så tau og tape ryker av en hengende vekt, ledd holder
 const FRICTION = 0.7, FIG_FRICTION = 0.1;
 
 const mat = (t) => MATERIAL[t] || MATERIAL.block;
@@ -70,12 +71,14 @@ export function createSim(def, opts = {}) {
 
   // koblinger
   const links = [];
-  for (const l of def.links || []) {
+  // R30: en vippe har et fast dreiepunkt i midten (ligger som et skjult ledd mot underlaget, så den svinger fritt men faller ikke)
+  const pivots = def.placed.filter((p) => partType(p.type).pivot).map((p) => ({ id: p.id + '_dreie', kind: 'pivot', a: p.id, b: null, la: { x: 0, y: 0 }, g: { u: p.u, v: p.v } }));
+  for (const l of [...(def.links || []), ...pivots]) {
     const ai = bodyOf.get(l.a); if (ai === undefined) continue;
     const bi = l.b ? bodyOf.get(l.b) : -1; if (l.b && bi === undefined) continue;
     const A = bodies[ai].part, wa = toWorldPt(A, l.la.x, l.la.y), B = l.b ? bodies[bi].part : null;
     const wb = l.b ? toWorldPt(B, l.lb.x, l.lb.y) : { u: l.g.u, v: l.g.v };
-    const link = { id: l.id, kind: l.kind, a: ai, b: bi, cons: [], broken: false, over: 0, snap: LINK_SNAP[l.kind] * strength, pa: -1, pb: -1 };
+    const link = { id: l.id, kind: l.kind, a: ai, b: bi, cons: [], broken: false, over: 0, snap: LINK_SNAP[l.kind] * strength, pa: -1, pb: -1, hidden: l.kind === 'pivot' };
     if (l.kind === 'rope') {
       link.pa = nearest(ai, wa.u, wa.v, 1)[0]; link.pb = bi >= 0 ? nearest(bi, wb.u, wb.v, 1)[0] : pin(wb.u, wb.v);
       const c = { a: link.pa, b: link.pb, rest: dist(link.pa, link.pb) + 0.3, k: 1, type: 'max', link }; cons.push(c); link.cons.push(c);
@@ -217,7 +220,7 @@ export function createSim(def, opts = {}) {
     });
     return {
       parts, figure: { u: F.x, v: F.y, r: FIG_R, vx: F.vx, vy: F.vy, supported },
-      links: links.map((l) => ({ id: l.id, kind: l.kind, broken: l.broken, stress: l.stress || 0, a: { u: P[l.pa].x, v: P[l.pa].y }, b: { u: P[l.pb].x, v: P[l.pb].y }, len: l.kind === 'rope' ? l.cons[0].rest : 0 })),
+      links: links.filter((l) => !l.hidden).map((l) => ({ id: l.id, kind: l.kind, broken: l.broken, stress: l.stress || 0, a: { u: P[l.pa].x, v: P[l.pa].y }, b: { u: P[l.pb].x, v: P[l.pb].y }, len: l.kind === 'rope' ? l.cons[0].rest : 0 })),
     };
   }
   const drain = () => events.splice(0, events.length);
