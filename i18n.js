@@ -5,11 +5,11 @@ export const LANGS = [['nb', 'Norsk'], ['en', 'English']];
 const DICT = {
   nb: {
     'var.water.up': 'Vannet stiger! Klatre opp på noe.', 'var.water.down': 'Vannet synker.', 'var.lights.off': 'Lyset gikk! Følg hjelmlykta.', 'var.lights.on': 'Lyset er på igjen.',
-    'btn.take': 'TA', 'btn.drop': 'SLIPP', 'btn.place': 'SETT PÅ', 'btn.throw': 'KAST', 'btn.smear': 'SMØR', 'btn.unroll': 'RULL UT', 'btn.thread': 'TRÆ',
+    'btn.take': 'TA', 'btn.drop': 'SLIPP', 'btn.place': 'SETT PÅ', 'btn.throw': 'KAST', 'btn.smear': 'SMØR', 'btn.unroll': 'RULL UT', 'btn.thread': 'TRÆ', 'btn.soak': 'SUG', 'btn.knot': 'KNYT', 'btn.press': 'PRESS', 'btn.hangrope': 'HENG TAU',
     'btn.tieTop': 'FEST OPPE', 'btn.tieEnd': 'FEST NEDE', 'btn.jump': 'HOPP', 'btn.grab': 'GREP',
     'hint.turn': 'Se mot {name} for å ta den ({look})', 'hint.look.touch': 'sveip', 'hint.look.pc': 'musa eller piltastene',
     'hint.take': 'ta {name}', 'hint.place': 'sett på {name}', 'hint.drop': 'slipp', 'hint.holdThrow': 'hold inne: kast', 'hint.dragThrow': 'hold inne og dra ned: sikt og kast',
-    'hint.releaseThrow': 'Slipp {btn}: KAST', 'hint.smear': 'smør gel på veggen', 'hint.unroll': 'rull ut et bånd over kanten',
+    'hint.releaseThrow': 'Slipp {btn}: KAST', 'hint.smear': 'smør gel på veggen', 'hint.soak': 'la svampen suge vann', 'hint.knot': 'knyt håndklærne til ett tau', 'hint.press': 'press haugen til et lavt trinn', 'hint.hangrope': 'heng tauet ned over kanten', 'hint.unroll': 'rull ut et bånd over kanten',
     'hint.needGel': 'Gå helt inntil en vegg, så smører {btn} gel', 'hint.needRoll': 'Gå helt ut til en kant, så ruller {btn} ut et bånd',
     'hint.thread': 'træ nålen med tråden', 'hint.needThread': 'Finn en trådsnelle å træ nålen med', 'hint.needNeedle': 'Finn en nål å træ tråden i',
     'hint.tieTop': 'fest tråden her (høyt oppe)', 'hint.tieEnd': 'Gå dit tråden skal ende (lavere), så fester {btn} den', 'hint.zipRide': '{btn}: heng deg i tråden og skli ned',
@@ -30,6 +30,7 @@ const DICT = {
     'goal.locked': 'Målet er låst. Fullfør først: {name}', 'goal.gate': 'åpner målet',
     'toast.threaded': 'Nålen er trædd. Gå til et høyt sted ved en kant og trykk {tieTop}.',
     'toast.tiedTop': 'Tråden er festet her. Gå dit den skal ende (lavere) og trykk {tieEnd}.',
+    'toast.soaked': 'Svampen suger vann: tung og myk. Land på den, eller bær den til en papirhaug og trykk {press}.', 'toast.knotted': 'Håndklærne er knyttet til ett langt tau. Gå ut til en kant og trykk {hang}.', 'toast.pressed': 'Papirhaugen er presset sammen: nå er den et lavt trinn. Hopp opp med {jump}.', 'toast.knotRope': 'Tauet henger ned. Klatre ned med {grab}, det revner ikke.',
     'toast.shortcutStep': 'Opp på trinnet! Hopp videre oppover trappa ({jump}).', 'toast.shortcutTop': 'Genvei! Du slapp den lange veien: hårgelé virket.',
     'toast.zipMade': 'Taubane! Gå tilbake til øvre ende og trykk {grab} for å henge deg i den.',
     'toast.needSpool': 'Gå bort til en trådsnelle og trykk {thread} for å træ nålen.', 'toast.needNeedle': 'Gå bort til en nål og trykk {thread} for å træ den.',
@@ -66,11 +67,11 @@ const DICT = {
   },
   en: {
     'var.water.up': 'The water is rising! Climb up onto something.', 'var.water.down': 'The water is going down.', 'var.lights.off': 'The lights went out! Follow your helmet lamp.', 'var.lights.on': 'The lights are back on.',
-    'btn.take': 'TAKE', 'btn.drop': 'DROP', 'btn.place': 'PLACE', 'btn.throw': 'THROW', 'btn.smear': 'SMEAR', 'btn.unroll': 'UNROLL', 'btn.thread': 'THREAD',
+    'btn.take': 'TAKE', 'btn.drop': 'DROP', 'btn.place': 'PLACE', 'btn.throw': 'THROW', 'btn.smear': 'SMEAR', 'btn.unroll': 'UNROLL', 'btn.thread': 'THREAD', 'btn.soak': 'SOAK', 'btn.knot': 'KNOT', 'btn.press': 'PRESS', 'btn.hangrope': 'HANG ROPE',
     'btn.tieTop': 'TIE UP', 'btn.tieEnd': 'TIE DOWN', 'btn.jump': 'JUMP', 'btn.grab': 'GRAB',
     'hint.turn': 'Look at {name} to pick it up ({look})', 'hint.look.touch': 'swipe', 'hint.look.pc': 'mouse or arrow keys',
     'hint.take': 'take {name}', 'hint.place': 'put on {name}', 'hint.drop': 'drop', 'hint.holdThrow': 'hold: throw', 'hint.dragThrow': 'hold and drag down to aim and throw',
-    'hint.releaseThrow': 'Release {btn}: THROW', 'hint.smear': 'smear gel on the wall', 'hint.unroll': 'unroll a strip over the edge',
+    'hint.releaseThrow': 'Release {btn}: THROW', 'hint.smear': 'smear gel on the wall', 'hint.soak': 'let the sponge soak up water', 'hint.knot': 'knot the towels into one rope', 'hint.press': 'squash the pile into a low step', 'hint.hangrope': 'hang the rope over the edge', 'hint.unroll': 'unroll a strip over the edge',
     'hint.needGel': 'Walk right up to a wall, then {btn} smears gel', 'hint.needRoll': 'Walk to an edge, then {btn} unrolls a strip',
     'hint.thread': 'thread the needle', 'hint.needThread': 'Find a spool of thread to thread the needle', 'hint.needNeedle': 'Find a needle to thread',
     'hint.tieTop': 'tie the thread here (up high)', 'hint.tieEnd': 'Walk to where the line should end (lower), then {btn} ties it', 'hint.zipRide': '{btn}: hang on the line and slide down',
@@ -91,6 +92,7 @@ const DICT = {
     'goal.locked': 'The goal is locked. First finish: {name}', 'goal.gate': 'opens the goal',
     'toast.threaded': 'The needle is threaded. Go to a high spot at an edge and press {tieTop}.',
     'toast.tiedTop': 'The thread is tied here. Go where it should end (lower) and press {tieEnd}.',
+    'toast.soaked': 'The sponge soaks up water: heavy and soft. Land on it, or carry it to a paper pile and press {press}.', 'toast.knotted': 'The towels are knotted into one long rope. Walk to an edge and press {hang}.', 'toast.pressed': 'The paper pile is squashed into a low step. Jump up with {jump}.', 'toast.knotRope': 'The rope hangs down. Climb down with {grab}, it will not tear.',
     'toast.shortcutStep': 'Up on the step! Keep jumping up the stairs ({jump}).', 'toast.shortcutTop': 'Shortcut! You skipped the long way: the hair gel worked.',
     'toast.zipMade': 'Zip line! Go back to the top end and press {grab} to hang on it.',
     'toast.needSpool': 'Walk to a spool of thread and press {thread} to thread the needle.', 'toast.needNeedle': 'Walk to a needle and press {thread} to thread it.',
@@ -130,7 +132,7 @@ const DICT = {
 // Visningsnavn per kind (ting i brettet). Ukjent kind: kallerens reserve (id).
 export const NAMES = {
   key: ['Nøkkel', 'Key'], needle: ['Nål', 'Needle'], spool: ['Trådsnelle', 'Spool of thread'], gel_bottle: ['Hårgelé', 'Hair gel'], gel: ['Gelé', 'Gel'], roll: ['Dopapirrull', 'Toilet roll'],
-  paper_strip: ['Papirbånd', 'Paper strip'], paper_pile: ['Dopapirhaug', 'Paper pile'], qtip: ['Ørepinne', 'Cotton swab'], sponge: ['Svamp', 'Sponge'],
+  paper_strip: ['Papirbånd', 'Paper strip'], paper_pile: ['Dopapirhaug', 'Paper pile'], qtip: ['Ørepinne', 'Cotton swab'], sponge: ['Svamp', 'Sponge'], water_bowl: ['Vannskål', 'Water bowl'],
   towel: ['Håndkle', 'Towel'], towel_hang: ['Håndkle', 'Towel'], towel_hang_: ['Håndkle', 'Towel'], cup: ['Tannglass', 'Tooth glass'], toothbrush: ['Tannbørste', 'Toothbrush'],
   tube: ['Tannkrem', 'Toothpaste'], bottle: ['Flaske', 'Bottle'], shaver: ['Barbermaskin', 'Shaver'], basket: ['Vaskekurv', 'Laundry basket'], hamper: ['Kurv', 'Basket'], toyblock: ['Kloss', 'Block'], letterblock: ['Bokstavkloss', 'Letter block'], legoblock: ['Legokloss', 'Brick'], toycar: ['Leketøysbil', 'Toy car'], tennisball: ['Tennisball', 'Tennis ball'], rockinghorse: ['Vippehest', 'Rocking horse'], windup: ['Wind-up-robot', 'Wind-up robot'], jackbox: ['Sprettboks', 'Jack-in-the-box'], bag: ['Toalettveske', 'Toiletry bag'],
   mat: ['Dørmatte', 'Door mat'], book: ['Bok', 'Book'], vanity: ['Servantskap', 'Vanity'], vanity_top: ['Servant', 'Sink top'], tub: ['Badekar', 'Bathtub'],

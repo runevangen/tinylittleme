@@ -3,6 +3,7 @@
 // Verden: akse-justerte bokser. x/z er gulvplanet, y er opp. Enhet ≈ «spillerhøyde» (1.0).
 
 import { ROUND_KINDS } from './toys_live.js';   // R18: kuleformede leker (ball, tennisball)
+import { COMBO, findCombo, comboHint, applyCombo, resetCombo } from './combos.js';   // R41: kombinasjoner (svamp + vann, håndkle + håndkle, papirhaug)
 
 // Felles bevegelsesvekt: klassisk og spenning er «umiddelbare» (som før); prince har treghet, oppbygging og tidsbruk.
 const SNAPPY = { stepUp: 0, faceCam: false, gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4, hardLand: Infinity, knockV: Infinity };
@@ -176,7 +177,7 @@ export function initBodies(L) {
   L.bodies = []; L.events = []; L.made = []; L.zips = [];
   for (const m of L.movables || []) {
     const b = {
-      id: m.id, kind: m.kind, pole: m.pole || 0, tool: m.tool || '', tool0: m.tool || '', thread: m.tool === 'spool', soft: !!m.soft, vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
+      id: m.id, kind: m.kind, pole: m.pole || 0, tool: m.tool || '', tool0: m.tool || '', thread: m.tool === 'spool', soft: !!m.soft, weight0: m.weight || 'medium', vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
       round: ROUND_KINDS.includes(m.kind) || !!m.round, min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
       vy: 0, alive: true, carried: false, home: { min: [...m.min], max: [...m.max] },
     };
@@ -189,8 +190,9 @@ export function resetBodies(L, p) {
   if (p?.carry) { p.carry = null; }
   for (const m of L.made || []) { const i = L.boxes.indexOf(m); if (i >= 0) L.boxes.splice(i, 1); }
   L.made = []; L.zips = [];
+  for (const b of L.boxes || []) if (b.pressed) resetCombo(b);   // R41: presset papirhaug
   for (const b of L.bodies || []) {
-    b.tool = b.tool0; b.threaded = false; b.zipA = null;
+    b.tool = b.tool0; b.threaded = false; b.zipA = null; resetCombo(b);
     b.min = [...b.home.min]; b.max = [...b.home.max]; b.vy = 0; b.vx = b.vz = 0; b.carried = false;
     if (!b.alive) { b.alive = true; L.boxes.push(b); }
   }
@@ -338,7 +340,7 @@ function carryControl(p, inp, dt, L) {
   const c = p.charge, ak = p.aimK || 0; p.charge = 0; p.aimK = 0;
   if (c <= 0) return;
   // v0.97: et litt for langt (eller litt dratt) trykk på «Rull ut»/«Smør» skal fortsatt bruke verktøyet, ikke kaste det. Bare et tydelig kast (lenge holdt eller langt dratt) kaster
-  const hint = p.carry?.tool ? toolHint(p, L) : null, toolTap = !!hint && !hint.startsWith('need') && ak < 0.35 && c < 0.9;
+  const hint = p.carry ? toolHint(p, L) : null, toolTap = !!hint && !hint.startsWith('need') && ak < 0.35 && c < 0.9;
   if (c < P.throwMin || toolTap) {
     const r = useTool(p, L);
     if (r === true) return;
@@ -350,7 +352,8 @@ function carryControl(p, inp, dt, L) {
 
 // Hva trykk på TA gjør nå for et verktøy du bærer (til hint-linjen): 'gel' | 'roll' (kan brukes her), 'again' (allerede brukt her: neste trykk slipper), 'need-gel' | 'need-roll' (ikke på riktig sted), eller null (ikke et verktøy)
 export function toolHint(p, L) {
-  const c = p.carry; if (!c?.tool) return null;
+  const c = p.carry; if (!c) return null;
+  if (!c.tool) return comboHint(p, L);                          // R41: ingen verktøy: kanskje en kombinasjon (wet | knot | press)
   const made = L.made || [];
   if (!p.onGround) return 'need-' + c.tool;
   if (c.tool === 'gel') { const f = faceAhead(p, L, HW + 0.9); if (!f) return 'need-gel'; return made.some((m) => m.owner === c.id && m.parent === f.b) ? 'again' : 'gel'; }
@@ -383,7 +386,8 @@ function faceAhead(p, L, reach) {                              // nærmeste lodd
 }
 function makeBox(L, spec) { L.made.push(spec); L.boxes.push(spec); return spec; }
 function useTool(p, L) {
-  const c = p.carry; if (!c?.tool || !p.onGround) return false;
+  const c = p.carry; if (!c || !p.onGround) return false;
+  if (!c.tool) { const f = findCombo(p, L); if (!f) return false; applyCombo(f, p, L, { removeBody, dropCarry }); return true; }   // R41
   L.made = L.made || [];
   if (c.tool === 'gel') {
     const f = faceAhead(p, L, HW + 0.9); if (!f) return false;
@@ -415,14 +419,15 @@ function useTool(p, L) {
       if (b.max[1] < top - 0.5 && b.max[1] > floorY) floorY = b.max[1];
     }
     if (floorY === -Infinity) floorY = 0;
-    const y0 = Math.max(floorY, top - P.stripMax); if (top - y0 < 2) return false;
+    const y0 = Math.max(floorY, top - P.stripMax * (c.stripMul || 1)); if (top - y0 < 2) return false;
     for (const m of L.made) if (m.owner === c.id) { const i = L.boxes.indexOf(m); if (i >= 0) L.boxes.splice(i, 1); }
     L.made = L.made.filter((m) => m.owner !== c.id);
     const t = 0.12, lo = [0, y0, 0], hi = [0, top, 0];
     lo[o] = cen - P.stripW / 2; hi[o] = cen + P.stripW / 2;
     if (sgn > 0) { lo[ax] = plane; hi[ax] = plane + t; } else { lo[ax] = plane - t; hi[ax] = plane; }
-    makeBox(L, { type: 'paper', kind: 'paper_strip', id: `bånd_${c.id}`, owner: c.id, material: 'paper', color: 0xfbfaf6, min: lo, max: hi, grip: true, gripDrain: -0.8, tear: P.stripTear, parent: gb });
-    L.events.push({ type: 'use', tool: 'roll' });
+    const kn = !!c.knotted;           // R41: knyttet håndkle-tau: stoff, lenger, revner ikke
+    makeBox(L, { type: kn ? 'fabric' : 'paper', kind: kn ? 'towel_hang' : 'paper_strip', id: `bånd_${c.id}`, owner: c.id, material: kn ? 'fabric' : 'paper', color: kn ? (c.color ?? 0x5a8fb8) : 0xfbfaf6, min: lo, max: hi, grip: true, gripDrain: -0.8, ...(kn ? {} : { tear: P.stripTear }), parent: gb });
+    L.events.push({ type: 'use', tool: kn ? 'knotrope' : 'roll' });
     return true;
   }
   if (c.tool === 'needle') {                                     // nål + trådsnelle: træ nålen, snella er brukt opp
@@ -588,6 +593,8 @@ export function stepLength(speed) {
   return Math.max(P.stepMin, speed / (P.cadence0 + P.cadenceK * speed));
 }
 
+const carryK = (p) => (p.carry ? P.carrySpeed * (p.carry.wet ? COMBO.wetSlow : 1) : 1);   // R41: våt svamp er tung
+
 // Avsparkfart: vanlig hopp, eller stavhopp når du løper med en stav (farten gjøres om til høyde).
 function launchVy(p) {
   const b = p.carry, sp = Math.max(Math.hypot(p.vx, p.vz), p.jumpSp || 0);   // farten du hadde før forberedelsen (hurken bremser)
@@ -595,7 +602,7 @@ function launchVy(p) {
   if (b?.pole && sp >= P.vaultMin * P.speed) {
     const hv = P.vaultH * (b.pole / 1.5) * (0.45 + 0.55 * Math.min(1, sp / P.speed));
     const vy = Math.sqrt(2 * -P.gravity * hv);
-    if (vy > P.jump) { p.vaulting = true; return vy; }
+    if (vy > P.jump) { p.vaulting = true; p.vaultV0 = vy; return vy; }
   }
   return P.jump;
 }
@@ -769,7 +776,7 @@ function sub(p, inp, dt, L) {
       const fa2 = fa + Math.max(-rate * dt, Math.min(rate * dt, diff));
       p.fx = Math.sin(fa2); p.fz = Math.cos(fa2);
       const aligned = Math.abs(diff) < 0.9 || Math.abs(s) > 1.2;   // snu først hvis du står stille og input er langt fra blikket
-      const speedCap = P.speed * (p.carry ? P.carrySpeed : 1) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
+      const speedCap = P.speed * carryK(p) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
       target = aligned ? speedCap * Math.min(1, wl) * Math.max(0, Math.cos(diff)) : 0;
     }
     p.skid = hasIn && s > 1.8 && Math.abs(diff) > 1.8;
@@ -797,7 +804,7 @@ function sub(p, inp, dt, L) {
       else if (p.groundBox?.slick) a = P.slickAccel;
       else if (wl < 0.1) a = P.decel;
       else a = rev ? P.turnDecel : P.accel;
-      let sp = P.speed * (p.carry ? P.carrySpeed : 1) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
+      let sp = P.speed * carryK(p) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
       if (P.gaitMode && !p.onGround) sp = Math.max(P.speed * P.jumpBoost, speed0);   // løpehopp: behold farten i lufta
       const tx = wx * sp, tz = wz * sp, dx = tx - p.vx, dz = tz - p.vz, dl = Math.hypot(dx, dz), m = a * dt;
       if (dl <= m) { p.vx = tx; p.vz = tz; } else { p.vx += dx / dl * m; p.vz += dz / dl * m; }   // som vektor: gir buer, ikke akse-hopp
@@ -854,7 +861,7 @@ function sub(p, inp, dt, L) {
     if (spd < 0.01 && wl < 0.1) p.gait = Math.round(p.gait / Math.PI) * Math.PI % (Math.PI * 2);
   }
   if (!wasGrounded && p.onGround && vyBefore < -3) {
-    const eff = -vyBefore * (p.groundBox?.soft ? P.softFactor : 1);          // myke flater tar av for fallet
+    const eff = -vyBefore * (p.groundBox?.soft ? (p.groundBox.softK ?? P.softFactor) : 1);          // myke flater tar av for fallet
     p.landImpact = eff; p.landT = 0; p.vaulting = false;
     if (P.landK > 0 && eff > P.landMin) p.recover = Math.min(P.landMax, (eff - P.landMin) * P.landK);
     if (p.safeT > 0) { /* R34: uskadd etter kast fra sprettboks */ }

@@ -63,3 +63,6 @@ Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»
 - **Forvarm alle shadere under oppstart** (admin, `tlm.shaderwarm`, standard på): etter `renderer.compile` tegnes ett helt bilde med alt «synlig» (`shaderwarm.js`), så også variantene i gjennomsiktighetspasset (glass, målflasken) er kompilert før spillet begynner. Av = bare `renderer.compile` (gammel oppførsel).
 - Lav profil endrer ikke lysenes antall, `castShadow` eller skyggetype (alt dette inngår i shader-nøkkelen og ga en full omkompilering midt i spillet): fyll-/kantlys får intensitet 0, solskyggen får bittelite kart og et kamera som ikke ser noe.
 - Hendelsen `shadere` logges hvis antallet programmer øker etter forvarmingen (med det som skjedde like før); rapporten viser «shadere N ved start, M nå». `node tools/live_shaders.cjs` (Playwright) krever uendret antall gjennom en økt.
+
+## Kombinasjoner og stavhopp (R41)
+⚙ → Spill: «Kombinasjoner» (`tlm.combo`, standard på: svamp + vann, håndkle + håndkle, tung ting + papirhaug) og «Stavhopp: egen animasjon» (`tlm.vaultanim`, standard på). Admin: våt svamps landingsandel (`tlm.combowet`, 0,15), presset haugs resthøyde (`tlm.combopress`, 0,5), knyttet taus lengde (`tlm.comboknot`, 1,8). Logges som `kombo` (`<regel>: <ting> + <ting>`, «tau hengt ned», «stavhopp», «kombinasjoner på/av»). Se `docs/KLATREHJELP.md`.

@@ -36,6 +36,8 @@ import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4�
 import { createVoice } from './voice.js';
 import { createShortcutWatch, resetShortcutWatch, stepShortcutWatch } from './shortcut.js';   // R29: verktøy-genveier (hårgelé-trapper i nivå 4–6)
 import { createToyLife, resetToys, stepToys, TOY, TOY_SOUND, TOY_CUE } from './toys_live.js';
+import { COMBO } from './combos.js';   // R41: kombinasjoner (svamp + vann, håndkle + håndkle, papirhaug)
+import { vaultPose, isVaulting } from './vault_anim.js';   // R41: stavhopp-animasjon
 import { KICK, tryKick, tickKick } from './toy_kick.js';   // R34: sprettboksen kaster figuren   // R18: leker som lever og reagerer
 import { animateToy } from './toys_view.js';
 import { makeT, LANGS } from './i18n.js';
@@ -169,6 +171,7 @@ let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buil
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let toysOn = store.get('tlm.toys', true);   // R18
 TOY.windT = store.get('tlm.toywind', TOY.windT);
+COMBO.on = store.get('tlm.combo', COMBO.on); COMBO.vaultAnim = store.get('tlm.vaultanim', COMBO.vaultAnim); COMBO.wetSoft = store.get('tlm.combowet', COMBO.wetSoft); COMBO.pressTo = store.get('tlm.combopress', COMBO.pressTo); COMBO.knotMul = store.get('tlm.comboknot', COMBO.knotMul);   // R41
 KICK.on = store.get('tlm.kick', KICK.on); KICK.speed = store.get('tlm.kickspeed', KICK.speed); KICK.up = store.get('tlm.kickup', KICK.up); KICK.safeT = store.get('tlm.kicksafe', KICK.safeT);   // R34
 let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
@@ -400,6 +403,7 @@ const drawn = new Set(); let hasToilet = false;
   }
 }
 const csHolder = new THREE.Group(); scene.add(csHolder);   // kontaktskygger samles her så de kan slås sammen til noen få tegnekall (R15)
+const pressViews = [];   // R41: papirhauger som kan presses sammen (tegnes om i høyden)
 let bookN = 0; const col0 = (b) => b.color ?? 0xcccccc;
 for (const b of LEVEL.boxes) {
   if (drawn.has(b)) continue;
@@ -407,6 +411,7 @@ for (const b of LEVEL.boxes) {
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
   const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material }) : null;
   if (b.grip) gripMark(b);
+  if (shaped && b.compress) { const w = new THREE.Group(); w.position.set(cx, cy, cz); w.add(shaped); scene.add(w); regFade(shaped, [b]); pressViews.push({ b, mesh: w, h0: sy }); continue; }   // R41: egen innpakning som skaleres i høyden (kan ikke slås sammen med resten)
   if (shaped) { shaped.position.set(cx, cy, cz); scene.add(shaped); regFade(shaped, [b]); continue; }
   if (b.type !== 'floor' && b.type !== 'wall' && !b.dyn && Math.min(sx, sz) > 0.4 && LEVEL.boxes.some((c) => c !== b && !c.dyn && Math.abs(c.max[1] - b.min[1]) < 0.05 && c.min[0] < b.max[0] && c.max[0] > b.min[0] && c.min[2] < b.max[2] && c.max[2] > b.min[2])) {
     const cs = look.contactShadow(sx, sz, Math.max(0.3, Math.min(0.9, Math.min(sx, sz) * 0.35))); cs.position.set(cx, b.min[1] + 0.02, cz); csHolder.add(cs);   // myk mørk kant der tingen står
@@ -627,7 +632,10 @@ const react = createReact();      // reaksjoner på maur (polish.js): jubel ved 
 const footSm = { L: 0, R: 0 };   // glattet fothøyde over trinn/kanter
 const DIP_MAX = 0.17;   // hvor mye hoftene kan synke i hurk (landing/forberedelse)
 
+let vaultNow = null;   // R41: stavhopp-posen akkurat nå (eller null)
 function poseHero(p, now, dt, mode) {
+  vaultNow = isVaulting(p, COMBO.vaultAnim) && mode === 'play' ? vaultPose(p) : null;
+  if (vaultNow && !hero.vaultLogged) { hero.vaultLogged = true; logEv('kombo', 'stavhopp'); } else if (!vaultNow) hero.vaultLogged = false;
   const c = hero.cur, sp = Math.hypot(p.vx, p.vz), sec = now / 1000;
   const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0, lzL: 0, lzR: 0, roll: 0, sway: 0, fgL: 0.35, fgR: 0.35 };
   let bob = 0;
@@ -726,6 +734,8 @@ function poseHero(p, now, dt, mode) {
     const rt = clampN((hero.reachT || 0) / 0.25, 0, 1), fl = Math.sin(sec * 15), wv = Math.sin(sec * 11);   // armene strekker seg mer og mer, bena sparker, kroppen vrir seg mot grepet
     Object.assign(T, { aL: -2.55 - 0.3 * rt + 0.1 * wv, aR: -2.8 - 0.35 * rt - 0.1 * wv, eL: -0.3 + 0.25 * rt, eR: -0.25 + 0.2 * rt, hL: -0.6 + 0.35 * fl, hR: 0.3 - 0.35 * fl, kL: 0.9 + 0.45 * Math.max(0, fl), kR: 0.5 + 0.45 * Math.max(0, -fl),
       lean: 0.12 + 0.12 * rt, chest: 0.1 + 0.14 * rt, hp: -0.2, twist: 0.12 * wv * rt });
+  } else if (vaultNow) {                                          // R41: stavhopp: plant, sving, topp, slipp (vault_anim.js)
+    Object.assign(T, vaultNow.T);
   } else if (!p.onGround) {
     if (p.sliding) {
       Object.assign(T, { aL: -2.8, aR: -2.8, eL: -0.3, eR: -0.3, hL: -0.2, hR: 0.1, kL: 0.6, kR: 0.7, lean: 0.05, hp: -0.15 });
@@ -1553,6 +1563,11 @@ const SETTINGS = [
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, wind-up og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
   fl('replies', 'test', 'Vis svar og tellere fra Claude (⚑-boksen)', true, () => repliesOn, kp('tlm.replies', (v) => { repliesOn = v; if (v) refreshInbox(false); else renderInbox(); })),
+  fl('combo', 'spill', 'Kombinasjoner: svamp + vann, håndkle + håndkle, tung ting + papirhaug (TA ved siden av)', true, () => COMBO.on, kp('tlm.combo', (v) => { COMBO.on = v; logEv('kombo', v ? 'kombinasjoner på' : 'kombinasjoner av'); })),
+  fl('vaultanim', 'spill', 'Stavhopp: egen animasjon (figuren svinger over staven)', true, () => COMBO.vaultAnim, kp('tlm.vaultanim', (v) => { COMBO.vaultAnim = v; logEv('kombo', v ? 'stavhopp-animasjon på' : 'stavhopp-animasjon av'); })),
+  rg('combowet', 'admin', 'Våt svamp: andel av landingsfarten den tar imot (lavere = mykere)', 0.15, 0.02, 0.35, 0.01, () => COMBO.wetSoft, kp('tlm.combowet', (v) => { COMBO.wetSoft = v; }), { digits: 2 }),
+  rg('combopress', 'admin', 'Presset papirhaug: andel av høyden som blir igjen', 0.5, 0.2, 0.8, 0.05, () => COMBO.pressTo, kp('tlm.combopress', (v) => { COMBO.pressTo = v; }), { digits: 2 }),
+  rg('comboknot', 'admin', 'Knyttet håndkle-tau: lengde i forhold til dopapirbånd', 1.8, 1, 3, 0.1, () => COMBO.knotMul, kp('tlm.comboknot', (v) => { COMBO.knotMul = v; }), { digits: 1 }),
   fl('kick', 'spill', 'Sprettboksen kaster figuren bort når den popper under ham', true, () => KICK.on, kp('tlm.kick', (v) => { KICK.on = v; logEv('leke', v ? 'sprettbokskast på' : 'sprettbokskast av'); })),
   rg('kickspeed', 'admin', 'Sprettboks-kast: fart bort fra boksen', 5.5, 0, 9, 0.5, () => KICK.speed, kp('tlm.kickspeed', (v) => { KICK.speed = v; }), { digits: 1 }),
   rg('kickup', 'admin', 'Sprettboks-kast: fart opp', 11, 4, 16, 0.5, () => KICK.up, kp('tlm.kickup', (v) => { KICK.up = v; }), { digits: 1 }),
@@ -2024,6 +2039,7 @@ function update(dt) {
   if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); lightFlag('sjekkpunkt'); saveProgress(); logEv('sjekkpunkt'); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
   if (player.y < LEVEL.deathY) { failAt('falt'); resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
+    if (ev.type === 'combo') { comboEvent(ev); continue; }
     logEv(ev.type, ev.id || ev.tool || ev.why || '');
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(lostReturnOn ? `${ev.id} forsvant – kommer tilbake om litt` : `${ev.id} forsvant`); if (lostReturnOn) lostQueue.push({ id: ev.id, t: 3 }); }
@@ -2033,6 +2049,7 @@ function update(dt) {
       if (ev.tool === 'thread') { toast(T('toast.threaded', { tieTop: T('btn.tieTop') })); say('thread'); }
       else if (ev.tool === 'zipA') toast(T('toast.tiedTop', { tieEnd: T('btn.tieEnd') }));
       else if (ev.tool === 'zip') { toast(T('toast.zipMade', { grab: GREP })); say('zip'); }
+      else if (ev.tool === 'knotrope') { toast(T('toast.knotRope', { grab: GREP })); say('knot'); logEv('kombo', 'tau hengt ned'); }
       else say(ev.tool === 'gel' ? 'gel' : 'roll');
     }
     else if (ev.type === 'toolhint') toast(ev.tool === 'needle' ? T('toast.needSpool', { thread: T('btn.thread') }) : ev.tool === 'spool' ? T('toast.needNeedle', { thread: T('btn.thread') }) : ev.tool === 'zip' ? ({ 'zip-flat': T('toast.zipFlat'), 'zip-far': T('toast.zipFar'), 'zip-blocked': T('toast.zipBlocked') }[ev.why] || T('toast.zipStand', { tieTop: T('btn.tieTop') })) : ev.tool === 'gel' ? T('toast.needGel', { smear: T('btn.smear'), drop: T('btn.drop') }) : T('toast.needRoll', { unroll: T('btn.unroll'), drop: T('btn.drop') }));
@@ -2247,13 +2264,16 @@ function render(now, dt) {
     const pz = B.prize; bossMesh.prize.visible = on && !!pz && !pz.taken; if (bossMesh.prize.visible) { bossMesh.prize.position.set(pz.x, pz.y + 0.35 + Math.sin(clock * 3) * 0.12, pz.z); bossMesh.prize.rotation.y = clock * 1.8; }
     bossBar.update(on ? B : null, mode === 'play' && !won && (B.mode !== 'patrol' || Math.hypot(player.x - B.x, player.z - B.z) < 22));
   }
+  for (const v of pressViews) { const h = v.b.max[1] - v.b.min[1]; v.mesh.scale.y = h / v.h0; v.mesh.position.y = v.b.min[1] + h / 2; }   // R41
   for (const { b, mesh, size } of bodyMeshes) {
     mesh.visible = b.alive;
     if (b.kind === 'needle' && mesh.userData.thread && mesh.userData.on !== !!b.threaded) { mesh.userData.on = !!b.threaded; mesh.userData.thread(!!b.threaded); }
     const bx = b.max[0] - b.min[0], by = b.max[1] - b.min[1], bz = b.max[2] - b.min[2];
     mesh.position.set(b.min[0] + bx / 2, b.min[1] + by / 2, b.min[2] + bz / 2);
     animateToy(mesh, b.kind, toyLife.toys.get(b.id), clock);          // R18
-    if (b.pole) mesh.rotation.y = b.carried ? Math.atan2(-player.fz, player.fx) : (bz > bx ? Math.PI / 2 : 0);   // staven peker fremover når du bærer den
+    if (b.pole) { mesh.rotation.y = b.carried ? Math.atan2(-player.fz, player.fx) : (bz > bx ? Math.PI / 2 : 0); mesh.rotation.z = b.carried && vaultNow ? vaultNow.poleTilt : 0; }   // staven peker fremover når du bærer den; R41: heller under stavhopp
+    if (Math.abs(by / size[1] - 1) > 1e-3 || mesh.userData.sy) { mesh.scale.y = by / size[1]; mesh.userData.sy = 1; }   // R41: våt svamp har svulmet
+    if (!!b.wet !== !!mesh.userData.wet) { mesh.userData.wet = !!b.wet; const k = b.wet ? 0.62 : 1 / 0.62; mesh.traverse((o) => { if (o.isMesh && o.material?.color) o.material.color.multiplyScalar(k); }); }   // R41: våt = mørkere
   }
   for (let i = shards.length - 1; i >= 0; i--) {
     const s = shards[i]; s.t -= dt; s.v.y -= 22 * dt;
@@ -2267,7 +2287,7 @@ function render(now, dt) {
     const st = taState(), B = TOUCH ? T('btn.' + st.key) : 'F', zn = !player.carry && zipNear(player, LEVEL);
     const throwTxt = TOUCH && aimThrowOn ? T('hint.dragThrow') : T('hint.holdThrow');
     const SENT = { 'need-gel': 'hint.needGel', 'need-roll': 'hint.needRoll', 'need-thread': 'hint.needThread', 'need-needle': 'hint.needNeedle', 'zip-b': 'hint.tieEnd' };   // hele setninger (resten starter med knappen)
-    const ACT = { gel: 'hint.smear', roll: 'hint.unroll', thread: 'hint.thread', 'zip-a': 'hint.tieTop' };
+    const ACT = { wet: 'hint.soak', knot: 'hint.knot', press: 'hint.press', gel: 'hint.smear', roll: player.carry?.knotted ? 'hint.hangrope' : 'hint.unroll', thread: 'hint.thread', 'zip-a': 'hint.tieTop' };
     const pk = puzzlesOn && player.carry && carryingKeyNear(LEVEL, player), pt = puzzlesOn && !player.carry && puzzleTarget(LEVEL, player);
     hint.textContent = pk && !SENT[st.th] && player.charge < P.throwMin ? T('puz.keyPlate', { place: B })
       : pt && pt.key === 'key' && t && t.id === pt.puzzle.key ? T('puz.takeKey', { take: B })
@@ -2423,6 +2443,14 @@ function updateFades(dt) {
     if (e.t === 0 && was > 0) setFadeMats(e, false);
   }
 }
+// R41: kombinasjoner: lyd, lydtekst, hint-tekst og logg (reglene ligger i combos.js)
+function comboEvent(ev) {
+  logEv('kombo', `${ev.rule}: ${ev.id}${ev.other ? ' + ' + ev.other : ''}`);
+  audio?.pickup(); buzz(25); setMood('happy', 1.2);
+  if (ev.does === 'wet') { audio?.splash('pit'); cue('plask, svampen suger'); toast(T('toast.soaked', { press: T('btn.press') })); say('soak'); }
+  else if (ev.does === 'knot') { audio?.drop('fabric'); cue('knyter'); toast(T('toast.knotted', { hang: T('btn.hangrope') })); say('knot'); }
+  else if (ev.does === 'press') { audio?.drop('paper'); cue('papir presses sammen'); toast(T('toast.pressed', { jump: T('btn.jump') })); say('press'); }
+}
 const offEl = $('offscreen');
 function updateOffscreen() {
   hero.head.getWorldPosition(_v3); _v3.project(camera);
@@ -2437,12 +2465,12 @@ function updateOffscreen() {
 }
 
 // ---------- TA-knappen: navn, farge og «klar» etter hva du holder og hva som er mulig der du står ----------
-const TA_MAP = { gel: ['smear', 1], 'need-gel': ['smear', 0], roll: ['unroll', 1], 'need-roll': ['unroll', 0], thread: ['thread', 1], 'need-thread': ['thread', 0], 'need-needle': ['thread', 0], 'zip-a': ['tieTop', 1], 'zip-b': ['tieEnd', 1] };
+const TA_MAP = { wet: ['soak', 1], knot: ['knot', 1], press: ['press', 1], gel: ['smear', 1], 'need-gel': ['smear', 0], roll: ['unroll', 1], 'need-roll': ['unroll', 0], thread: ['thread', 1], 'need-thread': ['thread', 0], 'need-needle': ['thread', 0], 'zip-a': ['tieTop', 1], 'zip-b': ['tieEnd', 1] };
 function taState() {
   const p = player;
   if (p.carry) {
     if (p.charge >= P.throwMin) return { key: 'throw', tone: 'throw', ready: true, th: null };
-    const th = toolHint(p, LEVEL), m = TA_MAP[th];
+    const th = toolHint(p, LEVEL), m = p.carry.knotted && (th === 'roll' || th === 'need-roll') ? ['hangrope', th === 'roll' ? 1 : 0] : TA_MAP[th];   // R41: knyttet håndkle-tau heter HENG TAU
     if (m) return { key: m[0], tone: 'use', ready: !!m[1], th };
     const sp = findPlaceSpot(p, LEVEL);
     return { key: sp && sp.c.type !== 'floor' && sp.min[1] > p.y + 0.2 ? 'place' : 'drop', tone: 'drop', ready: true, th, sp };
