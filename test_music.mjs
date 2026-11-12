@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { THEMES, SCALES, themeFor, moodFor, tempoFor, layersFor, scaleFor, degreeToMidi, patternFor, bassFor, rng, midiFreq, createMusic } from './music.js';
 
 assert.equal(Math.round(midiFreq(69)), 440);
-for (const id of ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2']) {
+for (const id of ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke']) {
   const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8'));
   assert.equal(themeFor(L).id, id.replace('2', ''), `${id}: tema`);
 }

@@ -46,6 +46,14 @@ Valg i ⚙ → Spill: «Nivå 4–6: egen stemning» og «Nivå 4–6: egen vri�
 
 Ikke gjort ennå i nivå 4–6: nye gjenstander som *verktøy* (hårgelé, dopapirbånd, nål og tråd, stav) er ikke lagt inn som alternative løsninger. Gå-verktøyet kan ikke bruke dem, så de må prøves for hånd først.
 
+### Nivå 7: Lekerommet (R31)
+Et eget rom (ikke en variant): 600 × 300 cm, gulv og tak som legoplater (knotter, `lekerom_view.js`), tinnsoldater som vakter (maur med `skin: 'soldier'`, egen modell og marsj), egen musikk (`leke` i `music.js`) og egen palett. Scenen lages av `node tools/make_leke.mjs` (`scenes/leke.scene.json`), brettet av `scene2level` (`lego`-feltet følger med), og `test_lekerom.mjs` sjekker at begge er à jour.
+- **Den vanlige veien** (`walk_route`): langs gulvet til sørøst-hjørnet og opp den smale trappa langs østveggen (fem trinn) til flagget. Rundt 41 s.
+- **Byggestedet** (R30-geometri): et gap på 35 cm mellom «platta» og «tårnet». Bygg en bro (planke) og gå klosstrappa langs nordveggen: snarvei (ruta via bygget er over 20 enheter kortere).
+- **Verktøy-gåten** (R29): hårgelé-flaska ligger på gulvet; første trinn av trappa til østveggen er for høyt å hoppe på, men går med gel. Går i 37,6 s mot 41,1 s uten verktøy.
+- **Delmål:** samle 6 smuler, knus en tinnsoldat, bygg broen, klatre trappa langs veggen (låser målet).
+- Ikke bevist her: ekte FPS og følelse på iPhone (miljøet har ingen GPU). Knottene er målt statisk: to tegnekall og under 16 000 trekanter.
+
 ## Slik lages og sjekkes et nivå
 1. Skriv scenen (`scenes/<navn>.scene.json`, mål i cm) og kontroller den: `node tools/validate_scene.mjs scenes/<navn>.scene.json`.
 2. Lag brettet: `node tools/scene2level.mjs scenes/<navn>.scene.json levels/<navn>.level.json`. Rutekartet finner veien og sier fra om det måtte legge inn hjelpetrinn (nivåene skal ha 0).

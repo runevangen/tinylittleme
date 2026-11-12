@@ -1,0 +1,932 @@
+{
+ "name": "Nivå 7: Lekerommet",
+ "rev": 1,
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -60,
+    -2,
+    -30
+   ],
+   "max": [
+    60,
+    0,
+    30
+   ],
+   "id": "gulv",
+   "color": 3120727,
+   "slick": false,
+   "material": "plastic"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -61,
+    0,
+    -30
+   ],
+   "max": [
+    -60,
+    52,
+    30
+   ],
+   "id": "vegg_v",
+   "color": 15983544,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    60,
+    0,
+    -30
+   ],
+   "max": [
+    61,
+    52,
+    30
+   ],
+   "id": "vegg_o",
+   "color": 15983544,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -60,
+    0,
+    -31
+   ],
+   "max": [
+    60,
+    52,
+    -30
+   ],
+   "id": "vegg_n",
+   "color": 15983544,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -60,
+    0,
+    30
+   ],
+   "max": [
+    60,
+    52,
+    31
+   ],
+   "id": "vegg_s",
+   "color": 15983544,
+   "material": "plaster"
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -48,
+    0,
+    -22
+   ],
+   "max": [
+    -40,
+    2,
+    -10
+   ],
+   "id": "k1",
+   "kind": "legoblock",
+   "color": 15222076,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -40,
+    0,
+    -22
+   ],
+   "max": [
+    -32,
+    4,
+    -10
+   ],
+   "id": "k2",
+   "kind": "legoblock",
+   "color": 16172331,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -32,
+    0,
+    -22
+   ],
+   "max": [
+    -24,
+    6,
+    -10
+   ],
+   "id": "k3",
+   "kind": "legoblock",
+   "color": 4173402,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -24,
+    0,
+    -22
+   ],
+   "max": [
+    -8,
+    8,
+    -10
+   ],
+   "id": "platta",
+   "kind": "legoblock",
+   "color": 3832024,
+   "material": "plastic",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -1,
+    0,
+    -22
+   ],
+   "max": [
+    13,
+    8,
+    -10
+   ],
+   "id": "tarn",
+   "kind": "legoblock",
+   "color": 15526108,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    13,
+    0,
+    -22
+   ],
+   "max": [
+    19,
+    10.4,
+    -10
+   ],
+   "id": "t1",
+   "kind": "legoblock",
+   "color": 16172331,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    19,
+    0,
+    -22
+   ],
+   "max": [
+    25,
+    12.8,
+    -10
+   ],
+   "id": "t2",
+   "kind": "legoblock",
+   "color": 15222076,
+   "material": "plastic",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    43,
+    0,
+    23
+   ],
+   "max": [
+    60,
+    3,
+    30
+   ],
+   "id": "r1",
+   "kind": "legoblock",
+   "color": 3832024,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    49,
+    0,
+    16
+   ],
+   "max": [
+    60,
+    6.2,
+    23
+   ],
+   "id": "r2",
+   "kind": "legoblock",
+   "color": 4173402,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    49,
+    0,
+    9
+   ],
+   "max": [
+    60,
+    9.4,
+    16
+   ],
+   "id": "r3",
+   "kind": "legoblock",
+   "color": 15764012,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    49,
+    0,
+    2
+   ],
+   "max": [
+    60,
+    12.6,
+    9
+   ],
+   "id": "r4",
+   "kind": "legoblock",
+   "color": 15222076,
+   "material": "plastic",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    49,
+    0,
+    -5
+   ],
+   "max": [
+    60,
+    15.8,
+    2
+   ],
+   "id": "r5",
+   "kind": "legoblock",
+   "color": 16172331,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    19,
+    0,
+    -30
+   ],
+   "max": [
+    25,
+    14.4,
+    -22
+   ],
+   "id": "m1",
+   "kind": "legoblock",
+   "color": 3832024,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    25,
+    0,
+    -30
+   ],
+   "max": [
+    31,
+    16,
+    -22
+   ],
+   "id": "n1",
+   "kind": "legoblock",
+   "color": 4173402,
+   "material": "plastic",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    31,
+    0,
+    -30
+   ],
+   "max": [
+    47,
+    17.6,
+    -22
+   ],
+   "id": "n2",
+   "kind": "legoblock",
+   "color": 15764012,
+   "material": "plastic",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    49,
+    0,
+    -30
+   ],
+   "max": [
+    60,
+    19.2,
+    -5
+   ],
+   "id": "maal",
+   "kind": "legoblock",
+   "color": 15222076,
+   "material": "plastic",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "plastic",
+   "min": [
+    37,
+    0,
+    -5
+   ],
+   "max": [
+    41,
+    5.4,
+    2
+   ],
+   "id": "gele_leke_trinn_1",
+   "kind": "legoblock",
+   "color": 16172331,
+   "material": "plastic",
+   "cp": false,
+   "soft": false,
+   "shortcut": true
+  },
+  {
+   "type": "plastic",
+   "min": [
+    41,
+    0,
+    -5
+   ],
+   "max": [
+    45,
+    9,
+    2
+   ],
+   "id": "gele_leke_trinn_2",
+   "kind": "legoblock",
+   "color": 15764012,
+   "material": "plastic",
+   "cp": false,
+   "soft": false,
+   "shortcut": true
+  },
+  {
+   "type": "plastic",
+   "min": [
+    45,
+    0,
+    -5
+   ],
+   "max": [
+    49,
+    12.6,
+    2
+   ],
+   "id": "gele_leke_trinn_3",
+   "kind": "legoblock",
+   "color": 15222076,
+   "material": "plastic",
+   "cp": true,
+   "soft": false,
+   "shortcut": true
+  }
+ ],
+ "movables": [
+  {
+   "id": "hargele_leke",
+   "kind": "gel_bottle",
+   "material": "plastic",
+   "color": 9427182,
+   "min": [
+    7.6,
+    0,
+    24
+   ],
+   "max": [
+    8.4,
+    2,
+    24.8
+   ],
+   "weight": "light",
+   "breakable": false,
+   "tool": "gel"
+  }
+ ],
+ "decor": [],
+ "hints": [
+  {
+   "id": "platta",
+   "text": "Gapet\nHer mangler broen. Trykk BYGG, bygg en bro over gapet, eller ta den lange veien langs gulvet.",
+   "pos": [
+    -16,
+    8.9,
+    -16
+   ]
+  },
+  {
+   "id": "hargele_leke",
+   "text": "Hårgelé\nTa flaska (TA), bær den til det høye trinnet og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.",
+   "pos": [
+    8,
+    2.9,
+    24.4
+   ]
+  },
+  {
+   "id": "gele_leke_trinn_1",
+   "text": "Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), klatre opp og gå trappa langs veggen. Den lange veien går fortsatt.",
+   "pos": [
+    39,
+    6.3,
+    -1.5
+   ]
+  }
+ ],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    0,
+    30,
+    -29.95
+   ],
+   "size": [
+    24,
+    16
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2.6
+ },
+ "audio": {
+  "reverb": 0.2,
+  "theme": "leke"
+ },
+ "ants": [
+  {
+   "id": "soldat_1",
+   "a": [
+    -41,
+    0,
+    0
+   ],
+   "b": [
+    -2,
+    0,
+    0
+   ],
+   "skin": "soldier"
+  },
+  {
+   "id": "soldat_2",
+   "a": [
+    28,
+    0,
+    15
+   ],
+   "b": [
+    41,
+    0,
+    15
+   ],
+   "skin": "soldier"
+  }
+ ],
+ "lego": {
+  "floor": true,
+  "ceiling": true,
+  "color": "#46bb6c",
+  "ceilColor": "#e8f2fb",
+  "plates": [
+   [
+    -60,
+    -34,
+    -18,
+    2,
+    "#e8453c"
+   ],
+   [
+    24,
+    60,
+    2,
+    16,
+    "#f6c52b"
+   ],
+   [
+    -24,
+    0,
+    -30,
+    -22,
+    "#3a78d8"
+   ]
+  ]
+ },
+ "collectibles": [
+  {
+   "id": "smule_1",
+   "x": 44.26,
+   "y": 3.8,
+   "z": 27.76
+  },
+  {
+   "id": "smule_2",
+   "x": 57.76,
+   "y": 13.4,
+   "z": 6.76
+  },
+  {
+   "id": "smule_3",
+   "x": 57.76,
+   "y": 7,
+   "z": 20.26
+  },
+  {
+   "id": "smule_4",
+   "x": 50.26,
+   "y": 16.6,
+   "z": -3.74
+  },
+  {
+   "id": "smule_5",
+   "x": 50.26,
+   "y": 20,
+   "z": -27.74
+  },
+  {
+   "id": "smule_6",
+   "x": 50.26,
+   "y": 10.2,
+   "z": 12.76
+  },
+  {
+   "id": "smule_7",
+   "x": -0.74,
+   "y": 0.8,
+   "z": -24.74
+  },
+  {
+   "id": "smule_8",
+   "x": -12.74,
+   "y": 0.8,
+   "z": 27.76
+  },
+  {
+   "id": "smule_9",
+   "x": 15.76,
+   "y": 0.8,
+   "z": 6.76
+  },
+  {
+   "id": "smule_10",
+   "x": -48.74,
+   "y": 0.8,
+   "z": 27.76
+  }
+ ],
+ "build": {
+  "sites": [
+   {
+    "id": "leke1",
+    "label": "Gapet mellom platta og tårnet",
+    "x": -4.5,
+    "y": 8,
+    "z": -16,
+    "w": 20,
+    "h": 12,
+    "anchors": [
+     {
+      "u": -3.5,
+      "v": 0
+     },
+     {
+      "u": 3.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.5
+     },
+     {
+      "u0": 3.5,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "p1",
+       "type": "plank_l",
+       "u": 0,
+       "v": 0.25,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
+      }
+     ],
+     "route": [
+      "gulv",
+      "k1",
+      "k2",
+      "k3",
+      "platta",
+      "@bro",
+      "tarn",
+      "t1",
+      "t2",
+      "m1",
+      "n1",
+      "n2",
+      "maal"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "p1",
+    "type": "plank_l",
+    "x": 0,
+    "y": 0.9,
+    "z": 4
+   },
+   {
+    "id": "p2",
+    "type": "plank_s",
+    "x": -44,
+    "y": 2.9,
+    "z": -14
+   },
+   {
+    "id": "p3",
+    "type": "block",
+    "x": -36,
+    "y": 0.9,
+    "z": 13
+   },
+   {
+    "id": "p4",
+    "type": "weight",
+    "x": -20,
+    "y": 0.9,
+    "z": 13
+   },
+   {
+    "id": "p5",
+    "type": "plank_s",
+    "x": -16,
+    "y": 8.9,
+    "z": -14
+   }
+  ]
+ },
+ "goals": [
+  {
+   "id": "smuler",
+   "type": "crumbs",
+   "label": "Samle 6 smuler",
+   "en": "Collect 6 crumbs",
+   "n": 6
+  },
+  {
+   "id": "soldat",
+   "type": "stomp",
+   "label": "Knus en tinnsoldat",
+   "en": "Squash a tin soldier",
+   "n": 1
+  },
+  {
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg en bro over gapet (BYGG-knappen)",
+   "en": "Build a bridge over the gap (BUILD button)",
+   "flag": "leke1"
+  },
+  {
+   "id": "tarn",
+   "type": "reach",
+   "label": "Klatre trappa langs veggen",
+   "en": "Climb the stairs along the wall",
+   "gate": true,
+   "on": "r4",
+   "x0": 49,
+   "x1": 60,
+   "z0": 2,
+   "z1": 9,
+   "top": 12.6
+  }
+ ],
+ "shortcuts": [
+  {
+   "id": "gele_leke",
+   "tool": "gel",
+   "item": "hargele_leke",
+   "label": "Smør hårgelé og klatre trappa opp langs veggen",
+   "en": "Smear hair gel and climb the stairs along the wall",
+   "stand": [
+    36.1,
+    -1.5
+   ],
+   "face": [
+    1,
+    0
+   ],
+   "steps": [
+    "gele_leke_trinn_1",
+    "gele_leke_trinn_2",
+    "gele_leke_trinn_3"
+   ],
+   "join": "r5"
+  }
+ ],
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -60,
+   "x1": 60,
+   "z0": -30,
+   "z1": 30,
+   "top": 0
+  },
+  {
+   "id": "r1",
+   "x0": 43,
+   "x1": 60,
+   "z0": 23,
+   "z1": 30,
+   "top": 3
+  },
+  {
+   "id": "r2",
+   "x0": 49,
+   "x1": 60,
+   "z0": 16,
+   "z1": 23,
+   "top": 6.2
+  },
+  {
+   "id": "r3",
+   "x0": 49,
+   "x1": 60,
+   "z0": 9,
+   "z1": 16,
+   "top": 9.4
+  },
+  {
+   "id": "r4",
+   "x0": 49,
+   "x1": 60,
+   "z0": 2,
+   "z1": 9,
+   "top": 12.6
+  },
+  {
+   "id": "r5",
+   "x0": 49,
+   "x1": 60,
+   "z0": -5,
+   "z1": 2,
+   "top": 15.8
+  },
+  {
+   "id": "maal",
+   "x0": 49,
+   "x1": 60,
+   "z0": -30,
+   "z1": -5,
+   "top": 19.2
+  }
+ ],
+ "start": [
+  -54,
+  0,
+  -7
+ ],
+ "goal": [
+  54.4,
+  19.2,
+  -18
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -60,
+  "x1": 60,
+  "z0": -30,
+  "z1": 30,
+  "height": 52,
+  "floor": {
+   "material": "plastic",
+   "color": "#2f9e57",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#f3e3b8"
+  },
+  "ceiling": {
+   "material": "plastic",
+   "color": "#cfe3f5"
+  }
+ },
+ "report": {
+  "source": {
+   "photos": 0,
+   "views": [],
+   "interpreted_by": "Oppdiktet rom (ikke fra bilder), laget for nivå 7 (R31): lekerom med legoknotter som gulv og tak.",
+   "scale_anchors": [
+    "legoklosser 10 cm per lag",
+    "tårnet 160 cm"
+   ],
+   "uncertainty": "Ingen: rommet er tegnet for spillet.",
+   "note": "Nivå 7 (R31). Lekerommet: gulv og tak er legoplater (knotter). Den harde veien går langs gulvet og opp den smale trappa til høyre; byggestedet (bro over gapet) og hårgelé-trappa er snarveier."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 17,
+  "reachable": 17
+ }
+}

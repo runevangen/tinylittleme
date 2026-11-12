@@ -28,7 +28,7 @@ import { freeAt, initBodies } from './physics.js';
 // --- brettene: minst 8 smuler i nivå 1–6, unike id-er, på frie, nåbare flater ---
 {
   const R = 0.7;
-  for (const id of ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2']) {
+  for (const id of ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke']) {
     const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), cs = L.collectibles || [];
     assert.ok(cs.length >= 8, `${id}: skal ha minst 8 smuler (har ${cs.length})`);
     assert.equal(new Set(cs.map((c) => c.id)).size, cs.length, `${id}: smule-id-er må være unike`);
