@@ -158,7 +158,8 @@ const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(m
 // ---------- innstillinger som flagg (selve lista og panelet står lenger ned: SETTINGS) ----------
 let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
-let showMapBtn = store.get('tlm.showmapbtn', true), showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
+let showMapBtn = store.get('tlm.showmapbtn2', false), showCenter = store.get('tlm.showcenter2', false),   // v1.35: ◎ og kartknappen er av som standard (nye nøkler, så alle starter uten dem)
+   stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
 let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
@@ -1591,8 +1592,8 @@ const SETTINGS = [
   ...(!TOUCH ? [fl('mouselook', 'styring', 'Musestyring (klikk i bildet: mus ser deg rundt, venstre = TA, høyre = GREP)', true, () => mouseLook, kp('tlm.mouselook', (v) => { mouseLook = v; if (!v && document.pointerLockElement) document.exitPointerLock(); }))] : []),
   fl('aimthrow', 'styring', 'Kast med dra og slipp (hold TA, dra ned)', true, () => aimThrowOn, kp('tlm.aimthrow', (v) => { aimThrowOn = v; })),
   fl('dbltap', 'styring', 'Dobbelttrykk på skjermen sentrerer kameraet', true, () => dblTapOn, kp('tlm.dbltap', (v) => { dblTapOn = v; })),
-  fl('showmapbtn', 'styring', 'Vis kart-knappen (oversikt) ved siden av ◎. Av = ingen knapp; minikartet øverst virker fortsatt', true, () => showMapBtn, kp('tlm.showmapbtn', (v) => { showMapBtn = v; applyUiFlags(); })),
-  fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', true, () => showCenter, kp('tlm.showcenter', (v) => { showCenter = v; applyUiFlags(); })),
+  fl('showmapbtn', 'styring', 'Vis kart-knappen (oversikt) ved siden av ◎. Av = ingen knapp; minikartet øverst virker fortsatt', false, () => showMapBtn, kp('tlm.showmapbtn2', (v) => { showMapBtn = v; applyUiFlags(); })),
+  fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', false, () => showCenter, kp('tlm.showcenter2', (v) => { showCenter = v; applyUiFlags(); })),
   fl('edgeguard', 'styring', TOUCH ? 'Kanthjelp: stopp ved kanten når du skyver stikken forsiktig' : 'Kanthjelp: stopp ved kanten når du går forsiktig (C)', true, () => edgeGuardOn, kp('tlm.edgeguard', (v) => { edgeGuardOn = v; reapplyKnobs(); })),
   fl('autojump', 'styring', TOUCH ? 'Kanthjelp: hopp av seg selv over gap når du løper (stikken helt ut)' : 'Kanthjelp: hopp av seg selv over gap når du løper mot kanten', true, () => autoJumpOn, kp('tlm.autojump', (v) => { autoJumpOn = v; reapplyKnobs(); })),
   fl('airsteady', 'styring', TOUCH ? 'I lufta: demp skjelving på stikken' : 'I lufta: demp små rykk i styringen', true, () => airSteadyOn, kp('tlm.airsteady', (v) => { airSteadyOn = v; reapplyKnobs(); })),
