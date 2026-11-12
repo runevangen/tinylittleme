@@ -19,15 +19,12 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 ## Åpne punkter
 
-### [ ] R35 · Færre hakk: forvarm shadere og hold antallet stabilt
-Fra testrapport (v1.28, nivå 3 Kjøkken, iPhone 18.7, 57 fps snitt): hakk på 2910 ms (ved 13 s), 444, 500, 542 og 587 ms tidlig i økta, og antall shadere stiger for hver gang (42 → 50 → 54 → 56 → 57 → 60). Det tyder på at shadere kompileres midt i spillet fordi `forvarming` (perf_budget/main.js) ikke dekker alle materialer og effekter (nye materialtyper fra R13/R18/R28/R30, oversikt-kamera, lykt, landingsmarkør, bygg, sprettboks-effekt osv.). Finn hva som utløser hver ny shader (logg program-antall i `logEv('hakk', …)` finnes allerede), forvarm dem under lasting/introen (f.eks. `renderer.compile` med alle materialer og lysoppsett, eller skjult ramme per materialtype), og begrens uten å øke tegnekall eller minne. Sikre også at det ikke kommer nye shadere når spilleren åpner oversikt, berører en lek, lander hardt eller starter bygging.
-Ferdig når: en test (Playwright, iPhone 14, programvare-GL er ok siden vi teller programmer, ikke ms) spiller en økt i nivå 3 med oversikt, lek-pop, hopp og landing og viser at `renderer.info.programs.length` er uendret etter forvarmingen; rapport/logg viser antall shadere ved start og etter økta; ingen økning i tegnekall eller teksturminne; alle tester grønne. Ekte ms-forbedring bekreftes på iPhone (merkes «testes på iPhone»).
-
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Færre hakk: forvarm shadere og hold antallet stabilt, shaderwarm.js (R35, v1.33; ekte ms-forbedring testes på iPhone)
 - [x] Sprettboksen kaster figuren som står på den: toy_kick.js, uskadd-tid, SETTINGS (R34, v1.30; må prøves på iPhone)
 - [x] «Send til Claude» (R33): tilbakemelding direkte fra spillet til Supabase med tester-kode (v1.27)
 - [x] Nytt rom: lekerom (nivå 7) med legoknotter, egen fiende, musikk, delmål, verktøy-gåte og byggested (R31, v1.26; må prøves på iPhone)

@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.33** – R35: færre hakk. Shadere forvarmes under lasting/intro (shaderwarm.js) så ingen nye programmer kompileres midt i spillet (oversikt, lek-pop, landing, bygging); program-antall logges ved start og etter økta. Testes på iPhone.
 - **1.32** – Fra tilbakemelding: (1) ◎- og kart-knappene var lette å treffe ved et uhell når man tok HOPP/TA: de har ikke lenger forstørret trykkflate og er litt dempet, og kart-knappen kan slås av i ⚙ → Styring («Vis kart-knappen»), som ◎. (2) Flimmer på halve det grønne håndkleet/badekåpa i Bad: håndkleet hadde samme topp som knaggrekka (z-fighting), og er nå skjøvet litt bakover i dybden (polygonOffset).
 
 - **1.31** – Målskjermen på liggende mobil: «Neste nivå» og «Spill igjen» ligger nå i en rad som er festet nederst og alltid synlig, resten av skjermen kan rulles, og skjermen er kompaktere (ingen figur, mindre tekst) når høyden er under 520 px.

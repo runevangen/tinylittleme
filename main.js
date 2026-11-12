@@ -44,6 +44,7 @@ import { createMarkerView } from './readable_view.js';
 import { createOverview } from './overview.js';
 import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, approach, landingEvent } from './landing.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
+import { programCount, warmRender, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
@@ -161,6 +162,7 @@ let showMapBtn = store.get('tlm.showmapbtn', true), showCenter = store.get('tlm.
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
+let shaderWarm = store.get('tlm.shaderwarm', true);   // R35: full tegning av alt under forvarmingen (admin)
 let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true), buildSeeHint = store.get('tlm.buildsee', true);   // R24: byggeskjermen
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let toysOn = store.get('tlm.toys', true);   // R18
@@ -245,6 +247,7 @@ sun.shadow.mapSize.set(devicePixelRatio > 2 || innerWidth < 700 ? 2048 : bigShad
 const shHalf = devicePixelRatio > 2 || innerWidth < 700 ? 17 : 26;       // v0.76: mindre område rundt deg på mobil = skarpere skygger (færre trappetrinn i kantene)
 Object.assign(sun.shadow.camera, { left: -shHalf, right: shHalf, top: shHalf, bottom: -shHalf, near: 1, far: 220 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
+const SHADOW_NORMAL = { size: sun.shadow.mapSize.x, near: 1, far: 220 };   // R35: Lav profil bytter størrelse/kamera, ikke castShadow (ellers nye shadere)
 scene.add(sun, sun.target);
 
 // ---------- utseende: teksturer med relieff, bøker, kontaktskygger og støv (look.js) ----------
@@ -1540,6 +1543,7 @@ const SETTINGS = [
   fl('buildslow', 'spill', 'Byggeskjerm: PRØV i sakte film (lettere å se hvor det bøyer og brekker)', false, () => buildSlow, kp('tlm.buildslow', (v) => { buildSlow = v; })),
   rg('buildstrength', 'admin', 'Byggeskjerm: hvor sterkt bygget er (faktor på brekkgrensene, 1 = standard)', 1, 0.5, 2, 0.1, () => buildStrength, kp('tlm.buildstrength', (v) => { buildStrength = v; }), { digits: 1 }),
   fl('buildworld', 'admin', 'Byggeskjerm: et prøvd bygg står i verden som solid (figuren kan gå på det)', true, () => buildWorld, kp('tlm.buildworld', (v) => { buildWorld = v; })),
+  fl('shaderwarm', 'admin', 'Forvarm alle shadere under oppstart (full tegning, også glass); av = bare renderer.compile', true, () => shaderWarm, kp('tlm.shaderwarm', (v) => { shaderWarm = v; })),
   fl('buildall', 'admin', 'Byggeskjerm: alle deler åpne (test)', false, () => buildAll, kp('tlm.buildall', (v) => { buildAll = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
@@ -1716,7 +1720,7 @@ function buildReportInfo() {
   return {
     version: VERSION, level: levelLabel, when: new Date().toLocaleString('nb-NO'), device: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 90),
     screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
-    perf: perfLine,
+    perf: perfLine + ' · shadere ' + shw.line(),
     fps: perf.n ? `${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms` : 'fps ukjent',
     pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), state: player.state, target: t.final ? 'målet' : t.label, stats: { ...stats },
     changed: changedSettings(SETTINGS.filter((d) => d.group !== 'admin' || true).map((d) => ({ id: d.id, label: d.label, def: d.def, get: d.get }))),
@@ -2173,7 +2177,7 @@ const perfMerge = { before: 0, after: 0 };
 let perfFrames = 0, perfPending = true, perfLine = '';
 function applyLowProfile(on) {                       // slår av skygge-kart, støv, korn, lysstråler og ekstra lys; kommer tilbake når den slås av
   if (on && !texLow) { const r = shrinkSceneTextures(scene, (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }); logEv('teksturer', `krympet ${r.n} teksturer midt i spillet (−${r.savedMB.toFixed(1)} MB)`); }
-  lowOn = on; sun.castShadow = !on; grade.setLow(on); look.setDetail(!on); glow.intensity = on ? 0 : 30;        // lysets antall endres ikke (ville tvunget alle shadere til å kompileres på nytt midt i spillet)
+  lowOn = on; setSunShadowLow(sun, on, SHADOW_NORMAL); grade.setLow(on); look.setDetail(!on); glow.intensity = on ? 0 : 30;        // lysets antall, skygge-på/av og skyggetype endres ikke (ville tvunget alle shadere til å kompileres på nytt midt i spillet, R35)
   perfPending = true; perfFrames = 0; logEv('lav profil', on ? 'på (ingen skygge-kart, støv, korn, lysstråler eller ekstra lys)' : 'av');
 }
 if (lowMode === 'on') { lowP.decide(null, 9, 1, 'on'); applyLowProfile(true); }
@@ -2492,6 +2496,7 @@ applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
 if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true); setTimeout(() => toast('PC: klikk i bildet for å styre blikket med musa (Esc slipper). WASD går, mellomrom hopper, venstre museknapp eller F tar, høyre eller E griper.'), 2500); }
 // v0.97: forvarming. three kompilerer shadere og laster opp teksturer først når noe kommer i syne, som gir et plutselig «stopp» (100-300 ms) første gang du ser nytt område eller en effekt. Gjør alt på forhånd, mens introskjermen vises
+const shw = createShaderWatch(() => programCount(renderer));   // R35: teller shaderprogram etter forvarmingen
 function warmUp() {
   const t0 = performance.now(); const hidden = [];
   try {
@@ -2499,12 +2504,14 @@ function warmUp() {
     const seen = new Set();
     scene.traverse((o) => { for (const m of [].concat(o.material || [])) for (const k of ['map', 'emissiveMap', 'roughnessMap', 'normalMap', 'bumpMap', 'alphaMap', 'aoMap']) { const t = m[k]; if (t && !seen.has(t)) { seen.add(t); try { renderer.initTexture(t); } catch { /* ikke støttet */ } } } });
     renderer.compile(scene, camera);
+    if (shaderWarm) warmRender(renderer, scene, camera);   // R35: compile() tar ikke med variantene i gjennomsiktighetspasset (glass, målflasken): én full tegning gjør det
   } catch (e) { logEv('forvarming feilet', String(e.message || e)); }
   for (const o of hidden) o.visible = false;
-  logEv('forvarming', `${Math.round(performance.now() - t0)} ms (shadere og teksturer klargjort)`);
+  shw.mark();
+  logEv('forvarming', `${Math.round(performance.now() - t0)} ms (shadere og teksturer klargjort) · ${shw.base} shadere`);
 }
 requestAnimationFrame(() => setTimeout(warmUp, 50));
-let lastHitch = -99;
+let lastHitch = -99, shwN = 0;
 let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
@@ -2512,6 +2519,7 @@ function frame(now) {
     lastHitch = clock; const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'lav fps').slice(-3).map((e) => e.type).join(', ');
     logEv('hakk', `${Math.round(raw)} ms${near ? ' etter: ' + near : ''} · ${renderer.info.programs?.length ?? '?'} shadere, ${renderer.info.render.calls} tegnekall`);
   }
+  if ((++shwN & 15) === 0) { const ev = shw.tick(); if (ev) { const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'shadere').slice(-3).map((e) => e.type).join(', '); logEv('shadere', `${ev.from} til ${ev.to} (start ${ev.base})${near ? ' etter: ' + near : ''}`); } }   // R35: hver ny shader etter forvarmingen logges med det som skjedde like før
   if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps${renderer.getPixelRatio() < basePr - 0.01 ? ' · ' + renderer.getPixelRatio().toFixed(2) + '×' : ''}`; perf.win = perf.winN = 0; } }
   { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
     if (mode === 'play' && !menuOpen) autoQC.feed(raw);
@@ -2529,4 +2537,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { shw, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
