@@ -23,10 +23,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
-### [ ] R28 · Fallgrenser varslet
-Landingsmarkør/kontaktskygge under figuren i fall, vindlyd og lett FOV-økning mot fallterskelen, og tre tydelige landingsklasser (myk, hard, farlig) med egen lyd, lydtekst og figurreaksjon. Data/terskler i egen ren modul (`landing.js`) med tester; hekter i `main.js`; verdier i `SETTINGS` (grupper: Spill/Hjelp, finjustering i admin); `logEv('landing', …)`. Må fungere med stikke + TA/HOPP/GREP, uten tastatur. Ikke endre fysikken i `physics.js` utover å lese fallhøyde/fart. Av/på i ⚙.
-Ferdig når: markør og vind vises i et fall på iPhone (Kontroll-brettet har fall-tårn), de tre landingsklassene har tester, `walk_route` er uendret grønn, og FPS er ikke dårligere (tegnekall-budsjett).
-
 ### [ ] R29 · Verktøy-løsninger i nivå 4–6
 Variantrommene skal ha egne gåter som bruker verktøy: hårgelé, dopapirbånd, nål og tråd (taubane), stav, og løse ting man må flytte selv. Minst én verktøy-løsning per rom (4, 5, 6), lagt i grunnscene/variant-oppskriften (`tools/make_variants.mjs`), ikke som engangs-hack. `walk_route` må bevise at målet kan nås både med verktøyet og via en lengre/vanskeligere vei uten. Tekst og hint nevner knappene.
 Ferdig når: nivå 4–6 har hver minst én verktøy-gåte, `walk_route` er grønn for alle seks nivåer, og `npm test` dekker verktøyene.
@@ -47,6 +43,7 @@ Ferdig når: boten løser Kontroll og alle seks nivåene med verktøy og klatrin
 Se BACKLOG «Teknisk». Må gjøres på PC; ikke i runneren.
 
 ## Ferdige punkter
+- [x] Fallgrenser varslet: landingsmarkør, fallvind og tre landingsklasser (R28, v1.22; markør og vind må bekreftes på iPhone)
 - [x] Gulv og overflater: gulvdetaljer for målestokk og matter uten moiré (R13, v1.15; ekte FPS og flimmer i bevegelse må bekreftes på iPhone)
 - [x] Byggeskjerm C: bygget flyttes ut i verdenen, to brett (bro og trapp) og vanskelig alternativ vei (R26, v1.14)
 - [x] Byggeskjerm B: 2D-fysikk (planker, klosser, tau, tape, vekter) og testfigur (R25, v1.13)
