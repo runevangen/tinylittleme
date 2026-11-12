@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.43** – R40: figuren snur med små skritt, tråkker over små hindre og har nye poser i heng/sving/veggglid (`hero_move.js`, av/på i ⚙). Følelsen testes på iPhone.
 - **1.42** – Veikart: R39 (finpuss av Prince), R40 (figurens bevegelse), R41 (flere kombinasjoner) og R42 (motgiften høyere opp, vann-variant).
 - **1.41** – Rapport over siste 24 timer lagt i `docs/RAPPORT_24T.md` (versjoner, tester-saker og linjer kode).
 - **1.40** – Siste shader som kompilerte midt i spillet forvarmes nå (gjennomsiktige utoningskopier), og nye shaderprogram logges med nøkkel (R35b, fra tester: Rune).
