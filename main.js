@@ -3,6 +3,7 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
+import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT } from './feedback_send.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
@@ -1664,12 +1665,13 @@ const marks = [];
 // rask vurdering mens du spiller: ⚑ → velg tema → 👍 / 😐 / 😫 (havner i testrapporten med posisjon og innstillinger)
 {
   let tag = store.get('tlm.qtag', 'Styring'); const pop = $('qpop'), tags = ['Styring', 'Kamera', 'Hopp', 'Gange', 'Annet'];
-  const draw = () => { const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
-  pop.innerHTML = `<input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button>`;
+  const draw = () => { const qc = $('qcode'); if (qc) qc.style.display = validCode(store.get('tlm.tcode', '')) ? 'none' : 'block'; const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
+  pop.innerHTML = `<input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang)" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button>`;
   const qtext = () => { const el = $('qtext'), v = el.value.trim(); el.value = ''; return v; };
   pop.addEventListener('click', (e) => {
     e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tag) { tag = b.dataset.tag; store.set('tlm.qtag', tag); draw(); return; }
+    if (b.dataset.send) { const c = $('qcode'); if (c && c.value.trim()) { store.set('tlm.tcode', cleanCode(c.value)); c.value = ''; } const tx = qtext(); sendToClaude(tx ? `${tag}: ${tx}` : '').then((r) => { if (r === 'ok') pop.classList.add('hide'); draw(); }); return; }
     if (b.dataset.copy) { doShare(true).then((r) => { toast(r === 'kopiert' ? 'Tilbakemeldingene er kopiert. Lim dem inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis tilbakemeldingene'); if (r === 'kopiert') pop.classList.add('hide'); }); return; }
     if (b.dataset.mark) { markHere(`${tag}: ${qtext()}`.replace(/: $/, '')); pop.classList.add('hide'); return; }
     if (b.dataset.backlog) { const tx = qtext(); if (!tx) { toast('Skriv hva som skal i backloggen først'); $('qtext').focus(); return; } logEv('BACKLOGG', tx); updateMarkBadge(); toast(`Lagt til backloggen (${unsent('BACKLOGG')} ny)`); pop.classList.add('hide'); return; }
@@ -1681,11 +1683,26 @@ const marks = [];
 }
 const unsent = (type) => evLog.filter((e) => e.type === type && !e.sent).length, markCount = () => unsent('MARKERT');
 function updateMarkBadge() { const n = markCount() + unsent('BACKLOGG'), el = $('qcnt'); el.textContent = n; el.style.display = n ? 'flex' : 'none'; const h = $('repHead'); if (h) h.innerHTML = repHeadHtml(); }
-function repHeadHtml() { const f = markCount(), b = unsent('BACKLOGG'); return f || b ? `<b>${f} feil meldt${b ? ` · ${b} i backloggen` : ''}</b><br>Send til Claude: <button id="hShare">Del tilbakemeldinger</button> <button id="hCopy">Kopier tilbakemeldinger</button>` : ''; }
+function repHeadHtml() { const f = markCount(), b = unsent('BACKLOGG'); return f || b ? `<b>${f} feil meldt${b ? ` · ${b} i backloggen` : ''}</b><br>Send til Claude: <button id="hSend">📤 Send direkte</button> <button id="hShare">Del tilbakemeldinger</button> <button id="hCopy">Kopier tilbakemeldinger</button>` : ''; }
 function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); updateMarkBadge(); toast(`Feil meldt (${markCount()} totalt). Husk å sende rapporten etterpå.`); }
 function markSent() { for (const e of evLog) if (e.type === 'MARKERT' || e.type === 'BACKLOGG') e.sent = true; updateMarkBadge(); }
 const doShare = async (copyOnly) => { const t = reportText(); { const rb = $('reportBox'); if (rb) rb.value = t; } let r; if (copyOnly) { try { await navigator.clipboard.writeText(t); r = 'kopiert'; } catch { r = 'vis'; } } else r = await shareText(t, `tinylittleme v${VERSION} testrapport`); if (r === 'delt' || r === 'kopiert') markSent(); return r; };
-$('panel').addEventListener('click', (e) => { if (e.target.id === 'hShare') doShare(false).then((r) => toast(r === 'delt' ? 'Delt' : r === 'kopiert' ? 'Tilbakemeldingene er kopiert' : r === 'vis' ? 'Åpne ⚙ → Test → Vis rapporten og kopier' : 'Avbrutt')); if (e.target.id === 'hCopy') doShare(true).then((r) => toast(r === 'kopiert' ? 'Rapporten er kopiert. Lim inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis rapporten')); });
+// «Send til Claude» (v1.27): sender rapporten + teksten direkte til tabellen tlm_feedback (se feedback_send.js, docs/TILBAKEMELDING.md).
+let sending = false;
+async function sendToClaude(body) {
+  if (sending) return 'opptatt';
+  const code = store.get('tlm.tcode', '');
+  if (!validCode(code)) { toast('Skriv tester-koden din først (feltet i ⚑-boksen, eller ⚙ → Test)'); return 'kode'; }
+  const built = buildPayload({ code, version: VERSION, level: levelLabel, kind: 'rapport', body, report: reportText(), ua: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '') });
+  if (built.error) { toast(REASON_TEXT[built.error] || REASON_TEXT.feil); return built.error; }
+  sending = true; toast('Sender …');
+  const res = await sendFeedback(built.row);
+  sending = false;
+  if (res.ok) { markSent(); logEv('sendt', `til Claude (${built.row.report.length} tegn)`); toast('Sendt! Takk, Claude ser den.'); return 'ok'; }
+  logEv('sendfeil', `${res.reason} ${res.status ?? ''}`);
+  toast(REASON_TEXT[res.reason] || REASON_TEXT.feil); return res.reason;
+}
+$('panel').addEventListener('click', (e) => { if (e.target.id === 'hSend') sendToClaude(''); if (e.target.id === 'hShare') doShare(false).then((r) => toast(r === 'delt' ? 'Delt' : r === 'kopiert' ? 'Tilbakemeldingene er kopiert' : r === 'vis' ? 'Åpne ⚙ → Test → Vis rapporten og kopier' : 'Avbrutt')); if (e.target.id === 'hCopy') doShare(true).then((r) => toast(r === 'kopiert' ? 'Rapporten er kopiert. Lim inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis rapporten')); });
 updateMarkBadge();
 function buildReportInfo() {
   const t = nextTarget();
@@ -1723,6 +1740,8 @@ function buildPanel() {
     if (g === 'test') extra = `
       <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
       <div class="row"><button id="bMark">⚑ Marker her</button></div>
+      <label>Tester-kode (får du av Rune)</label><input type="text" id="testerCode" placeholder="tlm-…" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="row"><button id="bSend">📤 Send til Claude</button></div>
       <div class="row"><button id="bReport">Del tilbakemeldinger</button><button id="bCopyRep">Kopier tilbakemeldinger</button></div>
       <details><summary>Vis tilbakemeldingene (rapporten)</summary><textarea id="reportBox" readonly rows="9"></textarea></details>
       <small>Bare innstillingene (ikke tilbakemeldinger):</small><div class="row"><button id="bExport">Kopier innstillinger</button><button id="bImport">Lim inn innstillinger</button></div>
@@ -1777,6 +1796,9 @@ function buildPanel() {
   $('pTitle').onclick = () => { const n = performance.now(); taps = n - tapT < 900 ? taps + 1 : 1; tapT = n; if (taps >= 7) { taps = 0; adminOn = !adminOn; store.set('tlm.admin', adminOn); toast(adminOn ? 'Admin på' : 'Admin av'); buildPanel(); } };
   if ($('lockAdmin')) $('lockAdmin').onclick = () => { adminOn = false; store.set('tlm.admin', false); buildPanel(); toast('Admin låst'); };
   // test
+  $('testerCode').value = store.get('tlm.tcode', '');
+  $('testerCode').onchange = () => { const v = cleanCode($('testerCode').value); store.set('tlm.tcode', v); if (v && !validCode(v)) toast('Koden ser feil ut (6–24 tegn: bokstaver, tall, - og _)'); };
+  $('bSend').onclick = () => { $('testerCode').onchange(); const tx = $('markText').value.trim(); sendToClaude(tx).then((r) => { if (r === 'ok') { $('markText').value = ''; $('reportBox').value = reportText(); } }); };
   $('bMark').onclick = () => { markHere($('markText').value.trim()); $('markText').value = ''; $('reportBox').value = reportText(); };
   $('bCopyRep').onclick = () => doShare(true).then((r) => { toast(r === 'kopiert' ? 'Tilbakemeldingene er kopiert. Lim dem inn til Claude' : 'Kunne ikke kopiere: åpne «Vis tilbakemeldingene» og kopier teksten'); if (r === 'vis') $('reportBox').closest('details').open = true; });
   $('bReport').onclick = async () => { const r = await doShare(false); toast(r === 'vis' ? 'Kunne ikke dele: åpne «Vis rapporten» og kopier teksten' : r === 'kopiert' ? 'Tilbakemeldingene er kopiert' : r === 'delt' ? 'Delt' : 'Avbrutt'); if (r === 'vis') $('reportBox').closest('details').open = true; };

@@ -20,6 +20,7 @@
   #qpop input{width:100%;box-sizing:border-box;border:1px solid #ffffff44;border-radius:9px;padding:9px 10px;font:16px system-ui;background:#0b1220;color:#eef2fa}
   #qpop .qa{display:flex;gap:5px}#qpop .qa button{flex:1}#qpop .qm{background:#ffa940;color:#1d2433}#qpop .qc{background:#ffffff30;margin-top:2px}#qpop .qb{background:#7cc4ff;color:#102033}#qpop small{color:#aab4c8;font:11px system-ui}
   .rhead{background:#3a2a10;border:1px solid #ffa940;border-radius:10px;padding:8px 10px;margin:6px 0;font-size:13px}.rhead:empty{display:none}.rhead button{margin:4px 4px 0 0;padding:7px 12px;border:0;border-radius:8px;background:#ffa940;color:#1d2433;font:600 13px system-ui}
+  #qpop .qs{background:#5ad17a;color:#0d2a17;margin-top:2px}#qpop #qcode{display:none}
   #qpop .qr button{background:#ffffff30;font-size:14px}
   #fps{position:fixed;right:max(52px,calc(env(safe-area-inset-right) + 44px));top:max(10px,env(safe-area-inset-top));color:#bff;font:600 12px ui-monospace,monospace;background:#0008;padding:3px 7px;border-radius:7px;display:none;z-index:3;pointer-events:none}
   #btnCarry.take{background:#2a7f62cc}#btnCarry.use{background:#c77d12e6}#btnCarry.throw{background:#c0392be6}#btnCarry.drop{background:#4b6a7acc}
@@ -199,7 +200,7 @@
   var v = String(Date.now());
   try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
   window.__assetV = v;
-  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'toys_live', 'toys_view', 'shortcut', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view', 'intro', 'intro_view', 'goals', 'goals_view', 'build', 'build_logic', 'build_phys', 'build_world', 'floordetail', 'floordetail_logic', 'landing', 'lekerom_logic', 'lekerom_view'];
+  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'version', 'level', 'kinds', 'toys', 'toys_live', 'toys_view', 'shortcut', 'music', 'grade', 'grade_apply', 'story', 'polish', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view', 'intro', 'intro_view', 'goals', 'goals_view', 'build', 'build_logic', 'build_phys', 'build_world', 'floordetail', 'floordetail_logic', 'landing', 'lekerom_logic', 'lekerom_view', 'feedback_send'];
   var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
   document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
 })();

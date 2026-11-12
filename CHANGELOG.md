@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.27** – «Send til Claude» (R33): testbrukere kan sende tilbakemelding direkte fra spillet (⚑-boksen eller ⚙ → Test) med en tester-kode, uten å lime inn. Lagres i Supabase (`tlm_feedback`), kun innsetting med gyldig kode (RLS), grense mot spam. Se `docs/TILBAKEMELDING.md`. Testes på iPhone: ⚑ → kode → Send.
 - **1.26** – R31: nytt rom, lekerom (nivå 7) med legoknotter, egen fiende, musikk, delmål, verktøy-gåte og byggested; `test_lekerom.mjs`.
 - **1.25** – R32: bot som klatrer og bruker verktøy (`tools/bot.mjs`, `test_bot.mjs`), streng/løs modus, utvidet `walk_route` og Kontroll-nivå; dokumentert i `docs/NIVAER.md`.
 - **1.24** – R29: verktøy-genveier i nivå 4–6 (`shortcut.js`): trapp med for høyt første trinn som krever hårgelé (TA, SMØR, SLIPP, GREP), bevist med `walk_route`; slått sammen med R30/R28.
