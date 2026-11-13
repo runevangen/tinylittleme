@@ -22,10 +22,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 > **Byggedel-serien (R45–R50):** se `docs/BYGGING_INSPIRASJON.md` for bakgrunn. Mål: blande plattform og byggespill med god, deterministisk fysikk. Felles regler: mobil først, `walk_route` uendret grønn, det finnes alltid en vanskelig vei uten bygging, fysikken (`build_phys.js`) forblir deterministisk (samme bygg gir samme resultat, testet), ingen økning i tegnekall/shadere utover budsjettet, innstillinger i `SETTINGS`, `logEv('bygg', …)`. R49 (live-vekt) og R51 (dynamiske deler) og R52 (verksted) er med vilje IKKE med: de diskuteres først.
 
-### [ ] R45 · Lesbar svikt i byggeskjermen
-Poly Bridge-lærdom: svikt må kunne leses uten tekst. I prøven (`build.js`, `build_phys.js`): (1) **spenningsfarge** på hver del og hvert ledd mens prøven går (blå = slapp, gul = belastet, rød = nær brudd), beregnet av fysikken som ren funksjon (belastning 0–1 per del) og testet; (2) **tydelig brudd-markering** der noe røk (ring, kort pause/slow-motion på selve bruddet, lyd finnes fra før); (3) **«hvorfor brakk det»**: en kort setning som peker på svakeste ledd/planke og et forslag («Planken bar for mye her. Prøv en støtte under», «Tauet røk. Bruk tape eller flere tau»), tekst i `i18n.js` nb/en som nevner knappene; (4) av/på av farger i `SETTINGS` (standard på). Ingen endring i selve fysikkresultatet: samme bygg gir samme utfall som før (regresjonstest mot eksisterende `test_buildphys.mjs`).
-Ferdig når: på iPhone (`devices['iPhone 14']`) vises farger i prøven og et brudd forklares med en setning; tester dekker belastningsberegning (monoton, 0–1), at forklaringen peker på riktig del i en kjent svak bygg, og at utfallet er uendret; `walk_route` og `npm test` grønne.
-
 ### [ ] R46 · Leker som byggematerialer
 Avhenger av R45. Husholdningsting som deler i barneskala, med egen vekt, stivhet og lyd i `build_phys.js` (`MATERIAL`) og `build_logic.js` (`PART_TYPES`): **blyant** (stiv og lett, tynn), **linjal** (lang planke), **legoklosse** (knotter gir snapping til rutenettet og til andre legoklosser), **bok** (tung blokk), **gummistrikk** (elastisk tau som strekker seg og trekker tilbake), **binders** (ledd), **svamp** (demper, myk). Hver del finnes som oppdagbar «del» i minst to rom (bruk eksisterende `parts` i scenene og `build_world`), med modell/ikon i byggeskjermen (bruk eksisterende rendering, ingen nye shadere) og lydtekst. Ingen del er nødvendig for å fullføre et nivå. Regeltabell/egenskaper i testbar form, deterministisk fysikk.
 Ferdig når: minst fem av de sju delene kan plukkes opp, plasseres og testes i byggeskjermen med merkbart ulik oppførsel (tester viser ulik nedbøyning/vekt/strekk), legoknotter snapper, `walk_route` og `npm test` grønne, tegnekall/shader-budsjett holder.
@@ -47,6 +43,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Lesbar svikt i byggeskjermen: spenningsfarge, bruddring og pause, «hvorfor brakk det», build_stress.js (R45, v1.51)
 - [x] Zoom i byggeskjermen: +, −, ⤢, dobbelttrykk, finere rutenett ved høy zoom, build_zoom.js (R44, v1.48; fra tester: Rune; må prøves på iPhone)
 - [x] Motgiften høyere opp i badet (speilskap, klatrevei, alt-vei) og vann-variant (R42, v1.46)
 - [x] Flere kombinasjoner: svamp + vann, håndkle + håndkle, papirhaug, stavhopp-animasjon, combos.js, vault_anim.js (R41, v1.45)
