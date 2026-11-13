@@ -36,4 +36,24 @@ assert.ok(bm.active, 'B åpner på tastatur'); for (const f of keys) f(key('Esca
   assert.ok(log.some(([t, d]) => t === 'bygg' && /står i verdenen/.test(d)), 'logges');
   bm.resetAll(); assert.ok(!bm.inWorld('s') && !L.boxes.some((b) => b.built), 'start på nytt fjerner bygget fra verden');
 }
+
+// R48: leker som testlast: valg uten tastatur, brettet krever ball og bil, løst først når begge har klart bygget, lagres og gjenopprettes
+{
+  const L2 = { boxes: [], build: { sites: [{ id: 'q', x: 0, y: 2, z: 0, w: 6, h: 8, loads: ['ball', 'car'], anchors: [{ u: -1.5, v: 0 }, { u: 1.5, v: 0 }], start: { u: -4, v: 0 }, goal: { u: 4, v: 0 } }], parts: [{ id: 'p', type: 'plank_l', x: 10, y: 1, z: 0 }] } };
+  const log2 = []; const solvedIds = [];
+  const b2 = createBuildMode({ scene: { add() {}, remove() {} }, LEVEL: L2, player, $: () => mkEl(), T: (k) => k, logEv: (t, d) => log2.push([t, d]), toast() {}, TOUCH: true, buzz() {}, audio: {}, isPlay: () => true, isMenu: () => false, isBoss: () => false, isWon: () => false, isOv: () => false, getSnap: () => true, setSnap() {}, allParts: () => true, onSolved: (id) => solvedIds.push(id), getWorld: () => false });
+  const root2 = body.children[body.children.length - 2], click = (l) => { for (const f of root2._l.click || []) f({ target: { closest: () => ({ dataset: { l } }) } }); };
+  b2.update(0.016, true); assert.ok(b2.open()); b2.close('t');
+  b2.load({ got: ['p'], solved: [], sites: { q: { have: ['p'], placed: [{ id: 'p', u: 0, v: 0.25, rot: 0 }], links: [] } } });
+  b2.update(0.016, true); assert.ok(b2.open());
+  const runTry = () => { assert.ok(b2.startTry()); for (let i = 0; i < 2400 && b2.running; i++) b2.update(1 / 60, true); return b2.result.state; };
+  click('ball'); assert.ok(log2.some(([t, d]) => t === 'bygg' && d === 'last valgt: ball'), 'valg av last logges');
+  assert.equal(runTry(), 'won', 'ballen klarer broa'); assert.ok(!b2.isSolved('q') && !solvedIds.length, 'ett krav igjen: ikke løst ennå');
+  assert.ok(log2.some(([t, d]) => /last ball bestått \(1\/2\)/.test(d)), 'bestått logges');
+  const mid = JSON.parse(JSON.stringify(b2.save())); assert.deepEqual(mid.loads, { q: ['ball'] }, 'bestått last lagres');
+  b2.stopTry(); click('car'); assert.equal(runTry(), 'won', 'bilen klarer broa'); assert.ok(b2.isSolved('q') && solvedIds[0] === 'q', 'begge bestått: løst');
+  b2.stopTry(); b2.close('t');
+  const b3 = createBuildMode({ scene: { add() {}, remove() {} }, LEVEL: JSON.parse(JSON.stringify(L2)), player, $: () => mkEl(), T: (k) => k, logEv() {}, toast() {}, TOUCH: true, buzz() {}, audio: {}, isPlay: () => true, isMenu: () => false, isBoss: () => false, isWon: () => false, isOv: () => false, getSnap: () => true, setSnap() {}, allParts: () => true, getWorld: () => false });
+  b3.load(mid); assert.deepEqual(JSON.parse(JSON.stringify(b3.save())).loads, { q: ['ball'] }, 'bestått last gjenopprettes ved fortsett');
+}
 console.log('bygg-DOM-tester grønne');
