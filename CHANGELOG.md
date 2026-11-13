@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.58** – R53: dynamisk toppbånd som samler versjonslinje, delmål, NESTE, hint, svar, ℹ og ⚑ i ett bånd (innstilling «Dynamisk toppbånd»), fra tester: Rune.
 - **1.57** – Veikart: R54 (roligere kamera: automatisk kamerafølging av som standard og bredere synsfelt på stående mobil), fra tester: Rune. Testerne ble desorientert av at skjermen veivet.
 - **1.56** – Veikart: R53 (dynamisk toppbånd som rydder skjermen), fra tester: Rune.
 v1.55: R50 ferdig, replay og spøkelse, bygg som kode (eksport/import), beste bygg på nett
