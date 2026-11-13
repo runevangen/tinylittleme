@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.60** – Veikart: visjonen presiserer at plattform, bygging og gåter ikke er tre minispill, men er bakt inn i én sammenhengende spillopplevelse.
 - **1.59** – Veikart: visjonen sier nå at vi tar det beste fra plattformspill (Super Mario Bros.), byggespill (Bridge Builder) og enkle gåter som i Zelda, i Zelda-kvalitet.
 - **1.58** – R53: dynamisk toppbånd som samler versjonslinje, delmål, NESTE, hint, svar, ℹ og ⚑ i ett bånd (innstilling «Dynamisk toppbånd»), fra tester: Rune.
 - **1.57** – Veikart: R54 (roligere kamera: automatisk kamerafølging av som standard og bredere synsfelt på stående mobil), fra tester: Rune. Testerne ble desorientert av at skjermen veivet.

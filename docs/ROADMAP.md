@@ -10,7 +10,9 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 - **Byggespill som Bridge Builder**: du bygger din egen vei (bro, trapp, vippe) av det som finnes i rommet, med fysikk som er til å stole på, og du ser hvorfor det holdt eller brakk.
 - **Enkle gåter og eventyr som i Zelda**: små gåter med verktøy og nøkler, lesbare mål, belønning for å utforske, varierte fiender, musikk og stemning.
 
-Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig. De tre delene skal henge sammen: det du bygger, bruker du i plattformdelen, og gåtene løses med hopp, verktøy og bygg.
+Dette er **ikke tre minispill** ved siden av hverandre, men **én sammenhengende spillopplevelse**. Du er i samme rom, med samme figur og samme styring hele tiden: du hopper og klatrer, møter et hinder, bygger deg forbi det med ting du finner, og løser en gåte med det du har bygd eller bærer med deg. Bygging og gåter skal vokse ut av rommet og veien du går, ikke være egne moduser som bryter flyten mer enn nødvendig.
+
+Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Regler for alle punkter (agentene leser dette)
 - **Tester først:** punkter som kommer fra testernes tilbakemeldinger ligger øverst i køen og merkes «Fra tester: <navn>». Rekkefølge: krasj/stopp, feil flere har meldt, enkeltfeil, ønsker. Se `CLAUDE.md`.
