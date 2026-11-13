@@ -62,7 +62,7 @@ export const REASON_TEXT = {
 
 // ---------- svar fra Claude + tellere (R36) ----------
 // Innboksen hentes med en sikker funksjon i Supabase (tlm_my_inbox) som bare gir tall og svartekster til den som har koden.
-async function rpc(name, args, { fetchFn = globalThis.fetch, cfg = FEEDBACK, timeoutMs = 8000 } = {}) {
+export async function rpc(name, args, { fetchFn = globalThis.fetch, cfg = FEEDBACK, timeoutMs = 8000 } = {}) {
   const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
   const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
   try {
