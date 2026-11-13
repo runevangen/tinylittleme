@@ -310,11 +310,11 @@ export function createSim(def, opts = {}) {
       const pts = B.idx.map((i) => ({ u: P[i].x, v: P[i].y }));
       if (B.kind === 'chain') {
         const segs = B.groups.map((g) => g.idx.map((i) => ({ u: P[i].x, v: P[i].y })));
-        return { id: B.id, type: B.type, kind: 'chain', pts, segs, broken: B.broken, stress: B.stress, mode: B.mode || null, buckle: B.ratioC || 0 };
+        return { id: B.id, type: B.type, kind: 'chain', pts, segs, broken: B.broken, stress: B.stress };
       }
       const a = P[B.idx[0]], b = P[B.idx[1]], n = B.idx.length; let cx = 0, cy = 0; for (const i of B.idx) { cx += P[i].x; cy += P[i].y; }
       let ls = 0; for (const l of links) if (!l.broken && (bodies[l.a] === B || (l.b >= 0 && bodies[l.b] === B))) ls = Math.max(ls, l.stress || 0);   // R45: stive deler viser belastningen i leddene sine
-      return { id: B.id, type: B.type, kind: 'rect', u: cx / n, v: cy / n, rot: Math.atan2(b.y - a.y, b.x - a.x), pts, broken: B.shattered, stress: Math.max(ls, B.ccap ? Math.min(1.5, B.cf / B.ccap) : 0) };
+      return { id: B.id, type: B.type, kind: 'rect', u: cx / n, v: cy / n, rot: Math.atan2(b.y - a.y, b.x - a.x), pts, broken: B.shattered, stress: Math.max(ls, B.ccap ? Math.min(1.5, Math.max(0, (B.cf / B.ccap - 0.25) / 0.75)) : 0) };   // knusing vises først fra en fjerdedel av grensen (egenvekten alene gir ingen farge)
     });
     return {
       parts, figure: { u: F.x, v: F.y, r: LD.r, vx: F.vx, vy: F.vy, supported, load: loadId, roll: F.x / LD.r },

@@ -8,7 +8,7 @@ const one = (v) => (v ? 1 : 0);
 export function encodeFrame(pose) {
   const a = [pose.figure.u, pose.figure.v, pose.figure.vx, pose.figure.vy, one(pose.figure.supported)];
   for (const p of pose.parts) {
-    if (p.kind === 'rect') a.push(p.u, p.v, p.rot, p.stress || 0);
+    if (p.kind === 'rect') a.push(p.u, p.v, p.rot, p.stress || 0, one(p.broken));
     else { a.push(p.stress || 0, one(p.broken), p.segs.length); for (const s of p.segs) { a.push(s.length); for (const q of s) a.push(q.u, q.v); } }
   }
   for (const l of pose.links) a.push(one(l.broken), l.stress || 0, l.a.u, l.a.v, l.b.u, l.b.v);
@@ -24,7 +24,7 @@ export function decodeFrame(skel, f) {
   let k = 0; const nx = () => f[k++];
   const figure = { u: nx(), v: nx(), r: skel.r, vx: nx(), vy: nx(), supported: !!nx(), load: skel.load }; figure.roll = figure.u / skel.r;
   const parts = skel.parts.map((s) => {
-    if (s.kind === 'rect') { const u = nx(), v = nx(), rot = nx(), stress = nx(); return { id: s.id, type: s.type, kind: 'rect', u, v, rot, broken: false, stress }; }
+    if (s.kind === 'rect') { const u = nx(), v = nx(), rot = nx(), stress = nx(), broken = !!nx(); return { id: s.id, type: s.type, kind: 'rect', u, v, rot, broken, stress }; }
     const stress = nx(), broken = !!nx(), n = nx(), segs = [];
     for (let i = 0; i < n; i++) { const m = nx(), seg = []; for (let j = 0; j < m; j++) seg.push({ u: nx(), v: nx() }); segs.push(seg); }
     return { id: s.id, type: s.type, kind: 'chain', segs, pts: segs.flat(), broken, stress };
