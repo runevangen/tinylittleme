@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.52** – R46: leker som byggematerialer (blyant, linjal, legoklosse, bok, svamp) i byggeskjermen, med egne fysikkverdier og nye byggebrett.
 - **1.51** – R45: lesbar svikt i byggeskjermen. Spenningsfarge på deler og ledd i prøven, bruddring og kort pause på selve bruddet, og en setning om hvorfor det brakk (nb/en). Av/på i innstillinger.
 - **1.50** – Veikart: byggedel-serien R45 (lesbar svikt), R46 (leker som materialer), R47 (stjerner og smulebudsjett), R48 (leker som testlast) og R50 (replay, deling og beste bygg). Supabase: tabell og funksjoner for beste bygg.
 - **1.49** – Designnotat om byggedelen: inspirasjon fra brobyggerspill og forslag R45–R52 (`docs/BYGGING_INSPIRASJON.md`). Ikke lagt i veikartet ennå.
