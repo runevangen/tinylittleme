@@ -4,9 +4,11 @@ import * as THREE from 'three';
 import { letterStack, letterTopY, studLayout, STUD_H, carWheel } from './toys.js';
 import { TOY_BUILDERS } from './toys_view.js';          // R18: levende leker (tennisball, vippehest, wind-up, sprettboks)
 import { shrinkCanvas } from './perf_budget.js';
+import { drawerParts, drawerSpec, partsBuffers, drawerCue } from './drawers.js';   // R55
 
 const porcelain = (color = 0xf1eee6) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.06 });
 const chrome = () => new THREE.MeshStandardMaterial({ color: 0xe4e6e8, metalness: 1, roughness: 0.12 });
+const DRAWER_MAT = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.05 });
 const mesh = (geo, mat, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.castShadow = shadow; m.receiveShadow = true; return m; };
 
 // avrundet rektangel (radius per hjørne: [−x−z, +x−z, +x+z, −x+z]) som Shape / Path i XY
@@ -426,6 +428,12 @@ const SINGLE = {
     const wat = mesh(new THREE.CircleGeometry(1, 28), new THREE.MeshPhysicalMaterial({ color: 0x7fb9d2, roughness: 0.04, transparent: true, opacity: 0.5 }), false); wat.rotation.x = -Math.PI / 2; wat.scale.set(rx * 0.35, rz * 0.3, 1); wat.position.set(cx, sy / 2 + 0.06, cz - rz * 0.3); g.add(wat);
     return g;
   },
+  drawer(sx, sy, sz, o) {                                           // R55: skuff, åpen eller lukket etter scenedata (drawers.js); én geometri, vertexfarger
+    if (!drawerCue()) return null;                                  // «Tydelige skuffer» av: vanlig boks som før
+    const b = partsBuffers(drawerParts(sx, sy, sz, drawerSpec(o.drawer, o.color))), geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(b.pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(b.nor, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(b.col, 3)); geo.setIndex(b.idx);
+    const g = new THREE.Group(); g.add(mesh(geo, DRAWER_MAT)); return g;
+  },
   shelf(sx, sy, sz, o) {
     const g = new THREE.Group(), cr = chrome();
     g.add(mesh(new THREE.BoxGeometry(sx, sy, sz), new THREE.MeshPhysicalMaterial({ color: 0xbfe0dc, roughness: 0.05, transparent: true, opacity: 0.45, transmission: 0.5 }), false));
@@ -545,7 +553,7 @@ const SINGLE = {
 // ting fra scene: bruk det vi har (kind, ellers materialet). Returnerer en gruppe sentrert i boksen, eller null.
 export function buildSingle(kind, size, opts = {}) {
   const fn = SINGLE[kind] || TOY_BUILDERS[kind]; if (!fn) return null;
-  const [sx, sy, sz] = size, o = { color: opts.color ?? 0xcccccc, id: opts.id || '', material: opts.material };
+  const [sx, sy, sz] = size, o = { color: opts.color ?? 0xcccccc, id: opts.id || '', material: opts.material, drawer: opts.drawer };
   const g = fn(sx, sy, sz, o); return g;
 }
 

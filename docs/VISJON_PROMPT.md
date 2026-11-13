@@ -38,6 +38,7 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `roll` | ja | toalettrull |
 | `cup` | ja | tannglass / kopp |
 | `toothbrush` | ja | tannbørste |
+| `drawer` | ja | skuff (R55): tegnes åpen eller lukket etter «drawer»: { open, front, handle, style } i scenen; lukket front = decor: true |
 | `knob` | ja | knott / håndtak (decor: true) |
 | `towel` | ja | brettet håndkle (frotté) |
 | `towel_hang` | ja | håndkle som henger langs en vegg; sett grip: true for klatring |

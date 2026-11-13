@@ -1046,9 +1046,9 @@
     },
     {
       "id": "skuffront_1",
-      "kind": "box",
+      "kind": "drawer",
       "material": "wood",
-      "color": "#d9d2c0",
+      "color": "#c9bd8f",
       "box": [
         70,
         115,
@@ -1059,13 +1059,19 @@
       ],
       "confidence": 1,
       "photos": [],
-      "decor": true
+      "decor": true,
+      "drawer": {
+        "open": false,
+        "front": "#c9bd8f",
+        "handle": "#c9ccd0",
+        "style": "knob"
+      }
     },
     {
       "id": "skuffront_2",
-      "kind": "box",
+      "kind": "drawer",
       "material": "wood",
-      "color": "#d9d2c0",
+      "color": "#9dbf9a",
       "box": [
         70,
         115,
@@ -1076,13 +1082,19 @@
       ],
       "confidence": 1,
       "photos": [],
-      "decor": true
+      "decor": true,
+      "drawer": {
+        "open": false,
+        "front": "#9dbf9a",
+        "handle": "#d6a73a",
+        "style": "bar"
+      }
     },
     {
       "id": "skuffront_3",
-      "kind": "box",
+      "kind": "drawer",
       "material": "wood",
-      "color": "#d9d2c0",
+      "color": "#d99d7e",
       "box": [
         70,
         115,
@@ -1093,13 +1105,19 @@
       ],
       "confidence": 1,
       "photos": [],
-      "decor": true
+      "decor": true,
+      "drawer": {
+        "open": false,
+        "front": "#d99d7e",
+        "handle": "#c9ccd0",
+        "style": "bar"
+      }
     },
     {
       "id": "skuffront_4",
-      "kind": "box",
+      "kind": "drawer",
       "material": "wood",
-      "color": "#d9d2c0",
+      "color": "#9ab6d4",
       "box": [
         70,
         115,
@@ -1110,7 +1128,13 @@
       ],
       "confidence": 1,
       "photos": [],
-      "decor": true
+      "decor": true,
+      "drawer": {
+        "open": false,
+        "front": "#9ab6d4",
+        "handle": "#d6a73a",
+        "style": "knob"
+      }
     },
     {
       "id": "kasse",

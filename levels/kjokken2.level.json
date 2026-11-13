@@ -1375,7 +1375,13 @@
   {
    "shape": "box",
    "id": "skuffront_1",
-   "kind": "box",
+   "kind": "drawer",
+   "drawer": {
+    "open": false,
+    "front": 13221263,
+    "handle": 13225168,
+    "style": "knob"
+   },
    "pos": [
     -17.5,
     2.2,
@@ -1386,13 +1392,19 @@
     3.2,
     0.12
    ],
-   "color": 14275264,
+   "color": 13221263,
    "material": "wood"
   },
   {
    "shape": "box",
    "id": "skuffront_2",
-   "kind": "box",
+   "kind": "drawer",
+   "drawer": {
+    "open": false,
+    "front": 10338202,
+    "handle": 14067514,
+    "style": "bar"
+   },
    "pos": [
     -17.5,
     6.2,
@@ -1403,13 +1415,19 @@
     3.2,
     0.12
    ],
-   "color": 14275264,
+   "color": 10338202,
    "material": "wood"
   },
   {
    "shape": "box",
    "id": "skuffront_3",
-   "kind": "box",
+   "kind": "drawer",
+   "drawer": {
+    "open": false,
+    "front": 14261630,
+    "handle": 13225168,
+    "style": "bar"
+   },
    "pos": [
     -17.5,
     10.2,
@@ -1420,13 +1438,19 @@
     3.2,
     0.12
    ],
-   "color": 14275264,
+   "color": 14261630,
    "material": "wood"
   },
   {
    "shape": "box",
    "id": "skuffront_4",
-   "kind": "box",
+   "kind": "drawer",
+   "drawer": {
+    "open": false,
+    "front": 10139348,
+    "handle": 14067514,
+    "style": "knob"
+   },
    "pos": [
     -17.5,
     14.2,
@@ -1437,7 +1461,7 @@
     3.2,
     0.12
    ],
-   "color": 14275264,
+   "color": 10139348,
    "material": "wood"
   }
  ],

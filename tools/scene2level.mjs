@@ -38,6 +38,7 @@ boxes.push(mk('wall', [x1, 0, z0], [x1 + 1, H, z1], { id: 'vegg_o', ...wallExtra
 boxes.push(mk('wall', [x0, 0, z0 - 1], [x1, H, z0], { id: 'vegg_n', ...wallExtra }));
 boxes.push(mk('wall', [x0, 0, z1], [x1, H, z1 + 1], { id: 'vegg_s', ...wallExtra }));
 
+const drawerOf = (o) => (o.drawer ? { drawer: { open: o.drawer.open !== false, ...(o.drawer.front ? { front: hex(o.drawer.front) } : {}), ...(o.drawer.handle ? { handle: hex(o.drawer.handle) } : {}), ...(o.drawer.style ? { style: o.drawer.style } : {}) } } : {});   // R55: skuffer (drawers.js)
 const decor = [], holds = [], movables = [], hints = [];
 for (const o of scene.objects) {
   const [a, b, c, d, e, f] = o.box;
@@ -49,10 +50,10 @@ for (const o of scene.objects) {
     continue;
   }
   if (o.decor) {
-    decor.push({ shape: 'box', id: o.id, kind: o.kind, pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
+    decor.push({ shape: 'box', id: o.id, kind: o.kind, ...drawerOf(o), pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
     continue;
   }
-  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), ...(o.face ? { face: o.face } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.compress ? { compress: true } : {}), ...(o.shortcut ? { shortcut: true } : {}), ...(o.alt ? { alt: true } : {}), ...(o.grip ? { grip: true } : {}), ...(o.onto ? { onto: o.onto } : {}), ...(o.grip_drain !== undefined ? { gripDrain: o.grip_drain } : {}) }));
+  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...drawerOf(o), ...(o.group ? { group: o.group } : {}), ...(o.face ? { face: o.face } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.compress ? { compress: true } : {}), ...(o.shortcut ? { shortcut: true } : {}), ...(o.alt ? { alt: true } : {}), ...(o.grip ? { grip: true } : {}), ...(o.onto ? { onto: o.onto } : {}), ...(o.grip_drain !== undefined ? { gripDrain: o.grip_drain } : {}) }));
 }
 const hazards = (scene.hazards || []).map((h) => {
   const [a, b, c, d, e, f] = h.box;

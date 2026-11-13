@@ -96,8 +96,9 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
   const s = load('kjokken'), k = kit(s);
   s.name = 'Nivå 6: Kjøkkenet, ryddet om'; s.rev = 1;
   s.source.interpreted_by += '. Ryddet om for nivå 6.';
-  for (let i = 1; i <= 4; i++) k.del(`skuff_${i}`, `skuffknott_${i}`);
-  for (let i = 1; i <= 4; i++) k.add(`skuffront_${i}`, 'box', 'wood', '#d9d2c0', [70, 115, i * 20 - 17, i * 20 - 1, 60, 60.6], { decor: true });   // skuffene er lukket
+  const drw = ['skuff_1', 'skuff_2', 'skuff_3', 'skuff_4'].map((id) => k.get(id).drawer);   // R55: samme frontfarger og håndtak som i nivå 3, men lukket (flat front, tydelig fuge)
+  for (let i = 1; i <= 4; i++) k.del(`skuff_${i}`);
+  for (let i = 1; i <= 4; i++) k.add(`skuffront_${i}`, 'drawer', 'wood', drw[i - 1].front, [70, 115, i * 20 - 17, i * 20 - 1, 60, 60.6], { decor: true, drawer: { ...drw[i - 1], open: false } });   // skuffene er lukket
   k.add('kasse', 'crate', 'wood', '#b88a4a', [208, 252, 0, 20, 66, 100], { help: 'Skuffene er lukket\nNy vei opp: hopp opp på kassa og klatre i håndkleet som henger på komfyren (hold GREP).' });
   k.add('komfyrhandkle', 'towel_hang', 'fabric', '#3f8fd6', [214, 246, 20, 90, 62, 65], { grip: true, onto: 'komfyr_front', grip_drain: -0.6 });
   k.del('komfyr_handtak');
