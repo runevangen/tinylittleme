@@ -46,6 +46,7 @@ export function createSim(def, opts = {}) {
   const mk = (x, y, w, r, b) => { const p = { x, y, px: x, py: y, vx: 0, vy: 0, w, r, b }; P.push(p); return P.length - 1; };
 
   // R49a1: fast løsningsrekkefølge uavhengig av plasseringsrekkefølge: delene sorteres etter geometri (type, u, v, rot), id bare som siste avgjører
+  const member = new Set(); for (const l of def.links || []) { member.add(l.a); if (l.b) member.add(l.b); }   // R49a2: stav-modellen (kraft langs delen, knekking) gjelder deler som er festet med ledd, tape, tau eller gummi: fagverk. Løse planker bøyer som før.
   const q6 = (x) => Math.round((x || 0) * 1e6);
   const orig = new Map(def.placed.map((p, i) => [p.id, i]));
   const sorted = [...def.placed].sort((a, b) => (a.type < b.type ? -1 : a.type > b.type ? 1 : 0) || q6(a.u) - q6(b.u) || q6(a.v) - q6(b.v) || q6(a.rot) - q6(b.rot) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
@@ -56,7 +57,7 @@ export function createSim(def, opts = {}) {
       pcr: chain ? buckleLoad(t, ty.w, ty.h) * strength : 0, tcap: chain ? tensionCap(t, ty.h) * strength : 0, ccapC: chain ? crushCap(t, ty.h) * strength : 0, ccap: chain ? 0 : crushCap(t, Math.min(ty.w, ty.h)) * strength,   // R49a2: knekk-, strekk- og knusekapasitet
       brittle: M.brittle ?? 1, duct: M.duct || 0, nc: 0, nt: 0, cf: 0, shattered: false, bars: [], yielded: false };
     for (const i of idx) P[i].fr = M.fric ?? FRIC_DEFAULT;
-    if (chain) for (let k = 0; k + 1 < idx.length; k++) { const a = P[idx[k]], b = P[idx[k + 1]], c = { type: 'bar', a: idx[k], b: idx[k + 1], rest: Math.hypot(a.x - b.x, a.y - b.y), k: M.axial ?? 1, bar: true, off: false, lam: 0 }; cons.push(c); body.bars.push(c); }   // R49a2: stav mellom nabokuler: delen kan ikke strekkes eller presses sammen, og kraften langs den (trykk/strekk) leses av her
+    if (chain && member.has(part.id)) for (let k = 0; k + 1 < idx.length; k++) { const a = P[idx[k]], b = P[idx[k + 1]], c = { type: 'bar', a: idx[k], b: idx[k + 1], rest: Math.hypot(a.x - b.x, a.y - b.y), k: M.axial ?? 1, bar: true, off: false, lam: 0 }; cons.push(c); body.bars.push(c); }   // R49a2: stav mellom nabokuler: delen kan ikke strekkes eller presses sammen, og kraften langs den (trykk/strekk) leses av her
     body.groups.push(mkGroup(idx));
     bodies.push(body); bodyOf.set(part.id, bi);
   }
