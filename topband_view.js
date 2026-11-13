@@ -2,15 +2,16 @@
 // Trykk på båndet åpner et panel (delmål, brett og versjon, siste svar, send-status, tellere) som lukkes etter ca. 6 s eller ved trykk utenfor.
 import { createQueue, push, clear, compose, statusParts, bandKey, panelModel, shouldClose, bandHeight, AUTO_CLOSE_MS } from './topband_logic.js';
 
-const CSS = `#topband{position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));top:max(6px,env(safe-area-inset-top));z-index:5;display:none;font:600 12px/1.25 system-ui;color:#fff;-webkit-tap-highlight-color:transparent;touch-action:manipulation;--tbh:32px}
+const CSS = `#topband{position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));top:max(6px,env(safe-area-inset-top));z-index:5;display:none;font:600 12px/16px system-ui;color:#fff;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;-webkit-tap-highlight-color:transparent;touch-action:manipulation;--tbh:32px}
 body.tb #topband{display:block}
 body.tb.ovview #topband{visibility:hidden}
 #topband .tbm{display:flex;align-items:center;gap:6px;min-height:var(--tbh);box-sizing:border-box;padding:0 4px 0 9px;background:#121a2ce6;border:1px solid #ffffff2a;border-radius:16px;cursor:pointer}
 #topband.big .tbm{border-radius:18px}
 #topband .tba{flex:none;width:20px;height:20px;display:none}#topband.next .tba{display:block}#topband .tba svg{width:20px;height:20px;transition:transform .08s linear}
-#topband .tbt{flex:1;min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;padding:3px 0;overflow-wrap:anywhere}   /* kort tekst = én linje (32 px); lange mål og hint bryter til to, viktige hint til tre */
+#topband .tbt{flex:1;min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;padding:3px 0;overflow-wrap:anywhere}   /* R56: heltalls linjehøyde (16 px) og jevn padding, så teksten havner på hele piksler (ingen halv-piksel-sentrering = skarp tekst); ingen gjennomsiktighet, transform eller filter på tekst */
+#topband .tbk{flex:none;display:none;white-space:nowrap;color:#ffd23f;font-weight:700}#topband.next .tbk.on{display:block}   /* kort tekst = én linje (32 px); lange mål og hint bryter til to, viktige hint til tre */
 #topband.big .tbt{-webkit-line-clamp:3}
-#topband.dim .tbt{opacity:.62}#topband.next .tbt{color:#ffd9a0}#topband.hint .tbt{color:#eef2fa}
+#topband.dim .tbt{color:#ffffff9e}#topband.next .tbt{color:#ffd9a0}#topband.hint .tbt{color:#eef2fa}
 #topband.danger .tbm{background:#b3261eee;border-color:#fff}#topband.reply .tbm{background:#2f6b45ee;border-color:#5ad17a}
 #topband .tbs{flex:none;color:#ffd23f;font-weight:700;display:none}#topband .tbs.on{display:block}
 #topband .tbv{flex:none;font:600 11px ui-monospace,monospace;color:#cfd8ea}
@@ -40,9 +41,9 @@ const ARROW = '<svg viewBox="-12 -12 24 24"><path d="M0 -10 L7 7 L0 3 L-7 7 Z" f
 export function createTopBand({ T, onInfo, onFlag, onNext, onOpen, logEv }) {
   if (!document.getElementById('tbcss')) { const s = document.createElement('style'); s.id = 'tbcss'; s.textContent = CSS; document.head.appendChild(s); }
   const el = document.createElement('div'); el.id = 'topband';
-  el.innerHTML = `<div class="tbm"><span class="tba">${ARROW}</span><span class="tbt"></span><span class="tbs"></span><span class="tbv"></span><button class="tbb" id="tbi" aria-label="${esc(T('tb.info'))}">i</button><button class="tbb" id="tbq" aria-label="${esc(T('tb.flag'))}">⚑<span class="tbn"></span></button></div><div class="tbp"></div>`;
+  el.innerHTML = `<div class="tbm"><span class="tba">${ARROW}</span><span class="tbt"></span><span class="tbk"></span><span class="tbs"></span><span class="tbv"></span><button class="tbb" id="tbi" aria-label="${esc(T('tb.info'))}">i</button><button class="tbb" id="tbq" aria-label="${esc(T('tb.flag'))}">⚑<span class="tbn"></span></button></div><div class="tbp"></div>`;
   document.body.appendChild(el);
-  const q = createQueue(), main = el.querySelector('.tbm'), arr = el.querySelector('.tba svg'), txt = el.querySelector('.tbt'), st = el.querySelector('.tbs'), ver = el.querySelector('.tbv');
+  const q = createQueue(), main = el.querySelector('.tbm'), arr = el.querySelector('.tba svg'), txt = el.querySelector('.tbt'), hnt = el.querySelector('.tbk'), st = el.querySelector('.tbs'), ver = el.querySelector('.tbv');
   const bi = el.querySelector('#tbi'), bq = el.querySelector('#tbq'), bn = el.querySelector('.tbn'), panel = el.querySelector('.tbp');
   let on = false, open = false, lastTouch = 0, key = '', stKey = '', pKey = '', size = 'compact', last = null, ctxNow = null;
   const setOpen = (v, now = performance.now()) => {
@@ -90,7 +91,7 @@ export function createTopBand({ T, onInfo, onFlag, onNext, onOpen, logEv }) {
       const k = bandKey(c);
       if (k !== key) {
         if (c.prio >= 3 || c.kind !== last?.kind) logEv?.('bånd', `${c.kind}: ${c.text}`.slice(0, 80));
-        key = k; txt.textContent = c.text;
+        key = k; txt.textContent = c.text; hnt.textContent = c.hint || ''; hnt.classList.toggle('on', !!c.hint);
         el.className = `${el.className.includes('open') ? 'open ' : ''}${el.className.includes('normal') ? 'normal ' : ''}${c.kind} ${c.dim ? 'dim ' : ''}${c.prio >= 3 ? 'big' : ''}`.trim();
       }
       last = c;

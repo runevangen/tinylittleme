@@ -31,13 +31,14 @@ export function active(q, now) {
 }
 
 // ctx: { levelLabel, version, nextText, nextAng, goalHead, crumbs: {n, total}|null, goalDone, goalTotal }
-// Returnerer det båndet viser: { kind, prio, text, arrow (vinkel i radianer eller null), dim, id }
+// R56: NESTE har målteksten (nextText) og knappehintet (nextHint, f.eks. «▲ HOPP») hver for seg, så hintet aldri kuttes bort når målnavnet er langt.
+// Returnerer det båndet viser: { kind, prio, text, hint, arrow (vinkel i radianer eller null), dim, id }
 export function compose(q, ctx, now) {
   const m = active(q, now);
-  if (m) return { kind: m.kind, prio: m.prio, text: m.text, arrow: null, dim: false, id: m.id };
-  if (ctx.nextText) return { kind: 'next', prio: PRIO.next, text: ctx.nextText, arrow: Number.isFinite(ctx.nextAng) ? ctx.nextAng : null, dim: false, id: 'next' };
-  if (ctx.goalHead) return { kind: 'goal', prio: PRIO.next, text: ctx.goalHead, arrow: null, dim: false, id: 'goal' };
-  return { kind: 'rest', prio: PRIO.rest, text: ctx.levelLabel || '', arrow: null, dim: true, id: 'rest' };
+  if (m) return { kind: m.kind, prio: m.prio, text: m.text, arrow: null, dim: false, hint: '', id: m.id };
+  if (ctx.nextText) return { kind: 'next', prio: PRIO.next, text: ctx.nextText, hint: ctx.nextHint || '', arrow: Number.isFinite(ctx.nextAng) ? ctx.nextAng : null, dim: false, id: 'next' };
+  if (ctx.goalHead) return { kind: 'goal', prio: PRIO.next, text: ctx.goalHead, hint: '', arrow: null, dim: false, id: 'goal' };
+  return { kind: 'rest', prio: PRIO.rest, text: ctx.levelLabel || '', hint: '', arrow: null, dim: true, id: 'rest' };
 }
 
 // Det faste i båndet (alltid lesbart): versjon og ★-teller. ★ kommer fra delmål hvis de finnes, ellers fra smuler.
@@ -47,14 +48,14 @@ export function statusParts(ctx) {
 }
 
 // Nøkkel som endres når båndets innhold bytter (brukes til logEv og til å unngå unødvendig DOM-skriving).
-export const bandKey = (c) => `${c.kind}|${c.id}|${c.text}`;
+export const bandKey = (c) => `${c.kind}|${c.id}|${c.text}|${c.hint || ''}`;
 
 // Utvidet panel: alt som lå løst før, samlet. goals: [{text, done, active}], rep: siste svar, send: status.
 export function panelModel(ctx) {
   const lines = [];
   lines.push({ k: 'head', text: `${ctx.version ? `v${ctx.version} · ` : ''}${ctx.levelLabel || ''}` });
   if (ctx.goals && ctx.goals.length) lines.push({ k: 'goals', items: ctx.goals });
-  if (ctx.nextText) lines.push({ k: 'next', text: ctx.nextText });
+  if (ctx.nextText) lines.push({ k: 'next', text: ctx.nextHint ? `${ctx.nextText} · ${ctx.nextHint}` : ctx.nextText });
   if (ctx.send) lines.push({ k: 'send', text: ctx.send });
   if (ctx.reply) lines.push({ k: 'reply', text: ctx.reply });
   if (ctx.counts && ctx.counts.length) lines.push({ k: 'counts', items: ctx.counts });
