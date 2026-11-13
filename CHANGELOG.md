@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.49** – Designnotat om byggedelen: inspirasjon fra brobyggerspill og forslag R45–R52 (`docs/BYGGING_INSPIRASJON.md`). Ikke lagt i veikartet ennå.
 - **1.48** – R44: zoom i byggeskjermen (+, −, ⤢, dobbelttrykk, finere rutenett ved høy zoom). Fra tester: Rune.
 - **1.47** – Veikart: R44 (zoom i byggeskjermen), fra tester: Rune.
 - **1.46** – R42: motgiften høyere opp i badet (speilskap med klatrevei og vanskeligere alt-vei) og vann-variant som kan slås på.
