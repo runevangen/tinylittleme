@@ -1313,7 +1313,7 @@ tb.setSize(tbSize); tb.setOn(tbandOn); tbReady = tb;
 function bandCtx() {
   const act = activeGoal(LEVEL), total = goalTotal(LEVEL), st = { crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0 };
   const play = mode === 'play' && !won;
-  const c = { version: VERSION, levelLabel, nextText: play ? compState.text : null, nextAng: compState.ang, goalHead: play && act ? goalLine(LEVEL, act, lang, st) : (total > 0 && goalDone(LEVEL) === total ? T('goal.all') : ''),
+  const c = { version: VERSION, levelLabel, nextText: play ? compState.text : null, nextHint: play ? compState.hint : '', nextAng: compState.ang, goalHead: play && act ? goalLine(LEVEL, act, lang, st) : (total > 0 && goalDone(LEVEL) === total ? T('goal.all') : ''),
     goalDone: goalDone(LEVEL), goalTotal: total, crumbs: crumbsOn && crumbTotal(LEVEL) ? { n: crumbCount(LEVEL), total: crumbTotal(LEVEL) } : null,
     infoOn: infoCard.style.display !== 'none', flagOn: qbtnOn, unread: $('qbtn').classList.contains('hasreply'), badge: markCount() + unsent('BACKLOGG') };
   if (tb.isOpen()) {
@@ -1338,7 +1338,7 @@ function topLayout() {
   compEl.style.top = ct;
   if (open && ct && infoCard.classList.contains('manual')) compEl.style.display = 'none';
 }
-const compState = { text: null, ang: 0 };    // R53: det NESTE-bobla viser, til toppbåndet
+const compState = { text: null, hint: '', ang: 0 };    // R53: det NESTE-bobla viser, til toppbåndet
 function compassFrame(now) {
   document.body.classList.toggle('bossfight', bossFighting());
   if (bossFighting()) { const bm = LEVEL.bossS.mode; if (bm === 'windup' || bm === 'charge') tb.push('boss', PRIO.danger, T('tb.boss.dodge'), 0.6, 'danger'); else if (bm === 'stunned') tb.push('boss', PRIO.danger, T('tb.boss.stun', { jump: TOUCH ? T('btn.jump') : 'Mellomrom' }), 0.6, 'danger'); }
@@ -1352,15 +1352,16 @@ function compassFrame(now) {
   goalArrow.visible = show && player.onGround && (compassMode === 'both' || compassMode === 'arrow' || forced); goalArrowG.visible = goalArrow.visible;
   topLayout();
   const bandNext = show && (compassMode === 'both' || compassMode === 'compass' || forced);
-  if (!bandNext) compState.text = null;
+  if (!bandNext) { compState.text = null; compState.hint = ''; }
   if (!show) { goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); return; }
   const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
   compArrow.style.transform = `rotate(${ang}rad)`;
   const dy = t.y - player.y;
   $('compLbl').textContent = t.final ? T('compass.goal') : T('compass.next', { name: t.label.toUpperCase() });
-  compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.act ? ` · ▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
-  if (bandNext) { compState.text = `${$('compLbl').textContent} · ${compTxt.textContent}`; compState.ang = ang; }
+  const distTxt = `${(dist * 0.05).toFixed(1).replace('.', ',')} m`, hintTxt = t.act ? `▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? '▲ opp' : '▼ ned') : '';
+  compTxt.textContent = distTxt + (hintTxt ? ` · ${hintTxt}` : '');
+  if (bandNext) { compState.text = `${$('compLbl').textContent} · ${distTxt}`; compState.hint = hintTxt; compState.ang = ang; }   // R56: knappehintet for seg, så det aldri kuttes
   const lowCam = innerWidth > innerHeight; goalArrowG.scale.setScalar(lowCam ? 1.35 : 1);   // liggende: lavere kamera, så pila er større og hevet litt
   const placeArrow = (d) => goalArrowG.position.set(player.x + dx / dist * d, player.y + (lowCam ? 0.14 : 0.07) + 0.01 * Math.sin(now / 200), player.z + dz / dist * d);
   placeArrow(1.4); goalArrowG.rotation.y = Math.atan2(-dx, -dz);

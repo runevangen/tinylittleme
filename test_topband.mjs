@@ -84,3 +84,21 @@ for (const sel of ['body.tb #hud', 'body.tb #goals', 'body.tb #compass', 'body.t
 assert.ok(view.includes('env(safe-area-inset-top)'), 'trygt område');
 assert.ok(fs.readFileSync('settings_util.js', 'utf8').includes("'tband', 'tbsize'"), 'i oppsettet');
 console.log('test_topband ok');
+
+// R56: skarp tekst og full NESTE-tekst
+{
+  const long = 'NESTE: KOM OPP PÅ KJØKKENBENKEN OG VIDERE TIL DEN HØYE SKAPDØREN · 21,1 m';
+  const c = compose(createQueue(), { ...ctx, nextText: long, nextHint: '▲ HOPP' }, 0);
+  assert.equal(c.kind, 'next'); assert.equal(c.hint, '▲ HOPP', 'knappehintet følger med separat, også for lang tekst');
+  assert.ok(!c.text.includes('HOPP'), 'hintet ligger ikke i den kuttbare teksten');
+  assert.equal(compose(createQueue(), { ...ctx, nextText: null }, 0).hint, '');
+  assert.notEqual(bandKey({ kind: 'next', id: 'next', text: 't', hint: 'A' }), bandKey({ kind: 'next', id: 'next', text: 't', hint: 'B' }));
+  assert.ok(panelModel({ ...ctx, nextText: long, nextHint: '▲ HOPP' }).find((r) => r.k === 'next').text.endsWith('▲ HOPP'), 'panelet viser hele linjen');
+  assert.ok(/nextHint: play \? compState\.hint/.test(main) && /compState\.hint = hintTxt/.test(main), 'main sender hintet separat');
+  const css = view.match(/const CSS = `([\s\S]*?)`;/)[1];
+  assert.ok(/\.tbk\{flex:none;/.test(css) && /white-space:nowrap/.test(css), 'hint-etiketten krymper aldri');
+  assert.ok(/#topband\{[^}]*font:600 12px\/16px/.test(css), 'heltalls linjehøyde (hele piksler, ingen halv-piksel-sentrering)');
+  const textRules = css.split('\n').filter((l) => /\.tb[tkmv]\b|#topband\{/.test(l)).join('\n');
+  assert.ok(!/backdrop-filter|filter:|will-change|opacity|translate|scale\(/.test(textRules.replace(/\.tba svg\{[^}]*\}/, '')), 'ingen blur/opacity/transform på tekstlagene');
+  assert.ok(!/backdrop-filter/.test(css), 'ingen backdrop-filter i båndet');
+}
