@@ -8,6 +8,7 @@ import {
 } from './build_logic.js';
 import { ZOOM_STEP, gridForScale, anchorRadius, zoomAbout, zoomStep, freeCenter, isDoubleTap, dblTapView, zoomLabel } from './build_zoom.js';   // R44
 import { createSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
+import { stressCss, tint, loadMap, whyBroke, breakTempo, ringAt } from './build_stress.js';   // R45: lesbar svikt
 import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum } from './build_world.js';   // R26: bygget flyttes ut i verdenen
 
 const css = `
@@ -41,7 +42,7 @@ body.building #panel{z-index:10}
 @media (orientation:landscape) and (max-height:520px){#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true }) {
+export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -53,7 +54,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   const TOPPX = () => (innerHeight <= 520 ? 100 : 130), BOTPX = () => (innerHeight <= 520 ? 110 : 160);
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let lastTap = null, zoomMsg = '', zoomMsgT = 0;   // R44: dobbelttrykk og zoom-melding
-  let sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [];   // R25: PRØV
+  let sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [], simBreaks = [], simWhy = null, breakAt = -9;   // R25: PRØV
   const solved = new Set(); let seeShown = false;
   const committed = new Map();               // R26: stedets id -> bygget (som tekst) som står i verdenen akkurat nå
   const worldPlaced = new Map();             // stedets id -> delene slik de ligger etter at de har satt seg
@@ -209,25 +210,25 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   }
   const mixCol = (hex, k) => { const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return `rgb(${Math.round(r + (230 - r) * k)},${Math.round(g * (1 - k * 0.8))},${Math.round(b * (1 - k * 0.8))})`; };
   function drawSim(S, sx) {
-    const pose = sim.pose(), sc = view.scale;
+    const pose = sim.pose(), sc = view.scale, stressOn = getStress(), lm = loadMap(pose);
     for (const p of pose.parts) {
       const t = partType(p.type);
       if (t.pivot) { const m = p.pts[(p.pts.length - 1) / 2]; drawPivot({ u: m.u, v: m.v }, sx); }
       if (p.kind === 'chain') {
         for (const seg of p.segs) {
           if (!seg.length) continue; const pts = seg.map((q) => sx(q.u, q.v));
-          for (const [w, col] of [[t.h * sc + 4, '#2a1d10'], [t.h * sc, mixCol(t.color, Math.min(1, Math.max(0, (p.stress - 0.35) / 0.65)))]]) {
+          for (const [w, col] of [[t.h * sc + 4, '#2a1d10'], [t.h * sc, stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : mixCol(t.color, Math.min(1, Math.max(0, (p.stress - 0.35) / 0.65)))]]) {
             g2.lineCap = 'round'; g2.lineJoin = 'round'; g2.lineWidth = w; g2.strokeStyle = col; g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); if (pts.length === 1) g2.lineTo(pts[0].x + 0.1, pts[0].y); g2.stroke();
           }
         }
       } else {
-        const pts = corners(p).map((c) => sx(c.u, c.v)); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath(); g2.fillStyle = t.color; g2.fill(); g2.lineWidth = 2; g2.strokeStyle = '#2a1d10'; g2.stroke();
+        const pts = corners(p).map((c) => sx(c.u, c.v)); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath(); g2.fillStyle = stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : t.color; g2.fill(); g2.lineWidth = 2; g2.strokeStyle = '#2a1d10'; g2.stroke();
         if (p.type === 'weight') { const c = sx(p.u, p.v); g2.fillStyle = '#fff'; g2.font = `700 ${Math.max(9, sc * 0.5)}px system-ui`; g2.textAlign = 'center'; g2.fillText('kg', c.x, c.y + sc * 0.18); }
       }
     }
     for (const l of pose.links) {
       if (l.broken) continue; const a = sx(l.a.u, l.a.v), b = sx(l.b.u, l.b.v);
-      g2.lineCap = 'round'; g2.strokeStyle = l.stress > 0.6 ? '#ff6a5a' : LINK_COL[l.kind]; g2.lineWidth = l.kind === 'tape' ? 5 : l.kind === 'rope' ? 3 : 2;
+      g2.lineCap = 'round'; g2.strokeStyle = stressOn ? stressCss(lm.links.get(l.id)) : l.stress > 0.6 ? '#ff6a5a' : LINK_COL[l.kind]; g2.lineWidth = l.kind === 'tape' ? 5 : l.kind === 'rope' ? 3 : 2;
       if (l.kind !== 'hinge') { g2.beginPath(); g2.moveTo(a.x, a.y); g2.lineTo(b.x, b.y); g2.stroke(); }
       g2.beginPath(); g2.arc(a.x, a.y, l.kind === 'hinge' ? 6 : 3.5, 0, 7); g2.fillStyle = l.kind === 'hinge' ? '#444' : LINK_COL[l.kind]; g2.fill(); g2.strokeStyle = '#fff'; g2.lineWidth = 1.5; g2.stroke();
     }
@@ -237,9 +238,12 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     g2.fillStyle = '#3b2b00'; for (const ex of [0.25, 0.62]) { g2.beginPath(); g2.arc(c.x + (ex - 0.1) * r, c.y - r * 0.2, Math.max(1.5, r * 0.12), 0, 7); g2.fill(); }
     // brudd: rødt kryss der noe røk
     for (const m of simMarks) { const q = sx(m.u, m.v), k = 9 + 3 * Math.sin(tNow * 8); g2.strokeStyle = '#ff3b30'; g2.lineWidth = 4; g2.lineCap = 'round'; g2.beginPath(); g2.moveTo(q.x - k, q.y - k); g2.lineTo(q.x + k, q.y + k); g2.moveTo(q.x + k, q.y - k); g2.lineTo(q.x - k, q.y + k); g2.stroke(); }
+    for (const m of simMarks) { const ring = ringAt(tNow - m.t0); if (!ring) continue; const q = sx(m.u, m.v); g2.beginPath(); g2.arc(q.x, q.y, ring.r, 0, 7); g2.strokeStyle = `rgba(255,59,48,${ring.a.toFixed(2)})`; g2.lineWidth = 4; g2.stroke(); }   // R45: ring der det røk
+    if (simWhy && simDone) { const q = sx(simWhy.u, simWhy.v), k = 20 + 3 * Math.sin(tNow * 6); g2.beginPath(); g2.arc(q.x, q.y, k, 0, 7); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 3; g2.setLineDash([6, 5]); g2.stroke(); g2.setLineDash([]); }   // R45: gul ring rundt svakeste punkt
+    if (stressOn) { const lx = 12, ly = H - BOTPX() - 22, lw = Math.min(150, W * 0.4), gr = g2.createLinearGradient(lx, 0, lx + lw, 0); gr.addColorStop(0, stressCss(0)); gr.addColorStop(0.5, stressCss(0.5)); gr.addColorStop(1, stressCss(1)); g2.fillStyle = gr; g2.fillRect(lx, ly, lw, 7); g2.strokeStyle = '#2a1d10'; g2.lineWidth = 1; g2.strokeRect(lx, ly, lw, 7); g2.fillStyle = '#fff'; g2.font = '600 10px system-ui'; g2.textAlign = 'left'; g2.fillText(T('build.legend'), lx, ly - 3); g2.textAlign = 'right'; g2.fillText(T('build.legend2'), lx + lw, ly - 3); g2.textAlign = 'left'; }   // R45: forklaring på fargene
     for (const q of confetti) { const p = sx(q.u, q.v); g2.fillStyle = q.c; g2.fillRect(p.x, p.y, 5, 8); }
     const st = sim.state;
-    hintEl.textContent = !simDone ? T('build.hintRun') : st.state === 'won' ? T('build.won') : (simMarks.length ? T('build.lostBreak') : st.reason === 'fell' ? T('build.lostFell') : T('build.lostStuck'));
+    hintEl.textContent = !simDone ? T('build.hintRun') : st.state === 'won' ? T('build.won') : (simWhy ? T(simWhy.key) : simMarks.length ? T('build.lostBreak') : st.reason === 'fell' ? T('build.lostFell') : T('build.lostStuck'));
     btn('try').textContent = T('build.stop'); btn('del').disabled = true; btn('rotl').disabled = btn('rotr').disabled = true; btn('undo').disabled = btn('reset').disabled = true;
   }
 
@@ -345,25 +349,25 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   function startSim() {
     const B = getB(active); if (!B.placed.length) { toast(T('build.tryEmpty')); return false; }
     sim = createSim({ site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() });
-    simAcc = 0; simMarks = []; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
+    simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
     root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger`); return true;
   }
   function stopSim(why) {
-    if (!sim) return; logEv('bygg', `stopp prøve (${why}) etter ${sim.t.toFixed(1)} s`); sim = null; simMarks = []; simDone = false; confetti = []; root.classList.remove('sim'); labels(); trayRender();
+    if (!sim) return; logEv('bygg', `stopp prøve (${why}) etter ${sim.t.toFixed(1)} s`); sim = null; simMarks = []; simBreaks = []; simWhy = null; simDone = false; confetti = []; root.classList.remove('sim'); labels(); trayRender();
   }
   function stepSim(dt) {
-    if (!sim || simDone) return; simAcc += dt * (getSlow() ? 0.35 : 1);
+    if (!sim || simDone) return; simAcc += dt * (getSlow() ? 0.35 : 1) * breakTempo(tNow - breakAt, getBreakFx());
     for (let n = 0; simAcc >= DT && n < 6 && !simDone; n++) {
       simAcc -= DT; sim.step();
       for (const e of sim.drain()) {
-        if (e.type === 'break') { simMarks.push({ u: e.u, v: e.v }); logEv('bygg', `brakk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
-        else if (e.type === 'linkbreak') { simMarks.push({ u: e.u, v: e.v }); logEv('bygg', `${e.kind} røk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
+        if (e.type === 'break') { simMarks.push({ u: e.u, v: e.v, t0: tNow }); simBreaks.push({ kind: 'plank', id: e.id, t: e.t, u: e.u, v: e.v }); breakAt = tNow; logEv('bygg', `brakk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
+        else if (e.type === 'linkbreak') { simMarks.push({ u: e.u, v: e.v, t0: tNow }); simBreaks.push({ kind: e.kind, id: e.id, t: e.t, u: e.u, v: e.v }); breakAt = tNow; logEv('bygg', `${e.kind} røk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
         else if (e.type === 'creak') audio?.bcreak?.(e.stress);
         else if (e.type === 'hop') audio?.bhop?.();
         else if (e.type === 'splash') audio?.bsplash?.();
         else if (e.type === 'win') { audio?.win?.(); buzz?.([30, 40, 30]); solved.add(active.id); commitWorld(active, 'prøve klarte det'); onSolved(active.id); for (let i = 0; i < 46; i++) confetti.push({ u: e.u + (i % 9 - 4) * 0.3, v: e.v + 1 + (i % 5) * 0.2, vx: ((i * 37) % 13 - 6) * 0.4, vy: 5 + (i * 17) % 7, c: ['#ffd23f', '#3df0b0', '#ff6a5a', '#6ab8ff'][i % 4] }); }
       }
-      if (sim.state.state !== 'run') { simDone = true; logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(T(sim.state.state === 'won' ? 'build.won' : simMarks.length ? 'build.lostBreak' : sim.state.reason === 'fell' ? 'build.lostFell' : 'build.lostStuck')); onChange?.(); }
+      if (sim.state.state !== 'run') { simDone = true; simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(T(sim.state.state === 'won' ? 'build.won' : simWhy ? simWhy.key : simMarks.length ? 'build.lostBreak' : sim.state.reason === 'fell' ? 'build.lostFell' : 'build.lostStuck')); onChange?.(); }
     }
     for (const q of confetti) { q.u += q.vx * dt; q.v += q.vy * dt; q.vy -= 14 * dt; }
     confetti = confetti.filter((q) => q.v > -8);
@@ -419,7 +423,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     },
     resetAll() { for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); sim = null; },
     screenPos: (u, v) => (active && view ? toScreen(view, W, H, u, v) : null),   // til tester på mobil (Playwright)
-    isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length } : null; },
+    isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'),
     state: () => ({ active: active?.id || null, builds: [...builds].map(([k, b]) => ({ id: k, have: b.have.length, placed: b.placed.length })) }),
   };

@@ -88,5 +88,5 @@ for (const f of fs.readdirSync('levels')) {
   assert.ok(lv.build.parts.length >= 2 && lv.build.sites.length >= 1, `${f}: bygg trenger sted og deler`);
 }
 // modulene er med i index.html
-const html = fs.readFileSync('index.html', 'utf8'); for (const m of ['build', 'build_logic', 'build_zoom', 'build_phys']) assert.ok(html.includes(`'${m}'`), `${m} mangler i files`);
+const html = fs.readFileSync('index.html', 'utf8'); for (const m of ['build', 'build_logic', 'build_zoom', 'build_phys', 'build_stress']) assert.ok(html.includes(`'${m}'`), `${m} mangler i files`);
 console.log('bygg-tester grønne');

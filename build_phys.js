@@ -216,7 +216,8 @@ export function createSim(def, opts = {}) {
         return { id: B.id, type: B.type, kind: 'chain', pts, segs, broken: B.broken, stress: B.stress };
       }
       const a = P[B.idx[0]], b = P[B.idx[1]], n = B.idx.length; let cx = 0, cy = 0; for (const i of B.idx) { cx += P[i].x; cy += P[i].y; }
-      return { id: B.id, type: B.type, kind: 'rect', u: cx / n, v: cy / n, rot: Math.atan2(b.y - a.y, b.x - a.x), pts, broken: false, stress: 0 };
+      let ls = 0; for (const l of links) if (!l.broken && (bodies[l.a] === B || (l.b >= 0 && bodies[l.b] === B))) ls = Math.max(ls, l.stress || 0);   // R45: stive deler viser belastningen i leddene sine
+      return { id: B.id, type: B.type, kind: 'rect', u: cx / n, v: cy / n, rot: Math.atan2(b.y - a.y, b.x - a.x), pts, broken: false, stress: ls };
     });
     return {
       parts, figure: { u: F.x, v: F.y, r: FIG_R, vx: F.vx, vy: F.vy, supported },
