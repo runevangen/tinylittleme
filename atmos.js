@@ -32,19 +32,22 @@ export function makeAtmos({ scene, LEVEL, floorY, sun, look, name = 'x' }) {
     geo.setAttribute('uv', new THREE.Float32BufferAttribute([0, 1, 1, 1, 0, 0, 1, 0], 2)); geo.setIndex([0, 1, 3, 0, 3, 2]); return geo;
   };
   for (const win of LEVEL.windows || []) {
-    const plan = beamPlan(win, room, sun, floorY); if (!plan) continue;
+    const plan = beamPlan(win, room, sun, floorY, 5, LEVEL.boxes || []); if (!plan) continue;
     plan.slabs.forEach((s, i) => {
       const mat = new THREE.MeshBasicMaterial({ map: beamTex, color: 0xffb640, transparent: true, opacity: 0.36, blending: THREE.NormalBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
       mat.userData.base = 0.34 + (i % 2) * 0.1; mat.userData.mid = lerp3(lerp3(s.a, s.b, 0.5), lerp3(s.a2, s.b2, 0.5), 0.5); mat.userData.ph = i * 1.7; beamMats.push(mat);
       const m = new THREE.Mesh(quad(s.a, s.b, s.a2, s.b2), mat); m.renderOrder = 3; m.frustumCulled = false; groups.rays.add(m);
     });
+    if (plan.patch) {
     const pm = new THREE.MeshBasicMaterial({ map: patchTex, color: 0xffc04a, transparent: true, opacity: 0.55, blending: THREE.NormalBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     pm.userData.base = 0.55; pm.userData.ph = 0.5; beamMats.push(pm);
-    const pg = new THREE.BufferGeometry(), P = plan.patch;
-    pg.setAttribute('position', new THREE.Float32BufferAttribute(P.flat(), 3)); pg.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2)); pg.setIndex([0, 1, 2, 0, 2, 3]);
+    const pg = new THREE.BufferGeometry(), P = plan.patch, pi = [];
+    pg.setAttribute('position', new THREE.Float32BufferAttribute(P.flatMap((c) => c.q.flat()), 3)); pg.setAttribute('uv', new THREE.Float32BufferAttribute(P.flatMap((c) => c.uv.flat()), 2));
+    P.forEach((_, k) => pi.push(k * 4, k * 4 + 1, k * 4 + 2, k * 4, k * 4 + 2, k * 4 + 3)); pg.setIndex(pi);
     const pmesh = new THREE.Mesh(pg, pm); pmesh.renderOrder = 2; pmesh.frustumCulled = false; groups.rays.add(pmesh);
+    }
     // støvkorn som svever i strålene
-    const n = 36, pos = new Float32Array(n * 3), seed = [], dot = cv(32, 32), dg = dot.getContext('2d'), rg = dg.createRadialGradient(16, 16, 0, 16, 16, 16);
+    const n = plan.slabs.length ? 36 : 0, pos = new Float32Array(n * 3), seed = [], dot = cv(32, 32), dg = dot.getContext('2d'), rg = dg.createRadialGradient(16, 16, 0, 16, 16, 16);
     rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.5, 'rgba(255,255,255,.3)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); dg.fillStyle = rg; dg.fillRect(0, 0, 32, 32);
     for (let i = 0; i < n; i++) seed.push({ s: (i * 0.618) % 1, k: ((i * 0.37 + 0.11) % 1), ph: i * 2.3, sl: plan.slabs[i % plan.slabs.length] });
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));

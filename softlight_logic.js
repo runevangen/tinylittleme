@@ -32,7 +32,7 @@ export function planGlows(L, floorY, sun = [28, 60, -24]) {
   const out = [];
   for (const w of L.windows || []) {
     const p = beamPlan(w, L.room, sun, floorY); if (!p) continue;
-    const xs = p.patch.map((q) => q[0]), zs = p.patch.map((q) => q[2]);
+    const xs = p.outline.map((q) => q[0]), zs = p.outline.map((q) => q[2]);
     const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cz = (Math.min(...zs) + Math.max(...zs)) / 2;
     const rx = Math.max(3, (Math.max(...xs) - Math.min(...xs)) * 1.1), rz = Math.max(3, (Math.max(...zs) - Math.min(...zs)) * 1.1);
     out.push({ x: clamp(cx, L.room.x0 + 1, L.room.x1 - 1), y: floorY, z: clamp(cz, L.room.z0 + 1, L.room.z1 - 1), rx, rz, op: 0.4 });
