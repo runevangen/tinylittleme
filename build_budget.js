@@ -7,7 +7,7 @@ export const PART_COST = {
   plank_s: 1, plank_l: 2, plank_t: 3, block: 1, weight: 4, seesaw: 3,          // tre er billig, tunge ting er dyre
   pencil: 1, ruler: 1, lego: 2, book: 4, sponge: 2,                 // leker (R46)
 };
-export const LINK_COST = { tape: 0, hinge: 1, rope: 1 };
+export const LINK_COST = { tape: 0, hinge: 1, rope: 1, band: 1 };
 export const DEFAULT_COST = 2;                                       // ukjent del (skal ikke skje; testen passer på at alle deler har pris)
 export const DEFAULT_STARS = { three: { cost: 4, parts: 3 }, two: { cost: 8, parts: 6 } };
 // ekstradeler som smuler åpner. id-ene er egne (aldri lik en del i verdenen).

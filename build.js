@@ -8,6 +8,7 @@ import {
 } from './build_logic.js';
 import { ZOOM_STEP, gridForScale, anchorRadius, zoomAbout, zoomStep, freeCenter, isDoubleTap, dblTapView, zoomLabel } from './build_zoom.js';   // R44
 import { capacity } from './build_capacity.js';   // R49a1: «Tåler X»-måler
+import { trussHelp, helpKey } from './build_truss.js';   // R49a2: ledd som kan svinge og slanke deler
 import { createSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
 import { stressCss, tint, loadMap, whyBroke, breakTempo, ringAt } from './build_stress.js';   // R45: lesbar svikt
 import { drawToyDetail, drawToyChain } from './build_toys_view.js';   // R46: leker som materialer
@@ -70,7 +71,7 @@ body.building #panel{z-index:10}
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined }) {
+export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -84,7 +85,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   const TOPPX = () => (innerHeight <= 520 ? 100 : 130), BOTPX = () => (innerHeight <= 520 ? 110 : 160) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let lastTap = null, zoomMsg = '', zoomMsgT = 0;   // R44: dobbelttrykk og zoom-melding
-  let loadMore = null, simLoad = DEFAULT_LOAD, sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [], simBreaks = [], simWhy = null, breakAt = -9;   // R25: PRØV
+  let loadMore = null, simLoad = DEFAULT_LOAD, sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [], simBreaks = [], simWhy = null, simHelp = null, breakAt = -9;   // R25: PRØV
   const solved = new Set(); let seeShown = false;
   const recs = new Map(); let recorder = null, ghostRec = null, replaying = false, winSolved = false;   // R50: siste prøve per sted (opptak), spøkelse, replay
   let winRes = null, starsCache = null, lastCrumbs = -1, lastBo = true, lastBonusKey = '';   // R47: siste vellykkede bygg (kostnad og stjerner), bufret stjernekart, bonus-sjekk
@@ -143,7 +144,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   // ---- DOM ----
   const root = document.createElement('div'); root.id = 'bld';
   root.innerHTML = `<canvas></canvas><div class="bt top"><button data-a="back"></button><button data-a="undo"></button><button data-a="reset"></button><button data-a="try" class="go"></button></div>
-  <div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button></div><div class="loads"></div><div class="share"><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>`;
+  <div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>`;
   document.body.appendChild(root);
   const cv = root.querySelector('canvas'), g2 = cv.getContext('2d'), tray = root.querySelector('.tray'), loadsEl = root.querySelector('.loads'), hintEl = root.querySelector('.hint'), modal = root.querySelector('.modal'), mTitle = modal.querySelector('.mt'), mText = modal.querySelector('textarea'), mList = modal.querySelector('.list'), sBtn = (k) => root.querySelector(`[data-s="${k}"]`);
   const btn = (a) => root.querySelector(`[data-a="${a}"]`);
@@ -235,6 +236,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
       if (p.anchored) { const c = sx(p.u, p.v); g2.beginPath(); g2.arc(c.x, c.y, 4, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); }
     }
     drawLinks(B, sx);
+    if (!drag) drawHelp(helpOf(B), sx);
     // snapforhåndsvisning
     if (drag && drag.part && getSnap()) { const s = snapPoint(S, drag.part.u, drag.part.v, { snap: true, grid: curGrid(), snapR: anchorRadius(view.scale) }), p = sx(s.u, s.v); g2.beginPath(); g2.arc(p.x, p.y, s.anchored ? 12 : 4, 0, 7); g2.strokeStyle = s.anchored ? '#3df0b0' : '#ffffff99'; g2.lineWidth = 2; g2.stroke(); }
     // dra-til-brettet-sone
@@ -260,9 +262,24 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
       if (capKey === key) { capRes = r; logEv('bygg', `tåler ca. ${r.n}${r.capped ? '+' : ''} klosser midt på spennet (${r.ms} ms, ${r.sims} sim)`); }
     }, 160);
   }
+  // R49a2: hjelp som viser ledd som kan svinge og slanke deler (build_truss.js). Algebra uten simulering, bufret per bygg.
+  let helpKeyStr = '', helpRes = null;
+  function helpOf(B) {
+    if (!getTruss() || !active) return null;
+    const key = `${active.id}|${sigOf(B)}|${JSON.stringify(B.links)}|${getStrength() * getAxial()}`; if (key === helpKeyStr) return helpRes;
+    helpKeyStr = key; helpRes = B.placed.length ? trussHelp({ placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() * getAxial() }) : null;
+    if (helpRes && (helpRes.joints.length || helpRes.slender.length)) logEv('bygg', `hjelp: ${helpRes.joints.length} ledd kan svinge, ${helpRes.slender.length} slanke deler${helpRes.suggest ? ', diagonal foreslått' : ''}`);
+    return helpRes;
+  }
+  function drawHelp(h, sx, pulse, posOf) {
+    if (!h) return;
+    for (const j of h.joints) { const q = posOf ? posOf(j) : sx(j.u, j.v); if (!q) continue; g2.beginPath(); g2.arc(q.x, q.y, 13 + 2.5 * Math.sin(tNow * 5), 0, 7); g2.strokeStyle = '#ffa940'; g2.lineWidth = 3; g2.stroke(); }
+    if (h.suggest && h.joints.length) { const a = sx(h.suggest.a.u, h.suggest.a.v), b = sx(h.suggest.b.u, h.suggest.b.v); g2.save(); g2.setLineDash([8, 6]); g2.lineDashOffset = -tNow * 14; g2.strokeStyle = '#ffd23f'; g2.lineWidth = 3; g2.beginPath(); g2.moveTo(a.x, a.y); g2.lineTo(b.x, b.y); g2.stroke(); g2.restore(); }
+    for (const s of h.slender) { const q = sx(s.u, s.v); g2.font = '800 12px system-ui'; g2.textAlign = 'center'; const t = '⚠ ' + s.blocks; const w = g2.measureText(t).width + 10; g2.fillStyle = 'rgba(14,20,36,.85)'; g2.fillRect(q.x - w / 2, q.y - 22, w, 18); g2.fillStyle = '#ffa940'; g2.fillText(t, q.x, q.y - 9); g2.textAlign = 'start'; }
+  }
   function drawBudget(B) {
     capUpdate(B);
-    if (!getBudget() && !getBonus() && !getCap()) return;
+    if (!getBudget() && !getBonus() && !getCap() && !getTruss()) return;
     const lines = [];
     if (getCap() && B.placed.length) lines.push({ t: capRes ? (!capRes.n ? T('build.capNone') : capRes.capped ? T('build.capMax', { n: capRes.n }) : T('build.cap', { n: capRes.n })) : T('build.capWait'), c: '#9fe3ff', b: true });
     if (getBudget()) {
@@ -271,6 +288,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
       lines.push({ t: !on ? '' : r.next ? T('build.nextStar', { n: r.next.cost, total: r.next.parts }) : T('build.threeStars'), c: '#ffd9a0' });
       if (best) lines.push({ t: T('build.record', { name: starText(best.stars) }), c: '#bde8cf' });
     }
+    { const h = !sim && !drag ? helpOf(B) : null, k = h && helpKey(h); if (k) lines.push({ t: T(k, { n: h.slender[0]?.blocks ?? 0 }), c: '#ffa940', b: true }); }
     if (getBonus()) { const n = getCrumbs(), nb = nextBonus(n, getBonusStep()); lines.push({ t: nb ? T('build.crumbsNext', { n, total: bonusAt(nb, getBonusStep()) }) : T('build.crumbsAll', { n }), c: '#ffd23f' }); }
     const ls = lines.filter((l) => l.t); if (!ls.length) return;
     const land = innerHeight <= 520, maxW = land ? 230 : Math.max(120, W - 214);   // til venstre, under teksten og ved siden av zoomknappene (ingen kollisjon med verktøy, brett eller flagg)
@@ -280,7 +298,8 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     ls.forEach((l, i) => { g2.font = `${l.b ? 800 : 600} 12px system-ui`; g2.fillStyle = l.c; g2.fillText(l.t, x0 + 7, y0 + 8 + lh * i + 11, w); });
     g2.textAlign = 'start';
   }
-  const LINK_COL = { tape: '#f3e36b', hinge: '#ffffff', rope: '#c79a5a' };
+  const LINK_COL = { tape: '#f3e36b', hinge: '#ffffff', rope: '#c79a5a', band: '#ff7a8a' };
+  const ropey = (l) => l.kind === 'rope' || l.kind === 'band';      // tau og gummistrikk er «snorer»: kan gå over avstand
   function drawPivot(c, sx) {            // R30: støtta under dreiepunktet til en vippe (trekant) og selve dreiepunktet
     const q = sx(c.u, c.v), h = Math.max(14, view.scale * 1.6), w = Math.max(9, view.scale * 0.7);
     g2.beginPath(); g2.moveTo(q.x, q.y); g2.lineTo(q.x - w, q.y + h); g2.lineTo(q.x + w, q.y + h); g2.closePath(); g2.fillStyle = '#2d6f67'; g2.fill(); g2.lineWidth = 2; g2.strokeStyle = '#0d2f2b'; g2.stroke();
@@ -289,14 +308,14 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   function drawLinks(B, sx) {
     for (const l of B.links) {
       const e = linkEnds(B, l); if (!e) continue; const a = sx(e[0].u, e[0].v), b = sx(e[1].u, e[1].v), isSel = selLink === l.id;
-      g2.lineCap = 'round'; g2.strokeStyle = isSel ? '#fff' : '#1a1208'; g2.lineWidth = (l.kind === 'tape' ? 9 : l.kind === 'rope' ? 6 : 3) + (isSel ? 4 : 2);
-      if (l.kind !== 'hinge') { g2.beginPath(); g2.moveTo(a.x, a.y); if (l.kind === 'rope') g2.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 + 10, b.x, b.y); else g2.lineTo(b.x, b.y); g2.stroke(); }
-      g2.strokeStyle = LINK_COL[l.kind]; g2.lineWidth = l.kind === 'tape' ? 6 : l.kind === 'rope' ? 3 : 2;
+      g2.lineCap = 'round'; g2.strokeStyle = isSel ? '#fff' : '#1a1208'; g2.lineWidth = (l.kind === 'tape' ? 9 : ropey(l) ? 6 : 3) + (isSel ? 4 : 2);
+      if (l.kind !== 'hinge') { g2.beginPath(); g2.moveTo(a.x, a.y); if (ropey(l)) g2.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 + 10, b.x, b.y); else g2.lineTo(b.x, b.y); g2.stroke(); }
+      g2.strokeStyle = LINK_COL[l.kind]; g2.lineWidth = l.kind === 'tape' ? 6 : ropey(l) ? 3 : 2;
       if (l.kind === 'tape') g2.setLineDash([5, 4]);
-      if (l.kind !== 'hinge') { g2.beginPath(); g2.moveTo(a.x, a.y); if (l.kind === 'rope') g2.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 + 10, b.x, b.y); else g2.lineTo(b.x, b.y); g2.stroke(); }
+      if (l.kind !== 'hinge') { g2.beginPath(); g2.moveTo(a.x, a.y); if (ropey(l)) g2.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 + 10, b.x, b.y); else g2.lineTo(b.x, b.y); g2.stroke(); }
       g2.setLineDash([]);
       for (const q of l.kind === 'hinge' ? [a] : [a, b]) { g2.beginPath(); g2.arc(q.x, q.y, l.kind === 'hinge' ? 7 : 4, 0, 7); g2.fillStyle = l.kind === 'hinge' ? '#444' : LINK_COL[l.kind]; g2.fill(); g2.strokeStyle = l.kind === 'hinge' ? '#fff' : '#1a1208'; g2.lineWidth = 2; g2.stroke(); }
-      if (!l.b && l.kind !== 'rope') { g2.fillStyle = '#6b5d4a'; g2.fillRect(b.x - 8, b.y + 2, 16, 4); }
+      if (!l.b && !ropey(l)) { g2.fillStyle = '#6b5d4a'; g2.fillRect(b.x - 8, b.y + 2, 16, 4); }
     }
   }
   const mixCol = (hex, k) => { const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return `rgb(${Math.round(r + (230 - r) * k)},${Math.round(g * (1 - k * 0.8))},${Math.round(b * (1 - k * 0.8))})`; };
@@ -315,14 +334,14 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
           drawToyChain(g2, p.type, pts, sc);
         }
       } else {
-        const pts = corners(p).map((c) => sx(c.u, c.v)); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath(); g2.fillStyle = stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : t.color; g2.fill(); g2.lineWidth = 2; g2.strokeStyle = '#2a1d10'; g2.stroke();
+        const pts = corners(p).map((c) => sx(c.u, c.v)); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath(); if (p.broken) g2.globalAlpha = 0.35; g2.fillStyle = stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : t.color; g2.fill(); g2.lineWidth = 2; g2.strokeStyle = '#2a1d10'; g2.stroke(); g2.globalAlpha = 1;   // R49a2: knust del vises svakt
         drawToyDetail(g2, p, sx, sc);
         if (p.type === 'weight') { const c = sx(p.u, p.v); g2.fillStyle = '#fff'; g2.font = `700 ${Math.max(9, sc * 0.5)}px system-ui`; g2.textAlign = 'center'; g2.fillText('kg', c.x, c.y + sc * 0.18); }
       }
     }
     for (const l of pose.links) {
       if (l.broken) continue; const a = sx(l.a.u, l.a.v), b = sx(l.b.u, l.b.v);
-      g2.lineCap = 'round'; g2.strokeStyle = stressOn ? stressCss(lm.links.get(l.id)) : l.stress > 0.6 ? '#ff6a5a' : LINK_COL[l.kind]; g2.lineWidth = l.kind === 'tape' ? 5 : l.kind === 'rope' ? 3 : 2;
+      g2.lineCap = 'round'; g2.strokeStyle = stressOn ? stressCss(lm.links.get(l.id)) : l.stress > 0.6 ? '#ff6a5a' : LINK_COL[l.kind]; g2.lineWidth = l.kind === 'tape' ? 5 : ropey(l) ? 3 : 2;
       if (l.kind !== 'hinge') { g2.beginPath(); g2.moveTo(a.x, a.y); g2.lineTo(b.x, b.y); g2.stroke(); }
       g2.beginPath(); g2.arc(a.x, a.y, l.kind === 'hinge' ? 6 : 3.5, 0, 7); g2.fillStyle = l.kind === 'hinge' ? '#444' : LINK_COL[l.kind]; g2.fill(); g2.strokeStyle = '#fff'; g2.lineWidth = 1.5; g2.stroke();
     }
@@ -333,6 +352,10 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     for (const m of simMarks) { const ring = ringAt(tNow - m.t0); if (!ring) continue; const q = sx(m.u, m.v); g2.beginPath(); g2.arc(q.x, q.y, ring.r, 0, 7); g2.strokeStyle = `rgba(255,59,48,${ring.a.toFixed(2)})`; g2.lineWidth = 4; g2.stroke(); }   // R45: ring der det røk
     if (simWhy && simDone) { const q = sx(simWhy.u, simWhy.v), k = 20 + 3 * Math.sin(tNow * 6); g2.beginPath(); g2.arc(q.x, q.y, k, 0, 7); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 3; g2.setLineDash([6, 5]); g2.stroke(); g2.setLineDash([]); }   // R45: gul ring rundt svakeste punkt
     if (stressOn) { const lx = 12, ly = H - BOTPX() - 22, lw = Math.min(150, W * 0.4), gr = g2.createLinearGradient(lx, 0, lx + lw, 0); gr.addColorStop(0, stressCss(0)); gr.addColorStop(0.5, stressCss(0.5)); gr.addColorStop(1, stressCss(1)); g2.fillStyle = gr; g2.fillRect(lx, ly, lw, 7); g2.strokeStyle = '#2a1d10'; g2.lineWidth = 1; g2.strokeRect(lx, ly, lw, 7); g2.fillStyle = '#fff'; g2.font = '600 10px system-ui'; g2.textAlign = 'left'; g2.fillText(T('build.legend'), lx, ly - 3); g2.textAlign = 'right'; g2.fillText(T('build.legend2'), lx + lw, ly - 3); g2.textAlign = 'left'; }   // R45: forklaring på fargene
+    if (simDone && sim.state.state === 'lost' && getTruss() && simHelp) {      // R49a2: etter en feilet prøve: ledd som kan svinge (ringer ved leddene slik de ligger nå) og deler nær knekking
+      const at = new Map(pose.links.map((l) => [l.id, l.a])); drawHelp(simHelp, sx, true, (j) => { const a = at.get(j.id); return a ? sx(a.u, a.v) : null; });
+      for (const a of sim.axial()) { const r = a.nc / Math.min(a.pcr, a.ccap); if (a.broken || r < 0.6) continue; const part = pose.parts.find((p) => p.id === a.id); if (!part) continue; const m = part.pts[part.pts.length >> 1], q = sx(m.u, m.v); g2.font = '800 12px system-ui'; g2.textAlign = 'center'; g2.fillStyle = '#ffa940'; g2.fillText('⚠ ' + Math.round(r * 100) + '%', q.x, q.y - 12); g2.textAlign = 'start'; }
+    }
     for (const q of confetti) { const p = sx(q.u, q.v); g2.fillStyle = q.c; g2.fillRect(p.x, p.y, 5, 8); }
     const st = sim.state;
     hintEl.textContent = simText();
@@ -440,8 +463,8 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   // ---- PRØV (R25) ----
   function startSim() {
     const B = getB(active); if (!B.placed.length) { toast(T('build.tryEmpty')); return false; }
-    sim = createSim({ site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad() });
-    simLoad = curLoad(); loadMore = null; replaying = false; winSolved = false; ghostRec = getGhost() ? recs.get(active.id) || null : null; recorder = createRecorder(sim, { load: simLoad }); simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
+    sim = createSim({ site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial() });
+    simLoad = curLoad(); loadMore = null; replaying = false; winSolved = false; ghostRec = getGhost() ? recs.get(active.id) || null : null; recorder = createRecorder(sim, { load: simLoad }); simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; simHelp = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
     root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}${ghostRec ? ', med spøkelse' : ''}`); return true;
   }
   const loadThe = (id) => T('build.loadThe.' + id);
@@ -461,14 +484,15 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
       simAcc -= DT; sim.step();
       const evs = sim.drain(); recorder?.frame(sim, evs);   // R50: opptak (bare ekte prøver, ikke replay)
       for (const e of evs) {
-        if (e.type === 'break') { simMarks.push({ u: e.u, v: e.v, t0: tNow }); simBreaks.push({ kind: 'plank', id: e.id, t: e.t, u: e.u, v: e.v }); breakAt = tNow; logEv('bygg', `brakk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
+        if (e.type === 'break') { simMarks.push({ u: e.u, v: e.v, t0: tNow }); simBreaks.push({ kind: e.mode || 'plank', id: e.id, t: e.t, u: e.u, v: e.v }); breakAt = tNow; logEv('bygg', e.mode ? `${e.mode === 'buckle' ? 'knakk' : e.mode === 'tear' ? 'revnet' : 'knust'} ${e.id} ved ${e.t.toFixed(1)} s (kraft ${e.m} mot grense ${e.cap})` : `brakk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
         else if (e.type === 'linkbreak') { simMarks.push({ u: e.u, v: e.v, t0: tNow }); simBreaks.push({ kind: e.kind, id: e.id, t: e.t, u: e.u, v: e.v }); breakAt = tNow; logEv('bygg', `${e.kind} røk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
+        else if (e.type === 'yield') logEv('bygg', `${e.id} bøyer seg (seigt materiale gir etter)`);
         else if (e.type === 'creak') audio?.bcreak?.(e.stress);
         else if (e.type === 'hop') audio?.bhop?.();
         else if (e.type === 'splash') audio?.bsplash?.();
         else if (e.type === 'win') { audio?.win?.(); buzz?.([30, 40, 30]); if (!replaying) { winRes = starsFor(active, getB(active).placed, getB(active).links); const r = afterWin(active, passedOf(active), simLoad); passedL.set(active.id, { sig: sigOf(getB(active)), ids: r.passed }); logEv('bygg', `last ${simLoad} bestått (${r.passed.length}/${requiredLoads(active).length || 1})`); winSolved = !replaying && r.solved; if (!replaying && r.solved) { const rec = recordBuildStars(st0, levelId, active.id, winRes); starsCache = null; logEv('bygg', `stjerner ${winRes.stars} (kostnad ${winRes.cost}, ${winRes.parts} deler) ${active.id}${rec.first ? ', første gang' : rec.improved ? ', ny rekord' : ''}`); solved.add(active.id); commitWorld(active, 'prøve klarte det'); onSolved(active.id); } else if (!replaying) loadMore = nextLoad(active, r.passed); } for (let i = 0; i < 46; i++) confetti.push({ u: e.u + (i % 9 - 4) * 0.3, v: e.v + 1 + (i % 5) * 0.2, vx: ((i * 37) % 13 - 6) * 0.4, vy: 5 + (i * 17) % 7, c: ['#ffd23f', '#3df0b0', '#ff6a5a', '#6ab8ff'][i % 4] }); }
       }
-      if (sim.state.state !== 'run') { simDone = true; if (recorder) { recs.set(active.id, recorder.finish(sim.state)); logEv('bygg', `opptak lagret: ${recorder.rec.frames.length} steg`); recorder = null; if (winSolved) submitBest(); } shareSync(); simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(simText()); onChange?.(); }
+      if (sim.state.state !== 'run') { simDone = true; if (recorder) { recs.set(active.id, recorder.finish(sim.state)); logEv('bygg', `opptak lagret: ${recorder.rec.frames.length} steg`); recorder = null; if (winSolved) submitBest(); } shareSync(); simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; simHelp = sim.state.state === 'lost' && getTruss() ? helpOf(getB(active)) : null; if (!simWhy && simHelp?.joints.length) { const j = simHelp.joints[0]; simWhy = { key: 'build.why.floppy', kind: 'floppy', id: j.id, u: j.u, v: j.v, t: sim.t }; } if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(simText()); onChange?.(); }
     }
     for (const q of confetti) { q.u += q.vx * dt; q.v += q.vy * dt; q.vy -= 14 * dt; }
     confetti = confetti.filter((q) => q.v > -8);

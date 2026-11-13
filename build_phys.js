@@ -16,6 +16,8 @@ import { loadParams, driveSpeed, isLoad, DEFAULT_LOAD } from './build_loads.js';
 const MOM_FILTER = 0.03;                             // R49a1: glatting av momentet per delsteg (demper støt og numerisk støy)
 const TAPE_LAMINATE = 4;                            // R49a1: skjærstyrke for teip mellom parallelle planker (× LINK_SNAP.tape)
 const TRUSS_ALPHA = 0.6;                 // R49a2: stivhet for staver med ledd i begge ender
+const AX_DELAY = 0.3, AX_STEPS = 3;                    // R49a2: knekking/strekkbrudd vurderes først 0,3 s etter oppstarten og når grensen er passert 3 steg på rad
+const BAND_DAMP = 0.06;                                // R49a2: demping langs et utstrukket gummistrikk per delsteg
 const COMP_K = 0.25;                                  // R49a1: hvor mange tapepunkter (veid) som skal til for å nå halv sammensatt virkning
 export const DT = 1 / 60, SUB = 2, ITER = 6;
 export const G = 32;                    // tyngde (enheter/s²); en enhet = 5 cm, men spillet skal føles tungt og lesbart
@@ -41,7 +43,7 @@ export const siteGoal = (site) => ({ u: site.goal?.u ?? site.w / 2 - 1, v: site.
 
 // def: { site, placed: [{id,type,u,v,rot}], links: [...] (se build_logic.addLink) }, opts: { strength = 1 (skalerer brekkgrensene), load = 'figure' (testlast, se build_loads.js), hold }
 export function createSim(def, opts = {}) {
-  const site = def.site, strength = opts.strength ?? 1, boxes = siteBoxes(site);
+  const site = def.site, strength = opts.strength ?? 1, axialK = opts.axial ?? 1, boxes = siteBoxes(site);
   const P = [], bodies = [], cons = [], noCol = new Set(), events = [];
   const bodyOf = new Map();
   const mk = (x, y, w, r, b) => { const p = { x, y, px: x, py: y, vx: 0, vy: 0, w, r, b }; P.push(p); return P.length - 1; };
@@ -55,7 +57,7 @@ export function createSim(def, opts = {}) {
     const t = part.type, M = mat(t), lay = layout(t), bi = bodies.length, chain = isChain(t), rad = chain && M.d > 1 ? Math.max(PR, partType(t).h / 2) : PR;   // høye bjelker (dybde > 1) har tykke kuler så formen og kontakten stemmer med tegningen
     const idx = lay.map((q) => { const w = toWorldPt(part, q.x, q.y); const k = mk(w.u, w.v, 1 / M.m, rad, bi); P[k].lx = q.x; P[k].ly = q.y; P[k].sx = 0; P[k].sy = 0; if (M.damp) P[k].d = M.damp; return k; });
     const ty = partType(t), body = { id: part.id, bi, oi: orig.get(part.id), type: t, kind: chain ? 'chain' : 'rect', idx, groups: [], alpha: M.alpha ?? 1, mcap: (M.mcap || (M.snap || 99) * 100) * strength, comp: 0, stress: 0, creakT: -9, broken: false, part,
-      pcr: chain ? buckleLoad(t, ty.w, ty.h) * strength : 0, tcap: chain ? tensionCap(t, ty.h) * strength : 0, ccapC: chain ? crushCap(t, ty.h) * strength : 0, ccap: chain ? 0 : crushCap(t, Math.min(ty.w, ty.h)) * strength,   // R49a2: knekk-, strekk- og knusekapasitet
+      pcr: chain ? buckleLoad(t, ty.w, ty.h) * strength * axialK : 0, tcap: chain ? tensionCap(t, ty.h) * strength * axialK : 0, ccapC: chain ? crushCap(t, ty.h) * strength * axialK : 0, ccap: chain ? 0 : crushCap(t, Math.min(ty.w, ty.h)) * strength,   // R49a2: knekk-, strekk- og knusekapasitet
       brittle: M.brittle ?? 1, duct: M.duct || 0, nc: 0, nt: 0, cf: 0, shattered: false, bars: [], yielded: false };
     for (const i of idx) P[i].fr = M.fric ?? FRIC_DEFAULT;
     if (chain && member.has(part.id)) for (let k = 0; k + 1 < idx.length; k++) { const a = P[idx[k]], b = P[idx[k + 1]], c = { type: 'bar', a: idx[k], b: idx[k + 1], rest: Math.hypot(a.x - b.x, a.y - b.y), k: M.axial ?? 1, bar: true, off: false, lam: 0 }; cons.push(c); body.bars.push(c); }   // R49a2: stav mellom nabokuler: delen kan ikke strekkes eller presses sammen, og kraften langs den (trykk/strekk) leses av her
@@ -246,6 +248,11 @@ export function createSim(def, opts = {}) {
       if (B.kind === 'chain') { let c = 0, t = 0; for (const s of B.bars) if (!s.off) { const q = s.lam / (h * h); if (-q > c) c = -q; if (q > t) t = q; } const e = B.groups.length === 1 ? B.groups[0].ax || 0 : 0; B.ex = e; c += Math.max(0, e); t += Math.max(0, -e); B.nc += (c * AXIAL_CAL - B.nc) * CRUSH_FILTER; B.nt += (t * AXIAL_CAL - B.nt) * CRUSH_FILTER; }
       else if (B.ccap && !B.shattered) B.cf += (cl[B.bi] / (h * h) / 2 - B.cf) * CRUSH_FILTER;
     }
+    for (const c of cons) if (c.type === 'band' && !c.link.broken) {      // R49a2: gummistrikket er litt dempet langs lengden (ellers spretter det evig)
+      const a = P[c.a], b = P[c.b], dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy), ws = a.w + b.w; if (d <= c.rest || !ws) continue;
+      const nx = dx / d, ny = dy / d, vr = ((a.x - a.px) - (b.x - b.px)) / h * nx + ((a.y - a.py) - (b.y - b.py)) / h * ny, dv = vr * BAND_DAMP;
+      a.px += nx * dv * h * a.w / ws; a.py += ny * dv * h * a.w / ws; b.px -= nx * dv * h * b.w / ws; b.py -= ny * dv * h * b.w / ws;
+    }
     for (const p of P) { if (!p.w) continue; p.vx = calm ? 0 : (p.x - p.px) / h; p.vy = calm ? 0 : (p.y - p.py) / h; const sp = Math.hypot(p.vx, p.vy); if (sp > 60) { p.vx *= 60 / sp; p.vy *= 60 / sp; } const dm = p.d || 0.9995; p.vx *= dm; p.vy *= dm; }
   }
 
@@ -274,7 +281,8 @@ export function createSim(def, opts = {}) {
       // R49a2: trykk og strekk er ulike. En slank del knekker i trykk (Euler: Pcr ∝ E·h³/L²) og ryker i strekk ved en annen grense; ved knekking bøyer den ut i midten og er ferdig som bærer.
       if (!B.broken && B.groups.length === 1) {
         const rc = B.nc / Math.min(B.pcr, B.ccapC), rt = B.nt / B.tcap; worst = Math.max(worst, rc, rt); B.ratioC = B.nc / B.pcr; B.ratioT = rt;
-        const mode = B.nc > B.pcr ? 'buckle' : B.nt > B.tcap ? 'tear' : B.nc > B.ccapC ? 'crush' : null, g = B.groups[0];
+        let mode = B.nc > B.pcr ? 'buckle' : B.nt > B.tcap ? 'tear' : B.nc > B.ccapC ? 'crush' : null; const g = B.groups[0];
+        B.over = mode && state.t > SETTLE + AX_DELAY ? B.over + 1 : 0; if (B.over < AX_STEPS) mode = null;      // ikke i oppstarten, og bare når grensen er passert flere steg på rad (som koblingene)
         if (mode && g.idx.length >= 4) {
           const best = Math.min(g.idx.length - 2, Math.max(1, (g.idx.length >> 1) - 1)); cutBars(B, g.idx[best], g.idx[best + 1]);
           const L = g.idx.slice(0, best + 1), R = g.idx.slice(best + 1); B.groups.splice(0, 1, mkGroup(L), mkGroup(R)); B.broken = true; B.mode = mode;
@@ -349,7 +357,7 @@ export function runSim(def, opts = {}) {
   const sim = createSim(def, opts), breaks = [], linkBreaks = []; const maxT = opts.maxT ?? MAX_T;
   while (sim.state.state === 'run' && sim.t < maxT + 0.001) {
     sim.step();
-    for (const e of sim.drain()) { if (e.type === 'break') breaks.push({ id: e.id, u: e.u, v: e.v, t: e.t }); else if (e.type === 'linkbreak') linkBreaks.push({ id: e.id, kind: e.kind, u: e.u, v: e.v, t: e.t }); }
+    for (const e of sim.drain()) { if (e.type === 'break') breaks.push({ id: e.id, u: e.u, v: e.v, t: e.t, ...(e.mode ? { mode: e.mode } : {}) }); else if (e.type === 'linkbreak') linkBreaks.push({ id: e.id, kind: e.kind, u: e.u, v: e.v, t: e.t }); }
   }
   return { load: isLoad(opts.load) ? opts.load : DEFAULT_LOAD, result: sim.state.state === 'won' ? 'won' : 'lost', reason: sim.state.reason, t: +sim.t.toFixed(3), breaks, linkBreaks, figure: { u: sim.figure.x, v: sim.figure.y } };
 }

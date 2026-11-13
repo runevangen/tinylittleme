@@ -21,7 +21,8 @@ export const PART_TYPES = {
   seesaw: { w: 8, h: 0.5, name: 'Vippe', en: 'Seesaw', color: '#3fa89b', pivot: true },   // R30: planke som svinger rundt midten (festet i en liten støtte under midtpunktet)
   ...TOY_TYPES,                                                                          // R46: blyant, linjal, legoklosse, bok, svamp (build_toys.js)
 };
-export const LINK_KINDS = ['tape', 'hinge', 'rope'];                   // R25: tape = stiv, ledd = svinger, tau = bare i strekk
+export const LINK_KINDS = ['tape', 'hinge', 'rope', 'band'];           // R25: tape = stiv, ledd = svinger (R49a2: ekte punktledd), tau = bare i strekk; R49a2: gummistrikk = fjær, strekker seg og trekker seg tilbake
+const ROPELIKE = (k) => k === 'rope' || k === 'band';                   // tau og gummistrikk kan gå over avstand
 export const LINK_MAX = 0.75;                                          // tape/ledd: delene må ligge inntil hverandre (avstand mellom kulene)
 export const PR = 0.25;                                                // R25: kule-radius i modellen (alle deler er bygd av kuler)
 export const layout = (t) => {                                         // R25: kulene en del er bygd av (lokale koordinater); fysikken bruker samme oppsett
@@ -120,15 +121,15 @@ export function addLink(B, kind, aId, bId, groundPt) {
     if (B.links.some((l) => l.b && ((l.a === aId && l.b === bId) || (l.a === bId && l.b === aId)) && (l.kind === kind))) return { ok: false, why: 'dup' };
     const pa = partPoints(a), pb = partPoints(b); let best = Infinity, ia = 0, ib = 0;
     pa.forEach((x, i) => pb.forEach((y, j) => { const d = Math.hypot(x.u - y.u, x.v - y.v); if (d < best) { best = d; ia = i; ib = j; } }));
-    if (kind === 'rope') { la = { x: 0, y: 0 }; lb = { x: 0, y: 0 }; }
+    if (ROPELIKE(kind)) { la = { x: 0, y: 0 }; lb = { x: 0, y: 0 }; }
     else {
       if (best > LINK_MAX) return { ok: false, why: 'far' };
       const m = { u: (pa[ia].u + pb[ib].u) / 2, v: (pa[ia].v + pb[ib].v) / 2 }; la = toLocalPt(a, m.u, m.v); lb = toLocalPt(b, m.u, m.v);
     }
   } else {
     g = { u: groundPt.u, v: groundPt.v };
-    if (kind !== 'rope') { const near = Math.min(...partPoints(a).map((x) => Math.hypot(x.u - g.u, x.v - g.v))); if (near > LINK_MAX + 0.3) return { ok: false, why: 'far' }; }
-    la = kind === 'rope' ? { x: 0, y: 0 } : toLocalPt(a, g.u, g.v);
+    if (!ROPELIKE(kind)) { const near = Math.min(...partPoints(a).map((x) => Math.hypot(x.u - g.u, x.v - g.v))); if (near > LINK_MAX + 0.3) return { ok: false, why: 'far' }; }
+    la = ROPELIKE(kind) ? { x: 0, y: 0 } : toLocalPt(a, g.u, g.v);
   }
   pushHist(B);
   let n = 1; while (B.links.some((l) => l.id === 'k' + n)) n++;

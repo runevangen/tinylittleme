@@ -7,6 +7,7 @@ import { partPoints, PR } from './build_logic.js';
 
 export const CAP_MAX = 16;          // flere enn dette viser vi som «16+»
 export const CAP_SECS = 3;          // hvor lenge hver prøvelast får stå
+export const CAP_SETTLE = 12, CAP_SAG = 1.0;   // R49a2: etter 12 steg måles første kloss; synker den mer enn 1 enhet etterpå har bygget gitt etter
 export const CAP_BLOCK_H = 1.5;     // en kloss er 1,5 enheter høy (se PART_TYPES.block)
 
 // midt i det bredeste gapet mellom dekkene (der en bro ligger); uten gap: midt på stedet
@@ -28,8 +29,10 @@ export function holds(def, k, opts = {}) {
   if (top === null) return k === 0;
   const load = Array.from({ length: k }, (_, i) => ({ id: '_cap' + i, type: 'block', u, v: top + CAP_BLOCK_H / 2 + 0.02 + CAP_BLOCK_H * i, rot: 0 }));
   const sim = createSim({ site: def.site, placed: [...(def.placed || []), ...load], links: def.links || [] }, { strength: opts.strength ?? 1, hold: true });
-  const n = Math.round((opts.secs ?? CAP_SECS) / DT);
-  for (let i = 0; i < n; i++) { sim.step(); for (const e of sim.drain()) if (e.type === 'break' || e.type === 'linkbreak') return false; }
+  const n = Math.round((opts.secs ?? CAP_SECS) / DT), lowId = '_cap0'; let v0 = null;
+  const lowV = () => sim.pose().parts.find((p) => p.id === lowId)?.v ?? null;
+  for (let i = 0; i < n; i++) { sim.step(); for (const e of sim.drain()) if (e.type === 'break' || e.type === 'linkbreak') return false; if (i === CAP_SETTLE) v0 = lowV(); }
+  if (v0 !== null && lowV() !== null && v0 - lowV() > CAP_SAG) return false;      // R49a2: en konstruksjon som gir etter (firkant uten diagonal) tåler ikke lasten, selv om ingenting brekker
   return !sim.pose().parts.some((p) => (p.kind === 'rect' ? p.v : p.pts.reduce((m, q) => Math.min(m, q.v), 99)) < -2);   // faller noe i gapet (en bro som ikke når over, last som sklir av), holder det ikke
 }
 // {n, max, at}: n = høyeste antall klosser som holder (0..max), at = posisjon. max = tak (da holder alt vi tester)

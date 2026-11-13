@@ -41,7 +41,7 @@ BL.restore(B2, null); assert.equal(B2.have.length, 0);
 
 // R25: koblinger (tape, ledd, tau): lages mellom plasserte deler, følger delene, angres, lagres
 const BK = BL.createBuild(site, { a: 'plank_s', b: 'block', w: 'weight' }, ['a', 'b', 'w']); BK.snap = false;
-assert.ok(BL.PART_TYPES.weight && BL.LINK_KINDS.join() === 'tape,hinge,rope');
+assert.ok(BL.PART_TYPES.weight && BL.LINK_KINDS.join() === 'tape,hinge,rope,band')   // R49a2: gummistrikk lagt til sist (kodeformatet er uendret for gamle koder);
 assert.ok(!BL.addLink(BK, 'tape', 'a', 'b').ok, 'delene må være plassert');
 BL.place(BK, 'a', 0, 0.25, 0); BL.place(BK, 'b', 0, 1.25, 0); BL.place(BK, 'w', 8, 3, 0);
 assert.equal(BL.addLink(BK, 'tape', 'a', 'b').ok, true, 'tape mellom deler som ligger inntil hverandre');
