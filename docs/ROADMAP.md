@@ -22,10 +22,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 > **Byggedel-serien (R45–R50):** se `docs/BYGGING_INSPIRASJON.md` for bakgrunn. Mål: blande plattform og byggespill med god, deterministisk fysikk. Felles regler: mobil først, `walk_route` uendret grønn, det finnes alltid en vanskelig vei uten bygging, fysikken (`build_phys.js`) forblir deterministisk (samme bygg gir samme resultat, testet), ingen økning i tegnekall/shadere utover budsjettet, innstillinger i `SETTINGS`, `logEv('bygg', …)`. R49 (live-vekt) og R51 (dynamiske deler) og R52 (verksted) er med vilje IKKE med: de diskuteres først.
 
-### [ ] R47 · Stjerner og smulebudsjett for bygg
-Avhenger av R46. Hver del har en **kostnad** (tre/linjal billig, legoklosse middels, vekt/bok dyrt, osv., tabell i egen testbar modul). Et vellykket bygg får **1–3 stjerner** etter total kostnad og antall deler mot terskler per byggested (data i scenen). Smuler (`collect.js`) kan «kjøpe» ekstra materiale: en enkel regel som at ekstra deler/bedre materiale låses opp ved et antall smuler, vist i byggeskjermen og lagt i rewards-lagringen (`rewards.js`, autolagring). Stjerner vises i byggeskjermen, på målskjermen og i delmålet. Alt valgfritt og aldri nødvendig for å fullføre.
-Ferdig når: kostnad og stjerner beregnes av ren, testet logikk (flere kjente bygg gir forventede stjerner), smulebudsjett fungerer og lagres/gjenopprettes, `walk_route` og `npm test` grønne.
-
 ### [ ] R48 · Leker som testlast
 Avhenger av R46. I stedet for bare testkulen kan prøven bruke **leker** som last: leke-bilen (hjul, middels vekt), tennisballen (ruller), wind-up-roboten (går selv, ujevn). Lasten velges i byggeskjermen (store knapper, uten tastatur), hver har fysikkparametere i `build_phys.js` (masse, radius/hjul, drift) som deterministisk logikk. Flere laster kan prøves etter hverandre på samme bygg (f.eks. først ballen, så bilen). Et brett kan kreve en bestemt last (data i scenen), ellers er valget fritt. Tekst som nevner knappene.
 Ferdig når: minst tre ulike laster kan prøves, de oppfører seg ulikt i tester (samme bygg: bil krever sterkere bro enn ball), utfallet er deterministisk, `walk_route` og `npm test` grønne.
@@ -39,6 +35,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Kostnad, stjerner og smulebudsjett for bygg, build_budget.js (R47, v1.53)
 - [x] Leker som byggematerialer: blyant, linjal, legoklosse, bok, svamp, build_toys.js (R46, v1.52)
 - [x] Lesbar svikt i byggeskjermen: spenningsfarge, bruddring og pause, «hvorfor brakk det», build_stress.js (R45, v1.51)
 - [x] Zoom i byggeskjermen: +, −, ⤢, dobbelttrykk, finere rutenett ved høy zoom, build_zoom.js (R44, v1.48; fra tester: Rune; må prøves på iPhone)
