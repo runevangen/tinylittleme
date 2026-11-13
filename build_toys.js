@@ -7,6 +7,7 @@
 //  - bok: tung blokk
 //  - svamp: myk og dempende, brekker aldri
 // Gummistrikk (elastisk tau) og binders (ledd) er ikke med ennå; de trenger egne koblingstyper i build_phys.js.
+import { MATERIALS } from './build_materials.js';
 export const STUD = 0.5;                 // knott-avstand (enheter): samme som rutenettet, så legoklosser aldri havner «mellom» knottene
 
 export const TOY_TYPES = {
@@ -17,13 +18,8 @@ export const TOY_TYPES = {
   sponge: { w: 4, h: 1.4, name: 'Svamp', en: 'Sponge', color: '#f0d24a', toy: true, icon: '🧽', snd: 'Pøff!' },
 };
 // m = masse per kule, alpha = stivhet (lavere = bøyer mer), snap = største nedbøyning før den brekker, damp = fartsdemping per steg (svamp)
-export const TOY_MATERIAL = {
-  pencil: { m: 0.25, alpha: 0.5, snap: 0.3, mcap: 1600 },   // R49a1: mcap = bøyemoment-kapasitet (se build_phys.js)
-  ruler: { m: 0.3, alpha: 0.05, snap: 1.8, mcap: 6500 },
-  lego: { m: 0.8, alpha: 1 },
-  book: { m: 2.5, alpha: 1 },
-  sponge: { m: 0.3, alpha: 0.02, damp: 0.97 },
-};
+// R49a2: materialene står nå i build_materials.js (én tabell for alle deler); her bare utdraget for lekene
+export const TOY_MATERIAL = Object.fromEntries(['pencil', 'ruler', 'lego', 'book', 'sponge'].map((k) => [k, MATERIALS[k]]));
 export const TOY_IDS = Object.keys(TOY_TYPES);
 export const isToy = (t) => !!TOY_TYPES[t];
 export const hasKnobs = (t) => !!TOY_TYPES[t]?.knobs;
