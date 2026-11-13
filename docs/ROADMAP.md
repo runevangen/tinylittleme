@@ -22,10 +22,6 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 
 > **Byggedel-serien (R45–R50):** se `docs/BYGGING_INSPIRASJON.md` for bakgrunn. Mål: blande plattform og byggespill med god, deterministisk fysikk. Felles regler: mobil først, `walk_route` uendret grønn, det finnes alltid en vanskelig vei uten bygging, fysikken (`build_phys.js`) forblir deterministisk (samme bygg gir samme resultat, testet), ingen økning i tegnekall/shadere utover budsjettet, innstillinger i `SETTINGS`, `logEv('bygg', …)`. R49 (live-vekt) og R51 (dynamiske deler) og R52 (verksted) er med vilje IKKE med: de diskuteres først.
 
-### [ ] R48 · Leker som testlast
-Avhenger av R46. I stedet for bare testkulen kan prøven bruke **leker** som last: leke-bilen (hjul, middels vekt), tennisballen (ruller), wind-up-roboten (går selv, ujevn). Lasten velges i byggeskjermen (store knapper, uten tastatur), hver har fysikkparametere i `build_phys.js` (masse, radius/hjul, drift) som deterministisk logikk. Flere laster kan prøves etter hverandre på samme bygg (f.eks. først ballen, så bilen). Et brett kan kreve en bestemt last (data i scenen), ellers er valget fritt. Tekst som nevner knappene.
-Ferdig når: minst tre ulike laster kan prøves, de oppfører seg ulikt i tester (samme bygg: bil krever sterkere bro enn ball), utfallet er deterministisk, `walk_route` og `npm test` grønne.
-
 ### [ ] R50 · Replay, deling og beste bygg
 Avhenger av R45 og R47. (1) **Replay/spøkelse:** siste prøve kan spilles av igjen (spøkelse i byggeskjermen) uten å simulere på nytt (lagre tilstand per steg eller bruk determinismen). (2) **Eksporter bygget som kort kode** (komprimert JSON i `build_logic.js`, maks ca. 6000 tegn) og importer den, med validering (ukjente deler/ugyldige verdier avvises). (3) **Beste bygg (Supabase):** etter et vellykket bygg sendes det til tabellen `tlm_bridges` via den ferdige funksjonen `tlm_submit_bridge(c, lvl, ver, n_parts, n_cost, n_stars, bcode)` (kall `POST {url}/rest/v1/rpc/tlm_submit_bridge` med anon-nøkkelen og tester-koden fra `tlm.tcode`, se `feedback_send.js` for mønsteret), og `tlm_best_bridges(c, lvl)` gir topp 10 **anonymt** (rangering, deler, kostnad, stjerner, kode, `is_me`). Vis «Du er nr 2 av 4» og la spilleren prøve en annens bygg (importere koden) i byggeskjermen. Brukes bare når tester-kode er satt og nett finnes; uten nett skjer ingenting og alt virker som før. Av/på i `SETTINGS`. Ingen navn vises. Tekst som nevner knappene.
 Ferdig når: replay fungerer og er lik originalen (test), eksport/import runder (test inkl. ugyldig kode), klientlaget til Supabase har tester med falsk `fetch` (som `test_feedback.mjs`), og `npm test` og `walk_route` er grønne. Selve nettkallet mot ekte Supabase testes av Claude etterpå.
@@ -35,6 +31,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Leker som testlast: ball, bil og robot velges i byggeskjermen, build_loads.js (R48, v1.54)
 - [x] Kostnad, stjerner og smulebudsjett for bygg, build_budget.js (R47, v1.53)
 - [x] Leker som byggematerialer: blyant, linjal, legoklosse, bok, svamp, build_toys.js (R46, v1.52)
 - [x] Lesbar svikt i byggeskjermen: spenningsfarge, bruddring og pause, «hvorfor brakk det», build_stress.js (R45, v1.51)

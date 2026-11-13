@@ -562,6 +562,10 @@
           40,
           0
         ],
+        "loads": [
+          "ball",
+          "car"
+        ],
         "ref": {
           "placed": [
             {

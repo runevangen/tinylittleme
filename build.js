@@ -13,6 +13,8 @@ import { drawToyDetail, drawToyChain } from './build_toys_view.js';   // R46: le
 import { isToy } from './build_toys.js';
 import { starsFor, starText, betterBuild, bonusTypes, BONUS, bonusAt, unlockedBonus, nextBonus, partCost } from './build_budget.js';   // R47: kostnad, stjerner, smulebudsjett
 import { getBuildStars, recordBuildStars, getBonusUnlocks, recordBonus } from './rewards.js';
+import { LOADS, DEFAULT_LOAD, offered, requiredLoads, afterWin, nextLoad, cleanPassed } from './build_loads.js';   // R48: leker som testlast
+import { drawLoad } from './build_loads_view.js';
 import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum } from './build_world.js';   // R26: bygget flyttes ut i verdenen
 
 const css = `
@@ -39,15 +41,19 @@ body.building #panel{z-index:10}
 #bld .tools{position:absolute;left:0;right:0;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px + 92px);display:flex;gap:6px;justify-content:center;padding:0 8px;pointer-events:none}
 #bld .tools button{height:42px;flex:0 1 96px;font-size:13px}
 #bld .tools button.on{background:#7a4a14;border-color:#fff}
+#bld .loads{position:absolute;left:0;right:0;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px + 92px + 48px);display:flex;gap:6px;justify-content:center;padding:0 8px;pointer-events:none}
+#bld .loads button{height:44px;flex:1 1 0;max-width:110px;font-size:13px}
+#bld .loads button.on{background:#7a4a14;border-color:#fff}
+#bld.sim .loads{display:none}
 #bld .tray>:first-child{margin-left:auto}#bld .tray>:last-child{margin-right:auto}   /* R26: midtstilt, men venstre kant kan rulles til når det er mange deler */
 #bld .chip.bonus{outline:2px solid #ffd23f;outline-offset:1px}
 #bld.sim .tray,#bld.sim .tools{display:none}
 #bld.sim button[data-a="undo"],#bld.sim button[data-a="reset"],#bld.sim button[data-a="rotl"],#bld.sim button[data-a="rotr"],#bld.sim button[data-a="snap"],#bld.sim button[data-a="del"]{opacity:.25;pointer-events:none}
 #btnBuild{position:fixed;right:12px;top:calc(max(8px,env(safe-area-inset-top)) + 112px);z-index:4;height:50px;padding:0 22px;border-radius:25px;border:2px solid #3df0b0;background:#2a7f62dd;color:#fff;font:800 16px system-ui;display:none;touch-action:manipulation}
-@media (orientation:landscape) and (max-height:520px){#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
+@media (orientation:landscape) and (max-height:520px){#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1 }) {
+export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -58,10 +64,10 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   const B0 = (site) => createBuild(site, types, bonusOpen());
   const builds = new Map();                  // stedets id -> byggetilstand
   const getB = (site) => { let b = builds.get(site.id); if (!b) { b = B0(site); builds.set(site.id, b); } return b; };
-  const TOPPX = () => (innerHeight <= 520 ? 100 : 130), BOTPX = () => (innerHeight <= 520 ? 110 : 160);
+  const TOPPX = () => (innerHeight <= 520 ? 100 : 130), BOTPX = () => (innerHeight <= 520 ? 110 : 160) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0);
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let lastTap = null, zoomMsg = '', zoomMsgT = 0;   // R44: dobbelttrykk og zoom-melding
-  let sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [], simBreaks = [], simWhy = null, breakAt = -9;   // R25: PRØV
+  let loadMore = null, simLoad = DEFAULT_LOAD, sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [], simBreaks = [], simWhy = null, breakAt = -9;   // R25: PRØV
   const solved = new Set(); let seeShown = false;
   let winRes = null, starsCache = null, lastCrumbs = -1, lastBo = true, lastBonusKey = '';   // R47: siste vellykkede bygg (kostnad og stjerner), bufret stjernekart, bonus-sjekk
   const wonText = () => (getBudget() && winRes ? T('build.wonStars', { name: starText(winRes.stars), n: winRes.cost }) : T('build.won'));
@@ -75,6 +81,11 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     if (announce) for (const id of fresh) { const b = BONUS.find((x) => x.id === id); logEv('bygg', `ekstradel ${id} (${b.type}) åpnet med ${getCrumbs()} smuler`); toast(T('build.bonusNew', { name: T('build.p.' + b.type) })); audio?.bhop?.(); }
     if (active) trayRender(); if (fresh.length) onChange?.();
   }
+  const loadSel = new Map(), passedL = new Map();   // R48: valgt testlast per sted, og hvilke laster som har klart gjeldende bygg ({ sig, ids })
+  const loadsOn = () => (getLoads() || requiredLoads(active).length > 0);
+  const loadList = () => offered(active, getLoads());
+  const curLoad = () => { const l = loadList(), v = loadSel.get(active.id); return l.includes(v) ? v : l.includes(DEFAULT_LOAD) ? DEFAULT_LOAD : l[0]; };
+  const passedOf = (site) => { const b = builds.get(site.id), e = passedL.get(site.id); return e && b && e.sig === sigOf(b) ? e.ids : []; };
   const committed = new Map();               // R26: stedets id -> bygget (som tekst) som står i verdenen akkurat nå
   const worldPlaced = new Map();             // stedets id -> delene slik de ligger etter at de har satt seg
   const worldMeshes = new Map();             // stedets id -> three-gruppe med de ferdige delene
@@ -114,9 +125,9 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   // ---- DOM ----
   const root = document.createElement('div'); root.id = 'bld';
   root.innerHTML = `<canvas></canvas><div class="bt top"><button data-a="back"></button><button data-a="undo"></button><button data-a="reset"></button><button data-a="try" class="go"></button></div>
-  <div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>`;
+  <div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button></div><div class="loads"></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>`;
   document.body.appendChild(root);
-  const cv = root.querySelector('canvas'), g2 = cv.getContext('2d'), tray = root.querySelector('.tray'), hintEl = root.querySelector('.hint');
+  const cv = root.querySelector('canvas'), g2 = cv.getContext('2d'), tray = root.querySelector('.tray'), loadsEl = root.querySelector('.loads'), hintEl = root.querySelector('.hint');
   const btn = (a) => root.querySelector(`[data-a="${a}"]`);
   const enterBtn = document.createElement('button'); enterBtn.id = 'btnBuild'; document.body.appendChild(enterBtn);
   const dpr = () => Math.min(2, window.devicePixelRatio || 1);
@@ -129,7 +140,12 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   }
   function size() { W = innerWidth; H = innerHeight; const d = dpr(); if (cv.width !== Math.round(W * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); } }
 
+  function loadsRender() {   // R48: store knapper for testlast (ingen tastatur): ikon og kort navn, hake når lasten har klart dette bygget
+    loadsEl.innerHTML = ''; if (!active) return; const list = loadList(); if (list.length < 2) return; const cur = curLoad(), done = passedOf(active);
+    for (const id of list) { const b = document.createElement('button'); b.dataset.l = id; b.className = id === cur ? 'on' : ''; b.textContent = `${LOADS[id].icon} ${T('build.load.' + id)}${done.includes(id) ? ' ✓' : ''}`; b.setAttribute?.('aria-pressed', id === cur ? 'true' : 'false'); loadsEl.appendChild(b); }
+  }
   function trayRender() {
+    loadsRender();
     const B = active && getB(active); tray.innerHTML = '';
     if (!B) return;
     const have = B.have;
@@ -206,7 +222,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     if (drag && drag.part) { const r = tray.getBoundingClientRect(); if (drag.y > r.top) { g2.fillStyle = 'rgba(255,80,80,.18)'; g2.fillRect(0, r.top, W, r.height); } }
     drawBudget(B);
     const left = inTray(B).length;
-    hintEl.textContent = (zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || hint || (linkFrom ? T('build.hint.link2') : tool ? T('build.hint.link1') : B.placed.length ? T('build.hintPlaced') : left ? T('build.hintEmpty') : B.have.length ? T('build.allUsed') : '');
+    hintEl.textContent = (zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || hint || (requiredLoads(active).length && B.placed.length ? T('build.loadNeed', { list: requiredLoads(active).filter((i) => !passedOf(active).includes(i)).map((i) => T('build.load.' + i)).join(', ') || T('build.loadAllDone') }) : '') || (linkFrom ? T('build.hint.link2') : tool ? T('build.hint.link1') : B.placed.length ? T('build.hintPlaced') : left ? T('build.hintEmpty') : B.have.length ? T('build.allUsed') : '');
     btn('del').disabled = !sel && !selLink; btn('rotl').disabled = btn('rotr').disabled = !sel; btn('undo').disabled = !B.history.length; btn('reset').disabled = !B.placed.length;
   }
 
@@ -275,9 +291,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
       g2.beginPath(); g2.arc(a.x, a.y, l.kind === 'hinge' ? 6 : 3.5, 0, 7); g2.fillStyle = l.kind === 'hinge' ? '#444' : LINK_COL[l.kind]; g2.fill(); g2.strokeStyle = '#fff'; g2.lineWidth = 1.5; g2.stroke();
     }
     // testfiguren: en rund fyr som ser fremover
-    const f = pose.figure, c = sx(f.u, f.v), r = f.r * sc;
-    g2.beginPath(); g2.arc(c.x, c.y, r, 0, 7); g2.fillStyle = '#ffd23f'; g2.fill(); g2.lineWidth = 2.5; g2.strokeStyle = '#3b2b00'; g2.stroke();
-    g2.fillStyle = '#3b2b00'; for (const ex of [0.25, 0.62]) { g2.beginPath(); g2.arc(c.x + (ex - 0.1) * r, c.y - r * 0.2, Math.max(1.5, r * 0.12), 0, 7); g2.fill(); }
+    drawLoad(g2, pose.figure, sx(pose.figure.u, pose.figure.v), sc);   // R48: testlasten (figur, ball, bil eller robot)
     // brudd: rødt kryss der noe røk
     for (const m of simMarks) { const q = sx(m.u, m.v), k = 9 + 3 * Math.sin(tNow * 8); g2.strokeStyle = '#ff3b30'; g2.lineWidth = 4; g2.lineCap = 'round'; g2.beginPath(); g2.moveTo(q.x - k, q.y - k); g2.lineTo(q.x + k, q.y + k); g2.moveTo(q.x + k, q.y - k); g2.lineTo(q.x - k, q.y + k); g2.stroke(); }
     for (const m of simMarks) { const ring = ringAt(tNow - m.t0); if (!ring) continue; const q = sx(m.u, m.v); g2.beginPath(); g2.arc(q.x, q.y, ring.r, 0, 7); g2.strokeStyle = `rgba(255,59,48,${ring.a.toFixed(2)})`; g2.lineWidth = 4; g2.stroke(); }   // R45: ring der det røk
@@ -285,7 +299,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     if (stressOn) { const lx = 12, ly = H - BOTPX() - 22, lw = Math.min(150, W * 0.4), gr = g2.createLinearGradient(lx, 0, lx + lw, 0); gr.addColorStop(0, stressCss(0)); gr.addColorStop(0.5, stressCss(0.5)); gr.addColorStop(1, stressCss(1)); g2.fillStyle = gr; g2.fillRect(lx, ly, lw, 7); g2.strokeStyle = '#2a1d10'; g2.lineWidth = 1; g2.strokeRect(lx, ly, lw, 7); g2.fillStyle = '#fff'; g2.font = '600 10px system-ui'; g2.textAlign = 'left'; g2.fillText(T('build.legend'), lx, ly - 3); g2.textAlign = 'right'; g2.fillText(T('build.legend2'), lx + lw, ly - 3); g2.textAlign = 'left'; }   // R45: forklaring på fargene
     for (const q of confetti) { const p = sx(q.u, q.v); g2.fillStyle = q.c; g2.fillRect(p.x, p.y, 5, 8); }
     const st = sim.state;
-    hintEl.textContent = !simDone ? T('build.hintRun') : st.state === 'won' ? wonText() : (simWhy ? T(simWhy.key) : simMarks.length ? T('build.lostBreak') : st.reason === 'fell' ? T('build.lostFell') : T('build.lostStuck'));
+    hintEl.textContent = simText();
     btn('try').textContent = T('build.stop'); btn('del').disabled = true; btn('rotl').disabled = btn('rotr').disabled = true; btn('undo').disabled = btn('reset').disabled = true;
   }
 
@@ -376,7 +390,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     del: () => { const B = getB(active); if (selLink && removeLink(B, selLink)) { logEv('bygg', `fjernet ${selLink}`); selLink = null; onChange?.(); } else if (sel && remove(B, sel)) { logEv('bygg', `tilbake i brettet ${sel}`); sel = null; trayRender(); onChange?.(); } },
   };
   function rot(d) { const B = getB(active); if (sel && rotate(B, sel, d)) { logEv('bygg', `roter ${sel}`); onChange?.(); } }
-  root.addEventListener('click', (e) => { const t = e.target.closest?.('button')?.dataset.t; if (t) { tool = tool === t ? null : t; linkFrom = null; labels(); return; } const a = e.target.closest?.('button')?.dataset.a; if (a && act[a]) act[a](); });
+  root.addEventListener('click', (e) => { const l = e.target.closest?.('button')?.dataset.l; if (l && active && !sim && loadList().includes(l)) { loadSel.set(active.id, l); logEv('bygg', `last valgt: ${l}`); loadsRender(); return; } const t = e.target.closest?.('button')?.dataset.t; if (t) { tool = tool === t ? null : t; linkFrom = null; labels(); return; } const a = e.target.closest?.('button')?.dataset.a; if (a && act[a]) act[a](); });
   enterBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); open(); });
   addEventListener('keydown', (e) => {
     if (active) {
@@ -390,9 +404,16 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   // ---- PRØV (R25) ----
   function startSim() {
     const B = getB(active); if (!B.placed.length) { toast(T('build.tryEmpty')); return false; }
-    sim = createSim({ site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() });
-    simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
-    root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger`); return true;
+    sim = createSim({ site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad() });
+    simLoad = curLoad(); loadMore = null; simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
+    root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}`); return true;
+  }
+  const loadThe = (id) => T('build.loadThe.' + id);
+  function simText() {   // R48: teksten nevner lasten som prøves (testfiguren har egne, eldre tekster)
+    const L = simLoad !== DEFAULT_LOAD, st = sim.state, nm = loadThe(simLoad);
+    if (!simDone) return L ? T('build.hintRunL', { name: nm }) : T('build.hintRun');
+    if (st.state === 'won') return loadMore ? T('build.wonMore', { name: nm, next: loadThe(loadMore) }) : getBudget() && winRes ? wonText() : L ? T('build.wonL', { name: nm }) : T('build.won');
+    return simWhy ? T(simWhy.key) : simMarks.length ? T('build.lostBreak') : st.reason === 'fell' ? (L ? T('build.lostFellL', { name: nm }) : T('build.lostFell')) : (L ? T('build.lostStuckL', { name: nm }) : T('build.lostStuck'));
   }
   function stopSim(why) {
     if (!sim) return; logEv('bygg', `stopp prøve (${why}) etter ${sim.t.toFixed(1)} s`); sim = null; simMarks = []; simBreaks = []; simWhy = null; simDone = false; confetti = []; root.classList.remove('sim'); labels(); trayRender();
@@ -407,9 +428,9 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
         else if (e.type === 'creak') audio?.bcreak?.(e.stress);
         else if (e.type === 'hop') audio?.bhop?.();
         else if (e.type === 'splash') audio?.bsplash?.();
-        else if (e.type === 'win') { winRes = starsFor(active, getB(active).placed, getB(active).links); const rec = recordBuildStars(st0, levelId, active.id, winRes); starsCache = null; logEv('bygg', `stjerner ${winRes.stars} (kostnad ${winRes.cost}, ${winRes.parts} deler) ${active.id}${rec.first ? ', første gang' : rec.improved ? ', ny rekord' : ''}`); audio?.win?.(); buzz?.([30, 40, 30]); solved.add(active.id); commitWorld(active, 'prøve klarte det'); onSolved(active.id); for (let i = 0; i < 46; i++) confetti.push({ u: e.u + (i % 9 - 4) * 0.3, v: e.v + 1 + (i % 5) * 0.2, vx: ((i * 37) % 13 - 6) * 0.4, vy: 5 + (i * 17) % 7, c: ['#ffd23f', '#3df0b0', '#ff6a5a', '#6ab8ff'][i % 4] }); }
+        else if (e.type === 'win') { audio?.win?.(); buzz?.([30, 40, 30]); { winRes = starsFor(active, getB(active).placed, getB(active).links); const r = afterWin(active, passedOf(active), simLoad); passedL.set(active.id, { sig: sigOf(getB(active)), ids: r.passed }); logEv('bygg', `last ${simLoad} bestått (${r.passed.length}/${requiredLoads(active).length || 1})`); if (r.solved) { const rec = recordBuildStars(st0, levelId, active.id, winRes); starsCache = null; logEv('bygg', `stjerner ${winRes.stars} (kostnad ${winRes.cost}, ${winRes.parts} deler) ${active.id}${rec.first ? ', første gang' : rec.improved ? ', ny rekord' : ''}`); solved.add(active.id); commitWorld(active, 'prøve klarte det'); onSolved(active.id); } else loadMore = nextLoad(active, r.passed); } for (let i = 0; i < 46; i++) confetti.push({ u: e.u + (i % 9 - 4) * 0.3, v: e.v + 1 + (i % 5) * 0.2, vx: ((i * 37) % 13 - 6) * 0.4, vy: 5 + (i * 17) % 7, c: ['#ffd23f', '#3df0b0', '#ff6a5a', '#6ab8ff'][i % 4] }); }
       }
-      if (sim.state.state !== 'run') { simDone = true; simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(sim.state.state === 'won' ? wonText() : T( simWhy ? simWhy.key : simMarks.length ? 'build.lostBreak' : sim.state.reason === 'fell' ? 'build.lostFell' : 'build.lostStuck')); onChange?.(); }
+      if (sim.state.state !== 'run') { simDone = true; simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(simText()); onChange?.(); }
     }
     for (const q of confetti) { q.u += q.vx * dt; q.v += q.vy * dt; q.vy -= 14 * dt; }
     confetti = confetti.filter((q) => q.v > -8);
@@ -458,14 +479,15 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
 
   return {
     get active() { return !!active; }, enabled, update, open, close, labels,
-    save: () => (enabled ? { got: gotPartIds(LEVEL), solved: [...solved], sites: Object.fromEntries([...builds].map(([k, b]) => [k, serialize(b)])) } : undefined),
+    save: () => (enabled ? { got: gotPartIds(LEVEL), solved: [...solved], loads: Object.fromEntries([...passedL].map(([k, e]) => [k, cleanPassed(e.ids)])), sites: Object.fromEntries([...builds].map(([k, b]) => [k, serialize(b)])) } : undefined),
     load(data) {
       if (!enabled || !data) return; restoreParts(LEVEL, data.got); solved.clear(); for (const id of Array.isArray(data.solved) ? data.solved : []) solved.add(id);
       for (const s of sites) { const d = data.sites?.[s.id]; if (!d) continue; const b = getB(s); restore(b, { have: d.have, placed: d.placed, links: d.links }); for (const id of data.got || []) addPart(b, id); }
       lastBonusKey = ''; syncBonus(false);
+      for (const s of sites) { const ids = cleanPassed(data.loads?.[s.id]); if (ids.length) passedL.set(s.id, { sig: sigOf(getB(s)), ids }); }
       for (const s of sites) if (solved.has(s.id) && getB(s).placed.length) commitWorld(s, 'fortsett');   // R26: bygget gjenopprettes i verdenen
     },
-    resetAll() { for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); sim = null; winRes = null; lastBonusKey = ''; lastCrumbs = -1; },
+    resetAll() { for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); passedL.clear(); loadSel.clear(); sim = null; winRes = null; lastBonusKey = ''; lastCrumbs = -1; },
     screenPos: (u, v) => (active && view ? toScreen(view, W, H, u, v) : null),   // til tester på mobil (Playwright)
     starsMap, bonusOpen, get lastResult() { return winRes; },
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },

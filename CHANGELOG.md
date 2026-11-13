@@ -2,6 +2,8 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+v1.54: R48 ferdig, leker som testlast (ball, bil, robot) i byggeskjermen
+
 - **1.53** – R47: kostnad per byggedel, 1–3 stjerner per bygg og smulebudsjett som låser opp materiale (build_budget.js).
 - **1.52** – R46: leker som byggematerialer (blyant, linjal, legoklosse, bok, svamp) i byggeskjermen, med egne fysikkverdier og nye byggebrett.
 - **1.51** – R45: lesbar svikt i byggeskjermen. Spenningsfarge på deler og ledd i prøven, bruddring og kort pause på selve bruddet, og en setning om hvorfor det brakk (nb/en). Av/på i innstillinger.
