@@ -15,6 +15,7 @@ export const ENTER_R = 7;                // hvor nær byggestedet man må stå f
 export const PART_TYPES = {
   plank_s: { w: 4, h: 0.5, name: 'Kort planke', en: 'Short plank', color: '#d9a35f' },
   plank_l: { w: 8, h: 0.5, name: 'Lang planke', en: 'Long plank', color: '#c98a45' },
+  plank_t: { w: 8, h: 1.2, name: 'Høykant-planke', en: 'Edge plank', color: '#a8672f' },   // R49a1: planke på høykant: høy profil, mye stivere og sterkere enn flat
   block: { w: 1.5, h: 1.5, name: 'Kloss', en: 'Block', color: '#e0605a' },
   weight: { w: 1.5, h: 1.5, name: 'Vekt', en: 'Weight', color: '#6f7b8c' },   // R25: tung (motvekt)
   seesaw: { w: 8, h: 0.5, name: 'Vippe', en: 'Seesaw', color: '#3fa89b', pivot: true },   // R30: planke som svinger rundt midten (festet i en liten støtte under midtpunktet)
