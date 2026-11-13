@@ -4,6 +4,7 @@
 // roteres, angres og nullstilles. Ingen fysikk ennå (R25): her bare plassering.
 
 import { clampZoom } from './build_zoom.js';
+import { TOY_TYPES, legoSnap } from './build_toys.js';   // R46: leker som materialer
 
 export const GRID = 0.5;                 // rutenett (enheter)
 export const ROT_STEP = Math.PI / 12;    // rotasjonstrinn: 15 grader
@@ -17,6 +18,7 @@ export const PART_TYPES = {
   block: { w: 1.5, h: 1.5, name: 'Kloss', en: 'Block', color: '#e0605a' },
   weight: { w: 1.5, h: 1.5, name: 'Vekt', en: 'Weight', color: '#6f7b8c' },   // R25: tung (motvekt)
   seesaw: { w: 8, h: 0.5, name: 'Vippe', en: 'Seesaw', color: '#3fa89b', pivot: true },   // R30: planke som svinger rundt midten (festet i en liten støtte under midtpunktet)
+  ...TOY_TYPES,                                                                          // R46: blyant, linjal, legoklosse, bok, svamp (build_toys.js)
 };
 export const LINK_KINDS = ['tape', 'hinge', 'rope'];                   // R25: tape = stiv, ledd = svinger, tau = bare i strekk
 export const LINK_MAX = 0.75;                                          // tape/ledd: delene må ligge inntil hverandre (avstand mellom kulene)
@@ -87,8 +89,12 @@ export function place(B, id, u, v, rot) {
   const s = snapPoint(B.site, u, v, { snap: B.snap, grid: B.grid || GRID, snapR: B.snapR || SNAP_R }), ex = placedOf(B, id);
   pushHist(B);
   const r = normRot(B.snap ? snapRot(rot ?? ex?.rot ?? 0) : (rot ?? ex?.rot ?? 0));
-  if (ex) { ex.u = s.u; ex.v = s.v; ex.rot = r; ex.anchored = s.anchored; return ex; }
-  const p = { id, type: B.types[id] || 'block', u: s.u, v: s.v, rot: r, anchored: s.anchored };
+  const type = B.types[id] || 'block';
+  // R46: legoknotter klikker mot andre legoklosser (av/på med B.lego = false)
+  const lg = B.snap && B.lego !== false ? legoSnap(B.placed, id, type, s.u, s.v, r) : null;
+  if (lg) { const c = clampToSite(B.site, lg.u, lg.v); if (Math.hypot(c.u - lg.u, c.v - lg.v) < 1e-9) { s.u = lg.u; s.v = lg.v; s.anchored = true; s.snapTo = lg.to; s.snapKind = lg.kind; } }
+  if (ex) { ex.u = s.u; ex.v = s.v; ex.rot = r; ex.anchored = s.anchored; ex.snapTo = s.snapTo || null; return ex; }
+  const p = { id, type, u: s.u, v: s.v, rot: r, anchored: s.anchored, snapTo: s.snapTo || null };
   B.placed.push(p); return p;
 }
 export function rotate(B, id, delta) {

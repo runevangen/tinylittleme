@@ -6,6 +6,7 @@
 //  - testfiguren er en liten rund fyr som går mot høyre og hopper når den støter mot noe
 // Fast tidssteg og fast rekkefølge: samme bygg gir alltid samme resultat (se test_buildphys.mjs).
 import { partType, layout, toWorldPt, PR } from './build_logic.js';
+import { TOY_MATERIAL } from './build_toys.js';   // R46: leker som materialer
 
 export const DT = 1 / 60, SUB = 2, ITER = 6;
 export const G = 32;                    // tyngde (enheter/s²); en enhet = 5 cm, men spillet skal føles tungt og lesbart
@@ -20,6 +21,7 @@ export const MATERIAL = {
   seesaw: { m: 0.5, alpha: 0.6, snap: 3 },   // R30: stiv planke (bøyer seg lite) med fast dreiepunkt i midten
   block: { m: 1, alpha: 1 },
   weight: { m: 5, alpha: 1 },
+  ...TOY_MATERIAL,                          // R46: blyant, linjal, legoklosse, bok, svamp (build_toys.js)
 };
 export const LINK_SNAP = { tape: 1000, hinge: 6000, rope: 1100, pivot: 30000 };   // kraft (masse·enhet/s²) som får koblingen til å ryke; en vekt henger med 1440, en kloss med 288, så tau og tape ryker av en hengende vekt, ledd holder
 const FRICTION = 0.7, FIG_FRICTION = 0.1;
@@ -44,7 +46,7 @@ export function createSim(def, opts = {}) {
 
   for (const part of def.placed) {
     const t = part.type, M = mat(t), lay = layout(t), bi = bodies.length;
-    const idx = lay.map((q) => { const w = toWorldPt(part, q.x, q.y); const k = mk(w.u, w.v, 1 / M.m, PR, bi); P[k].lx = q.x; P[k].ly = q.y; return k; });
+    const idx = lay.map((q) => { const w = toWorldPt(part, q.x, q.y); const k = mk(w.u, w.v, 1 / M.m, PR, bi); P[k].lx = q.x; P[k].ly = q.y; if (M.damp) P[k].d = M.damp; return k; });
     const body = { id: part.id, type: t, kind: isChain(t) ? 'chain' : 'rect', idx, groups: [], alpha: M.alpha ?? 1, snap: (M.snap || 99) * strength, stress: 0, creakT: -9, broken: false, part };
     body.groups.push(mkGroup(idx));
     bodies.push(body); bodyOf.set(part.id, bi);
@@ -161,7 +163,7 @@ export function createSim(def, opts = {}) {
       for (const p of P) if (p.w) for (const bx of boxes) collideBox(p, bx);
     }
     for (const c of cons) if (c.link) c.f = Math.abs(c.lam) / (h * h);
-    for (const p of P) { if (!p.w) continue; p.vx = calm ? 0 : (p.x - p.px) / h; p.vy = calm ? 0 : (p.y - p.py) / h; const sp = Math.hypot(p.vx, p.vy); if (sp > 60) { p.vx *= 60 / sp; p.vy *= 60 / sp; } p.vx *= 0.9995; p.vy *= 0.9995; }
+    for (const p of P) { if (!p.w) continue; p.vx = calm ? 0 : (p.x - p.px) / h; p.vy = calm ? 0 : (p.y - p.py) / h; const sp = Math.hypot(p.vx, p.vy); if (sp > 60) { p.vx *= 60 / sp; p.vy *= 60 / sp; } const dm = p.d || 0.9995; p.vx *= dm; p.vy *= dm; }
   }
 
   function checkBreaks() {

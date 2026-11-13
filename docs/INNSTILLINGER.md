@@ -69,3 +69,4 @@ Skjult som standard. Slå på ved å trykke 7 ganger raskt på «Innstillinger»
 
 ## Kombinasjoner og stavhopp (R41)
 ⚙ → Spill: «Kombinasjoner» (`tlm.combo`, standard på: svamp + vann, håndkle + håndkle, tung ting + papirhaug) og «Stavhopp: egen animasjon» (`tlm.vaultanim`, standard på). Admin: våt svamps landingsandel (`tlm.combowet`, 0,15), presset haugs resthøyde (`tlm.combopress`, 0,5), knyttet taus lengde (`tlm.comboknot`, 1,8). Logges som `kombo` (`<regel>: <ting> + <ting>`, «tau hengt ned», «stavhopp», «kombinasjoner på/av»). Se `docs/KLATREHJELP.md`.
+- **Byggeskjerm: legoklosser klikker sammen** (⚙ → Spill, `tlm.buildlego`, standard på, R46): en legoklosse som slippes nær en annen legoklosse snapper til knottene (oppå, under eller ved siden av). Hendelse: `bygg` `plasser <id> (lego) lego-klikk mot <id>`.

@@ -9,6 +9,8 @@ import {
 import { ZOOM_STEP, gridForScale, anchorRadius, zoomAbout, zoomStep, freeCenter, isDoubleTap, dblTapView, zoomLabel } from './build_zoom.js';   // R44
 import { createSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
 import { stressCss, tint, loadMap, whyBroke, breakTempo, ringAt } from './build_stress.js';   // R45: lesbar svikt
+import { drawToyDetail, drawToyChain } from './build_toys_view.js';   // R46: leker som materialer
+import { isToy } from './build_toys.js';
 import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum } from './build_world.js';   // R26: bygget flyttes ut i verdenen
 
 const css = `
@@ -42,7 +44,7 @@ body.building #panel{z-index:10}
 @media (orientation:landscape) and (max-height:520px){#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true }) {
+export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -118,7 +120,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     for (const id of have) {
       const t = partType(B.types[id]), used = B.placed.some((p) => p.id === id);
       const c = document.createElement('div'); c.className = 'chip' + (used ? ' used' : ''); c.dataset.id = id; c.title = T('build.p.' + B.types[id]);
-      const i = document.createElement('i'); const k = 6; i.style.cssText = `width:${Math.min(66, t.w * k)}px;height:${Math.max(8, t.h * k)}px;background:${t.color}`; c.appendChild(i);
+      const i = document.createElement('i'); const k = 6; i.style.cssText = `width:${Math.min(66, t.w * k)}px;height:${Math.max(t.icon ? 22 : 8, t.h * k)}px;background:${t.color}`; if (t.icon) { i.textContent = t.icon; i.style.cssText += ';display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;overflow:hidden'; } c.appendChild(i);
       c.addEventListener('pointerdown', (e) => { if (!used) startDrag(e, id, true); else { toast(T('build.usedHint')); } });
       tray.appendChild(c);
     }
@@ -127,7 +129,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   // ---- R44: zoom ----
   const fitNow = () => fitView(active, W, H, 24, TOPPX(), BOTPX());
   const curGrid = () => gridForScale(view.scale, getFine());
-  const syncSnap = (B) => { B.grid = curGrid(); B.snapR = anchorRadius(view.scale); };   // plassering er alltid et tall i enheter: samme verdi uansett zoom, bare rutenettets trinn følger zoomen
+  const syncSnap = (B) => { B.grid = curGrid(); B.snapR = anchorRadius(view.scale); B.lego = getLego(); };   // plassering er alltid et tall i enheter: samme verdi uansett zoom, bare rutenettets trinn følger zoomen
   const zoomTarget = () => { const B = getB(active), id = drag?.id || sel, p = id && (drag && drag.id === id ? drag.part : B.placed.find((z) => z.id === id)); return p ? { u: p.u, v: p.v } : null; };
   function setView(nv, why, x, y) {
     const old = view.scale; view = nv;
@@ -176,6 +178,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
       const t = partType(p.type), pts = corners(p).map((c) => sx(c.u, c.v));
       g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath();
       g2.globalAlpha = p === (drag && drag.part) ? 0.8 : 1; g2.fillStyle = t.color; g2.fill(); g2.lineWidth = sel === p.id || linkFrom === p.id ? 4 : 2; g2.strokeStyle = sel === p.id || linkFrom === p.id ? '#fff' : '#2a1d10'; g2.stroke(); g2.globalAlpha = 1;
+      drawToyDetail(g2, p, sx, view.scale);
       if (t.pivot) drawPivot(p, sx);
       if (p.anchored) { const c = sx(p.u, p.v); g2.beginPath(); g2.arc(c.x, c.y, 4, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); }
     }
@@ -220,9 +223,11 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
           for (const [w, col] of [[t.h * sc + 4, '#2a1d10'], [t.h * sc, stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : mixCol(t.color, Math.min(1, Math.max(0, (p.stress - 0.35) / 0.65)))]]) {
             g2.lineCap = 'round'; g2.lineJoin = 'round'; g2.lineWidth = w; g2.strokeStyle = col; g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); if (pts.length === 1) g2.lineTo(pts[0].x + 0.1, pts[0].y); g2.stroke();
           }
+          drawToyChain(g2, p.type, pts, sc);
         }
       } else {
         const pts = corners(p).map((c) => sx(c.u, c.v)); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath(); g2.fillStyle = stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : t.color; g2.fill(); g2.lineWidth = 2; g2.strokeStyle = '#2a1d10'; g2.stroke();
+        drawToyDetail(g2, p, sx, sc);
         if (p.type === 'weight') { const c = sx(p.u, p.v); g2.fillStyle = '#fff'; g2.font = `700 ${Math.max(9, sc * 0.5)}px system-ui`; g2.textAlign = 'center'; g2.fillText('kg', c.x, c.y + sc * 0.18); }
       }
     }
@@ -314,7 +319,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
       else {
         const moved = ex ? Math.hypot(drag.part.u - drag.before.u, drag.part.v - drag.before.v) > 0.05 : true;
         if (ex && !moved && getDbl()) lastTap = { t: e.timeStamp || performance.now(), x: drag.x, y: drag.y };   // R44: trykk på en del teller som første trykk i et dobbelttrykk
-        if (moved) { const p = place(B, drag.id, drag.part.u, drag.part.v, drag.part.rot); logEv('bygg', `${drag.fromTray ? 'plasser' : 'flytt'} ${drag.id} (${p.type}) ${p.anchored ? 'festet' : 'rutenett'}`); buzz?.(8); if (drag.fromTray && partType(p.type).pivot && getSeeHint() && !seeShown) { seeShown = true; toast(T('build.seesawHint')); } onChange?.(); }
+        if (moved) { const p = place(B, drag.id, drag.part.u, drag.part.v, drag.part.rot); logEv('bygg', `${drag.fromTray ? 'plasser' : 'flytt'} ${drag.id} (${p.type}) ${p.snapTo ? 'lego-klikk mot ' + p.snapTo : p.anchored ? 'festet' : 'rutenett'}`); buzz?.(p.snapTo ? 14 : 8); if (isToy(p.type) && (drag.fromTray || p.snapTo)) toast(T('build.snd.' + p.type)); if (drag.fromTray && partType(p.type).pivot && getSeeHint() && !seeShown) { seeShown = true; toast(T('build.seesawHint')); } onChange?.(); }
       }
       drag = null; trayRender();
     }
