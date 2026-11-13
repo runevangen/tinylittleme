@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.69** – Veikart: mer innhold. R60 (gåteverktøy: trykkplate, dør og bryter), R61 (veps som flyr), R62 (nivå 8: Stuen) og R63 (nivå 9: Verkstedet).
 - **1.68** – Veikart: R49a1 (byggefysikk etter statikk og «tåler X»-måler) og R49a2 (fagverk, trykk mot strekk og materialer), med akseptansetester fra statikk. Eksperimentet ligger i `tools/phys_exp.mjs`.
 - **1.67** – R59 (fra tester: Rune): kameraet kunne ikke dreies når høyre tommel startet på en knapp, i kantfeltet rundt knappene eller på toppbåndet; nå dreier dra derfra kameraet (camdrag.js), med test.
 - **1.66** – Veikart: R59 (kameraet lar seg ikke svinge rundt med høyre tommel), fra tester: Rune (v1.65).
