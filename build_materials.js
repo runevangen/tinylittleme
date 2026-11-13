@@ -13,7 +13,8 @@
 // Gummistrikk er ingen del, men en kobling: se BAND (stivhet og bruddgrense).
 export const EULER = 822;              // π²/12 · 1000: gir Pcr = 822 · E · h³ / L² (fritt opplagt i begge ender)
 export const FRIC_DEFAULT = 0.7;
-export const CRUSH_FILTER = 0.2;       // glatting av kraft langs delen per steg (demper støt)
+export const AXIAL_CAL = 0.85;          // målt kraft langs delen ligger 20–40 % over statikken (Gauss-Seidel og støt); skaleres ned så Euler-lasten stemmer i fagverk
+export const CRUSH_FILTER = 0.05;      // glatting av kraft langs delen per steg (demper støt)
 
 // planke: samme formler som R49a1 (profildybde d gir masse ∝ √d, stivhet ∝ d³, kapasitet ∝ d²)
 const beam = (m, alpha, mc, d = 1) => ({ m: m * Math.sqrt(d), alpha: Math.min(1, alpha * d * d * d), mcap: mc * d * d, d, snap: 0.9 });

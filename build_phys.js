@@ -10,11 +10,12 @@
 // Delene og koblingene løses i en fast rekkefølge uavhengig av hvilken rekkefølge de ble plassert i (sortert etter geometri), så samme bygg gir alltid samme resultat uansett.
 // Fast tidssteg og fast rekkefølge: samme bygg gir alltid samme resultat (se test_buildphys.mjs).
 import { partType, layout, toWorldPt, PR } from './build_logic.js';
-import { MATERIALS, BAND, buckleLoad, tensionCap, crushCap, FRIC_DEFAULT, CRUSH_FILTER } from './build_materials.js';   // R49a2: materialtabell (inkl. R46-lekene)
+import { MATERIALS, BAND, buckleLoad, tensionCap, crushCap, FRIC_DEFAULT, CRUSH_FILTER, AXIAL_CAL } from './build_materials.js';   // R49a2: materialtabell (inkl. R46-lekene)
 import { loadParams, driveSpeed, isLoad, DEFAULT_LOAD } from './build_loads.js';   // R48: leker som testlast
 
 const MOM_FILTER = 0.03;                             // R49a1: glatting av momentet per delsteg (demper støt og numerisk støy)
 const TAPE_LAMINATE = 4;                            // R49a1: skjærstyrke for teip mellom parallelle planker (× LINK_SNAP.tape)
+const TRUSS_ALPHA = 0.6;                 // R49a2: stivhet for staver med ledd i begge ender
 const COMP_K = 0.25;                                  // R49a1: hvor mange tapepunkter (veid) som skal til for å nå halv sammensatt virkning
 export const DT = 1 / 60, SUB = 2, ITER = 6;
 export const G = 32;                    // tyngde (enheter/s²); en enhet = 5 cm, men spillet skal føles tungt og lesbart
@@ -79,14 +80,15 @@ export function createSim(def, opts = {}) {
   }
   // R49a1: bøyemoment langs en kjede (kuler i rekkefølge). Kraft per kule = masse · samlet rettelse / h². Momentet i snitt k = momentet (om snittpunktet) av kreftene på kulene til venstre for snittet.
   function moments(g, h) {
-    let sfx = 0, sfy = 0, sm = 0, best = 0, at = 0; const n = g.idx.length, k2 = 1 / (h * h);
+    let sfx = 0, sfy = 0, sm = 0, best = 0, at = 0, ax = 0; const n = g.idx.length, k2 = 1 / (h * h);
     for (let k = 0; k + 1 < n; k++) {
       const p = P[g.idx[k]], m = p.w ? 1 / p.w : 0, fx = p.sx * m * k2, fy = p.sy * m * k2;
       sfx += fx; sfy += fy; sm += p.x * fy - p.y * fx;
       const q = P[g.idx[k + 1]], xc = (p.x + q.x) / 2, yc = (p.y + q.y) / 2, M = Math.abs(sm - (xc * sfy - yc * sfx));
       if (M > best) { best = M; at = k; }
+      const tx = q.x - p.x, ty = q.y - p.y, tl = Math.hypot(tx, ty) || 1; ax += -(sfx * tx + sfy * ty) / tl;   // R49a2: kraft langs delen fra formtilpasningen (positiv = trykk), middel over snittene
     }
-    return { m: best, at };
+    return { m: best, at, ax: ax / Math.max(1, n - 1) };
   }
   function cutBars(B, i, j) { for (const s of B.bars) if (s.a === i && s.b === j) s.off = true; }
   function bodyCenter(B) { let x = 0, y = 0; for (const i of B.idx) { x += P[i].x; y += P[i].y; } return { x: x / B.idx.length, y: y / B.idx.length }; }
@@ -137,6 +139,9 @@ export function createSim(def, opts = {}) {
     links.push(link);
   }
 
+  // R49a2: en stav i et fagverk (ledd i to eller flere punkter) bærer kraft langs lengden og bøyer lite: stivheten løftes så den ikke bøyer ut av seg selv under trykk (knekking kommer av regelen med Euler-lasten, ikke av tilfeldig bøying)
+  { const pins = new Map(); for (const l of links) if (l.kind === 'hinge') for (const bi of [l.a, l.b]) if (bi >= 0) pins.set(bi, (pins.get(bi) || 0) + 1);
+    for (const [bi, n] of pins) if (n >= 2 && bodies[bi].kind === 'chain') bodies[bi].alpha = Math.max(bodies[bi].alpha, TRUSS_ALPHA); }
   // R49a1: sammenteipede lag (to parallelle planker med tape mellom): tape overfører skjær, så lagene virker mer sammen. Tapepunkt nær midten overfører lite (der er skjæret null), nær endene mye.
   // composite γ = Σw / (Σw + COMP_K) i 0..1; hvert lag får moment-kapasitet ×(1+γ) og stivhet ×(1+3γ): to like lag helt sammensatt = 4× (som én dobbelt så dyp bjelke).
   {
@@ -236,9 +241,9 @@ export function createSim(def, opts = {}) {
       for (const p of P) if (p.w) for (const bx of boxes) collideBox(p, bx);
     }
     for (const c of cons) if (c.link) c.f = (c.type === 'pin' ? Math.hypot(c.lx, c.ly) : Math.abs(c.lam)) / (h * h);
-    for (const B of bodies) if (B.kind === 'chain') for (const g of B.groups) { const r = moments(g, h); g.mf += (r.m - g.mf) * MOM_FILTER; g.at = r.at; }   // R49a1: bøyemoment (glattet)
+    for (const B of bodies) if (B.kind === 'chain') for (const g of B.groups) { const r = moments(g, h); g.mf += (r.m - g.mf) * MOM_FILTER; g.at = r.at; g.ax = r.ax; }   // R49a1: bøyemoment (glattet)
     for (const B of bodies) {      // R49a2: kraft langs delen (stavene) og knusing av klosser, glattet
-      if (B.kind === 'chain') { let c = 0, t = 0; for (const s of B.bars) if (!s.off) { const q = s.lam / (h * h); if (-q > c) c = -q; if (q > t) t = q; } B.nc += (c - B.nc) * CRUSH_FILTER; B.nt += (t - B.nt) * CRUSH_FILTER; }
+      if (B.kind === 'chain') { let c = 0, t = 0; for (const s of B.bars) if (!s.off) { const q = s.lam / (h * h); if (-q > c) c = -q; if (q > t) t = q; } const e = B.groups.length === 1 ? B.groups[0].ax || 0 : 0; B.ex = e; c += Math.max(0, e); t += Math.max(0, -e); B.nc += (c * AXIAL_CAL - B.nc) * CRUSH_FILTER; B.nt += (t * AXIAL_CAL - B.nt) * CRUSH_FILTER; }
       else if (B.ccap && !B.shattered) B.cf += (cl[B.bi] / (h * h) / 2 - B.cf) * CRUSH_FILTER;
     }
     for (const p of P) { if (!p.w) continue; p.vx = calm ? 0 : (p.x - p.px) / h; p.vy = calm ? 0 : (p.y - p.py) / h; const sp = Math.hypot(p.vx, p.vy); if (sp > 60) { p.vx *= 60 / sp; p.vy *= 60 / sp; } const dm = p.d || 0.9995; p.vx *= dm; p.vy *= dm; }
