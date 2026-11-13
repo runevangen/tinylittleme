@@ -4,11 +4,19 @@
 //  - planker: en kjede av kuler med et mykt «bøyebånd» (hver kule mot nummer to bortover): bøyer seg synlig, og brekker når vinkelen mellom to biter blir for stor
 //  - tape: stiv sveis mellom to deler (eller del og underlag), ryker når den strekkes for mye; ledd: ett festepunkt som svinger; tau: bare en maksavstand (trekker, skyver ikke)
 //  - testfiguren er en liten rund fyr som går mot høyre og hopper når den støter mot noe
+// R49a1: planker brekker nå av BØYEMOMENT, ikke av vinkel. Formtilpasningen virker som elastiske krefter (masse · rettelse / h²) på kulene; summen av dem på den ene siden av et snitt
+//  er kraften og momentet planken faktisk overfører over snittet (statikk). Brudd når momentet over delens kapasitet: kapasitet ∝ materiale · dybde² (profil), stivhet ∝ dybde³.
+//  Last nær opplager gir lite moment (a·(L−a)/L), midt på mye; en støtte under kutter spennet; sammenteipede lag får `composite`-faktor etter antall og plassering av tapepunkter.
+// Delene og koblingene løses i en fast rekkefølge uavhengig av hvilken rekkefølge de ble plassert i (sortert etter geometri), så samme bygg gir alltid samme resultat uansett.
 // Fast tidssteg og fast rekkefølge: samme bygg gir alltid samme resultat (se test_buildphys.mjs).
 import { partType, layout, toWorldPt, PR } from './build_logic.js';
 import { TOY_MATERIAL } from './build_toys.js';   // R46: leker som materialer
 import { loadParams, driveSpeed, isLoad, DEFAULT_LOAD } from './build_loads.js';   // R48: leker som testlast
 
+const MOM_FILTER = 0.03;                             // R49a1: glatting av momentet per delsteg (demper støt og numerisk støy)
+const TAPE_LAMINATE = 4;                            // R49a1: skjærstyrke for teip mellom parallelle planker (× LINK_SNAP.tape)
+const COMP_K = 0.25;                                  // R49a1: hvor mange tapepunkter (veid) som skal til for å nå halv sammensatt virkning
+const MC_PLANK_S = 2200, MC_PLANK_L = 2200, MC_SEESAW = 5000;
 export const DT = 1 / 60, SUB = 2, ITER = 6;
 export const G = 32;                    // tyngde (enheter/s²); en enhet = 5 cm, men spillet skal føles tungt og lesbart
 export const FIG_R = 0.4;               // testfigurens radius
@@ -16,10 +24,13 @@ export const FIG_SPEED = 3.4, FIG_HOP = 11.5;
 export const SETTLE = 0.25;              // først en rolig start så overlapp og tyngde setter seg
 export const MAX_T = 30;                // lengste prøve (s)
 // materialer: m = masse per kule, alpha = stivhet (0..1 per runde, lavere = bøyer mer), snap = største nedbøyning (enheter) før planken brekker
+// R49a1: mcap = bøyemoment-kapasitet (masse·enhet²/s²) for et standard-profil (dybde 1), d = dybde (relativ), E ∝ d³ gir alpha, kapasitet ∝ d². `snap` er bare en rangering (tester/visning), ikke brudd.
+const beam = (m, alpha, mc, d = 1) => ({ m: m * Math.sqrt(d), alpha: Math.min(1, alpha * d * d * d), mcap: mc * d * d, d, snap: 0.9 });
 export const MATERIAL = {
-  plank_s: { m: 0.5, alpha: 0.12, snap: 0.9 },
-  plank_l: { m: 0.5, alpha: 0.03, snap: 0.9 },
-  seesaw: { m: 0.5, alpha: 0.6, snap: 3 },   // R30: stiv planke (bøyer seg lite) med fast dreiepunkt i midten
+  plank_s: { ...beam(0.5, 0.12, MC_PLANK_S), snap: 0.9 },
+  plank_l: { ...beam(0.5, 0.03, MC_PLANK_L), snap: 0.9 },
+  plank_t: { ...beam(0.5, 0.03, MC_PLANK_L, 2.4), snap: 0.9 },   // R49a1: planke på høykant: dybde 2,4 gir 5,8× moment og 14× stivhet
+  seesaw: { m: 0.5, alpha: 0.6, snap: 3, mcap: MC_SEESAW },   // R30: stiv planke (bøyer seg lite) med fast dreiepunkt i midten
   block: { m: 1, alpha: 1 },
   weight: { m: 5, alpha: 1 },
   ...TOY_MATERIAL,                          // R46: blyant, linjal, legoklosse, bok, svamp (build_toys.js)
@@ -45,15 +56,19 @@ export function createSim(def, opts = {}) {
   const bodyOf = new Map();
   const mk = (x, y, w, r, b) => { const p = { x, y, px: x, py: y, vx: 0, vy: 0, w, r, b }; P.push(p); return P.length - 1; };
 
-  for (const part of def.placed) {
-    const t = part.type, M = mat(t), lay = layout(t), bi = bodies.length;
-    const idx = lay.map((q) => { const w = toWorldPt(part, q.x, q.y); const k = mk(w.u, w.v, 1 / M.m, PR, bi); P[k].lx = q.x; P[k].ly = q.y; if (M.damp) P[k].d = M.damp; return k; });
-    const body = { id: part.id, type: t, kind: isChain(t) ? 'chain' : 'rect', idx, groups: [], alpha: M.alpha ?? 1, snap: (M.snap || 99) * strength, stress: 0, creakT: -9, broken: false, part };
+  // R49a1: fast løsningsrekkefølge uavhengig av plasseringsrekkefølge: delene sorteres etter geometri (type, u, v, rot), id bare som siste avgjører
+  const q6 = (x) => Math.round((x || 0) * 1e6);
+  const orig = new Map(def.placed.map((p, i) => [p.id, i]));
+  const sorted = [...def.placed].sort((a, b) => (a.type < b.type ? -1 : a.type > b.type ? 1 : 0) || q6(a.u) - q6(b.u) || q6(a.v) - q6(b.v) || q6(a.rot) - q6(b.rot) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  for (const part of sorted) {
+    const t = part.type, M = mat(t), lay = layout(t), bi = bodies.length, chain = isChain(t), rad = chain && M.d > 1 ? Math.max(PR, partType(t).h / 2) : PR;   // høye bjelker (dybde > 1) har tykke kuler så formen og kontakten stemmer med tegningen
+    const idx = lay.map((q) => { const w = toWorldPt(part, q.x, q.y); const k = mk(w.u, w.v, 1 / M.m, rad, bi); P[k].lx = q.x; P[k].ly = q.y; P[k].sx = 0; P[k].sy = 0; if (M.damp) P[k].d = M.damp; return k; });
+    const body = { id: part.id, oi: orig.get(part.id), type: t, kind: chain ? 'chain' : 'rect', idx, groups: [], alpha: M.alpha ?? 1, mcap: (M.mcap || (M.snap || 99) * 100) * strength, comp: 0, stress: 0, creakT: -9, broken: false, part };
     body.groups.push(mkGroup(idx));
     bodies.push(body); bodyOf.set(part.id, bi);
   }
   // en gruppe = kuler som holdes mot sin stive form («formtilpasning»); en brukket planke blir to grupper
-  function mkGroup(idx) { let rx = 0, ry = 0; for (const i of idx) { rx += P[i].lx; ry += P[i].ly; } return { idx, rx: rx / idx.length, ry: ry / idx.length }; }
+  function mkGroup(idx) { let rx = 0, ry = 0; for (const i of idx) { rx += P[i].lx; ry += P[i].ly; } return { idx, rx: rx / idx.length, ry: ry / idx.length, mf: 0, at: 0 }; }
   function fit(g) {
     const n = g.idx.length; let cx = 0, cy = 0; for (const i of g.idx) { cx += P[i].x; cy += P[i].y; } cx /= n; cy /= n;
     let sa = 0, sb = 0; for (const i of g.idx) { const p = P[i], qx = p.lx - g.rx, qy = p.ly - g.ry, ux = p.x - cx, uy = p.y - cy; sa += qx * ux + qy * uy; sb += qx * uy - qy * ux; }
@@ -64,9 +79,20 @@ export function createSim(def, opts = {}) {
     for (let k = 0; k < g.idx.length; k++) {
       const p = P[g.idx[k]], qx = p.lx - g.rx, qy = p.ly - g.ry, gx = g.cx + g.c * qx - g.s * qy, gy = g.cy + g.s * qx + g.c * qy, ex = gx - p.x, ey = gy - p.y, d = Math.hypot(ex, ey);
       if (d > dev) { dev = d; at = k; }
-      if (alpha) { p.x += ex * alpha; p.y += ey * alpha; }
+      if (alpha) { p.x += ex * alpha; p.y += ey * alpha; p.sx += ex * alpha; p.sy += ey * alpha; }   // sx/sy: summen av rettelsene = den elastiske kraften (·m/h²) som R49a1 leser momentet av
     }
     return { dev, at };
+  }
+  // R49a1: bøyemoment langs en kjede (kuler i rekkefølge). Kraft per kule = masse · samlet rettelse / h². Momentet i snitt k = momentet (om snittpunktet) av kreftene på kulene til venstre for snittet.
+  function moments(g, h) {
+    let sfx = 0, sfy = 0, sm = 0, best = 0, at = 0; const n = g.idx.length, k2 = 1 / (h * h);
+    for (let k = 0; k + 1 < n; k++) {
+      const p = P[g.idx[k]], m = p.w ? 1 / p.w : 0, fx = p.sx * m * k2, fy = p.sy * m * k2;
+      sfx += fx; sfy += fy; sm += p.x * fy - p.y * fx;
+      const q = P[g.idx[k + 1]], xc = (p.x + q.x) / 2, yc = (p.y + q.y) / 2, M = Math.abs(sm - (xc * sfy - yc * sfx));
+      if (M > best) { best = M; at = k; }
+    }
+    return { m: best, at };
   }
   function dist(a, b) { return Math.hypot(P[a].x - P[b].x, P[a].y - P[b].y); }
   const nearest = (bi, u, v, n) => bodies[bi].idx.map((i) => ({ i, d: Math.hypot(P[i].x - u, P[i].y - v) })).sort((a, b) => a.d - b.d || a.i - b.i).slice(0, n).map((q) => q.i);
@@ -76,12 +102,16 @@ export function createSim(def, opts = {}) {
   const links = [];
   // R30: en vippe har et fast dreiepunkt i midten (ligger som et skjult ledd mot underlaget, så den svinger fritt men faller ikke)
   const pivots = def.placed.filter((p) => partType(p.type).pivot).map((p) => ({ id: p.id + '_dreie', kind: 'pivot', a: p.id, b: null, la: { x: 0, y: 0 }, g: { u: p.u, v: p.v } }));
-  for (const l of [...(def.links || []), ...pivots]) {
+  const rank = (id) => { const i = bodyOf.get(id); return i === undefined ? -1 : i; };
+  const lkey = (l) => [l.kind === 'tape' ? 0 : l.kind === 'hinge' ? 1 : l.kind === 'rope' ? 2 : 3, rank(l.a), l.b ? rank(l.b) : -1, q6(l.la?.x), q6(l.la?.y), q6(l.lb?.x), q6(l.lb?.y), q6(l.g?.u), q6(l.g?.v)];
+  const linkOrder = (def.links || []).map((l, i) => ({ l, i, k: lkey(l) })).sort((a, b) => { for (let j = 0; j < a.k.length; j++) if (a.k[j] !== b.k[j]) return a.k[j] - b.k[j]; return a.i - b.i; }).map((o) => o.l);
+  const origLink = new Map((def.links || []).map((l, i) => [l.id, i]));
+  for (const l of [...linkOrder, ...pivots]) {
     const ai = bodyOf.get(l.a); if (ai === undefined) continue;
     const bi = l.b ? bodyOf.get(l.b) : -1; if (l.b && bi === undefined) continue;
     const A = bodies[ai].part, wa = toWorldPt(A, l.la.x, l.la.y), B = l.b ? bodies[bi].part : null;
     const wb = l.b ? toWorldPt(B, l.lb.x, l.lb.y) : { u: l.g.u, v: l.g.v };
-    const link = { id: l.id, kind: l.kind, a: ai, b: bi, cons: [], broken: false, over: 0, snap: LINK_SNAP[l.kind] * strength, pa: -1, pb: -1, hidden: l.kind === 'pivot' };
+    const link = { id: l.id, oi: origLink.get(l.id) ?? 1e9, la: l.la, lb: l.lb, kind: l.kind, a: ai, b: bi, cons: [], broken: false, over: 0, snap: LINK_SNAP[l.kind] * strength, pa: -1, pb: -1, hidden: l.kind === 'pivot' };
     if (l.kind === 'rope') {
       link.pa = nearest(ai, wa.u, wa.v, 1)[0]; link.pb = bi >= 0 ? nearest(bi, wb.u, wb.v, 1)[0] : pin(wb.u, wb.v);
       const c = { a: link.pa, b: link.pb, rest: dist(link.pa, link.pb) + 0.3, k: 1, type: 'max', link }; cons.push(c); link.cons.push(c);
@@ -91,12 +121,27 @@ export function createSim(def, opts = {}) {
       if (bi >= 0) {
         const nb = nearest(bi, wb.u, wb.v, l.kind === 'tape' ? 2 : 1); link.pb = nb[0];
         for (const x of na) for (const y of nb) { const c = { a: x, b: y, rest: dist(x, y), k: 1, type: 'eq', link }; cons.push(c); link.cons.push(c); }
-        noCol.add(ai < bi ? `${ai},${bi}` : `${bi},${ai}`);
+        if (!(l.kind === 'tape' && bodies[ai].kind === 'chain' && bodies[bi].kind === 'chain')) noCol.add(ai < bi ? `${ai},${bi}` : `${bi},${ai}`);   // R49a1: sammenteipede planker (lag) trykker fortsatt mot hverandre, ellers bærer teipen hele lasten alene
       } else {
         for (const x of na) { const q = pin(P[x].x, P[x].y); if (x === link.pa) link.pb = q; const c = { a: x, b: q, rest: 0, k: 1, type: 'eq', link }; cons.push(c); link.cons.push(c); }
       }
     }
     links.push(link);
+  }
+
+  // R49a1: sammenteipede lag (to parallelle planker med tape mellom): tape overfører skjær, så lagene virker mer sammen. Tapepunkt nær midten overfører lite (der er skjæret null), nær endene mye.
+  // composite γ = Σw / (Σw + COMP_K) i 0..1; hvert lag får moment-kapasitet ×(1+γ) og stivhet ×(1+3γ): to like lag helt sammensatt = 4× (som én dobbelt så dyp bjelke).
+  {
+    const pair = new Map();
+    for (const l of links) {
+      if (l.kind !== 'tape' || l.b < 0) continue; const A = bodies[l.a], B = bodies[l.b]; if (A.kind !== 'chain' || B.kind !== 'chain') continue;
+      if (Math.abs(Math.sin((A.part.rot || 0) - (B.part.rot || 0))) > 0.3) continue;
+      const hl = Math.min(partType(A.type).w, partType(B.type).w) / 2, s = Math.min(1, Math.abs(l.la.x) / (0.9 * hl)), key = l.a + ',' + l.b;
+      pair.set(key, (pair.get(key) || 0) + 0.25 + 0.75 * s);
+      l.snap *= TAPE_LAMINATE;   // teip langs en flate mellom to planker tåler mer enn teip mellom vilkårlige deler
+    }
+    for (const [key, w] of pair) { const [a, b] = key.split(',').map(Number), gm = w / (w + COMP_K); for (const [i, j] of [[a, b], [b, a]]) { const B = bodies[i]; B.comp = Math.max(B.comp, gm); (B.partners || (B.partners = [])).push(j); } }
+    for (const B of bodies) if (B.comp) { B.mcap *= 1 + B.comp; B.alpha = Math.min(1, B.alpha * (1 + 3 * B.comp)); }
   }
 
   // testfiguren
@@ -155,6 +200,7 @@ export function createSim(def, opts = {}) {
     hopCd -= h; supported = false; blocked = false; const calm = state.t < SETTLE;
     for (const p of P) { if (!p.w) continue; p.vy -= G * h; p.px = p.x; p.py = p.y; p.x += p.vx * h; p.y += p.vy * h; }
     updateBoxes(); for (const c of cons) if (c.link) c.lam = 0;
+    for (const B of bodies) if (B.kind === 'chain') for (const i of B.idx) { P[i].sx = 0; P[i].sy = 0; }
     for (let it = 0; it < ITER; it++) {
       for (const B of bodies) for (const g of B.groups) matchGroup(g, B.alpha);
       for (const c of cons) if (!c.link || !c.link.broken) solveCon(c);
@@ -165,25 +211,26 @@ export function createSim(def, opts = {}) {
       for (const p of P) if (p.w) for (const bx of boxes) collideBox(p, bx);
     }
     for (const c of cons) if (c.link) c.f = Math.abs(c.lam) / (h * h);
+    for (const B of bodies) if (B.kind === 'chain') for (const g of B.groups) { const r = moments(g, h); g.mf += (r.m - g.mf) * MOM_FILTER; g.at = r.at; }   // R49a1: bøyemoment (glattet)
     for (const p of P) { if (!p.w) continue; p.vx = calm ? 0 : (p.x - p.px) / h; p.vy = calm ? 0 : (p.y - p.py) / h; const sp = Math.hypot(p.vx, p.vy); if (sp > 60) { p.vx *= 60 / sp; p.vy *= 60 / sp; } const dm = p.d || 0.9995; p.vx *= dm; p.vy *= dm; }
   }
 
   function checkBreaks() {
-    // planker: avstand fra stiv form (nedbøyning). For stor nedbøyning: planken brekker der den bøyer mest
+    // planker: bøyemoment over kapasiteten brekker planken i snittet med størst moment (R49a1; før: vinkel/nedbøyning)
     for (let bi = 0; bi < bodies.length; bi++) {
       const B = bodies[bi]; if (B.kind !== 'chain') continue;
       let worst = 0;
       for (let gi = 0; gi < B.groups.length; gi++) {
-        const g = B.groups[gi], r = matchGroup(g, 0); if (r.dev > worst) worst = r.dev;
-        if (r.dev > B.snap && g.idx.length >= 4) {
-          // brekkpunkt: der vinkelen mellom to biter er størst (men ikke helt ytterst)
-          let best = 1, ba = -1;
-          for (let k = 1; k + 1 < g.idx.length; k++) { const a = P[g.idx[k - 1]], m = P[g.idx[k]], c = P[g.idx[k + 1]], ux = m.x - a.x, uy = m.y - a.y, vx = c.x - m.x, vy = c.y - m.y, ang = Math.abs(Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy)); if (ang > ba) { ba = ang; best = k; } }
+        const g = B.groups[gi]; let own = g.mf;
+        if (B.comp && B.partners) { let sum = own; for (const j of B.partners) sum += Math.max(...bodies[j].groups.map((q) => q.mf)); own += B.comp * (sum / (1 + B.partners.length) - own); }   // sammensatt: lagene deler momentet (i forhold til γ)
+        const r = own / B.mcap; if (r > worst) worst = r;
+        if (r > 1 && g.idx.length >= 4) {
+          const best = Math.min(g.idx.length - 2, Math.max(1, g.at + 1));   // snittet ligger mellom kule `at` og `at+1`; ikke helt ytterst
           const L = g.idx.slice(0, best + 1), R = g.idx.slice(best + 1); B.groups.splice(gi, 1, mkGroup(L), mkGroup(R)); B.broken = true;
-          events.push({ type: 'break', id: B.id, u: P[g.idx[best]].x, v: P[g.idx[best]].y, t: state.t }); gi++;
+          events.push({ type: 'break', id: B.id, u: P[g.idx[best]].x, v: P[g.idx[best]].y, t: state.t, m: +own.toFixed(1), cap: +B.mcap.toFixed(1) }); gi++;
         }
       }
-      B.stress = Math.min(1.5, worst / B.snap);
+      B.stress = Math.min(1.5, worst);
       if (B.stress > 0.6 && state.t - B.creakT > 0.9) { B.creakT = state.t; events.push({ type: 'creak', id: B.id, stress: B.stress }); }
     }
     // koblinger: for stort strekk i noen steg på rad
@@ -213,7 +260,7 @@ export function createSim(def, opts = {}) {
 
   // visning: planker som kjeder (synlig nedbøyning), klosser som rektangler, koblinger, testfiguren
   function pose() {
-    const parts = bodies.slice(0, fig).map((B) => {
+    const parts = bodies.slice(0, fig).sort((x, y) => x.oi - y.oi).map((B) => {
       const pts = B.idx.map((i) => ({ u: P[i].x, v: P[i].y }));
       if (B.kind === 'chain') {
         const segs = B.groups.map((g) => g.idx.map((i) => ({ u: P[i].x, v: P[i].y })));
@@ -225,11 +272,11 @@ export function createSim(def, opts = {}) {
     });
     return {
       parts, figure: { u: F.x, v: F.y, r: LD.r, vx: F.vx, vy: F.vy, supported, load: loadId, roll: F.x / LD.r },
-      links: links.filter((l) => !l.hidden).map((l) => ({ id: l.id, kind: l.kind, broken: l.broken, stress: l.stress || 0, a: { u: P[l.pa].x, v: P[l.pa].y }, b: { u: P[l.pb].x, v: P[l.pb].y }, len: l.kind === 'rope' ? l.cons[0].rest : 0 })),
+      links: links.filter((l) => !l.hidden).sort((x, y) => x.oi - y.oi).map((l) => ({ id: l.id, kind: l.kind, broken: l.broken, stress: l.stress || 0, a: { u: P[l.pa].x, v: P[l.pa].y }, b: { u: P[l.pb].x, v: P[l.pb].y }, len: l.kind === 'rope' ? l.cons[0].rest : 0 })),
     };
   }
   const drain = () => events.splice(0, events.length);
-  return { step, pose, drain, state, figure: F, get t() { return state.t; }, breaks: () => bodies.filter((b) => b.broken).map((b) => b.id) };
+  return { step, pose, drain, state, figure: F, get t() { return state.t; }, breaks: () => bodies.filter((b) => b.broken).sort((x, y) => x.oi - y.oi).map((b) => b.id), moments: () => bodies.filter((b) => b.kind === 'chain').sort((x, y) => x.oi - y.oi).map((b) => ({ id: b.id, m: Math.max(...b.groups.map((g) => g.mf)), cap: b.mcap, comp: b.comp })) };
 }
 
 // R26: hvor delene kommer til å ligge når de har satt seg (klosser faller ned på hverandre, løftes opp av underlaget): brukes når bygget flyttes ut i verdenen.

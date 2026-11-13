@@ -18,8 +18,8 @@ export const TOY_TYPES = {
 };
 // m = masse per kule, alpha = stivhet (lavere = bøyer mer), snap = største nedbøyning før den brekker, damp = fartsdemping per steg (svamp)
 export const TOY_MATERIAL = {
-  pencil: { m: 0.25, alpha: 0.5, snap: 0.3 },
-  ruler: { m: 0.3, alpha: 0.05, snap: 1.8 },
+  pencil: { m: 0.25, alpha: 0.5, snap: 0.3, mcap: 1600 },   // R49a1: mcap = bøyemoment-kapasitet (se build_phys.js)
+  ruler: { m: 0.3, alpha: 0.05, snap: 1.8, mcap: 6500 },
   lego: { m: 0.8, alpha: 1 },
   book: { m: 2.5, alpha: 1 },
   sponge: { m: 0.3, alpha: 0.02, damp: 0.97 },

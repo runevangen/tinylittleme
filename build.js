@@ -7,6 +7,7 @@ import {
   addLink, removeLink, topLink, linkEnds, LINK_KINDS, twistRot, fitView, clampScale, toScreen, toWorld, canEnterBuild, nearestSite, initParts, partTypes, gotPartIds, stepParts, restoreParts, snapPoint, siteAnchors, ROT_STEP,
 } from './build_logic.js';
 import { ZOOM_STEP, gridForScale, anchorRadius, zoomAbout, zoomStep, freeCenter, isDoubleTap, dblTapView, zoomLabel } from './build_zoom.js';   // R44
+import { capacity } from './build_capacity.js';   // R49a1: «Tåler X»-måler
 import { createSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
 import { stressCss, tint, loadMap, whyBroke, breakTempo, ringAt } from './build_stress.js';   // R45: lesbar svikt
 import { drawToyDetail, drawToyChain } from './build_toys_view.js';   // R46: leker som materialer
@@ -69,7 +70,7 @@ body.building #panel{z-index:10}
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined }) {
+export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -245,9 +246,25 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   }
 
   // R47: kostnad og stjerner (og smuler) nede til høyre over brettet. Vanlige canvas-kall, ingen nye tegnejobber utover én avrundet boks og noen tekstlinjer.
+  // R49a1: «Tåler ca. N klosser» (build_capacity.js): regnes ut litt etter at du slipper en del (ikke mens du drar), og bufres per bygg
+  let capKey = '', capRes = null, capTimer = 0; const capCache = new Map();
+  function capUpdate(B) {
+    if (!getCap() || !B.placed.length) { capRes = null; capKey = ''; return; }
+    if (drag) { capKey = ''; return; }
+    const key = `${active.id}|${sigOf(B)}|${JSON.stringify(B.links)}|${getStrength()}`; if (key === capKey) return; capKey = key;
+    if (capCache.has(key)) { capRes = capCache.get(key); return; }
+    capRes = null; clearTimeout(capTimer);
+    capTimer = setTimeout(() => {
+      if (capKey !== key || !active) return; const t0 = performance.now();
+      const r = capacity({ site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() }); r.ms = Math.round(performance.now() - t0); capCache.set(key, r);
+      if (capKey === key) { capRes = r; logEv('bygg', `tåler ca. ${r.n}${r.capped ? '+' : ''} klosser midt på spennet (${r.ms} ms, ${r.sims} sim)`); }
+    }, 160);
+  }
   function drawBudget(B) {
-    if (!getBudget() && !getBonus()) return;
+    capUpdate(B);
+    if (!getBudget() && !getBonus() && !getCap()) return;
     const lines = [];
+    if (getCap() && B.placed.length) lines.push({ t: capRes ? (!capRes.n ? T('build.capNone') : capRes.capped ? T('build.capMax', { n: capRes.n }) : T('build.cap', { n: capRes.n })) : T('build.capWait'), c: '#9fe3ff', b: true });
     if (getBudget()) {
       const r = starsFor(active, B.placed, B.links), best = getBuildStars(st0, levelId)[active.id], on = B.placed.length > 0;
       lines.push({ t: `${on ? starText(r.stars) : '☆☆☆'}  ${T('build.cost', { n: r.cost })} · ${(r.parts === 1 ? T('build.partOne') : T('build.partsN', { n: r.parts }))}`, c: '#ffe9a8', b: true });
@@ -571,7 +588,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     },
     resetAll() { for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); passedL.clear(); loadSel.clear(); recs.clear(); recorder = null; replaying = false; sim = null; winRes = null; lastBonusKey = ''; lastCrumbs = -1; },
     screenPos: (u, v) => (active && view ? toScreen(view, W, H, u, v) : null),   // til tester på mobil (Playwright)
-    starsMap, bonusOpen, get lastResult() { return winRes; },
+    starsMap, bonusOpen, get lastResult() { return winRes; }, get cap() { return capRes; },
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'),
     startReplay: () => !!active && startReplay(), get replaying() { return replaying; }, record: (id) => recs.get(id) || null, importText: (t) => !!active && doImport(t), exportText: () => (active ? exportCode(getB(active)) : null),   // R50: til tester (node og Playwright)
