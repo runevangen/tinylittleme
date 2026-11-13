@@ -11,8 +11,10 @@ import { buildRoller, buildDangler, ROLLER_COL, DANGLER_COL } from './creatures_
 import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid, nearBridge } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
 import { buildFlag, buildGoalRing } from './markers.js';
-import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
+import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalLine, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
 import { createGoalView } from './goals_view.js';
+import { createTopBand } from './topband_view.js';   // R53: dynamisk toppbånd
+import { PRIO } from './topband_logic.js';
 import { introKey, shouldShowIntro, finishData, winHTML, showCard, heroSVG, totals, endHTML } from './story.js';
 import { firstTarget, reachedFirst, createSweep, sweepPose } from './intro.js';
 import { createIntroView } from './intro_view.js';
@@ -1083,6 +1085,10 @@ function toast(msg, low = false) {
   const t = $('toast'); t.textContent = msg; t.classList.toggle('low', low); t.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1700);
 }
+// R53: viktige tekster går via toppbåndet når det er på (ellers vanlig toast). prio: PRIO.danger / reply / hint.
+let tbReady = null;
+const bandSay = (id, prio, msg, ttl = 5, kind = 'msg') => { if (!(tbReady && tbReady.push(id, prio, msg, ttl, kind))) toast(msg); };
+const tip = (msg) => bandSay('tip', PRIO.hint, msg, 6, 'hint');
 const points = () => Math.max(0, SCORE.start - stats.saves * SCORE.save - stats.respawns * SCORE.respawn - stats.broken * SCORE.broken - stats.resets * SCORE.resetThings - stats.hard * SCORE.hardLand - (stats.hits || 0) * SCORE.antHit - Math.floor(clock / 10) * SCORE.perTenSeconds + (stats.crumbs || 0) * SCORE.crumb + (stats.carried || 0) * SCORE.carried + (stats.boss || 0) * SCORE.boss);
 let camReady = false;       // cam er deklarert lenger ned
 function placeFlag() {          // flagget settes ved siden av figuren (ikke under beina), og bare der det finnes gulv
@@ -1278,6 +1284,9 @@ goalArrow.rotation.x = -Math.PI / 2; goalArrow.renderOrder = 7; goalArrow.visibl
 for (const [color, k, ord, z] of [[0x10151f, 1.5, 5, -0.004], [0xffffff, 1.28, 6, -0.002]]) { const o = new THREE.Mesh(arrowGeo, arrowMat(color)); o.scale.set(k, k, 1); o.renderOrder = ord; goalArrow.add(o); }
 const goalArrowG = new THREE.Group(); goalArrowG.add(goalArrow); scene.add(goalArrowG);
 const introV = createIntroView({ scene, $, T, low: gfxLow });
+{ const sh = introV.showHint.bind(introV), hh = introV.hideHint.bind(introV);       // R53: hint-bobla går via båndet når det er på
+  introV.showHint = (label, text) => { sh(label, text); tb.push('intro', PRIO.hint, `${label ? label + ': ' : ''}${text}`, 10, 'hint'); };
+  introV.hideHint = () => { hh(); tb.clear('intro'); }; }
 let introSweep = null, introTgt = null, introHintT = 0;   // R22: sveip, første delmål og hint-tid
 function introEnd(skipped) {
   introSweep = null; introV.hideSweep(); menuOpen = false; logEv('intro', skipped ? 'sveip hoppet over' : 'sveip ferdig');
@@ -1297,6 +1306,23 @@ const bossFighting = () => bossOn && !!LEVEL.bossS && !LEVEL.bossS.gone && ['win
 // R14: infokortet skal aldri dekke HUD-en eller NESTE-bobla: kortet legges under HUD-en, og bobla under kortet (eller skjules når bruksanvisningen er åpen)
 const hudEl = $('hud');
 goalView = createGoalView({ $, T, getLang: () => lang, L: LEVEL, hudEl }); goalView.setOn(goalsOn);   // R23: delmål-panelet (goals_view.js)
+// R53: toppbåndet samler HUD-linje, delmål, NESTE, hint, ℹ og ⚑. Av (innstilling) gir tilbake de gamle elementene.
+let tbandOn = store.get('tlm.tband', true), tbSize = store.get('tlm.tbsize', 'compact');
+const tb = createTopBand({ T, logEv, onInfo: () => { $('qpop').classList.add('hide'); infoTab.click(); }, onFlag: () => { if (infoOpen) closeInfo(); $('qbtn').click(); }, onNext: () => camToGoal(), onOpen: () => { $('qpop').classList.add('hide'); if (infoOpen) closeInfo(); } });
+tb.setSize(tbSize); tb.setOn(tbandOn); tbReady = tb;
+function bandCtx() {
+  const act = activeGoal(LEVEL), total = goalTotal(LEVEL), st = { crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0 };
+  const play = mode === 'play' && !won;
+  const c = { version: VERSION, levelLabel, nextText: play ? compState.text : null, nextAng: compState.ang, goalHead: play && act ? goalLine(LEVEL, act, lang, st) : (total > 0 && goalDone(LEVEL) === total ? T('goal.all') : ''),
+    goalDone: goalDone(LEVEL), goalTotal: total, crumbs: crumbsOn && crumbTotal(LEVEL) ? { n: crumbCount(LEVEL), total: crumbTotal(LEVEL) } : null,
+    infoOn: infoCard.style.display !== 'none', flagOn: qbtnOn, unread: $('qbtn').classList.contains('hasreply'), badge: markCount() + unsent('BACKLOGG') };
+  if (tb.isOpen()) {
+    c.goals = (LEVEL.goalList || []).map((g) => ({ text: goalLine(LEVEL, g, lang, st), done: !!g.done, active: g === act }));
+    c.send = sendState; const r = inbox?.replies?.[0]; c.reply = r ? `${r.version ? 'v' + r.version + ': ' : ''}${r.message}` : '';
+    c.counts = inbox ? statsLines(inbox) : [];
+  }
+  return c;
+}
 function topLayout() {
   const open = infoCard.classList.contains('show'), cw = infoCard.offsetWidth, left = innerWidth - cw;
   const hr0 = hudEl.getBoundingClientRect(), gr = goalView?.el.classList.contains('show') ? goalView.el.getBoundingClientRect() : null;      // R23: delmål-panelet hører til samme øvre venstre hjørne som HUD-en
@@ -1312,8 +1338,10 @@ function topLayout() {
   compEl.style.top = ct;
   if (open && ct && infoCard.classList.contains('manual')) compEl.style.display = 'none';
 }
+const compState = { text: null, ang: 0 };    // R53: det NESTE-bobla viser, til toppbåndet
 function compassFrame(now) {
   document.body.classList.toggle('bossfight', bossFighting());
+  if (bossFighting()) { const bm = LEVEL.bossS.mode; if (bm === 'windup' || bm === 'charge') tb.push('boss', PRIO.danger, T('tb.boss.dodge'), 0.6, 'danger'); else if (bm === 'stunned') tb.push('boss', PRIO.danger, T('tb.boss.stun', { jump: TOUCH ? T('btn.jump') : 'Mellomrom' }), 0.6, 'danger'); }
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
   const forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6) && !bossFighting();
   { const key = (t.final ? '!' : '') + t.label, idle = player.onGround && Math.hypot(player.vx, player.vz) < 0.3;       // v0.75: bare pila til vanlig; teksten vises ved nytt mål, tips, og når du står stille
@@ -1323,6 +1351,8 @@ function compassFrame(now) {
   compEl.style.display = show && (compassMode === 'both' || compassMode === 'compass' || forced) ? 'flex' : 'none';
   goalArrow.visible = show && player.onGround && (compassMode === 'both' || compassMode === 'arrow' || forced); goalArrowG.visible = goalArrow.visible;
   topLayout();
+  const bandNext = show && (compassMode === 'both' || compassMode === 'compass' || forced);
+  if (!bandNext) compState.text = null;
   if (!show) { goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); return; }
   const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
@@ -1330,6 +1360,7 @@ function compassFrame(now) {
   const dy = t.y - player.y;
   $('compLbl').textContent = t.final ? T('compass.goal') : T('compass.next', { name: t.label.toUpperCase() });
   compTxt.textContent = `${(dist * 0.05).toFixed(1).replace('.', ',')} m${t.act ? ` · ▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? ' · ▲ opp' : ' · ▼ ned') : ''}`;
+  if (bandNext) { compState.text = `${$('compLbl').textContent} · ${compTxt.textContent}`; compState.ang = ang; }
   const lowCam = innerWidth > innerHeight; goalArrowG.scale.setScalar(lowCam ? 1.35 : 1);   // liggende: lavere kamera, så pila er større og hevet litt
   const placeArrow = (d) => goalArrowG.position.set(player.x + dx / dist * d, player.y + (lowCam ? 0.14 : 0.07) + 0.01 * Math.sin(now / 200), player.z + dz / dist * d);
   placeArrow(1.4); goalArrowG.rotation.y = Math.atan2(-dx, -dz);
@@ -1579,6 +1610,8 @@ const SETTINGS = [
   fl('rewardsall', 'admin', 'Alt tilbehør åpent (test av lekerommet)', false, () => rewardsAll, kp('tlm.rewardsall', (v) => { rewardsAll = v; refreshAccessories(); })),
   fl('introsweep', 'hjelp', 'Nivåstart: kort kamerasveip fra målet tilbake til figuren (trykk for å hoppe over)', true, () => introSweepOn, kp('tlm.introsweep', (v) => { introSweepOn = v; })),
   fl('intromark', 'hjelp', 'Nivåstart: pil over første delmål (neste hylle, kasse eller kurv)', true, () => introMarkOn, kp('tlm.intromark', (v) => { introMarkOn = v; if (!v) introV.markerOn(false); })),
+  fl('tband', 'hjelp', 'Dynamisk toppbånd: ett bånd øverst samler versjon, delmål, NESTE, hint, ℹ og ⚑ (trykk på det for mer). Av gir tilbake de løse boblene', true, () => tbandOn, kp('tlm.tband', (v) => { tbandOn = v; tb.setOn(v); logEv('bånd', v ? 'på' : 'av'); })),
+  sl('tbsize', 'hjelp', 'Toppbånd: størrelse', 'compact', [['compact', 'Kompakt'], ['normal', 'Normal']], () => tbSize, kp('tlm.tbsize', (v) => { tbSize = v; tb.setSize(v); })),
   fl('introhint', 'hjelp', 'Nivåstart: hint-boble som nevner riktig knapp', true, () => introHintOn, kp('tlm.introhint', (v) => { introHintOn = v; if (!v) introV.hideHint(); })),
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
   fl('buildsnap', 'spill', 'Byggeskjerm: delene snapper til rutenett og festepunkter', true, () => buildSnap, kp('tlm.buildsnap', (v) => { buildSnap = v; })),
@@ -1768,7 +1801,7 @@ const marks = [];
   });
   pop.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'qtext') { e.preventDefault(); pop.querySelector('[data-mark]').click(); } });
   $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); draw(); if (!pop.classList.contains('hide')) refreshInbox(true); if (!pop.classList.contains('hide')) setTimeout(() => $('qtext').focus(), 30); });
-  document.addEventListener('pointerdown', (e) => { if (!pop.classList.contains('hide') && !pop.contains(e.target) && e.target !== $('qbtn')) pop.classList.add('hide'); });
+  document.addEventListener('pointerdown', (e) => { if (!pop.classList.contains('hide') && !pop.contains(e.target) && e.target !== $('qbtn') && !e.target.closest?.('#topband')) pop.classList.add('hide'); });
 }
 const unsent = (type) => evLog.filter((e) => e.type === type && !e.sent).length, markCount = () => unsent('MARKERT');
 function updateMarkBadge() { const n = markCount() + unsent('BACKLOGG'), el = $('qcnt'); el.textContent = n; el.style.display = n ? 'flex' : 'none'; const h = $('repHead'); if (h) h.innerHTML = repHeadHtml(); }
@@ -1796,25 +1829,25 @@ async function refreshInbox(opened) {
   got.replies.forEach((r) => { r.fresh = !r.read && !seen.has(r.id); });
   inbox = got; renderInbox();
   const fresh = inbox.replies.filter((r) => r.fresh);
-  if (fresh.length && !inboxToast && !opened) { inboxToast = true; toast(`✉ Svar fra Claude: ${fresh[0].message}`); logEv('svar', `${fresh.length} nytt`); }
+  if (fresh.length && !inboxToast && !opened) { inboxToast = true; bandSay('reply', PRIO.reply, `✉ Svar fra Claude: ${fresh[0].message}`, 9, 'reply'); logEv('svar', `${fresh.length} nytt`); }
   if (fresh.length && opened) { markRead(code, fresh.map((r) => r.id)); fresh.forEach((r) => { r.read = true; }); $('qbtn').classList.remove('hasreply'); }
 }
 setTimeout(() => refreshInbox(false), 4000);
 
 // «Send til Claude» (v1.27): sender rapporten + teksten direkte til tabellen tlm_feedback (se feedback_send.js, docs/TILBAKEMELDING.md).
-let sending = false;
+let sending = false, sendState = '';
 async function sendToClaude(body) {
   if (sending) return 'opptatt';
   const code = store.get('tlm.tcode', '');
   if (!validCode(code)) { toast('Skriv tester-koden din først (feltet i ⚑-boksen, eller ⚙ → Test)'); return 'kode'; }
   const built = buildPayload({ code, version: VERSION, level: levelLabel, kind: 'rapport', body, report: reportText(), ua: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '') });
   if (built.error) { toast(REASON_TEXT[built.error] || REASON_TEXT.feil); return built.error; }
-  sending = true; toast('Sender …');
+  sending = true; sendState = T('tb.sending'); bandSay('send', PRIO.reply, T('tb.sending'), 0, 'reply');
   const res = await sendFeedback(built.row);
-  sending = false;
-  if (res.ok) { markSent(); logEv('sendt', `til Claude (${built.row.report.length} tegn)`); toast('Sendt! Takk, Claude ser den.'); refreshInbox(true); return 'ok'; }
+  sending = false; tb.clear('send');
+  if (res.ok) { markSent(); logEv('sendt', `til Claude (${built.row.report.length} tegn)`); sendState = T('tb.sent'); bandSay('send', PRIO.reply, 'Sendt! Takk, Claude ser den.', 5, 'reply'); refreshInbox(true); return 'ok'; }
   logEv('sendfeil', `${res.reason} ${res.status ?? ''}`);
-  toast(REASON_TEXT[res.reason] || REASON_TEXT.feil); return res.reason;
+  sendState = REASON_TEXT[res.reason] || REASON_TEXT.feil; bandSay('send', PRIO.reply, sendState, 6, 'reply'); return res.reason;
 }
 $('panel').addEventListener('click', (e) => { if (e.target.id === 'hSend') sendToClaude(''); if (e.target.id === 'hShare') doShare(false).then((r) => toast(r === 'delt' ? 'Delt' : r === 'kopiert' ? 'Tilbakemeldingene er kopiert' : r === 'vis' ? 'Åpne ⚙ → Test → Vis rapporten og kopier' : 'Avbrutt')); if (e.target.id === 'hCopy') doShare(true).then((r) => toast(r === 'kopiert' ? 'Rapporten er kopiert. Lim inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis rapporten')); });
 updateMarkBadge();
@@ -1958,7 +1991,7 @@ const boost = () => held('ShiftLeft', 'ShiftRight');
 // maur: hopp på ryggen = knus og sprett; ellers støt tilbake (v0.77)
 // R19: pillbug (roller) og tråd-edderkopp (dangler): varsel, støt, knus. Alle hendelser logges som «fiende».
 function creatureEvent(ev) {
-  const J = TOUCH ? T('btn.jump') : 'Mellomrom', roller = ev.kind === 'roller', seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); toast(msg); } };
+  const J = TOUCH ? T('btn.jump') : 'Mellomrom', roller = ev.kind === 'roller', seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); tip(msg); } };
   logEv('fiende', `${ev.kind} ${ev.type} ${ev.id}`);
   if (ev.type === 'alert') { audio?.spiderhiss(); buzz(15); if (roller) seen('roller', `En pillbug! Den ruller seg sammen og ruller rett mot deg: stikk til siden, eller hopp på den (${J})`); else seen('dangler', `Edderkopp i tråd! Den rister før den stuper: løp forbi mens den er oppe, eller hopp på den (${J}) når den henger lavt`); }
   else if (ev.type === 'roll' || ev.type === 'plunge') { audio?.spiderleap(); buzz(25); }
@@ -1996,7 +2029,7 @@ function puzzleEvent(ev) {
 }
 // sjef-maur (R9): varsel, støt i veggen, skade, seier og premie
 function bossEvent(ev) {
-  const seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); toast(msg); } };
+  const seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); tip(msg); } };
   const J = TOUCH ? T('btn.jump') : 'Mellomrom';
   if (ev.type === 'alert') { logEv('sjef varsler', ev.id); audio?.bossroar(false); music?.duck(0.5, 1); buzz(30); seen('boss', 'Sjef-maur! Den varsler, så stormer den rett fram. Stikk til siden. Smeller den i veggen, eller blir sliten, er den svimmel: hopp på ryggen'); }
   else if (ev.type === 'charge') { logEv('sjef stormer', ev.id); audio?.bossroar(true); buzz(40); }
@@ -2114,7 +2147,7 @@ function update(dt) {
       else if (ev.tool === 'knotrope') { toast(T('toast.knotRope', { grab: GREP })); say('knot'); logEv('kombo', 'tau hengt ned'); }
       else say(ev.tool === 'gel' ? 'gel' : 'roll');
     }
-    else if (ev.type === 'toolhint') toast(ev.tool === 'needle' ? T('toast.needSpool', { thread: T('btn.thread') }) : ev.tool === 'spool' ? T('toast.needNeedle', { thread: T('btn.thread') }) : ev.tool === 'zip' ? ({ 'zip-flat': T('toast.zipFlat'), 'zip-far': T('toast.zipFar'), 'zip-blocked': T('toast.zipBlocked') }[ev.why] || T('toast.zipStand', { tieTop: T('btn.tieTop') })) : ev.tool === 'gel' ? T('toast.needGel', { smear: T('btn.smear'), drop: T('btn.drop') }) : T('toast.needRoll', { unroll: T('btn.unroll'), drop: T('btn.drop') }));
+    else if (ev.type === 'toolhint') tip(ev.tool === 'needle' ? T('toast.needSpool', { thread: T('btn.thread') }) : ev.tool === 'spool' ? T('toast.needNeedle', { thread: T('btn.thread') }) : ev.tool === 'zip' ? ({ 'zip-flat': T('toast.zipFlat'), 'zip-far': T('toast.zipFar'), 'zip-blocked': T('toast.zipBlocked') }[ev.why] || T('toast.zipStand', { tieTop: T('btn.tieTop') })) : ev.tool === 'gel' ? T('toast.needGel', { smear: T('btn.smear'), drop: T('btn.drop') }) : T('toast.needRoll', { unroll: T('btn.unroll'), drop: T('btn.drop') }));
     else if (ev.type === 'autojump') { buzz(15); if (!store.get('tlm.seen.autojump', false)) { store.set('tlm.seen.autojump', true); toast(TOUCH ? 'Hoppet av seg selv: stikken helt ut mot en kant = hopp over. Skyv forsiktig for å stoppe ved kanten.' : 'Hoppet av seg selv over gapet. Hold C for å gå forsiktig og stoppe ved kanten.'); } }
     else if (ev.type === 'edgestop') { buzz(10); if (!store.get('tlm.seen.edgestop', false)) { store.set('tlm.seen.edgestop', true); toast(TOUCH ? 'Stopper ved kanten. Skyv stikken helt ut for å hoppe over eller gå utfor.' : 'Stopper ved kanten. Slipp C for å gå utfor.'); } }
     else if (ev.type === 'shimmy') { logEv('shimmy'); buzz(8); if (!store.get('tlm.seen.shimmy', false)) { store.set('tlm.seen.shimmy', true); toast(TOUCH ? `Du kan gå sidelengs i kanten: skyv stikken til siden. ${T('btn.jump')} hiver deg opp.` : 'Du kan gå sidelengs i kanten (A/D). Mellomrom hiver deg opp.'); } }
@@ -2123,7 +2156,7 @@ function update(dt) {
   }
   if (LEVEL.shortcuts?.length && mode === 'play') for (const ev of stepShortcutWatch(shortcutWatch, player)) {           // R29: genvei med verktøy
     logEv('genvei', `${ev.id} ${ev.act === 'top' ? 'oppe' : 'første trinn'}`);
-    if (shortcutHintOn) { if (ev.act === 'top') { audio?.checkpoint(); buzz(25); toast(T('toast.shortcutTop')); } else toast(T('toast.shortcutStep', { jump: T('btn.jump') })); }
+    if (shortcutHintOn) { if (ev.act === 'top') { audio?.checkpoint(); buzz(25); tip(T('toast.shortcutTop')); } else tip(T('toast.shortcutStep', { jump: T('btn.jump') })); }
   }
   tickKick(player, dt);
   if (toysOn) for (const ev of stepToys(toyLife, LEVEL, player, dt)) {                // R18: små stemmer i rommet
@@ -2150,12 +2183,12 @@ function update(dt) {
     failAt(hz.type || 'fare');
     audio?.splash(hz.type === 'flush' ? 'flush' : 'pit'); cue(hz.type === 'flush' ? 'skylling' : 'plask'); say(hz.type === 'flush' ? 'flush' : 'pit');
     resetPlayer(player, ...(hz.type === 'flush' ? LEVEL.start : save.pos)); stats.respawns++;
-    toast(`${hz.message || 'Fare!'}  −${SCORE.respawn} poeng`);
+    toast(`${hz.message || 'Fare!'}  −${SCORE.respawn} poeng`); bandSay('hazard', PRIO.danger, hz.message || 'Fare!', 3, 'danger');
   }
 
   const g = LEVEL.goal;
   if (!won && goalTotal(LEVEL) && goalsOn && goalLockOn && !goalsOpen(LEVEL) && mode === 'play' && !stats.flew && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
-    if (performance.now() > goalLockMsg) { goalLockMsg = performance.now() + 4000; logEv('mål låst', lockingGoals(LEVEL).map((q) => q.id).join(',')); toast(T('goal.locked', { name: goalLabel(lockingGoals(LEVEL)[0], lang) })); }
+    if (performance.now() > goalLockMsg) { goalLockMsg = performance.now() + 4000; logEv('mål låst', lockingGoals(LEVEL).map((q) => q.id).join(',')); tip(T('goal.locked', { name: goalLabel(lockingGoals(LEVEL)[0], lang) })); }
   } else if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
     let d, rw = null;
@@ -2465,6 +2498,7 @@ function render(now, dt) {
   renderer.render(scene, camera);
   if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const w = overBudget(st).concat(memOver(st, texLow || lowOn)); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
   goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
+  if (tb.isOn()) tb.update(bandCtx(), now);
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
   $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
