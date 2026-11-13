@@ -20,6 +20,8 @@ Seks nivåer med stigende vanskelighetsgrad: tre rom (nivå 1–3), og de samme 
 - **Nivå 2:** gulv → to klosser → lekekasse → seng → nattbord → hopp over lekebøtta → krakk → skrivebord → gardin (klatre) → vinduskarm → vegghylle → spilleske → klesskap.
 - **Nivå 3:** gulv → fire skuffer som trapp → benk → smal kant foran vasken → benk → smal kant foran kokeplatene → benk → brødrister → mikrobølgeovn → kjøkkenhåndkle (klatre) → krydderhylle → hvitløksflette (klatre) → overskap → hopp til kjøleskapet.
 
+Skuffene i nivå 3 (åpne) og nivå 6 (lukkede fronter) er `kind: "drawer"` med `drawer: { open, front, handle, style }` i scenen (R55, `drawers.js`); tilstanden leses av tegningen, kollisjon og rute er uendret.
+
 ## Nivå 4–6: de samme rommene, løst på en ny måte
 Laget av grunnscenene med `tools/make_variants.mjs` (flytter møbler, legger til hyller og ting, flytter målet). Endrer du en grunnscene, kjør verktøyet på nytt; `npm test` sier fra hvis variantene er utdaterte, og krever at ruta er en annen enn i grunnrommet.
 

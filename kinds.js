@@ -28,6 +28,7 @@ export const KINDS = {
   roll:         { shaped: true,  desc: 'toalettrull' },
   cup:          { shaped: true,  desc: 'tannglass / kopp' },
   toothbrush:   { shaped: true,  desc: 'tannbørste' },
+  drawer:       { shaped: true,  desc: 'skuff (R55): tegnes åpen eller lukket etter «drawer»: { open, front, handle, style } i scenen; lukket front = decor: true' },
   knob:         { shaped: true,  desc: 'knott / håndtak (decor: true)' },
   towel:        { shaped: true,  desc: 'brettet håndkle (frotté)' },
   towel_hang:   { shaped: true,  desc: 'håndkle som henger langs en vegg; sett grip: true for klatring' },

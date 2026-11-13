@@ -153,8 +153,14 @@
     -7.6
    ],
    "id": "skuff_1",
-   "kind": "crate",
-   "color": 15262418,
+   "kind": "drawer",
+   "drawer": {
+    "open": true,
+    "front": 13221263,
+    "handle": 13225168,
+    "style": "knob"
+   },
+   "color": 13221263,
    "material": "wood",
    "cp": false,
    "soft": false
@@ -172,8 +178,14 @@
     -10.2
    ],
    "id": "skuff_2",
-   "kind": "crate",
-   "color": 15262418,
+   "kind": "drawer",
+   "drawer": {
+    "open": true,
+    "front": 10338202,
+    "handle": 14067514,
+    "style": "bar"
+   },
+   "color": 10338202,
    "material": "wood",
    "cp": false,
    "soft": false
@@ -191,8 +203,14 @@
     -12.8
    ],
    "id": "skuff_3",
-   "kind": "crate",
-   "color": 15262418,
+   "kind": "drawer",
+   "drawer": {
+    "open": true,
+    "front": 14261630,
+    "handle": 13225168,
+    "style": "bar"
+   },
+   "color": 14261630,
    "material": "wood",
    "cp": false,
    "soft": false
@@ -210,8 +228,14 @@
     -15.4
    ],
    "id": "skuff_4",
-   "kind": "crate",
-   "color": 15262418,
+   "kind": "drawer",
+   "drawer": {
+    "open": true,
+    "front": 10139348,
+    "handle": 14067514,
+    "style": "knob"
+   },
+   "color": 10139348,
    "material": "wood",
    "cp": false,
    "soft": false
@@ -1012,74 +1036,6 @@
    ],
    "color": 12172736,
    "material": "plastic"
-  },
-  {
-   "shape": "box",
-   "id": "skuffknott_1",
-   "kind": "knob",
-   "pos": [
-    -17.5,
-    2.1,
-    -7.4
-   ],
-   "size": [
-    1,
-    0.6,
-    0.4
-   ],
-   "color": 13225168,
-   "material": "metal"
-  },
-  {
-   "shape": "box",
-   "id": "skuffknott_2",
-   "kind": "knob",
-   "pos": [
-    -17.5,
-    6.1,
-    -10
-   ],
-   "size": [
-    1,
-    0.6,
-    0.4
-   ],
-   "color": 13225168,
-   "material": "metal"
-  },
-  {
-   "shape": "box",
-   "id": "skuffknott_3",
-   "kind": "knob",
-   "pos": [
-    -17.5,
-    10.1,
-    -12.6
-   ],
-   "size": [
-    1,
-    0.6,
-    0.4
-   ],
-   "color": 13225168,
-   "material": "metal"
-  },
-  {
-   "shape": "box",
-   "id": "skuffknott_4",
-   "kind": "knob",
-   "pos": [
-    -17.5,
-    13.7,
-    -15.2
-   ],
-   "size": [
-    1,
-    0.6,
-    0.4
-   ],
-   "color": 13225168,
-   "material": "metal"
   },
   {
    "shape": "box",

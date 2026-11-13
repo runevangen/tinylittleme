@@ -4,6 +4,7 @@ import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT, fetchInbox, markRead, unreadReplies, statsLines } from './feedback_send.js';
+import { setDrawerCue, drawerCue, drawerSummary } from './drawers.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
@@ -274,6 +275,7 @@ const maxAniso = gfxLow ? 4 : Math.min(16, renderer.capabilities.getMaxAnisotrop
 setAniso(maxAniso);
 const texLow = gfxLow || lowMode === 'on' || store.get('tlm.texsmall', false) === true;   // R21: små (halve) prosedyreteksturer: Enkel grafikk, Lav profil «På» eller eget valg i ⚙ (kan ikke byttes midt i spillet, så siden lastes på nytt)
 setTexLow(texLow);
+setDrawerCue(store.get('tlm.drawercue', true) !== false);   // R55: tydelige skuffer (drawers.js), leses før brettet bygges
 const look = makeLook({ aniso: maxAniso, low: texLow });
 const gradeMode = store.get('tlm.grade', 'film');   // R1: Toy Story-lys (film) eller opprinnelig lys (off); lys i grade.js
 const grade = applyGrade({ renderer, scene, sun, canvas, look: LEVEL.look, mode: gradeMode, low: gfxLow, filterOn: store.get('tlm.gradefilter', true) !== false });
@@ -417,7 +419,7 @@ for (const b of LEVEL.boxes) {
   if (drawn.has(b)) continue;
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
-  const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material }) : null;
+  const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material, drawer: b.drawer }) : null;
   if (b.grip) gripMark(b);
   if (shaped && b.compress) { const w = new THREE.Group(); w.position.set(cx, cy, cz); w.add(shaped); scene.add(w); regFade(shaped, [b]); pressViews.push({ b, mesh: w, h0: sy }); continue; }   // R41: egen innpakning som skaleres i høyden (kan ikke slås sammen med resten)
   if (shaped) { shaped.position.set(cx, cy, cz); scene.add(shaped); regFade(shaped, [b]); continue; }
@@ -494,7 +496,7 @@ for (const b of LEVEL.boxes) {
 function hexNum(h) { return typeof h === 'number' ? h : parseInt(String(h).replace('#', ''), 16); }
 
 for (const d of LEVEL.decor || []) {
-  const sg = d.kind && buildSingle(d.kind, d.size, { color: d.color, id: d.id, material: d.material });
+  const sg = d.kind && buildSingle(d.kind, d.size, { color: d.color, id: d.id, material: d.material, drawer: d.drawer });
   if (sg) { sg.position.set(...d.pos); scene.add(sg); continue; }
   const geo = d.shape === 'sphere' ? new THREE.SphereGeometry(d.size[0], 16, 12) : new THREE.BoxGeometry(...d.size);
   const mat = d.emissive !== undefined || d.metal !== undefined
@@ -1014,7 +1016,7 @@ function animateHero(p, now, dt) {
 initBodies(LEVEL); initAnts(LEVEL); initBoss(LEVEL); initCollect(LEVEL); initPuzzles(LEVEL); initGoals(LEVEL);
 const bodyMeshes = LEVEL.bodies.map((b) => {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
-  const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
+  const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material, drawer: b.drawer })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
   mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); if (!gfxLow) look.detailize(mesh);
   return { b, mesh, size: [sx, sy, sz] };
 });
@@ -1752,6 +1754,7 @@ const SETTINGS = [
   rg('landmin', 'admin', 'Fallvarsel: minste landingsfart som gir lydtekst og logg', 9, 4, 16, 1, () => landMinV, kp('tlm.landmin', (v) => { landMinV = v; }), { digits: 0 }),
   fl('failhint', 'hjelp', 'Tips etter 3 fall på samme sted', true, () => failHintOn, kp('tlm.failhint', (v) => { failHintOn = v; })),
   fl('minimap', 'hjelp', 'Minikart øverst til venstre (trykk på det for oversikt; av som standard med Enkel grafikk)', true, () => miniOn ?? !gfxLow, kp('tlm.minimap', (v) => { miniOn = v; logEv('minikart', v ? 'på' : 'av'); })),
+  fl('drawercue', 'hjelp', 'Tydelige skuffer (åpne står fram med mørk innside, lukkede er flate med fuge; gjelder fra neste brett)', true, () => drawerCue(), kp('tlm.drawercue', (v) => { setDrawerCue(v); logEv('skuffer', v ? 'tydelige' : 'enkle'); })),
   fl('markers', 'hjelp', 'Tydelige markører (grep ▲, hylle, glatt, pil i kanten)', true, () => markersOn, kp('tlm.markers', (v) => { markersOn = v; logEv('markør', v ? 'på' : 'av'); })),
   fl('griphi', 'hjelp', 'Fremhev grep (oransje, pulserende)', false, () => gripHi, kp('tlm.griphi', (v) => { gripHi = v; })),
   ...(labels.length ? [fl('labels', 'hjelp', `Brukslapper ved ting${key('L')}`, true, () => labelsOn, kp('tlm.labels', (v) => { labelsOn = v; }))] : []),
@@ -2509,7 +2512,7 @@ function render(now, dt) {
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   grade.follow(player, camera);
   renderer.render(scene, camera);
-  if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const w = overBudget(st).concat(memOver(st, texLow || lowOn)); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
+  if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const ds = drawerSummary(LEVEL); if (ds.total) logEv('skuffer', `${ds.open} åpne, ${ds.closed} lukkede, ${ds.fronts} frontfarger, tydelige ${drawerCue() ? 'på' : 'av'}`); const w = overBudget(st).concat(memOver(st, texLow || lowOn)); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
   goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
   if (tb.isOn()) tb.update(bandCtx(), now);
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';

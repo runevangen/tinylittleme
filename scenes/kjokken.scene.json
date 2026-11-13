@@ -141,9 +141,9 @@
     },
     {
       "id": "skuff_1",
-      "kind": "crate",
+      "kind": "drawer",
       "material": "wood",
-      "color": "#e8e2d2",
+      "color": "#c9bd8f",
       "box": [
         70,
         115,
@@ -154,30 +154,19 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Skuffetrapp\nSkuffene står åpne som trappetrinn. Hopp opp ett trinn om gangen (HOPP), og ta tak i kanten på neste."
-    },
-    {
-      "id": "skuffknott_1",
-      "kind": "knob",
-      "material": "metal",
-      "color": "#c9ccd0",
-      "box": [
-        90,
-        95,
-        9,
-        12,
-        112,
-        114
-      ],
-      "confidence": 1,
-      "photos": [],
-      "decor": true
+      "help": "Skuffetrapp\nSkuffene står åpne som trappetrinn. Hopp opp ett trinn om gangen (HOPP), og ta tak i kanten på neste.",
+      "drawer": {
+        "open": true,
+        "front": "#c9bd8f",
+        "handle": "#c9ccd0",
+        "style": "knob"
+      }
     },
     {
       "id": "skuff_2",
-      "kind": "crate",
+      "kind": "drawer",
       "material": "wood",
-      "color": "#e8e2d2",
+      "color": "#9dbf9a",
       "box": [
         70,
         115,
@@ -187,30 +176,19 @@
         99
       ],
       "confidence": 1,
-      "photos": []
-    },
-    {
-      "id": "skuffknott_2",
-      "kind": "knob",
-      "material": "metal",
-      "color": "#c9ccd0",
-      "box": [
-        90,
-        95,
-        29,
-        32,
-        99,
-        101
-      ],
-      "confidence": 1,
       "photos": [],
-      "decor": true
+      "drawer": {
+        "open": true,
+        "front": "#9dbf9a",
+        "handle": "#d6a73a",
+        "style": "bar"
+      }
     },
     {
       "id": "skuff_3",
-      "kind": "crate",
+      "kind": "drawer",
       "material": "wood",
-      "color": "#e8e2d2",
+      "color": "#d99d7e",
       "box": [
         70,
         115,
@@ -220,30 +198,19 @@
         86
       ],
       "confidence": 1,
-      "photos": []
-    },
-    {
-      "id": "skuffknott_3",
-      "kind": "knob",
-      "material": "metal",
-      "color": "#c9ccd0",
-      "box": [
-        90,
-        95,
-        49,
-        52,
-        86,
-        88
-      ],
-      "confidence": 1,
       "photos": [],
-      "decor": true
+      "drawer": {
+        "open": true,
+        "front": "#d99d7e",
+        "handle": "#c9ccd0",
+        "style": "bar"
+      }
     },
     {
       "id": "skuff_4",
-      "kind": "crate",
+      "kind": "drawer",
       "material": "wood",
-      "color": "#e8e2d2",
+      "color": "#9ab6d4",
       "box": [
         70,
         115,
@@ -253,24 +220,13 @@
         73
       ],
       "confidence": 1,
-      "photos": []
-    },
-    {
-      "id": "skuffknott_4",
-      "kind": "knob",
-      "material": "metal",
-      "color": "#c9ccd0",
-      "box": [
-        90,
-        95,
-        67,
-        70,
-        73,
-        75
-      ],
-      "confidence": 1,
       "photos": [],
-      "decor": true
+      "drawer": {
+        "open": true,
+        "front": "#9ab6d4",
+        "handle": "#d6a73a",
+        "style": "knob"
+      }
     },
     {
       "id": "benk_v",
