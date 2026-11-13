@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.61** – Veikart: fire saker fra tester (Rune, v1.59): R55 (skuffer lette å skille), R56 (skarp tekst i toppbåndet og full NESTE-tekst), R57 (solstråle gjennom boks) og R58 (klatring som ser levende ut).
 - **1.60** – Veikart: visjonen presiserer at plattform, bygging og gåter ikke er tre minispill, men er bakt inn i én sammenhengende spillopplevelse.
 - **1.59** – Veikart: visjonen sier nå at vi tar det beste fra plattformspill (Super Mario Bros.), byggespill (Bridge Builder) og enkle gåter som i Zelda, i Zelda-kvalitet.
 - **1.58** – R53: dynamisk toppbånd som samler versjonslinje, delmål, NESTE, hint, svar, ℹ og ⚑ i ett bånd (innstilling «Dynamisk toppbånd»), fra tester: Rune.
