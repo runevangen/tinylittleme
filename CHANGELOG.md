@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+v1.55: R50 ferdig, replay og spøkelse, bygg som kode (eksport/import), beste bygg på nett
 v1.54: R48 ferdig, leker som testlast (ball, bil, robot) i byggeskjermen
 
 - **1.53** – R47: kostnad per byggedel, 1–3 stjerner per bygg og smulebudsjett som låser opp materiale (build_budget.js).
