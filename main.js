@@ -52,6 +52,7 @@ import { createOverview } from './overview.js';
 import { climbFeel, CF } from './climbfeel.js';   // R58: klatring som ser levende ut (heng med vekt, fingre rundt kanten, bena skyver, avspark)
 import { FIN, rollProgress } from './finpuss.js';   // R39: finpuss av Prince (kant-shimmy, rulle, forsiktig gange, tyngre tau)
 import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, approach, landingEvent } from './landing.js';
+import { Relay, inCore, CAM_SLOP, yawDelta, pitchDelta, shouldHintDrag } from './camdrag.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { programCount, programKeys, warmRender, warmFades, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
@@ -166,7 +167,7 @@ const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(m
 
 // ---------- innstillinger som flagg (selve lista og panelet står lenger ned: SETTINGS) ----------
 let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
-let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
+let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true), camRelayOn = store.get('tlm.camrelay', true), camSlop = store.get('tlm.camslop', CAM_SLOP), camHintShown = store.get('tlm.camhint', false);
 let showMapBtn = store.get('tlm.showmapbtn2', false), showCenter = store.get('tlm.showcenter2', false),   // v1.35: ◎ og kartknappen er av som standard (nye nøkler, så alle starter uten dem)
    stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
@@ -1393,23 +1394,43 @@ canvas.addEventListener('pointerdown', (e) => {
   if (TOUCH && stickFloat && mode !== 'fly' && stickId === null && e.clientX < innerWidth * 0.5 && e.clientY > innerHeight * 0.2) {      // venstre halvdel: stikken dukker opp der tommelen treffer
     stickId = e.pointerId; setStickCenter(e.clientX, e.clientY); stick.classList.add('float'); stickMove(e); return;
   }
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() }); metrics.swipes++;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), tm: performance.now() }); metrics.swipes++;
   if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); }
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === stickId) { stickMove(e); return; }            // fingeren styrer stikken (flytende), ikke kameraet
   const p = pointers.get(e.pointerId); if (!p) return;
-  const ms = e.pointerType === 'mouse' ? mouseSens : 1, dx = (e.clientX - p.x) * ms, dy = (e.clientY - p.y) * ms; p.x = e.clientX; p.y = e.clientY;
-  const c = activeCam();
+  const ms = e.pointerType === 'mouse' ? mouseSens : 1, dx = (e.clientX - p.x) * ms, dy = (e.clientY - p.y) * ms; p.x = e.clientX; p.y = e.clientY; p.tm = performance.now();
   if (pointers.size === 2) {
     const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
     if (pinch0) zoom(pinch0 / d); pinch0 = d; return;
   }
-  camAnim = null; c.yaw -= dx * 0.006 * camSens; lastDrag = performance.now() / 1000; metrics.dragPx += Math.abs(dx) + Math.abs(dy); metrics.yawUser += Math.abs(dx * 0.006 * camSens);
-  c.pitch += dy * 0.005 * camSens * (camInvY && mode !== 'plan' ? -1 : 1);
+  dragCam(dx, dy);
+});
+function dragCam(dx, dy) {                                           // felles for canvas, knapper og toppbånd (R59)
+  const c = activeCam();
+  camAnim = null; c.yaw -= yawDelta(dx, camSens); lastDrag = performance.now() / 1000; metrics.dragPx += Math.abs(dx) + Math.abs(dy); metrics.yawUser += Math.abs(yawDelta(dx, camSens));
+  c.pitch += pitchDelta(dy, camSens, camInvY && mode !== 'plan');
   const lim = mode === 'plan' ? [-0.3, 1.5] : viewFirst ? [-1.25, 1.25] : viewMode === 'shoulder' ? [-0.85, 1.2] : [-0.85, 1.35];
   c.pitch = Math.min(lim[1], Math.max(lim[0], c.pitch));
+}
+// R59: dra som starter på HOPP/GREP, kantfeltet rundt TA/HOPP/GREP eller toppbåndet dreier også kameraet (før nådde de aldri bildet).
+const relay = new Relay(camSlop);
+const relayLog = new Set();
+function relayStart(e, src, tap) { if (camRelayOn && mode !== 'fly' && e.pointerType !== 'mouse') relay.start(e.pointerId, e.clientX, e.clientY, performance.now(), src, tap); }
+document.addEventListener('pointermove', (e) => {
+  if (!relay.has(e.pointerId)) return; relay.slop = camSlop;
+  const r = relay.move(e.pointerId, e.clientX, e.clientY); if (!r) return;
+  if (r.first) { metrics.swipes++; metrics.relay = (metrics.relay || 0) + 1; if (!relayLog.has(r.src)) { relayLog.add(r.src); logEv('kamera', `dra fra ${r.src} dreier kameraet`); } }
+  dragCam(r.dx, r.dy);
 });
+const relayEnd = (e) => { const r = relay.end(e.pointerId, performance.now()); if (r && r.tap && r.fn) r.fn(); };
+document.addEventListener('pointerup', relayEnd); document.addEventListener('pointercancel', (e) => relay.end(e.pointerId, 1e12));
+document.addEventListener('pointerdown', (e) => { if (e.target.closest?.('#topband, #hud')) relayStart(e, 'bånd'); }, true);
+// robusthet: en peker som mistes uten pointerup (iPhone-bevegelser, overlegg) må ikke bli stående og gjøre neste dra om til klyping
+const dropPtr = (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = 0; };
+canvas.addEventListener('lostpointercapture', dropPtr);
+for (const ev of ['touchend', 'touchcancel']) document.addEventListener(ev, (e) => { if (e.touches.length === 0) { pointers.clear(); pinch0 = 0; relay.clear(); } }, { passive: true });
 let lastTap = { t: 0, x: 0, y: 0 };
 const endPtr = (e) => {
   const p = pointers.get(e.pointerId);
@@ -1459,20 +1480,24 @@ const stickEnd = (e) => {
 };
 stick.addEventListener('pointerup', stickEnd); stick.addEventListener('pointercancel', stickEnd);
 canvas.addEventListener('pointerup', (e) => { if (e.pointerId === stickId) stickEnd(e); }); canvas.addEventListener('pointercancel', (e) => { if (e.pointerId === stickId) stickEnd(e); });
-function bindBtn(id, key, edge) {
+const tapKey = (key, edge) => () => { touch[key] = true; edge(); setTimeout(() => { touch[key] = false; }, 90); };   // R59: kort trykk på kantfeltet gir fortsatt et knappetrykk
+function bindBtn(id, key, edge, relayCore = true) {
   const el = $(id);
-  el.addEventListener('pointerdown', (e) => { el.setPointerCapture(e.pointerId); touch[key] = true; edge(); });
+  el.addEventListener('pointerdown', (e) => {
+    if (camRelayOn && TOUCH && e.pointerType !== 'mouse' && !inCore(e.clientX, e.clientY, el.getBoundingClientRect())) { relayStart(e, 'kant', tapKey(key, edge)); return; }   // utenfor sirkelen: bildet, ikke knappen
+    if (relayCore) relayStart(e, 'knapp'); el.setPointerCapture(e.pointerId); touch[key] = true; edge();
+  });
   const up = () => { touch[key] = false; };
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
 }
 bindBtn('btnJump', 'jump', () => { jumpEdge = true; });
 bindBtn('btnGrab', 'grab', () => { grabEdge = true; });
-bindBtn('btnCarry', 'carry', () => { carryEdge = true; });
+bindBtn('btnCarry', 'carry', () => { carryEdge = true; }, false);   // TA: dra i sirkelen er kast-sikte, ikke kamera
 // kast med dra og slipp: hold TA, dra fingeren bakover (som en slynge), slipp. Retning og kraft følger draget; uten drag er det som før (hold lenge = langt kast).
 const aimPt = { id: null, x0: 0, y0: 0, x: 0, y: 0 };
 {
   const el = $('btnCarry');
-  el.addEventListener('pointerdown', (e) => { aimPt.id = e.pointerId; aimPt.x0 = aimPt.x = e.clientX; aimPt.y0 = aimPt.y = e.clientY; });
+  el.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse' && camRelayOn && TOUCH && !inCore(e.clientX, e.clientY, el.getBoundingClientRect())) return; aimPt.id = e.pointerId; aimPt.x0 = aimPt.x = e.clientX; aimPt.y0 = aimPt.y = e.clientY; });
   el.addEventListener('pointermove', (e) => { if (e.pointerId === aimPt.id) { aimPt.x = e.clientX; aimPt.y = e.clientY; } });
   const end = (e) => { if (e.pointerId === aimPt.id) aimPt.id = null; };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
@@ -1698,6 +1723,8 @@ const SETTINGS = [
   fl('stickfloat', 'styring', 'Flytende stikke (følger tommelen) i stedet for fast som i PUBG', false, () => stickFloat, kp('tlm.stickfloat', (v) => { stickFloat = v; })),
   ...(!TOUCH ? [fl('mouselook', 'styring', 'Musestyring (klikk i bildet: mus ser deg rundt, venstre = TA, høyre = GREP)', true, () => mouseLook, kp('tlm.mouselook', (v) => { mouseLook = v; if (!v && document.pointerLockElement) document.exitPointerLock(); }))] : []),
   fl('aimthrow', 'styring', 'Kast med dra og slipp (hold TA, dra ned)', true, () => aimThrowOn, kp('tlm.aimthrow', (v) => { aimThrowOn = v; })),
+  fl('camrelay', 'kamera', 'Dra fra knapper, kantfeltet rundt dem og toppbåndet dreier kameraet (høyre tommel)', true, () => camRelayOn, kp('tlm.camrelay', (v) => { camRelayOn = v; relay.clear(); logEv('kamera', v ? 'dra fra knapper på' : 'dra fra knapper av'); })),
+  rg('camslop', 'admin', 'Kamera: piksler fingeren må flytte seg fra en knapp før det regnes som dra', CAM_SLOP, 3, 24, 1, () => camSlop, kp('tlm.camslop', (v) => { camSlop = v; })),
   fl('dbltap', 'styring', 'Dobbelttrykk på skjermen sentrerer kameraet', true, () => dblTapOn, kp('tlm.dbltap', (v) => { dblTapOn = v; })),
   fl('showmapbtn', 'styring', 'Vis kart-knappen (oversikt) ved siden av ◎. Av = ingen knapp; minikartet øverst virker fortsatt', false, () => showMapBtn, kp('tlm.showmapbtn2', (v) => { showMapBtn = v; applyUiFlags(); })),
   fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', false, () => showCenter, kp('tlm.showcenter2', (v) => { showCenter = v; applyUiFlags(); })),
@@ -2116,6 +2143,7 @@ function update(dt) {
 
   if (!won) clock += dt;
   stepLost(dt);
+  if (shouldHintDrag({ touch: TOUCH, play: mode === 'play' && !won && !introSweep, shown: camHintShown, swipes: metrics.swipes, t: metrics.t })) { camHintShown = true; store.set('tlm.camhint', true); tip('Dra med høyre tommel på bildet for å se deg rundt.'); logEv('kamera', 'hint: dra for å se deg rundt'); }
   autoT += dt; if (mode === 'play' && !won) { metrics.t += dt; if (Math.hypot(touch.x, touch.y) > 0.2 || held('KeyW', 'KeyA', 'KeyS', 'KeyD')) metrics.stickT += dt; }
   if (autoT > 5 && mode === 'play' && !won) {                         // trygg autolagring: en rolig stund på fast grunn
     autoT = 0;
