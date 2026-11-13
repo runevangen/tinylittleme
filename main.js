@@ -48,6 +48,7 @@ import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './poli
 import { MOVE, createTurnSteps, createStepOver, gripPose, effectiveStepUp } from './hero_move.js';
 import { createMarkerView } from './readable_view.js';
 import { createOverview } from './overview.js';
+import { climbFeel, CF } from './climbfeel.js';   // R58: klatring som ser levende ut (heng med vekt, fingre rundt kanten, bena skyver, avspark)
 import { FIN, rollProgress } from './finpuss.js';   // R39: finpuss av Prince (kant-shimmy, rulle, forsiktig gange, tyngre tau)
 import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, approach, landingEvent } from './landing.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
@@ -830,6 +831,15 @@ function poseHero(p, now, dt, mode) {
     const g = hero.catchT, g2 = g * g;
     T.eL -= 0.9 * g2; T.eR -= 0.9 * g2; T.chest += 0.16 * g2; T.lean += 0.1 * g2; T.hL += 0.35 * g2 * Math.sin(sec * 12); T.hR -= 0.35 * g2 * Math.sin(sec * 12); T.kL += 0.5 * g2; T.kR += 0.5 * g2; bob -= 0.08 * g2;
   }
+  { const st = p.state, cf0 = hero.cfPrev;                                  // R58: avspark ved hopp ut av heng/klatring (kun pose; fysikken gjør hoppet)
+    if ((cf0 === 'hang' || cf0 === 'climb') && st === 'air' && p.vy > 2) { hero.kickT = 1; logEv('klatrepose', 'avspark'); }
+    hero.kickT = st === 'air' ? Math.max(0, (hero.kickT || 0) - dt / CF.kickDur) : 0; hero.cfPrev = st;
+    const cf = mode === 'fly' ? null : climbFeel({ state: st, sec, catchT: hero.catchT || 0, kickT: hero.kickT, mantleU: st === 'mantle' && p.mantle ? Math.min(1, p.mantle.t / p.mantle.dur) : -1, tired: clampN(1 - p.stam / (P.stamina * 0.4), 0, 1), speed: Math.hypot(p.vx, p.vz), s1: Math.sin((p.climbPh || 0) * 2), climbMove: p.climbMove || 0, strength: climbFeelStr });
+    if (cf && cf.phase) {
+      for (const k in cf.d) T[k] += cf.d[k]; bob += cf.bob; hero.cfFg = [cf.fgL, cf.fgR];
+      if (hero.cfPhaseWas !== cf.phase) logEv('klatrepose', cf.phase);
+    } else hero.cfFg = null;
+    hero.cfPhaseWas = cf ? cf.phase : ''; }
   if (!p.skid && p.state !== 'mantle' && p.state !== 'hang' && p.state !== 'swing' && mode !== 'fly' && p.onGround) T.lean += hero.accLean;
   if (p.rollT > 0 && p.state === 'ground' && mode !== 'fly') {                                     // R39: rulle ved landing: kroppen krøller seg sammen fremover og reiser seg igjen
     const rp = rollProgress(p.rollT), rs = Math.sin(Math.PI * rp);
@@ -838,6 +848,7 @@ function poseHero(p, now, dt, mode) {
 
   // fingrene: knyttet rundt det han holder eller henger i, løst knyttet i løp, åpne når han rekker ut
   T.fgL = T.fgR = p.carry || ['hang', 'climb', 'swing', 'zip', 'mantle'].includes(p.state) ? 1.2 : p.reach > 0 || (!p.onGround && p.vy < -8) ? 0.05 : 0.35 + 0.55 * kSp * (p.onGround ? 1 : 0);
+  if (hero.cfFg) { if (hero.cfFg[0] != null) T.fgL = hero.cfFg[0]; if (hero.cfFg[1] != null) T.fgR = hero.cfFg[1]; }   // R58: fingrene rundt kanten
   if (hero.gripNear && (p.state === 'ground' || p.state === 'air') && !p.carry) { T.aR = Math.min(T.aR, -1.75); T.eR = -0.45; T.fgR = 0.05; }   // rekker en arm mot grepet
   if (ownGait && p.onGround && p.state === 'ground' && mode === 'play') {
     T.roll += clampN(-yawRate * 0.06 * kSp, -0.2, 0.2);                            // lener seg inn i svingen
@@ -1236,7 +1247,7 @@ let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get
 let stickCurve = store.get('tlm.stickcurve', 1.3), inertia = store.get('tlm.inertia', 1), speedScale = store.get('tlm.speedscale', 1), qbtnOn = store.get('tlm.qbtn', true);
 const metrics = { swipes: 0, dragPx: 0, yawUser: 0, yawAuto: 0, stickT: 0, t: 0 };
 let stepAdapt = store.get('tlm.stepadapt', true), reactAnim = store.get('tlm.reactanim', true);
-let turnStepsOn = store.get('tlm.turnsteps', true), stepOverOn = store.get('tlm.stepover', true), gripPosesOn = store.get('tlm.gripposes', true);
+let turnStepsOn = store.get('tlm.turnsteps', true), stepOverOn = store.get('tlm.stepover', true), gripPosesOn = store.get('tlm.gripposes', true), climbFeelStr = store.get('tlm.climbfeel', 1);
 let breathSound = store.get('tlm.breathsound', false);                        // R38: pustelyd av som standard (egen lagringsnøkkel)
 let idleWink = store.get('tlm.idlewink', true), restBreath = store.get('tlm.restbreath', false);
 const mixSet = (ids, v) => { const mix = store.get('tlm.mix2', {}); for (const id of ids) { mix[id] = v; audio?.setLevel(id, v); } store.set('tlm.mix2', mix); };
@@ -1725,6 +1736,7 @@ const SETTINGS = [
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
   fl('turnsteps', 'spill', 'Figuren snur med små skritt når du snur raskt på stedet', true, () => turnStepsOn, kp('tlm.turnsteps', (v) => { turnStepsOn = v; })),
   fl('stepover', 'spill', 'Figuren løfter foten over små hindre han tråkker opp på', true, () => stepOverOn, kp('tlm.stepover', (v) => { stepOverOn = v; })),
+  rg('climbfeel', 'spill', 'Levende klatring: vekt i heng, fingre rundt kanten, bena skyver og sparker fra (0 = av)', 1, 0, CF.maxStrength, 0.1, () => climbFeelStr, kp('tlm.climbfeel', (v) => { climbFeelStr = v; }), { digits: 1 }),
   fl('gripposes', 'spill', 'Nye poser i heng, sving og veggglid (hender som tar tak)', true, () => gripPosesOn, kp('tlm.gripposes', (v) => { gripPosesOn = v; })),
   { id: 'smallstep', group: 'admin', type: 'range', label: 'Hinder under denne høyden tråkkes over uten hopp (0 = av)', min: 0, max: 0.4, step: 0.01, def: MOVE.stepOverMax, get: () => smallStepH, set: (v) => { smallStepH = v; store.set('tlm.smallstep', v); reapplyKnobs(); }, digits: 2 },
   fl('stepadapt', 'spill', 'Føttene tilpasser seg trinn og kanter', true, () => stepAdapt, kp('tlm.stepadapt', (v) => { stepAdapt = v; })),
