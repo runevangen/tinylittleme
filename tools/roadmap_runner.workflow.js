@@ -10,13 +10,14 @@ const REPO = '/home/user/tinylittleme'
 // args.items = [{ id: 'R39', deps: [] }, …] i prioritert rekkefølge (tester-saker først). Maks 5 per kjøring anbefales.
 const ITEMS = (Array.isArray(args?.items) ? args.items : []).map((i) => ({ id: String(i.id), deps: Array.isArray(i.deps) ? i.deps.map(String) : [] }))
 if (!ITEMS.length) throw new Error('args.items mangler')
+const RESUME = new Set((Array.isArray(args?.resume) ? args.resume : []).map(String))   // ids med påbegynt arbeid (worktree /tmp/wt/<id>, branch road/<id>) som skal FORTSETTES, ikke slettes (f.eks. etter containerstopp)
 const BUILD = { type: 'object', properties: { ok: { type: 'boolean' }, summary: { type: 'string' } }, required: ['ok', 'summary'] }
 const VERDICT = { type: 'object', properties: { approve: { type: 'boolean' }, issues: { type: 'array', items: { type: 'string' } } }, required: ['approve', 'issues'] }
 const MERGE = { type: 'object', properties: { merged: { type: 'boolean' }, version: { type: 'string' }, note: { type: 'string' } }, required: ['merged', 'note'] }
 const NOGPU = 'Miljøet har ingen GPU (swiftshader ~1 fps): krev IKKE målt FPS eller flimmer i bevegelse; godta statiske tegnekall-/trekantbudsjett som bevis, og at ekte FPS/følelse er merket «testes på iPhone» i CHANGELOG/ROADMAP. Underkjenn kun for reelle feil mot «Ferdig når» som kan verifiseres her.'
 
 phase('Rydd')
-await agent(`I ${REPO}: kjør \`git worktree prune\`, fjern gamle worktrees under /tmp/wt og gamle branches road/* som ikke er merget. Primærsjekken skal være ren; \`git fetch origin main\` og sørg for at HEAD inneholder origin/main. Svar kort.`, { phase: 'Rydd', effort: 'low' })
+await agent(`I ${REPO}: kjør \`git worktree prune\`, fjern gamle worktrees under /tmp/wt og gamle branches road/* som ikke er merget, MED UNNTAK av disse som skal fortsettes og ikke røres: ${[...RESUME].join(', ') || '(ingen)'}. Primærsjekken skal være ren; \`git fetch origin main\` og sørg for at HEAD inneholder origin/main. Svar kort.`, { phase: 'Rydd', effort: 'low' })
 
 const done = new Set(), tries = {}
 let chain = Promise.resolve()
@@ -30,7 +31,7 @@ for (let round = 1; round <= ROUNDS; round++) {
   const results = await pipeline(picks,
     async it => {
       const wt = `/tmp/wt/${it.id}`, br = `road/${it.id}`
-      return await agent(`Bygg veikartpunkt ${it.id} i ${REPO}/docs/ROADMAP.md (les seksjonen, «Regler for alle punkter» og CLAUDE.md). Lag eget worktree fra gjeldende HEAD i ${REPO}: \`git worktree add ${wt} -b ${br}\` (fjern først hvis det finnes) og jobb KUN der. Modulært, mobil først, SETTINGS + logEv, ny modul i files i index.html, tester, walk_route for endrede nivåer, npm test grønn, Playwright iPhone 14 og se på skjermbildet. ${NOGPU} IKKE øk versjon, ikke rør CHANGELOG/ROADMAP, ikke push. Commit på ${br}. Mislykkes det: ok=false med årsak.`, { label: `bygg ${it.id}`, phase: 'Bygg', schema: BUILD })
+      return await agent(`Bygg veikartpunkt ${it.id} i ${REPO}/docs/ROADMAP.md (les seksjonen, «Regler for alle punkter» og CLAUDE.md). ${RESUME.has(it.id) ? `FORTSETT påbegynt arbeid: worktree ${wt} og branch ${br} finnes allerede med en WIP-commit etter at en tidligere kjøring ble avbrutt. IKKE slett eller start på nytt: kjør git log og git status der, les hva som er gjort, slå inn siste origin/main (git merge origin/main) og fullfør alt som mangler mot «Ferdig når», uten å miste eksisterende arbeid. Jobb KUN der.` : `Lag eget worktree fra gjeldende HEAD i ${REPO}: \`git worktree add ${wt} -b ${br}\` (fjern først hvis det finnes) og jobb KUN der.`} Modulært, mobil først, SETTINGS + logEv, ny modul i files i index.html, tester, walk_route for endrede nivåer, npm test grønn, Playwright iPhone 14 og se på skjermbildet. ${NOGPU} IKKE øk versjon, ikke rør CHANGELOG/ROADMAP, ikke push. Commit på ${br}. Mislykkes det: ok=false med årsak.`, { label: `bygg ${it.id}`, phase: 'Bygg', schema: BUILD })
     },
     async (b, it) => {
       if (!b || !b.ok) return { it, ok: false, why: b ? b.summary : 'byggeagent feilet' }

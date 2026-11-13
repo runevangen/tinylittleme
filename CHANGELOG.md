@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.72** – Runneren kan fortsette påbegynt arbeid etter containerstopp (`args.resume`): uferdige worktrees og branches slettes ikke, og byggeren fortsetter fra WIP-commit.
 - **1.71** – Byggefysikk 2: fagverk (trekanter), trykk mot strekk (Euler-knekking), materialtabell, gummistrikk og hjelp for ledd som svinger (R49a2).
 - **1.70** – Byggefysikk: bruddgrenser etter bøyemoment, høykant-planke, sammenteipede lag og «Tåler X»-måler (build_capacity.js, R49a1).
 - **1.69** – Veikart: mer innhold. R60 (gåteverktøy: trykkplate, dør og bryter), R61 (veps som flyr), R62 (nivå 8: Stuen) og R63 (nivå 9: Verkstedet).
