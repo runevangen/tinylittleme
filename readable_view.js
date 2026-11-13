@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { inflate, inAny, edgePoint, placeMarker, ungrippableAhead, shelfIds, figureRect, pickArrowDistance } from './readable.js';
 
 // alt som ligger over spillbildet og ikke skal skjule en markør (bare det som faktisk vises)
-const BLOCKERS = ['btnJump', 'btnGrab', 'btnCarry', 'btnCenter', 'btnMap', 'minimap', 'ovhint', 'stick', 'hud', 'compass', 'bar', 'hint', 'infocard', 'qbtn', 'stam', 'soundPill'];
+const BLOCKERS = ['btnJump', 'btnGrab', 'btnCarry', 'btnCenter', 'btnMap', 'minimap', 'ovhint', 'stick', 'hud', 'topband', 'compass', 'bar', 'hint', 'infocard', 'qbtn', 'stam', 'soundPill'];
 
 function spriteTex(draw, size = 96) {
   const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size);
