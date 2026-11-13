@@ -10,7 +10,7 @@ Panelet har et **søkefelt** øverst (skjuler rader som ikke treffer og åpner g
 | Gruppe | Innhold |
 |---|---|
 | **Spill** | Språk, autolagring, startskjerm, trykk to ganger, ting kommer tilbake; Brett-velger, Start på nytt, Hovedmeny |
-| **Innhold og utfordring** | Gåter, delmål, smuler, tilbehør, fortelling, maur, sjef, skapninger, levende leker, nivå 4–6 stemning og vri; undermeny **Byggeskjerm** (snapping, sakte film) |
+| **Innhold og utfordring** | Gåter, delmål, smuler, tilbehør, fortelling, maur, sjef, skapninger, veps (av/på og vanskelighet), levende leker, nivå 4–6 stemning og vri; undermeny **Byggeskjerm** (snapping, sakte film) |
 | **Styring** | Styringsstil, hjelp-nivå, stikke (flytende/kurve/dødsone), knappestørrelse, gangfart, treghet, grip kanten, sikte-hjelp, kast, dobbelttrykk, **◎-knappen** og **kart-knappen** (kan skjules hver for seg), vibrasjon; undermeny **Mus og tastatur (PC)** |
 | **Figuren** | Føttene tilpasser seg trinn, snu med skritt, løfte foten over små hindre, nye grep-poser (admin: høyde på hinder), jubel/rykk, blunking; finpuss (R39): kant-shimmy, rulle ved landing, forsiktig gange, tyngre tau |
 | **Kamera** | Følging, avstand, synsfelt, vinkel, ser foran, hjelper, utoning, følsomhet, skygge under figuren, kamerasyn; undermeny **Skulderkamera** |
