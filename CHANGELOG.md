@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.50** – Veikart: byggedel-serien R45 (lesbar svikt), R46 (leker som materialer), R47 (stjerner og smulebudsjett), R48 (leker som testlast) og R50 (replay, deling og beste bygg). Supabase: tabell og funksjoner for beste bygg.
 - **1.49** – Designnotat om byggedelen: inspirasjon fra brobyggerspill og forslag R45–R52 (`docs/BYGGING_INSPIRASJON.md`). Ikke lagt i veikartet ennå.
 - **1.48** – R44: zoom i byggeskjermen (+, −, ⤢, dobbelttrykk, finere rutenett ved høy zoom). Fra tester: Rune.
 - **1.47** – Veikart: R44 (zoom i byggeskjermen), fra tester: Rune.

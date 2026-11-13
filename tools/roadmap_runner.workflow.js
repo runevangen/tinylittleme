@@ -5,7 +5,7 @@ export const meta = {
 }
 // Veikart-runner (tinylittleme). Start med Workflow({ scriptPath: 'tools/roadmap_runner.workflow.js', args: { items: [{ id: 'R39', deps: [] }] } }).
 // Se docs/TILBAKEMELDING.md («Løpende behandling») og CLAUDE.md. Hver id må finnes som «### [ ] <id> · …» i docs/ROADMAP.md.
-const ROUNDS = 4, PER_ROUND = 12, MAX_TRIES = 2
+const ROUNDS = 6, PER_ROUND = 12, MAX_TRIES = 2
 const REPO = '/home/user/tinylittleme'
 // args.items = [{ id: 'R39', deps: [] }, …] i prioritert rekkefølge (tester-saker først). Maks 5 per kjøring anbefales.
 const ITEMS = (Array.isArray(args?.items) ? args.items : []).map((i) => ({ id: String(i.id), deps: Array.isArray(i.deps) ? i.deps.map(String) : [] }))
