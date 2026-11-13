@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.66** – Veikart: R59 (kameraet lar seg ikke svinge rundt med høyre tommel), fra tester: Rune (v1.65).
 - **1.65** – R55 (fra tester: Rune): åpne og lukkede skuffer er lette å skille (drawers.js).
 - **1.64** – R58 (fra tester: Rune): levende klatring med vekt i heng, synlig grep, skyv fra med bena og avspark (climbfeel.js).
 - **1.63** – R56 (fra tester: Rune): skarp tekst i toppbåndet, og NESTE-linjen beholder knappehintet også for lange målnavn.
