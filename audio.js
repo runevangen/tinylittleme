@@ -42,6 +42,8 @@ export const SOUND_LIST = [
   { id: 'anthit', label: 'Maur støter deg', group: 'Hendelser' },
   { id: 'spiderhiss', label: 'Edderkopp varsler (hveser)', group: 'Hendelser' },
   { id: 'spiderleap', label: 'Edderkopp hopper', group: 'Hendelser' },
+  { id: 'waspbuzz', label: 'Veps varsler (summer)', group: 'Hendelser' },
+  { id: 'waspdive', label: 'Veps stuper', group: 'Hendelser' },
   { id: 'bossroar', label: 'Sjef-maur varsler / stormer', group: 'Hendelser' },
   { id: 'bossbump', label: 'Sjef-maur smeller i veggen', group: 'Hendelser' },
   { id: 'fanfare', label: 'Sjef-maur slått (fanfare)', group: 'Hendelser' },
@@ -226,6 +228,8 @@ export function createAudio(ctx, opts = {}) {
   const squash = () => use('squash', () => { tone({ freq: 640, freq2: 190, type: 'triangle', gain: 0.18, decay: 0.14 }); burst({ type: 'lowpass', freq: 900, gain: 0.3, decay: 0.08 }); tone({ freq: 1250, freq2: 700, type: 'sine', gain: 0.08, decay: 0.1, delay: 0.05 }); });
   const anthit = () => use('anthit', () => { tone({ freq: 330, freq2: 170, type: 'square', gain: 0.1, decay: 0.2 }); burst({ type: 'bandpass', freq: 2200, gain: 0.16, decay: 0.07 }); });
   const spiderhiss = () => use('spiderhiss', () => { burst({ type: 'bandpass', freq: 5200, freq2: 3000, gain: 0.2, attack: 0.02, decay: 0.32 }); tone({ freq: 220, freq2: 260, type: 'sawtooth', gain: 0.04, decay: 0.3 }); });
+  const waspbuzz = () => use('waspbuzz', () => { tone({ freq: 210, freq2: 235, type: 'sawtooth', gain: 0.06, decay: 0.55 }); tone({ freq: 420, freq2: 470, type: 'square', gain: 0.025, decay: 0.55 }); burst({ type: 'bandpass', freq: 900, gain: 0.05, decay: 0.4 }); });   // R61
+  const waspdive = () => use('waspdive', () => { tone({ freq: 700, freq2: 160, type: 'sawtooth', gain: 0.1, decay: 0.4 }); burst({ type: 'highpass', freq: 2500, gain: 0.08, decay: 0.25 }); });
   const spiderleap = () => use('spiderleap', () => { tone({ freq: 260, freq2: 620, type: 'triangle', gain: 0.14, decay: 0.18 }); burst({ type: 'highpass', freq: 3000, gain: 0.1, decay: 0.12 }); tone({ freq: 120, freq2: 70, gain: 0.2, decay: 0.12, delay: 0.5 }); });
   const bossroar = (charge = false) => use('bossroar', () => { tone({ freq: charge ? 150 : 95, freq2: charge ? 260 : 150, type: 'sawtooth', gain: 0.16, decay: charge ? 0.35 : 0.7 }); burst({ type: 'lowpass', freq: 700, freq2: 300, gain: 0.3, decay: charge ? 0.4 : 0.8 }); tone({ freq: 70, freq2: 50, type: 'square', gain: 0.1, decay: 0.5, delay: 0.1 }); });
   const bossbump = () => use('bossbump', () => { tone({ freq: 90, freq2: 40, gain: 0.55, decay: 0.3 }); burst({ type: 'lowpass', freq: 600, gain: 0.5, decay: 0.3 }); [880, 1320, 990, 1480].forEach((f, k) => tone({ freq: f, type: 'triangle', gain: 0.05, decay: 0.2, delay: 0.25 + k * 0.1 })); });
@@ -283,6 +287,8 @@ export function createAudio(ctx, opts = {}) {
       case 'anthit': anthit(); break;
       case 'spiderhiss': spiderhiss(); break;
       case 'spiderleap': spiderleap(); break;
+      case 'waspbuzz': waspbuzz(); break;
+      case 'waspdive': waspdive(); break;
       case 'bossroar': bossroar(); break;
       case 'bossbump': bossbump(); break;
       case 'fanfare': fanfare(); break;
@@ -315,7 +321,7 @@ export function createAudio(ctx, opts = {}) {
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
     ctx, out: bus, step, land, roll, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
-    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, bossroar, bossbump, fanfare, crumb, bcreak, bbreak, bsplash, bhop, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
+    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, waspbuzz, waspdive, bossroar, bossbump, fanfare, crumb, bcreak, bbreak, bsplash, bhop, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
     setBreath: (on) => { breathOn = !!on; }, isBreath: () => breathOn,

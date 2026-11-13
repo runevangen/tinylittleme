@@ -288,13 +288,13 @@ const route = (() => {
   });
   return out;
 })();
-// maur: patruljer i scenen oppgis i cm: { id, on: «gulv» eller id på en ting (flaten de går på), from: [x, z], to: [x, z], speed?, type?: 'ant' | 'spider' | 'carrier' }
+// maur: patruljer i scenen oppgis i cm: { id, on: «gulv» eller id på en ting (flaten de går på), from: [x, z], to: [x, z], speed?, type?: 'ant' | 'spider' | 'carrier' | 'roller' | 'dangler' | 'wasp', alt? (veps: flyhøyde i cm over flata) }
 const ants = (scene.ants || []).map((a) => {
   const on = a.on && a.on !== 'gulv' ? scene.objects.find((o) => o.id === a.on) : null;
   if (a.on && a.on !== 'gulv' && !on) throw new Error(`maur ${a.id}: fant ikke flaten ${a.on}`);
   const y = on ? uy(on.box[3]) : 0;
   const to = a.to || a.from;   // edderkopp: bare hjemmet (from)
-  return { id: a.id, ...(a.type && a.type !== 'ant' ? { type: a.type } : {}), a: [ux(a.from[0]), y, uz(a.from[1])], b: [ux(to[0]), y, uz(to[1])], ...(a.speed ? { speed: a.speed } : {}), ...(a.crumb ? { crumb: true } : {}), ...(a.skin ? { skin: a.skin } : {}) };
+  return { id: a.id, ...(a.type && a.type !== 'ant' ? { type: a.type } : {}), a: [ux(a.from[0]), y, uz(a.from[1])], b: [ux(to[0]), y, uz(to[1])], ...(a.speed ? { speed: a.speed } : {}), ...(a.alt ? { alt: round(a.alt / U) } : {}), ...(a.crumb ? { crumb: true } : {}), ...(a.skin ? { skin: a.skin } : {}) };
 });
 
 // variant (R12, se variant.js): stemning, vri og rekvisitter for nivå 4–6. I scenen i cm, i brettet i enheter.

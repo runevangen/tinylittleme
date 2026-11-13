@@ -1683,6 +1683,21 @@
    ]
   },
   {
+   "id": "veps_bord",
+   "type": "wasp",
+   "a": [
+    -8,
+    0,
+    1.4
+   ],
+   "b": [
+    13,
+    0,
+    1.4
+   ],
+   "alt": 3.4
+  },
+  {
    "id": "edderkopp_skap",
    "type": "spider",
    "a": [

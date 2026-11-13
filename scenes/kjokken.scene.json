@@ -1253,6 +1253,20 @@
         330,
         95
       ]
+    },
+    {
+      "id": "veps_bord",
+      "type": "wasp",
+      "on": "gulv",
+      "from": [
+        140,
+        157
+      ],
+      "to": [
+        245,
+        157
+      ],
+      "alt": 17
     }
   ],
   "collectibles": [

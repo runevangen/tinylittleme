@@ -9,6 +9,8 @@ import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, buildAnt, 
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
 import { buildRoller, buildDangler, ROLLER_COL, DANGLER_COL } from './creatures_view.js';
+import { TUNE as WASP_TUNE } from './wasp.js';   // R61: veps som flyr
+import { buildWasp, WASP_COL } from './wasp_view.js';
 import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid, nearBridge } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
 import { buildFlag, buildGoalRing } from './markers.js';
@@ -184,6 +186,8 @@ KICK.on = store.get('tlm.kick', KICK.on); KICK.speed = store.get('tlm.kickspeed'
 let shimmyOn = store.get('tlm.shimmy', true), rollOn = store.get('tlm.roll', true), carefulOn = store.get('tlm.careful', true), ropeHeavyOn = store.get('tlm.ropeheavy', true);   // R39: finpuss av Prince
 for (const [k, id] of [['shimmySpeed', 'shimspeed'], ['rollSafe', 'rollsafe'], ['carefulMul', 'carefulmul'], ['ropeG', 'ropeg'], ['ropePush', 'ropepush'], ['ropeLag', 'ropelag']]) FIN[k] = store.get('tlm.' + id, FIN[k]);
 let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
+let waspOn = store.get('tlm.wasp', true), waspLevel = store.get('tlm.wasplevel', 'normal');   // R61: veps som flyr
+WASP_TUNE.level = waspLevel;
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let goalsOn = store.get('tlm.goals', true), goalArrowOn = store.get('tlm.goalarrow', true), goalLockOn = store.get('tlm.goallock', true);   // delmål (R23)
 let shortcutHintOn = store.get('tlm.shortcuthint', true);   // verktøy-genveier (R29): varsel når du bruker en genvei
@@ -1025,9 +1029,10 @@ const shortcutWatch = createShortcutWatch(LEVEL);   // R29 (shortcut.js)
 const toyLife = createToyLife(LEVEL); toyLife.on = toysOn;   // R18: leker som lever (toys_live.js): reagerer på dytt, landing og TA/slipp
 // maur: én modell per patrulje (v0.77)
 LEVEL.noCreatures = !creaturesOn; CREATURE_TUNE.warn = creatureWarn;     // R19
+LEVEL.noWasps = !waspOn;                                                  // R61
 const ANT_COL = [0x9a3a1e, 0x7a2a16, 0xb04a22, 0x8a3320];
 const antMeshes = (LEVEL.antList || []).map((t, i) => {
-  const a = LEVEL.ants[i].skin === 'train' ? buildTrain() : isSoldier(LEVEL.ants[i]) ? buildSoldier() : t.type === 'roller' ? buildRoller() : t.type === 'dangler' ? buildDangler({ ceil: LEVEL.room?.height ?? 48 }) : t.type === 'spider' ? buildSpider() : t.type === 'carrier' ? buildCarrier() : buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb });   // R6: tre slag, hver med egen modell
+  const a = LEVEL.ants[i].skin === 'train' ? buildTrain() : isSoldier(LEVEL.ants[i]) ? buildSoldier() : t.type === 'roller' ? buildRoller() : t.type === 'dangler' ? buildDangler({ ceil: LEVEL.room?.height ?? 48 }) : t.type === 'wasp' ? buildWasp() : t.type === 'spider' ? buildSpider() : t.type === 'carrier' ? buildCarrier() : buildAnt({ color: ANT_COL[i % ANT_COL.length], crumb: !!LEVEL.ants[i].crumb });   // R6: tre slag, hver med egen modell
   a.root.userData.antId = t.id; scene.add(a.root); if (!gfxLow) look.detailize(a.root);
   let drop = null; if (t.type === 'carrier') { drop = buildDropCrumb(); drop.visible = false; scene.add(drop); }                 // smula bæreren slipper når den knuses
   return { t, a, drop, rot: Math.atan2(-t.fz, t.fx) };
@@ -1690,6 +1695,8 @@ const SETTINGS = [
   rg('toywind', 'admin', 'Levende leker: hvor lenge wind-up-roboten går (sekunder)', 2.6, 1, 6, 0.2, () => TOY.windT, kp('tlm.toywind', (v) => { TOY.windT = v; }), { digits: 1 }),
   fl('creatures', 'spill', 'Nye skapninger (pillbug som ruller, edderkopp i tråd): av = bare maur', true, () => creaturesOn, kp('tlm.creatures', (v) => { creaturesOn = v; LEVEL.noCreatures = !v; logEv('fiende', v ? 'skapninger på' : 'skapninger av'); })),
   rg('creaturewarn', 'admin', 'Nye skapninger: varseltid (faktor, 1 = standard)', 1, 0.7, 2.5, 0.1, () => creatureWarn, kp('tlm.creaturewarn', (v) => { creatureWarn = v; CREATURE_TUNE.warn = v; }), { digits: 1 }),
+  fl('wasp', 'spill', 'Veps som flyr (varsler, stuper mot deg: gjem deg under en ting, stikk til siden eller hopp på den); av = ingen veps', true, () => waspOn, kp('tlm.wasp', (v) => { waspOn = v; LEVEL.noWasps = !v; logEv('fiende', v ? 'veps på' : 'veps av'); })),
+  sl('wasplevel', 'spill', 'Veps: vanskelighet (lett = lengre varsel og saktere stup)', 'normal', [['easy', 'Lett'], ['normal', 'Normal'], ['hard', 'Vanskelig']], () => waspLevel, kp('tlm.wasplevel', (v) => { waspLevel = v; WASP_TUNE.level = v; logEv('fiende', 'veps-vanskelighet ' + v); })),
   fl('boss', 'hjelp', 'Sjef-maur i siste rom (nivå 6): av = ingen sjef', true, () => bossOn, kp('tlm.boss', (v) => { bossOn = v; logEv('sjef', v ? 'på' : 'av'); })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
@@ -2044,12 +2051,23 @@ function creatureEvent(ev) {
   else if (ev.type === 'stomp') { react.trigger('stomp'); stats.squashed++; audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], roller ? ROLLER_COL : DANGLER_COL); }
   else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${roller ? 'Pillbuggen rullet over deg' : 'Edderkoppen falt ned på deg'}  −${SCORE.antHit} poeng. Hopp på den (${J}) for å knuse den`); }
 }
+// R61: veps som flyr: varsel (summing + rød glød + ring på flata), stup, krasj, knus og støt. Alt logges som «fiende».
+function waspEvent(ev) {
+  const J = TOUCH ? T('btn.jump') : 'Mellomrom';
+  logEv('fiende', `veps ${ev.type} ${ev.id}`);
+  if (ev.type === 'alert') { audio?.waspbuzz(); buzz(15); cue('summing!'); if (!store.get('tlm.seen.wasp', false)) { store.set('tlm.seen.wasp', true); tip(`En veps! Den lyser rødt før den stuper: gjem deg under en ting, stikk til siden, eller hopp på den (${J}) når den stuper`); } }
+  else if (ev.type === 'dive') { audio?.waspdive(); buzz(25); cue('vepsen stuper!'); }
+  else if (ev.type === 'crash') { audio?.bossbump(); cue('vepsen smalt i noe'); }
+  else if (ev.type === 'stomp') { react.trigger('stomp'); stats.squashed++; audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], WASP_COL); }
+  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! Vepsen stupte på deg  −${SCORE.antHit} poeng. Gjem deg under en ting, eller hopp på den (${J}) når den stuper`); }
+}
 function antEvent(ev) {
   if (ev.id && isSoldier(LEVEL.ants?.find((a) => a.id === ev.id))) {            // R31: tinnsoldaten (egen fiende i nivå 7): egne meldinger og logg, ellers som en maur
     logEv(ev.type === 'stomp' ? 'tinnsoldat knust' : ev.type === 'hurt' ? 'tinnsoldat støt' : 'tinnsoldat ' + ev.type, ev.id);
     if (ev.type === 'alert' && !store.get('tlm.seen.soldier', false)) { store.set('tlm.seen.soldier', true); toast(T('leke.soldier', { jump: TOUCH ? T('btn.jump') : 'Mellomrom' })); }
     ev = { ...ev, kind: 'ant', soldier: true };
   }
+  if (ev.kind === 'wasp') { waspEvent(ev); return; }                                           // R61 (wasp.js)
   if (ev.kind === 'roller' || ev.kind === 'dangler') { creatureEvent(ev); return; }          // R19 (creatures.js)
   if (ev.type === 'alert' && ev.kind === 'spider') { if (!store.get('tlm.seen.spider', false)) { store.set('tlm.seen.spider', true); toast(`En edderkopp-vakt! Den dukker og hopper: rygg unna, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); } audio?.spiderhiss(); }
   else if (ev.type === 'alert' && !store.get('tlm.seen.ant', false)) { store.set('tlm.seen.ant', true); toast(`En maur! Unngå den, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); }
@@ -2398,7 +2416,7 @@ function render(now, dt) {
   for (const { c, m } of crumbMeshes) { m.update(c.phase, c.got || !crumbsOn); }
   for (const m of antMeshes) {
     const { t, a, drop } = m;
-    if (drop) { drop.visible = antsOn && !!t.drop && !t.drop.taken; if (drop.visible) { drop.position.set(t.drop.x, t.drop.y + 0.35 + Math.sin(clock * 3) * 0.06, t.drop.z); drop.rotation.y = clock * 1.5; } } a.root.visible = antsOn && !(LEVEL.noCreatures && (t.type === 'roller' || t.type === 'dangler')) && (t.alive || t.squash < 0.98);
+    if (drop) { drop.visible = antsOn && !!t.drop && !t.drop.taken; if (drop.visible) { drop.position.set(t.drop.x, t.drop.y + 0.35 + Math.sin(clock * 3) * 0.06, t.drop.z); drop.rotation.y = clock * 1.5; } } a.root.visible = antsOn && !(LEVEL.noCreatures && (t.type === 'roller' || t.type === 'dangler')) && !(LEVEL.noWasps && t.type === 'wasp') && (t.alive || t.squash < 0.98);
     a.root.position.set(t.x, t.y, t.z);
     const want = Math.atan2(-t.fz, t.fx); let dr = want - m.rot; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); m.rot += dr * Math.min(1, dt * 10); a.root.rotation.y = m.rot;
     a.update(t.phase, t.speedNow || 0, t.squash, t.alerted, t);
