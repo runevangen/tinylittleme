@@ -62,7 +62,8 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `gerikt` | ja | gerikt (list rundt dør og vindu); også dørfôr/vindusfôr |
 | `qtip` | ja | ørepinne (stav): movable light + pole: 1.5 |
 | `sponge` | ja | svamp: movable light + soft: true |
-| `paper_pile` | ja | haug med dopapir: soft: true (fast myk flate) |
+| `water_bowl` | ja | vannskål (R41): lav, fast boks med vann; en svamp du bærer og TA-trykker ved den blir våt (tung og myk) |
+| `paper_pile` | ja | haug med dopapir: soft: true (fast myk flate); compress: true = kan presses sammen til halv høyde av en tung ting du bærer (R41) |
 | `needle` | ja | nål: movable light + tool: "needle" (trædes med en trådsnelle til en taubane) |
 | `spool` | ja | trådsnelle: movable light + tool: "spool" + thread: true |
 | `key` | ja | nøkkel (R7): movable light, ca. 14×3×6 cm; brukes i en gåte (`puzzles` i scenen) og legges på en plate for å rulle ut en bro |

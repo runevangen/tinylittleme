@@ -2,7 +2,9 @@
 // Ren JS uten DOM/three, slik at den kan testes i Node og porteres (Unity/Godot) senere.
 // Verden: akse-justerte bokser. x/z er gulvplanet, y er opp. Enhet ≈ «spillerhøyde» (1.0).
 
+import { FIN, shimmyVel, shimmyMove, rollWanted, carefulFactor, swingParams, lagToward } from './finpuss.js';   // R39: finpuss av Prince
 import { ROUND_KINDS } from './toys_live.js';   // R18: kuleformede leker (ball, tennisball)
+import { COMBO, findCombo, comboHint, applyCombo, resetCombo } from './combos.js';   // R41: kombinasjoner (svamp + vann, håndkle + håndkle, papirhaug)
 
 // Felles bevegelsesvekt: klassisk og spenning er «umiddelbare» (som før); prince har treghet, oppbygging og tidsbruk.
 const SNAPPY = { stepUp: 0, faceCam: false, gaitMode: false, jumpBoost: 1, accel: 60, decel: 60, turnDecel: 60, jumpWindup: 0, mantleTime: 0, landMin: 10, landK: 0, landMax: 0.5, landSlow: 0.3, walkFactor: 0.4, hardLand: Infinity, knockV: Infinity };
@@ -102,6 +104,7 @@ export const P = {
   // stabilisering i lufta (v0.65): av som standard her; spillet slår dem på etter innstillingene
   airSteady: false, airDead: 0.18, airSmooth: 0.08,   // små rykk på stikken (under airDead) overses i lufta; større endringer følges mykt (tidskonstant i s)
   magnet: false, magnetRange: 3.5, magnetWidth: 0.7, magnetV: 2.0, magnetAcc: 16,   // sikte-hjelp: bommer du med mindre enn magnetWidth sidelengs på et grep, en kant eller et tau innen magnetRange, trekkes banen dit
+  shimmy: false, rollOn: false, carefulOn: false, ropeHeavy: false,   // R39 finpuss (verdier i FIN, finpuss.js): kant-shimmy, rulle ved landing, forsiktig gange (sakte), tyngre tau. Av her; spillet slår dem på
   holdGrab: false,   // true: holder du GREP inne i lufta, griper du det første som kommer innen rekkevidde
 };
 
@@ -137,6 +140,7 @@ export function newPlayer(x, y, z) {
     airT: 0, landT: 9, landImpact: 0, pushT: 0, hadIn: false,   // til animasjon: tid i lufta, tid siden landing, dytting, input-hysterese
     gait: 0, stepLen: 0.4,         // skrittfase (rad, π per skritt) og gjeldende skrittlengde
     carry: null, crushed: null, charge: 0, carryLatch: false,   // kast: hold-tid, og «ventet til F ble sluppet etter at noe ble tatt»
+    hangMove: 0, rollT: 0, rollSafeT: 0, rollV: 0, rolls: 0,   // R39: shimmy-fart, rulle (gjenstående tid, uskadd-tid, fart) og antall rulletter
     hardLands: 0, knockout: false, vaulting: false, jumpSp: 0, toolWarn: 0,
     zip: null,
     stam: P.stamina, exhaust: 0, climb: null, climbPh: 0, climbMove: 0,        // klatring: stamina, flaten du henger på, og armtak-fase til animasjon
@@ -176,7 +180,7 @@ export function initBodies(L) {
   L.bodies = []; L.events = []; L.made = []; L.zips = [];
   for (const m of L.movables || []) {
     const b = {
-      id: m.id, kind: m.kind, pole: m.pole || 0, tool: m.tool || '', tool0: m.tool || '', thread: m.tool === 'spool', soft: !!m.soft, vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
+      id: m.id, kind: m.kind, pole: m.pole || 0, tool: m.tool || '', tool0: m.tool || '', thread: m.tool === 'spool', soft: !!m.soft, weight0: m.weight || 'medium', vx: 0, vz: 0, grounded: false, type: m.material || 'plastic', material: m.material, color: m.color,
       round: ROUND_KINDS.includes(m.kind) || !!m.round, min: [...m.min], max: [...m.max], dyn: true, weight: m.weight || 'medium', breakable: !!m.breakable,
       vy: 0, alive: true, carried: false, home: { min: [...m.min], max: [...m.max] },
     };
@@ -189,8 +193,9 @@ export function resetBodies(L, p) {
   if (p?.carry) { p.carry = null; }
   for (const m of L.made || []) { const i = L.boxes.indexOf(m); if (i >= 0) L.boxes.splice(i, 1); }
   L.made = []; L.zips = [];
+  for (const b of L.boxes || []) if (b.pressed) resetCombo(b);   // R41: presset papirhaug
   for (const b of L.bodies || []) {
-    b.tool = b.tool0; b.threaded = false; b.zipA = null;
+    b.tool = b.tool0; b.threaded = false; b.zipA = null; resetCombo(b);
     b.min = [...b.home.min]; b.max = [...b.home.max]; b.vy = 0; b.vx = b.vz = 0; b.carried = false;
     if (!b.alive) { b.alive = true; L.boxes.push(b); }
   }
@@ -338,7 +343,7 @@ function carryControl(p, inp, dt, L) {
   const c = p.charge, ak = p.aimK || 0; p.charge = 0; p.aimK = 0;
   if (c <= 0) return;
   // v0.97: et litt for langt (eller litt dratt) trykk på «Rull ut»/«Smør» skal fortsatt bruke verktøyet, ikke kaste det. Bare et tydelig kast (lenge holdt eller langt dratt) kaster
-  const hint = p.carry?.tool ? toolHint(p, L) : null, toolTap = !!hint && !hint.startsWith('need') && ak < 0.35 && c < 0.9;
+  const hint = p.carry ? toolHint(p, L) : null, toolTap = !!hint && !hint.startsWith('need') && ak < 0.35 && c < 0.9;
   if (c < P.throwMin || toolTap) {
     const r = useTool(p, L);
     if (r === true) return;
@@ -350,7 +355,8 @@ function carryControl(p, inp, dt, L) {
 
 // Hva trykk på TA gjør nå for et verktøy du bærer (til hint-linjen): 'gel' | 'roll' (kan brukes her), 'again' (allerede brukt her: neste trykk slipper), 'need-gel' | 'need-roll' (ikke på riktig sted), eller null (ikke et verktøy)
 export function toolHint(p, L) {
-  const c = p.carry; if (!c?.tool) return null;
+  const c = p.carry; if (!c) return null;
+  if (!c.tool) return comboHint(p, L);                          // R41: ingen verktøy: kanskje en kombinasjon (wet | knot | press)
   const made = L.made || [];
   if (!p.onGround) return 'need-' + c.tool;
   if (c.tool === 'gel') { const f = faceAhead(p, L, HW + 0.9); if (!f) return 'need-gel'; return made.some((m) => m.owner === c.id && m.parent === f.b) ? 'again' : 'gel'; }
@@ -383,7 +389,8 @@ function faceAhead(p, L, reach) {                              // nærmeste lodd
 }
 function makeBox(L, spec) { L.made.push(spec); L.boxes.push(spec); return spec; }
 function useTool(p, L) {
-  const c = p.carry; if (!c?.tool || !p.onGround) return false;
+  const c = p.carry; if (!c || !p.onGround) return false;
+  if (!c.tool) { const f = findCombo(p, L); if (!f) return false; applyCombo(f, p, L, { removeBody, dropCarry }); return true; }   // R41
   L.made = L.made || [];
   if (c.tool === 'gel') {
     const f = faceAhead(p, L, HW + 0.9); if (!f) return false;
@@ -415,14 +422,15 @@ function useTool(p, L) {
       if (b.max[1] < top - 0.5 && b.max[1] > floorY) floorY = b.max[1];
     }
     if (floorY === -Infinity) floorY = 0;
-    const y0 = Math.max(floorY, top - P.stripMax); if (top - y0 < 2) return false;
+    const y0 = Math.max(floorY, top - P.stripMax * (c.stripMul || 1)); if (top - y0 < 2) return false;
     for (const m of L.made) if (m.owner === c.id) { const i = L.boxes.indexOf(m); if (i >= 0) L.boxes.splice(i, 1); }
     L.made = L.made.filter((m) => m.owner !== c.id);
     const t = 0.12, lo = [0, y0, 0], hi = [0, top, 0];
     lo[o] = cen - P.stripW / 2; hi[o] = cen + P.stripW / 2;
     if (sgn > 0) { lo[ax] = plane; hi[ax] = plane + t; } else { lo[ax] = plane - t; hi[ax] = plane; }
-    makeBox(L, { type: 'paper', kind: 'paper_strip', id: `bånd_${c.id}`, owner: c.id, material: 'paper', color: 0xfbfaf6, min: lo, max: hi, grip: true, gripDrain: -0.8, tear: P.stripTear, parent: gb });
-    L.events.push({ type: 'use', tool: 'roll' });
+    const kn = !!c.knotted;           // R41: knyttet håndkle-tau: stoff, lenger, revner ikke
+    makeBox(L, { type: kn ? 'fabric' : 'paper', kind: kn ? 'towel_hang' : 'paper_strip', id: `bånd_${c.id}`, owner: c.id, material: kn ? 'fabric' : 'paper', color: kn ? (c.color ?? 0x5a8fb8) : 0xfbfaf6, min: lo, max: hi, grip: true, gripDrain: -0.8, ...(kn ? {} : { tear: P.stripTear }), parent: gb });
+    L.events.push({ type: 'use', tool: kn ? 'knotrope' : 'roll' });
     return true;
   }
   if (c.tool === 'needle') {                                     // nål + trådsnelle: træ nålen, snella er brukt opp
@@ -588,6 +596,8 @@ export function stepLength(speed) {
   return Math.max(P.stepMin, speed / (P.cadence0 + P.cadenceK * speed));
 }
 
+const carryK = (p) => (p.carry ? P.carrySpeed * (p.carry.wet ? COMBO.wetSlow : 1) : 1);   // R41: våt svamp er tung
+
 // Avsparkfart: vanlig hopp, eller stavhopp når du løper med en stav (farten gjøres om til høyde).
 function launchVy(p) {
   const b = p.carry, sp = Math.max(Math.hypot(p.vx, p.vz), p.jumpSp || 0);   // farten du hadde før forberedelsen (hurken bremser)
@@ -595,7 +605,7 @@ function launchVy(p) {
   if (b?.pole && sp >= P.vaultMin * P.speed) {
     const hv = P.vaultH * (b.pole / 1.5) * (0.45 + 0.55 * Math.min(1, sp / P.speed));
     const vy = Math.sqrt(2 * -P.gravity * hv);
-    if (vy > P.jump) { p.vaulting = true; return vy; }
+    if (vy > P.jump) { p.vaulting = true; p.vaultV0 = vy; return vy; }
   }
   return P.jump;
 }
@@ -729,6 +739,7 @@ function sub(p, inp, dt, L) {
   p.buffer -= dt; p.coyote -= dt; p.wallT -= dt;
   p.reach = Math.max(0, p.reach - dt); p.reachCd = Math.max(0, p.reachCd - dt);
   p.recover = Math.max(0, p.recover - dt); p.toolWarn = Math.max(0, p.toolWarn - dt);
+  p.rollT = Math.max(0, p.rollT - dt); p.rollSafeT = Math.max(0, p.rollSafeT - dt);
   p.landT += dt; p.pushT = Math.max(0, p.pushT - dt); p.airT = p.onGround ? 0 : p.airT + dt;
 
   let wx = inp.mx, wz = inp.mz;
@@ -749,12 +760,13 @@ function sub(p, inp, dt, L) {
   if (p.state !== 'climb') p.stam = Math.min(P.stamina, p.stam + (p.onGround ? P.staminaRegen * dt : 0));
   if (p.state === 'climb') return climbStep(p, inp, wx, wz, dt, L);
   if (p.state === 'mantle') return mantleStep(p, dt);
-  if (p.state === 'hang') return hangStep(p, wx, wz);
+  if (p.state === 'hang') return hangStep(p, wx, wz, dt, L);
   if (p.state === 'swing') return swingStep(p, inp, wx, wz, dt);
   if (p.state === 'zip') return zipStep(p, inp, dt, L);
   if (inp.grabPressed && L.zips?.length && tryZip(p, L)) return;
 
   let handled = false;
+  const cf = P.carefulOn && p.onGround ? carefulFactor(wl, P.guardMax) : 1;   // R39: lett stikke = sakte gange
   if (P.gaitMode && p.onGround && !p.groundBox?.slick && p.lock <= 0) {
     // Gange med skritt: fart bare langs blikkretningen, kroppen snur gradvis, skrittet fullføres før du stopper.
     handled = true;
@@ -769,7 +781,7 @@ function sub(p, inp, dt, L) {
       const fa2 = fa + Math.max(-rate * dt, Math.min(rate * dt, diff));
       p.fx = Math.sin(fa2); p.fz = Math.cos(fa2);
       const aligned = Math.abs(diff) < 0.9 || Math.abs(s) > 1.2;   // snu først hvis du står stille og input er langt fra blikket
-      const speedCap = P.speed * (p.carry ? P.carrySpeed : 1) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
+      const speedCap = P.speed * cf * carryK(p) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
       target = aligned ? speedCap * Math.min(1, wl) * Math.max(0, Math.cos(diff)) : 0;
     }
     p.skid = hasIn && s > 1.8 && Math.abs(diff) > 1.8;
@@ -797,13 +809,14 @@ function sub(p, inp, dt, L) {
       else if (p.groundBox?.slick) a = P.slickAccel;
       else if (wl < 0.1) a = P.decel;
       else a = rev ? P.turnDecel : P.accel;
-      let sp = P.speed * (p.carry ? P.carrySpeed : 1) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
+      let sp = P.speed * cf * carryK(p) * (inp.walk ? P.walkFactor : 1) * (p.recover > 0 ? P.landSlow : 1) * (p.windup > 0 ? 0.6 : 1);
       if (P.gaitMode && !p.onGround) sp = Math.max(P.speed * P.jumpBoost, speed0);   // løpehopp: behold farten i lufta
       const tx = wx * sp, tz = wz * sp, dx = tx - p.vx, dz = tz - p.vz, dl = Math.hypot(dx, dz), m = a * dt;
       if (dl <= m) { p.vx = tx; p.vz = tz; } else { p.vx += dx / dl * m; p.vz += dz / dl * m; }   // som vektor: gir buer, ikke akse-hopp
     }
   }
 
+  if (p.rollT > 0 && p.onGround) { const cs = Math.hypot(p.vx, p.vz), want = p.rollV * (p.rollT / FIN.rollDur); if (cs > 0.01 && cs < want) { p.vx *= want / cs; p.vz *= want / cs; } }   // R39: rullen holder farten oppe
   p.edgeStop = Math.max(0, (p.edgeStop || 0) - dt);
   if ((P.edgeGuard || P.autoJump) && p.onGround && p.lock <= 0 && p.state === 'ground') edgeAssist(p, inp, wl, dt, L);
   if (P.magnet && p.state === 'air' && !p.onGround && p.lock <= 0) magnetAssist(p, wx, wz, dt, L);
@@ -854,11 +867,14 @@ function sub(p, inp, dt, L) {
     if (spd < 0.01 && wl < 0.1) p.gait = Math.round(p.gait / Math.PI) * Math.PI % (Math.PI * 2);
   }
   if (!wasGrounded && p.onGround && vyBefore < -3) {
-    const eff = -vyBefore * (p.groundBox?.soft ? P.softFactor : 1);          // myke flater tar av for fallet
+    const eff = -vyBefore * (p.groundBox?.soft ? (p.groundBox.softK ?? P.softFactor) : 1);          // myke flater tar av for fallet
     p.landImpact = eff; p.landT = 0; p.vaulting = false;
     if (P.landK > 0 && eff > P.landMin) p.recover = Math.min(P.landMax, (eff - P.landMin) * P.landK);
-    if (p.safeT > 0) { /* R34: uskadd etter kast fra sprettboks */ }
+    if (p.safeT > 0 || p.rollSafeT > 0) { /* R34: uskadd etter kast fra sprettboks (R39: og etter rulle) */ }
     else if (eff >= P.knockV) p.knockout = true;                                   // for hardt: tilbake til lagringspunktet
+    else if (P.rollOn && rollWanted(eff, P.hardLand, P.knockV, Math.hypot(p.vx, p.vz), P.speed, wl)) {   // R39: rulle i stedet for bedøvelse
+      p.recover = 0; p.rollT = FIN.rollDur; p.rollSafeT = FIN.rollSafe; p.rollV = Math.hypot(p.vx, p.vz) * FIN.rollKeep; p.rolls++; (L.events ||= []).push({ type: 'roll', v: +eff.toFixed(1) });
+    }
     else if (eff >= P.hardLand) { p.recover = Math.max(p.recover, P.stunTime); p.hardLands++; }   // bedøvet en stund
   }
 
@@ -950,7 +966,8 @@ function tryLedge(p, hit, L) {
   if (!freeAt(L, tx, top + 0.02, tz)) return false;
   if (px !== p.x || pz !== p.z) { for (const o of L.boxes) if (o !== b && o !== p.carry && !o.carried && overlaps(o, hit.nx ? p.x : px, top - H, hit.nz ? p.z : pz)) return false; p.x = px; p.z = pz; }
   p.state = 'hang';
-  p.hang = { nx: hit.nx, nz: hit.nz, top, tx, tz };
+  p.hang = { nx: hit.nx, nz: hit.nz, top, tx, tz, box: b };
+  p.hangMove = 0;
   p.y = top - H;
   if (hit.nx) p.x = hit.nx > 0 ? b.max[0] + HW : b.min[0] - HW;
   if (hit.nz) p.z = hit.nz > 0 ? b.max[2] + HW : b.min[2] - HW;
@@ -1018,8 +1035,16 @@ function climbStep(p, inp, wx, wz, dt, L) {
   }
 }
 
-function hangStep(p, wx, wz) {
+function hangStep(p, wx, wz, dt, L) {
   const h = p.hang;
+  p.hangMove = 0;
+  if (P.shimmy && h.box && p.buffer <= 0 && wx * h.nx + wz * h.nz <= 0.5) {      // R39: gå sidelengs i kanten (stikka langs kanten)
+    const v = shimmyVel(wx * -h.nz + wz * h.nx), r = v ? shimmyMove(h, h.box, p, v * dt) : null;
+    if (r && freeAt(L, r.tx, h.top + 0.02, r.tz) && !L.boxes.some((o) => o !== h.box && o !== p.carry && !o.carried && overlaps(o, r.x, p.y, r.z))) {
+      p.x = r.x; p.z = r.z; h.tx = r.tx; h.tz = r.tz; p.hangMove = v;
+      if (!h.shimmied) { h.shimmied = true; (L.events ||= []).push({ type: 'shimmy' }); }
+    }
+  }
   if (p.buffer > 0 && P.mantleTime > 0) {                  // hiv deg opp: tar tid, du er sårbar underveis
     p.mantle = { t: 0, dur: P.mantleTime, fx: p.x, fy: p.y, fz: p.z, tx: h.tx, ty: h.top, tz: h.tz };
     p.state = 'mantle'; p.hang = null; p.buffer = 0;
@@ -1055,7 +1080,7 @@ function tryRope(p, L) {
     const d = Math.hypot(p.x - r.x, p.z - r.z);
     if (d < P.ropeReach && hy < r.y - 1.2 && hy > r.y - r.len) {
       const R = Math.max(1.5, Math.hypot(p.x - r.x, hy - r.y, p.z - r.z));
-      p.state = 'swing'; p.rope = r; p.swing = { R };
+      p.state = 'swing'; p.rope = r; p.swing = { R }; p.swIx = p.swIz = undefined;
       p.reach = 0; p.jumping = false;
       return true;
     }
@@ -1072,9 +1097,11 @@ function swingStep(p, inp, wx, wz, dt) {
     p.cd = 0.3; p.jumps = Math.min(1, P.airJumps); p.buffer = 0;
     return;
   }
-  p.vy += P.gravity * dt;
-  p.vx += wx * P.swingPush * dt;
-  p.vz += wz * P.swingPush * dt;
+  const sw = swingParams(P.ropeHeavy);                              // R39: tyngre tau = lengre periode, treghet i stikka, mer fart i utsvinget
+  p.swIx = lagToward(p.swIx ?? wx, wx, dt, sw.lag); p.swIz = lagToward(p.swIz ?? wz, wz, dt, sw.lag);
+  p.vy += P.gravity * sw.gMul * dt;
+  p.vx += p.swIx * P.swingPush * sw.pushMul * dt;
+  p.vz += p.swIz * P.swingPush * sw.pushMul * dt;
   let hx = p.x + p.vx * dt, hy = p.y + H * 0.85 + p.vy * dt, hz = p.z + p.vz * dt;
   let dx = hx - r.x, dy = hy - r.y, dz = hz - r.z;
   const len = Math.hypot(dx, dy, dz);
@@ -1086,7 +1113,7 @@ function swingStep(p, inp, wx, wz, dt) {
     const vr = p.vx * nx + p.vy * ny + p.vz * nz;
     if (vr > 0) { p.vx -= nx * vr; p.vy -= ny * vr; p.vz -= nz * vr; }
   }
-  const damp = 1 - 0.1 * dt;
+  const damp = 1 - sw.damp * dt;
   p.vx *= damp; p.vy *= damp; p.vz *= damp;
   p.x = hx; p.y = hy - H * 0.85; p.z = hz;
   const sp = Math.hypot(p.vx, p.vz);

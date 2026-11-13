@@ -256,6 +256,7 @@
     "w": 100,
     "h": 60,
     "d": 20,
+    "stars": {"three": {"cost": 3, "parts": 2}, "two": {"cost": 6, "parts": 4}},
     "anchors": [
      [
       -17.5,
@@ -361,6 +362,60 @@
     "at": [
      220,
      80
+    ]
+   },
+   {
+    "id": "p6",
+    "type": "pencil",
+    "on": "gulv",
+    "at": [
+     260,
+     215
+    ]
+   },
+   {
+    "id": "p7",
+    "type": "lego",
+    "on": "gulv",
+    "at": [
+     150,
+     215
+    ]
+   },
+   {
+    "id": "p8",
+    "type": "lego",
+    "on": "gulv",
+    "at": [
+     175,
+     215
+    ]
+   },
+   {
+    "id": "p9",
+    "type": "book",
+    "on": "gulv",
+    "at": [
+     60,
+     215
+    ]
+   },
+   {
+    "id": "p10",
+    "type": "sponge",
+    "on": "gulv",
+    "at": [
+     330,
+     215
+    ]
+   },
+   {
+    "id": "p11",
+    "type": "ruler",
+    "on": "gulv",
+    "at": [
+     230,
+     230
     ]
    }
   ]

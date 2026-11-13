@@ -30,7 +30,7 @@ export function makeSoftLight({ THREE, scene, LEVEL, floorY, sun, sunDir, render
       const act = softActive(onSet, low, gfxLow); group.visible = act;
       if (state !== act) {
         state = act; sun.shadow.radius = shadowRadius(onSet, low || gfxLow);
-        if (renderer) { const t = softShadowType(onSet, low, gfxLow) === 'pcf' ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;   // radius virker bare i PCFShadowMap
+        if (renderer) { const t = softShadowType(onSet, false, gfxLow) === 'pcf' ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;   // R35: Lav profil skal ikke bytte skyggetype (alle shadere kompileres på nytt); bare valget og grafikknivå gjør det   // radius virker bare i PCFShadowMap
           if (renderer.shadowMap.type !== t) { renderer.shadowMap.type = t; scene.traverse((o) => { const m = o.material; if (m) for (const x of Array.isArray(m) ? m : [m]) x.needsUpdate = true; }); } }
       }
     },

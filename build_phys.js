@@ -6,6 +6,8 @@
 //  - testfiguren er en liten rund fyr som går mot høyre og hopper når den støter mot noe
 // Fast tidssteg og fast rekkefølge: samme bygg gir alltid samme resultat (se test_buildphys.mjs).
 import { partType, layout, toWorldPt, PR } from './build_logic.js';
+import { TOY_MATERIAL } from './build_toys.js';   // R46: leker som materialer
+import { loadParams, driveSpeed, isLoad, DEFAULT_LOAD } from './build_loads.js';   // R48: leker som testlast
 
 export const DT = 1 / 60, SUB = 2, ITER = 6;
 export const G = 32;                    // tyngde (enheter/s²); en enhet = 5 cm, men spillet skal føles tungt og lesbart
@@ -20,9 +22,10 @@ export const MATERIAL = {
   seesaw: { m: 0.5, alpha: 0.6, snap: 3 },   // R30: stiv planke (bøyer seg lite) med fast dreiepunkt i midten
   block: { m: 1, alpha: 1 },
   weight: { m: 5, alpha: 1 },
+  ...TOY_MATERIAL,                          // R46: blyant, linjal, legoklosse, bok, svamp (build_toys.js)
 };
 export const LINK_SNAP = { tape: 1000, hinge: 6000, rope: 1100, pivot: 30000 };   // kraft (masse·enhet/s²) som får koblingen til å ryke; en vekt henger med 1440, en kloss med 288, så tau og tape ryker av en hengende vekt, ledd holder
-const FRICTION = 0.7, FIG_FRICTION = 0.1;
+const FRICTION = 0.7;
 
 const mat = (t) => MATERIAL[t] || MATERIAL.block;
 const isChain = (t) => { const ty = partType(t); return ty.w >= ty.h * 2; };
@@ -35,7 +38,7 @@ export function siteBoxes(site) {
 export const siteStart = (site) => ({ u: site.start?.u ?? -site.w / 2 + 1, v: site.start?.v ?? 0 });
 export const siteGoal = (site) => ({ u: site.goal?.u ?? site.w / 2 - 1, v: site.goal?.v ?? 0 });
 
-// def: { site, placed: [{id,type,u,v,rot}], links: [...] (se build_logic.addLink) }, opts: { strength = 1 (skalerer brekkgrensene), figure = true }
+// def: { site, placed: [{id,type,u,v,rot}], links: [...] (se build_logic.addLink) }, opts: { strength = 1 (skalerer brekkgrensene), load = 'figure' (testlast, se build_loads.js), hold }
 export function createSim(def, opts = {}) {
   const site = def.site, strength = opts.strength ?? 1, boxes = siteBoxes(site);
   const P = [], bodies = [], cons = [], noCol = new Set(), events = [];
@@ -44,7 +47,7 @@ export function createSim(def, opts = {}) {
 
   for (const part of def.placed) {
     const t = part.type, M = mat(t), lay = layout(t), bi = bodies.length;
-    const idx = lay.map((q) => { const w = toWorldPt(part, q.x, q.y); const k = mk(w.u, w.v, 1 / M.m, PR, bi); P[k].lx = q.x; P[k].ly = q.y; return k; });
+    const idx = lay.map((q) => { const w = toWorldPt(part, q.x, q.y); const k = mk(w.u, w.v, 1 / M.m, PR, bi); P[k].lx = q.x; P[k].ly = q.y; if (M.damp) P[k].d = M.damp; return k; });
     const body = { id: part.id, type: t, kind: isChain(t) ? 'chain' : 'rect', idx, groups: [], alpha: M.alpha ?? 1, snap: (M.snap || 99) * strength, stress: 0, creakT: -9, broken: false, part };
     body.groups.push(mkGroup(idx));
     bodies.push(body); bodyOf.set(part.id, bi);
@@ -99,7 +102,8 @@ export function createSim(def, opts = {}) {
   // testfiguren
   const st = siteStart(site), goal = siteGoal(site);
   const fig = bodies.length; bodies.push({ id: 'figur', kind: 'ball', idx: [], groups: [] });
-  const fi = mk(st.u, st.v + FIG_R, 1, FIG_R, fig); bodies[fig].idx.push(fi);
+  const loadId = isLoad(opts.load) ? opts.load : DEFAULT_LOAD, LD = loadParams(loadId);   // R48: lasten har egen masse, radius, fart og friksjon
+  const fi = mk(st.u, st.v + LD.r, 1 / LD.mass, LD.r, fig); bodies[fig].idx.push(fi);
   const F = P[fi]; let supported = false, blocked = false, hopCd = 0;
   const state = { t: 0, state: 'run', reason: '', won: 0, stuckX: F.x, stuckT: 0 };
 
@@ -120,7 +124,7 @@ export function createSim(def, opts = {}) {
     a.x += nx * ca; a.y += ny * ca; b.x -= nx * cb; b.y -= ny * cb;
     // friksjon: demp sidelengs bevegelse mellom de to i dette steget
     const rx = (a.x - a.px) - (b.x - b.px), ry = (a.y - a.py) - (b.y - b.py), tn = rx * nx + ry * ny, tx = rx - tn * nx, ty = ry - tn * ny, tl = Math.hypot(tx, ty);
-    if (tl > 1e-12) { const f = Math.min(1, ((a === F || b === F) ? FIG_FRICTION : FRICTION) * pen / tl); a.x -= tx * f * a.w / ws; a.y -= ty * f * a.w / ws; b.x += tx * f * b.w / ws; b.y += ty * f * b.w / ws; }
+    if (tl > 1e-12) { const f = Math.min(1, ((a === F || b === F) ? LD.fric : FRICTION) * pen / tl); a.x -= tx * f * a.w / ws; a.y -= ty * f * a.w / ws; b.x += tx * f * b.w / ws; b.y += ty * f * b.w / ws; }
     if (a === F || b === F) { const s = a === F ? 1 : -1; if (ny * s > 0.5) supported = true; if (nx * s < -0.5) blocked = true; }
   }
   function collideBox(p, bx) {
@@ -130,7 +134,7 @@ export function createSim(def, opts = {}) {
     else { const l = p.x - bx.x0, r = bx.x1 - p.x, bt = p.y - bx.y0, tp = bx.y1 - p.y, m = Math.min(l, r, bt, tp); if (m === tp) { nx = 0; ny = 1; } else if (m === l) { nx = -1; ny = 0; } else if (m === r) { nx = 1; ny = 0; } else { nx = 0; ny = -1; } pen = m + p.r; }
     p.x += nx * pen; p.y += ny * pen;
     const rx = p.x - p.px, ry = p.y - p.py, tn = rx * nx + ry * ny, tx = rx - tn * nx, ty = ry - tn * ny, tl = Math.hypot(tx, ty);
-    if (tl > 1e-12) { const f = Math.min(1, (p === F ? FIG_FRICTION : FRICTION) * pen / tl); p.x -= tx * f; p.y -= ty * f; }
+    if (tl > 1e-12) { const f = Math.min(1, (p === F ? LD.fric : FRICTION) * pen / tl); p.x -= tx * f; p.y -= ty * f; }
     if (p === F) { if (ny > 0.5) supported = true; if (nx < -0.5) blocked = true; }
   }
   function solveCon(c) {
@@ -147,7 +151,7 @@ export function createSim(def, opts = {}) {
   function substep(h) {
     // fart og posisjon
     const drive = state.state === 'run' && state.t >= SETTLE && !opts.hold;   // hold: figuren står stille (brukes til å finne hvor delene lander, se settledPlaced)
-    if (drive) { const tgt = FIG_SPEED, ac = supported ? 14 : 3; F.vx += (tgt - F.vx) * Math.min(1, ac * h); if (supported && blocked && hopCd <= 0) { F.vy = FIG_HOP; hopCd = 0.45; events.push({ type: 'hop', u: F.x, v: F.y }); } }
+    if (drive) { const tgt = driveSpeed(loadId, state.t), ac = supported ? LD.acc : LD.accAir; F.vx += (tgt - F.vx) * Math.min(1, ac * h); if (supported && blocked && hopCd <= 0 && LD.hop > 0) { F.vy = LD.hop; hopCd = 0.45; events.push({ type: 'hop', u: F.x, v: F.y }); } }
     hopCd -= h; supported = false; blocked = false; const calm = state.t < SETTLE;
     for (const p of P) { if (!p.w) continue; p.vy -= G * h; p.px = p.x; p.py = p.y; p.x += p.vx * h; p.y += p.vy * h; }
     updateBoxes(); for (const c of cons) if (c.link) c.lam = 0;
@@ -161,7 +165,7 @@ export function createSim(def, opts = {}) {
       for (const p of P) if (p.w) for (const bx of boxes) collideBox(p, bx);
     }
     for (const c of cons) if (c.link) c.f = Math.abs(c.lam) / (h * h);
-    for (const p of P) { if (!p.w) continue; p.vx = calm ? 0 : (p.x - p.px) / h; p.vy = calm ? 0 : (p.y - p.py) / h; const sp = Math.hypot(p.vx, p.vy); if (sp > 60) { p.vx *= 60 / sp; p.vy *= 60 / sp; } p.vx *= 0.9995; p.vy *= 0.9995; }
+    for (const p of P) { if (!p.w) continue; p.vx = calm ? 0 : (p.x - p.px) / h; p.vy = calm ? 0 : (p.y - p.py) / h; const sp = Math.hypot(p.vx, p.vy); if (sp > 60) { p.vx *= 60 / sp; p.vy *= 60 / sp; } const dm = p.d || 0.9995; p.vx *= dm; p.vy *= dm; }
   }
 
   function checkBreaks() {
@@ -197,7 +201,7 @@ export function createSim(def, opts = {}) {
     state.t += DT; if (state.t >= SETTLE) checkBreaks();
     // seier / tap
     if (F.y < -6) { state.state = 'lost'; state.reason = 'fell'; events.push({ type: 'lose', why: 'fell', u: F.x, v: F.y }); events.push({ type: 'splash', u: F.x, v: F.y }); }
-    else if (F.x >= goal.u && F.y >= goal.v + FIG_R - 0.35 && supported) { state.won += DT; if (state.won >= 0.3) { state.state = 'won'; events.push({ type: 'win', u: F.x, v: F.y }); } }
+    else if (F.x >= goal.u && F.y >= goal.v + LD.r - 0.35 && supported) { state.won += DT; if (state.won >= 0.3) { state.state = 'won'; events.push({ type: 'win', u: F.x, v: F.y }); } }
     else state.won = 0;
     if (state.state === 'run') {
       if (Math.abs(F.x - state.stuckX) > 0.4) { state.stuckX = F.x; state.stuckT = state.t; }
@@ -216,10 +220,11 @@ export function createSim(def, opts = {}) {
         return { id: B.id, type: B.type, kind: 'chain', pts, segs, broken: B.broken, stress: B.stress };
       }
       const a = P[B.idx[0]], b = P[B.idx[1]], n = B.idx.length; let cx = 0, cy = 0; for (const i of B.idx) { cx += P[i].x; cy += P[i].y; }
-      return { id: B.id, type: B.type, kind: 'rect', u: cx / n, v: cy / n, rot: Math.atan2(b.y - a.y, b.x - a.x), pts, broken: false, stress: 0 };
+      let ls = 0; for (const l of links) if (!l.broken && (bodies[l.a] === B || (l.b >= 0 && bodies[l.b] === B))) ls = Math.max(ls, l.stress || 0);   // R45: stive deler viser belastningen i leddene sine
+      return { id: B.id, type: B.type, kind: 'rect', u: cx / n, v: cy / n, rot: Math.atan2(b.y - a.y, b.x - a.x), pts, broken: false, stress: ls };
     });
     return {
-      parts, figure: { u: F.x, v: F.y, r: FIG_R, vx: F.vx, vy: F.vy, supported },
+      parts, figure: { u: F.x, v: F.y, r: LD.r, vx: F.vx, vy: F.vy, supported, load: loadId, roll: F.x / LD.r },
       links: links.filter((l) => !l.hidden).map((l) => ({ id: l.id, kind: l.kind, broken: l.broken, stress: l.stress || 0, a: { u: P[l.pa].x, v: P[l.pa].y }, b: { u: P[l.pb].x, v: P[l.pb].y }, len: l.kind === 'rope' ? l.cons[0].rest : 0 })),
     };
   }
@@ -248,5 +253,5 @@ export function runSim(def, opts = {}) {
     sim.step();
     for (const e of sim.drain()) { if (e.type === 'break') breaks.push({ id: e.id, u: e.u, v: e.v, t: e.t }); else if (e.type === 'linkbreak') linkBreaks.push({ id: e.id, kind: e.kind, u: e.u, v: e.v, t: e.t }); }
   }
-  return { result: sim.state.state === 'won' ? 'won' : 'lost', reason: sim.state.reason, t: +sim.t.toFixed(3), breaks, linkBreaks, figure: { u: sim.figure.x, v: sim.figure.y } };
+  return { load: isLoad(opts.load) ? opts.load : DEFAULT_LOAD, result: sim.state.state === 'won' ? 'won' : 'lost', reason: sim.state.reason, t: +sim.t.toFixed(3), breaks, linkBreaks, figure: { u: sim.figure.x, v: sim.figure.y } };
 }

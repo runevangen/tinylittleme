@@ -357,6 +357,16 @@
     },
     "d": 4,
     "drop": 8,
+    "stars": {
+     "three": {
+      "cost": 5,
+      "parts": 2
+     },
+     "two": {
+      "cost": 8,
+      "parts": 4
+     }
+    },
     "ref": {
      "placed": [
       {

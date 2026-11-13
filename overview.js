@@ -11,7 +11,7 @@ export function createOverview({ scene, camera, LEVEL, player, mv, $, getYaw, ge
   const room = LEVEL.room, dpr = () => Math.min(2, window.devicePixelRatio || 1);
   const _q = new THREE.Quaternion(), _m = new THREE.Matrix4(), _up = new THREE.Vector3(0, 1, 0), _p = new THREE.Vector3(), _l = new THREE.Vector3();
   const finite = !!room && [room.x0, room.x1, room.z0, room.z1].every(Number.isFinite);
-  const boxes = (LEVEL.boxes || []).filter((b) => b.type !== 'floor' && b.type !== 'wall' && b.min && b.max && !b.dyn && !b.carried);
+  const boxes = (LEVEL.boxes || []).filter((b) => b.type !== 'floor' && b.type !== 'wall' && b.min && b.max && !b.dyn && !b.carried && !b.bead);
 
   // ---- minikart ----
   const mini = document.createElement('canvas'); mini.id = 'minimap'; mini.setAttribute('aria-label', 'Minikart: trykk for oversikt'); mini.style.display = 'none';

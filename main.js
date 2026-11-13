@@ -3,7 +3,7 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
-import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT } from './feedback_send.js';
+import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT, fetchInbox, markRead, unreadReplies, statsLines } from './feedback_send.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
@@ -30,20 +30,26 @@ import { makeSoftLight } from './softlight.js';
 import { applyGrade } from './grade_apply.js';
 import { gradeTint } from './grade.js';
 import { buildHero, RIG_S } from './hero.js';
-import { recordRun, getEquipped, rt as rwT, accById } from './rewards.js';
+import { recordRun, getEquipped, rt as rwT, accById, getBest, getBuildStars } from './rewards.js';
+import { starText } from './build_budget.js';   // R47
 import { applyAccessories, updateAccessories, showCloset, previewSVG } from './rewards_view.js';
 import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4–6 som egne rom (stemning, hjelmlykt, vri)
 import { createVoice } from './voice.js';
 import { createShortcutWatch, resetShortcutWatch, stepShortcutWatch } from './shortcut.js';   // R29: verktøy-genveier (hårgelé-trapper i nivå 4–6)
 import { createToyLife, resetToys, stepToys, TOY, TOY_SOUND, TOY_CUE } from './toys_live.js';
+import { COMBO } from './combos.js';   // R41: kombinasjoner (svamp + vann, håndkle + håndkle, papirhaug)
+import { vaultPose, isVaulting } from './vault_anim.js';   // R41: stavhopp-animasjon
 import { KICK, tryKick, tickKick } from './toy_kick.js';   // R34: sprettboksen kaster figuren   // R18: leker som lever og reagerer
 import { animateToy } from './toys_view.js';
 import { makeT, LANGS } from './i18n.js';
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
+import { MOVE, createTurnSteps, createStepOver, gripPose, effectiveStepUp } from './hero_move.js';
 import { createMarkerView } from './readable_view.js';
 import { createOverview } from './overview.js';
+import { FIN, rollProgress } from './finpuss.js';   // R39: finpuss av Prince (kant-shimmy, rulle, forsiktig gange, tyngre tau)
 import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, approach, landingEvent } from './landing.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
+import { programCount, programKeys, warmRender, warmFades, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
@@ -120,7 +126,7 @@ function unlockAudio(e) {
   if (!audio) {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
-      audio = createAudio(new Ctx(), { volume: store.get('tlm.vol', 0.7), reverb: store.get('tlm.reverb', null) ?? LEVEL.audio?.reverb ?? 0.12, levels: store.get('tlm.mix2', {}) });
+      audio = createAudio(new Ctx(), { volume: store.get('tlm.vol', 0.7), reverb: store.get('tlm.reverb', null) ?? LEVEL.audio?.reverb ?? 0.12, levels: store.get('tlm.mix2', {}), breath: breathSound });
       audio.setMuted(soundMuted);
       music = createMusic(audio.ctx, audio.out, { theme: themeFor(LEVEL), volume: store.get('tlm.musicvol', 0.2), on: store.get('tlm.music', true) });   // R5: musikk starter etter første trykk
       music.setMood(musicMood); music.start();
@@ -157,15 +163,21 @@ const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(m
 // ---------- innstillinger som flagg (selve lista og panelet står lenger ned: SETTINGS) ----------
 let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true);
-let showMapBtn = store.get('tlm.showmapbtn', true), showCenter = store.get('tlm.showcenter', true), stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
+let showMapBtn = store.get('tlm.showmapbtn2', false), showCenter = store.get('tlm.showcenter2', false),   // v1.35: ◎ og kartknappen er av som standard (nye nøkler, så alle starter uten dem)
+   stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
+let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
-let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true), buildSeeHint = store.get('tlm.buildsee', true);   // R24: byggeskjermen
+let shaderWarm = store.get('tlm.shaderwarm', true);   // R35: full tegning av alt under forvarmingen (admin)
+let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true), buildSeeHint = store.get('tlm.buildsee', true), buildDbl = store.get('tlm.builddbl', true), buildFine = store.get('tlm.buildfine', true), buildStress = store.get('tlm.buildstress', true), buildBreakFx = store.get('tlm.buildbreakfx', true), buildLego = store.get('tlm.buildlego', true), buildBudget = store.get('tlm.buildbudget', true), buildBonus = store.get('tlm.buildbonus', true), buildBonusStep = +store.get('tlm.buildbonusstep', 1) || 1, buildLoads = store.get('tlm.buildloads', true), buildShare = store.get('tlm.buildshare', true), buildGhost = store.get('tlm.buildghost', true);   // R50: deling, beste bygg og spøkelse;   // R47: kostnad/stjerner, smule-ekstradeler; R24: byggeskjermen
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let toysOn = store.get('tlm.toys', true);   // R18
 TOY.windT = store.get('tlm.toywind', TOY.windT);
+COMBO.on = store.get('tlm.combo', COMBO.on); COMBO.vaultAnim = store.get('tlm.vaultanim', COMBO.vaultAnim); COMBO.wetSoft = store.get('tlm.combowet', COMBO.wetSoft); COMBO.pressTo = store.get('tlm.combopress', COMBO.pressTo); COMBO.knotMul = store.get('tlm.comboknot', COMBO.knotMul);   // R41
 KICK.on = store.get('tlm.kick', KICK.on); KICK.speed = store.get('tlm.kickspeed', KICK.speed); KICK.up = store.get('tlm.kickup', KICK.up); KICK.safeT = store.get('tlm.kicksafe', KICK.safeT);   // R34
+let shimmyOn = store.get('tlm.shimmy', true), rollOn = store.get('tlm.roll', true), carefulOn = store.get('tlm.careful', true), ropeHeavyOn = store.get('tlm.ropeheavy', true);   // R39: finpuss av Prince
+for (const [k, id] of [['shimmySpeed', 'shimspeed'], ['rollSafe', 'rollsafe'], ['carefulMul', 'carefulmul'], ['ropeG', 'ropeg'], ['ropePush', 'ropepush'], ['ropeLag', 'ropelag']]) FIN[k] = store.get('tlm.' + id, FIN[k]);
 let creaturesOn = store.get('tlm.creatures', true), creatureWarn = store.get('tlm.creaturewarn', 1);   // R19
 let antsOn = store.get('tlm.ants', true);   // maur (v0.77)
 let goalsOn = store.get('tlm.goals', true), goalArrowOn = store.get('tlm.goalarrow', true), goalLockOn = store.get('tlm.goallock', true);   // delmål (R23)
@@ -193,6 +205,7 @@ let resQ = store.get('tlm.resq', 'auto'); if (!['auto', 'full', 'mid', 'low'].in
 let lowMode = store.get('tlm.lowprofile', 'auto'); if (!['off', 'auto', 'on'].includes(lowMode)) lowMode = 'auto';   // R15 Lav profil: av / auto (når FPS er lav) / på
 const fdDens = +store.get('tlm.fdens', 1) || 1;   // R13: gulvdetaljer (floordetail.js): blyanter, perler, flekker, fugeskitt; tetthet etter rom og kvalitet (halvert med Lav profil «På», tom med Enkel grafikk)
 let floorDetailOn = store.get('tlm.floordetail', true);
+let beadSolidOn = store.get('tlm.beadsolid', true);   // R37: perlene i gulvdetaljene er solide små kuler (kan stås på/glis av)
 const legoDens = +store.get('tlm.legodens', 1) || 1; let legoOn = store.get('tlm.lego', true);   // R31: legoknotter på gulv og tak i lekerommet (lekerom_view.js)
 const lowP = createLowProfile(); let lowOn = false;
 let autoQ = resQ === 'auto', qSteps = 0, basePr = 1, qToasted = false;
@@ -245,6 +258,7 @@ sun.shadow.mapSize.set(devicePixelRatio > 2 || innerWidth < 700 ? 2048 : bigShad
 const shHalf = devicePixelRatio > 2 || innerWidth < 700 ? 17 : 26;       // v0.76: mindre område rundt deg på mobil = skarpere skygger (færre trappetrinn i kantene)
 Object.assign(sun.shadow.camera, { left: -shHalf, right: shHalf, top: shHalf, bottom: -shHalf, near: 1, far: 220 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
+const SHADOW_NORMAL = { size: sun.shadow.mapSize.x, near: 1, far: 220 };   // R35: Lav profil bytter størrelse/kamera, ikke castShadow (ellers nye shadere)
 scene.add(sun, sun.target);
 
 // ---------- utseende: teksturer med relieff, bøker, kontaktskygger og støv (look.js) ----------
@@ -394,6 +408,7 @@ const drawn = new Set(); let hasToilet = false;
   }
 }
 const csHolder = new THREE.Group(); scene.add(csHolder);   // kontaktskygger samles her så de kan slås sammen til noen få tegnekall (R15)
+const pressViews = [];   // R41: papirhauger som kan presses sammen (tegnes om i høyden)
 let bookN = 0; const col0 = (b) => b.color ?? 0xcccccc;
 for (const b of LEVEL.boxes) {
   if (drawn.has(b)) continue;
@@ -401,6 +416,7 @@ for (const b of LEVEL.boxes) {
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
   const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material }) : null;
   if (b.grip) gripMark(b);
+  if (shaped && b.compress) { const w = new THREE.Group(); w.position.set(cx, cy, cz); w.add(shaped); scene.add(w); regFade(shaped, [b]); pressViews.push({ b, mesh: w, h0: sy }); continue; }   // R41: egen innpakning som skaleres i høyden (kan ikke slås sammen med resten)
   if (shaped) { shaped.position.set(cx, cy, cz); scene.add(shaped); regFade(shaped, [b]); continue; }
   if (b.type !== 'floor' && b.type !== 'wall' && !b.dyn && Math.min(sx, sz) > 0.4 && LEVEL.boxes.some((c) => c !== b && !c.dyn && Math.abs(c.max[1] - b.min[1]) < 0.05 && c.min[0] < b.max[0] && c.max[0] > b.min[0] && c.min[2] < b.max[2] && c.max[2] > b.min[2])) {
     const cs = look.contactShadow(sx, sz, Math.max(0.3, Math.min(0.9, Math.min(sx, sz) * 0.35))); cs.position.set(cx, b.min[1] + 0.02, cz); csHolder.add(cs);   // myk mørk kant der tingen står
@@ -619,9 +635,13 @@ function footstep(side, sp) {
 
 const react = createReact();      // reaksjoner på maur (polish.js): jubel ved knus, rykk ved støt
 const footSm = { L: 0, R: 0 };   // glattet fothøyde over trinn/kanter
+const turnSteps = createTurnSteps(), stepOverAnim = createStepOver();   // R40 (hero_move.js): snu med skritt, tråkke over hinder
 const DIP_MAX = 0.17;   // hvor mye hoftene kan synke i hurk (landing/forberedelse)
 
+let vaultNow = null;   // R41: stavhopp-posen akkurat nå (eller null)
 function poseHero(p, now, dt, mode) {
+  vaultNow = isVaulting(p, COMBO.vaultAnim) && mode === 'play' ? vaultPose(p) : null;
+  if (vaultNow && !hero.vaultLogged) { hero.vaultLogged = true; logEv('kombo', 'stavhopp'); } else if (!vaultNow) hero.vaultLogged = false;
   const c = hero.cur, sp = Math.hypot(p.vx, p.vz), sec = now / 1000;
   const T = { aL: 0, aR: 0, zL: 0.06, zR: -0.06, eL: -0.15, eR: -0.15, hL: 0, hR: 0, kL: 0, kR: 0, lean: 0, chest: 0, twist: 0, hy: 0, hp: 0, fp: 0, lzL: 0, lzR: 0, roll: 0, sway: 0, fgL: 0.35, fgR: 0.35 };
   let bob = 0;
@@ -659,7 +679,7 @@ function poseHero(p, now, dt, mode) {
   const u = (gph / (Math.PI * 2)) % 1, idleW = clampN(1 - sp / 0.35, 0, 1);
   const pathL = footPath(u, sFrac, A, lift), pathR = footPath((u + 0.5) % 1, sFrac, A, lift);
   for (const f of [pathL, pathR]) { f.z *= 1 - idleW; f.y *= 1 - idleW; f.pitch *= 1 - idleW; }
-  if (ownGait && p.onGround) { const tw = idleW * clampN((Math.abs(yawRate) - 1) / 3, 0, 1), sn = Math.sin(gph); pathL.y += 0.035 * tw * Math.max(0, sn); pathR.y += 0.035 * tw * Math.max(0, -sn); }   // løfter føttene når han snur seg på stedet
+  if (ownGait && p.onGround && !turnStepsOn) { const tw = idleW * clampN((Math.abs(yawRate) - 1) / 3, 0, 1), sn = Math.sin(gph); pathL.y += 0.035 * tw * Math.max(0, sn); pathR.y += 0.035 * tw * Math.max(0, -sn); }   // løfter føttene når han snur seg på stedet
   const gaitN = { L: pathL.z / (A + 1e-6), R: pathR.z / (A + 1e-6) };
   pathL.z /= RIG_S; pathR.z /= RIG_S;          // rig-lokalt: figuren er skalert, så foten må flyttes tilsvarende mindre
   const gaitOn = ikGait && mode !== 'fly' && p.state === 'ground' && p.onGround && !p.skid;
@@ -674,6 +694,14 @@ function poseHero(p, now, dt, mode) {
       footSm[key] += (off - footSm[key]) * (1 - Math.exp(-dt / 0.04));
       f.y += footSm[key] / RIG_S; f.pitch += -footSm[key] * 0.8;
     } }
+  // R40: snu på stedet med små skritt (annenhver fot løftes og svinger ut), og tråkke over små hindre (fremste fot løftes over kanten)
+  { const standing = ownGait && gaitOn && sp < MOVE.standSpeed && mode === 'play';
+    const ts = turnSteps.update(dt, { yawRate, standing, on: turnStepsOn });
+    if (ts.stepped) logEv('snusteg', `${ts.dir > 0 ? 'venstre' : 'høyre'} #${ts.steps}`);
+    if (ts.active) { pathL.y += ts.liftL; pathR.y += ts.liftR; T.lzL = ts.spreadL; T.lzR = ts.spreadR; T.twist += ts.twist; }
+    if (stepOverOn && p.stepDy > 0 && gaitOn && stepOverAnim.trigger(p.stepDy, Math.max(P.stepUp, MOVE.stepOverMax))) logEv('trinn', `${p.stepDy.toFixed(2)} over hinder`);
+    const so = stepOverAnim.update(dt);
+    if (so.active) { const lf = Math.min(so.lift, 0.3) / RIG_S; (so.foot ? pathR : pathL).y += lf; (so.foot ? pathL : pathR).y += lf * 0.35; T.lean += so.lean; } }
 
   // hurk: forberedelse før hopp (armene bak) og demping etter landing (armene frem). 0 = oppreist, 1 = dypt.
   const wDF = p.windup > 0 ? smooth3(clampN((P.jumpWindup - p.windup) / 0.07, 0, 1)) : 0;
@@ -711,8 +739,9 @@ function poseHero(p, now, dt, mode) {
       T.twist += id * 0.06 * a1; T.lean += id * 0.015 * a2; T.chest += id * 0.03 * a1; T.hy += 0.25 * Math.sin(sec * 0.8) * id; }
     bob = -0.05 - 0.012 * Math.abs(s1) * m;
   } else if (p.state === 'hang' || p.state === 'zip') {
-    const sway = Math.sin(sec * 1.5), hs = hangSway(sec, Math.hypot(p.vx, p.vz), false);   // heng: rolig dingling
-    Object.assign(T, { aL: -3.05, aR: -3.05, eL: -0.12, eR: -0.12, hL: hs.legL, hR: hs.legR, kL: hs.kneeL, kR: hs.kneeR, lean: hs.lean, roll: hs.roll, chest: -0.05, hp: -0.2, twist: sway * 0.05 });
+    const sway = Math.sin(sec * 1.5), hm = p.state === 'hang' ? clampN(Math.abs(p.hangMove || 0) / FIN.shimmySpeed, 0, 1) : 0, hs = hangSway(sec, Math.hypot(p.vx, p.vz) + 2 * hm, false);   // heng: rolig dingling (R39: bena og hender følger med når han går sidelengs)
+    hero.shimPh = (hero.shimPh || 0) + hm * dt * 7; const shp = Math.sin(hero.shimPh) * hm;                                 // hendene bytter på å ta tak
+    Object.assign(T, { aL: -3.05 + 0.18 * shp, aR: -3.05 - 0.18 * shp, eL: -0.12, eR: -0.12, hL: hs.legL, hR: hs.legR, lean: hs.lean, roll: hs.roll, chest: -0.05, hp: -0.2, twist: sway * 0.05 + 0.12 * shp, kL: hs.kneeL + 0.15 * hm * Math.max(0, shp), kR: hs.kneeR + 0.15 * hm * Math.max(0, -shp) });
   } else if (p.state === 'swing') {
     const k = clampN((p.vx * p.fx + p.vz * p.fz) * 0.1, -0.8, 0.8), ss = hangSway(sec * 1.4, Math.hypot(p.vx, p.vz), true);   // sving: stort pendel i bena, kroppen lener med farten
     Object.assign(T, { aL: -3.0, aR: -3.1, eL: -0.1, eR: -0.1, hL: ss.legL - 0.5 * k, hR: ss.legR - 0.5 * k, kL: ss.kneeL + 0.3, kR: ss.kneeR + 0.5, lean: -0.25 * k + ss.lean * 2, roll: ss.roll, chest: -0.1 * k, hp: -0.15, twist: 0.06 * Math.sin(sec * 2.1) });
@@ -720,6 +749,8 @@ function poseHero(p, now, dt, mode) {
     const rt = clampN((hero.reachT || 0) / 0.25, 0, 1), fl = Math.sin(sec * 15), wv = Math.sin(sec * 11);   // armene strekker seg mer og mer, bena sparker, kroppen vrir seg mot grepet
     Object.assign(T, { aL: -2.55 - 0.3 * rt + 0.1 * wv, aR: -2.8 - 0.35 * rt - 0.1 * wv, eL: -0.3 + 0.25 * rt, eR: -0.25 + 0.2 * rt, hL: -0.6 + 0.35 * fl, hR: 0.3 - 0.35 * fl, kL: 0.9 + 0.45 * Math.max(0, fl), kR: 0.5 + 0.45 * Math.max(0, -fl),
       lean: 0.12 + 0.12 * rt, chest: 0.1 + 0.14 * rt, hp: -0.2, twist: 0.12 * wv * rt });
+  } else if (vaultNow) {                                          // R41: stavhopp: plant, sving, topp, slipp (vault_anim.js)
+    Object.assign(T, vaultNow.T);
   } else if (!p.onGround) {
     if (p.sliding) {
       Object.assign(T, { aL: -2.8, aR: -2.8, eL: -0.3, eR: -0.3, hL: -0.2, hR: 0.1, kL: 0.6, kR: 0.7, lean: 0.05, hp: -0.15 });
@@ -787,11 +818,21 @@ function poseHero(p, now, dt, mode) {
     if (p.carry) { T.aL = T.aR = -1.25; T.eL = T.eR = -0.95; T.zL = 0.1; T.zR = -0.1; T.lean -= 0.04; }       // holder tingen foran seg
     else if (p.pushT > 0) { T.lean += 0.22; T.chest += 0.1; T.aL = T.aR = -1.4; T.eL = T.eR = -0.2; }          // lener seg inn i det han dytter
   }
+  if (gripPosesOn && mode !== 'fly') {                                 // R40: nye poser for heng, veggglid og sving (hender som tar tak, vekt og holdning følger farten)
+    const gs = p.state === 'hang' || p.state === 'zip' ? 'hang' : p.state === 'swing' ? 'swing' : !p.onGround && p.sliding && !p.reach ? 'slide' : '';
+    if (gs) Object.assign(T, gripPose(gs, { sec, speed: Math.hypot(p.vx, p.vz), signed: p.vx * p.fx + p.vz * p.fz, tired: clampN(1 - p.stam / (P.stamina * 0.4), 0, 1), vy: p.vy }));
+    if (gs && hero.gripPoseWas !== gs) logEv('grepspose', gs);
+    hero.gripPoseWas = gs;
+  }
   if ((hero.catchT || 0) > 0 && (p.state === 'climb' || p.state === 'hang')) {                     // tar imot: albuene bøyes og kroppen dypper, så strammer han seg opp igjen
     const g = hero.catchT, g2 = g * g;
     T.eL -= 0.9 * g2; T.eR -= 0.9 * g2; T.chest += 0.16 * g2; T.lean += 0.1 * g2; T.hL += 0.35 * g2 * Math.sin(sec * 12); T.hR -= 0.35 * g2 * Math.sin(sec * 12); T.kL += 0.5 * g2; T.kR += 0.5 * g2; bob -= 0.08 * g2;
   }
   if (!p.skid && p.state !== 'mantle' && p.state !== 'hang' && p.state !== 'swing' && mode !== 'fly' && p.onGround) T.lean += hero.accLean;
+  if (p.rollT > 0 && p.state === 'ground' && mode !== 'fly') {                                     // R39: rulle ved landing: kroppen krøller seg sammen fremover og reiser seg igjen
+    const rp = rollProgress(p.rollT), rs = Math.sin(Math.PI * rp);
+    T.lean = 0.95 * rs; T.chest = 0.7 * rs; T.hp = 0.4 * rs; T.aL = T.aR = -0.9 * rs; T.eL = T.eR = -1.3 * rs; T.hL = T.hR = -1.1 * rs; T.kL = T.kR = 1.6 * rs; T.roll = 0; bob -= 0.1 * rs;
+  }
 
   // fingrene: knyttet rundt det han holder eller henger i, løst knyttet i løp, åpne når han rekker ut
   T.fgL = T.fgR = p.carry || ['hang', 'climb', 'swing', 'zip', 'mantle'].includes(p.state) ? 1.2 : p.reach > 0 || (!p.onGround && p.vy < -8) ? 0.05 : 0.35 + 0.55 * kSp * (p.onGround ? 1 : 0);
@@ -1023,7 +1064,7 @@ const save = { pos: [...LEVEL.start] };
 const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
-const bld = createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
+const bld = createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getShare: () => buildShare, getGhost: () => buildGhost, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
 
 // Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
 const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
@@ -1189,6 +1230,8 @@ let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get
 let stickCurve = store.get('tlm.stickcurve', 1.3), inertia = store.get('tlm.inertia', 1), speedScale = store.get('tlm.speedscale', 1), qbtnOn = store.get('tlm.qbtn', true);
 const metrics = { swipes: 0, dragPx: 0, yawUser: 0, yawAuto: 0, stickT: 0, t: 0 };
 let stepAdapt = store.get('tlm.stepadapt', true), reactAnim = store.get('tlm.reactanim', true);
+let turnStepsOn = store.get('tlm.turnsteps', true), stepOverOn = store.get('tlm.stepover', true), gripPosesOn = store.get('tlm.gripposes', true);
+let breathSound = store.get('tlm.breathsound', false);                        // R38: pustelyd av som standard (egen lagringsnøkkel)
 let idleWink = store.get('tlm.idlewink', true), restBreath = store.get('tlm.restbreath', false);
 const mixSet = (ids, v) => { const mix = store.get('tlm.mix2', {}); for (const id of ids) { mix[id] = v; audio?.setLevel(id, v); } store.set('tlm.mix2', mix); };
 const mixGet = (id) => store.get('tlm.mix2', {})[id] ?? 1;
@@ -1439,6 +1482,7 @@ const TUNE = [
   ['reachAbove', 'Grep: ekstra rekkevidde opp', 0, 1.5, 0.05], ['ropeReach', 'Tau-rekkevidde', 0.8, 3.5, 0.1],
 ];
 const P0_SNAPSHOT = { ...P };
+let smallStepH = store.get('tlm.smallstep', MOVE.stepOverMax);   // R40
 let presetName = store.get('tlm.preset4', DEFAULT_PRESET);
 if (!PRESETS[presetName]) presetName = 'prince';
 applyPreset(presetName);
@@ -1448,7 +1492,9 @@ function reapplyKnobs() {
   const base = PRESETS[presetName] || {}, b = (k) => base[k] ?? P0_SNAPSHOT[k];
   const lv = { none: { coyote: 0.1, jumpBuffer: 0.08, reachSnap: 0.3, stepUp: 0, autoGrab: false }, normal: { coyote: 0.14, jumpBuffer: 0.12, reachSnap: 0.45, stepUp: b('stepUp'), autoGrab: base.autoGrab ?? false }, much: { coyote: 0.22, jumpBuffer: 0.2, reachSnap: 0.7, stepUp: Math.max(0.6, b('stepUp')), autoGrab: true } }[helpLevel] || {};
   Object.assign(P, lv);
+  P.stepUp = effectiveStepUp(lv.stepUp, smallStepH, helpLevel !== 'none');   // R40: små hindre (≤ smallStepH) tråkkes alltid over
   P.edgeGuard = edgeGuardOn && helpLevel !== 'none'; P.autoJump = autoJumpOn && helpLevel !== 'none';       // kanthjelp: stopp ved kanten (forsiktig) og hopp selv over gap (løp)
+  P.shimmy = shimmyOn; P.rollOn = rollOn && helpLevel !== 'none'; P.carefulOn = carefulOn && helpLevel !== 'none'; P.ropeHeavy = ropeHeavyOn;   // R39: finpuss
   P.airSteady = airSteadyOn && helpLevel !== 'none'; P.magnet = magnetOn && helpLevel !== 'none'; P.holdGrab = holdGrabOn && helpLevel !== 'none';   // stabilisering i lufta: demping, sikte-hjelp, hold GREP
   P.accel = b('accel') * inertia; P.decel = b('decel') * inertia; P.turnDecel = b('turnDecel') * inertia; P.speed = b('speed') * speedScale;
 }
@@ -1536,14 +1582,32 @@ const SETTINGS = [
   fl('introhint', 'hjelp', 'Nivåstart: hint-boble som nevner riktig knapp', true, () => introHintOn, kp('tlm.introhint', (v) => { introHintOn = v; if (!v) introV.hideHint(); })),
   fl('story', 'spill', 'Fortelling i starten av hvert nivå', true, () => storyOn, kp('tlm.story', (v) => { storyOn = v; })),
   fl('buildsnap', 'spill', 'Byggeskjerm: delene snapper til rutenett og festepunkter', true, () => buildSnap, kp('tlm.buildsnap', (v) => { buildSnap = v; })),
+  fl('builddbl', 'spill', 'Byggeskjerm: dobbelttrykk zoomer inn (og tilbake til hele byggeplassen)', true, () => buildDbl, kp('tlm.builddbl', (v) => { buildDbl = v; })),
+  fl('buildfine', 'spill', 'Byggeskjerm: rutenettet blir finere jo mer du zoomer inn (0,5 → 0,25 → 0,125)', true, () => buildFine, kp('tlm.buildfine', (v) => { buildFine = v; })),
   fl('buildsee', 'hjelp', 'Byggeskjerm: hint om vippa når du legger den ut (den har dreiepunkt på midten: legg den over gapet og rotér den skrått)', true, () => buildSeeHint, kp('tlm.buildsee', (v) => { buildSeeHint = v; })),
+  fl('buildstress', 'spill', 'Byggeskjerm: farge på delene i PRØV viser belastning (blå = slapp, gul = belastet, rød = nær brudd)', true, () => buildStress, kp('tlm.buildstress', (v) => { buildStress = v; })),
+  fl('buildbreakfx', 'spill', 'Byggeskjerm: kort pause og sakte film når noe brekker i PRØV (med ring rundt bruddet)', true, () => buildBreakFx, kp('tlm.buildbreakfx', (v) => { buildBreakFx = v; })),
+  fl('buildbudget', 'spill', 'Byggeskjerm: kostnad og stjerner (1-3 etter pris og antall deler; vises i byggeskjermen, delmålet og målskjermen)', true, () => buildBudget, kp('tlm.buildbudget', (v) => { buildBudget = v; })),
+  fl('buildbonus', 'spill', 'Byggeskjerm: smuler åpner ekstradeler (en ekstra planke/kloss ved et antall smuler)', true, () => buildBonus, kp('tlm.buildbonus', (v) => { buildBonus = v; })),
+  rg('buildbonusstep', 'admin', 'Byggeskjerm: smuler per ekstradel (faktor på 3/6/9 smuler, 1 = standard)', 1, 0.5, 3, 0.5, () => buildBonusStep, kp('tlm.buildbonusstep', (v) => { buildBonusStep = v; }), { digits: 1 }),
+  fl('buildlego', 'spill', 'Byggeskjerm: legoklosser klikker sammen (snapper til knottene på andre legoklosser)', true, () => buildLego, kp('tlm.buildlego', (v) => { buildLego = v; })),
+  fl('buildloads', 'spill', 'Byggeskjerm: leker som testlast (tennisball, leke-bil og robot kan prøves i stedet for testfiguren, velges med knappene over delene)', true, () => buildLoads, kp('tlm.buildloads', (v) => { buildLoads = v; })),
+  fl('buildshare', 'spill', 'Byggeskjerm: dele bygg (kopier og lim inn kode; med tester-kode og nett sendes vellykkede bygg til «Beste bygg» anonymt, og du kan prøve andres)', true, () => buildShare, kp('tlm.buildshare', (v) => { buildShare = v; })),
+  fl('buildghost', 'spill', 'Byggeskjerm: spøkelse av forrige prøve vises under neste PRØV, og SE IGJEN spiller av siste prøve', true, () => buildGhost, kp('tlm.buildghost', (v) => { buildGhost = v; })),
   fl('buildslow', 'spill', 'Byggeskjerm: PRØV i sakte film (lettere å se hvor det bøyer og brekker)', false, () => buildSlow, kp('tlm.buildslow', (v) => { buildSlow = v; })),
   rg('buildstrength', 'admin', 'Byggeskjerm: hvor sterkt bygget er (faktor på brekkgrensene, 1 = standard)', 1, 0.5, 2, 0.1, () => buildStrength, kp('tlm.buildstrength', (v) => { buildStrength = v; }), { digits: 1 }),
   fl('buildworld', 'admin', 'Byggeskjerm: et prøvd bygg står i verden som solid (figuren kan gå på det)', true, () => buildWorld, kp('tlm.buildworld', (v) => { buildWorld = v; })),
+  fl('shaderwarm', 'admin', 'Forvarm alle shadere under oppstart (full tegning, også glass); av = bare renderer.compile', true, () => shaderWarm, kp('tlm.shaderwarm', (v) => { shaderWarm = v; })),
   fl('buildall', 'admin', 'Byggeskjerm: alle deler åpne (test)', false, () => buildAll, kp('tlm.buildall', (v) => { buildAll = v; })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, wind-up og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
+  fl('replies', 'test', 'Vis svar og tellere fra Claude (⚑-boksen)', true, () => repliesOn, kp('tlm.replies', (v) => { repliesOn = v; if (v) refreshInbox(false); else renderInbox(); })),
+  fl('combo', 'spill', 'Kombinasjoner: svamp + vann, håndkle + håndkle, tung ting + papirhaug (TA ved siden av)', true, () => COMBO.on, kp('tlm.combo', (v) => { COMBO.on = v; logEv('kombo', v ? 'kombinasjoner på' : 'kombinasjoner av'); })),
+  fl('vaultanim', 'spill', 'Stavhopp: egen animasjon (figuren svinger over staven)', true, () => COMBO.vaultAnim, kp('tlm.vaultanim', (v) => { COMBO.vaultAnim = v; logEv('kombo', v ? 'stavhopp-animasjon på' : 'stavhopp-animasjon av'); })),
+  rg('combowet', 'admin', 'Våt svamp: andel av landingsfarten den tar imot (lavere = mykere)', 0.15, 0.02, 0.35, 0.01, () => COMBO.wetSoft, kp('tlm.combowet', (v) => { COMBO.wetSoft = v; }), { digits: 2 }),
+  rg('combopress', 'admin', 'Presset papirhaug: andel av høyden som blir igjen', 0.5, 0.2, 0.8, 0.05, () => COMBO.pressTo, kp('tlm.combopress', (v) => { COMBO.pressTo = v; }), { digits: 2 }),
+  rg('comboknot', 'admin', 'Knyttet håndkle-tau: lengde i forhold til dopapirbånd', 1.8, 1, 3, 0.1, () => COMBO.knotMul, kp('tlm.comboknot', (v) => { COMBO.knotMul = v; }), { digits: 1 }),
   fl('kick', 'spill', 'Sprettboksen kaster figuren bort når den popper under ham', true, () => KICK.on, kp('tlm.kick', (v) => { KICK.on = v; logEv('leke', v ? 'sprettbokskast på' : 'sprettbokskast av'); })),
   rg('kickspeed', 'admin', 'Sprettboks-kast: fart bort fra boksen', 5.5, 0, 9, 0.5, () => KICK.speed, kp('tlm.kickspeed', (v) => { KICK.speed = v; }), { digits: 1 }),
   rg('kickup', 'admin', 'Sprettboks-kast: fart opp', 11, 4, 16, 0.5, () => KICK.up, kp('tlm.kickup', (v) => { KICK.up = v; }), { digits: 1 }),
@@ -1559,6 +1623,8 @@ const SETTINGS = [
   fl('gradefilter', 'spill', 'Fargefilter på skjermen (Varm film; slå av om det går tregt)', true, () => store.get('tlm.gradefilter', true) !== false, (v) => { store.set('tlm.gradefilter', v); logEv('gradefilter', v ? 'på' : 'av'); grade.setFilter(v); }),
   fl('varmood', 'spill', 'Nivå 4–6: egen stemning (kveld, natt, hjelmlykt)', true, () => variantMoodOn, kp('tlm.varmood', (v) => { variantMoodOn = v; logEv('stemning', v ? 'på' : 'av'); })),
   fl('vartwist', 'spill', 'Nivå 4–6: egen vri (vann som stiger, lys som slukkes, tog)', true, () => variantTwistOn, kp('tlm.vartwist', (v) => { variantTwistOn = v; logEv('vri', v ? 'på' : 'av'); })),
+  sl('flood', 'spill', 'Nivå 4: stigende vann (vannet stiger sakte, du må klatre høyere enn det; druknet = tilbake til lagringspunktet)', 'av', [['av', 'Av (vanlig vann)'], ['rolig', 'Rolig'], ['vanlig', 'Vanlig'], ['rask', 'Rask']], () => floodMode, (v) => { floodMode = v; store.set('tlm.flood', v); logEv('flood', `valg: ${v}`); }),
+  rg('floodrate', 'admin', 'Stigende vann: fartsfaktor (1 = standard)', 1, 0.5, 2.5, 0.1, () => floodMult, kp('tlm.floodrate', (v) => { floodMult = v; }), { digits: 1 }),
   rg('lamp', 'admin', 'Hjelmlykt: styrke', 1, 0.3, 2.5, 0.1, () => lampPower, kp('tlm.lamp', (v) => { lampPower = v; }), { digits: 1 }),
   fl('dust', 'spill', 'Støv i lufta', true, () => dustOn, kp('tlm.dust', (v) => { dustOn = v; })),
   ...(gfxLow ? [] : [
@@ -1566,6 +1632,7 @@ const SETTINGS = [
     fl('ao', 'spill', 'Mørkere hjørner og kontaktskygger (Detaljert grafikk)', true, () => aoOn, kp('tlm.ao', (v) => { aoOn = v; logEv('hjorner', v ? 'på' : 'av'); })),
     fl('softlight', 'spill', 'Myke skygger og lysflekk: mørke hjørner og under møbler, varm flekk fra vinduet (Detaljert grafikk, ikke Lav profil)', true, () => softOn, kp('tlm.softlight', (v) => { softOn = v; logEv('myke skygger', v ? 'på' : 'av'); })),
     fl('floordetail', 'spill', 'Gulvdetaljer: blyantstumper, perler, flekker og skitt i fugene for målestokk (Detaljert grafikk)', true, () => floorDetailOn, kp('tlm.floordetail', (v) => { floorDetailOn = v; logEv('gulvdetaljer', v ? 'på' : 'av'); })),
+    fl('beadsolid', 'spill', 'Perler på gulvet er solide: du stoppes av dem og kan stå på dem (Detaljert grafikk)', true, () => beadSolidOn, kp('tlm.beadsolid', (v) => { beadSolidOn = v; logEv('perler', v ? 'solide' : 'gjennomtrengelige'); })),
     fl('lego', 'spill', 'Legoknotter på gulv og tak i lekerommet, nivå 7 (Detaljert grafikk)', true, () => legoOn, kp('tlm.lego', (v) => { legoOn = v; logEv('legoknotter', v ? 'på' : 'av'); })),
     sl('legodens', 'admin', 'Legoknotter: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(legoDens), (v) => { if (+v === +legoDens) return; store.set('tlm.legodens', +v); logEv('legoknotter', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     sl('fdens', 'admin', 'Gulvdetaljer: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(fdDens), (v) => { if (+v === +fdDens) return; store.set('tlm.fdens', +v); logEv('gulvdetaljer', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
@@ -1585,9 +1652,19 @@ const SETTINGS = [
   ...(!TOUCH ? [fl('mouselook', 'styring', 'Musestyring (klikk i bildet: mus ser deg rundt, venstre = TA, høyre = GREP)', true, () => mouseLook, kp('tlm.mouselook', (v) => { mouseLook = v; if (!v && document.pointerLockElement) document.exitPointerLock(); }))] : []),
   fl('aimthrow', 'styring', 'Kast med dra og slipp (hold TA, dra ned)', true, () => aimThrowOn, kp('tlm.aimthrow', (v) => { aimThrowOn = v; })),
   fl('dbltap', 'styring', 'Dobbelttrykk på skjermen sentrerer kameraet', true, () => dblTapOn, kp('tlm.dbltap', (v) => { dblTapOn = v; })),
-  fl('showmapbtn', 'styring', 'Vis kart-knappen (oversikt) ved siden av ◎. Av = ingen knapp; minikartet øverst virker fortsatt', true, () => showMapBtn, kp('tlm.showmapbtn', (v) => { showMapBtn = v; applyUiFlags(); })),
-  fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', true, () => showCenter, kp('tlm.showcenter', (v) => { showCenter = v; applyUiFlags(); })),
+  fl('showmapbtn', 'styring', 'Vis kart-knappen (oversikt) ved siden av ◎. Av = ingen knapp; minikartet øverst virker fortsatt', false, () => showMapBtn, kp('tlm.showmapbtn2', (v) => { showMapBtn = v; applyUiFlags(); })),
+  fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', false, () => showCenter, kp('tlm.showcenter2', (v) => { showCenter = v; applyUiFlags(); })),
   fl('edgeguard', 'styring', TOUCH ? 'Kanthjelp: stopp ved kanten når du skyver stikken forsiktig' : 'Kanthjelp: stopp ved kanten når du går forsiktig (C)', true, () => edgeGuardOn, kp('tlm.edgeguard', (v) => { edgeGuardOn = v; reapplyKnobs(); })),
+  fl('shimmy', 'styring', TOUCH ? 'Kant-shimmy: heng i en kant og skyv stikken sidelengs for å gå langs den' : 'Kant-shimmy: heng i en kant og gå sidelengs langs den (A/D)', true, () => shimmyOn, kp('tlm.shimmy', (v) => { shimmyOn = v; reapplyKnobs(); logEv('finpuss', 'shimmy ' + (v ? 'på' : 'av')); })),
+  fl('roll', 'styring', TOUCH ? 'Rulle ved landing: lander du hardt i fart og skyver stikken, ruller du i stedet for å bli bedøvd' : 'Rulle ved landing: lander du hardt i fart og styrer, ruller du i stedet for å bli bedøvd', true, () => rollOn, kp('tlm.roll', (v) => { rollOn = v; reapplyKnobs(); logEv('finpuss', 'rulle ' + (v ? 'på' : 'av')); })),
+  fl('careful', 'styring', TOUCH ? 'Forsiktig gange: lett stikke gir rolig gange (stopper ved kanten med Kanthjelp)' : 'Forsiktig gange: lett styring gir rolig gange (stopper ved kanten med Kanthjelp)', true, () => carefulOn, kp('tlm.careful', (v) => { carefulOn = v; reapplyKnobs(); logEv('finpuss', 'forsiktig gange ' + (v ? 'på' : 'av')); })),
+  fl('ropeheavy', 'styring', 'Tyngre tau: lengre sving med mer treghet og fart i utsvinget', true, () => ropeHeavyOn, kp('tlm.ropeheavy', (v) => { ropeHeavyOn = v; reapplyKnobs(); logEv('finpuss', 'tungt tau ' + (v ? 'på' : 'av')); })),
+  rg('shimspeed', 'admin', 'Kant-shimmy: fart sidelengs (enheter/s)', 1.1, 0.4, 2.5, 0.1, () => FIN.shimmySpeed, kp('tlm.shimspeed', (v) => { FIN.shimmySpeed = v; }), { digits: 1 }),
+  rg('rollsafe', 'admin', 'Rulle: uskadd-tid etter rullen (sekunder)', 0.9, 0, 3, 0.1, () => FIN.rollSafe, kp('tlm.rollsafe', (v) => { FIN.rollSafe = v; }), { digits: 1 }),
+  rg('carefulmul', 'admin', 'Forsiktig gange: fartsfaktor ved lett stikke', 0.7, 0.3, 1, 0.05, () => FIN.carefulMul, kp('tlm.carefulmul', (v) => { FIN.carefulMul = v; }), { digits: 2 }),
+  rg('ropeg', 'admin', 'Tau: tyngdekraft på svingen (lavere = lengre periode)', 0.8, 0.4, 1, 0.05, () => FIN.ropeG, kp('tlm.ropeg', (v) => { FIN.ropeG = v; }), { digits: 2 }),
+  rg('ropepush', 'admin', 'Tau: fart fra stikka i utsvinget (faktor)', 1.2, 0.6, 2, 0.05, () => FIN.ropePush, kp('tlm.ropepush', (v) => { FIN.ropePush = v; }), { digits: 2 }),
+  rg('ropelag', 'admin', 'Tau: treghet i stikka (sekunder)', 0.22, 0, 0.8, 0.02, () => FIN.ropeLag, kp('tlm.ropelag', (v) => { FIN.ropeLag = v; }), { digits: 2 }),
   fl('autojump', 'styring', TOUCH ? 'Kanthjelp: hopp av seg selv over gap når du løper (stikken helt ut)' : 'Kanthjelp: hopp av seg selv over gap når du løper mot kanten', true, () => autoJumpOn, kp('tlm.autojump', (v) => { autoJumpOn = v; reapplyKnobs(); })),
   fl('airsteady', 'styring', TOUCH ? 'I lufta: demp skjelving på stikken' : 'I lufta: demp små rykk i styringen', true, () => airSteadyOn, kp('tlm.airsteady', (v) => { airSteadyOn = v; reapplyKnobs(); })),
   fl('magnet', 'styring', 'I lufta: sikte-hjelp (trekkes svakt mot grep, kanter og tau du nesten treffer)', true, () => magnetOn, kp('tlm.magnet', (v) => { magnetOn = v; reapplyKnobs(); })),
@@ -1612,6 +1689,10 @@ const SETTINGS = [
   rg('camdist', 'kamera', 'Kameraavstand', 5.5, 3, 9, 0.1, () => cam.dist, kp('tlm.camdist', (v) => { cam.dist = v; camDistSet = v; })),
   // Hjelp og tekst
   sl('compassmode', 'hjelp', 'Retningshjelp mot neste hinder', 'both', [['both', 'Kompass og gulvpil'], ['compass', 'Bare kompass'], ['arrow', 'Bare gulvpil'], ['off', 'Av']], () => compassMode, kp('tlm.compassmode', (v) => { compassMode = v; })),
+  fl('turnsteps', 'spill', 'Figuren snur med små skritt når du snur raskt på stedet', true, () => turnStepsOn, kp('tlm.turnsteps', (v) => { turnStepsOn = v; })),
+  fl('stepover', 'spill', 'Figuren løfter foten over små hindre han tråkker opp på', true, () => stepOverOn, kp('tlm.stepover', (v) => { stepOverOn = v; })),
+  fl('gripposes', 'spill', 'Nye poser i heng, sving og veggglid (hender som tar tak)', true, () => gripPosesOn, kp('tlm.gripposes', (v) => { gripPosesOn = v; })),
+  { id: 'smallstep', group: 'admin', type: 'range', label: 'Hinder under denne høyden tråkkes over uten hopp (0 = av)', min: 0, max: 0.4, step: 0.01, def: MOVE.stepOverMax, get: () => smallStepH, set: (v) => { smallStepH = v; store.set('tlm.smallstep', v); reapplyKnobs(); }, digits: 2 },
   fl('stepadapt', 'spill', 'Føttene tilpasser seg trinn og kanter', true, () => stepAdapt, kp('tlm.stepadapt', (v) => { stepAdapt = v; })),
   sl('resq', 'test', 'Oppløsning (Auto senker ved lav FPS og skrur opp igjen)', 'auto', [['auto', 'Auto (følger FPS)'], ['full', 'Full (skarp)'], ['mid', 'Middels (75 %)'], ['low', 'Lav (1×, raskest)']], () => resQ, kp('tlm.resq', (v) => { resQ = v; autoQ = v === 'auto'; if (autoQ) autoQC.reset(); applyRes(); })),
   fl('texsmall', 'test', 'Små teksturer: halv oppløsning på overflater, ca. 50 % mindre teksturminne (laster siden på nytt; alltid på med Enkel grafikk og Lav profil «På»)', false, () => texLow, (v) => { if (v === texLow) return; store.set('tlm.texsmall', v); logEv('teksturer', v ? 'små' : 'full'); setTimeout(() => location.reload(), 150); }),
@@ -1640,6 +1721,7 @@ const SETTINGS = [
     rg('voicevol', 'lyd', 'Stemmevolum', 0.9, 0.2, 1, 0.1, () => voiceVol, kp('tlm.voicevol', (v) => { voiceVol = v; })),
   ] : []),
   // Lydvalg som er lette å finne (hele lydmikseren med alle lydene ligger bak admin)
+  fl('breathsound', 'lyd', 'Pustelyd (pust ved anstrengelse)', false, () => breathSound, kp('tlm.breathsound', (v) => { breathSound = v; audio?.setBreath(v); logEv('pustelyd', v ? 'på' : 'av'); })),
   rg('mix_breath', 'lyd', 'Pust: volum (0 = av)', 1, 0, 2, 0.05, () => mixGet('breath'), (v) => mixSet(['breath', 'windup'], v), { pct: true }),
   fl('restbreath', 'lyd', 'Rolig pust også når du står stille', false, () => restBreath, kp('tlm.restbreath', (v) => { restBreath = v; })),
   rg('mix_steps', 'lyd', 'Skritt: volum', 1, 0, 2, 0.05, () => mixGet('step'), (v) => mixSet(['step'], v), { pct: true }),
@@ -1673,7 +1755,7 @@ const marks = [];
 {
   let tag = store.get('tlm.qtag', 'Styring'); const pop = $('qpop'), tags = ['Styring', 'Kamera', 'Hopp', 'Gange', 'Annet'];
   const draw = () => { const qc = $('qcode'); if (qc) qc.style.display = validCode(store.get('tlm.tcode', '')) ? 'none' : 'block'; const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
-  pop.innerHTML = `<input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang)" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button>`;
+  pop.innerHTML = `<div id="qinbox"></div><input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang)" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button>`;
   const qtext = () => { const el = $('qtext'), v = el.value.trim(); el.value = ''; return v; };
   pop.addEventListener('click', (e) => {
     e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
@@ -1685,7 +1767,7 @@ const marks = [];
     if (b.dataset.r) { const tx = qtext(); logEv('vurdering', `${b.dataset.r} · ${tag}${tx ? ' · ' + tx : ''}`); pop.classList.add('hide'); toast(`Takk! Registrert: ${b.textContent} (${tag})`); }
   });
   pop.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'qtext') { e.preventDefault(); pop.querySelector('[data-mark]').click(); } });
-  $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); draw(); if (!pop.classList.contains('hide')) setTimeout(() => $('qtext').focus(), 30); });
+  $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); draw(); if (!pop.classList.contains('hide')) refreshInbox(true); if (!pop.classList.contains('hide')) setTimeout(() => $('qtext').focus(), 30); });
   document.addEventListener('pointerdown', (e) => { if (!pop.classList.contains('hide') && !pop.contains(e.target) && e.target !== $('qbtn')) pop.classList.add('hide'); });
 }
 const unsent = (type) => evLog.filter((e) => e.type === type && !e.sent).length, markCount = () => unsent('MARKERT');
@@ -1694,6 +1776,31 @@ function repHeadHtml() { const f = markCount(), b = unsent('BACKLOGG'); return f
 function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); updateMarkBadge(); toast(`Feil meldt (${markCount()} totalt). Husk å sende rapporten etterpå.`); }
 function markSent() { for (const e of evLog) if (e.type === 'MARKERT' || e.type === 'BACKLOGG') e.sent = true; updateMarkBadge(); }
 const doShare = async (copyOnly) => { const t = reportText(); { const rb = $('reportBox'); if (rb) rb.value = t; } let r; if (copyOnly) { try { await navigator.clipboard.writeText(t); r = 'kopiert'; } catch { r = 'vis'; } } else r = await shareText(t, `tinylittleme v${VERSION} testrapport`); if (r === 'delt' || r === 'kopiert') markSent(); return r; };
+// Svar fra Claude og tellere (R36): hentes når spillet starter og når ⚑ åpnes; ⚑ lyser grønt når det er et ulest svar.
+let inbox = null, inboxToast = false;
+const escH = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function renderInbox() {
+  const el = $('qinbox'), btn = $('qbtn'); if (!el || !btn) return;
+  const unread = inbox ? inbox.replies.filter((r) => r.fresh).length : 0;
+  btn.classList.toggle('hasreply', repliesOn && unread > 0);
+  if (!repliesOn || !inbox) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const lines = statsLines(inbox), rs = inbox.replies.slice(0, 3);
+  el.style.display = 'block';
+  el.innerHTML = lines.map((l) => `<div class="qs1">${escH(l)}</div>`).join('') + rs.map((r) => `<div class="qrep${r.fresh ? ' new' : ''}">✉ ${r.version ? 'v' + escH(r.version) + ': ' : ''}${escH(r.message)}</div>`).join('');
+}
+async function refreshInbox(opened) {
+  const code = store.get('tlm.tcode', '');
+  if (!repliesOn || !validCode(code)) { inbox = null; renderInbox(); return; }
+  const got = await fetchInbox(code); if (!got) return;
+  const seen = new Set((inbox?.replies || []).filter((r) => !r.fresh && r.read).map((r) => r.id));
+  got.replies.forEach((r) => { r.fresh = !r.read && !seen.has(r.id); });
+  inbox = got; renderInbox();
+  const fresh = inbox.replies.filter((r) => r.fresh);
+  if (fresh.length && !inboxToast && !opened) { inboxToast = true; toast(`✉ Svar fra Claude: ${fresh[0].message}`); logEv('svar', `${fresh.length} nytt`); }
+  if (fresh.length && opened) { markRead(code, fresh.map((r) => r.id)); fresh.forEach((r) => { r.read = true; }); $('qbtn').classList.remove('hasreply'); }
+}
+setTimeout(() => refreshInbox(false), 4000);
+
 // «Send til Claude» (v1.27): sender rapporten + teksten direkte til tabellen tlm_feedback (se feedback_send.js, docs/TILBAKEMELDING.md).
 let sending = false;
 async function sendToClaude(body) {
@@ -1705,7 +1812,7 @@ async function sendToClaude(body) {
   sending = true; toast('Sender …');
   const res = await sendFeedback(built.row);
   sending = false;
-  if (res.ok) { markSent(); logEv('sendt', `til Claude (${built.row.report.length} tegn)`); toast('Sendt! Takk, Claude ser den.'); return 'ok'; }
+  if (res.ok) { markSent(); logEv('sendt', `til Claude (${built.row.report.length} tegn)`); toast('Sendt! Takk, Claude ser den.'); refreshInbox(true); return 'ok'; }
   logEv('sendfeil', `${res.reason} ${res.status ?? ''}`);
   toast(REASON_TEXT[res.reason] || REASON_TEXT.feil); return res.reason;
 }
@@ -1716,7 +1823,7 @@ function buildReportInfo() {
   return {
     version: VERSION, level: levelLabel, when: new Date().toLocaleString('nb-NO'), device: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 90),
     screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
-    perf: perfLine,
+    perf: perfLine + ' · shadere ' + shw.line(),
     fps: perf.n ? `${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms` : 'fps ukjent',
     pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), state: player.state, target: t.final ? 'målet' : t.label, stats: { ...stats },
     changed: changedSettings(SETTINGS.filter((d) => d.group !== 'admin' || true).map((d) => ({ id: d.id, label: d.label, def: d.def, get: d.get }))),
@@ -1908,6 +2015,12 @@ function crumbEvent(ev) {
   toast(ev.n === ev.total ? `Alle smulene! ${ev.n}/${ev.total}  +${SCORE.crumb} poeng` : `Smule ${ev.n}/${ev.total}  +${SCORE.crumb} poeng`);
 }
 // R23: målskjermen viser hvilke delmål som er klare
+// R47: stjerner for byggene i nivået på målskjermen (bare steder som er klart)
+function buildStarsWinHTML() {
+  if (!buildBudget || !LEVEL.buildSites?.length) return '';
+  const best = getBuildStars(store, levelId), rows = LEVEL.buildSites.filter((s) => best[s.id]).map((s) => `<div style="font-size:14px;text-align:left">🔨 ${(s.label || s.id).replace(/[<>&]/g, '')}: <b style="color:#ffd23f">${starText(best[s.id].stars)}</b> <small>${T('build.cost', { n: best[s.id].cost })}</small></div>`).join('');
+  return rows ? `<div class="wpts" style="font-size:15px;margin-top:8px">${T('build.starsTitle')}</div><div style="display:inline-block;margin:4px 0">${rows}</div>` : '';
+}
 function goalsWinHTML() {
   if (!goalTotal(LEVEL) || !goalsOn) return '';
   const rows = LEVEL.goalList.map((g) => `<div style="font-size:13px;opacity:${g.done ? 1 : 0.55};text-align:left">${g.done ? '✓' : '○'} ${goalLabel(g, lang).replace(/[<>&]/g, '')}</div>`).join('');
@@ -1988,20 +2101,24 @@ function update(dt) {
   if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); lightFlag('sjekkpunkt'); saveProgress(); logEv('sjekkpunkt'); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
   if (player.y < LEVEL.deathY) { failAt('falt'); resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
   for (const ev of drainEvents(LEVEL)) {
+    if (ev.type === 'combo') { comboEvent(ev); continue; }
     logEv(ev.type, ev.id || ev.tool || ev.why || '');
     if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
     else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(lostReturnOn ? `${ev.id} forsvant – kommer tilbake om litt` : `${ev.id} forsvant`); if (lostReturnOn) lostQueue.push({ id: ev.id, t: 3 }); }
-    else if (ev.type === 'exhausted') { setMood('hurt', 0.6); buzz(30); cue('puster tungt'); }
+    else if (ev.type === 'exhausted') { setMood('hurt', 0.6); buzz(30); if (breathSound) cue('puster tungt'); }
     else if (ev.type === 'use') {
       audio?.pickup(); buzz(20); setMood('happy', 0.9);
       if (ev.tool === 'thread') { toast(T('toast.threaded', { tieTop: T('btn.tieTop') })); say('thread'); }
       else if (ev.tool === 'zipA') toast(T('toast.tiedTop', { tieEnd: T('btn.tieEnd') }));
       else if (ev.tool === 'zip') { toast(T('toast.zipMade', { grab: GREP })); say('zip'); }
+      else if (ev.tool === 'knotrope') { toast(T('toast.knotRope', { grab: GREP })); say('knot'); logEv('kombo', 'tau hengt ned'); }
       else say(ev.tool === 'gel' ? 'gel' : 'roll');
     }
     else if (ev.type === 'toolhint') toast(ev.tool === 'needle' ? T('toast.needSpool', { thread: T('btn.thread') }) : ev.tool === 'spool' ? T('toast.needNeedle', { thread: T('btn.thread') }) : ev.tool === 'zip' ? ({ 'zip-flat': T('toast.zipFlat'), 'zip-far': T('toast.zipFar'), 'zip-blocked': T('toast.zipBlocked') }[ev.why] || T('toast.zipStand', { tieTop: T('btn.tieTop') })) : ev.tool === 'gel' ? T('toast.needGel', { smear: T('btn.smear'), drop: T('btn.drop') }) : T('toast.needRoll', { unroll: T('btn.unroll'), drop: T('btn.drop') }));
     else if (ev.type === 'autojump') { buzz(15); if (!store.get('tlm.seen.autojump', false)) { store.set('tlm.seen.autojump', true); toast(TOUCH ? 'Hoppet av seg selv: stikken helt ut mot en kant = hopp over. Skyv forsiktig for å stoppe ved kanten.' : 'Hoppet av seg selv over gapet. Hold C for å gå forsiktig og stoppe ved kanten.'); } }
     else if (ev.type === 'edgestop') { buzz(10); if (!store.get('tlm.seen.edgestop', false)) { store.set('tlm.seen.edgestop', true); toast(TOUCH ? 'Stopper ved kanten. Skyv stikken helt ut for å hoppe over eller gå utfor.' : 'Stopper ved kanten. Slipp C for å gå utfor.'); } }
+    else if (ev.type === 'shimmy') { logEv('shimmy'); buzz(8); if (!store.get('tlm.seen.shimmy', false)) { store.set('tlm.seen.shimmy', true); toast(TOUCH ? `Du kan gå sidelengs i kanten: skyv stikken til siden. ${T('btn.jump')} hiver deg opp.` : 'Du kan gå sidelengs i kanten (A/D). Mellomrom hiver deg opp.'); } }
+    else if (ev.type === 'roll') { logEv('rulle', `v=${ev.v}`); audio?.roll(); buzz(20); cue('rulle'); setMood('happy', 0.8); say('roll'); if (!store.get('tlm.seen.roll', false)) { store.set('tlm.seen.roll', true); toast('Rullet! Fart og stikke i landingen gjør at du ikke blir bedøvd.'); } }
     else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
   }
   if (LEVEL.shortcuts?.length && mode === 'play') for (const ev of stepShortcutWatch(shortcutWatch, player)) {           // R29: genvei med verktøy
@@ -2046,7 +2163,7 @@ function update(dt) {
         rw = recordRun(store, { levelId, n, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL), t: clock, flew: stats.flew }); logEv('belønning', `beste ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}${rw.unlocked ? ', låste opp ' + rw.unlocked.id : ''}${rw.newBestTime ? ', ny beste tid' : ''}`); if (rw.unlocked) refreshAccessories(); }       // husk hvilke nivåer som er klart (beste poeng)
       d = finishData({ n, nextExists: !!nextLevel, clock, stats, crumbs: crumbCount(LEVEL), crumbTotal: crumbTotal(LEVEL), points: points(), prevBest, flew: stats.flew });
       $('winTitle').textContent = n ? (nextLevel ? T('win.level', { n }) : T('win.all')) : T('win.top');
-      $('winStats').innerHTML = winHTML(d, T) + goalsWinHTML() + (rw?.unlocked && rewardsOn ? `<div class="wpts" style="font-size:17px;line-height:1.3">🎁 ${rwT(lang, 'rw.new', { name: rwT(lang, 'acc.' + rw.unlocked.id) })}</div>` : '') + (rw?.newBestTime ? `<div class="wpts" style="font-size:15px"><small>${rwT(lang, 'rw.newbest')}</small></div>` : ''); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
+      $('winStats').innerHTML = winHTML(d, T) + goalsWinHTML() + buildStarsWinHTML() + (rw?.unlocked && rewardsOn ? `<div class="wpts" style="font-size:17px;line-height:1.3">🎁 ${rwT(lang, 'rw.new', { name: rwT(lang, 'acc.' + rw.unlocked.id) })}</div>` : '') + (rw?.newBestTime ? `<div class="wpts" style="font-size:15px"><small>${rwT(lang, 'rw.newbest')}</small></div>` : ''); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
       const nb = $('nextLevel'); nb.style.display = nextLevel || (n && storyOn) ? '' : 'none';
       if (nextLevel) { nb.textContent = `${T('win.next')} →`; nb.onclick = () => goLevel(nextLevel.id); }
       else if (n && storyOn) { nb.textContent = `${T('win.ending')} →`; nb.onclick = showEnding; }
@@ -2096,12 +2213,12 @@ function cueFrame(pre) {
   voiceFrame(pre);
   if (landWarn) {
     const ev = landingEvent(pre.vy, p.landImpact, ...landTh(), landMinV);
-    if (ev && !pre.onGround && p.onGround) {
+    if (ev && !pre.onGround && p.onGround && !(p.rollT > 0)) {   // R39: rullet landing meldes som «rulle»
       logEv('landing', `${ev.cls} ${ev.v}`); cue(ev.cue);
       if (ev.cls === 'soft' && ev.v > landMinV + 2) setMood('happy', 0.6);
     }
   } else if (!pre.onGround && p.onGround && pre.vy < -9) cue(p.landImpact >= P.hardLand ? 'hard landing' : 'landing');
-  if (p.landImpact >= P.hardLand && !pre.onGround && p.onGround) buzz(45);
+  if (p.landImpact >= P.hardLand && !pre.onGround && p.onGround && !(p.rollT > 0)) buzz(45);
   if ((pre.state !== 'hang' && p.state === 'hang') || (pre.state !== 'climb' && p.state === 'climb')) buzz(14);
   if (pre.state !== 'hang' && p.state === 'hang') cue('tak i kanten');
   if (!pre.carry && p.carry) cue('tok tingen');
@@ -2120,7 +2237,7 @@ function audioFrame(pre, dt) {
   const p = player, sp = Math.hypot(p.vx, p.vz), surf = surfaceOf(p.groundBox);
   if (pre.windup === 0 && p.windup > 0) audio.windup();                                       // tar sats
   if (pre.onGround && !p.onGround && p.vy > 5) audio.jump();                                  // avspark
-  if (!pre.onGround && p.onGround && pre.vy < -3) audio.land(surf, -pre.vy, landWarn ? landClass(p.landImpact, ...landTh()) : 'soft');   // landing (R28: egen lyd per klasse)
+  if (!pre.onGround && p.onGround && pre.vy < -3) audio.land(surf, -pre.vy, landWarn && !(p.rollT > 0) ? landClass(p.landImpact, ...landTh()) : 'soft');   // landing (R28: egen lyd per klasse)
   if (pre.state !== 'hang' && p.state === 'hang') audio.grab();
   if (pre.state !== 'climb' && p.state === 'climb') audio.grab();
   if (pre.state !== 'swing' && p.state === 'swing') audio.grab();
@@ -2144,13 +2261,16 @@ function insideAny(x, y, z, m) {
 
 const camAhead = { x: 0, z: 0 };
 const dust = gfxLow ? null : look.makeDust(); if (dust) scene.add(dust.points);
+let floodMode = store.get('tlm.flood', 'av'), floodMult = store.get('tlm.floodrate', 1);   // R42: stigende vann i nivå 4 (variant.js: floodCfg)
 let variantMoodOn = store.get('tlm.varmood', true), variantTwistOn = store.get('tlm.vartwist', true), lampPower = store.get('tlm.lamp', 1);   // R12
 const variant = makeVariant({ scene, LEVEL, renderer, sun, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])),
-  opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, aim: () => cam.pitch, P, say: (k) => toast(T(k)), logEv } });
+  opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, aim: () => cam.pitch, P, say: (k) => toast(T(k, { jump: T('btn.jump'), grab: T('btn.grab') })), logEv,
+    flood: () => floodMode, floodMult: () => floodMult,
+    onDrown: () => { failAt('druknet'); audio?.splash?.('pit'); buzz(60); say('knockout'); resetPlayer(player, ...save.pos); stats.respawns++; variant.restartFlood(); toast(T('flood.drown', { jump: T('btn.jump'), grab: T('btn.grab') }) + `  −${SCORE.respawn} poeng`); } } });
 if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
 const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
-if (fdet) logEv('gulvdetaljer', `${fdet.count} stk`);
+if (fdet) logEv('gulvdetaljer', `${fdet.count} stk, ${fdet.beads.length} perler`);
 const leke = gfxLow ? null : makeLekerom({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: legoDens });   // R31: legoknotter (2 tegnekall, ikke slått sammen)
 if (leke?.count) logEv('lekerom', `${leke.count} knotter, ${leke.calls} tegnekall, ${leke.tris} trekanter`);
 const soft = gfxLow ? null : makeSoftLight({ THREE, scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun, sunDir: SUN, renderer });   // R17: myke skygger og lysbaking (softlight.js)
@@ -2173,7 +2293,7 @@ const perfMerge = { before: 0, after: 0 };
 let perfFrames = 0, perfPending = true, perfLine = '';
 function applyLowProfile(on) {                       // slår av skygge-kart, støv, korn, lysstråler og ekstra lys; kommer tilbake når den slås av
   if (on && !texLow) { const r = shrinkSceneTextures(scene, (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }); logEv('teksturer', `krympet ${r.n} teksturer midt i spillet (−${r.savedMB.toFixed(1)} MB)`); }
-  lowOn = on; sun.castShadow = !on; grade.setLow(on); look.setDetail(!on); glow.intensity = on ? 0 : 30;        // lysets antall endres ikke (ville tvunget alle shadere til å kompileres på nytt midt i spillet)
+  lowOn = on; setSunShadowLow(sun, on, SHADOW_NORMAL); grade.setLow(on); look.setDetail(!on); glow.intensity = on ? 0 : 30;        // lysets antall, skygge-på/av og skyggetype endres ikke (ville tvunget alle shadere til å kompileres på nytt midt i spillet, R35)
   perfPending = true; perfFrames = 0; logEv('lav profil', on ? 'på (ingen skygge-kart, støv, korn, lysstråler eller ekstra lys)' : 'av');
 }
 if (lowMode === 'on') { lowP.decide(null, 9, 1, 'on'); applyLowProfile(true); }
@@ -2211,13 +2331,16 @@ function render(now, dt) {
     const pz = B.prize; bossMesh.prize.visible = on && !!pz && !pz.taken; if (bossMesh.prize.visible) { bossMesh.prize.position.set(pz.x, pz.y + 0.35 + Math.sin(clock * 3) * 0.12, pz.z); bossMesh.prize.rotation.y = clock * 1.8; }
     bossBar.update(on ? B : null, mode === 'play' && !won && (B.mode !== 'patrol' || Math.hypot(player.x - B.x, player.z - B.z) < 22));
   }
+  for (const v of pressViews) { const h = v.b.max[1] - v.b.min[1]; v.mesh.scale.y = h / v.h0; v.mesh.position.y = v.b.min[1] + h / 2; }   // R41
   for (const { b, mesh, size } of bodyMeshes) {
     mesh.visible = b.alive;
     if (b.kind === 'needle' && mesh.userData.thread && mesh.userData.on !== !!b.threaded) { mesh.userData.on = !!b.threaded; mesh.userData.thread(!!b.threaded); }
     const bx = b.max[0] - b.min[0], by = b.max[1] - b.min[1], bz = b.max[2] - b.min[2];
     mesh.position.set(b.min[0] + bx / 2, b.min[1] + by / 2, b.min[2] + bz / 2);
     animateToy(mesh, b.kind, toyLife.toys.get(b.id), clock);          // R18
-    if (b.pole) mesh.rotation.y = b.carried ? Math.atan2(-player.fz, player.fx) : (bz > bx ? Math.PI / 2 : 0);   // staven peker fremover når du bærer den
+    if (b.pole) { mesh.rotation.y = b.carried ? Math.atan2(-player.fz, player.fx) : (bz > bx ? Math.PI / 2 : 0); mesh.rotation.z = b.carried && vaultNow ? vaultNow.poleTilt : 0; }   // staven peker fremover når du bærer den; R41: heller under stavhopp
+    if (Math.abs(by / size[1] - 1) > 1e-3 || mesh.userData.sy) { mesh.scale.y = by / size[1]; mesh.userData.sy = 1; }   // R41: våt svamp har svulmet
+    if (!!b.wet !== !!mesh.userData.wet) { mesh.userData.wet = !!b.wet; const k = b.wet ? 0.62 : 1 / 0.62; mesh.traverse((o) => { if (o.isMesh && o.material?.color) o.material.color.multiplyScalar(k); }); }   // R41: våt = mørkere
   }
   for (let i = shards.length - 1; i >= 0; i--) {
     const s = shards[i]; s.t -= dt; s.v.y -= 22 * dt;
@@ -2231,7 +2354,7 @@ function render(now, dt) {
     const st = taState(), B = TOUCH ? T('btn.' + st.key) : 'F', zn = !player.carry && zipNear(player, LEVEL);
     const throwTxt = TOUCH && aimThrowOn ? T('hint.dragThrow') : T('hint.holdThrow');
     const SENT = { 'need-gel': 'hint.needGel', 'need-roll': 'hint.needRoll', 'need-thread': 'hint.needThread', 'need-needle': 'hint.needNeedle', 'zip-b': 'hint.tieEnd' };   // hele setninger (resten starter med knappen)
-    const ACT = { gel: 'hint.smear', roll: 'hint.unroll', thread: 'hint.thread', 'zip-a': 'hint.tieTop' };
+    const ACT = { wet: 'hint.soak', knot: 'hint.knot', press: 'hint.press', gel: 'hint.smear', roll: player.carry?.knotted ? 'hint.hangrope' : 'hint.unroll', thread: 'hint.thread', 'zip-a': 'hint.tieTop' };
     const pk = puzzlesOn && player.carry && carryingKeyNear(LEVEL, player), pt = puzzlesOn && !player.carry && puzzleTarget(LEVEL, player);
     hint.textContent = pk && !SENT[st.th] && player.charge < P.throwMin ? T('puz.keyPlate', { place: B })
       : pt && pt.key === 'key' && t && t.id === pt.puzzle.key ? T('puz.takeKey', { take: B })
@@ -2331,7 +2454,7 @@ function render(now, dt) {
   if (dust) { dust.points.visible = dustOn && !lowOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
   variant.update(now / 1000, dt, player, mode);
   if (soft) soft.update(softOn, lowOn, gfxLow);
-  if (fdet) fdet.update(floorDetailOn && !lowOn && mode !== 'plan');
+  if (fdet) { fdet.update(floorDetailOn && !lowOn && mode !== 'plan'); const sol = floorDetailOn && !lowOn && beadSolidOn; if (sol !== fdet.solid) logEv('perler', sol ? `${fdet.beads.length} solide` : 'ikke solide'); fdet.setSolid(sol); }   // R37
   if (leke) leke.update(legoOn && !lowOn && mode !== 'plan');
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(dt, mode === 'play' && !won && !menuOpen && !ov.active); updateFades(dt); updateOffscreen();
@@ -2341,7 +2464,7 @@ function render(now, dt) {
   grade.follow(player, camera);
   renderer.render(scene, camera);
   if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const w = overBudget(st).concat(memOver(st, texLow || lowOn)); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
-  goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, show: mode === 'play' && !won && !menuOpen }, now);
+  goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
   $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
@@ -2387,6 +2510,14 @@ function updateFades(dt) {
     if (e.t === 0 && was > 0) setFadeMats(e, false);
   }
 }
+// R41: kombinasjoner: lyd, lydtekst, hint-tekst og logg (reglene ligger i combos.js)
+function comboEvent(ev) {
+  logEv('kombo', `${ev.rule}: ${ev.id}${ev.other ? ' + ' + ev.other : ''}`);
+  audio?.pickup(); buzz(25); setMood('happy', 1.2);
+  if (ev.does === 'wet') { audio?.splash('pit'); cue('plask, svampen suger'); toast(T('toast.soaked', { press: T('btn.press') })); say('soak'); }
+  else if (ev.does === 'knot') { audio?.drop('fabric'); cue('knyter'); toast(T('toast.knotted', { hang: T('btn.hangrope') })); say('knot'); }
+  else if (ev.does === 'press') { audio?.drop('paper'); cue('papir presses sammen'); toast(T('toast.pressed', { jump: T('btn.jump') })); say('press'); }
+}
 const offEl = $('offscreen');
 function updateOffscreen() {
   hero.head.getWorldPosition(_v3); _v3.project(camera);
@@ -2401,12 +2532,12 @@ function updateOffscreen() {
 }
 
 // ---------- TA-knappen: navn, farge og «klar» etter hva du holder og hva som er mulig der du står ----------
-const TA_MAP = { gel: ['smear', 1], 'need-gel': ['smear', 0], roll: ['unroll', 1], 'need-roll': ['unroll', 0], thread: ['thread', 1], 'need-thread': ['thread', 0], 'need-needle': ['thread', 0], 'zip-a': ['tieTop', 1], 'zip-b': ['tieEnd', 1] };
+const TA_MAP = { wet: ['soak', 1], knot: ['knot', 1], press: ['press', 1], gel: ['smear', 1], 'need-gel': ['smear', 0], roll: ['unroll', 1], 'need-roll': ['unroll', 0], thread: ['thread', 1], 'need-thread': ['thread', 0], 'need-needle': ['thread', 0], 'zip-a': ['tieTop', 1], 'zip-b': ['tieEnd', 1] };
 function taState() {
   const p = player;
   if (p.carry) {
     if (p.charge >= P.throwMin) return { key: 'throw', tone: 'throw', ready: true, th: null };
-    const th = toolHint(p, LEVEL), m = TA_MAP[th];
+    const th = toolHint(p, LEVEL), m = p.carry.knotted && (th === 'roll' || th === 'need-roll') ? ['hangrope', th === 'roll' ? 1 : 0] : TA_MAP[th];   // R41: knyttet håndkle-tau heter HENG TAU
     if (m) return { key: m[0], tone: 'use', ready: !!m[1], th };
     const sp = findPlaceSpot(p, LEVEL);
     return { key: sp && sp.c.type !== 'floor' && sp.min[1] > p.y + 0.2 ? 'place' : 'drop', tone: 'drop', ready: true, th, sp };
@@ -2492,6 +2623,7 @@ applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
 if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true); setTimeout(() => toast('PC: klikk i bildet for å styre blikket med musa (Esc slipper). WASD går, mellomrom hopper, venstre museknapp eller F tar, høyre eller E griper.'), 2500); }
 // v0.97: forvarming. three kompilerer shadere og laster opp teksturer først når noe kommer i syne, som gir et plutselig «stopp» (100-300 ms) første gang du ser nytt område eller en effekt. Gjør alt på forhånd, mens introskjermen vises
+const shw = createShaderWatch(() => programCount(renderer), () => programKeys(renderer));   // R35: teller shaderprogram etter forvarmingen
 function warmUp() {
   const t0 = performance.now(); const hidden = [];
   try {
@@ -2499,12 +2631,15 @@ function warmUp() {
     const seen = new Set();
     scene.traverse((o) => { for (const m of [].concat(o.material || [])) for (const k of ['map', 'emissiveMap', 'roughnessMap', 'normalMap', 'bumpMap', 'alphaMap', 'aoMap']) { const t = m[k]; if (t && !seen.has(t)) { seen.add(t); try { renderer.initTexture(t); } catch { /* ikke støttet */ } } } });
     renderer.compile(scene, camera);
+    if (shaderWarm) { warmRender(renderer, scene, camera); const nf = warmFades(fadeEntries, (e) => { setFadeMats(e, true); for (const c of e.clone.values()) for (const mt of [].concat(c)) { mt.opacity = fadeOp; mt.depthWrite = false; } }, (e) => setFadeMats(e, false), () => warmRender(renderer, scene, camera)); logEv('forvarming', `utoning: ${nf} ting`); }   // R35b: også de gjennomsiktige utoningskopiene
+    // R35: compile() tar ikke med variantene i gjennomsiktighetspasset (glass, målflasken): én full tegning gjør det
   } catch (e) { logEv('forvarming feilet', String(e.message || e)); }
   for (const o of hidden) o.visible = false;
-  logEv('forvarming', `${Math.round(performance.now() - t0)} ms (shadere og teksturer klargjort)`);
+  shw.mark();
+  logEv('forvarming', `${Math.round(performance.now() - t0)} ms (shadere og teksturer klargjort) · ${shw.base} shadere`);
 }
 requestAnimationFrame(() => setTimeout(warmUp, 50));
-let lastHitch = -99;
+let lastHitch = -99, shwN = 0;
 let last = performance.now();
 function frame(now) {
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
@@ -2512,6 +2647,7 @@ function frame(now) {
     lastHitch = clock; const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'lav fps').slice(-3).map((e) => e.type).join(', ');
     logEv('hakk', `${Math.round(raw)} ms${near ? ' etter: ' + near : ''} · ${renderer.info.programs?.length ?? '?'} shadere, ${renderer.info.render.calls} tegnekall`);
   }
+  if ((++shwN & 15) === 0) { const ev = shw.tick(); if (ev) { const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'shadere').slice(-3).map((e) => e.type).join(', '); logEv('shadere', `${ev.from} til ${ev.to} (start ${ev.base})${ev.keys && ev.keys.length ? ' nye: ' + ev.keys.join(' ') : ''}${near ? ' etter: ' + near : ''}`); } }   // R35: hver ny shader etter forvarmingen logges med det som skjedde like før
   if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps${renderer.getPixelRatio() < basePr - 0.01 ? ' · ' + renderer.getPixelRatio().toFixed(2) + '×' : ''}`; perf.win = perf.winN = 0; } }
   { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
     if (mode === 'play' && !menuOpen) autoQC.feed(raw);
@@ -2529,4 +2665,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

@@ -52,7 +52,7 @@ for (const o of scene.objects) {
     decor.push({ shape: 'box', id: o.id, kind: o.kind, pos: lo.map((v, i) => round((v + hi[i]) / 2)), size: lo.map((v, i) => round(Math.max(0.05, hi[i] - v))), color: hex(o.color), material: o.material });
     continue;
   }
-  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), ...(o.face ? { face: o.face } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.shortcut ? { shortcut: true } : {}), ...(o.grip ? { grip: true } : {}), ...(o.onto ? { onto: o.onto } : {}), ...(o.grip_drain !== undefined ? { gripDrain: o.grip_drain } : {}) }));
+  boxes.push(mk(o.material, lo, hi, { id: o.id, kind: o.kind, ...(o.group ? { group: o.group } : {}), ...(o.face ? { face: o.face } : {}), color: hex(o.color), material: o.material, cp: !!o.cp, soft: !!o.soft, ...(o.compress ? { compress: true } : {}), ...(o.shortcut ? { shortcut: true } : {}), ...(o.alt ? { alt: true } : {}), ...(o.grip ? { grip: true } : {}), ...(o.onto ? { onto: o.onto } : {}), ...(o.grip_drain !== undefined ? { gripDrain: o.grip_drain } : {}) }));
 }
 const hazards = (scene.hazards || []).map((h) => {
   const [a, b, c, d, e, f] = h.box;
@@ -75,6 +75,7 @@ const fromBox = (b) => ({ id: b.id, x0: b.min[0], x1: b.max[0], z0: b.min[2], z1
 nodes.push({ id: 'gulv', x0, x1, z0, z1, top: 0 });
 for (const b of boxes) {
   if (b.type === 'floor' || b.type === 'wall') continue;
+  if (b.alt) continue;                                       // R42: trinn i den harde veien (uten klatring) er ikke en del av den vanlige ruta
   if (b.shortcut) continue;                                  // R29: trinn i en verktøy-genvei er ikke en del av den vanlige ruta (de krever verktøyet)
   if (b.max[1] < 0.6) continue;                              // matter o.l. regnes som gulv
   if (b.max[0] - b.min[0] < MIN_NODE || b.max[2] - b.min[2] < MIN_NODE) continue;
@@ -299,6 +300,7 @@ const ants = (scene.ants || []).map((a) => {
 const variant = scene.variant ? (() => {
   const v = JSON.parse(JSON.stringify(scene.variant)), cm = (n) => +(n / U).toFixed(3);
   if (v.twist?.max !== undefined) v.twist.max = cm(v.twist.max);
+  if (v.twist?.flood?.max !== undefined) v.twist.flood.max = cm(v.twist.flood.max);   // R42: stigende vann, høyde i cm → enheter
   v.props = (v.props || []).map((p) => {
     const q = { ...p };
     if (q.x !== undefined) q.x = ux(q.x);
@@ -352,9 +354,11 @@ const build = scene.build ? {
     ...(s.anchors ? { anchors: s.anchors.map((a) => ({ u: round(a[0] / U), v: round(a[1] / U) })) } : {}),   // festepunkter [u, v] cm fra midten og opp fra flata
     ...(s.deck ? { deck: s.deck.map((d) => ({ u0: round(d[0] / U), u1: round(d[1] / U), ...(d[2] !== undefined ? { top: round(d[2] / U) } : {}) })) } : {}),   // underlag (hyller/kanter) [u0, u1, top?] cm fra midten
     ...(s.start ? { start: { u: round(s.start[0] / U), v: round(s.start[1] / U) } } : {}), ...(s.goal ? { goal: { u: round(s.goal[0] / U), v: round(s.goal[1] / U) } } : {}),   // R26: figurens start og mål i prøven [u, v] cm
+    ...(Array.isArray(s.loads) && s.loads.length ? { loads: s.loads.filter((l) => typeof l === 'string') } : {}),   // R48: laster brettet krever (build_loads.js: ball, car, robot, figure)
     ...(s.d ? { d: round(s.d / U) } : {}),                                  // R26: dybden på bygget i verden (cm)
     ...(s.drop ? { drop: round(s.drop / U) } : {}),                         // R30: hvor langt ned støtta under en vippe når (cm), ned til rommets gulv
     // R26: referansebygg (kjent god bygging) og ruta gjennom det: ref = { placed: [{id,type,u,v,rot}] (enheter, som lagret), links: [], surfaces: [{id,u0,u1,top}] (enheter), route: [id i ruta eller i surfaces] }
+    ...(s.stars ? { stars: s.stars } : {}),                                  // R47: stjerne-terskler { three: { cost, parts }, two: { cost, parts } } (build_budget.js)
     ...(s.ref ? { ref: s.ref } : {}) })),
   parts: (scene.build.parts || []).map((q) => {
     const on = q.on && q.on !== 'gulv' ? scene.objects.find((o) => o.id === q.on) : null;
@@ -367,6 +371,14 @@ const build = scene.build ? {
 const shortcuts = (scene.shortcuts || []).map((c) => {
   for (const id of [c.item, ...c.steps, c.join]) if (!scene.objects.some((o) => o.id === id)) throw new Error(`genvei ${c.id}: fant ikke ${id}`);
   return { id: c.id, tool: c.tool, item: c.item, label: c.label, ...(c.en ? { en: c.en } : {}), stand: [ux(c.stand[0]), uz(c.stand[1])], face: c.face, steps: c.steps, join: c.join };
+});
+
+// harde veier uten klatring (R42): { id, label, en, path: [id på trinn, …, id på siste flate] } i cm-scenen; gulvet er alltid første rutepunkt.
+// Brettet får `alts: [{ id, label, en, route: [flater] }]`, og walk_route/test_badet beviser at hver rute går uten en eneste grep-flate.
+const alts = (scene.alts || []).map((a) => {
+  const route = [{ id: 'gulv', x0, x1, z0, z1, top: 0 }];
+  for (const id of a.path) { const b = boxes.find((q) => q.id === id); if (!b) throw new Error(`hard vei ${a.id}: fant ikke ${id}`); route.push(fromBox(b)); }
+  return { id: a.id, label: a.label, ...(a.en ? { en: a.en } : {}), route };
 });
 
 const finalSeen = reachable();
@@ -385,6 +397,7 @@ const level = {
   ...(puzzles.length ? { puzzles } : {}),
   ...(goals.length ? { goals } : {}),
   ...(shortcuts.length ? { shortcuts } : {}),
+  ...(alts.length ? { alts } : {}),
   ropes: [],
   route,
   start, goal,

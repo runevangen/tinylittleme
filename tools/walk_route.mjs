@@ -7,7 +7,7 @@ import { P, newPlayer, step, applyPreset, initBodies, inHazard } from '../physic
 import { shortcutsOf, shortcutRoute, gateRoute, toolBoxes } from '../shortcut.js';
 
 export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [], helpers = true, only = null, wallJump = true, trace = null } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
-  applyPreset(preset); Object.assign(P, { edgeGuard: helpers, autoJump: helpers, airSteady: helpers, magnet: helpers, holdGrab: helpers }); if (only) for (const k of only) P[k] = true;   // R32: helpers=false = streng modus (ingen sikte-hjelp)
+  applyPreset(preset); Object.assign(P, { edgeGuard: helpers, autoJump: helpers, airSteady: helpers, magnet: helpers, holdGrab: helpers, shimmy: helpers, rollOn: helpers, carefulOn: helpers, ropeHeavy: helpers }); if (only) for (const k of only) P[k] = true;   // R32: helpers=false = streng modus (ingen sikte-hjelp)
   if (!wallJump) Object.assign(P, { wallKick: 0, wallUp: 0 });                                                                      // R32: wallJump=false = ingen veggsprang
   const L = level ? JSON.parse(JSON.stringify(level)) : JSON.parse(fs.readFileSync(levelPath, 'utf8')); initBodies(L); for (const b of extraBoxes) L.boxes.push(JSON.parse(JSON.stringify(b)));
   const R = route || L.route || []; if (R.length < 2) return { ok: false, why: 'brettet har ingen rute' };
@@ -117,6 +117,11 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop()
   for (const sc of shortcutsOf(JSON.parse(fs.readFileSync(file, 'utf8')))) {
     const w = walkShortcut(file, sc);
     console.log(w.ok ? `GENVEI ${sc.id}: uten verktøy kommer du ikke opp på første trinn; med ${sc.tool} går ruta på ${w.withTool.secs} s; den vanlige veien tar ${w.plain.secs} s` : `GENVEI ${sc.id} FEILER: ${w.why}`);
+    if (!w.ok) bad = true;
+  }
+  for (const a of JSON.parse(fs.readFileSync(file, 'utf8')).alts || []) {            // R42: harde veier uten klatring
+    const w = walkRoute(file, { route: a.route });
+    console.log(w.ok ? `HARD VEI ${a.id}: går uten klatring på ${w.secs} s` : `HARD VEI ${a.id} FEILER: ${w.why}`);
     if (!w.ok) bad = true;
   }
   process.exit(bad ? 2 : 0);

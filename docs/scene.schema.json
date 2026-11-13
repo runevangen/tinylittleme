@@ -298,6 +298,10 @@
         "soft": {
           "type": "boolean"
         },
+        "compress": {
+          "type": "boolean",
+          "description": "R41: fast papirhaug som presses sammen til halv høyde når du trykker TA med en tung ting (f.eks. en våt svamp) i hånden ved den."
+        },
         "grip": {
           "type": "boolean"
         },

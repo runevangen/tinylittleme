@@ -53,11 +53,21 @@ Første kombinasjon i spillet. Prøverommet har en **nål** og en **trådsnelle*
 4. Gå tilbake til øvre ende og trykk GREP: du henger deg i tråden og sklir ned (fart 1,5 → 9 enheter/s). Hopp = slipp underveis. Ved enden slippes du forsiktig (ingen hard landing).
 Kun én taubane per nål; ny tråd erstatter den gamle. Trykk TA på samme sted som første feste for å angre og legge fra deg nålen.
 
+## Kombinasjonsmotoren (R41, `combos.js`)
+Tabell over **egenskaper** (hva en ting er: `absorbent`, `water`, `knottable`, `heavy`, `compressible` …) → **regler** (`RULES`: bærer egenskap a, står ved egenskap b) → **resultat** (`applyCombo`). Alt testes i `test_combo.mjs`. Du bærer en ting (TA) og trykker TA kort ved en annen; knappen skifter navn (SUG, KNYT, PRESS, HENG TAU) og hint-linjen sier hva som skjer. Hver kombinasjon har lyd, lydtekst, replikk og `logEv('kombo', …)`. Ingen er nødvendig for å fullføre et brett: de er alternative veier (ruta går ikke via dem).
+| Kombinasjon | Hvordan | Resultat |
+|---|---|---|
+| **svamp + vann** (`sponge` + `water_bowl`) | bær svampen til vannskåla, trykk SUG | svampen blir våt: svulmer (×1,5), tung (du går saktere med den), og myk: tar bare 15 % av landingsfarten (tørr svamp 35 %). Mørkere farge |
+| **håndkle + håndkle** (`towel` løse) | bær det ene til det andre, trykk KNYT. Gå til en kant og trykk HENG TAU | ett langt tau (1,8 × dopapirbånd, helt ned til gulvet fra tårnet) som ikke revner. Brukes til å klatre ned fra tårnet uten hardt fall |
+| **tung ting + papirhaug** (`paper_pile` med `compress`) | bær noe tungt (våt svamp) til haugen, trykk PRESS | haugen blir halvparten så høy (28 → 14 cm): et trinn du hopper opp på, videre til hylla. Alternativ til ørepinnen |
+Rekkefølgen svamp → skål → haug er en liten gåte i prøverommet. Nullstilling (nullstill ting) gjør alt tilbake. Nye kombinasjoner legges til ved å føye en egenskap i `KIND_PROPS`, en linje i `RULES` og et resultat i `applyCombo`.
+
+**Stavhopp-animasjon** (`vault_anim.js`): fysikken er uendret (`p.vaultV0` husker avsparkfarten); `vaultPose` gir fire faser etter loddrett fart (plant, sving, topp, slipp) for armer, bein og overkropp, og staven heller seg med. Av/på i ⚙ → Spill.
+
 ## Det som ikke er med ennå
 - Verktøy er ikke merket i bildene: prøverommet og nivå 4–6 (hårgelé-trapper, se NIVAER.md) har dem foreløpig.
 - Grep-flater i badet fra bildene: hvilke gjenstander som er klatrbare er ikke bestemt (se backlogg). Flatetypen `slick` (glatt, kan ikke klatres) finnes ikke som grep-type ennå.
-- Flere kombinasjoner (svamp + vann, håndkle + håndkle …). Taubane: «skyte opp» tråden mot et høyt punkt, tråd som kan klatres, og en lyd/animasjon for selve sklien. Boten bruker den ikke.
-- Stavhopp-animasjon (kroppen bruker vanlig hoppose).
-- Dopapirhaugen presses ikke sammen når du lander i den.
+- Flere kombinasjoner utover de fire under (se «Kombinasjonsmotoren»). Taubane: «skyte opp» tråden mot et høyt punkt, tråd som kan klatres, og en lyd/animasjon for selve sklien. Boten bruker den ikke.
+- Dopapirhaugen (den myke landingshaugen) presses ikke sammen når du lander i den; bare haugen med `compress` presses, av en tung ting du bærer.
 - Boten bruker ikke stav eller kast, og validerer ikke rutene.
 - Fallregelen gjelder bare «Prince» (Klassisk og Spenning er uendret).

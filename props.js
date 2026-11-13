@@ -471,6 +471,14 @@ const SINGLE = {
     pad.position.y = -sy / 2 + sy * 0.7; g.add(pad);
     return g;
   },
+  water_bowl(sx, sy, sz, o) {                                        // R41: vannskål (lav, rund, med blå vannflate); svampen blir våt her
+    const g = new THREE.Group(), rim = new THREE.MeshStandardMaterial({ color: o.color ?? 0x9ccbe6, roughness: 0.25, metalness: 0.05 });
+    const bowl = mesh(new THREE.CylinderGeometry(0.5, 0.38, sy, 28, 1, true), rim); bowl.scale.set(sx, 1, sz); bowl.material.side = THREE.DoubleSide; g.add(bowl);
+    const base = mesh(new THREE.CylinderGeometry(0.38, 0.38, sy * 0.12, 28), rim); base.scale.set(sx, 1, sz); base.position.y = -sy / 2 + sy * 0.06; g.add(base);
+    const water = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.47, sy * 0.05, 28), new THREE.MeshStandardMaterial({ color: 0x3fa8e0, roughness: 0.05, metalness: 0.1, emissive: 0x0a2a44, emissiveIntensity: 0.4 }));
+    water.scale.set(sx, 1, sz); water.position.y = sy * 0.3; g.add(water);
+    return g;
+  },
   paper_pile(sx, sy, sz) {                                          // haug av utrullet dopapir
     const g = new THREE.Group(), r = rng(31), mat = new THREE.MeshStandardMaterial({ color: 0xfbfaf6, roughness: 0.95, map: terryTex(), bumpMap: terryTex(), bumpScale: 0.3 });
     const n = 14;

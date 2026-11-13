@@ -70,7 +70,7 @@ export const SOUND_LIST = [
 ];
 
 export function createAudio(ctx, opts = {}) {
-  let volume = opts.volume ?? 0.7, muted = false;
+  let volume = opts.volume ?? 0.7, muted = false, breathOn = opts.breath === true;   // R38: pustelyd er av som standard
   const master = ctx.createGain(); master.gain.value = volume;
   const comp = ctx.createDynamicsCompressor();
   comp.threshold.value = -14; comp.knee.value = 12; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.2;
@@ -138,7 +138,8 @@ export function createAudio(ctx, opts = {}) {
   }
 
   // ---- pust --------------------------------------------------------------
-  function breath(kind, intensity, dur, delay = 0) {
+  function breath(kind, intensity, dur, delay = 0, force = false) {
+    if (!breathOn && !force) return;                                  // R38: pust av = ingen pustelyd (andre lyder uendret)
     const t = now() + delay, k = clamp(intensity, 0, 1);
     const peak = ((kind === 'in' ? 0.03 : 0.04) + 0.2 * Math.pow(k, 1.3)) * 0.8;   // roligere enn før
     const att = kind === 'in' ? dur * 0.6 : dur * 0.18;
@@ -155,7 +156,7 @@ export function createAudio(ctx, opts = {}) {
   let effort = 0, bphase = 0;
   const bump = (x) => { effort = clamp(effort + x, 0, 1); };
   function tick(dt, st = {}) {
-    if (!st.active) return;
+    if (!st.active || !breathOn) return;
     use('breath', () => tickBreath(dt, st));
   }
   function tickBreath(dt, st) {
@@ -184,6 +185,7 @@ export function createAudio(ctx, opts = {}) {
     burst({ type: 'lowpass', freq: 400, gain: 0.3 * i, decay: 0.15 });
     if (i > 0.3) { breath('out', 0.5 + 0.5 * i, 0.3, 0.05); bump(0.2 * i); }
   });
+  const roll = () => use('land', () => { burst({ type: 'bandpass', freq: 500, freq2: 1400, gain: 0.16, attack: 0.05, decay: 0.3 }); tone({ freq: 70, freq2: 45, gain: 0.3, decay: 0.12 }); breath('out', 0.7, 0.3, 0.05); tone({ freq: 60, freq2: 40, gain: 0.22, decay: 0.1, delay: 0.32 }); bump(0.15); });   // R39: rulle ved landing: raslende skuring + to dunk
   const grab = () => use('grab', () => { breath('in', 0.6, 0.12); burst({ freq: 1800, q: 0.8, gain: 0.14, decay: 0.05 }); tone({ freq: 140, gain: 0.2, decay: 0.07 }); bump(0.08); });
   const mantle = () => use('mantle', () => { breath('out', 0.9, 0.7); burst({ type: 'lowpass', freq: 900, gain: 0.14, attack: 0.1, decay: 0.55 }); tone({ freq: 80, freq2: 55, gain: 0.28, decay: 0.12, delay: 0.7 }); bump(0.3); });
   const reach = () => use('reach', () => burst({ type: 'highpass', freq: 1200, freq2: 3500, gain: 0.1, attack: 0.03, decay: 0.12 }));
@@ -268,7 +270,7 @@ export function createAudio(ctx, opts = {}) {
       case 'land': land('wood', 16); break;
       case 'windup': windup(); break;
       case 'jump': jump(); break;
-      case 'breath': use('breath', () => { breath('in', 0.7, 0.5); breath('out', 0.7, 0.6, 0.55); }); break;
+      case 'breath': use('breath', () => { breath('in', 0.7, 0.5, 0, true); breath('out', 0.7, 0.6, 0.55, true); }); break;
       case 'grab': grab(); break;
       case 'mantle': mantle(); break;
       case 'reach': reach(); break;
@@ -312,10 +314,11 @@ export function createAudio(ctx, opts = {}) {
   // ---- styring -------------------------------------------------------------
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
-    ctx, out: bus, step, land, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
+    ctx, out: bus, step, land, roll, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
     pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, bossroar, bossbump, fanfare, crumb, bcreak, bbreak, bsplash, bhop, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
+    setBreath: (on) => { breathOn = !!on; }, isBreath: () => breathOn,
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },
     setMuted: (m) => { muted = !!m; apply(); },
     setReverb: (v) => { wet.gain.value = v; },

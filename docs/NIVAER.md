@@ -4,7 +4,7 @@ Seks nivåer med stigende vanskelighetsgrad: tre rom (nivå 1–3), og de samme 
 
 | | Nivå 1: Badet | Nivå 2: Barnerommet | Nivå 3: Kjøkkenet |
 |---|---|---|---|
-| Fil | `scenes/bad.scene.json` | `scenes/barnerom.scene.json` | `scenes/kjokken.scene.json` |
+| Fil | `scenes/bad.scene.json` (R42: motgiften på medisinskapet, 190 cm; vei via kurv, badekåpe, knaggrekke og håndkle; hard vei med esker) | `scenes/barnerom.scene.json` | `scenes/kjokken.scene.json` |
 | Kilde | tolket fra fire bilder | oppdiktet for spillet | oppdiktet for spillet |
 | Steg i ruta | 5 | 12 | 16 |
 | Klatringer | 1 (vaskekurv, 60 cm) | 1 (gardin, 34 cm) | 2 (kjøkkenhåndkle 34 cm, hvitløksflette 48 cm: tar nesten alle kreftene) |
@@ -147,3 +147,12 @@ Hvert variantrom har en genvei med verktøy (`shortcuts` i brettet, satt opp med
 - **Vis ruta:** `--verbose` skriver ett trinn per linje (flate, høyde, klatre/hopp/gå). `--svg rute.svg` tegner et sideriss av rommet med botens spor (rød linje = gikk, oransje = feilet der den stoppet) og kan åpnes i nettleser.
 - **Dekning:** Kontroll og alle seks nivåene (og byggebrettene) består i streng modus. Kontroll fikk en ekte rute (trinn → plattformer) i stedet for gulv → siste plattform. `test_bot.mjs` krever at hvert brett med rute er med i lista, så et nytt brett må legges inn der.
 - **Legge til et nytt brett:** lag ruta som vanlig, kjør `node tools/bot.mjs levels/<navn>.level.json`, og legg id-en i `ids` i `test_bot.mjs`. `solve.mjs` (tilfeldig søk) er uendret og gjelder fortsatt prototyper uten rute; `--nowalljump` finnes der.
+
+## Leker som byggematerialer (R46)
+`build_toys.js` (ren logikk, testet i `test_buildtoys.mjs`) har fem deler: **blyant** (stiv, lett, sprø), **linjal** (lang, bøyer seg mye), **legoklosse** (knotter som klikker mot andre legoklosser), **bok** (tung blokk) og **svamp** (myk, dempende, brekker ikke). Geometrien slås inn i `PART_TYPES`, materialene i `MATERIAL`; tegningen (knotter, spiss, streker, hull) ligger i `build_toys_view.js`. Delene ligger på gulvet i `bro`, `kjokkenbro` og `leke` (`build.parts` i scenen); ingen er nødvendig, referansebyggene bruker bare planker. Gummistrikk og binders mangler (trenger egne koblingstyper).
+
+## Leker som testlast (R48)
+`build_loads.js` (ren logikk, testet i `test_buildloads.mjs`) har fire laster som PRØV kan bruke i stedet for bare testfiguren: **testfiguren** (masse 1, hopper høyt), **tennisballen** (lett, ruller, tar tid på å få opp fart, små sprett), **leke-bilen** (tung, raskest, hjul, bare små hopp) og **wind-up-roboten** (går selv, i rykk, står stille et øyeblikk hver tredje sekund). Fysikken (`createSim(def, { load })` i `build_phys.js`) bruker massen, radius, fart, akselerasjon, hoppfart og friksjon fra tabellen; alt er deterministisk (bare tid, ingen tilfeldighet). Samme bygg gir ulikt utfall: bilen belaster planken mest og krever en sterkere (festet, kortere spenn) bro enn ballen; en lang planke over et smalt gap holder ball, figur og robot, men ikke bilen, mens den samme planken teipet fast i begge ender bærer bilen.
+- **Valg:** store knapper over delene (`.loads`), uten tastatur. Flere laster kan prøves etter hverandre på samme bygg (STOPP, velg ny last, PRØV); en hake viser hvilke som har klart bygget. Endres bygget, nullstilles haken.
+- **Krav i scenen:** `build.sites[].loads: ['ball', 'car']` (fra `scene2level.mjs` til nivået). Da vises bare de kravte lastene, og stedet regnes som løst (delmål, bygget ut i verdenen) først når alle er bestått. Uten `loads` er valget fritt, og en hvilken som helst last løser stedet. I `leke` kreves ball og bil; referansebygget (lang planke) består begge. Bestått-listen lagres med autolagringen (`build.loads`).
+- Tegning: `build_loads_view.js` (canvas 2D, ~10 til 20 tegnekall per last, ingen nye shadere).

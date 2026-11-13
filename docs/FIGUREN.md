@@ -55,3 +55,11 @@ Ren logikk i `polish.js` (testet i `test_polish.mjs`), brukt i `poseHero`/render
 - **Hei du:** står du helt stille i 3 s (ingen stikke, ikke bærer noe, på bakken), snur figuren seg rolig mot kameraet, ser på deg med stort smil og rødmer, og blunker med det ene øyet; stemmen kan si «Hei du!». Beveger du deg, snur den seg tilbake. Bare i 3. person/skulderkamera med PUBG-styring. Av/på: ⚙ → Spill → «Figuren snur seg og blunker …».
 
 - **Auto-oppløsning**: meldingen vises én gang per økt, liten og under målpilen (`#toast.low`), så den ikke dekker målpilen; senere nedtrappinger og opptrappinger logges bare (`kvalitet ned/opp`).
+
+## Snu med skritt, tråkke over hinder, nye grep-poser (R40, `hero_move.js`)
+Ren logikk i `hero_move.js` (testet i `test_heromove.mjs`), brukt i `poseHero` i `main.js`. Alt er animasjon/IK: kollisjon og fysikk er uendret, bortsett fra at den allerede støttede trinn-opp-grensen (`P.stepUp`) har fått et lite minimum.
+- **Snu på stedet** (⚙ → Spill → «Figuren snur med små skritt …», `turnsteps`): står han stille og stikka snur raskere enn 1,6 rad/s, tas diskrete skritt (0,24 s), annenhver fot løftes og svinger ut mot snuretningen, overkroppen vrir seg litt. Logges som `snusteg`.
+- **Tråkke over små hindre** (`stepover`, og admin `smallstep`, standard 0,15): `physics.js` `stepOver` setter figuren oppå hindre opp til `P.stepUp`; `effectiveStepUp` gir nå minst `smallstep` (også i Prince, bortsett fra hjelp «Ingen»). Fremste fot løftes over kanten, kneet og kroppen følger. Hindre over grensen stopper som før (test). Logges som `trinn`.
+- **Heng, veggglid og sving** (`gripposes`): heng i bevegelse = hendene tar tak én og én, trett = bøyde albuer og sparkende bein, kroppen heller med farten; veggglid = begge armer opp mot veggen, hendene skraper, knærne bøyd, lener mot veggen mer med fall-fart; sving = bena slenger og kroppen lener med farten. Logges som `grepspose`.
+- Statisk budsjett: ingen nye mesher, materialer eller shadere, så tegnekall og trekanter er uendret (`test_perf.mjs` grønn). Ekte følelse og FPS testes på iPhone (R27).
+- Live-sjekk: `node tools/live_heromove.cjs <mappe> [port]` (iPhone 14, skjermbilder av veggglid og heng).

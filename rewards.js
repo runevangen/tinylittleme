@@ -68,3 +68,34 @@ export function recordRun(st, { levelId, n, crumbs, total, t, flew }) {
   }
   return out;
 }
+
+// R47: bygg-stjerner og ekstradeler (smulebudsjett, build_budget.js). Nøkler: tlm.bstars = { nivå: { sted: { stars, cost, parts } } }, tlm.bbonus = { nivå: [id] }.
+// Ugyldig lagring (endret for hånd) ignoreres.
+const goodStars = (o) => o && Number.isFinite(o.stars) && o.stars >= 1 && o.stars <= 3 && Number.isFinite(o.cost) && Number.isFinite(o.parts);
+export function getBuildStars(st, levelId) {
+  const all = st.get('tlm.bstars', {}), lv = all && typeof all === 'object' ? all[levelId] : null, out = {};
+  if (lv && typeof lv === 'object') for (const [k, v] of Object.entries(lv)) if (goodStars(v)) out[k] = { stars: Math.round(v.stars), cost: v.cost, parts: v.parts };
+  return out;
+}
+// lagrer bare hvis bygget er bedre enn det som ligger der (flere stjerner, så lavere kostnad, så færre deler). Returnerer { improved, first, best }.
+export function recordBuildStars(st, levelId, siteId, res) {
+  if (!levelId || !siteId || !goodStars(res)) return { improved: false, first: false, best: null };
+  const cur = getBuildStars(st, levelId), old = cur[siteId] || null;
+  const better = !old || res.stars > old.stars || (res.stars === old.stars && (res.cost < old.cost || (res.cost === old.cost && res.parts < old.parts)));
+  if (!better) return { improved: false, first: false, best: old };
+  const all = st.get('tlm.bstars', {}), root = all && typeof all === 'object' ? all : {};
+  cur[siteId] = { stars: res.stars, cost: res.cost, parts: res.parts }; root[levelId] = cur; st.set('tlm.bstars', root);
+  return { improved: true, first: !old, best: cur[siteId] };
+}
+export function getBonusUnlocks(st, levelId, known = null) {
+  const all = st.get('tlm.bbonus', {}), a = all && typeof all === 'object' ? all[levelId] : null;
+  return Array.isArray(a) ? a.filter((id) => typeof id === 'string' && (!known || known.includes(id))) : [];
+}
+// husker at ekstradeler er åpnet (de blir åpne også om smulene nullstilles). Returnerer id-ene som var nye.
+export function recordBonus(st, levelId, ids, known = null) {
+  if (!levelId) return [];
+  const have = getBonusUnlocks(st, levelId, known), fresh = (ids || []).filter((id) => !have.includes(id) && (!known || known.includes(id)));
+  if (!fresh.length) return [];
+  const all = st.get('tlm.bbonus', {}), root = all && typeof all === 'object' ? all : {};
+  root[levelId] = [...have, ...fresh]; st.set('tlm.bbonus', root); return fresh;
+}

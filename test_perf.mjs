@@ -92,7 +92,7 @@ ok(/tegnekall 5/.test(statsLine({ calls: 5, tris: 6, lights: 2, shadowLights: 1,
     ok(m.after <= m.before && calls === m.after, `softlight ${id}: sammenslåing gir færre kall (${m.before} til ${m.after})`);
     // av/på: lav profil og Enkel grafikk beholder dagens look (ingen tegnekall fra softlight, PCFSoft, radius 1); på gir PCF (radius virker bare der)
     soft.update(true, false, false); ok(soft.group.visible && sun.shadow.radius === SOFT.shadowRadius && renderer.shadowMap.type === THREE.PCFShadowMap, `${id}: på gir synlig + PCFShadowMap + radius`);
-    soft.update(true, true, false); ok(!soft.group.visible && sun.shadow.radius === SOFT.shadowRadiusOff && renderer.shadowMap.type === THREE.PCFSoftShadowMap, `${id}: lav profil slår alt av`);
+    soft.update(true, true, false); ok(!soft.group.visible && sun.shadow.radius === SOFT.shadowRadiusOff && renderer.shadowMap.type === THREE.PCFShadowMap, `${id}: lav profil slår alt av (R35: skyggetypen står, ellers nye shadere)`);
     soft.update(true, false, true); ok(!soft.group.visible, `${id}: Enkel grafikk slår alt av`);
     if (id === 'barnerom') console.log(`softlight budsjett: ${calls} tegnekall, ${tris} trekanter (maks ${SOFT.budget.calls} / ${SOFT.budget.tris})`);
   }

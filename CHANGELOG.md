@@ -2,8 +2,32 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
-- **1.33** – Veikart: R36 (roligere kamera: automatisk kamerafølging av som standard og bredere synsfelt på stående mobil), fra spilletest der testerne ble desorientert av at skjermen veivet.
+- **1.57** – Veikart: R54 (roligere kamera: automatisk kamerafølging av som standard og bredere synsfelt på stående mobil), fra tester: Rune. Testerne ble desorientert av at skjermen veivet.
+- **1.56** – Veikart: R53 (dynamisk toppbånd som rydder skjermen), fra tester: Rune.
+v1.55: R50 ferdig, replay og spøkelse, bygg som kode (eksport/import), beste bygg på nett
+v1.54: R48 ferdig, leker som testlast (ball, bil, robot) i byggeskjermen
 
+- **1.53** – R47: kostnad per byggedel, 1–3 stjerner per bygg og smulebudsjett som låser opp materiale (build_budget.js).
+- **1.52** – R46: leker som byggematerialer (blyant, linjal, legoklosse, bok, svamp) i byggeskjermen, med egne fysikkverdier og nye byggebrett.
+- **1.51** – R45: lesbar svikt i byggeskjermen. Spenningsfarge på deler og ledd i prøven, bruddring og kort pause på selve bruddet, og en setning om hvorfor det brakk (nb/en). Av/på i innstillinger.
+- **1.50** – Veikart: byggedel-serien R45 (lesbar svikt), R46 (leker som materialer), R47 (stjerner og smulebudsjett), R48 (leker som testlast) og R50 (replay, deling og beste bygg). Supabase: tabell og funksjoner for beste bygg.
+- **1.49** – Designnotat om byggedelen: inspirasjon fra brobyggerspill og forslag R45–R52 (`docs/BYGGING_INSPIRASJON.md`). Ikke lagt i veikartet ennå.
+- **1.48** – R44: zoom i byggeskjermen (+, −, ⤢, dobbelttrykk, finere rutenett ved høy zoom). Fra tester: Rune.
+- **1.47** – Veikart: R44 (zoom i byggeskjermen), fra tester: Rune.
+- **1.46** – R42: motgiften høyere opp i badet (speilskap med klatrevei og vanskeligere alt-vei) og vann-variant som kan slås på.
+- **1.45** – R41: kombinasjoner (svamp + vann, håndkle + håndkle, papirhaug) i regeltabell `combos.js`, og stavhopp-animasjon (`vault_anim.js`).
+- **1.44** – R39: finpuss av Prince: kant-shimmy, rulle ved landing, forsiktig gange og tyngre tau (`finpuss.js`, justeres i ⚙). Følelsen testes på iPhone.
+- **1.43** – R40: figuren snur med små skritt, tråkker over små hindre og har nye poser i heng/sving/veggglid (`hero_move.js`, av/på i ⚙). Følelsen testes på iPhone.
+- **1.42** – Veikart: R39 (finpuss av Prince), R40 (figurens bevegelse), R41 (flere kombinasjoner) og R42 (motgiften høyere opp, vann-variant).
+- **1.41** – Rapport over siste 24 timer lagt i `docs/RAPPORT_24T.md` (versjoner, tester-saker og linjer kode).
+- **1.40** – Siste shader som kompilerte midt i spillet forvarmes nå (gjennomsiktige utoningskopier), og nye shaderprogram logges med nøkkel (R35b, fra tester: Rune).
+- **1.39** – Perlene i gulvdetaljene er nå solide små kuler (R37, fra tester: Rune): figuren stoppes av eller glir av dem i stedet for å gå gjennom.
+- **1.38** – Pustelyd er av som standard (R38, fra tester): egen innstilling «Pustelyd» i ⚙ → Lyd og stemme slår all pustelyd av/på; animasjon og andre lyder er uendret.
+- **1.37** – Løpende behandling av innmeldte saker: runneren er lagret i repoet (`tools/roadmap_runner.workflow.js`, tar `args.items`), og rutinen for å hente, prioritere og kjøre tester-saker står i `docs/TILBAKEMELDING.md` og `CLAUDE.md`.
+- **1.36** – Veikart: tre saker fra tester (Rune): R37 (solide perler), R38 (pustelyd av som standard) og R35b (siste shader som kompileres midt i spillet).
+- **1.35** – Fra tester (Rune): ◎-knappen (sentrer kamera) og kartknappen (oversikt) er borte fra skjermen som standard, så de ikke tar plass ved TA/HOPP/GREP. Kan slås på igjen i ⚙ → Styring.
+- **1.34** – Svar fra Claude og tellere (R36): når en tester-sak er rettet får testeren et kort svar i spillet (⚑ lyser grønt, melding ved start, svar i ⚑-boksen), og ⚑-boksen viser «Du har meldt N · M rettet» og en felles teller uten navn. Av/på i ⚙ → Test. Nye regler i CLAUDE.md: tester-saker først, og automatisk svar etter utlegging. Testes på iPhone.
+- **1.33** – R35: færre hakk. Shadere forvarmes under lasting/intro (shaderwarm.js) så ingen nye programmer kompileres midt i spillet (oversikt, lek-pop, landing, bygging); program-antall logges ved start og etter økta. Testes på iPhone.
 - **1.32** – Fra tilbakemelding: (1) ◎- og kart-knappene var lette å treffe ved et uhell når man tok HOPP/TA: de har ikke lenger forstørret trykkflate og er litt dempet, og kart-knappen kan slås av i ⚙ → Styring («Vis kart-knappen»), som ◎. (2) Flimmer på halve det grønne håndkleet/badekåpa i Bad: håndkleet hadde samme topp som knaggrekka (z-fighting), og er nå skjøvet litt bakover i dybden (polygonOffset).
 
 - **1.31** – Målskjermen på liggende mobil: «Neste nivå» og «Spill igjen» ligger nå i en rad som er festet nederst og alltid synlig, resten av skjermen kan rulles, og skjermen er kompaktere (ingen figur, mindre tekst) når høyden er under 520 px.

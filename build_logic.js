@@ -3,6 +3,9 @@
 // Delene spilleren har plukket (`build.parts`) ligger i et brett; de dras ut, snappes til rutenett/festepunkter,
 // roteres, angres og nullstilles. Ingen fysikk ennå (R25): her bare plassering.
 
+import { clampZoom } from './build_zoom.js';
+import { TOY_TYPES, legoSnap } from './build_toys.js';   // R46: leker som materialer
+
 export const GRID = 0.5;                 // rutenett (enheter)
 export const ROT_STEP = Math.PI / 12;    // rotasjonstrinn: 15 grader
 export const SNAP_R = 0.7;               // hvor nær et festepunkt delen snapper
@@ -15,6 +18,7 @@ export const PART_TYPES = {
   block: { w: 1.5, h: 1.5, name: 'Kloss', en: 'Block', color: '#e0605a' },
   weight: { w: 1.5, h: 1.5, name: 'Vekt', en: 'Weight', color: '#6f7b8c' },   // R25: tung (motvekt)
   seesaw: { w: 8, h: 0.5, name: 'Vippe', en: 'Seesaw', color: '#3fa89b', pivot: true },   // R30: planke som svinger rundt midten (festet i en liten støtte under midtpunktet)
+  ...TOY_TYPES,                                                                          // R46: blyant, linjal, legoklosse, bok, svamp (build_toys.js)
 };
 export const LINK_KINDS = ['tape', 'hinge', 'rope'];                   // R25: tape = stiv, ledd = svinger, tau = bare i strekk
 export const LINK_MAX = 0.75;                                          // tape/ledd: delene må ligge inntil hverandre (avstand mellom kulene)
@@ -44,10 +48,10 @@ export function siteAnchors(site) {
 export const clampToSite = (site, u, v) => ({ u: Math.min(site.w / 2, Math.max(-site.w / 2, u)), v: Math.min(site.h, Math.max(0, v)) });
 
 // snapping: nærmeste festepunkt (om i nærheten), ellers rutenett. Slått av: fri plassering (men innenfor stedet).
-export function snapPoint(site, u, v, { snap = true, grid = GRID } = {}) {
+export function snapPoint(site, u, v, { snap = true, grid = GRID, snapR = SNAP_R } = {}) {
   const c = clampToSite(site, u, v);
   if (!snap) return { ...c, anchored: false };
-  let best = null, bd = SNAP_R;
+  let best = null, bd = snapR;
   for (const a of siteAnchors(site)) { const d = Math.hypot(a.u - c.u, a.v - c.v); if (d < bd) { bd = d; best = a; } }
   if (best) return { u: best.u, v: best.v, anchored: true };
   return { ...clampToSite(site, snapG(c.u, grid), snapG(c.v, grid)), anchored: false };
@@ -82,11 +86,15 @@ export function addPart(B, id) { if (!B.have.includes(id)) B.have.push(id); retu
 // legg en del fra brettet (eller flytt en som ligger der). Returnerer den plasserte delen, eller null om den ikke finnes/ikke er plukket.
 export function place(B, id, u, v, rot) {
   if (!B.have.includes(id)) return null;
-  const s = snapPoint(B.site, u, v, { snap: B.snap }), ex = placedOf(B, id);
+  const s = snapPoint(B.site, u, v, { snap: B.snap, grid: B.grid || GRID, snapR: B.snapR || SNAP_R }), ex = placedOf(B, id);
   pushHist(B);
   const r = normRot(B.snap ? snapRot(rot ?? ex?.rot ?? 0) : (rot ?? ex?.rot ?? 0));
-  if (ex) { ex.u = s.u; ex.v = s.v; ex.rot = r; ex.anchored = s.anchored; return ex; }
-  const p = { id, type: B.types[id] || 'block', u: s.u, v: s.v, rot: r, anchored: s.anchored };
+  const type = B.types[id] || 'block';
+  // R46: legoknotter klikker mot andre legoklosser (av/på med B.lego = false)
+  const lg = B.snap && B.lego !== false ? legoSnap(B.placed, id, type, s.u, s.v, r) : null;
+  if (lg) { const c = clampToSite(B.site, lg.u, lg.v); if (Math.hypot(c.u - lg.u, c.v - lg.v) < 1e-9) { s.u = lg.u; s.v = lg.v; s.anchored = true; s.snapTo = lg.to; s.snapKind = lg.kind; } }
+  if (ex) { ex.u = s.u; ex.v = s.v; ex.rot = r; ex.anchored = s.anchored; ex.snapTo = s.snapTo || null; return ex; }
+  const p = { id, type, u: s.u, v: s.v, rot: r, anchored: s.anchored, snapTo: s.snapTo || null };
   B.placed.push(p); return p;
 }
 export function rotate(B, id, delta) {
@@ -169,7 +177,7 @@ export function fitView(site, w, h, pad = 24, top = 0, bot = 0) {     // skala (
   const sc = Math.max(4, Math.min((w - pad * 2) / Math.max(1, site.w), (h - top - bot - pad * 2) / Math.max(1, site.h + 2)));
   return { scale: sc, cu: 0, cv: site.h / 2, oy: (top - bot) / 2 };
 }
-export const clampScale = (s) => Math.min(80, Math.max(6, s));
+export const clampScale = clampZoom;   // R44: grensene bor i build_zoom.js (maks økt fra 80)
 export const toScreen = (view, w, h, u, v) => ({ x: w / 2 + (u - view.cu) * view.scale, y: h / 2 + (view.oy || 0) - (v - view.cv) * view.scale });
 export const toWorld = (view, w, h, x, y) => ({ u: view.cu + (x - w / 2) / view.scale, v: view.cv - (y - h / 2 - (view.oy || 0)) / view.scale });
 
@@ -199,3 +207,63 @@ export function stepParts(L, p, dt, active = true) {
   return ev;
 }
 export function restoreParts(L, ids) { const set = new Set(Array.isArray(ids) ? ids : []); for (const q of L.buildParts || []) q.got = set.has(q.id); return gotPartIds(L).length; }
+
+// ---------- R50: bygget som kort kode (deling) ----------
+// Format: `TLM1.<base64url av kompakt JSON>.<sjekksum>`. JSON = [1, stedets id, deler, koblinger]; tall er heltall (u, v og koblingspunkt i tusendeler, vinkel i titusendeler).
+// Koden gjelder ett byggested og tar bare med det som ligger på brettet. Import validerer alt: ukjente deler, deler du ikke har plukket, tall utenfor stedet og ødelagt tekst avvises.
+export const CODE_MAX = 6000, CODE_PREFIX = 'TLM1.', CODE_MAX_PARTS = 60, CODE_MAX_LINKS = 120;
+const CODE_KINDS = LINK_KINDS;   // rekkefølgen er en del av formatet (tape, ledd, tau)
+const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); };
+const toB64 = (s) => { const by = new TextEncoder().encode(s); let bin = ''; for (const b of by) bin += String.fromCharCode(b); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const fromB64 = (t) => { const bin = atob(t.replace(/-/g, '+').replace(/_/g, '/')); const by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i); return new TextDecoder('utf-8', { fatal: true }).decode(by); };
+const ik = (x, k) => Math.round(x * k);
+export function exportCode(B) {
+  const d = serialize(B);
+  const placed = d.placed.map((p) => [p.id, ik(p.u, 1000), ik(p.v, 1000), ik(p.rot, 10000)]);
+  const links = d.links.map((l) => [l.id, CODE_KINDS.indexOf(l.kind), l.a, ik(l.la.x, 1000), ik(l.la.y, 1000), l.b, ...(l.b ? [ik(l.lb.x, 1000), ik(l.lb.y, 1000)] : [ik(l.g.u, 1000), ik(l.g.v, 1000)])]);
+  const body = toB64(JSON.stringify([1, B.site.id, placed, links])), code = `${CODE_PREFIX}${body}.${fnv(body)}`;
+  return code.length <= CODE_MAX ? code : null;
+}
+// Leser og kontrollerer en kode mot byggestedet i B. Returnerer { ok: true, placed, links } (ferdig til applyImport) eller { ok: false, why, missing? }.
+// why: tom | lang | format | sum | sted | del | mangler | verdi
+export function importCode(code, B) {
+  const bad = (why, extra) => ({ ok: false, why, ...extra });
+  if (typeof code !== 'string') return bad('tom');
+  const s = code.replace(/\s+/g, ''); if (!s) return bad('tom');
+  if (s.length > CODE_MAX) return bad('lang');
+  if (!s.startsWith(CODE_PREFIX)) return bad('format');
+  const parts = s.slice(CODE_PREFIX.length).split('.'); if (parts.length !== 2 || !/^[A-Za-z0-9_-]+$/.test(parts[0]) || !parts[1]) return bad('format');
+  if (fnv(parts[0]) !== parts[1]) return bad('sum');
+  let j; try { j = JSON.parse(fromB64(parts[0])); } catch { return bad('format'); }
+  if (!Array.isArray(j) || j.length !== 4 || j[0] !== 1 || typeof j[1] !== 'string' || !Array.isArray(j[2]) || !Array.isArray(j[3])) return bad('format');
+  if (j[1] !== B.site.id) return bad('sted');
+  if (j[2].length > CODE_MAX_PARTS || j[3].length > CODE_MAX_LINKS) return bad('verdi');
+  const num = (x, lim) => typeof x === 'number' && Number.isInteger(x) && Math.abs(x) <= lim, S = B.site, E = 2;
+  const placed = [], seen = new Set(); let missing = 0;
+  for (const p of j[2]) {
+    if (!Array.isArray(p) || p.length !== 4 || typeof p[0] !== 'string') return bad('format');
+    if (!Object.hasOwn(B.types, p[0])) return bad('del');
+    if (seen.has(p[0])) return bad('verdi'); seen.add(p[0]);
+    if (!num(p[1], 1e6) || !num(p[2], 1e6) || !num(p[3], 40000)) return bad('verdi');
+    const u = p[1] / 1000, v = p[2] / 1000, rot = p[3] / 10000;
+    if (u < -S.w / 2 - E / 1000 || u > S.w / 2 + E / 1000 || v < -E / 1000 || v > S.h + E / 1000 || Math.abs(rot) > Math.PI + 0.001) return bad('verdi');
+    if (!B.have.includes(p[0])) missing++;
+    placed.push({ id: p[0], u, v, rot });
+  }
+  if (missing) return bad('mangler', { missing });
+  const links = [], ids = new Set();
+  for (const l of j[3]) {
+    if (!Array.isArray(l) || l.length !== 8 || typeof l[0] !== 'string' || !/^[A-Za-z0-9_]{1,12}$/.test(l[0]) || ids.has(l[0])) return bad(Array.isArray(l) && ids.has(l[0]) ? 'verdi' : 'format'); ids.add(l[0]);
+    const kind = CODE_KINDS[l[1]]; if (!kind) return bad('verdi');
+    if (!seen.has(l[2]) || (l[5] !== null && (typeof l[5] !== 'string' || !seen.has(l[5]) || l[5] === l[2]))) return bad('verdi');
+    if (![3, 4, 6, 7].every((i) => num(l[i], 1e6))) return bad('verdi');
+    const o = { id: l[0], kind, a: l[2], la: { x: l[3] / 1000, y: l[4] / 1000 }, b: l[5] };
+    if (l[5]) { o.lb = { x: l[6] / 1000, y: l[7] / 1000 }; o.g = null; } else { const gu = l[6] / 1000, gv = l[7] / 1000; if (gu < -S.w / 2 - 1 || gu > S.w / 2 + 1 || gv < -1 || gv > S.h + 1) return bad('verdi'); o.lb = null; o.g = { u: gu, v: gv }; }
+    links.push(o);
+  }
+  const T = createBuild(B.site, B.types, B.have); restore(T, { have: B.have, placed, links });
+  if (T.placed.length !== placed.length || T.links.length !== links.length) return bad('verdi');
+  return { ok: true, placed: T.placed, links: T.links };
+}
+// legger det importerte bygget på brettet (kan angres med ANGRE). Delene som ikke er med i koden havner tilbake i brettet.
+export function applyImport(B, r) { if (!r?.ok) return false; pushHist(B); B.placed = r.placed.map((p) => ({ ...p })); B.links = r.links.map((l) => ({ ...l, la: { ...l.la }, lb: l.lb && { ...l.lb }, g: l.g && { ...l.g } })); return true; }

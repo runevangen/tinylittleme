@@ -3,6 +3,7 @@
 export const LINES = {
   thrown:     { say: ['Wææh!', 'Hjelp, en klovn!', 'Oi oi oi!'], gap: 5, p: 1 },
   hardland:   { say: ['Au!', 'Uff!', 'Oi, det svei!'], gap: 6, p: 1 },
+  roll:       { say: ['Og rull!', 'Hoppla, rulle!', 'Der satt den.'], gap: 8, p: 0.8 },
   knockout:   { say: ['Aj aj aj!', 'Det var for langt ned!'], gap: 6, p: 1, prio: true },
   fall:       { say: ['Hjelp!', 'Neeei!', 'Uææ!'], gap: 10, p: 0.9 },
   softland:   { say: ['Myk landing!', 'Puh, det gikk bra.'], gap: 12, p: 0.8 },
@@ -12,6 +13,9 @@ export const LINES = {
   gel:        { say: ['Klissete!', 'Fiks. Nå må det tørke.'], gap: 15, p: 0.9 },
   roll:       { say: ['Der ruller båndet ut.', 'Dopapir-tau!'], gap: 15, p: 0.9 },
   thread:     { say: ['Nå er den trædd.', 'Nål og tråd!'], gap: 15, p: 0.9 },
+  soak:       { say: ['Svampen drikker.', 'Nå er den tung.', 'Sugd full!'], gap: 15, p: 0.9 },
+  knot:       { say: ['En knute, og en til.', 'Håndkletau!'], gap: 15, p: 0.9 },
+  press:      { say: ['Flat som en pannekake.', 'Nå er den lavere.'], gap: 15, p: 0.9 },
   zip:        { say: ['Taubane!', 'Det blir en fin tur.'], gap: 15, p: 0.9 },
   zipping:    { say: ['Wiiii!', 'Hurra!', 'Hold meg fast!'], gap: 12, p: 0.9 },
   wink:       { say: ['Hei du!', 'Ja, det er meg.', 'Hehe.'], gap: 40, p: 0.6 },
