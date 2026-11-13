@@ -363,6 +363,16 @@
      "v": 0
     },
     "d": 4,
+    "stars": {
+     "three": {
+      "cost": 3,
+      "parts": 2
+     },
+     "two": {
+      "cost": 6,
+      "parts": 4
+     }
+    },
     "ref": {
      "placed": [
       {

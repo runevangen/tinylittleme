@@ -30,7 +30,8 @@ import { makeSoftLight } from './softlight.js';
 import { applyGrade } from './grade_apply.js';
 import { gradeTint } from './grade.js';
 import { buildHero, RIG_S } from './hero.js';
-import { recordRun, getEquipped, rt as rwT, accById } from './rewards.js';
+import { recordRun, getEquipped, rt as rwT, accById, getBest, getBuildStars } from './rewards.js';
+import { starText } from './build_budget.js';   // R47
 import { applyAccessories, updateAccessories, showCloset, previewSVG } from './rewards_view.js';
 import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4–6 som egne rom (stemning, hjelmlykt, vri)
 import { createVoice } from './voice.js';
@@ -169,7 +170,7 @@ let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('t
 let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let shaderWarm = store.get('tlm.shaderwarm', true);   // R35: full tegning av alt under forvarmingen (admin)
-let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true), buildSeeHint = store.get('tlm.buildsee', true), buildDbl = store.get('tlm.builddbl', true), buildFine = store.get('tlm.buildfine', true), buildStress = store.get('tlm.buildstress', true), buildBreakFx = store.get('tlm.buildbreakfx', true), buildLego = store.get('tlm.buildlego', true);   // R24: byggeskjermen
+let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true), buildSeeHint = store.get('tlm.buildsee', true), buildDbl = store.get('tlm.builddbl', true), buildFine = store.get('tlm.buildfine', true), buildStress = store.get('tlm.buildstress', true), buildBreakFx = store.get('tlm.buildbreakfx', true), buildLego = store.get('tlm.buildlego', true), buildBudget = store.get('tlm.buildbudget', true), buildBonus = store.get('tlm.buildbonus', true), buildBonusStep = +store.get('tlm.buildbonusstep', 1) || 1;   // R47: kostnad/stjerner, smule-ekstradeler; R24: byggeskjermen
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let toysOn = store.get('tlm.toys', true);   // R18
 TOY.windT = store.get('tlm.toywind', TOY.windT);
@@ -1063,7 +1064,7 @@ const save = { pos: [...LEVEL.start] };
 const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
-const bld = createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
+const bld = createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
 
 // Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
 const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
@@ -1586,6 +1587,9 @@ const SETTINGS = [
   fl('buildsee', 'hjelp', 'Byggeskjerm: hint om vippa når du legger den ut (den har dreiepunkt på midten: legg den over gapet og rotér den skrått)', true, () => buildSeeHint, kp('tlm.buildsee', (v) => { buildSeeHint = v; })),
   fl('buildstress', 'spill', 'Byggeskjerm: farge på delene i PRØV viser belastning (blå = slapp, gul = belastet, rød = nær brudd)', true, () => buildStress, kp('tlm.buildstress', (v) => { buildStress = v; })),
   fl('buildbreakfx', 'spill', 'Byggeskjerm: kort pause og sakte film når noe brekker i PRØV (med ring rundt bruddet)', true, () => buildBreakFx, kp('tlm.buildbreakfx', (v) => { buildBreakFx = v; })),
+  fl('buildbudget', 'spill', 'Byggeskjerm: kostnad og stjerner (1-3 etter pris og antall deler; vises i byggeskjermen, delmålet og målskjermen)', true, () => buildBudget, kp('tlm.buildbudget', (v) => { buildBudget = v; })),
+  fl('buildbonus', 'spill', 'Byggeskjerm: smuler åpner ekstradeler (en ekstra planke/kloss ved et antall smuler)', true, () => buildBonus, kp('tlm.buildbonus', (v) => { buildBonus = v; })),
+  rg('buildbonusstep', 'admin', 'Byggeskjerm: smuler per ekstradel (faktor på 3/6/9 smuler, 1 = standard)', 1, 0.5, 3, 0.5, () => buildBonusStep, kp('tlm.buildbonusstep', (v) => { buildBonusStep = v; }), { digits: 1 }),
   fl('buildlego', 'spill', 'Byggeskjerm: legoklosser klikker sammen (snapper til knottene på andre legoklosser)', true, () => buildLego, kp('tlm.buildlego', (v) => { buildLego = v; })),
   fl('buildslow', 'spill', 'Byggeskjerm: PRØV i sakte film (lettere å se hvor det bøyer og brekker)', false, () => buildSlow, kp('tlm.buildslow', (v) => { buildSlow = v; })),
   rg('buildstrength', 'admin', 'Byggeskjerm: hvor sterkt bygget er (faktor på brekkgrensene, 1 = standard)', 1, 0.5, 2, 0.1, () => buildStrength, kp('tlm.buildstrength', (v) => { buildStrength = v; }), { digits: 1 }),
@@ -2008,6 +2012,12 @@ function crumbEvent(ev) {
   toast(ev.n === ev.total ? `Alle smulene! ${ev.n}/${ev.total}  +${SCORE.crumb} poeng` : `Smule ${ev.n}/${ev.total}  +${SCORE.crumb} poeng`);
 }
 // R23: målskjermen viser hvilke delmål som er klare
+// R47: stjerner for byggene i nivået på målskjermen (bare steder som er klart)
+function buildStarsWinHTML() {
+  if (!buildBudget || !LEVEL.buildSites?.length) return '';
+  const best = getBuildStars(store, levelId), rows = LEVEL.buildSites.filter((s) => best[s.id]).map((s) => `<div style="font-size:14px;text-align:left">🔨 ${(s.label || s.id).replace(/[<>&]/g, '')}: <b style="color:#ffd23f">${starText(best[s.id].stars)}</b> <small>${T('build.cost', { n: best[s.id].cost })}</small></div>`).join('');
+  return rows ? `<div class="wpts" style="font-size:15px;margin-top:8px">${T('build.starsTitle')}</div><div style="display:inline-block;margin:4px 0">${rows}</div>` : '';
+}
 function goalsWinHTML() {
   if (!goalTotal(LEVEL) || !goalsOn) return '';
   const rows = LEVEL.goalList.map((g) => `<div style="font-size:13px;opacity:${g.done ? 1 : 0.55};text-align:left">${g.done ? '✓' : '○'} ${goalLabel(g, lang).replace(/[<>&]/g, '')}</div>`).join('');
@@ -2150,7 +2160,7 @@ function update(dt) {
         rw = recordRun(store, { levelId, n, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL), t: clock, flew: stats.flew }); logEv('belønning', `beste ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}${rw.unlocked ? ', låste opp ' + rw.unlocked.id : ''}${rw.newBestTime ? ', ny beste tid' : ''}`); if (rw.unlocked) refreshAccessories(); }       // husk hvilke nivåer som er klart (beste poeng)
       d = finishData({ n, nextExists: !!nextLevel, clock, stats, crumbs: crumbCount(LEVEL), crumbTotal: crumbTotal(LEVEL), points: points(), prevBest, flew: stats.flew });
       $('winTitle').textContent = n ? (nextLevel ? T('win.level', { n }) : T('win.all')) : T('win.top');
-      $('winStats').innerHTML = winHTML(d, T) + goalsWinHTML() + (rw?.unlocked && rewardsOn ? `<div class="wpts" style="font-size:17px;line-height:1.3">🎁 ${rwT(lang, 'rw.new', { name: rwT(lang, 'acc.' + rw.unlocked.id) })}</div>` : '') + (rw?.newBestTime ? `<div class="wpts" style="font-size:15px"><small>${rwT(lang, 'rw.newbest')}</small></div>` : ''); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
+      $('winStats').innerHTML = winHTML(d, T) + goalsWinHTML() + buildStarsWinHTML() + (rw?.unlocked && rewardsOn ? `<div class="wpts" style="font-size:17px;line-height:1.3">🎁 ${rwT(lang, 'rw.new', { name: rwT(lang, 'acc.' + rw.unlocked.id) })}</div>` : '') + (rw?.newBestTime ? `<div class="wpts" style="font-size:15px"><small>${rwT(lang, 'rw.newbest')}</small></div>` : ''); logEv('målskjerm', `${d.time}, maur ${d.squashed}, smuler ${d.crumbs}/${d.total}`);
       const nb = $('nextLevel'); nb.style.display = nextLevel || (n && storyOn) ? '' : 'none';
       if (nextLevel) { nb.textContent = `${T('win.next')} →`; nb.onclick = () => goLevel(nextLevel.id); }
       else if (n && storyOn) { nb.textContent = `${T('win.ending')} →`; nb.onclick = showEnding; }
@@ -2451,7 +2461,7 @@ function render(now, dt) {
   grade.follow(player, camera);
   renderer.render(scene, camera);
   if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const w = overBudget(st).concat(memOver(st, texLow || lowOn)); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
-  goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, show: mode === 'play' && !won && !menuOpen }, now);
+  goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
   $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
     `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +

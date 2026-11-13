@@ -251,6 +251,7 @@
     "h": 60,
     "d": 20,
     "drop": 40,
+    "stars": {"three": {"cost": 5, "parts": 2}, "two": {"cost": 8, "parts": 4}},
     "anchors": [
      [
       0,

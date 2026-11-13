@@ -87,7 +87,7 @@ export const GROUPS = [
 ];
 export const LAYOUT = {
   spill: ['lang', 'autosave', 'startscreen', 'confirm2', 'lostreturn'],
-  innhold: ['puzzles', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['buildsnap', 'buildslow'] }],
+  innhold: ['puzzles', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['buildsnap', 'buildslow', 'buildbudget', 'buildbonus'] }],
   styring: ['preset', 'help', 'stickfloat', 'stickcurve', 'stickdead', 'btnscale', 'speedscale', 'inertia', 'autograb', 'magnet', 'aimthrow', 'dbltap', 'showcenter', 'showmapbtn', 'vib',
     { sub: 'Mus og tastatur (PC)', ids: ['pcbtns', 'mousesens', 'mouselook'] }],
   figur: ['stepadapt', 'reactanim', 'idlewink', 'shimmy', 'roll', 'careful', 'ropeheavy'],

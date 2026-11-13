@@ -37,7 +37,7 @@ export function createGoalView({ $, T, getLang, L, hudEl, onToggle }) {
       const total = goalTotal(L), show = on && state.show && total > 0;
       el.classList.toggle('show', show); if (!show) return;
       const lang = getLang(), act = activeGoal(L), done = goalDone(L), lock = lockingGoals(L);
-      const k = `${lang}|${done}|${act?.id}|${state.crumbs}|${state.stomps}|${open}|${lock.length}`;
+      const k = `${lang}|${done}|${act?.id}|${state.crumbs}|${state.stomps}|${state.stars ? Object.values(state.stars).join('') : ''}|${open}|${lock.length}`;
       if (k !== key) {
         key = k;
         const head = act ? goalLine(L, act, lang, state) : T('goal.all');

@@ -256,6 +256,7 @@
     "w": 100,
     "h": 60,
     "d": 20,
+    "stars": {"three": {"cost": 3, "parts": 2}, "two": {"cost": 6, "parts": 4}},
     "anchors": [
      [
       -17.5,

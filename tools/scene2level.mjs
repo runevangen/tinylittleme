@@ -357,6 +357,7 @@ const build = scene.build ? {
     ...(s.d ? { d: round(s.d / U) } : {}),                                  // R26: dybden på bygget i verden (cm)
     ...(s.drop ? { drop: round(s.drop / U) } : {}),                         // R30: hvor langt ned støtta under en vippe når (cm), ned til rommets gulv
     // R26: referansebygg (kjent god bygging) og ruta gjennom det: ref = { placed: [{id,type,u,v,rot}] (enheter, som lagret), links: [], surfaces: [{id,u0,u1,top}] (enheter), route: [id i ruta eller i surfaces] }
+    ...(s.stars ? { stars: s.stars } : {}),                                  // R47: stjerne-terskler { three: { cost, parts }, two: { cost, parts } } (build_budget.js)
     ...(s.ref ? { ref: s.ref } : {}) })),
   parts: (scene.build.parts || []).map((q) => {
     const on = q.on && q.on !== 'gulv' ? scene.objects.find((o) => o.id === q.on) : null;

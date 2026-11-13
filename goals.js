@@ -96,7 +96,8 @@ export const goalLabel = (g, lang) => (lang === 'en' && g.en) || g.label || g.id
 // Linje til panelet: «Samle 5 smuler (3/5)»
 export function goalLine(L, g, lang, ctx = {}) {
   const pr = goalProgress(L, g, ctx);
-  return pr.need > 1 && !g.done ? `${goalLabel(g, lang)} (${pr.cur}/${pr.need})` : goalLabel(g, lang);
+  const stars = g.type === 'flag' && g.done && ctx.stars?.[g.flag] ? ` ${'★'.repeat(ctx.stars[g.flag])}${'☆'.repeat(3 - ctx.stars[g.flag])}` : '';   // R47: byggestjerner bak byggedelmålet
+  return (pr.need > 1 && !g.done ? `${goalLabel(g, lang)} (${pr.cur}/${pr.need})` : goalLabel(g, lang)) + stars;
 }
 
 // ---------- kontroll av brettdata (brukes av test_goals.mjs) ----------

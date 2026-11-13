@@ -195,6 +195,16 @@
      "v": 6
     },
     "d": 4,
+    "stars": {
+     "three": {
+      "cost": 6,
+      "parts": 6
+     },
+     "two": {
+      "cost": 10,
+      "parts": 10
+     }
+    },
     "ref": {
      "placed": [
       {
