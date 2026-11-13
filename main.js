@@ -11,6 +11,8 @@ import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
 import { buildRoller, buildDangler, ROLLER_COL, DANGLER_COL } from './creatures_view.js';
 import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, puzzleTotal, puzzleTarget, carryingKeyNear, bridgeFarEnd, bridgeMid, nearBridge } from './puzzle.js';
 import { buildPuzzleViews } from './puzzle_view.js';
+import { GATE, initGates, resetGates, restoreGates, gatesSave, stepGates, nearSwitch, toggleSwitch, doorById, hasGates, gatesBudget } from './plates_logic.js';   // R60: trykkplate, dør, vindebro og bryter
+import { buildGateViews } from './plates_view.js';
 import { buildFlag, buildGoalRing } from './markers.js';
 import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalLine, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
 import { createGoalView } from './goals_view.js';
@@ -100,6 +102,7 @@ const LEVELS = [
   { id: 'vippe', label: 'Bygg 3: Vippa over gapet (barnerom: bygg en vippe, eller ta den harde veien)', short: 'Bygg · Vippe' },
   { id: 'kjokkenbro', label: 'Bygg 4: Bro til kjøleskapet (kjøkken: bygg en bro, eller ta den harde veien)', short: 'Bygg · Kjøkkenbro' },
   { id: 'soverom', label: 'Ekstra: Soverom (håndlaget)', short: 'Soverom' },
+  { id: 'gaate', label: 'Prøverom: gåter (plate, dør, bryter og vindebro)', short: 'Gåter' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
   { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
   { id: 'kontroll', label: 'Kontrollbanen (test av styring og kamera)', short: 'Kontroll' },
@@ -170,6 +173,7 @@ let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true), camRelayOn = store.get('tlm.camrelay', true), camSlop = store.get('tlm.camslop', CAM_SLOP), camHintShown = store.get('tlm.camhint', false);
 let showMapBtn = store.get('tlm.showmapbtn2', false), showCenter = store.get('tlm.showcenter2', false),   // v1.35: ◎ og kartknappen er av som standard (nye nøkler, så alle starter uten dem)
    stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
+let gatesOn = store.get('tlm.gates', true), gateCamOn = store.get('tlm.gatecam', true);   // gåteverktøy (R60)
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
 let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
@@ -1014,7 +1018,7 @@ function animateHero(p, now, dt) {
 }
 
 // ---------- tilstand ----------
-initBodies(LEVEL); initAnts(LEVEL); initBoss(LEVEL); initCollect(LEVEL); initPuzzles(LEVEL); initGoals(LEVEL);
+initBodies(LEVEL); initAnts(LEVEL); initBoss(LEVEL); initCollect(LEVEL); initPuzzles(LEVEL); initGoals(LEVEL); GATE.hero = +store.get('tlm.gatehero', GATE.hero) || GATE.hero; GATE.needScale = +store.get('tlm.gateneed', 1) || 1; GATE.dur = +store.get('tlm.gatedur', GATE.dur) || GATE.dur; initGates(LEVEL);
 const bodyMeshes = LEVEL.bodies.map((b) => {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material, drawer: b.drawer })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
@@ -1036,6 +1040,8 @@ const antMeshes = (LEVEL.antList || []).map((t, i) => {
 const bossMesh = LEVEL.bossS ? (() => { const m = buildBoss(), prize = buildPrize(); prize.visible = false; scene.add(m.root, prize); if (!gfxLow) look.detailize(m.root); return { ...m, prize, rot: 0 }; })() : null;
 const bossBar = LEVEL.bossS ? createBossBar(document.body, TOUCH ? T('btn.jump') : 'Mellomrom') : null;
 // smuler (R3): gylne smuler som flyter og snurrer; tatt = skjult
+const gateViews = buildGateViews(scene, LEVEL);   // R60: plater, dører, broer og brytere (ingenting tegnes i brett uten `gates`)
+if (hasGates(LEVEL)) { const gb = gatesBudget(LEVEL); logEv('gåte', `${gateViews.count} deler, ${gb.calls} tegnekall, ${gb.tris} trekanter`); }
 const puzzleViews = buildPuzzleViews(scene, LEVEL);                                                                              // R7: plate og bro
 const crumbMeshes = (LEVEL.crumbList || []).map((c) => { const m = buildCrumb(); m.root.position.set(c.x, c.y, c.z); scene.add(m.root); return { c, m }; });
 // taubaner (nål + tråd) opprettes av fysikken: en tynn rød tråd mellom to knuter
@@ -1129,7 +1135,7 @@ placeFlag();
 const progKey = `tlm.progress.${levelId}${LEVEL.rev ? '.r' + LEVEL.rev : ''}`;       // rev: brettet er bygd om (gammel fremgang passer ikke lenger)
 let autoPos = null, autoT = 0, resumed = false;
 let noSave = false;       // satt rett før siden lastes på nytt etter «Nytt spill», så pagehide ikke skriver gammel fremgang tilbake
-function saveProgress() { if (won || !autosaveOn || noSave) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells], crumbs: collectedIds(LEVEL), puzzles: puzzleOpenIds(LEVEL), goals: goalDoneIds(LEVEL), goalFlags: goalFlagList(LEVEL), build: bld.save() }); }
+function saveProgress() { if (won || !autosaveOn || noSave) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells], crumbs: collectedIds(LEVEL), puzzles: puzzleOpenIds(LEVEL), gates: gatesSave(LEVEL), goals: goalDoneIds(LEVEL), goalFlags: goalFlagList(LEVEL), build: bld.save() }); }
 function clearProgress() { autoPos = null; store.set(progKey, null); }
 const failCells = new Map();
 let compassForce = 0;
@@ -1143,7 +1149,7 @@ function failAt(why = 'fall') {
   if (autosaveOn && pr && pr.clock > 4 && okAt(pr.save)) {
     save.pos = pr.save; Object.assign(stats, pr.stats || {}); clock = pr.clock; autoPos = okAt(pr.auto) ? pr.auto : null;
     for (const [k, v] of pr.fails || []) failCells.set(k, v);
-    stats.crumbs = restoreCollected(LEVEL, pr.crumbs); restorePuzzles(LEVEL, pr.puzzles); restoreGoals(LEVEL, pr.goals, pr.goalFlags); bld.load(pr.build);
+    stats.crumbs = restoreCollected(LEVEL, pr.crumbs); restorePuzzles(LEVEL, pr.puzzles); restoreGates(LEVEL, pr.gates); restoreGoals(LEVEL, pr.goals, pr.goalFlags); bld.load(pr.build);
     resetPlayer(player, ...(autoPos || save.pos)); placeFlag(); if (stats.saves > 0) flagV.ignite(true); resumed = true;
   }
 }
@@ -1181,7 +1187,7 @@ function restartAll() {
   clearProgress(); failCells.clear(); bld.resetAll();
   resetPlayer(player, ...LEVEL.start);
   resetBodies(LEVEL, player); resetToys(toyLife); resetShortcutWatch(shortcutWatch);
-  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = stats.boss = 0; stats.flew = false; resetAnts(LEVEL); resetBoss(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); resetGoals(LEVEL); bridgeGuide = null;
+  save.pos = [...LEVEL.start]; stats.saves = stats.respawns = stats.broken = stats.resets = stats.hits = stats.squashed = stats.crumbs = stats.carried = stats.boss = 0; stats.flew = false; resetAnts(LEVEL); resetBoss(LEVEL); resetCollect(LEVEL); resetPuzzles(LEVEL); resetGates(LEVEL); resetGoals(LEVEL); bridgeGuide = null;
   won = false; clock = 0; placeFlag(); flagV.extinguish(); $('win').classList.add('hide'); setMode('play');
 }
 
@@ -1640,6 +1646,11 @@ const SETTINGS = [
   fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
   fl('startscreen', 'spill', 'Vis startskjerm (Nytt spill / Fortsett) når spillet åpnes', true, () => startScreenOn, kp('tlm.startscreen', (v) => { startScreenOn = v; })),
   fl('puzzles', 'spill', 'Gåter (nøkkel og lås: en snarvei du åpner)', true, () => puzzlesOn, kp('tlm.puzzles', (v) => { puzzlesOn = v; })),
+  fl('gates', 'spill', 'Gåteverktøy (trykkplater, porter, vindebroer og brytere: bær ting til plata, slå bryteren med TA)', true, () => gatesOn, kp('tlm.gates', (v) => { gatesOn = v; logEv('gåte', v ? 'på' : 'av'); })),
+  fl('gatecam', 'hjelp', 'Gåteverktøy: kort kamerasveip mot døra eller broen når den åpnes', true, () => gateCamOn, kp('tlm.gatecam', (v) => { gateCamOn = v; })),
+  rg('gatehero', 'admin', 'Gåteverktøy: figurens vekt på plater (1 = for lett til de fleste plater, 3 = klarer plater alene)', 1, 0.5, 6, 0.5, () => GATE.hero, kp('tlm.gatehero', (v) => { GATE.hero = v; }), { digits: 1 }),
+  rg('gateneed', 'admin', 'Gåteverktøy: terskel på alle plater (gange, 1 = som i brettet)', 1, 0.25, 3, 0.25, () => GATE.needScale, kp('tlm.gateneed', (v) => { GATE.needScale = v; }), { digits: 2 }),
+  rg('gatedur', 'admin', 'Gåteverktøy: hvor lenge dører og broer bruker på å åpne (sekunder)', 1.4, 0.4, 5, 0.2, () => GATE.dur, kp('tlm.gatedur', (v) => { GATE.dur = v; }), { digits: 1 }),
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
   fl('goals', 'spill', 'Delmål (milepæler: panel øverst, jubel når et delmål er klart)', true, () => goalsOn, kp('tlm.goals', (v) => { goalsOn = v; goalView?.setOn(v); logEv('delmål', v ? 'på' : 'av'); })),
   fl('shortcuthint', 'hjelp', 'Verktøy-genveier: varsel når du klatrer en trapp med hårgelé (nivå 4–6)', true, () => shortcutHintOn, kp('tlm.shortcuthint', (v) => { shortcutHintOn = v; logEv('genvei', v ? 'varsel på' : 'varsel av'); })),
@@ -2073,6 +2084,26 @@ function puzzleEvent(ev) {
     if (p) { bridgeGuide = { ...p, until: performance.now() + 90000 }; if (puzCamOn) { const m = bridgeMid(p); turnCamera(Math.atan2(player.x - m.x, player.z - m.z), 0.5); setTimeout(() => { if (mode === 'play' && !won) camBehind(); }, 3600); } } }
   else if (ev.type === 'done') logEv('gåte: broen ute', ev.id);
 }
+// gåteverktøy (R60): plate, bryter, dør og vindebro. Lesbart uten tekst (plata synker og lyser, døra viser rødt/grønt), pluss lyd, lydtekst og logg
+const gateName = (o) => (lang === 'en' && o?.en) || o?.label || o?.id || '';
+function gateEvent(ev) {
+  if (!ev) return;
+  if (ev.type === 'plate') { logEv('gåte', `plate ${ev.id} ${ev.on ? 'ned' : 'opp'} (last ${ev.load})`); audio?.pickup(); buzz(ev.on ? 20 : 8); cue(ev.on ? 'klikk!' : 'klikk'); }
+  else if (ev.type === 'switch') { logEv('gåte', `bryter ${ev.id} ${ev.on ? 'på' : 'av'}`); audio?.pickup(); audio?.drop('metal'); buzz(25); cue('klikk!'); toast(T(ev.on ? 'gate.switchOn' : 'gate.switchOff')); }
+  else if (ev.type === 'door') { const d = doorById(LEVEL, ev.id); logEv('gåte', `${d?.kind === 'bridge' ? 'bro' : 'dør'} ${ev.id} ${ev.open ? 'åpnes' : 'lukkes'}`); audio?.creak(1); cue(ev.open ? 'rumler' : 'rumler igjen'); buzz(15);
+    if (ev.open) { toast(T(d?.kind === 'bridge' ? 'gate.bridgeOpen' : 'gate.doorOpen', { name: gateName(d) })); setMood('happy', 1);
+      if (gateCamOn && d && !(d.kind !== 'bridge' && Math.hypot(player.x - (d.min[0] + d.max[0]) / 2, player.z - (d.min[2] + d.max[2]) / 2) < 8)) { const mx = (d.min[0] + d.max[0]) / 2, mz = (d.min[2] + d.max[2]) / 2; turnCamera(Math.atan2(player.x - mx, player.z - mz), 0.5); setTimeout(() => { if (mode === 'play' && !won) camBehind(); }, 3000); } }
+    else toast(T('gate.doorClose', { name: gateName(d) })); }
+  else if (ev.type === 'doorDone') logEv('gåte', `${ev.id} ${ev.open ? 'helt åpen' : 'helt lukket'}`);
+  else if (ev.type === 'latch') { logEv('gåte', `${ev.id} blir stående åpen`); audio?.crumb(9, 10); cue('klikk! låst opp'); }
+  else if (ev.type === 'blocked') { logEv('gåte', `${ev.id} kan ikke lukkes: noe står i veien`); toast(T('gate.blocked')); }
+}
+function gateIntro() {
+  if (store.get('tlm.seen.gates', false)) return;
+  const near = (LEVEL.gateS.plates.some((q) => Math.hypot((q.x0 + q.x1) / 2 - player.x, (q.z0 + q.z1) / 2 - player.z) < 12) || nearSwitch(LEVEL, player, 6)) && player.onGround;
+  if (!near) return;
+  store.set('tlm.seen.gates', true); toast(T('gate.intro', { take: TOUCH ? T('btn.take') : 'F', drop: TOUCH ? T('btn.drop') : 'F' }));
+}
 // sjef-maur (R9): varsel, støt i veggen, skade, seier og premie
 function bossEvent(ev) {
   const seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); tip(msg); } };
@@ -2152,6 +2183,10 @@ function update(dt) {
     autoT = 0;
     if (player.onGround && player.state === 'ground' && !player.carry && player.recover <= 0 && player.groundBox && !player.groundBox.dyn && !player.groundBox.owner && player.y > LEVEL.deathY + 5 && !inHazard(LEVEL, player)) { autoPos = [player.x, player.y, player.z]; saveProgress(); }
   }
+  if (carryEdge && gatesOn && mode === 'play' && !won && !player.carry) {          // R60: TA ved en bryter slår den (hvis ikke en ting er nærmere)
+    const sw = nearSwitch(LEVEL, player), t0 = findCarryTarget(player, LEVEL);
+    if (sw && !t0) { carryEdge = false; gateEvent(toggleSwitch(LEVEL, sw.id)); }
+  }
   const inp = {
     mx: rx * ix + fx * iz, mz: rz * ix + fz * iz,
     jumpPressed: jumpEdge, jumpHeld: held('Space') || touch.jump,
@@ -2168,6 +2203,7 @@ function update(dt) {
   if (antsOn) for (const ev of stepAnts(LEVEL, player, dt, mode === 'play' && !won)) antEvent(ev);
   if (puzzlesOn || puzzleOpenIds(LEVEL).length) for (const ev of stepPuzzles(LEVEL, dt, puzzlesOn && mode === 'play' && !won)) puzzleEvent(ev);
   if (puzzlesOn && mode === 'play' && !won) puzzleIntro();
+  if (hasGates(LEVEL)) { for (const ev of stepGates(LEVEL, dt, player, gatesOn && mode === 'play' && !won)) gateEvent(ev); if (gatesOn && mode === 'play' && !won) gateIntro(); }
   if (bossOn && LEVEL.bossS) for (const ev of stepBoss(LEVEL, player, dt, mode === 'play' && !won)) bossEvent(ev);
   if (crumbsOn) for (const ev of stepCollect(LEVEL, player, dt, mode === 'play' && !won)) crumbEvent(ev);
   if (goalTotal(LEVEL) && goalsOn) for (const ev of stepGoals(LEVEL, { player, crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0 }, mode === 'play' && !won)) goalEvent(ev);
@@ -2394,6 +2430,7 @@ function render(now, dt) {
     const b = player.rope === r ? new THREE.Vector3(player.x, player.y + 0.85, player.z) : new THREE.Vector3(r.x, r.y - r.len, r.z);
     setCyl(line, a, b); end.position.copy(b);
   }
+  gateViews.update(now);
   for (const v of puzzleViews) v.update(now);
   for (const { c, m } of crumbMeshes) { m.update(c.phase, c.got || !crumbsOn); }
   for (const m of antMeshes) {
@@ -2436,7 +2473,8 @@ function render(now, dt) {
     const SENT = { 'need-gel': 'hint.needGel', 'need-roll': 'hint.needRoll', 'need-thread': 'hint.needThread', 'need-needle': 'hint.needNeedle', 'zip-b': 'hint.tieEnd' };   // hele setninger (resten starter med knappen)
     const ACT = { wet: 'hint.soak', knot: 'hint.knot', press: 'hint.press', gel: 'hint.smear', roll: player.carry?.knotted ? 'hint.hangrope' : 'hint.unroll', thread: 'hint.thread', 'zip-a': 'hint.tieTop' };
     const pk = puzzlesOn && player.carry && carryingKeyNear(LEVEL, player), pt = puzzlesOn && !player.carry && puzzleTarget(LEVEL, player);
-    hint.textContent = pk && !SENT[st.th] && player.charge < P.throwMin ? T('puz.keyPlate', { place: B })
+    const gsw = gatesOn && hasGates(LEVEL) && !player.carry && !t && nearSwitch(LEVEL, player);
+    hint.textContent = gsw ? T('gate.switchHint', { btn: B, name: gateName(gsw) }) : pk && !SENT[st.th] && player.charge < P.throwMin ? T('puz.keyPlate', { place: B })
       : pt && pt.key === 'key' && t && t.id === pt.puzzle.key ? T('puz.takeKey', { take: B })
       : player.carry
       ? (player.charge >= P.throwMin ? T('hint.releaseThrow', { btn: B })

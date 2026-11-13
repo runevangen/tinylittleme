@@ -5,6 +5,7 @@
 //         'crumbs' { n }                      samle n smuler i brettet
 //         'stomp'  { n }                      knus n maur/edderkopper
 //         'puzzle' { puzzle }                 åpne gåten (nøkkel og lås, R7)
+//         'gate'   { door }                   åpne en dør/port/vindebro (plate eller bryter, R60, plates_logic.js)
 //         'boss'                              slå sjef-mauren (R9)
 //         'flag'   { flag }                   settes utenfra med setGoalFlag (f.eks. «bygg broen» fra byggeskjermen, R24)
 //   gate:  må være klart før målet åpner (alltid påkrevd). req: påkrevd for «alle delmål klare», men låser ikke målet.
@@ -16,7 +17,7 @@ export const GOAL = {
   above: 3.0,         // reach: ... og så langt over (stå oppå en løs ting på flata)
   minPerLevel: 2, maxPerLevel: 4,
 };
-export const GOAL_TYPES = ['reach', 'crumbs', 'stomp', 'puzzle', 'boss', 'flag'];
+export const GOAL_TYPES = ['reach', 'crumbs', 'stomp', 'puzzle', 'gate', 'boss', 'flag'];
 
 export function initGoals(L) {
   L.goalList = (L.goals || []).map((g) => ({ ...g, done: false }));
@@ -58,6 +59,7 @@ export function goalProgress(L, g, ctx = {}) {
     case 'stomp': return { cur: Math.min(ctx.stomps || 0, g.n), need: g.n };
     case 'reach': return { cur: ctx.player && onSurface(g, ctx.player) ? 1 : 0, need: 1 };
     case 'puzzle': return { cur: (L.puzzleList || []).find((q) => q.id === g.puzzle)?.open ? 1 : 0, need: 1 };
+    case 'gate': return { cur: (L.gateS?.doors || []).find((q) => q.id === g.door)?.t >= 0.999 ? 1 : 0, need: 1 };
     case 'boss': return { cur: L.bossS?.gone ? 1 : 0, need: 1 };
     case 'flag': return { cur: L.goalFlags?.has(g.flag) ? 1 : 0, need: 1 };
     default: return { cur: 0, need: 1 };
@@ -87,6 +89,11 @@ export function goalTarget(L, g, p) {
   if (g.type === 'reach') return { x: Math.max(g.x0, Math.min(g.x1, p.x)), y: g.top, z: Math.max(g.z0, Math.min(g.z1, p.z)) };
   if (g.type === 'crumbs') { const c = nearest((L.crumbList || []).filter((q) => !q.got)); return c ? { x: c.x, y: c.y - 0.8, z: c.z } : null; }
   if (g.type === 'stomp') { const a = nearest((L.antList || []).filter((q) => q.alive)); return a ? { x: a.x, y: a.y, z: a.z } : null; }
+  if (g.type === 'gate') {                                       // pila peker på første plate/bryter som ikke er trykket ennå
+    const d = (L.gateS?.doors || []).find((q) => q.id === g.door); if (!d || d.t > 0) return null;
+    for (const id of d.needs || []) { const pl = L.gateS.plates.find((q) => q.id === id); if (pl && !pl.on) return { x: (pl.x0 + pl.x1) / 2, y: pl.y, z: (pl.z0 + pl.z1) / 2 }; const sw = L.gateS.switches.find((q) => q.id === id); if (sw && !sw.on) return { x: sw.x, y: sw.y, z: sw.z }; }
+    return null;
+  }
   if (g.type === 'boss') { const b = L.bossS; return b && !b.gone ? { x: b.x, y: b.y, z: b.z } : null; }
   return null;
 }
@@ -115,6 +122,7 @@ export function checkGoals(L, { levelId = '' } = {}) {
     if (g.type === 'crumbs' && g.n > (L.collectibles || []).length) errs.push(`${at}: flere smuler enn det finnes`);
     if (g.type === 'stomp' && g.n > (L.ants || []).length) errs.push(`${at}: flere enn det finnes maur`);
     if (g.type === 'puzzle' && !(L.puzzles || []).some((q) => q.id === g.puzzle)) errs.push(`${at}: gåten ${g.puzzle} finnes ikke`);
+    if (g.type === 'gate' && !(L.gates?.doors || []).some((q) => q.id === g.door)) errs.push(`${at}: døra ${g.door} finnes ikke`);
     if (g.type === 'boss' && !L.boss) errs.push(`${at}: brettet har ingen sjef`);
     if (g.type === 'flag' && !g.flag) errs.push(`${at}: flag mangler`);
     if (g.type === 'reach') {
