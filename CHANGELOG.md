@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.56** – Veikart: R53 (dynamisk toppbånd som rydder skjermen), fra tester: Rune.
 v1.55: R50 ferdig, replay og spøkelse, bygg som kode (eksport/import), beste bygg på nett
 v1.54: R48 ferdig, leker som testlast (ball, bil, robot) i byggeskjermen
 
