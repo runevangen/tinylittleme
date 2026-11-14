@@ -76,7 +76,7 @@ const html = fs.readFileSync('index.html', 'utf8'), main = fs.readFileSync('main
 for (const f of ['topband_logic', 'topband_view']) assert.ok(html.includes(`'${f}'`), `${f} i files`);
 assert.ok(view.includes('id="tbi"') && view.includes('id="tbq"'), 'ℹ og ⚑ inni båndet');
 assert.ok(/onInfo: \(\) => \{[^}]*infoTab\.click\(\)/.test(main) && /onFlag: \(\) => \{[^}]*\$\('qbtn'\)\.click\(\)/.test(main), 'ℹ åpner bruksanvisningen, ⚑ åpner vurderingsboksen som før');
-assert.ok(/onNext: \(\) => camToGoal\(\)/.test(main), 'kamera mot målet fra båndet');
+assert.ok(/onNext: \(\) => \(guideOn \? startShowMeNow\(\) : camToGoal\(\)\)/.test(main), "kamera mot målet (Vis meg, R64) fra båndet");
 for (const id of ['tband', 'tbsize']) assert.ok(main.includes(`'${id}', 'hjelp'`), `innstilling ${id}`);
 assert.ok(main.includes("logEv('bånd'") && view.includes("logEv?.('bånd'"), 'logEv bånd');
 assert.ok(main.includes('PRIO.danger') && main.includes('PRIO.reply') && main.includes('PRIO.hint'), 'fare, svar og hint går via båndet');

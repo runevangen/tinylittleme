@@ -65,7 +65,7 @@ export function createTopBand({ T, onInfo, onFlag, onNext, onOpen, logEv }) {
     for (const r of rows) {
       if (r.k === 'head') h += `<div class="ph">${esc(r.text)}</div>`;
       else if (r.k === 'goals') h += `<ul>${r.items.map((g) => `<li class="${g.done ? 'done' : g.active ? 'act' : ''}"><i>${g.done ? '✓' : g.active ? '▶' : '○'}</i><span>${esc(g.text)}</span></li>`).join('')}</ul>`;
-      else if (r.k === 'next') h += `<div class="pr">${esc(r.text)}</div><button data-act="next">${esc(T('tb.camgoal'))}</button>`;
+      else if (r.k === 'next') h += `<div class="pr" style="white-space:pre-line">${esc(r.text)}</div><button data-act="next">${esc(T('tb.camgoal'))}</button>`;
       else if (r.k === 'send') h += `<div class="pr">${esc(r.text)}</div>`;
       else if (r.k === 'reply') h += `<div class="pr rep">✉ ${esc(r.text)}</div>`;
       else if (r.k === 'counts') h += r.items.map((l) => `<div class="qs1">${esc(l)}</div>`).join('');
