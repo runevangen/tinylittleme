@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.77** – Veikart: R64 (tydelig veiledning når målet er under, bak eller ikke i bildet), fra tester: Rune (v1.76).
 - **1.76** – R63: nivå 9 Verkstedet (verksted.scene.json, workshop_logic.js): glatte flater (olje), vektgåte med to plater og mutre, byggested over porten, ny musikk/fortelling, og avslutning etter siste nivå.
 - **1.75** – R62: nivå 8 Stuen (stue_logic.js, scenes/stue.scene.json): sofa, sofabord, TV-benk, bokhylle, skyvedør med trykkplate, delmål, musikk og fortelling.
 - **1.74** – R60: gåteverktøy: trykkplate, dør og bryter (plates_logic.js, plates_view.js), datastyrt i scenen.
