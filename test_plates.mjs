@@ -156,6 +156,7 @@ assert.deepEqual(checkGates(LV, { levelId: 'gaate' }), []); assert.deepEqual(che
   for (const id of ['gates', 'gatecam', 'gatehero', 'gateneed', 'gatedur']) assert.ok(new RegExp(`'${id}', '(spill|hjelp|admin)'`).test(main) && main.includes(`'tlm.${id}'`), `${id} i SETTINGS`);
   assert.ok(/'gatehero', 'admin'/.test(main) && /'gateneed', 'admin'/.test(main) && /'gatedur', 'admin'/.test(main), 'finjustering er admin');
   assert.ok(/logEv\('gåte'/.test(main), 'logEv(gåte …)'); assert.ok(main.includes('gates: gatesSave(LEVEL)') && main.includes('restoreGates(LEVEL, pr.gates)') && main.includes('resetGates(LEVEL)'), 'lagres, gjenopprettes og nullstilles'); assert.ok(main.includes("id: 'gaate'"), 'Gåterommet står i brettlista');
+  assert.ok(main.indexOf("logEv('gåte', `${gateViews.count}") > main.indexOf('let won = false, clock = 0;'), 'oppstartslogg for gåter må komme etter clock (ellers TDZ-krasj ved lasting)');
   const html = fs.readFileSync('index.html', 'utf8'); assert.ok(html.includes("'plates_logic'") && html.includes("'plates_view'"), 'modulene står i files');
 }
 console.log('plates ok');

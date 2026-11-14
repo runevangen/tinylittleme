@@ -1041,7 +1041,6 @@ const bossMesh = LEVEL.bossS ? (() => { const m = buildBoss(), prize = buildPriz
 const bossBar = LEVEL.bossS ? createBossBar(document.body, TOUCH ? T('btn.jump') : 'Mellomrom') : null;
 // smuler (R3): gylne smuler som flyter og snurrer; tatt = skjult
 const gateViews = buildGateViews(scene, LEVEL);   // R60: plater, dører, broer og brytere (ingenting tegnes i brett uten `gates`)
-if (hasGates(LEVEL)) { const gb = gatesBudget(LEVEL); logEv('gåte', `${gateViews.count} deler, ${gb.calls} tegnekall, ${gb.tris} trekanter`); }
 const puzzleViews = buildPuzzleViews(scene, LEVEL);                                                                              // R7: plate og bro
 const crumbMeshes = (LEVEL.crumbList || []).map((c) => { const m = buildCrumb(); m.root.position.set(c.x, c.y, c.z); scene.add(m.root); return { c, m }; });
 // taubaner (nål + tråd) opprettes av fysikken: en tynn rød tråd mellom to knuter
@@ -1086,6 +1085,7 @@ const save = { pos: [...LEVEL.start] };
 const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
+if (hasGates(LEVEL)) { const gb = gatesBudget(LEVEL); logEv('gåte', `${gateViews.count} deler, ${gb.calls} tegnekall, ${gb.tris} trekanter`); }
 const bld = createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
 
 // Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
