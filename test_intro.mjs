@@ -2,12 +2,12 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { makeT, DICT_KEYS } from './i18n.js';
-import { INTRO, INTRO_SWEEP, introKey, STORY_LEVELS } from './story.js';
+import { INTRO, INTRO_SWEEP, introKey, STORY_NS } from './story.js';
 import { firstTarget, reachedFirst, createSweep, sweepPose } from './intro.js';
 
-const levels = { 1: 'bad', 2: 'barnerom', 3: 'kjokken', 4: 'bad2', 5: 'barnerom2', 6: 'kjokken2', 7: 'leke', 8: 'stue' };
+const levels = { 1: 'bad', 2: 'barnerom', 3: 'kjokken', 4: 'bad2', 5: 'barnerom2', 6: 'kjokken2', 7: 'leke', 8: 'stue', 9: 'verksted' };
 let lang = 'nb'; const { T } = makeT(() => lang);
-for (let n = 1; n <= STORY_LEVELS; n++) {
+for (const n of STORY_NS) {
   const L = JSON.parse(fs.readFileSync(new URL(`./levels/${levels[n]}.level.json`, import.meta.url), 'utf8'));
   const t = firstTarget(L.route, L.start, n);
   assert.ok(t, `nivå ${n} mangler første delmål`);

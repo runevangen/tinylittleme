@@ -1,0 +1,1040 @@
+{
+ "name": "Nivå 9: Verkstedet",
+ "rev": 1,
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -70,
+    -2,
+    -26
+   ],
+   "max": [
+    70,
+    0,
+    26
+   ],
+   "id": "gulv",
+   "color": 9409691,
+   "slick": false,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -71,
+    0,
+    -26
+   ],
+   "max": [
+    -70,
+    52,
+    26
+   ],
+   "id": "vegg_v",
+   "color": 13222838,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    70,
+    0,
+    -26
+   ],
+   "max": [
+    71,
+    52,
+    26
+   ],
+   "id": "vegg_o",
+   "color": 13222838,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -70,
+    0,
+    -27
+   ],
+   "max": [
+    70,
+    52,
+    -26
+   ],
+   "id": "vegg_n",
+   "color": 13222838,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -70,
+    0,
+    26
+   ],
+   "max": [
+    70,
+    52,
+    27
+   ],
+   "id": "vegg_s",
+   "color": 13222838,
+   "material": "plaster"
+  },
+  {
+   "type": "plastic",
+   "min": [
+    -56,
+    0,
+    -14
+   ],
+   "max": [
+    -35,
+    0.4,
+    15
+   ],
+   "id": "olje_1",
+   "kind": "oil",
+   "color": 2303275,
+   "material": "plastic",
+   "cp": false,
+   "soft": false,
+   "slick": true
+  },
+  {
+   "type": "wood",
+   "min": [
+    -32,
+    0,
+    -6
+   ],
+   "max": [
+    -21,
+    3.6,
+    9
+   ],
+   "id": "kasse_1",
+   "kind": "crate",
+   "color": 12159573,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    -21,
+    0,
+    -12
+   ],
+   "max": [
+    -5.6,
+    6.4,
+    10
+   ],
+   "id": "verktoykasse",
+   "kind": "toolbox",
+   "color": 13187119,
+   "material": "metal",
+   "cp": true,
+   "soft": false,
+   "slick": true
+  },
+  {
+   "type": "fabric",
+   "min": [
+    -5.6,
+    6.4,
+    -4
+   ],
+   "max": [
+    -4.8,
+    11.2,
+    4
+   ],
+   "id": "fille",
+   "kind": "towel_hang",
+   "color": 15774761,
+   "material": "fabric",
+   "cp": false,
+   "soft": false,
+   "grip": true,
+   "onto": "benk_v",
+   "gripDrain": -0.3
+  },
+  {
+   "type": "wood",
+   "min": [
+    -4.8,
+    0,
+    -26
+   ],
+   "max": [
+    32,
+    11.2,
+    14
+   ],
+   "id": "benk_v",
+   "kind": "table",
+   "color": 10253128,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    32,
+    0,
+    -26
+   ],
+   "max": [
+    70,
+    11.2,
+    14
+   ],
+   "id": "benk_o",
+   "kind": "table",
+   "color": 10253128,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    -2.8,
+    11.2,
+    -24
+   ],
+   "max": [
+    3.2,
+    14.4,
+    -16
+   ],
+   "id": "skrustikke",
+   "kind": "vise",
+   "color": 9081500,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    15.5,
+    19.2,
+    -26
+   ],
+   "max": [
+    21.5,
+    21.2,
+    -14
+   ],
+   "id": "hylle_v",
+   "kind": "shelf",
+   "color": 11450047,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    15.5,
+    11.2,
+    -14
+   ],
+   "max": [
+    21.5,
+    21.2,
+    -13.2
+   ],
+   "id": "vegg_v",
+   "kind": "towel_hang",
+   "color": 6258344,
+   "material": "metal",
+   "cp": false,
+   "soft": false,
+   "grip": true,
+   "onto": "hylle_v",
+   "gripDrain": -0.2
+  },
+  {
+   "type": "metal",
+   "min": [
+    30.5,
+    19.2,
+    -26
+   ],
+   "max": [
+    46,
+    21.2,
+    -14
+   ],
+   "id": "hylle_o",
+   "kind": "shelf",
+   "color": 11450047,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    46,
+    19.2,
+    -26
+   ],
+   "max": [
+    70,
+    21.2,
+    -14
+   ],
+   "id": "hylle_o2",
+   "kind": "shelf",
+   "color": 11450047,
+   "material": "metal",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "metal",
+   "min": [
+    58,
+    11.2,
+    -14
+   ],
+   "max": [
+    70,
+    21.2,
+    -13.2
+   ],
+   "id": "vegg_o",
+   "kind": "towel_hang",
+   "color": 6258344,
+   "material": "metal",
+   "cp": false,
+   "soft": false,
+   "grip": true,
+   "onto": "hylle_o2",
+   "gripDrain": -0.2
+  },
+  {
+   "type": "metal",
+   "min": [
+    35,
+    21.2,
+    -24
+   ],
+   "max": [
+    42,
+    24.4,
+    -16
+   ],
+   "id": "maal",
+   "kind": "toolbox",
+   "color": 3116885,
+   "material": "metal",
+   "cp": true,
+   "soft": false
+  }
+ ],
+ "movables": [
+  {
+   "id": "dekk_1",
+   "kind": "tire",
+   "material": "plastic",
+   "color": 2829617,
+   "min": [
+    -62,
+    0,
+    17
+   ],
+   "max": [
+    -59.2,
+    2.8,
+    19.8
+   ],
+   "weight": "light",
+   "breakable": false,
+   "round": true
+  },
+  {
+   "id": "mutter_1",
+   "kind": "nut",
+   "material": "metal",
+   "color": 11450047,
+   "min": [
+    -0.4,
+    11.2,
+    -14.4
+   ],
+   "max": [
+    1.2,
+    12.8,
+    -12.8
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "mutter_2",
+   "kind": "nut",
+   "material": "metal",
+   "color": 11450047,
+   "min": [
+    -0.4,
+    11.2,
+    -9.4
+   ],
+   "max": [
+    1.2,
+    12.8,
+    -7.8
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "mutter_3",
+   "kind": "nut",
+   "material": "metal",
+   "color": 11450047,
+   "min": [
+    -0.4,
+    11.2,
+    -4.4
+   ],
+   "max": [
+    1.2,
+    12.8,
+    -2.8
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "mutter_4",
+   "kind": "nut",
+   "material": "metal",
+   "color": 11450047,
+   "min": [
+    -0.4,
+    11.2,
+    0.6
+   ],
+   "max": [
+    1.2,
+    12.8,
+    2.2
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "mutter_5",
+   "kind": "nut",
+   "material": "metal",
+   "color": 11450047,
+   "min": [
+    -0.4,
+    11.2,
+    5.2
+   ],
+   "max": [
+    1.2,
+    12.8,
+    6.8
+   ],
+   "weight": "light",
+   "breakable": false
+  }
+ ],
+ "decor": [],
+ "hints": [
+  {
+   "id": "olje_1",
+   "text": "Oljeflekk\nGlatt! Uten grep sklir du. Gå utenom, eller bruk farten: stikka styrer, men bremsene virker nesten ikke.",
+   "pos": [
+    -45.5,
+    1.3,
+    0.5
+   ]
+  },
+  {
+   "id": "dekk_1",
+   "text": "Sykkeldekk\nDytt det med stikka så ruller det. Det kan også bæres med TA.",
+   "pos": [
+    -60.6,
+    3.7,
+    18.4
+   ]
+  },
+  {
+   "id": "verktoykasse",
+   "text": "Verktøykasse\nLokket er oljet og glatt. Gå inntil fillen og hold GREP for å klatre opp på arbeidsbenken.",
+   "pos": [
+    -13.3,
+    7.3,
+    -1
+   ]
+  },
+  {
+   "id": "fille",
+   "text": "Oljefille\nHold GREP mot fillen og klatre opp på arbeidsbenken. Den er ikke glatt.",
+   "pos": [
+    -5.2,
+    12.1,
+    0
+   ]
+  },
+  {
+   "id": "skrustikke",
+   "text": "Skrustikke\nTung og fast. Hopp opp på den med HOPP, eller gå utenom.",
+   "pos": [
+    0.2,
+    15.3,
+    -20
+   ]
+  },
+  {
+   "id": "mutter_1",
+   "text": "Mutre\nBær en mutter med TA og sett den på en trykkplate (TA igjen). Den tunge plata trenger tre, den lette to.",
+   "pos": [
+    0.4,
+    13.7,
+    -13.6
+   ]
+  },
+  {
+   "id": "vegg_v",
+   "text": "Verktøyvegg\nHullbrett med knagger: hold GREP mot veggen og klatre opp på hylla. Her kan du bygge en bro til neste hylle.",
+   "pos": [
+    18.5,
+    22.1,
+    -13.6
+   ]
+  },
+  {
+   "id": "vegg_o",
+   "text": "Verktøyvegg\nHold GREP mot hullbrettet og klatre opp på hylla. Gå så tilbake langs hylla: målet er verktøykassa øverst.",
+   "pos": [
+    64,
+    22.1,
+    -13.6
+   ]
+  }
+ ],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    24,
+    32,
+    -25.95
+   ],
+   "size": [
+    22,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2.4
+ },
+ "audio": {
+  "reverb": 0.25,
+  "theme": "verksted"
+ },
+ "ants": [
+  {
+   "id": "maur_1",
+   "a": [
+    -48,
+    0,
+    20.4
+   ],
+   "b": [
+    -10,
+    0,
+    20.4
+   ]
+  },
+  {
+   "id": "maur_2",
+   "a": [
+    38,
+    11.2,
+    0
+   ],
+   "b": [
+    68,
+    11.2,
+    0
+   ]
+  },
+  {
+   "id": "veps_1",
+   "type": "wasp",
+   "a": [
+    -48,
+    0,
+    -15
+   ],
+   "b": [
+    -23,
+    0,
+    -15
+   ],
+   "alt": 9
+  }
+ ],
+ "collectibles": [
+  {
+   "id": "smule_1",
+   "x": -7.74,
+   "y": 7.2,
+   "z": 7.76
+  },
+  {
+   "id": "smule_2",
+   "x": 67.26,
+   "y": 12,
+   "z": 12.26
+  },
+  {
+   "id": "smule_3",
+   "x": 29.76,
+   "y": 12,
+   "z": 12.26
+  },
+  {
+   "id": "smule_4",
+   "x": 7.26,
+   "y": 12,
+   "z": -23.74
+  },
+  {
+   "id": "smule_5",
+   "x": 67.26,
+   "y": 22,
+   "z": -23.74
+  },
+  {
+   "id": "smule_6",
+   "x": -30.24,
+   "y": 4.4,
+   "z": -4.24
+  },
+  {
+   "id": "smule_7",
+   "x": -52.74,
+   "y": 0.8,
+   "z": -23.74
+  },
+  {
+   "id": "smule_8",
+   "x": -40.74,
+   "y": 0.8,
+   "z": 22.76
+  },
+  {
+   "id": "smule_9",
+   "x": -15.24,
+   "y": 0.8,
+   "z": -23.74
+  },
+  {
+   "id": "smule_10",
+   "x": 11.76,
+   "y": 0.8,
+   "z": 22.76
+  }
+ ],
+ "build": {
+  "sites": [
+   {
+    "id": "verksted1",
+    "label": "Gapet over porten",
+    "x": 26,
+    "y": 21.2,
+    "z": -20,
+    "w": 24,
+    "h": 12,
+    "anchors": [
+     {
+      "u": -4.5,
+      "v": 0
+     },
+     {
+      "u": 4.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -10.5,
+      "u1": -4.5
+     },
+     {
+      "u0": 4.5,
+      "u1": 10.5
+     }
+    ],
+    "start": {
+     "u": -9,
+     "v": 0
+    },
+    "goal": {
+     "u": 9,
+     "v": 0
+    },
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "p1",
+       "type": "plank_l",
+       "u": -2,
+       "v": 0.25,
+       "rot": 0
+      },
+      {
+       "id": "p2",
+       "type": "plank_l",
+       "u": 2,
+       "v": 0.75,
+       "rot": 0
+      }
+     ],
+     "links": [
+      {
+       "id": "k1",
+       "kind": "tape",
+       "a": "p2",
+       "la": {
+        "x": -2,
+        "y": -0.25
+       },
+       "b": "p1",
+       "lb": {
+        "x": 2,
+        "y": 0.25
+       }
+      }
+     ],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -6,
+       "u1": 6,
+       "top": 0.58,
+       "tol": 0.26
+      }
+     ],
+     "route": [
+      "gulv",
+      "kasse_1",
+      "verktoykasse",
+      "fille",
+      "benk_v",
+      "vegg_v",
+      "hylle_v",
+      "@bro",
+      "hylle_o",
+      "maal"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "p1",
+    "type": "plank_l",
+    "x": 5.6,
+    "y": 12.1,
+    "z": -22
+   },
+   {
+    "id": "p2",
+    "type": "plank_l",
+    "x": 5.6,
+    "y": 12.1,
+    "z": -18
+   },
+   {
+    "id": "p3",
+    "type": "plank_s",
+    "x": 9,
+    "y": 12.1,
+    "z": -22
+   },
+   {
+    "id": "p4",
+    "type": "ruler",
+    "x": 9,
+    "y": 12.1,
+    "z": -18
+   },
+   {
+    "id": "p5",
+    "type": "pencil",
+    "x": 12.4,
+    "y": 12.1,
+    "z": -18
+   },
+   {
+    "id": "p6",
+    "type": "weight",
+    "x": -16,
+    "y": 7.3,
+    "z": -6
+   },
+   {
+    "id": "p7",
+    "type": "block",
+    "x": -11,
+    "y": 7.3,
+    "z": -6
+   },
+   {
+    "id": "p8",
+    "type": "lego",
+    "x": -40,
+    "y": 0.9,
+    "z": 20
+   }
+  ]
+ },
+ "gates": {
+  "plates": [
+   {
+    "id": "pv",
+    "x0": 10,
+    "x1": 18,
+    "z0": -5,
+    "z1": 3,
+    "y": 11.2,
+    "need": 6,
+    "label": "Tung plate",
+    "en": "Heavy plate"
+   },
+   {
+    "id": "ph",
+    "x0": 22,
+    "x1": 30,
+    "z0": -5,
+    "z1": 3,
+    "y": 11.2,
+    "need": 4,
+    "label": "Lett plate",
+    "en": "Light plate"
+   }
+  ],
+  "switches": [],
+  "doors": [
+   {
+    "id": "port",
+    "kind": "door",
+    "min": [
+     31.2,
+     11.2,
+     -26
+    ],
+    "max": [
+     32.8,
+     18.4,
+     14
+    ],
+    "needs": [
+     "pv",
+     "ph"
+    ],
+    "dir": "down",
+    "label": "Porten",
+    "en": "The gate"
+   }
+  ]
+ },
+ "goals": [
+  {
+   "id": "smuler",
+   "type": "crumbs",
+   "label": "Samle 6 smuler",
+   "en": "Collect 6 crumbs",
+   "n": 6
+  },
+  {
+   "id": "port",
+   "type": "gate",
+   "label": "Åpne porten (begge platene samtidig)",
+   "en": "Open the gate (both plates at once)",
+   "door": "port"
+  },
+  {
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg en teipet bro over porten (BYGG-knappen)",
+   "en": "Build a taped bridge over the gate (BUILD button)",
+   "flag": "verksted1"
+  },
+  {
+   "id": "vegg",
+   "type": "reach",
+   "label": "Klatre verktøyveggen",
+   "en": "Climb the tool wall",
+   "gate": true,
+   "on": "hylle_o",
+   "x0": 30.5,
+   "x1": 46,
+   "z0": -26,
+   "z1": -14,
+   "top": 21.2
+  }
+ ],
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -70,
+   "x1": 70,
+   "z0": -26,
+   "z1": 26,
+   "top": 0
+  },
+  {
+   "id": "kasse_1",
+   "x0": -32,
+   "x1": -21,
+   "z0": -6,
+   "z1": 9,
+   "top": 3.6
+  },
+  {
+   "id": "verktoykasse",
+   "x0": -21,
+   "x1": -5.6,
+   "z0": -12,
+   "z1": 10,
+   "top": 6.4
+  },
+  {
+   "id": "fille",
+   "x0": -5.6,
+   "x1": -4.8,
+   "z0": -4,
+   "z1": 4,
+   "top": 6.4,
+   "grip": true
+  },
+  {
+   "id": "benk_v",
+   "x0": -4.8,
+   "x1": 32,
+   "z0": -26,
+   "z1": 14,
+   "top": 11.2
+  },
+  {
+   "id": "benk_o",
+   "x0": 32,
+   "x1": 70,
+   "z0": -26,
+   "z1": 14,
+   "top": 11.2
+  },
+  {
+   "id": "vegg_o",
+   "x0": 58,
+   "x1": 70,
+   "z0": -14,
+   "z1": -13.2,
+   "top": 11.2,
+   "grip": true
+  },
+  {
+   "id": "hylle_o2",
+   "x0": 46,
+   "x1": 70,
+   "z0": -26,
+   "z1": -14,
+   "top": 21.2
+  },
+  {
+   "id": "hylle_o",
+   "x0": 30.5,
+   "x1": 46,
+   "z0": -26,
+   "z1": -14,
+   "top": 21.2
+  },
+  {
+   "id": "maal",
+   "x0": 35,
+   "x1": 42,
+   "z0": -24,
+   "z1": -16,
+   "top": 24.4
+  }
+ ],
+ "start": [
+  -64,
+  0,
+  4
+ ],
+ "goal": [
+  38.4,
+  24.4,
+  -20
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -70,
+  "x1": 70,
+  "z0": -26,
+  "z1": 26,
+  "height": 52,
+  "floor": {
+   "material": "plaster",
+   "color": "#8f949b",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#c9c3b6"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#9aa0a8"
+  }
+ },
+ "report": {
+  "source": {
+   "photos": 0,
+   "views": [],
+   "interpreted_by": "Oppdiktet rom (ikke fra bilder), laget for nivå 9 (R63): verksted/garasje i barneskala.",
+   "scale_anchors": [
+    "arbeidsbenk 76 cm",
+    "verktøykasse 36 cm",
+    "mutter 8 cm"
+   ],
+   "uncertainty": "Ingen: rommet er tegnet for spillet.",
+   "note": "Nivå 9 (R63). Glatt olje på gulvet og på verktøykassa; fille og verktøyvegg å klatre i; vektgåte med to plater og en port; tape-bro som snarvei."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 12,
+  "reachable": 12
+ }
+}

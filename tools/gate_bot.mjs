@@ -6,11 +6,11 @@ import fs from 'node:fs';
 import { P, newPlayer, step, applyPreset, initBodies, drainEvents } from '../physics.js';
 import { initGates, stepGates, toggleSwitch, nearSwitch, doorById, doorOpen, plateLoad, plateNeed, GATE, gatesBudget } from '../plates_logic.js';
 
-export function solveGates(levelPath, { level = null, verbose = false } = {}) {
+export function solveGates(levelPath, { level = null, verbose = false, from = null } = {}) {   // R63: from = [x, y, z] setter figuren på flata gåten ligger på (klatringen dit bevises av walk_route)
   applyPreset('mario'); Object.assign(P, { edgeGuard: true, autoJump: true, airSteady: true, magnet: true, holdGrab: true, shimmy: true, rollOn: true, carefulOn: true });
   const L = level ? JSON.parse(JSON.stringify(level)) : JSON.parse(fs.readFileSync(levelPath, 'utf8'));
   initBodies(L); initGates(L);
-  const p = newPlayer(...L.start), idle = { mx: 0, mz: 0, jumpPressed: false, jumpHeld: false, grabPressed: false, grabHeld: false }, out = { ok: true, log: [], events: [], solved: [], L, p };
+  const p = newPlayer(...(from || L.start)), idle = { mx: 0, mz: 0, jumpPressed: false, jumpHeld: false, grabPressed: false, grabHeld: false }, out = { ok: true, log: [], events: [], solved: [], L, p };
   const say = (m) => { out.log.push(`${(t / 60).toFixed(1)}s ${m}`); if (verbose) console.log(out.log.at(-1)); };
   let t = 0;
   const tick = (inp = {}) => { step(p, { ...idle, ...inp }, 1 / 60, L); drainEvents(L); for (const ev of stepGates(L, 1 / 60, p, true)) out.events.push(ev); t++; };
@@ -43,9 +43,9 @@ export function solveGates(levelPath, { level = null, verbose = false } = {}) {
     if (!walkTo(bx + ux / ul * 1.6, bz + uz / ul * 1.6, 0.3)) return `kom ikke bort til ${b.id}`;
     for (let i = 0; i < 90 && !p.carry; i++) {                                    // gå mot tingen til den er innen rekkevidde, og trykk TA
       const dx = bx - p.x, dz = bz - p.z, d = Math.hypot(dx, dz) || 1, gap = Math.hypot(Math.max(b.min[0] - p.x, 0, p.x - b.max[0]), Math.max(b.min[2] - p.z, 0, p.z - b.max[2]));
-      tick({ mx: dx / d * (gap < 0.9 ? 0.05 : 0.5), mz: dz / d * (gap < 0.9 ? 0.05 : 0.5), carryPressed: gap < 0.9 && i % 4 === 0 });
+      tick({ mx: dx / d * (gap < 0.9 ? 0.12 : 0.5), mz: dz / d * (gap < 0.9 ? 0.12 : 0.5), carryPressed: gap < 0.9 && i % 4 === 0 });
     }
-    if (p.carry !== b) return `fikk ikke tak i ${b.id}`;
+    if (p.carry !== b) return `fikk ikke tak i ${b.id} (står på ${p.x.toFixed(1)}, ${p.y.toFixed(1)}, ${p.z.toFixed(1)}, ser mot ${p.fx.toFixed(1)}, ${p.fz.toFixed(1)}; tingen ligger på ${bx.toFixed(1)}, ${bz.toFixed(1)})`;
     used.add(b.id); say(`tok ${b.id}`);
     if (!walkTo(cx - ux / ul * 0.3, cz - uz / ul * 0.3, 0.45)) return `kom ikke til ${pl.id} med ${b.id}`;
     for (let i = 0; i < 30; i++) tick({ mx: -ux / ul * 0.05, mz: -uz / ul * 0.05, carryPressed: i === 5 });      // sett den fra deg (TA igjen)
@@ -62,7 +62,7 @@ export function solveGates(levelPath, { level = null, verbose = false } = {}) {
       if (pl) {
         if (plateLoad(L, pl, null) >= plateNeed(pl)) continue;
         if (GATE.hero >= plateNeed(pl)) { if (!walkTo((pl.x0 + pl.x1) / 2, (pl.z0 + pl.z1) / 2, 0.3)) return fail(`kom ikke til ${pl.id}`); settle(10); }
-        else { const e = carryTo(pl); if (e) return fail(e); }
+        else { for (let k = 0; k < 12 && plateLoad(L, pl, null) < plateNeed(pl); k++) { const e = carryTo(pl); if (e) return fail(e); } }   // R63: plater som trenger flere ting
         if (!pl.on) return fail(`${pl.id} trykkes ikke ned (last ${pl.load}, trenger ${plateNeed(pl)})`);
         say(`plate ${pl.id} trykket (last ${pl.load})`);
       } else if (sw) {

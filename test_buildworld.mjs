@@ -49,7 +49,7 @@ const lv = (id) => JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')
   assert.ok(walkAcross(false).x < site.x, 'uten bro stopper figuren ved kanten (gapet kan ikke krysses ved å gå)');
 }
 // 4) alle fire byggebrettene (R26: bro og trapp, R30: vippe og kjøkkenbro): byggestedet er med delene, referansebygget består prøven i 2D-fysikken, og ruta via bygget går i ekte fysikk
-for (const id of ['bro', 'trapp', 'vippe', 'kjokkenbro', 'leke', 'stue']) {
+for (const id of ['bro', 'trapp', 'vippe', 'kjokkenbro', 'leke', 'stue', 'verksted']) {
   const L = lv(id), site = L.build.sites[0]; assert.ok(site.ref?.placed?.length && site.ref.route, `${id}: referansebygg og rute i brettet`);
   const types = Object.fromEntries(L.build.parts.map((q) => [q.id, q.type]));
   const need = {}; for (const p of site.ref.placed) need[p.type] = (need[p.type] || 0) + 1; for (const [t, n] of Object.entries(need)) assert.ok(L.build.parts.filter((q) => q.type === t).length >= n, `${id}: nok deler av typen ${t} å finne i rommet`);

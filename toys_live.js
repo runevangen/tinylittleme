@@ -3,8 +3,8 @@
 // Alt bygger på de vanlige flyttbare tingene (`movables` → `L.bodies`): ingen ny kollisjonsmodell. Utløses med det spilleren allerede kan:
 // dytte (stikka), lande på (HOPP) og ta/slippe (TA). Tegning og animasjon ligger i toys_view.js, lyden i audio.js.
 
-export const TOY_KINDS = ['tennisball', 'rockinghorse', 'windup', 'jackbox', 'toycar'];
-export const ROUND_KINDS = ['ball', 'tennisball'];            // kuleformede: ekte kulekollisjon i fysikken
+export const TOY_KINDS = ['tennisball', 'rockinghorse', 'windup', 'jackbox', 'toycar', 'tire'];
+export const ROUND_KINDS = ['ball', 'tennisball', 'tire'];     // kuleformede: ekte kulekollisjon i fysikken (R63: sykkeldekket ruller som en ball)
 export const TOY = {
   rollK: 0.85,        // hvor mye av dyttet som blir til rulling videre (0 = ingen)
   rollMin: 1.2,       // enheter/s: roligere dytt gjør ingenting
@@ -36,7 +36,7 @@ export function createToyLife(L) {
   return S;
 }
 export function resetToys(S) {
-  for (const t of S.toys.values()) { const [x, z] = ctr(t.b); Object.assign(t, { x, z, wasCarried: false, cool: 0, rock: 0, ph: 0, pop: 0, wind: 0, tickT: 0, stuck: 0, speed: 0 }); }
+  for (const t of S.toys.values()) { const [x, z] = ctr(t.b); Object.assign(t, { x, z, wasCarried: false, cool: 0, rock: 0, ph: 0, pop: 0, wind: 0, tickT: 0, stuck: 0, speed: 0, spin: 0 }); }
   S.prevGround = null; S.prevOnGround = true; S.prevVy = 0;
 }
 
@@ -78,6 +78,7 @@ export function stepToys(S, L, p, dt) {
     // dyttet: målt flytting siden forrige bilde
     const dx = x - t.x, dz = z - t.z, sp = Math.hypot(dx, dz) / dt; t.x = x; t.z = z; t.speed = sp;
     const r = (b.max[0] - b.min[0]) / 2; if (t.kind === 'tennisball' && r > 0) { t.rx += dz / r; t.rz -= dx / r; }
+    if (t.kind === 'tire' && r > 0 && Math.hypot(dx, dz) > 1e-4) { t.spin = (t.spin || 0) + Math.hypot(dx, dz) / r; t.yaw = Math.atan2(-dz, dx); }   // R63: dekket svinger i rulleretningen og snurrer rundt akslingen
     const own = Math.hypot(b.vx || 0, b.vz || 0);
     if (t.kind === 'windup') {
       if (t.wind > 0) {
@@ -89,7 +90,7 @@ export function stepToys(S, L, p, dt) {
       }
       continue;
     }
-    if (sp > TOY.rollMin && (t.kind === 'tennisball' || t.kind === 'toycar')) {
+    if (sp > TOY.rollMin && (t.kind === 'tennisball' || t.kind === 'toycar' || t.kind === 'tire')) {
       if (sp > own * 1.05 + 0.2 && TOY.rollK > 0) { const k = Math.min(1, TOY.rollMax / sp) * TOY.rollK; b.vx = dx / dt * k; b.vz = dz / dt * k; }   // rull videre
       if (t.kind === 'tennisball' && hasCooled(t, TOY.squeakCool)) out('squeak', clamp(sp / 4, 0.4, 1));
       else if (t.kind === 'toycar' && hasCooled(t, TOY.honkCool)) out('honk', clamp(sp / 4, 0.4, 1));

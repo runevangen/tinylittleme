@@ -64,6 +64,13 @@ Et eget rom (ikke en variant): 670 × 280 cm, laget av `node tools/make_stue.mjs
 - **Delmål:** 6 smuler, åpne skyvedøren, bygg broen (valgfritt), klatre opp bokhylla (låser målet). **Fiender:** to maur og en veps (R61). **10 smuler.** Egen musikk (`stue` i `music.js`), palett (`grade.js`), fortelling og intro (nivå 8). Nivåvalget og «Neste nivå» kommer fra `LEVELS` i `main.js`.
 - **Bevis:** `node tools/walk_route.mjs levels/stue.level.json` (hovedveien, ca. 42 s; med døra lukket kommer du ikke fram), `node tools/gate_bot.mjs levels/stue.level.json`, `node tools/bot.mjs levels/stue.level.json` (ruta og bygget består streng modus).
 - **Gulvdetaljer:** rommet er stort, så `room.fdetMax` (118) i scenen setter et lavere tak enn standarden (140) så `perf_budget`/`FDET` holder. Ikke bevist her: ekte FPS og følelse på iPhone (miljøet har ingen GPU).
+### Nivå 9: Verkstedet (R63)
+Siste rom, 700 × 260 cm (`tools/make_verksted.mjs` → `scenes/verksted.scene.json` → `levels/verksted.level.json`; `test_verksted.mjs` sjekker at de er à jour). «Neste nivå» er nivået med lavest `n` over dette (`nextLevelOf`), så nivå 8 (Stuen, R62) kan komme før eller etter; etter siste nivå viser målskjermen «Alle nivåene klart» og knappen til avslutningen.
+- **Hovedveien** (`walk_route`, ca. 47 s): gulv (oljeflekk `olje_1`, glatt) → kasse → verktøykasse med oljet, glatt lokk → oljefille (grep) → arbeidsbenken → gåtekammeret → port → verktøyvegg (grep) → hylle → verktøykassa med motgiften.
+- **Vektgåten:** to plater (tung 6, lett 4) og nøyaktig fem mutre à 2 som kan bæres (TA): tre på den tunge, to på den lette. Porten åpner bare når begge er nede samtidig. `gate_bot` løser den med ekte fysikk (`solveGates(…, { from })`), og `walk_route` med lukket port feiler.
+- **Byggestedet:** gapet over porten (45 cm) mellom to hyller; én planke rekker ikke, to planker uten tape faller. Referansebygget er to lange planker teipet sammen (`tol` på broflata gir plass til at den henger litt). Snarveien går forbi hele gåten; boten beviser både hovedveien og `bygg:verksted1`.
+- **Glatt** (`slick: true` på en boks i scenen): gli uten grep (`slickAccel`, admin-innstilling), rød ✕ og glansstriper (`readable_view.js`); gripbare flater (fillen) virker fra glatt underlag. Sykkeldekket (`tire`) er rundt og ruller når du dytter det.
+- Ikke bevist her: ekte FPS og følelsen av å gli på iPhone (testes på iPhone).
 
 ## Slik lages og sjekkes et nivå
 1. Skriv scenen (`scenes/<navn>.scene.json`, mål i cm) og kontroller den: `node tools/validate_scene.mjs scenes/<navn>.scene.json`.

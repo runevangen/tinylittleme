@@ -89,7 +89,7 @@ export function refRoute(L, site) {
   const hd = siteDepth(site) / 2, byId = new Map();
   for (const b of L.boxes || []) if (b.id && b.type !== 'wall' && b.type !== 'floor') byId.set(b.id, { id: b.id, x0: b.min[0], x1: b.max[0], z0: b.min[2], z1: b.max[2], top: b.max[1] });
   for (const n of L.route || []) byId.set(n.id, n);
-  for (const s of ref.surfaces || []) byId.set(s.id, { id: s.id, x0: site.x + s.u0, x1: site.x + s.u1, z0: site.z - hd, z1: site.z + hd, top: site.y + s.top });
+  for (const s of ref.surfaces || []) byId.set(s.id, { id: s.id, x0: site.x + s.u0, x1: site.x + s.u1, z0: site.z - hd, z1: site.z + hd, top: site.y + s.top, ...(s.tol ? { tol: s.tol } : {}) });   // R63: tol = toleranse for høyden (en teipet bro som henger litt)
   const out = ref.route.map((id) => byId.get(id)); return out.every(Boolean) ? out : null;
 }
 // verste tenkelige bygg: hele byggestedet fylt med én solid blokk (for å bevise at den alternative veien aldri går gjennom stedet)

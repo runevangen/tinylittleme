@@ -29,11 +29,11 @@ const L = lv('leke');
 {
   const main = fs.readFileSync('main.js', 'utf8');
   assert.ok(/\{ id: 'leke', n: 7,/.test(main), 'nivå 7 ligger i LEVELS');
-  assert.equal(STORY_LEVELS, 8); assert.equal(storyKey(7), 'story.7'); assert.equal(INTRO[7].hint, 'intro.hint.7');
+  assert.equal(STORY_LEVELS, 9); assert.equal(storyKey(7), 'story.7'); assert.equal(INTRO[7].hint, 'intro.hint.7');
   let lang = 'nb'; const { T } = makeT(() => lang);
   for (const l of ['nb', 'en']) { lang = l; for (const k of ['story.title.7', 'story.7', 'intro.hint.7', 'leke.soldier']) { const s = T(k, { jump: 'HOPP', grab: 'GREP', take: 'TA' }); assert.notEqual(s, k, `${l}:${k}`); assert.ok(!/\{\w+\}/.test(s), `${l}:${k} plassholdere`); assert.ok(!/\b(mellomrom|space|tast|shift)\b/i.test(s), `${l}:${k} nevner taster`); } }
   assert.deepEqual(DICT_KEYS.nb.filter((k) => /leke\./.test(k)).sort(), DICT_KEYS.en.filter((k) => /leke\./.test(k)).sort());
-  assert.ok(/'win\.all': 'Alle åtte/.test(fs.readFileSync('i18n.js', 'utf8')));
+  assert.ok(/'win\.all': 'Alle nivåene/.test(fs.readFileSync('i18n.js', 'utf8')));
   assert.equal(themeFor(L).id, 'leke'); assert.ok(THEMES.leke.bpm > THEMES.kjokken.bpm, 'egen musikk, raskere marsj');
   assert.ok(gradeTint('leke', 'wall:plaster'), 'egen palett');
 }

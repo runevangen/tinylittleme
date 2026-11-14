@@ -74,6 +74,11 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `tv` | boks | TV (R62): flat dekorboks på veggen |
 | `remote` | boks | fjernkontroll (R62): movable light, ca. 16×5×8 cm; bæres (TA) til en trykkplate (R60) |
 | `gel_bottle` | ja | hårgelé: movable light + tool: "gel" |
+| `oil` | boks | oljeflekk (R63): lav boks med slick: true; du sklir uten grep, tegnes med glansstriper og rød ✕ |
+| `toolbox` | boks | verktøykasse (metall, vanlig boks); slick: true gir et oljet lokk |
+| `vise` | boks | skrustikke (metall, vanlig boks) |
+| `nut` | boks | mutter (R63): movable light, ca. 8 cm kube; veier 2 på en trykkplate |
+| `tire` | ja | sykkeldekk (R63): movable light, kube ca. 14 cm; ekte kulekollisjon (ruller når du dytter det), bæres med TA |
 
 ## Felt per ting
 - `material`: wood, woodpanel, tile, porcelain, ceramic, plastic, fabric, paper, metal, glass, mirror, wicker, book, plaster.

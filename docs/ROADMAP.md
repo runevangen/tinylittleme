@@ -27,10 +27,6 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Åpne punkter
 
-### [ ] R63 · Nivå 9: Verkstedet/garasjen (olje, verktøy og tung maskineri i liten skala)
-Avhenger av R60 og R61. Nytt rom som er det mest «tekniske» i huset: **verktøykasse** (skrutrekker som stav, spiker, teip og linjal som byggedeler), **arbeidsbenk** med skrustikke, **oljeflekk/såpe** som er glatte flater (`slick`, se BACKLOG «slick-flater»: man glir uten grep, med rød ✕ og glansstriper fra v1.00), **sykkeldekk** som ruller, **verktøyvegg** med hull (klatrevei), og et **tung-vekt-gåtekammer** med to trykkplater (R60) der man må balansere vekt. Minst 3 delmål, en bygging som kombinerer tau/tape (R25/R49a) og gåten, bakkefiender og veps, egen musikk og fortelling, 10 smuler, overgang til målskjerm og til slutten av spillet (utvid avslutningen etter siste nivå). Alt som i R62: validering, `walk_route`/bot-bevis, alternativ vei, nb/en-tekster, lagring.
-Ferdig når: som R62 for dette rommet, pluss at glatte flater oppfører seg riktig (test: gli uten grep, gripbar kant fungerer) og avslutningen etter siste nivå viser at spillet er ferdig.
-
 ### [ ] R54 · Fra tester: Rune · Roligere kamera: følging av som standard og bredere synsfelt i høyformat
 Fra spilletest på iPhone (v1.32–v1.56): testerne blir desorientert og sier at skjermen veiver fram og tilbake. Med «Kamerafølging: styrke» på 0 og «Synsfelt» på 70 ble det klart bedre; med følgingen tilbake på 1 (synsfelt fortsatt 70) ble det mye verre. Den automatiske dreiningen bak figuren (`followYaw` i `camera_util.js`, kalt fra `main.js`) er altså hovedårsaken, og synsfeltet nummer to: 52° loddrett gir bare ca. 25° vannrett på stående iPhone, fordi synsfeltet ikke justeres for skjermformatet.
 (1) **Følging av som standard.** «Kameraet følger etter deg automatisk» (`tlm.follow`) er av for alle, også for dem som har den gamle verdien lagret (engangs-migrering, slik PUBG-standarden på PC ble satt i v0.72). Valget og «Kamerafølging: styrke» blir stående i ⚙ → Kamera, så den kan slås på igjen. Sjefkamp-kameraet, ◎ og dobbelttrykk virker som før.
@@ -45,6 +41,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Nivå 9: Verkstedet (olje/glatte flater, vektgåte, verktøy, byggested, avslutning etter siste nivå) (R63, v1.76)
 - [x] Nivå 8: Stuen (sofa, sofabord, TV-benk, bokhylle, skyvedør med trykkplate, delmål, musikk, fortelling) (R62, v1.75)
 - [x] Gåteverktøy: trykkplate, dør og bryter (plates_logic.js, plates_view.js) (R60, v1.74)
 - [x] Fiende: veps som flyr, patruljerer, varsler og stuper (wasp.js, wasp_view.js) (R61, v1.73)

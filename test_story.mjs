@@ -1,17 +1,17 @@
 // node test_story.mjs: fortelling og målseremoni (R8): tekster finnes for alle nivåer i begge språk, og logikken stemmer.
 import assert from 'node:assert/strict';
 import { makeT } from './i18n.js';
-import { storyKey, fmtTime, shouldShowIntro, finishData, winHTML, STORY_LEVELS, starCount, totals, endHTML, heroSVG } from './story.js';
+import { STORY_NS, storyKey, fmtTime, shouldShowIntro, finishData, winHTML, STORY_LEVELS, starCount, totals, endHTML, heroSVG } from './story.js';
 
 assert.equal(fmtTime(7.4), '7 s'); assert.equal(fmtTime(75), '1:15'); assert.equal(fmtTime(-3), '0 s');
-assert.equal(storyKey(0), null); assert.equal(storyKey(9), null); assert.equal(storyKey(3), 'story.3');
+assert.equal(storyKey(0), null); assert.equal(storyKey(10), null); assert.equal(storyKey(3), 'story.3');
 assert.ok(shouldShowIntro({ n: 1, enabled: true, resumed: false }));
 assert.ok(!shouldShowIntro({ n: 1, enabled: false, resumed: false }) && !shouldShowIntro({ n: 1, enabled: true, resumed: true }) && !shouldShowIntro({ n: undefined, enabled: true, resumed: false }));
 
 let lang = 'nb'; const { T } = makeT(() => lang);
 for (const l of ['nb', 'en']) {
   lang = l;
-  for (let n = 1; n <= STORY_LEVELS; n++) {
+  for (const n of STORY_NS) {
     for (const k of [`story.title.${n}`, storyKey(n)]) assert.notEqual(T(k), k, `${l}:${k} mangler`);
     assert.ok(T(storyKey(n)).length < 140, 'kort tekst, ikke vegger');
     assert.ok(!/\b(trykk|tast)\s+(på\s+)?(mellomrom|space|E|F)\b/i.test(T(storyKey(n))), 'bruker knappenavn, ikke taster');

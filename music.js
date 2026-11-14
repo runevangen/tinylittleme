@@ -19,6 +19,7 @@ export const THEMES = {
   barnerom: { id: 'barnerom', label: 'Barnerommet', root: 60, scale: 'major', dark: 'minor', bpm: 104, prog: [0, 2, 3, 1], timbre: 'box',   swing: 0.12 },
   leke:     { id: 'leke',     label: 'Lekerommet',  root: 64, scale: 'major', dark: 'dim',   bpm: 126, prog: [0, 4, 3, 1], timbre: 'box',   swing: 0.28 },   // R31: marsjerende spilledåse (tinnsoldater)
   stue:     { id: 'stue',     label: 'Stuen',       root: 57, scale: 'major', dark: 'minor', bpm: 92,  prog: [0, 3, 2, 1], timbre: 'bell',  swing: 0.18 },   // R62: rolig stue-vals (lunt, litt søvnig)
+  verksted: { id: 'verksted', label: 'Verkstedet',  root: 57, scale: 'mixo',  dark: 'dim',   bpm: 96,  prog: [0, 5, 3, 4], timbre: 'pluck', swing: 0.05 },   // R63: tung, jevn maskinrytme (lav grunntone, rolig tempo)
   kjokken:  { id: 'kjokken',  label: 'Kjøkkenet',   root: 55, scale: 'mixo',  dark: 'dim',   bpm: 116, prog: [0, 1, 3, 2], timbre: 'pluck', swing: 0.2 },
 };
 export const DEFAULT_THEME = 'barnerom';
@@ -31,6 +32,7 @@ export function themeFor(level) {
   if (/kj[øo]kken|kitchen/.test(n)) return THEMES.kjokken;
   if (/leke|toy/.test(n)) return THEMES.leke;
   if (/stue|living/.test(n)) return THEMES.stue;
+  if (/verksted|garasje|workshop|garage/.test(n)) return THEMES.verksted;
   if (/barn|nursery|kids/.test(n)) return THEMES.barnerom;
   return THEMES[DEFAULT_THEME];
 }

@@ -17,7 +17,7 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario', level 
   const tick = (inp) => { step(p, { ...idle, ...inp }, 1 / 60, L); t++; if (trace && t % 6 === 0) trace.push([+(t / 60).toFixed(2), +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), p.state]); if (inHazard(L, p)) fail = `fare: ${inHazard(L, p).id}`; else if (p.knockout) fail = 'for hardt fall'; else if (p.y < L.deathY) fail = 'falt ut'; };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const near = (n, m = 0.35) => [clamp(p.x, Math.min(n.x0 + m, (n.x0 + n.x1) / 2), Math.max(n.x1 - m, (n.x0 + n.x1) / 2)), clamp(p.z, Math.min(n.z0 + m, (n.z0 + n.z1) / 2), Math.max(n.z1 - m, (n.z0 + n.z1) / 2))];
-  const on = (n) => p.onGround && Math.abs(p.y - n.top) < 0.06 && p.x > n.x0 - 0.32 && p.x < n.x1 + 0.32 && p.z > n.z0 - 0.32 && p.z < n.z1 + 0.32;
+  const on = (n) => p.onGround && Math.abs(p.y - n.top) < (n.tol || 0.06) && p.x > n.x0 - 0.32 && p.x < n.x1 + 0.32 && p.z > n.z0 - 0.32 && p.z < n.z1 + 0.32;
   for (let i = 0; i < 20; i++) tick({});
   for (let i = 1; i < R.length && !fail; i++) {
     const B = R[i], t0 = t; let jumpT = -99, tries = 0, lastPos = [p.x, p.z], lastT = t, detour = 0, side = 1, stuckN = 0;

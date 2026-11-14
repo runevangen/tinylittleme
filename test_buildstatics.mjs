@@ -65,7 +65,7 @@ assert.equal(cap(wide, [P('a', 'plank_s', 0, 0)]).n, 0, 'en planke som ikke når
   const a = BP.createSim({ site: wide, placed: b, links: l }), c = BP.createSim({ site: wide, placed: b, links: l }); for (let i = 0; i < 200; i++) { a.step(); c.step(); } assert.equal(JSON.stringify([a.pose(), a.moments()]), JSON.stringify([c.pose(), c.moments()]));
 }
 // 7) referansebyggene i brettene er fortsatt gyldige løsninger (bro, trapp, kjøkkenbro, vippe, leke), også med målt tåleevne > 0 der det er en planke
-for (const id of ['bro', 'trapp', 'kjokkenbro', 'vippe', 'leke', 'stue']) {
+for (const id of ['bro', 'trapp', 'kjokkenbro', 'vippe', 'leke', 'stue', 'verksted']) {
   const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), site = L.build.sites[0], loads = site.loads || [undefined];
   for (const ld of loads) { const r = BP.runSim({ site, placed: site.ref.placed, links: site.ref.links || [] }, ld ? { load: ld } : {}); assert.equal(r.result, 'won', `${id} ${ld || ''}: referansebygget klarer prøven (${r.reason})`); assert.equal(r.breaks.length + r.linkBreaks.length, 0, `${id}: ingenting brekker`); }
   const c = CP.capacity({ site, placed: site.ref.placed, links: site.ref.links || [] }); assert.ok(c.n >= 0 && c.n <= CP.CAP_MAX);

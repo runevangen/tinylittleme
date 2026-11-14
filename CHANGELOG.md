@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.76** – R63: nivå 9 Verkstedet (verksted.scene.json, workshop_logic.js): glatte flater (olje), vektgåte med to plater og mutre, byggested over porten, ny musikk/fortelling, og avslutning etter siste nivå.
 - **1.75** – R62: nivå 8 Stuen (stue_logic.js, scenes/stue.scene.json): sofa, sofabord, TV-benk, bokhylle, skyvedør med trykkplate, delmål, musikk og fortelling.
 - **1.74** – R60: gåteverktøy: trykkplate, dør og bryter (plates_logic.js, plates_view.js), datastyrt i scenen.
 - **1.73** – R61: veps som flyr (wasp.js, wasp_view.js): patruljerer i lufta, varsler med lyd og farge, stuper mot deg; kan unngås.

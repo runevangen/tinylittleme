@@ -64,7 +64,7 @@ assert.ok(!onSurface(flat, P(5, 6, 2)) && !onSurface(flat, P(2, 3, 2)) && !onSur
   L.crumbList.forEach((c) => (c.got = true)); assert.equal(goalTarget(L, { type: 'crumbs' }, P(0, 0, 0)), null, 'ingen smuler igjen: pila faller tilbake til ruta');
 }
 // brettene: alle seks nivåene har 2-4 gyldige delmål, lås-delmålene ligger på ruta, og målet kan ikke låses av noe utenfor ruta
-for (const id of ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke', 'stue']) {
+for (const id of ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke', 'stue', 'verksted']) {
   const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8'));
   assert.deepEqual(checkGoals(L, { levelId: id }), [], id);
   assert.ok(L.goals.length >= GOAL.minPerLevel && L.goals.length <= GOAL.maxPerLevel, id);

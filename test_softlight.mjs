@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { planBlobs, planGlows, shadowRadius, softActive, SOFT } from './softlight_logic.js';
 
-for (const id of ['bad', 'barnerom', 'kjokken', 'poc', 'klatring', 'barnerom2', 'kjokken2', 'bad2', 'leke', 'stue']) {
+for (const id of ['bad', 'barnerom', 'kjokken', 'poc', 'klatring', 'barnerom2', 'kjokken2', 'bad2', 'leke', 'stue', 'verksted']) {
   const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), room = L.room, fy = Math.max(0, ...L.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1]));
   const sun = L.sun || [28, 60, -24], bl = planBlobs(L, fy, sun), gl = planGlows(L, fy, sun);
   assert.ok(bl.length >= 4 && bl.length <= SOFT.maxBlobs, `${id}: blobber (${bl.length})`);

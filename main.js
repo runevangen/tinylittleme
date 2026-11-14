@@ -21,6 +21,7 @@ import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagLi
 import { createGoalView } from './goals_view.js';
 import { createTopBand } from './topband_view.js';   // R53: dynamisk toppbånd
 import { PRIO } from './topband_logic.js';
+import { createSlickTracker, nextLevelOf, isLastLevel } from './workshop_logic.js';   // R63: verkstedet: glatte flater og nivårekkefølge
 import { introKey, shouldShowIntro, finishData, winHTML, showCard, heroSVG, totals, endHTML } from './story.js';
 import { firstTarget, reachedFirst, createSweep, sweepPose } from './intro.js';
 import { createIntroView } from './intro_view.js';
@@ -101,6 +102,7 @@ const LEVELS = [
   { id: 'kjokken2', n: 6, label: 'Nivå 6: Kjøkkenet, ryddet om', short: 'Nivå 6 · Kjøkken' },
   { id: 'leke', n: 7, label: 'Nivå 7: Lekerommet', short: 'Nivå 7 · Lekerom' },
   { id: 'stue', n: 8, label: 'Nivå 8: Stuen', short: 'Nivå 8 · Stue' },
+  { id: 'verksted', n: 9, label: 'Nivå 9: Verkstedet', short: 'Nivå 9 · Verksted' },   // R63 (nivå 8 er reservert til Stuen, R62: «neste nivå» hopper over hull)
   { id: 'bro', label: 'Bygg 1: Hyllebroen (bygg en bro, eller ta den harde veien)', short: 'Bygg · Bro' },
   { id: 'trapp', label: 'Bygg 2: Klossetrappa (bygg en trapp, eller ta den harde veien)', short: 'Bygg · Trapp' },
   { id: 'vippe', label: 'Bygg 3: Vippa over gapet (barnerom: bygg en vippe, eller ta den harde veien)', short: 'Bygg · Vippe' },
@@ -124,7 +126,7 @@ if (levelId && levelId !== 'soverom') {
 if (!LEVEL) { LEVEL = (await import('./level.js')).LEVEL; levelId = 'soverom'; }
 store.set('tlm.level', levelId);
 const levelInfo = LEVELS.find((l) => l.id === levelId), levelLabel = levelInfo?.short || levelId;
-const nextLevel = levelInfo?.n ? LEVELS.find((l) => l.n === levelInfo.n + 1) : null;
+const nextLevel = levelInfo?.n ? nextLevelOf(LEVELS, levelInfo.n) : null;   // R63: lavest n over dette nivået (et hull i nummereringen stopper ikke spillet)
 const goLevel = (id) => { store.set('tlm.level', id); location.search = `?level=${id}`; };
 const SUN = LEVEL.sun || [28, 60, -24];
 
@@ -178,6 +180,8 @@ let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.ai
 let showMapBtn = store.get('tlm.showmapbtn2', false), showCenter = store.get('tlm.showcenter2', false),   // v1.35: ◎ og kartknappen er av som standard (nye nøkler, så alle starter uten dem)
    stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
 let stueHintOn = store.get('tlm.stuehint', true); const stueSeen = new Set();   // R62: Stuen: hint om fjernkontrollen, plata og broen
+let slickHintOn = store.get('tlm.slickhint', true);   // glatte flater (R63): hint første gang du sklir
+P.slickAccel = +store.get('tlm.slickaccel', P.slickAccel) || P.slickAccel;
 let gatesOn = store.get('tlm.gates', true), gateCamOn = store.get('tlm.gatecam', true);   // gåteverktøy (R60)
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
@@ -1659,6 +1663,8 @@ const SETTINGS = [
   rg('gatehero', 'admin', 'Gåteverktøy: figurens vekt på plater (1 = for lett til de fleste plater, 3 = klarer plater alene)', 1, 0.5, 6, 0.5, () => GATE.hero, kp('tlm.gatehero', (v) => { GATE.hero = v; }), { digits: 1 }),
   rg('gateneed', 'admin', 'Gåteverktøy: terskel på alle plater (gange, 1 = som i brettet)', 1, 0.25, 3, 0.25, () => GATE.needScale, kp('tlm.gateneed', (v) => { GATE.needScale = v; }), { digits: 2 }),
   rg('gatedur', 'admin', 'Gåteverktøy: hvor lenge dører og broer bruker på å åpne (sekunder)', 1.4, 0.4, 5, 0.2, () => GATE.dur, kp('tlm.gatedur', (v) => { GATE.dur = v; }), { digits: 1 }),
+  fl('slickhint', 'hjelp', 'Glatte flater: hint første gang du sklir på olje eller såpe (rød ✕ og glansstriper viser dem alltid)', true, () => slickHintOn, kp('tlm.slickhint', (v) => { slickHintOn = v; logEv('glatt', v ? 'hint på' : 'hint av'); })),
+  rg('slickaccel', 'admin', 'Glatte flater: hvor raskt du skifter fart på olje og såpe (5 = sklir mye, 34 = som vanlig gulv)', 5, 2, 34, 1, () => P.slickAccel, kp('tlm.slickaccel', (v) => { P.slickAccel = v; logEv('glatt', `grep ${v}`); }), { digits: 0 }),
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
   fl('goals', 'spill', 'Delmål (milepæler: panel øverst, jubel når et delmål er klart)', true, () => goalsOn, kp('tlm.goals', (v) => { goalsOn = v; goalView?.setOn(v); logEv('delmål', v ? 'på' : 'av'); })),
   fl('stuehint', 'hjelp', 'Stuen: hint om fjernkontrollen, den gule plata og broen mellom sofaen og bordet (nivå 8)', true, () => stueHintOn, kp('tlm.stuehint', (v) => { stueHintOn = v; logEv('stue', v ? 'hint på' : 'hint av'); })),
@@ -2108,6 +2114,13 @@ function puzzleEvent(ev) {
 }
 // gåteverktøy (R60): plate, bryter, dør og vindebro. Lesbart uten tekst (plata synker og lyser, døra viser rødt/grønt), pluss lyd, lydtekst og logg
 const gateName = (o) => (lang === 'en' && o?.en) || o?.label || o?.id || '';
+// glatte flater (R63): oljeflekken og det oljede verktøykasse-lokket; logges og gir ett hint første gang
+const slickTrack = LEVEL.boxes.some((b) => b.slick && b.type !== 'wall') ? createSlickTracker() : null;
+function slickEvent(ev) {
+  if (ev.type === 'glir') {
+    logEv('glatt', `glir på ${ev.id} (${ev.speed} enh/s)`); cue('sklir'); if (!store.get('tlm.seen.slick', false) && slickHintOn) { store.set('tlm.seen.slick', true); tip(T('slick.hint', { grab: TOUCH ? T('btn.grab') : 'Shift', jump: TOUCH ? T('btn.jump') : 'Mellomrom' })); }
+  } else if (ev.type === 'grep') logEv('glatt', `fast grunn igjen etter ${ev.id}`);
+}
 function gateEvent(ev) {
   if (!ev) return;
   if (ev.type === 'plate') { logEv('gåte', `plate ${ev.id} ${ev.on ? 'ned' : 'opp'} (last ${ev.load})`); audio?.pickup(); buzz(ev.on ? 20 : 8); cue(ev.on ? 'klikk!' : 'klikk'); }
@@ -2227,6 +2240,7 @@ function update(dt) {
   variant.beforeStep(player, dt, mode === 'play' && !won);
   step(player, inp, dt, LEVEL);
   variant.afterStep();
+  if (slickTrack && mode === 'play' && !won) for (const ev of slickTrack.update(player, dt)) slickEvent(ev);
   if (antsOn) for (const ev of stepAnts(LEVEL, player, dt, mode === 'play' && !won)) antEvent(ev);
   if (puzzlesOn || puzzleOpenIds(LEVEL).length) for (const ev of stepPuzzles(LEVEL, dt, puzzlesOn && mode === 'play' && !won)) puzzleEvent(ev);
   if (puzzlesOn && mode === 'play' && !won) puzzleIntro();

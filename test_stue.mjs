@@ -98,7 +98,7 @@ const L = lv('stue'), scene = JSON.parse(fs.readFileSync('scenes/stue.scene.json
 
 // 7) tekster (nb/en, knappenavn), fortelling, musikk og palett, nivåvalg og modul i index.html
 {
-  assert.equal(STORY_LEVELS, 8); assert.equal(storyKey(8), 'story.8'); assert.equal(INTRO[8].hint, 'intro.hint.8'); assert.equal(introKey(8), 'intro.hint.8');
+  assert.equal(STORY_LEVELS, 9); assert.equal(storyKey(8), 'story.8'); assert.equal(INTRO[8].hint, 'intro.hint.8'); assert.equal(introKey(8), 'intro.hint.8');
   let lang = 'nb'; const { T } = makeT(() => lang);
   for (const l of ['nb', 'en']) { lang = l;
     for (const k of ['story.title.8', 'story.8', 'intro.hint.8', 'stue.remote', 'stue.plate', 'stue.door', 'stue.build']) { const t = T(k, { jump: 'HOPP', grab: 'GREP', take: 'TA' }); assert.notEqual(t, k, `${l}:${k}`); assert.ok(!/\{\w+\}/.test(t), `${l}:${k} variabler fylt`); assert.ok(!/\b(mellomrom|space|shift|tast|key)\b/i.test(t), `${l}:${k} nevner ikke taster`); }
