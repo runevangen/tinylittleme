@@ -55,7 +55,7 @@ export function panelModel(ctx) {
   const lines = [];
   lines.push({ k: 'head', text: `${ctx.version ? `v${ctx.version} · ` : ''}${ctx.levelLabel || ''}` });
   if (ctx.goals && ctx.goals.length) lines.push({ k: 'goals', items: ctx.goals });
-  if (ctx.nextText) lines.push({ k: 'next', text: ctx.nextHint ? `${ctx.nextText} · ${ctx.nextHint}` : ctx.nextText });
+  if (ctx.nextText) lines.push({ k: 'next', text: ctx.nextAction ? `${ctx.nextText}\n${ctx.nextAction}` : ctx.nextHint ? `${ctx.nextText} · ${ctx.nextHint}` : ctx.nextText });   // R64: hele handlingssetningen når den finnes
   if (ctx.send) lines.push({ k: 'send', text: ctx.send });
   if (ctx.reply) lines.push({ k: 'reply', text: ctx.reply });
   if (ctx.counts && ctx.counts.length) lines.push({ k: 'counts', items: ctx.counts });

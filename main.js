@@ -17,6 +17,8 @@ import { GATE, initGates, resetGates, restoreGates, gatesSave, stepGates, nearSw
 import { buildGateViews } from './plates_view.js';
 import { stueHint, isStue, stueSummary } from './stue_logic.js';   // R62: Stuen (nivå 8): hint om fjernkontrollen, plata og broen
 import { buildFlag, buildGoalRing } from './markers.js';
+import { GUIDE, aim, glyph, fmtM, danglerPhase, actionFor, bandHint, edgeMark, createStall, stepStall, stalled, nextSurface, ledgePoint, createShowMe, startShowMe, skipShowMe, stepShowMe, showMePlan } from './guide_logic.js';   // R64: veiledning når målet er skjult
+import { createGuideView } from './guide_view.js';
 import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalLine, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
 import { createGoalView } from './goals_view.js';
 import { createTopBand } from './topband_view.js';   // R53: dynamisk toppbånd
@@ -1285,22 +1287,36 @@ function nextTarget() {
   if (puzzlesOn && mode === 'play' && bridgeGuide) {                              // R7: etter åpning peker pila på broen til du er over
     const e = bridgeFarEnd(bridgeGuide);
     if (Math.hypot(player.x - e.x, player.z - e.z) < 2 || performance.now() > bridgeGuide.until || !nearBridge(bridgeGuide, player)) bridgeGuide = null;   // også når du har falt/respawnet bort fra broen
-    else return { x: e.x, y: e.y, z: e.z, label: T('puz.bridgeLbl'), final: false, act: '' };
+    else return { x: e.x, y: e.y, z: e.z, label: T('puz.bridgeLbl'), final: false, act: '', kind: 'route' };
   }
-  if (puzzlesOn && mode === 'play') { const pt = puzzleTarget(LEVEL, player); if (pt) return { x: pt.x, y: pt.y, z: pt.z, label: T('puz.' + pt.key), final: false, act: pt.key === 'plate' ? T('btn.drop') : T('btn.take') }; }   // R7: nøkkel, så lås
+  if (puzzlesOn && mode === 'play') { const pt = puzzleTarget(LEVEL, player); if (pt) return { x: pt.x, y: pt.y, z: pt.z, label: T('puz.' + pt.key), final: false, act: pt.key === 'plate' ? T('btn.drop') : T('btn.take'), kind: pt.key === 'plate' ? 'plate' : 'key' }; }   // R7: nøkkel, så lås
   if (goalsOn && goalArrowOn && mode === 'play') {                                  // R23: pila peker mot aktivt delmål (reach/smuler/maur/sjef); gåter har egen veiledning over
     const ag = activeGoal(LEVEL), gt = ag && goalTarget(LEVEL, ag, player);
-    if (gt) return { x: gt.x, y: gt.y, z: gt.z, label: goalLabel(ag, lang), final: false, act: '' };
+    if (gt) return { x: gt.x, y: gt.y, z: gt.z, label: goalLabel(ag, lang), final: false, act: '', kind: guideKind(ag, gt), ref: guideRef(ag, gt) };
   }
   if (R?.length > 1) {
-    let i = -1;
-    if (player.state === 'climb') i = R.findIndex((w) => (w.grip || w.via) && w.id === player.climb?.box?.id);
-    else if (player.onGround) R.forEach((w, k) => { if (!w.grip && !w.via && player.y - w.top > -0.3 && player.y - w.top < 3.5 && player.x >= w.x0 - 0.3 && player.x <= w.x1 + 0.3 && player.z >= w.z0 - 0.3 && player.z <= w.z1 + 0.3) i = k; });   // flaten du står på (også når du står på en løs ting oppå)
-    if (i >= 0) routeCur = i;
+    routeIndex();
     const w = R[Math.min(routeCur + 1, R.length - 1)];
-    if (w !== R[R.length - 1]) return { x: Math.max(w.x0, Math.min(w.x1, player.x)), y: w.top, z: Math.max(w.z0, Math.min(w.z1, player.z)), label: (lang === 'en' && w.en) || w.label || nameOfId(w.id).replace(/_/g, ' '), final: false, act: w.act || (w.grip ? 'klatre' : '') };
+    if (w !== R[R.length - 1]) return { x: Math.max(w.x0, Math.min(w.x1, player.x)), y: w.top, z: Math.max(w.z0, Math.min(w.z1, player.z)), label: (lang === 'en' && w.en) || w.label || nameOfId(w.id).replace(/_/g, ' '), final: false, act: w.act || (w.grip ? 'klatre' : ''), kind: 'route', grip: !!w.grip };
   }
-  return { x: g[0], y: g[1], z: g[2], label: T('compass.goal'), final: true };
+  return { x: g[0], y: g[1], z: g[2], label: T('compass.goal'), final: true, kind: 'route' };
+}
+// R64: hvilken flate på ruta står figuren på (oppdaterer routeCur). Egen funksjon så veiledningen kan bruke den også når delmål styrer pila.
+function routeIndex() {
+  const R = LEVEL.route; if (!(R?.length > 1)) return 0;
+  let i = -1;
+  if (player.state === 'climb') i = R.findIndex((w) => (w.grip || w.via) && w.id === player.climb?.box?.id);
+  else if (player.onGround) R.forEach((w, k) => { if (!w.grip && !w.via && player.y - w.top > -0.3 && player.y - w.top < 3.5 && player.x >= w.x0 - 0.3 && player.x <= w.x1 + 0.3 && player.z >= w.z0 - 0.3 && player.z <= w.z1 + 0.3) i = k; });   // flaten du står på (også når du står på en løs ting oppå)
+  if (i >= 0) routeCur = i;
+  return routeCur;
+}
+// R64: type mål for veiledningen (dangler/maur/smuler/bryter/flate) og selve skapningen
+function guideRef(ag, gt) { return ag.type === 'stomp' ? (LEVEL.antList || []).find((q) => q.alive && q.x === gt.x && q.y === gt.y && q.z === gt.z) || null : null; }
+function guideKind(ag, gt) {
+  if (ag.type === 'stomp') { const q = guideRef(ag, gt); return q?.type === 'dangler' ? 'dangler' : 'ant'; }
+  if (ag.type === 'crumbs') return 'crumbs';
+  if (ag.type === 'gate') return (LEVEL.gateS?.switches || []).some((q) => q.x === gt.x && q.y === gt.y && q.z === gt.z) ? 'switch' : 'goal';
+  return 'reach';
 }
 const camToGoal = () => { const t = nextTarget(); turnCamera(Math.atan2(-(t.x - player.x), -(t.z - player.z)), viewFirst ? 0.1 : 0.32); };    // neste mål rett frem
 function stepCamAnim(dt) {
@@ -1340,12 +1356,12 @@ const hudEl = $('hud');
 goalView = createGoalView({ $, T, getLang: () => lang, L: LEVEL, hudEl }); goalView.setOn(goalsOn);   // R23: delmål-panelet (goals_view.js)
 // R53: toppbåndet samler HUD-linje, delmål, NESTE, hint, ℹ og ⚑. Av (innstilling) gir tilbake de gamle elementene.
 let tbandOn = store.get('tlm.tband', true), tbSize = store.get('tlm.tbsize', 'compact');
-const tb = createTopBand({ T, logEv, onInfo: () => { $('qpop').classList.add('hide'); infoTab.click(); }, onFlag: () => { if (infoOpen) closeInfo(); $('qbtn').click(); }, onNext: () => camToGoal(), onOpen: () => { $('qpop').classList.add('hide'); if (infoOpen) closeInfo(); } });
+const tb = createTopBand({ T, logEv, onInfo: () => { $('qpop').classList.add('hide'); infoTab.click(); }, onFlag: () => { if (infoOpen) closeInfo(); $('qbtn').click(); }, onNext: () => (guideOn ? startShowMeNow() : camToGoal()), onOpen: () => { $('qpop').classList.add('hide'); if (infoOpen) closeInfo(); } });
 tb.setSize(tbSize); tb.setOn(tbandOn); tbReady = tb;
 function bandCtx() {
   const act = activeGoal(LEVEL), total = goalTotal(LEVEL), st = { crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0 };
   const play = mode === 'play' && !won;
-  const c = { version: VERSION, levelLabel, nextText: play ? compState.text : null, nextHint: play ? compState.hint : '', nextAng: compState.ang, goalHead: play && act ? goalLine(LEVEL, act, lang, st) : (total > 0 && goalDone(LEVEL) === total ? T('goal.all') : ''),
+  const c = { version: VERSION, levelLabel, nextText: play ? compState.text : null, nextHint: play ? compState.hint : '', nextAction: play ? compState.action : '', nextAng: compState.ang, goalHead: play && act ? goalLine(LEVEL, act, lang, st) : (total > 0 && goalDone(LEVEL) === total ? T('goal.all') : ''),
     goalDone: goalDone(LEVEL), goalTotal: total, crumbs: crumbsOn && crumbTotal(LEVEL) ? { n: crumbCount(LEVEL), total: crumbTotal(LEVEL) } : null,
     infoOn: infoCard.style.display !== 'none', flagOn: qbtnOn, unread: $('qbtn').classList.contains('hasreply'), badge: markCount() + unsent('BACKLOGG') };
   if (tb.isOpen()) {
@@ -1370,12 +1386,59 @@ function topLayout() {
   compEl.style.top = ct;
   if (open && ct && infoCard.classList.contains('manual')) compEl.style.display = 'none';
 }
-const compState = { text: null, hint: '', ang: 0 };    // R53: det NESTE-bobla viser, til toppbåndet
+const compState = { text: null, hint: '', ang: 0, action: '' };    // R53: det NESTE-bobla viser, til toppbåndet
+// R64: veiledning når målet er under, bak eller ikke i bildet (guide_logic.js, guide_view.js)
+let guideOn = store.get('tlm.guide', true); GUIDE.stallMs = store.get('tlm.guidestall', 45) * 1000;
+const stall = createStall(), showMe = createShowMe();
+let guideKey = '', guideMsgAt = 0, guideRouteLogged = '';
+const guideV = createGuideView({ scene, T, logEv, onShow: () => startShowMeNow() });
+const guideP = () => ({ jump: TOUCH ? T('btn.jump') : 'mellomrom', grab: GREP, take: TA, drop: TOUCH ? T('btn.drop') : 'F' });
+const guideAimOf = (t) => aim({ dx: t.x - player.x, dy: t.y - player.y, dz: t.z - player.z, yaw: cam.yaw });
+const guideAction = (t, a) => actionFor({ kind: t.kind || 'route', a, phase: danglerPhase(t.ref), grip: !!t.grip, act: t.act });
+function startShowMeNow() {
+  if (showMe.phase !== 'idle' || mode !== 'play' || won || introSweep) return;
+  const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, a = guideAimOf(t);
+  startShowMe(showMe, { yaw: cam.yaw, pitch: cam.pitch }, showMePlan({ dx, dz, a, pitch0: cam.pitch }));
+  logEv('veiledning', `vis meg: ${t.label} (${a.vert}${a.vertDom ? ', loddrett' : ''})`);
+}
+function showMeFrame(dt) {
+  if (showMe.phase === 'idle') return;
+  if (mode !== 'play' || won) { showMe.phase = 'idle'; return; }
+  const r = stepShowMe(showMe, dt);
+  if (r.act === 'turn') turnCamera(r.yaw, r.pitch); else if (r.act === 'done') logEv('veiledning', 'vis meg: ferdig');
+  lastDrag = performance.now() / 1000;                      // ingen automatisk dreining bak figuren mens kameraet viser veien
+}
+document.addEventListener('pointerdown', (e) => { if ((showMe.phase === 'to' || showMe.phase === 'hold') && !e.target.closest?.('#guideEdge')) { skipShowMe(showMe); logEv('veiledning', 'vis meg: hoppet over'); } }, true);
+document.addEventListener('keydown', () => { if (showMe.phase === 'to' || showMe.phase === 'hold') skipShowMe(showMe); }, true);
+const guideHide = () => guideV.update({ ghost: null, ledge: null, mark: null, route: null, routeOn: false }, 0);
+// Hver ramme når pila vises: kantmerke, ring, uthevet flate og båndtekst. a: aim(), t: nextTarget(), show: pila vises
+function guideFrame(now, t, a, show) {
+  const R = LEVEL.route, idx = routeIndex();
+  if (!guideOn || !show || mode !== 'play' || won) { guideHide(); return; }
+  if (menuOpen || introSweep || showMe.phase !== 'idle') { stall.t0 = stall.t0 === null ? null : now; }    // pause: menyen og sveipene teller ikke som stillstand
+  stepStall(stall, now, { goalKey: (t.final ? '!' : '') + t.label, routeIdx: idx, done: goalDone(LEVEL), dist: a.hdist });
+  const w = innerWidth, h = innerHeight, sc = mv?.toScreen(t.x, t.y, t.z) ?? null, mark = edgeMark({ s: sc, a, w, h }), hidden = !!mark || a.vertDom;
+  const surf = nextSurface(R, idx), routeOn = stalled(stall, now) && !!surf;
+  let ledge = null;
+  if (showMe.phase === 'hold') { const cur = R?.[idx]; const lp = cur && !cur.grip ? ledgePoint(cur, t) : null; if (lp && Math.hypot(lp.x - player.x, lp.z - player.z) > 0.5 && (a.vert !== 'up' || a.vertDom)) ledge = lp; }
+  guideV.update({ ghost: hidden && a.hdist + Math.abs(a.dy) > 1.5 ? t : null, ledge, mark, markText: mark ? `${glyph(a)} ${a.vertDom ? T(a.vert === 'down' ? 'guide.edge.down' : 'guide.edge.up') : T('guide.show')}`.trim() : '', route: surf, routeOn }, now);
+  if (routeOn && surf && guideRouteLogged !== surf.id) { guideRouteLogged = surf.id; logEv('veiledning', `rute utheves etter ${Math.round(GUIDE.stallMs / 1000)} s uten framdrift: ${surf.id}`); }
+  if (!routeOn) guideRouteLogged = '';
+  if (hidden) {                                                                    // hele handlingssetningen i båndet når målet er skjult (ved nytt mål og så med jevne mellomrom)
+    const key = (t.final ? '!' : '') + t.label + '|' + a.vert + (a.vertDom ? 'v' : '');
+    if (key !== guideKey || now - guideMsgAt > GUIDE.repeatMs) {
+      if (key !== guideKey) logEv('veiledning', `skjult mål: ${t.label} · ${a.vert}${a.vertDom ? ' loddrett' : ''}${a.behind ? ' bak' : ''}${mark ? ' kantmerke' : ''}`);
+      guideKey = key; guideMsgAt = now;
+      const act = guideAction(t, a), txt = T(act.key, { ...guideP(), ...act.params });
+      if (!tb.push('guide', PRIO.hint, txt, 7, 'hint', now)) toast(txt, true);
+    }
+  } else guideKey = '';
+}
 function compassFrame(now) {
   document.body.classList.toggle('bossfight', bossFighting());
   if (bossFighting()) { const bm = LEVEL.bossS.mode; if (bm === 'windup' || bm === 'charge') tb.push('boss', PRIO.danger, T('tb.boss.dodge'), 0.6, 'danger'); else if (bm === 'stunned') tb.push('boss', PRIO.danger, T('tb.boss.stun', { jump: TOUCH ? T('btn.jump') : 'Mellomrom' }), 0.6, 'danger'); }
   const t = nextTarget(), dx = t.x - player.x, dz = t.z - player.z, dist = Math.hypot(dx, dz);
-  const forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && dist > (t.final ? 2.5 : 0.6) && !bossFighting();
+  const ga = guideAimOf(t), forced = performance.now() < compassForce, show = (compassMode !== 'off' || forced) && mode === 'play' && !won && (dist > (t.final ? 2.5 : 0.6) || (guideOn && ga.vertDom && Math.abs(ga.dy) > 2)) && !bossFighting();
   { const key = (t.final ? '!' : '') + t.label, idle = player.onGround && Math.hypot(player.vx, player.vz) < 0.3;       // v0.75: bare pila til vanlig; teksten vises ved nytt mål, tips, og når du står stille
     if (key !== compKey) { compKey = key; compShowUntil = now + 6000; }
     if (!idle) compIdleSince = now; else if (!compIdleSince) compIdleSince = now;
@@ -1384,20 +1447,22 @@ function compassFrame(now) {
   goalArrow.visible = show && player.onGround && (compassMode === 'both' || compassMode === 'arrow' || forced); goalArrowG.visible = goalArrow.visible;
   topLayout();
   const bandNext = show && (compassMode === 'both' || compassMode === 'compass' || forced);
-  if (!bandNext) { compState.text = null; compState.hint = ''; }
-  if (!show) { goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); return; }
+  if (!bandNext) { compState.text = null; compState.hint = ''; compState.action = ''; }
+  if (!show) { goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); guideFrame(now, t, ga, false); return; }
   const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
-  const ang = Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);                     // 0 = rett frem på skjermen, positiv = til høyre
+  const ang = guideOn ? ga.ang : Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);   // 0 = rett frem på skjermen (R64: opp når målet er over, ned når det er under), positiv = til høyre
   compArrow.style.transform = `rotate(${ang}rad)`;
   const dy = t.y - player.y;
   $('compLbl').textContent = t.final ? T('compass.goal') : T('compass.next', { name: t.label.toUpperCase() });
-  const distTxt = `${(dist * 0.05).toFixed(1).replace('.', ',')} m`, hintTxt = t.act ? `▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? '▲ opp' : '▼ ned') : '';
+  const distTxt = guideOn ? fmtM(ga.meters) : `${(dist * 0.05).toFixed(1).replace('.', ',')} m`;
+  const hintTxt = guideOn ? bandHint(guideAction(t, ga), ga, (k) => T(k, guideP())) : t.act ? `▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? '▲ opp' : '▼ ned') : '';
   compTxt.textContent = distTxt + (hintTxt ? ` · ${hintTxt}` : '');
-  if (bandNext) { compState.text = `${$('compLbl').textContent} · ${distTxt}`; compState.hint = hintTxt; compState.ang = ang; }   // R56: knappehintet for seg, så det aldri kuttes
-  const lowCam = innerWidth > innerHeight; goalArrowG.scale.setScalar(lowCam ? 1.35 : 1);   // liggende: lavere kamera, så pila er større og hevet litt
+  if (bandNext) { compState.text = `${$('compLbl').textContent} · ${distTxt}`; compState.hint = hintTxt; compState.ang = ang; compState.action = guideOn ? (() => { const ac = guideAction(t, ga); return T(ac.key, { ...guideP(), ...ac.params }); })() : ''; }   // R56: knappehintet for seg, så det aldri kuttes
+  const lowCam = innerWidth > innerHeight; guideFrame(now, t, ga, true); goalArrowG.scale.setScalar(lowCam ? 1.35 : 1);   // liggende: lavere kamera, så pila er større og hevet litt
   const placeArrow = (d) => goalArrowG.position.set(player.x + dx / dist * d, player.y + (lowCam ? 0.14 : 0.07) + 0.01 * Math.sin(now / 200), player.z + dz / dist * d);
   placeArrow(1.4); goalArrowG.rotation.y = Math.atan2(-dx, -dz);
-  if (goalArrow.visible && mv?.arrowFrame(placeArrow, ang, true)) goalArrow.visible = goalArrowG.visible = false;   // R14: bak en knapp, bak figuren eller utenfor skjermen: kantstilt pil i stedet (ellers flyttes gulvpila lenger fram)
+  if (guideOn && ga.vertDom) { goalArrow.visible = goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); }   // R64: målet er loddrett over/under: gulvpila ville pekt feil vei, kantmerket og båndet viser «ned»/«opp»
+  else if (goalArrow.visible && mv?.arrowFrame(placeArrow, ang, true)) goalArrow.visible = goalArrowG.visible = false;   // R14: bak en knapp, bak figuren eller utenfor skjermen: kantstilt pil i stedet (ellers flyttes gulvpila lenger fram)
   else if (!goalArrow.visible) mv?.arrowFrame(null, 0, false);
 }
 compEl.addEventListener('pointerdown', (e) => { e.stopPropagation(); camToGoal(); });
@@ -1669,6 +1734,8 @@ const SETTINGS = [
   fl('goals', 'spill', 'Delmål (milepæler: panel øverst, jubel når et delmål er klart)', true, () => goalsOn, kp('tlm.goals', (v) => { goalsOn = v; goalView?.setOn(v); logEv('delmål', v ? 'på' : 'av'); })),
   fl('stuehint', 'hjelp', 'Stuen: hint om fjernkontrollen, den gule plata og broen mellom sofaen og bordet (nivå 8)', true, () => stueHintOn, kp('tlm.stuehint', (v) => { stueHintOn = v; logEv('stue', v ? 'hint på' : 'hint av'); })),
   fl('shortcuthint', 'hjelp', 'Verktøy-genveier: varsel når du klatrer en trapp med hårgelé (nivå 4–6)', true, () => shortcutHintOn, kp('tlm.shortcuthint', (v) => { shortcutHintOn = v; logEv('genvei', v ? 'varsel på' : 'varsel av'); })),
+  fl('guide', 'hjelp', 'Veiledning når målet er skjult: handling i teksten, pil ned/opp, kantmerke, ring gjennom hindre, «Vis meg» og glød på neste flate', true, () => guideOn, kp('tlm.guide', (v) => { guideOn = v; if (!v) guideHide(); logEv('veiledning', v ? 'på' : 'av'); })),
+  rg('guidestall', 'admin', 'Veiledning: sekunder uten framdrift før neste flate utheves', 45, 15, 120, 1, () => Math.round(GUIDE.stallMs / 1000), kp('tlm.guidestall', (v) => { GUIDE.stallMs = v * 1000; }), { digits: 0 }),
   fl('goalarrow', 'hjelp', 'Pila og kompasset peker mot aktivt delmål', true, () => goalArrowOn, kp('tlm.goalarrow', (v) => { goalArrowOn = v; logEv('delmål', v ? 'pil følger delmål' : 'pil følger ruta'); })),
   fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; logEv('delmål', v ? 'lås på' : 'lås av'); })),
   fl('rewards', 'spill', 'Tilbehør på figuren (hatter, skjerf, sekk du har samlet)', true, () => rewardsOn, kp('tlm.rewards', (v) => { rewardsOn = v; refreshAccessories(); logEv('belønning', v ? 'tilbehør på' : 'tilbehør av'); })),
@@ -2816,7 +2883,7 @@ function frame(now) {
     { const lp = fr && mode === 'play' && !menuOpen ? lowP.decide(fr, renderer.getPixelRatio(), 1, lowMode, autoQC.warm) : null; if (lp !== null) { applyLowProfile(lp); if (lp && lowMode === 'auto') toast('Lav profil på for jevnere bilde. ⚙ → Test → Lav profil styrer det', true); } }
     if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); if (dq.dir === 'down' && !qToasted) { qToasted = true; toast('Lavere oppløsning for jevnere bilde. ⚙ → Test → Oppløsning styrer det', true); } } }   // én melding per økt, nede ved kanten så den ikke dekker målpilen; resten logges bare
   if (!window.__paused && !menuOpen && !ov.active && !bld.active) update(dt);   // R20: spillet venter mens oversikten vises
-  stepCamAnim(dt); compassFrame(now);
+  showMeFrame(dt); stepCamAnim(dt); compassFrame(now);
   render(now, dt);
   requestAnimationFrame(frame);
 }
@@ -2826,4 +2893,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
