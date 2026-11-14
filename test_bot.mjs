@@ -19,7 +19,7 @@ assert.equal(verdictOf(bad(), bad(LONG.len, 4)), 'TIL_GJENNOMGANG', 'lang rute (
 assert.ok(isLong({ steps: 12, len: 1 }) && isLong({ steps: 1, len: 200 }) && !isLong({ steps: 9, len: 119 }));
 
 // 2) nivåene: Kontroll + alle seks, og de fire byggebrettene. Alt består i streng modus (uten sikte-hjelp og uten veggsprang).
-const ids = ['kontroll', 'gaate', 'bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'bro', 'trapp', 'vippe', 'kjokkenbro', 'leke'];
+const ids = ['kontroll', 'gaate', 'bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'bro', 'trapp', 'vippe', 'kjokkenbro', 'leke', 'verksted'];
 const kinds = new Set();
 for (const id of ids) {
   const r = botSolve(path(id));

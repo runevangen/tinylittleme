@@ -109,7 +109,7 @@ const deflection = (d, k) => { const L = loadOn(d, k); return runHold({ ...L, n:
     const s1 = BP.createSim({ site, placed: d.placed, links: d.links }), s2 = BP.createSim({ site, placed: [...d.placed].reverse(), links: [...d.links].reverse() }); for (let i = 0; i < 200; i++) { s1.step(); s2.step(); } assert.equal(JSON.stringify(s1.axial().map((x) => [x.id, +x.nc.toFixed(4), +x.nt.toFixed(4)]).sort()), JSON.stringify(s2.axial().map((x) => [x.id, +x.nc.toFixed(4), +x.nt.toFixed(4)]).sort()), 'samme krefter uansett rekkefølge'); }
 }
 // g) alle referansebygg i brettene vinner fortsatt, og målingen «Tåler» fungerer; ingen nivå er endret (walk_route er uendret)
-for (const id of ['bro', 'trapp', 'kjokkenbro', 'vippe', 'leke']) {
+for (const id of ['bro', 'trapp', 'kjokkenbro', 'vippe', 'leke', 'verksted']) {
   const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), st = L.build.sites[0];
   for (const ld of st.loads || [undefined]) { const r = BP.runSim({ site: st, placed: st.ref.placed, links: st.ref.links || [] }, ld ? { load: ld } : {}); assert.equal(r.result, 'won', `${id} ${ld || ''}: referansebygget klarer prøven`); assert.equal(r.breaks.length + r.linkBreaks.length, 0, `${id}: ingen brudd`); }
 }

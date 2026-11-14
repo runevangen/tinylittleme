@@ -144,7 +144,7 @@ assert.deepEqual(checkGates(LV, { levelId: 'gaate' }), []); assert.deepEqual(che
 // 11) tegnebudsjett: statisk (ingen GPU her), og ingen kostnad i brett uten gåter
 {
   const b = gatesBudget(LV); assert.ok(b.calls > 0 && b.calls <= 40 && b.tris <= 1200, `Gåterommet: ${b.calls} tegnekall, ${b.tris} trekanter`);
-  for (const f of fs.readdirSync('levels')) { const id = f.replace('.level.json', ''), L = JSON.parse(fs.readFileSync(`levels/${f}`, 'utf8')); if (id !== 'gaate') { assert.equal(L.gates, undefined, `${id}: ingen gåteverktøy`); assert.deepEqual(gatesBudget(L), { calls: 0, tris: 0 }); assert.ok(!hasGates(L)); } }
+  for (const f of fs.readdirSync('levels')) { const id = f.replace('.level.json', ''), L = JSON.parse(fs.readFileSync(`levels/${f}`, 'utf8')); if (id !== 'gaate' && id !== 'verksted') { assert.equal(L.gates, undefined, `${id}: ingen gåteverktøy`); assert.deepEqual(gatesBudget(L), { calls: 0, tris: 0 }); assert.ok(!hasGates(L)); } }
   const view = fs.readFileSync('plates_view.js', 'utf8'); assert.equal((view.match(/new THREE\.(Box|Cylinder|Sphere)Geometry/g) || []).length, 3, 'tre delte geometrier, ingen per gjenstand');
   assert.ok(!/ShaderMaterial|onBeforeCompile|RawShaderMaterial/.test(view), 'ingen nye shadere'); assert.ok(/count: 0/.test(view), 'brett uten gåter tegner ingenting');
 }

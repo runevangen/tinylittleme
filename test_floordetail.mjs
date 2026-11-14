@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { detailCount, pickDetails, hashStr, floorKind, TILE, KINDS, BEAD, beadBoxes, beadRadius, routeClear, START_YAW, START_CAM, isMat, toScreen, floorAt } from './floordetail_logic.js';
 
 const fy = (L) => Math.max(0, ...L.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1]));
-const names = ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke'];
+const names = ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke', 'verksted'];
 for (const id of names) {
   const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), room = L.room, y = fy(L);
   const hi = detailCount(room, 'high'), mid = detailCount(room, 'mid'), low = detailCount(room, 'low');

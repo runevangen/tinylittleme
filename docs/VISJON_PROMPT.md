@@ -69,6 +69,11 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `spool` | ja | trådsnelle: movable light + tool: "spool" + thread: true |
 | `key` | ja | nøkkel (R7): movable light, ca. 14×3×6 cm; brukes i en gåte (`puzzles` i scenen) og legges på en plate for å rulle ut en bro |
 | `gel_bottle` | ja | hårgelé: movable light + tool: "gel" |
+| `oil` | boks | oljeflekk (R63): lav boks med slick: true; du sklir uten grep, tegnes med glansstriper og rød ✕ |
+| `toolbox` | boks | verktøykasse (metall, vanlig boks); slick: true gir et oljet lokk |
+| `vise` | boks | skrustikke (metall, vanlig boks) |
+| `nut` | boks | mutter (R63): movable light, ca. 8 cm kube; veier 2 på en trykkplate |
+| `tire` | ja | sykkeldekk (R63): movable light, kube ca. 14 cm; ekte kulekollisjon (ruller når du dytter det), bæres med TA |
 
 ## Felt per ting
 - `material`: wood, woodpanel, tile, porcelain, ceramic, plastic, fabric, paper, metal, glass, mirror, wicker, book, plaster.

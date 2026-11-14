@@ -309,6 +309,10 @@
           "type": "string",
           "description": "Id til tingen du hiver deg opp på når du klatrer til toppen av denne grep-flaten (f.eks. servanten bak et hengende håndkle)."
         },
+        "slick": {
+          "type": "boolean",
+          "description": "R63: glatt flate (oljeflekk, såpe): du sklir uten grep (slickAccel), og flaten tegnes med glansstriper og rød ✕. Kan gjelde en lav flekk på gulvet eller toppen av en ting."
+        },
         "grip_drain": {
           "type": "number",
           "description": "Ekstra stamina-forbruk per sekund på grep-flaten (negativ = billigere, f.eks. -0.9 for et håndkle)."

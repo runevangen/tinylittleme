@@ -56,6 +56,14 @@ Et eget rom (ikke en variant): 600 × 300 cm, gulv og tak som legoplater (knotte
 - **Delmål:** samle 6 smuler, knus en tinnsoldat, bygg broen, klatre trappa langs veggen (låser målet).
 - Ikke bevist her: ekte FPS og følelse på iPhone (miljøet har ingen GPU). Knottene er målt statisk: to tegnekall og under 16 000 trekanter.
 
+### Nivå 9: Verkstedet (R63)
+Siste rom, 700 × 260 cm (`tools/make_verksted.mjs` → `scenes/verksted.scene.json` → `levels/verksted.level.json`; `test_verksted.mjs` sjekker at de er à jour). «Neste nivå» er nivået med lavest `n` over dette (`nextLevelOf`), så nivå 8 (Stuen, R62) kan komme før eller etter; etter siste nivå viser målskjermen «Alle nivåene klart» og knappen til avslutningen.
+- **Hovedveien** (`walk_route`, ca. 47 s): gulv (oljeflekk `olje_1`, glatt) → kasse → verktøykasse med oljet, glatt lokk → oljefille (grep) → arbeidsbenken → gåtekammeret → port → verktøyvegg (grep) → hylle → verktøykassa med motgiften.
+- **Vektgåten:** to plater (tung 6, lett 4) og nøyaktig fem mutre à 2 som kan bæres (TA): tre på den tunge, to på den lette. Porten åpner bare når begge er nede samtidig. `gate_bot` løser den med ekte fysikk (`solveGates(…, { from })`), og `walk_route` med lukket port feiler.
+- **Byggestedet:** gapet over porten (45 cm) mellom to hyller; én planke rekker ikke, to planker uten tape faller. Referansebygget er to lange planker teipet sammen (`tol` på broflata gir plass til at den henger litt). Snarveien går forbi hele gåten; boten beviser både hovedveien og `bygg:verksted1`.
+- **Glatt** (`slick: true` på en boks i scenen): gli uten grep (`slickAccel`, admin-innstilling), rød ✕ og glansstriper (`readable_view.js`); gripbare flater (fillen) virker fra glatt underlag. Sykkeldekket (`tire`) er rundt og ruller når du dytter det.
+- Ikke bevist her: ekte FPS og følelsen av å gli på iPhone (testes på iPhone).
+
 ## Slik lages og sjekkes et nivå
 1. Skriv scenen (`scenes/<navn>.scene.json`, mål i cm) og kontroller den: `node tools/validate_scene.mjs scenes/<navn>.scene.json`.
 2. Lag brettet: `node tools/scene2level.mjs scenes/<navn>.scene.json levels/<navn>.level.json`. Rutekartet finner veien og sier fra om det måtte legge inn hjelpetrinn (nivåene skal ha 0).

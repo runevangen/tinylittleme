@@ -9,6 +9,15 @@ const box = (w, h, d, mat) => mesh(new THREE.BoxGeometry(w, h, d), mat);
 const lerpCol = (c, to, k) => new THREE.Color(c).lerp(new THREE.Color(to), k);
 
 export const TOY_BUILDERS = {
+  tire(sx, sy, sz, o) {                                              // R63: sykkeldekk: sort torus med felg og åtte eiker. Står på høykant og ruller i fartsretningen (animateToy)
+    const g = new THREE.Group(), r = Math.min(sx, sy, sz) / 2, wheel = new THREE.Group(), spin = new THREE.Group();
+    spin.add(mesh(new THREE.TorusGeometry(r * 0.82, r * 0.18, 10, 28), M(o.color, { roughness: 0.95 })));
+    const rim = M(0xc3cad2, { metalness: 0.7, roughness: 0.35 });
+    spin.add(mesh(new THREE.TorusGeometry(r * 0.62, r * 0.035, 6, 24), rim, false));
+    for (let i = 0; i < 4; i++) { const sp = mesh(new THREE.CylinderGeometry(r * 0.02, r * 0.02, r * 1.24, 5), rim, false); sp.rotation.z = (i * Math.PI) / 4; spin.add(sp); }
+    const hub = mesh(new THREE.CylinderGeometry(r * 0.09, r * 0.09, r * 0.2, 8), rim, false); hub.rotation.x = Math.PI / 2; spin.add(hub);
+    wheel.add(spin); g.add(wheel); g.userData.toy = { wheel, spin }; return g;
+  },
   tennisball(sx, sy, sz, o) {                                        // tennisball: gulgrønn med to hvite sømmer
     const g = new THREE.Group(), r = Math.min(sx, sy, sz) / 2, ball = new THREE.Group();
     ball.add(mesh(new THREE.SphereGeometry(r, 28, 20), M(o.color, { roughness: 0.9 })));
@@ -73,6 +82,7 @@ export const TOY_BUILDERS = {
 export function animateToy(mesh, kind, t, clock) {
   const u = mesh.userData.toy; if (!u || !t) return;
   if (kind === 'tennisball') u.ball.rotation.set(t.rx, 0, t.rz);
+  else if (kind === 'tire') { u.wheel.rotation.y = t.yaw || 0; u.spin.rotation.z = -(t.spin || 0); }
   else if (kind === 'rockinghorse') { const k = t.rock / TOY.rockT; u.pivot.rotation.z = k > 0 ? Math.sin(t.ph) * 0.2 * k * Math.min(1, k * 3 + 0.15) : 0; }
   else if (kind === 'windup') {
     const w = t.wind > 0, s = Math.sin(clock * 14);
