@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.82** – R65: stigende vann i Nivå 4: delmål og veiledning tar hensyn til vannstanden (fra tester: Rune).
 - **1.81** – R64: veiledning når målet er under, bak eller ikke i bildet (fra tester: Rune).
 - **1.80** – Veikart: R66 (for mange piler: markørbudsjett og rangering), fra tester: Rune (v1.79).
 - **1.79** – Veikart: visjonen presiserer at byggeskjermen er en del av spillet. Prøven er om noe bidrar til å komme videre, ikke om det skjer på egen skjerm; løsrevne minispill vil vi ikke ha.
