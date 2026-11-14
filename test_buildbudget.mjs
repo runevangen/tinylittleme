@@ -43,7 +43,7 @@ assert.equal(BB.starText(2), '★★☆'); assert.equal(BB.starText(9), '★★�
 assert.deepEqual(BB.starThresholds({}), BB.DEFAULT_STARS);
 assert.deepEqual(BB.starThresholds({ stars: { three: { cost: -1, parts: 'x' }, two: null } }), BB.DEFAULT_STARS);
 { const t = BB.starThresholds({ stars: { three: { cost: 9, parts: 9 }, two: { cost: 3, parts: 3 } } }); assert.ok(t.two.cost >= t.three.cost && t.two.parts >= t.three.parts); }
-for (const n of ['bro', 'kjokkenbro', 'leke', 'vippe', 'trapp', 'kontroll']) {
+for (const n of ['bro', 'kjokkenbro', 'leke', 'stue', 'vippe', 'trapp', 'kontroll']) {
   for (const s of lv(n).build.sites) {
     const t = BB.starThresholds(s); assert.ok(t.three.cost <= t.two.cost && t.three.parts <= t.two.parts, `${n}: terskler stigende`);
     if (s.ref) { assert.ok(s.stars, `${n}/${s.id}: stjerne-terskler er satt i scenen`); const r = BB.starsFor(s, s.ref.placed, s.ref.links || []); assert.equal(r.stars, 3, `${n}/${s.id}: referansebygget gir tre stjerner (kostnad ${r.cost})`); }
@@ -55,7 +55,7 @@ assert.equal(BB.unlockedBonus(0).length, 0); assert.deepEqual(BB.unlockedBonus(3
 assert.equal(BB.unlockedBonus(3, 2).length, 0, 'dobbelt terskel: 3 smuler er ikke nok'); assert.equal(BB.unlockedBonus(6, 2).length, 1);
 assert.equal(BB.nextBonus(4).id, 'bx2'); assert.equal(BB.nextBonus(9), null);
 for (const b of BB.BONUS) { assert.ok(BL.PART_TYPES[b.type], `ekstradel ${b.id} har gyldig type`); assert.ok(!(['d1', 'p1', 'v1']).includes(b.id)); }
-for (const n of ['bro', 'kjokkenbro', 'leke', 'vippe', 'trapp', 'kontroll']) for (const p of lv(n).build.parts) assert.ok(!BB.isBonusId(p.id), `${n}: ${p.id} kolliderer ikke med ekstradeler`);
+for (const n of ['bro', 'kjokkenbro', 'leke', 'stue', 'vippe', 'trapp', 'kontroll']) for (const p of lv(n).build.parts) assert.ok(!BB.isBonusId(p.id), `${n}: ${p.id} kolliderer ikke med ekstradeler`);
 
 // 5. lagring (rewards.js): bare bedre bygg erstatter, ugyldig lagring ignoreres, ekstradeler huskes
 {

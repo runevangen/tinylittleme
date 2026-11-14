@@ -15,6 +15,7 @@ import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, 
 import { buildPuzzleViews } from './puzzle_view.js';
 import { GATE, initGates, resetGates, restoreGates, gatesSave, stepGates, nearSwitch, toggleSwitch, doorById, hasGates, gatesBudget } from './plates_logic.js';   // R60: trykkplate, dør, vindebro og bryter
 import { buildGateViews } from './plates_view.js';
+import { stueHint, isStue, stueSummary } from './stue_logic.js';   // R62: Stuen (nivå 8): hint om fjernkontrollen, plata og broen
 import { buildFlag, buildGoalRing } from './markers.js';
 import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalLine, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
 import { createGoalView } from './goals_view.js';
@@ -90,7 +91,7 @@ const store = {
 };
 
 // Brett: ?level=bad (eller barnerom/kjokken/soverom …). Uten parameter åpnes brettet du sist spilte; første gang nivå 1.
-// De syv første er nivåene (n = nivånummer, stigende vanskelighetsgrad; 4–6 er de samme rommene ommøblert); resten er ekstra- og prøverom.
+// De åtte første er nivåene (n = nivånummer, stigende vanskelighetsgrad; 4–6 er de samme rommene ommøblert); resten er ekstra- og prøverom.
 const LEVELS = [
   { id: 'bad', n: 1, label: 'Nivå 1: Badet', short: 'Nivå 1 · Bad' },
   { id: 'barnerom', n: 2, label: 'Nivå 2: Barnerommet', short: 'Nivå 2 · Barnerom' },
@@ -99,6 +100,7 @@ const LEVELS = [
   { id: 'barnerom2', n: 5, label: 'Nivå 5: Barnerommet, ommøblert', short: 'Nivå 5 · Barnerom' },
   { id: 'kjokken2', n: 6, label: 'Nivå 6: Kjøkkenet, ryddet om', short: 'Nivå 6 · Kjøkken' },
   { id: 'leke', n: 7, label: 'Nivå 7: Lekerommet', short: 'Nivå 7 · Lekerom' },
+  { id: 'stue', n: 8, label: 'Nivå 8: Stuen', short: 'Nivå 8 · Stue' },
   { id: 'bro', label: 'Bygg 1: Hyllebroen (bygg en bro, eller ta den harde veien)', short: 'Bygg · Bro' },
   { id: 'trapp', label: 'Bygg 2: Klossetrappa (bygg en trapp, eller ta den harde veien)', short: 'Bygg · Trapp' },
   { id: 'vippe', label: 'Bygg 3: Vippa over gapet (barnerom: bygg en vippe, eller ta den harde veien)', short: 'Bygg · Vippe' },
@@ -175,6 +177,7 @@ let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true), camRelayOn = store.get('tlm.camrelay', true), camSlop = store.get('tlm.camslop', CAM_SLOP), camHintShown = store.get('tlm.camhint', false);
 let showMapBtn = store.get('tlm.showmapbtn2', false), showCenter = store.get('tlm.showcenter2', false),   // v1.35: ◎ og kartknappen er av som standard (nye nøkler, så alle starter uten dem)
    stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
+let stueHintOn = store.get('tlm.stuehint', true); const stueSeen = new Set();   // R62: Stuen: hint om fjernkontrollen, plata og broen
 let gatesOn = store.get('tlm.gates', true), gateCamOn = store.get('tlm.gatecam', true);   // gåteverktøy (R60)
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
@@ -1658,6 +1661,7 @@ const SETTINGS = [
   rg('gatedur', 'admin', 'Gåteverktøy: hvor lenge dører og broer bruker på å åpne (sekunder)', 1.4, 0.4, 5, 0.2, () => GATE.dur, kp('tlm.gatedur', (v) => { GATE.dur = v; }), { digits: 1 }),
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
   fl('goals', 'spill', 'Delmål (milepæler: panel øverst, jubel når et delmål er klart)', true, () => goalsOn, kp('tlm.goals', (v) => { goalsOn = v; goalView?.setOn(v); logEv('delmål', v ? 'på' : 'av'); })),
+  fl('stuehint', 'hjelp', 'Stuen: hint om fjernkontrollen, den gule plata og broen mellom sofaen og bordet (nivå 8)', true, () => stueHintOn, kp('tlm.stuehint', (v) => { stueHintOn = v; logEv('stue', v ? 'hint på' : 'hint av'); })),
   fl('shortcuthint', 'hjelp', 'Verktøy-genveier: varsel når du klatrer en trapp med hårgelé (nivå 4–6)', true, () => shortcutHintOn, kp('tlm.shortcuthint', (v) => { shortcutHintOn = v; logEv('genvei', v ? 'varsel på' : 'varsel av'); })),
   fl('goalarrow', 'hjelp', 'Pila og kompasset peker mot aktivt delmål', true, () => goalArrowOn, kp('tlm.goalarrow', (v) => { goalArrowOn = v; logEv('delmål', v ? 'pil følger delmål' : 'pil følger ruta'); })),
   fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; logEv('delmål', v ? 'lås på' : 'lås av'); })),
@@ -2116,6 +2120,11 @@ function gateEvent(ev) {
   else if (ev.type === 'latch') { logEv('gåte', `${ev.id} blir stående åpen`); audio?.crumb(9, 10); cue('klikk! låst opp'); }
   else if (ev.type === 'blocked') { logEv('gåte', `${ev.id} kan ikke lukkes: noe står i veien`); toast(T('gate.blocked')); }
 }
+function stueTick() {                                     // R62: hint i Stuen, ett om gangen og bare en gang hver
+  if (!stueHintOn || !isStue(LEVEL) || $('toast').classList.contains('show')) return;
+  const k = stueHint(LEVEL, player, stueSeen, !!LEVEL.goalFlags?.has('stue1')); if (!k) return;
+  stueSeen.add(k); logEv('stue', `hint ${k}`); toast(T(k, { take: TOUCH ? T('btn.take') : 'F' }));
+}
 function gateIntro() {
   if (store.get('tlm.seen.gates', false)) return;
   const near = (LEVEL.gateS.plates.some((q) => Math.hypot((q.x0 + q.x1) / 2 - player.x, (q.z0 + q.z1) / 2 - player.z) < 12) || nearSwitch(LEVEL, player, 6)) && player.onGround;
@@ -2221,7 +2230,7 @@ function update(dt) {
   if (antsOn) for (const ev of stepAnts(LEVEL, player, dt, mode === 'play' && !won)) antEvent(ev);
   if (puzzlesOn || puzzleOpenIds(LEVEL).length) for (const ev of stepPuzzles(LEVEL, dt, puzzlesOn && mode === 'play' && !won)) puzzleEvent(ev);
   if (puzzlesOn && mode === 'play' && !won) puzzleIntro();
-  if (hasGates(LEVEL)) { for (const ev of stepGates(LEVEL, dt, player, gatesOn && mode === 'play' && !won)) gateEvent(ev); if (gatesOn && mode === 'play' && !won) gateIntro(); }
+  if (hasGates(LEVEL)) { for (const ev of stepGates(LEVEL, dt, player, gatesOn && mode === 'play' && !won)) gateEvent(ev); if (gatesOn && mode === 'play' && !won) { gateIntro(); stueTick(); } }
   if (bossOn && LEVEL.bossS) for (const ev of stepBoss(LEVEL, player, dt, mode === 'play' && !won)) bossEvent(ev);
   if (crumbsOn) for (const ev of stepCollect(LEVEL, player, dt, mode === 'play' && !won)) crumbEvent(ev);
   if (goalTotal(LEVEL) && goalsOn) for (const ev of stepGoals(LEVEL, { player, crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0 }, mode === 'play' && !won)) goalEvent(ev);
@@ -2406,6 +2415,7 @@ const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...L
 const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
 if (fdet) logEv('gulvdetaljer', `${fdet.count} stk, ${fdet.beads.length} perler`);
 const leke = gfxLow ? null : makeLekerom({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: legoDens });   // R31: legoknotter (2 tegnekall, ikke slått sammen)
+if (isStue(LEVEL)) { const ss = stueSummary(LEVEL); logEv('stue', `${ss.cushions} puter, ${ss.plates} plate, ${ss.doors} dør, ${ss.goals} delmål, ${ss.crumbs} smuler, ${ss.foes} fiender`); }
 if (leke?.count) logEv('lekerom', `${leke.count} knotter, ${leke.calls} tegnekall, ${leke.tris} trekanter`);
 const soft = gfxLow ? null : makeSoftLight({ THREE, scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun, sunDir: SUN, renderer });   // R17: myke skygger og lysbaking (softlight.js)
 // ---------- R15: budsjett og lav profil (perf_budget.js) ----------

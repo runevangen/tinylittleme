@@ -68,6 +68,11 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `needle` | ja | nål: movable light + tool: "needle" (trædes med en trådsnelle til en taubane) |
 | `spool` | ja | trådsnelle: movable light + tool: "spool" + thread: true |
 | `key` | ja | nøkkel (R7): movable light, ca. 14×3×6 cm; brukes i en gåte (`puzzles` i scenen) og legges på en plate for å rulle ut en bro |
+| `rug` | boks | teppe (R62): lav dekorboks på gulvet med lesbare soner (ramme, stripe, midte); decor: true |
+| `sofa` | boks | sofa (R62): sete, rygg og arm som vanlige bokser av stoff |
+| `cushion` | boks | sofapute (R62): myk boks (soft: true) som tar av for fall |
+| `tv` | boks | TV (R62): flat dekorboks på veggen |
+| `remote` | boks | fjernkontroll (R62): movable light, ca. 16×5×8 cm; bæres (TA) til en trykkplate (R60) |
 | `gel_bottle` | ja | hårgelé: movable light + tool: "gel" |
 
 ## Felt per ting

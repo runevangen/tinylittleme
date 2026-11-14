@@ -35,6 +35,7 @@ const TINTS = {
   bad2: { 'wall:tile': [1.0, 0.7, 0.66], 'floor:tile': [0.62, 0.78, 0.95], wood: [0.85, 0.7, 0.62] },
   barnerom2: { 'wall:plaster': [0.55, 0.62, 1.0], 'floor:wood': [0.72, 0.74, 1.0], wood: [0.8, 0.8, 1.0] },
   leke: { 'wall:plaster': [1.0, 0.9, 0.66], wood: [1.0, 0.88, 0.7] },                                   // R31: lekerommet: varme gule vegger mot grønne legoplater og primærfarger
+  stue: { 'wall:plaster': [1.0, 0.86, 0.66], 'floor:wood': [1.0, 0.84, 0.64], wood: [1.0, 0.86, 0.7] },                              // R62: stuen: varmt lampelys, honning i gulv og vegger
   kjokken2: { 'floor:tile': [0.62, 0.8, 0.85], 'wall:plaster': [1.0, 0.72, 0.8], 'wood:light': [1.0, 0.82, 0.55], wood: [0.9, 0.75, 0.7] },
 };
 export function gradeTint(levelId, kind, lum = 0.5, mode = 'film') {

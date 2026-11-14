@@ -56,6 +56,15 @@ Et eget rom (ikke en variant): 600 × 300 cm, gulv og tak som legoplater (knotte
 - **Delmål:** samle 6 smuler, knus en tinnsoldat, bygg broen, klatre trappa langs veggen (låser målet).
 - Ikke bevist her: ekte FPS og følelse på iPhone (miljøet har ingen GPU). Knottene er målt statisk: to tegnekall og under 16 000 trekanter.
 
+### Nivå 8: Stuen (R62)
+Et eget rom (ikke en variant): 670 × 280 cm, laget av `node tools/make_stue.mjs` (`scenes/stue.scene.json`), brettet av `scene2level`; `test_stue.mjs` sjekker at begge er à jour. Logikken (hint, oppsummering) ligger i `stue_logic.js`; gåten bruker `plates_logic.js` (R60), byggestedet R30/R31.
+- **Rommet:** teppe (lesbare soner, bare utseende), sofa med to myke puter (`soft`, myke landinger) og en trapp av tre bøker foran, sofabord med spilleske, TV-benk, og bokhylla langs østveggen: syv trinn opp (den harde veien) til toppen, pluss tre hyllefjell fra TV-benken (snarveien). Lekebil, vippehest og bokstavklosser står på teppet.
+- **Gåten:** en skyvedør (`d1`, vegg til vegg og til taket, ingen vei rundt) deler rommet. Fjernkontrollen (eller boka) er lett nok til å bæres (TA) og må settes på den gule plata (`p1`, terskel 2: figuren alene er for lett). Døra blir stående åpen (`latch`). `tools/gate_bot.mjs` beviser det med ekte fysikk.
+- **Byggestedet** (`stue1`): gapet på 35 cm mellom sofaen og sofabordet, samme mål som i lekerommet, så referansebygget (en lang planke) bærer ball og bil. Ruta via bygget er over 20 enheter kortere enn den harde veien (`test_buildworld.mjs`).
+- **Delmål:** 6 smuler, åpne skyvedøren, bygg broen (valgfritt), klatre opp bokhylla (låser målet). **Fiender:** to maur og en veps (R61). **10 smuler.** Egen musikk (`stue` i `music.js`), palett (`grade.js`), fortelling og intro (nivå 8). Nivåvalget og «Neste nivå» kommer fra `LEVELS` i `main.js`.
+- **Bevis:** `node tools/walk_route.mjs levels/stue.level.json` (hovedveien, ca. 42 s; med døra lukket kommer du ikke fram), `node tools/gate_bot.mjs levels/stue.level.json`, `node tools/bot.mjs levels/stue.level.json` (ruta og bygget består streng modus).
+- **Gulvdetaljer:** rommet er stort, så `room.fdetMax` (118) i scenen setter et lavere tak enn standarden (140) så `perf_budget`/`FDET` holder. Ikke bevist her: ekte FPS og følelse på iPhone (miljøet har ingen GPU).
+
 ## Slik lages og sjekkes et nivå
 1. Skriv scenen (`scenes/<navn>.scene.json`, mål i cm) og kontroller den: `node tools/validate_scene.mjs scenes/<navn>.scene.json`.
 2. Lag brettet: `node tools/scene2level.mjs scenes/<navn>.scene.json levels/<navn>.level.json`. Rutekartet finner veien og sier fra om det måtte legge inn hjelpetrinn (nivåene skal ha 0).

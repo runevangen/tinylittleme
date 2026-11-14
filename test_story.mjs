@@ -4,7 +4,7 @@ import { makeT } from './i18n.js';
 import { storyKey, fmtTime, shouldShowIntro, finishData, winHTML, STORY_LEVELS, starCount, totals, endHTML, heroSVG } from './story.js';
 
 assert.equal(fmtTime(7.4), '7 s'); assert.equal(fmtTime(75), '1:15'); assert.equal(fmtTime(-3), '0 s');
-assert.equal(storyKey(0), null); assert.equal(storyKey(8), null); assert.equal(storyKey(3), 'story.3');
+assert.equal(storyKey(0), null); assert.equal(storyKey(9), null); assert.equal(storyKey(3), 'story.3');
 assert.ok(shouldShowIntro({ n: 1, enabled: true, resumed: false }));
 assert.ok(!shouldShowIntro({ n: 1, enabled: false, resumed: false }) && !shouldShowIntro({ n: 1, enabled: true, resumed: true }) && !shouldShowIntro({ n: undefined, enabled: true, resumed: false }));
 

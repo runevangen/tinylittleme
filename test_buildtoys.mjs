@@ -72,7 +72,7 @@ const bridge = { site: { id: 's', w: 40, h: 20, deck: [{ u0: -26, u1: -5 }, { u0
 const o1 = BP.runSim(bridge), o2 = BP.runSim(bridge); assert.deepEqual(o1, o2, 'runSim er deterministisk'); assert.ok(['won', 'lost'].includes(o1.result));
 
 // 8. delene finnes i minst to rom og er plukkbare; ingen del er nødvendig (referansebyggene bruker bare planker)
-const rooms = ['bro', 'kjokkenbro', 'leke'];
+const rooms = ['bro', 'kjokkenbro', 'leke', 'stue'];
 const seen = {};
 for (const n of rooms) {
   const lv = JSON.parse(fs.readFileSync(`levels/${n}.level.json`, 'utf8')), ids = new Set();

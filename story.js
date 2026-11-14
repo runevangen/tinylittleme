@@ -1,9 +1,9 @@
 // R8: fortelling og målseremoni. Ren logikk (tekstnøkler, tid, resultat) + små DOM-hjelpere; main.js har bare tynne hekter.
 // Tekstene ligger i i18n.js (story.*, win.*). Alt bruker knappenavn, ikke taster.
-export const STORY_LEVELS = 7;
+export const STORY_LEVELS = 8;
 export const storyKey = (n) => (n >= 1 && n <= STORY_LEVELS ? `story.${n}` : null);
 export const fmtTime = (s) => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60); return m ? `${m}:${String(s % 60).padStart(2, '0')}` : `${s} s`; };
-// Fortellingen vises ved friskt nivåstart (ikke ved gjenopptatt fremgang) og bare for de syv nivåene.
+// Fortellingen vises ved friskt nivåstart (ikke ved gjenopptatt fremgang) og bare for de åtte nivåene.
 export const shouldShowIntro = ({ n, enabled, resumed, seen }) => !!enabled && !resumed && !seen && !!storyKey(n);
 // 1 stjerne for å komme i mål, 2 for minst halvparten av smulene, 3 for alle (uten smuler i brettet: 2).
 export const starCount = ({ crumbs, total }) => (!total ? 2 : crumbs >= total ? 3 : crumbs * 2 >= total ? 2 : 1);
@@ -41,6 +41,6 @@ export function showCard(el, { title, text, btn, skip, onDone, art = '', extra =
 export const INTRO_SWEEP = { hold: 1.1, travel: 2.3 };
 export const INTRO = {
   1: { hint: 'intro.hint.1' }, 2: { hint: 'intro.hint.2' }, 3: { hint: 'intro.hint.3' },
-  4: { hint: 'intro.hint.4' }, 5: { hint: 'intro.hint.5' }, 6: { hint: 'intro.hint.6' }, 7: { hint: 'intro.hint.7' },
+  4: { hint: 'intro.hint.4' }, 5: { hint: 'intro.hint.5' }, 6: { hint: 'intro.hint.6' }, 7: { hint: 'intro.hint.7' }, 8: { hint: 'intro.hint.8' },
 };
 export const introKey = (n) => (INTRO[n] ? INTRO[n].hint : null);

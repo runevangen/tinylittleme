@@ -416,7 +416,7 @@ const level = {
   route,
   start, goal,
   deathY: -15,
-  room: { x0, x1, z0, z1, height: H, floor: R.floor, walls: R.walls, ceiling: R.ceiling },
+  room: { x0, x1, z0, z1, height: H, floor: R.floor, walls: R.walls, ceiling: R.ceiling, ...(R.fdetMax ? { fdetMax: R.fdetMax } : {}) },
   report: { source: scene.source, solvable_by_graph: solvable, helpers, nodes: nodes.length, reachable: finalSeen.size },
 };
 fs.mkdirSync(outPath.replace(/[^/]+$/, '') || '.', { recursive: true });

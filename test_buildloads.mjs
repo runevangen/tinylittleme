@@ -77,6 +77,7 @@ assert.deepEqual(LD.cleanPassed(['ball', 'x', 'ball', 3]), ['ball']); assert.dee
 // 8. data: leke-brettet krever ball og bil, og referansebygget består begge (brettet kan løses)
 const lv = JSON.parse(fs.readFileSync('levels/leke.level.json', 'utf8')), s0 = lv.build.sites[0];
 assert.deepEqual(s0.loads, ['ball', 'car'], 'leke-brettet krever ball og bil');
+for (const id of ['stue']) { const w = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')).build.sites[0]; assert.deepEqual(w.loads, ['ball', 'car'], `${id} krever ball og bil`); for (const l of w.loads) assert.equal(BP.runSim({ site: w, placed: w.ref.placed, links: w.ref.links || [] }, { load: l }).result, 'won', `referansebygget i ${id} består med ${l}`); }
 for (const l of s0.loads) assert.equal(BP.runSim({ site: s0, placed: s0.ref.placed, links: s0.ref.links || [] }, { load: l }).result, 'won', `referansebygget i leke består med ${l}`);
 for (const n of fs.readdirSync('levels').filter((f) => f.endsWith('.level.json'))) for (const s of JSON.parse(fs.readFileSync(`levels/${n}`, 'utf8')).build?.sites || []) for (const l of s.loads || []) assert.ok(LD.isLoad(l), `${n}: ukjent last ${l}`);
 

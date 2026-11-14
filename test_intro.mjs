@@ -5,7 +5,7 @@ import { makeT, DICT_KEYS } from './i18n.js';
 import { INTRO, INTRO_SWEEP, introKey, STORY_LEVELS } from './story.js';
 import { firstTarget, reachedFirst, createSweep, sweepPose } from './intro.js';
 
-const levels = { 1: 'bad', 2: 'barnerom', 3: 'kjokken', 4: 'bad2', 5: 'barnerom2', 6: 'kjokken2', 7: 'leke' };
+const levels = { 1: 'bad', 2: 'barnerom', 3: 'kjokken', 4: 'bad2', 5: 'barnerom2', 6: 'kjokken2', 7: 'leke', 8: 'stue' };
 let lang = 'nb'; const { T } = makeT(() => lang);
 for (let n = 1; n <= STORY_LEVELS; n++) {
   const L = JSON.parse(fs.readFileSync(new URL(`./levels/${levels[n]}.level.json`, import.meta.url), 'utf8'));

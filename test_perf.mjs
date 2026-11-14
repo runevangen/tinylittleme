@@ -81,7 +81,7 @@ ok(/tegnekall 5/.test(statsLine({ calls: 5, tris: 6, lights: 2, shadowLights: 1,
   const fs = await import('node:fs'), { makeSoftLight } = await import('./softlight.js'), { SOFT } = await import('./softlight_logic.js');
   const fakeCtx = { createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, set fillStyle(v) {} };
   globalThis.document = { createElement: () => ({ getContext: () => fakeCtx }) };
-  for (const id of ['bad', 'barnerom', 'kjokken', 'poc', 'klatring', 'barnerom2', 'kjokken2', 'bad2', 'leke']) {
+  for (const id of ['bad', 'barnerom', 'kjokken', 'poc', 'klatring', 'barnerom2', 'kjokken2', 'bad2', 'leke', 'stue']) {
     const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), fy = Math.max(0, ...L.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1]));
     const scene = new THREE.Scene(), sun = { shadow: { radius: 1 } }, renderer = { shadowMap: { type: THREE.PCFSoftShadowMap } };
     const soft = makeSoftLight({ THREE, scene, LEVEL: L, floorY: fy, sun, sunDir: L.sun || [28, 60, -24], renderer });
@@ -106,7 +106,7 @@ ok(/tegnekall 5/.test(statsLine({ calls: 5, tris: 6, lights: 2, shadowLights: 1,
   const fakeCtx = { createRadialGradient: () => ({ addColorStop() {} }), fillRect() {}, set fillStyle(v) {} };
   globalThis.document = { createElement: () => ({ getContext: () => fakeCtx }) };
   const rows = [];
-  for (const id of ['bad', 'barnerom', 'kjokken', 'poc', 'klatring', 'barnerom2', 'kjokken2', 'bad2', 'leke']) for (const [q, dens] of [['high', 1.6], ['high', 1], ['mid', 1]]) {
+  for (const id of ['bad', 'barnerom', 'kjokken', 'poc', 'klatring', 'barnerom2', 'kjokken2', 'bad2', 'leke', 'stue']) for (const [q, dens] of [['high', 1.6], ['high', 1], ['mid', 1]]) {
     const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), fy = Math.max(0, ...L.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1]));
     const scene = new THREE.Scene(), fd = makeFloorDetail({ scene, LEVEL: L, floorY: fy, quality: q, density: dens, name: id });
     const stat = () => { let calls = 0, tris = 0; fd.group.traverse((o) => { if (o.isMesh) { calls++; tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; } }); return { calls, tris }; };
@@ -142,7 +142,7 @@ ok(/tegnekall 5/.test(statsLine({ calls: 5, tris: 6, lights: 2, shadowLights: 1,
   // R21: ekte nivåbygging 1→6 (props.js bygger brettets ting av nivåfilene), rapport per nivå, og frigjøring med disposeTree
   const { readFileSync } = await import('node:fs');
   const { buildGroup, buildSingle, setTexLow } = await import('./props.js');
-  const ids = ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke'];
+  const ids = ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke', 'stue'];
   const buildLevel = (id) => {
     const LV = JSON.parse(readFileSync(new URL(`./levels/${id}.level.json`, import.meta.url))), root = new THREE.Group(), groups = new Map(), drawn = new Set();
     for (const b of LV.boxes) if (b.group) { if (!groups.has(b.group)) groups.set(b.group, []); groups.get(b.group).push(b); }

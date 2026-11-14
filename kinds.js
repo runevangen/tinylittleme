@@ -60,6 +60,11 @@ export const KINDS = {
   needle:       { shaped: true,  desc: 'nål: movable light + tool: "needle" (trædes med en trådsnelle til en taubane)' },
   spool:        { shaped: true,  desc: 'trådsnelle: movable light + tool: "spool" + thread: true' },
   key:          { shaped: true,  desc: 'nøkkel (R7): movable light, ca. 14×3×6 cm; brukes i en gåte (`puzzles` i scenen) og legges på en plate for å rulle ut en bro' },
+  rug:          { shaped: false, desc: 'teppe (R62): lav dekorboks på gulvet med lesbare soner (ramme, stripe, midte); decor: true' },
+  sofa:         { shaped: false, desc: 'sofa (R62): sete, rygg og arm som vanlige bokser av stoff' },
+  cushion:      { shaped: false, desc: 'sofapute (R62): myk boks (soft: true) som tar av for fall' },
+  tv:           { shaped: false, desc: 'TV (R62): flat dekorboks på veggen' },
+  remote:       { shaped: false, desc: 'fjernkontroll (R62): movable light, ca. 16×5×8 cm; bæres (TA) til en trykkplate (R60)' },
   gel_bottle:   { shaped: true,  desc: 'hårgelé: movable light + tool: "gel"' },
 };
 export const MATERIALS = ['wood', 'woodpanel', 'tile', 'porcelain', 'ceramic', 'plastic', 'fabric', 'paper', 'metal', 'glass', 'mirror', 'wicker', 'book', 'plaster'];

@@ -39,7 +39,7 @@ export const TILE = 4;                                                      // f
 // antall: ca. 1,5 per 100 enheter² gulv i full kvalitet; «mid» halvparten; «low» ingen (Lav profil / Enkel grafikk tegner ikke småting)
 export function detailCount(room, quality = 'high', density = 1) {
   const area = (room.x1 - room.x0) * (room.z1 - room.z0), q = quality === 'high' ? 1 : quality === 'mid' ? 0.5 : 0;
-  return Math.max(0, Math.min(140, Math.round(area / 100 * 1.5 * q * density)));
+  return Math.max(0, Math.min(Number.isFinite(room.fdetMax) ? room.fdetMax : 140, Math.round(area / 100 * 1.5 * q * density)));   // R62: store rom fulle av ting kan sette et lavere tak (room.fdetMax) så budsjettet holder
 }
 export function floorKind(room) { return room?.floor?.material === 'tile' ? 'tile' : 'wood'; }
 
