@@ -94,7 +94,7 @@ export const LAYOUT = {
   kamera: ['followstr', 'camdist', 'fov', 'pitchbase', 'lookahead', 'camassist', 'fade', 'fadeop', 'camsens', 'camrelay', 'blob', 'view',
     { sub: 'Skulderkamera', ids: ['shdist', 'shoff', 'shside', 'xhair'] }],
   grafikk: ['gfx', 'grade', 'gradefilter', 'softlight', 'ao', 'rays', 'dust', 'floordetail', 'clutter', 'resq', 'texsmall', 'lowprofile', 'fps'],
-  hjelp: ['tband', 'tbsize', 'guide', 'goalarrow', 'shortcuthint', 'compassmode', 'beacon', 'minimap', 'markers', 'drawercue', 'griphi', 'failhint', 'bubbles', 'hudtech', 'puzcam', 'gatecam', { sub: 'Nivåstart', ids: ['introsweep', 'intromark', 'introhint'] }],
+  hjelp: ['tband', 'tbsize', 'guide', 'goalarrow', 'shortcuthint', 'compassmode', 'beacon', 'minimap', 'markers', 'markrank', 'drawercue', 'griphi', 'failhint', 'bubbles', 'hudtech', 'puzcam', 'gatecam', { sub: 'Nivåstart', ids: ['introsweep', 'intromark', 'introhint'] }],
   lyd: ['sound', 'vol', 'music', 'musicvol', 'voice', 'voicevol', { sub: 'Pust og lydnivåer', ids: ['restbreath', 'mix_breath', 'mix_steps', 'mix_move', 'mix_things', 'mix_toys', 'mix_room'] }],
   test: ['qbtn'],
 };

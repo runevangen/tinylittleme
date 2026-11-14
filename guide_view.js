@@ -45,10 +45,11 @@ export function createGuideView({ scene, T, onShow, logEv }) {
     edge, ghost, ledge, frame,
     // s: { ghost: {x,y,z}|null, ledge: {x,y,z}|null, mark: {x,y,rot}|null, markText: string, route: flate|null, routeOn: bool }
     update(s, now) {
-      const pulse = 0.5 + 0.5 * Math.sin(now / 260);
-      if (s.ghost) { ghost.visible = true; ghost.position.set(s.ghost.x, s.ghost.y + 0.05, s.ghost.z); const k = 1 + 0.12 * pulse; ghost.scale.set(k, k, 1); ghost.material.opacity = 0.35 + 0.2 * pulse; } else ghost.visible = false;
+      const pulse = 0.5 + 0.5 * Math.sin(now / 260), still = 0.5;       // R66: s.pulseGhost/pulseFrame === false: ingen puls (bare den viktigste markøren pulserer)
+      const pg = s.pulseGhost === false ? still : pulse, pf = s.pulseFrame === false ? still : pulse;
+      if (s.ghost) { ghost.visible = true; ghost.position.set(s.ghost.x, s.ghost.y + 0.05, s.ghost.z); const k = (s.ghostK || 1) * (1 + 0.12 * pg); ghost.scale.set(k, k, 1); ghost.material.opacity = (s.ghostA ?? 1) * (0.35 + 0.2 * pg); } else ghost.visible = false;
       if (s.ledge) { ledge.visible = true; ledge.position.set(s.ledge.x, s.ledge.y + 0.06, s.ledge.z); const k = 1.1 + 0.2 * pulse; ledge.scale.set(k, k, 1); } else ledge.visible = false;
-      if (s.routeOn && s.route) { setFrame(s.route); frame.visible = true; frame.material.opacity = 0.25 + 0.4 * pulse; } else { frame.visible = false; if (!s.route) setFrame(null); }
+      if (s.routeOn && s.route) { setFrame(s.route); frame.visible = true; frame.material.opacity = 0.25 + 0.4 * pf; } else { frame.visible = false; if (!s.route) setFrame(null); }
       if (s.mark) {
         if (!edgeOn) { edgeOn = true; edge.style.display = 'block'; }
         edge.style.left = `${s.mark.x.toFixed(0)}px`; edge.style.top = `${s.mark.y.toFixed(0)}px`; eArr.style.transform = `rotate(${s.mark.rot}rad)`;

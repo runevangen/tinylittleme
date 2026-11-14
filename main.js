@@ -19,6 +19,7 @@ import { stueHint, isStue, stueSummary } from './stue_logic.js';   // R62: Stuen
 import { buildFlag, buildGoalRing } from './markers.js';
 import { GUIDE, aim, glyph, fmtM, danglerPhase, actionFor, bandHint, edgeMark, createStall, stepStall, stalled, nextSurface, ledgePoint, createShowMe, startShowMe, skipShowMe, stepShowMe, showMePlan } from './guide_logic.js';   // R64: veiledning når målet er skjult
 import { createGuideView } from './guide_view.js';
+import { MARK, budgetFor, selectMarkers, goalDirection, noteGrab, markerStyle as rankStyle } from './markers_rank.js';   // R66: markørbudsjett og rangering
 import { FG, isWet, pickGoal, refuge, dropIntoWater, drownAlert, shakeOffset, beepDue, levelBadge, floodPct } from './flood_logic.js';   // R65: stigende vann i Nivå 4: mål og varsler tar hensyn til vannstanden
 import { createFloodView } from './flood_view.js';
 import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalLine, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
@@ -345,6 +346,12 @@ const woodKinds = new Set(['wood', 'woodpanel']);
 
 // brukslapper: små lapper med bruksanvisning ved ting som kan gjøre noe (brettets `hints`, bl.a. i treningsrommet). Vises når du er nær.
 let labelsOn = store.get('tlm.labels', true), markersOn = store.get('tlm.markers', true);
+// R66: markørbudsjett (markers_rank.js): høyst 3 (Normal) / 6 (Mye) verdensmarkører samtidig, rangert; Ingen = ingen verdensmarkører
+let markRankOn = store.get('tlm.markrank', true), markBudN = store.get('tlm.markbudn', MARK.budgetNormal), markBudM = store.get('tlm.markbudm', MARK.budgetMuch), markMerge = store.get('tlm.markmerge', MARK.merge);
+let markInfoNear = store.get('tlm.markinfo', MARK.infoNear), markWear = store.get('tlm.markwear', MARK.wearN), markStallS = store.get('tlm.markstall', MARK.stallMs / 1000), markCalm = store.get('tlm.markcalm', true);
+let markPlan = { on: false, allow: new Set(), order: [], primary: null }, goalInfo = { show: false }, markLog = '', markLogAt = 0;
+const markUse = (() => { try { const o = store.get('tlm.gripuse', {}); return o && typeof o === 'object' ? o : {}; } catch { return {}; } })();   // grep per flate (nivå:id), til «brukt ofte før»
+const markUseKey = (id) => `${levelInfo?.n ?? ''}:${id}`;
 let miniOn = store.get('tlm.minimap', null);   // R20: minikart; av som standard på «Enkel» grafikk (eldre telefoner)
 const labels = [];
 function makeBadge() {                                         // liten «i»-merking som viser at tingen kan gjøre noe
@@ -388,8 +395,9 @@ function updateLabels() {
   let near = null;
   for (const l of labels) { l.d = Math.hypot(player.x - l.pos[0], player.z - l.pos[2], (player.y - l.pos[1]) * 0.5); if (!near || l.d < near.d) near = l; }
   const on = labelsOn && mode === 'play' && labels.length > 0, tabOn = mode === 'play' && !won;
-  for (const l of labels) {
-    const o = on && !(mv && mv.covered(l.pos[0], l.pos[1], l.pos[2])) ? Math.max(0, Math.min(1, (13 - l.d) / 4)) : 0;   // R14: ikke bak knapper
+  for (const [li, l] of labels.entries()) {
+    const rkOk = !markPlan.on || markPlan.allow.has(`info:${li}`), rng = markPlan.on ? markInfoNear : 13;   // R66: ⓘ bare når den er valgt av rangeringen (nær, ulest, ingen annen markør konkurrerer)
+    const o = on && rkOk && !(mv && mv.covered(l.pos[0], l.pos[1], l.pos[2])) ? Math.max(0, Math.min(1, (rng - l.d) / 4)) : 0;   // R14: ikke bak knapper
     l.sp.material.opacity += (o - l.sp.material.opacity) * 0.2; l.sp.visible = l.sp.material.opacity > 0.03;
   }
   infoCard.style.display = tabOn ? '' : 'none';
@@ -1353,7 +1361,7 @@ function introBegin() {            // kalles ved friskt nivåstart (etter fortel
   if (introSweepOn && mode === 'play') { menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; introSweep = createSweep(); introV.showSweep(() => { introSweep?.skip(); }); }
   else introEnd(false);
 }
-const mv = createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay: () => mode === 'play' && !won, isOn: () => markersOn, logEv });   // R14: markører som holder seg unna knappene (readable.js, readable_view.js)
+const mv = createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay: () => mode === 'play' && !won, isOn: () => markersOn, logEv, getRank: () => markPlan });   // R14: markører som holder seg unna knappene (readable.js, readable_view.js)
 const ov = createOverview({ scene, camera, LEVEL, player, mv, $, getYaw: () => cam.yaw, getSave: () => save.pos, getSaves: () => stats.saves, crumbsOn: () => crumbsOn, miniOn: () => (miniOn ?? !gfxLow), isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, logEv, toast });   // R20: minikart og oversikt (overview.js, overview_logic.js)
 let compKey = '', compShowUntil = 0, compIdleSince = 0;
 const bossFighting = () => bossOn && !!LEVEL.bossS && !LEVEL.bossS.gone && ['windup', 'charge', 'stunned', 'hit', 'tired'].includes(LEVEL.bossS.mode);   // under sjefkamp: skjul NESTE-pillen så varsel og tekst får plass
@@ -1443,18 +1451,22 @@ function floodFrame(now, dt) {
   } else if (!blocked) floodEv('high', '');
   const pc = Math.floor(floodPct(fw.level, fw.cfg) / 25) * 25; if (pc !== floodSt.pct) { floodSt.pct = pc; logEv('vann', `vannstand ${pc} %+`); }
 }
-const guideHide = () => guideV.update({ ghost: null, ledge: null, mark: null, route: null, routeOn: false }, 0);
+// R66: ring på selve målet når det er i bildet (i stedet for pil); dempes og blir større med avstand, pulserer bare når målet er den viktigste markøren
+const ringSpec = (t, a) => ({ ghost: t, ghostK: Math.min(4, Math.max(1, a.hdist / 8)), ghostA: rankStyle({ dist: a.hdist }, { range: 60 }).alpha, pulseGhost: !markPlan.on || !markCalm || markPlan.primary === 'goal:goal' });
+const guideHide = (now = 0, a = null, t = null) => guideV.update({ ghost: null, ledge: null, mark: null, route: null, routeOn: false, ...(a && t && markPlan.on && goalDir.ring ? ringSpec(t, a) : {}) }, now);
+let goalDir = { ring: false, arrow: true, chevron: true };
 // Hver ramme når pila vises: kantmerke, ring, uthevet flate og båndtekst. a: aim(), t: nextTarget(), show: pila vises
 function guideFrame(now, t, a, show) {
   const R = LEVEL.route, idx = routeIndex();
-  if (!guideOn || !show || mode !== 'play' || won) { guideHide(); return; }
+  if (!guideOn || !show || mode !== 'play' || won) { guideHide(now, show && mode === 'play' && !won ? a : null, t); return; }
   if (menuOpen || introSweep || showMe.phase !== 'idle') { stall.t0 = stall.t0 === null ? null : now; }    // pause: menyen og sveipene teller ikke som stillstand
   stepStall(stall, now, { goalKey: (t.final ? '!' : '') + t.label, routeIdx: idx, done: goalDone(LEVEL), dist: a.hdist });
-  const w = innerWidth, h = innerHeight, sc = mv?.toScreen(t.x, t.y, t.z) ?? null, mark = edgeMark({ s: sc, a, w, h }), hidden = !!mark || a.vertDom;
+  const w = innerWidth, h = innerHeight, sc = mv?.toScreen(t.x, t.y, t.z) ?? null, markRaw = edgeMark({ s: sc, a, w, h }), hidden = !!markRaw || a.vertDom;
+  const mark = markPlan.on && helpLevel === 'none' ? null : markRaw;   // R66: Ingen hjelp = ingen verdensmarkører (båndet viser retningen)
   const surf = nextSurface(R, idx), routeOn = stalled(stall, now) && !!surf;
   let ledge = null;
   if (showMe.phase === 'hold') { const cur = R?.[idx]; const lp = cur && !cur.grip ? ledgePoint(cur, t) : null; if (lp && Math.hypot(lp.x - player.x, lp.z - player.z) > 0.5 && (a.vert !== 'up' || a.vertDom)) ledge = lp; }
-  guideV.update({ ghost: hidden && a.hdist + Math.abs(a.dy) > 1.5 ? t : null, ledge, mark, markText: mark ? (floodSt.drop ? `💧 ${T('water.edge')}` : `${glyph(a)} ${a.vertDom ? T(a.vert === 'down' ? 'guide.edge.down' : 'guide.edge.up') : T('guide.show')}`.trim()) : '', route: surf, routeOn }, now);
+  guideV.update({ ...(hidden && a.hdist + Math.abs(a.dy) > 1.5 && !(markPlan.on && helpLevel === 'none') ? { ghost: t, pulseGhost: !markPlan.on || !markCalm || (markPlan.primary === 'goal:goal' && !routeOn) } : markPlan.on && goalDir.ring ? ringSpec(t, a) : { ghost: null }), pulseFrame: !markPlan.on || !markCalm || routeOn, ledge, mark, markText: mark ? (floodSt.drop ? `💧 ${T('water.edge')}` : `${glyph(a)} ${a.vertDom ? T(a.vert === 'down' ? 'guide.edge.down' : 'guide.edge.up') : T('guide.show')}`.trim()) : '', route: surf, routeOn }, now);
   if (routeOn && surf && guideRouteLogged !== surf.id) { guideRouteLogged = surf.id; logEv('veiledning', `rute utheves etter ${Math.round(GUIDE.stallMs / 1000)} s uten framdrift: ${surf.id}`); }
   if (!routeOn) guideRouteLogged = '';
   if (hidden) {                                                                    // hele handlingssetningen i båndet når målet er skjult (ved nytt mål og så med jevne mellomrom)
@@ -1481,7 +1493,7 @@ function compassFrame(now) {
   topLayout();
   const bandNext = show && (compassMode === 'both' || compassMode === 'compass' || forced);
   if (!bandNext) { compState.text = null; compState.hint = ''; compState.action = ''; }
-  if (!show) { goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); guideFrame(now, t, ga, false); return; }
+  if (!show) { goalInfo = { show: false }; goalDir = { ring: false, arrow: false, chevron: true }; compArrow.style.visibility = ''; goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); guideFrame(now, t, ga, false); return; }
   const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
   const ang = guideOn ? ga.ang : Math.atan2(dx * cy - dz * sy, -dx * sy - dz * cy);   // 0 = rett frem på skjermen (R64: opp når målet er over, ned når det er under), positiv = til høyre
   compArrow.style.transform = `rotate(${ang}rad)`;
@@ -1492,12 +1504,40 @@ function compassFrame(now) {
   compTxt.textContent = distTxt + (hintTxt ? ` · ${hintTxt}` : '');
   if (floodSt.drop) { $('compLbl').textContent = `💧 ${T('water.below')}`; }   // R65: pila viser vannvarselet når nedhoppet lander i vann
   if (bandNext) { compState.text = `${$('compLbl').textContent} · ${distTxt}`; compState.hint = hintTxt; compState.ang = ang; compState.action = guideOn ? (() => { const ac = guideAction(t, ga); return T(ac.key, { ...guideP(), ...ac.params }); })() : ''; }   // R56: knappehintet for seg, så det aldri kuttes
+  { const gsc = mv?.toScreen(t.x, t.y, t.z) ?? null, inFrame = !edgeMark({ s: gsc, a: ga, w: innerWidth, h: innerHeight });      // R66: én retningsangivelse om gangen
+    goalDir = markRankOn ? goalDirection({ inFrame, help: helpLevel, show: true }) : { ring: false, arrow: true, chevron: true };
+    goalInfo = { show: true, inFrame, sx: gsc?.x, sy: gsc?.y, dist: ga.hdist + Math.abs(ga.dy), key: (t.final ? '!' : '') + t.label }; }
   const lowCam = innerWidth > innerHeight; guideFrame(now, t, ga, true); goalArrowG.scale.setScalar(lowCam ? 1.35 : 1);   // liggende: lavere kamera, så pila er større og hevet litt
   const placeArrow = (d) => goalArrowG.position.set(player.x + dx / dist * d, player.y + (lowCam ? 0.14 : 0.07) + 0.01 * Math.sin(now / 200), player.z + dz / dist * d);
   placeArrow(1.4); goalArrowG.rotation.y = Math.atan2(-dx, -dz);
+  if (markRankOn && (!goalDir.arrow || (guideOn && guideV.state().edge))) goalArrow.visible = goalArrowG.visible = false;   // R66: pila i bildet vises bare når målet er utenfor bildet, og aldri sammen med kantmerket
   if (guideOn && ga.vertDom) { goalArrow.visible = goalArrowG.visible = false; mv?.arrowFrame(null, 0, false); }   // R64: målet er loddrett over/under: gulvpila ville pekt feil vei, kantmerket og båndet viser «ned»/«opp»
   else if (goalArrow.visible && mv?.arrowFrame(placeArrow, ang, true)) goalArrow.visible = goalArrowG.visible = false;   // R14: bak en knapp, bak figuren eller utenfor skjermen: kantstilt pil i stedet (ellers flyttes gulvpila lenger fram)
   else if (!goalArrow.visible) mv?.arrowFrame(null, 0, false);
+  if (markRankOn) {                                                               // R66: chevron i båndet bare når pila ikke er i bildet (ellers ville det vært to piler)
+    const arrowPic = goalArrow.visible || !!mv?.edgeOn() || (guideOn && guideV.state().edge), chev = goalDir.chevron || !arrowPic;
+    compArrow.style.visibility = chev ? '' : 'hidden'; if (bandNext && !chev) compState.ang = null;
+  } else compArrow.style.visibility = '';
+}
+// R66: velg hvilke markører som vises nå (mål, høyst 2 grep, ⓘ) etter hjelp-nivå. Kjøres én gang per bilde før tegning.
+const routeIdSet = new Set((LEVEL.route || []).filter((w) => !w.via).map((w) => w.id));
+const markStall = createStall();
+function markerPlanFrame(now) {
+  if (!markRankOn) { if (markPlan.on) markPlan = { on: false, allow: new Set(), order: [], primary: null }; return; }
+  const play = mode === 'play' && !won && markersOn, budget = play ? budgetFor(helpLevel, { normal: markBudN, much: markBudM }) : 0;
+  if (menuOpen || !play) { if (markStall.t0 !== null) markStall.t0 = now; }
+  else stepStall(markStall, now, { goalKey: goalInfo.key || '', routeIdx: routeCur, done: goalDone(LEVEL), dist: goalInfo.dist ?? 0 });
+  const cands = [];
+  if (budget > 0) {
+    if (goalInfo.show) cands.push({ id: 'goal', tier: 'goal', dist: goalInfo.dist ?? 0, prio: 1, sx: goalInfo.inFrame ? goalInfo.sx : undefined, sy: goalInfo.inFrame ? goalInfo.sy : undefined });
+    cands.push(...mv.gripCands(routeIdSet, LEVEL.route?.[Math.min(routeCur + 1, (LEVEL.route?.length || 1) - 1)]?.id, (id) => markUse[markUseKey(id)] || 0));
+    if (labelsOn) labels.forEach((l, i) => { const sc = mv.toScreen(l.pos[0], l.pos[1], l.pos[2]); cands.push({ id: i, tier: 'info', dist: l.d ?? 99, read: infoSeen.has(l), sx: sc?.x, sy: sc?.y }); });
+  }
+  const sel = selectMarkers(cands, { merge: markMerge, infoNear: markInfoNear, wearN: markWear }, budget), order = sel.picked.map((c) => `${c.tier}:${c.id}`);
+  markPlan = { on: true, allow: new Set(order), order, primary: order[0] || null, merge: markMerge, wearN: markWear, use: (id) => markUse[markUseKey(id)] || 0, stalledMs: markStall.t0 === null ? 0 : now - markStall.t0, stallMs: markStallS * 1000, much: helpLevel === 'much', calm: markCalm, budget, picked: sel.picked };
+  const ng = sel.picked.filter((c) => c.tier === 'grip').length, ni = sel.picked.filter((c) => c.tier === 'info').length, hasGoal = sel.picked.some((c) => c.tier === 'goal');
+  const key = `${helpLevel} ${hasGoal ? 'mål ' : ''}${ng} grep${ni ? ' ⓘ' : ''} av ${budget}`;
+  if (key !== markLog && now - markLogAt > 5000) { markLog = key; markLogAt = now; logEv('markør', `rangert: ${key}`); }
 }
 compEl.addEventListener('pointerdown', (e) => { e.stopPropagation(); camToGoal(); });
 $('btnCenter').addEventListener('pointerdown', (e) => { e.stopPropagation(); camBehind(); });
@@ -1917,6 +1957,14 @@ const SETTINGS = [
   fl('minimap', 'hjelp', 'Minikart øverst til venstre (trykk på det for oversikt; av som standard med Enkel grafikk)', true, () => miniOn ?? !gfxLow, kp('tlm.minimap', (v) => { miniOn = v; logEv('minikart', v ? 'på' : 'av'); })),
   fl('drawercue', 'hjelp', 'Tydelige skuffer (åpne står fram med mørk innside, lukkede er flate med fuge; gjelder fra neste brett)', true, () => drawerCue(), kp('tlm.drawercue', (v) => { setDrawerCue(v); logEv('skuffer', v ? 'tydelige' : 'enkle'); })),
   fl('markers', 'hjelp', 'Tydelige markører (grep ▲, hylle, glatt, pil i kanten)', true, () => markersOn, kp('tlm.markers', (v) => { markersOn = v; logEv('markør', v ? 'på' : 'av'); })),
+  fl('markrank', 'hjelp', 'Færre markører: rangert budsjett etter Hjelp-nivå (Normal høyst 3 samtidig, Mye 6, Ingen 0), én pil om gangen, dempet med avstand og erfaring, bare den viktigste pulserer', true, () => markRankOn, kp('tlm.markrank', (v) => { markRankOn = v; logEv('markør', v ? 'rangering på' : 'rangering av (alle markører i nærheten)'); })),
+  rg('markbudn', 'admin', 'Markørbudsjett på Normal (mål + grep + ⓘ)', MARK.budgetNormal, 1, 6, 1, () => markBudN, kp('tlm.markbudn', (v) => { markBudN = v; }), { digits: 0 }),
+  rg('markbudm', 'admin', 'Markørbudsjett på Mye hjelp', MARK.budgetMuch, 2, 10, 1, () => markBudM, kp('tlm.markbudm', (v) => { markBudM = v; }), { digits: 0 }),
+  rg('markmerge', 'admin', 'Markører nærmere enn dette (px) slås sammen', MARK.merge, 40, 160, 5, () => markMerge, kp('tlm.markmerge', (v) => { markMerge = v; }), { digits: 0 }),
+  rg('markinfo', 'admin', 'ⓘ vises bare nærmere enn dette (brettenheter)', MARK.infoNear, 4, 40, 1, () => markInfoNear, kp('tlm.markinfo', (v) => { markInfoNear = v; }), { digits: 0 }),
+  rg('markwear', 'admin', 'Grep-markør dempes til kontur etter så mange grep på flaten (0 = aldri)', MARK.wearN, 0, 20, 1, () => markWear, kp('tlm.markwear', (v) => { markWear = v; }), { digits: 0 }),
+  rg('markstall', 'admin', 'Dempede markører vises tydelig igjen etter så mange sekunder uten framdrift', MARK.stallMs / 1000, 10, 90, 5, () => markStallS, kp('tlm.markstall', (v) => { markStallS = v; }), { digits: 0 }),
+  fl('markcalm', 'admin', 'Ro: bare den viktigste markøren pulserer (av = alle pulserer som før)', true, () => markCalm, kp('tlm.markcalm', (v) => { markCalm = v; })),
   fl('griphi', 'hjelp', 'Fremhev grep (oransje, pulserende)', false, () => gripHi, kp('tlm.griphi', (v) => { gripHi = v; })),
   ...(labels.length ? [fl('labels', 'hjelp', `Brukslapper ved ting${key('L')}`, true, () => labelsOn, kp('tlm.labels', (v) => { labelsOn = v; }))] : []),
   fl('cues', 'hjelp', `Lydtekst: vis tekst for lyder${key('V')}`, false, () => cuesOn, kp('tlm.cues', (v) => { cuesOn = v; })),
@@ -2499,7 +2547,7 @@ function audioFrame(pre, dt) {
   if (pre.onGround && !p.onGround && p.vy > 5) audio.jump();                                  // avspark
   if (!pre.onGround && p.onGround && pre.vy < -3) audio.land(surf, -pre.vy, landWarn && !(p.rollT > 0) ? landClass(p.landImpact, ...landTh()) : 'soft');   // landing (R28: egen lyd per klasse)
   if (pre.state !== 'hang' && p.state === 'hang') audio.grab();
-  if (pre.state !== 'climb' && p.state === 'climb') audio.grab();
+  if (pre.state !== 'climb' && p.state === 'climb') { audio.grab(); const gid = p.climb?.box?.id; if (gid) { noteGrab(markUse, markUseKey(gid)); try { store.set('tlm.gripuse', markUse); } catch { /* ikke lagret */ } } }
   if (pre.state !== 'swing' && p.state === 'swing') audio.grab();
   if (pre.state !== 'zip' && p.state === 'zip') { audio.grab(); setMood('happy', 3); say('zipping', true); }
   if (pre.state !== 'mantle' && p.state === 'mantle') audio.mantle();
@@ -2563,7 +2611,7 @@ function render(now, dt) {
   updateCarryButton();
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
   poseHero(player, now, dt, mode); animateHero(player, now, dt); updateBubble(now); updateStam();
-  updateArc(); syncMade(); syncZips(); updateLabels(); mv.update(now, dt);
+  updateArc(); syncMade(); syncZips(); markerPlanFrame(now); updateLabels(); mv.update(now, dt);
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
   for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
   hero.stepOff = (hero.stepOff || 0) * Math.exp(-dt / 0.07) + (player.stepDy || 0); player.stepDy = 0;                     // trinnhopp: figuren glir opp i stedet for å poppe
@@ -2931,4 +2979,4 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

@@ -2,6 +2,7 @@
 // Logikken (trygg sone, kantplassering) ligger i readable.js; her er DOM og three. Kobles inn fra main.js med createMarkerView().
 import * as THREE from 'three';
 import { inflate, inAny, edgePoint, placeMarker, ungrippableAhead, shelfIds, figureRect, pickArrowDistance } from './readable.js';
+import { MARK, angOff, markerStyle } from './markers_rank.js';
 
 // alt som ligger over spillbildet og ikke skal skjule en markør (bare det som faktisk vises)
 const BLOCKERS = ['btnJump', 'btnGrab', 'btnCarry', 'btnCenter', 'btnMap', 'minimap', 'ovhint', 'stick', 'hud', 'topband', 'compass', 'bar', 'hint', 'infocard', 'qbtn', 'stam', 'soundPill'];
@@ -11,7 +12,7 @@ function spriteTex(draw, size = 96) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
-export function createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay, isOn, logEv }) {
+export function createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay, isOn, logEv, getRank = () => null }) {   // R66: getRank() gir markørplanen (markers_rank.js) eller null (gammel oppførsel)
   const vw = () => innerWidth, vh = () => innerHeight;
   const _v = new THREE.Vector3();
 
@@ -85,13 +86,34 @@ export function createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay, i
     tri(); g.strokeStyle = '#10151f'; g.lineWidth = 16; g.stroke(); g.fillStyle = '#ff9a1f'; g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 5; g.stroke();
     g.fillStyle = '#fff'; g.beginPath(); g.moveTo(n / 2, 34); g.lineTo(n / 2 + 11, n - 52); g.lineTo(n / 2 - 11, n - 52); g.closePath(); g.fill();
   }, 128);
+  const thinTex = spriteTex((g, n) => {                                // R66: dempet grep (brukt mange ganger): bare en tynn kontur, ingen fyll
+    g.lineJoin = 'round'; g.beginPath(); g.moveTo(n / 2, 10); g.lineTo(n - 12, n - 22); g.lineTo(n / 2, n - 44); g.lineTo(12, n - 22); g.closePath();
+    g.strokeStyle = 'rgba(16,21,31,.8)'; g.lineWidth = 9; g.stroke(); g.strokeStyle = '#ffb347'; g.lineWidth = 4; g.stroke();
+  }, 128);
   const mkSprite = (map, sz) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map, transparent: true, depthTest: true, depthWrite: false, opacity: 0, sizeAttenuation: false, fog: false })); sp.userData.px = sz; sp.renderOrder = 18; sp.visible = false; scene.add(sp); return sp; };
   // sprite med sizeAttenuation=false: høyde i piksler = scale * P11 * vh / 2, så størrelsen holdes lik i stående og liggende
   const sizeSprite = (sp, bump = 1) => { const sc = (sp.userData.px * bump * 2) / (camera.projectionMatrix.elements[5] * vh()); sp.scale.set(sc, sc, 1); };
   const gripPx = () => Math.max(44, Math.min(58, Math.min(vw(), vh()) * 0.14));
 
   // grep: ▲ som svever foran hver grep-flate når du er i nærheten (flyttes ut av knapper og figur i stedet for å skjules)
-  const grips = LEVEL.boxes.filter((b) => b.grip && !b.dyn && !b.parent).map((b) => ({ b, sp: mkSprite(upTex, 48), c: [(b.min[0] + b.max[0]) / 2, b.max[1] + 0.55, (b.min[2] + b.max[2]) / 2] }));
+  const grips = LEVEL.boxes.filter((b) => b.grip && !b.dyn && !b.parent).map((b, i) => ({ b, id: b.id ?? `g${i}`, sp: mkSprite(upTex, 48), c: [(b.min[0] + b.max[0]) / 2, b.max[1] + 0.55, (b.min[2] + b.max[2]) / 2] }));
+  const gripDist = (g) => Math.hypot(player.x - g.c[0], player.z - g.c[2], (player.y - g.c[1]) * 0.5);
+  function gripPos(g, bob = 0) {                                                  // foran flaten (mot deg), i høyde med figuren
+    const dx = player.x - g.c[0], dz = player.z - g.c[2], dl = Math.hypot(dx, dz) || 1, off = 0.45 + Math.min(g.b.max[0] - g.b.min[0], g.b.max[2] - g.b.min[2]) / 2;
+    return { x: g.c[0] + dx / dl * off, y: Math.max(g.b.min[1] + 0.5, Math.min(g.b.max[1] + 0.5, player.y + 1.7)) + bob, z: g.c[2] + dz / dl * off };
+  }
+  // R66: kandidater til rangeringen (markers_rank.js): nærhet, retning mot blikket, på ruta (route: id-er, next: neste flate), brukt før (use)
+  function gripCands(route, nextId, use) {
+    const out = [];
+    for (const g of grips) {
+      const d = gripDist(g); if (d >= MARK.gripRange) continue;
+      const w = gripPos(g), q = nudge(w.x, w.y, w.z, 160, gripPx() * 0.7, gripPx() * 0.5);   // kandidater som ikke kan vises i bildet (bak kameraet, for langt utenfor) tar ikke plass i budsjettet
+      if (!q) continue;
+      const s = toScreen(q.x, q.y, q.z), id = g.id;
+      out.push({ id, tier: 'grip', dist: d, ang: angOff(player.fx || 0, player.fz || 1, g.c[0] - player.x, g.c[2] - player.z), route: route.has(id), prio: id === nextId ? 1 : 0, used: use?.(id) || 0, sx: s?.x, sy: s?.y });
+    }
+    return out;
+  }
 
   // hylle: teal kant på toppflaten av flater på ruta (ikke grep, ikke dekor)
   const shelves = [];
@@ -144,18 +166,50 @@ export function createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay, i
     for (const l of shelves) l.visible = on;
     slickCenter.value.set(player.x, player.y, player.z);
     for (const m of slicks) { m.visible = on; m.material.opacity = on ? 0.95 : 0; m.userData.edgeLine.visible = on && !m.userData.big; m.userData.tex.offset.x = (now / 4000) % 1; }
+    const rk = on ? getRank() : null;                                           // R66: plan med budsjett (null = alle grep i nærheten som før)
+    if (rk?.on) {
+      const placed = [], stalledMs = rk.stalledMs || 0;
+      for (const g of grips) {
+        const d = gripDist(g), key = `grip:${g.id}`, ri = rk.order.indexOf(key);
+        if (ri >= 0 && d < MARK.gripRange) {
+          const prim = rk.primary === key, w = gripPos(g, (rk.calm ? prim : true) ? Math.sin(now / 300) * 0.08 : 0);
+          const q = nudge(w.x, w.y, w.z, 160, gripPx() * 0.7, gripPx() * 0.5);
+          if (q) { const sc = toScreen(q.x, q.y, q.z); if (sc) { placed.push({ g, ri, q, sc, prim, d }); } }
+        }
+        g.sp.userData.want = 0;
+      }
+      placed.sort((a, b) => a.ri - b.ri);
+      const kept = [];
+      for (const p of placed) {                                                   // etter flytting ut av knapper: aldri to markører tettere enn merge-avstanden
+        if (kept.some((k) => Math.hypot(k.sc.x - p.sc.x, k.sc.y - p.sc.y) < rk.merge)) continue;
+        kept.push(p);
+      }
+      for (const p of kept) {
+        const st = markerStyle({ dist: p.d, used: rk.use?.(p.g.id) || 0 }, { wearN: rk.wearN, stalledMs, stallMs: rk.stallMs, much: rk.much });
+        p.g.sp.position.set(p.q.x, p.q.y, p.q.z); p.g.sp.userData.want = st.alpha; p.g.sp.userData.st = st; p.g.sp.userData.prim = p.prim;
+      }
+      for (const g of grips) {
+        const w = g.sp.userData.want || 0, st = g.sp.userData.st;
+        g.sp.material.opacity += (w - g.sp.material.opacity) * 0.25; g.sp.visible = g.sp.material.opacity > 0.03;
+        if (w > 0 && st) { const tx = st.thin ? thinTex : upTex; if (g.sp.material.map !== tx) g.sp.material.map = tx; }
+        const k = st ? st.scale : 1;
+        g.sp.userData.px = gripPx() * k; sizeSprite(g.sp, (rk.calm ? g.sp.userData.prim : true) ? 1 + 0.06 * Math.sin(now / 260) : 1);
+        if (w === 0) g.sp.userData.st = null;
+      }
+    } else {
     const bob = Math.sin(now / 300) * 0.08;
     for (const g of grips) {
-      const d = Math.hypot(player.x - g.c[0], player.z - g.c[2], (player.y - g.c[1]) * 0.5), want = on && d < 24 ? Math.min(1, (24 - d) / 6) : 0;
+      const d = gripDist(g), want = on && d < 24 ? Math.min(1, (24 - d) / 6) : 0;
       let tgt = 0;
       if (want > 0) {
-        const dx = player.x - g.c[0], dz = player.z - g.c[2], dl = Math.hypot(dx, dz) || 1, off = 0.45 + Math.min(g.b.max[0] - g.b.min[0], g.b.max[2] - g.b.min[2]) / 2;   // foran flaten (mot deg), i høyde med figuren
-        const wx = g.c[0] + dx / dl * off, wy = Math.max(g.b.min[1] + 0.5, Math.min(g.b.max[1] + 0.5, player.y + 1.7)) + bob, wz = g.c[2] + dz / dl * off;
-        const q = nudge(wx, wy, wz, 160, gripPx() * 0.7, gripPx() * 0.5);
+        const w = gripPos(g, bob);
+        const q = nudge(w.x, w.y, w.z, 160, gripPx() * 0.7, gripPx() * 0.5);
         if (q) { g.sp.position.set(q.x, q.y, q.z); tgt = want; }
       }
+      if (g.sp.material.map !== upTex) g.sp.material.map = upTex;
       g.sp.material.opacity += (tgt - g.sp.material.opacity) * 0.25; g.sp.visible = g.sp.material.opacity > 0.03;
       g.sp.userData.px = gripPx(); sizeSprite(g.sp, 1 + 0.06 * Math.sin(now / 260));
+    }
     }
     // ✕ på flaten foran deg når du hopper mot noe som ikke kan gripes
     reachK.reach = (P.ledgeAbove || 0) + (P.reachAbove || 0);
@@ -168,5 +222,5 @@ export function createMarkerView({ scene, camera, LEVEL, player, P, $, isPlay, i
     crossEl.style.opacity = String(Math.min(1, crossT * 1.2)); crossEl.style.display = crossT > 0.03 ? 'block' : 'none';
   }
 
-  return { update, arrowFrame, covered, safeRects, toScreen, heroRect, edge, cross: crossEl, debug: () => ({ slicks: slicks.map((m) => [m.visible, m.material.opacity, m.position.y]), grips: grips.map((g) => [g.sp.visible, g.sp.material.opacity]), shelves: shelves.length, cross: [crossEl.style.display, crossT] }) };
+  return { update, arrowFrame, covered, gripCands, edgeOn: () => edgeMode, safeRects, toScreen, heroRect, edge, cross: crossEl, debug: () => ({ slicks: slicks.map((m) => [m.visible, m.material.opacity, m.position.y]), grips: grips.map((g) => [g.sp.visible, g.sp.material.opacity]), gripsShown: grips.filter((g) => g.sp.visible && g.sp.material.opacity > 0.1).length, shelves: shelves.length, cross: [crossEl.style.display, crossT] }) };
 }
