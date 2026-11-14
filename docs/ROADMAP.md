@@ -29,16 +29,6 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Åpne punkter
 
-### [ ] R66 · Fra tester: Rune · For mange piler: markørbudsjett og tydelig rangering
-Testrapport (skjermbilde, v1.79, hylle med bøker i barnerommet): «Veldig mange piler her. Hvordan gjør vi det bedre.» Bildet viser omtrent sju gule ▲ samtidig (grep-markører på bokfronten, ved flagget og nede i bokhylla), en stor kantstilt mål-pil, ⓘ-markør og flagg, i tillegg til toppbåndet og minikartet. Alt konkurrerer om oppmerksomheten, så ingenting skiller seg ut. Innfør et **markørbudsjett** og **rangering** (`markers.js`, `markers_logic.js`, `readable.js`, `readable_view.js`, `main.js` kompass/pil, `topband_logic.js`), og ta hensyn til de nye markørene fra R64 (målmarkør, kantmerke, «Vis meg») og R65 (vann):
-1. **Tre nivåer:** (a) **mål:** én og bare én retningsangivelse om gangen: enten pila i bildet *eller* chevron i båndet, ikke begge, og pila i bildet vises bare når målet er utenfor bildet (ellers en ring på selve målet); (b) **neste grep:** høyst 2 grep-markører, valgt etter nærhet, retning (kjegle foran figuren), om den ligger på ruta (`route`) og at den ikke er brukt ofte før; (c) **info (ⓘ):** bare når du er nær (ca. 2 m), ikke lest, og ingen annen markør konkurrerer.
-2. **Budsjett etter hjelp-nivå** (`⚙ → Hjelp`, Ingen/Normal/Mye): Ingen = ingen verdensmarkører, Normal = høyst 3 samtidig (inkl. mål), Mye = høyst 6. Rangeringen er en ren, testet funksjon `selectMarkers(kandidater, ctx, budsjett)` (poeng = nærhet + retning + rute + ikke brukt + prioritet).
-3. **Skjermavstand:** to markører nærmere enn ca. 90 px slås sammen, og den med høyest rang beholdes; ingen markør dekker figuren, stikka, knapper, toppbåndet eller minikartet.
-4. **Dempes med erfaring og avstand:** markører blir mindre og mer gjennomsiktige med avstand; grep-markører på flater spilleren har grepet mange ganger dempes til en tynn kontur, men vises tydelig igjen etter ca. 30 s uten framdrift eller når hjelp-nivå er Mye.
-5. **Ro:** ingen markør blinker uten grunn; bare én animert (pulserende) om gangen, nemlig den viktigste.
-6. Alt skal kunne slås av/justeres i `SETTINGS`, `logEv('markør', …)` ved bytte, tekster nb/en. Ingen endring i grep-logikk, kollisjon eller ruter.
-Ferdig når: i barnerommet på bokhylla fra skjermbildet vises høyst 3 markører samtidig på Normal, og et rent bilde med tydelig rangering (skjermbilder `devices['iPhone 14']` før og etter er sett på); en test samler markørkandidater på ca. 30 steder per nivå og viser at budsjettet aldri overskrides og at markører ikke overlapper på skjermen; tester for `selectMarkers` (nærhet, kjegle, rute, brukt, nivå) og sammenslåing; R64-markørene (målmarkør, kantmerke, «Vis meg») og R65 (vann) holder seg innenfor budsjettet; `walk_route`, bot og `npm test` grønne, ingen økning i tegnekall/shadere. Følelsen testes på iPhone.
-
 ### [ ] R54 · Fra tester: Rune · Roligere kamera: følging av som standard og bredere synsfelt i høyformat
 Fra spilletest på iPhone (v1.32–v1.56): testerne blir desorientert og sier at skjermen veiver fram og tilbake. Med «Kamerafølging: styrke» på 0 og «Synsfelt» på 70 ble det klart bedre; med følgingen tilbake på 1 (synsfelt fortsatt 70) ble det mye verre. Den automatiske dreiningen bak figuren (`followYaw` i `camera_util.js`, kalt fra `main.js`) er altså hovedårsaken, og synsfeltet nummer to: 52° loddrett gir bare ca. 25° vannrett på stående iPhone, fordi synsfeltet ikke justeres for skjermformatet.
 (1) **Følging av som standard.** «Kameraet følger etter deg automatisk» (`tlm.follow`) er av for alle, også for dem som har den gamle verdien lagret (engangs-migrering, slik PUBG-standarden på PC ble satt i v0.72). Valget og «Kamerafølging: styrke» blir stående i ⚙ → Kamera, så den kan slås på igjen. Sjefkamp-kameraet, ◎ og dobbelttrykk virker som før.
@@ -53,6 +43,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Fra tester: Rune · for mange piler: markørbudsjett og rangering (markers_rank.js) (R66, v1.83)
 - [x] Fra tester: Rune · stigende vann i Nivå 4: delmål og veiledning tar hensyn til vannstanden (flood_logic.js, flood_view.js) (R65, v1.82)
 - [x] Fra tester: Rune · veiledning når målet er under, bak eller ikke i bildet (guide_logic.js, guide_view.js) (R64, v1.81)
 - [x] Nivå 9: Verkstedet (olje/glatte flater, vektgåte, verktøy, byggested, avslutning etter siste nivå) (R63, v1.76)

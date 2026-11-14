@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.83** – R66: markørbudsjett og rangering: høyst 3/6 verdensmarkører, én retningsangivelse, dempet med avstand og erfaring (fra tester: Rune).
 - **1.82** – R65: stigende vann i Nivå 4: delmål og veiledning tar hensyn til vannstanden (fra tester: Rune).
 - **1.81** – R64: veiledning når målet er under, bak eller ikke i bildet (fra tester: Rune).
 - **1.80** – Veikart: R66 (for mange piler: markørbudsjett og rangering), fra tester: Rune (v1.79).
