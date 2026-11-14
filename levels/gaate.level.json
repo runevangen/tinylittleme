@@ -1,0 +1,606 @@
+{
+ "name": "Gåterommet",
+ "rev": 1,
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -80,
+    -2,
+    -24
+   ],
+   "max": [
+    80,
+    0,
+    24
+   ],
+   "id": "gulv",
+   "color": 14267266,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -81,
+    0,
+    -24
+   ],
+   "max": [
+    -80,
+    40,
+    24
+   ],
+   "id": "vegg_v",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    80,
+    0,
+    -24
+   ],
+   "max": [
+    81,
+    40,
+    24
+   ],
+   "id": "vegg_o",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -80,
+    0,
+    -25
+   ],
+   "max": [
+    80,
+    40,
+    -24
+   ],
+   "id": "vegg_n",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -80,
+    0,
+    24
+   ],
+   "max": [
+    80,
+    40,
+    25
+   ],
+   "id": "vegg_s",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    -80,
+    0,
+    13
+   ],
+   "max": [
+    -72,
+    12,
+    14
+   ],
+   "id": "nisje_v1",
+   "kind": "chest",
+   "color": 12094042,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -66,
+    0,
+    13
+   ],
+   "max": [
+    -60,
+    12,
+    14
+   ],
+   "id": "nisje_v2",
+   "kind": "chest",
+   "color": 12094042,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -60,
+    0,
+    13
+   ],
+   "max": [
+    -59,
+    12,
+    24
+   ],
+   "id": "nisje_o",
+   "kind": "chest",
+   "color": 12094042,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    8,
+    0,
+    -12
+   ],
+   "max": [
+    16,
+    3,
+    12
+   ],
+   "id": "trinn_a",
+   "kind": "chest",
+   "color": 11105866,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    16,
+    0,
+    -12
+   ],
+   "max": [
+    28,
+    6,
+    12
+   ],
+   "id": "plat_a",
+   "kind": "chest",
+   "color": 9198138,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    44,
+    0,
+    -12
+   ],
+   "max": [
+    60,
+    6,
+    12
+   ],
+   "id": "plat_b",
+   "kind": "chest",
+   "color": 9198138,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  }
+ ],
+ "movables": [
+  {
+   "id": "klosse_a",
+   "kind": "letterblock",
+   "material": "plastic",
+   "color": 15222076,
+   "min": [
+    -66,
+    0,
+    -18
+   ],
+   "max": [
+    -63.6,
+    2.4,
+    -15.6
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "klosse_b",
+   "kind": "toyblock",
+   "material": "wood",
+   "color": 3832024,
+   "min": [
+    -34,
+    0,
+    -6
+   ],
+   "max": [
+    -31.6,
+    2.4,
+    -3.6
+   ],
+   "weight": "light",
+   "breakable": false
+  },
+  {
+   "id": "klosse_c",
+   "kind": "legoblock",
+   "material": "plastic",
+   "color": 16172331,
+   "min": [
+    -34,
+    0,
+    2
+   ],
+   "max": [
+    -31.6,
+    2.4,
+    4.4
+   ],
+   "weight": "light",
+   "breakable": false
+  }
+ ],
+ "decor": [],
+ "hints": [
+  {
+   "id": "klosse_a",
+   "text": "Gåte 1\nTa klossen (TA), bær den til den gule platen og sett den fra deg (TA igjen). Er den tung nok, åpner porten seg.",
+   "pos": [
+    -64.8,
+    3.3,
+    -16.8
+   ]
+  },
+  {
+   "id": "klosse_b",
+   "text": "Gåte 2\nTo plater må trykkes ned samtidig. Bær en kloss til hver plate (TA).",
+   "pos": [
+    -32.8,
+    3.3,
+    -4.8
+   ]
+  },
+  {
+   "id": "plat_a",
+   "text": "Gåte 3\nGå inntil bryteren og trykk TA: en bro senkes over gapet. HOPP over når den er ute.",
+   "pos": [
+    22,
+    6.9,
+    0
+   ]
+  }
+ ],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    -32,
+    22,
+    -23.95
+   ],
+   "size": [
+    28,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2.4
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ants": [],
+ "collectibles": [
+  {
+   "id": "smule_1",
+   "x": -76,
+   "y": 0.8,
+   "z": 19
+  },
+  {
+   "id": "smule_2",
+   "x": -70,
+   "y": 0.8,
+   "z": 19
+  },
+  {
+   "id": "smule_3",
+   "x": -64,
+   "y": 0.8,
+   "z": 19
+  }
+ ],
+ "gates": {
+  "plates": [
+   {
+    "id": "p1",
+    "x0": -56,
+    "x1": -48,
+    "z0": -4,
+    "z1": 4,
+    "y": 0,
+    "need": 2,
+    "label": "Gul plate",
+    "en": "Yellow plate"
+   },
+   {
+    "id": "p2",
+    "x0": -20,
+    "x1": -12,
+    "z0": -16,
+    "z1": -8,
+    "y": 0,
+    "need": 2,
+    "label": "Plate 1 av 2",
+    "en": "Plate 1 of 2"
+   },
+   {
+    "id": "p3",
+    "x0": -20,
+    "x1": -12,
+    "z0": 8,
+    "z1": 16,
+    "y": 0,
+    "need": 2,
+    "label": "Plate 2 av 2",
+    "en": "Plate 2 of 2"
+   },
+   {
+    "id": "p4",
+    "x0": -74,
+    "x1": -66,
+    "z0": -20,
+    "z1": -12,
+    "y": 0,
+    "need": 1,
+    "label": "Hjørneplata",
+    "en": "Corner plate"
+   }
+  ],
+  "switches": [
+   {
+    "id": "s1",
+    "x": 22,
+    "y": 6,
+    "z": 0,
+    "label": "Bryter",
+    "en": "Switch"
+   }
+  ],
+  "doors": [
+   {
+    "id": "d1",
+    "kind": "door",
+    "min": [
+     -40,
+     0,
+     -24
+    ],
+    "max": [
+     -38,
+     40,
+     24
+    ],
+    "needs": [
+     "p1"
+    ],
+    "dir": "down",
+    "label": "Porten",
+    "en": "The gate"
+   },
+   {
+    "id": "d2",
+    "kind": "door",
+    "min": [
+     4,
+     0,
+     -24
+    ],
+    "max": [
+     6,
+     40,
+     24
+    ],
+    "needs": [
+     "p2",
+     "p3"
+    ],
+    "dir": "down",
+    "label": "Den andre porten",
+    "en": "The second gate"
+   },
+   {
+    "id": "d3",
+    "kind": "bridge",
+    "min": [
+     28,
+     5.2,
+     -6
+    ],
+    "max": [
+     44,
+     6,
+     6
+    ],
+    "needs": [
+     "s1"
+    ],
+    "axis": "x",
+    "anchor": "min",
+    "label": "Vindebroen",
+    "en": "The drawbridge"
+   },
+   {
+    "id": "d4",
+    "kind": "door",
+    "min": [
+     -72,
+     0,
+     13
+    ],
+    "max": [
+     -66,
+     12,
+     14
+    ],
+    "needs": [
+     "p4"
+    ],
+    "latch": true,
+    "dir": "down",
+    "label": "Nisja",
+    "en": "The nook"
+   }
+  ]
+ },
+ "goals": [
+  {
+   "id": "port1",
+   "type": "gate",
+   "label": "Åpne den første porten (kloss på platen)",
+   "en": "Open the first gate (block on the plate)",
+   "door": "d1"
+  },
+  {
+   "id": "port2",
+   "type": "gate",
+   "label": "Trykk begge platene samtidig",
+   "en": "Press both plates at once",
+   "door": "d2"
+  },
+  {
+   "id": "bro",
+   "type": "reach",
+   "label": "Senk vindebroen med bryteren og kom over",
+   "en": "Lower the drawbridge with the switch and cross",
+   "gate": true,
+   "on": "plat_b",
+   "x0": 44,
+   "x1": 60,
+   "z0": -12,
+   "z1": 12,
+   "top": 6
+  },
+  {
+   "id": "nisje",
+   "type": "crumbs",
+   "label": "Åpne nisja og ta de tre smulene (valgfritt)",
+   "en": "Open the nook and take the three crumbs (optional)",
+   "n": 3
+  }
+ ],
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -80,
+   "x1": 80,
+   "z0": -24,
+   "z1": 24,
+   "top": 0
+  },
+  {
+   "id": "trinn_a",
+   "x0": 8,
+   "x1": 16,
+   "z0": -12,
+   "z1": 12,
+   "top": 3
+  },
+  {
+   "id": "plat_a",
+   "x0": 16,
+   "x1": 28,
+   "z0": -12,
+   "z1": 12,
+   "top": 6
+  },
+  {
+   "id": "d3",
+   "x0": 28,
+   "x1": 44,
+   "z0": -6,
+   "z1": 6,
+   "top": 6
+  },
+  {
+   "id": "plat_b",
+   "x0": 44,
+   "x1": 60,
+   "z0": -12,
+   "z1": 12,
+   "top": 6
+  }
+ ],
+ "start": [
+  -72,
+  0,
+  0
+ ],
+ "goal": [
+  52,
+  6,
+  0
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -80,
+  "x1": 80,
+  "z0": -24,
+  "z1": 24,
+  "height": 40,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b382",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#e9e1d3"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "photos": 0,
+   "views": [],
+   "interpreted_by": "Oppdiktet testbrett for R60 (trykkplate, dør, vindebro og bryter).",
+   "scale_anchors": [
+    "klosser 12 cm",
+    "porter i full romhøyde"
+   ],
+   "uncertainty": "Ingen: rommet er tegnet for spillet.",
+   "note": "R60. Tre gåter på hovedveien (klosse til plata, to plater samtidig, bryter og vindebro) og en valgfri nisje med smuler."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 8,
+  "reachable": 5
+ }
+}

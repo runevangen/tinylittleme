@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.74** – R60: gåteverktøy: trykkplate, dør og bryter (plates_logic.js, plates_view.js), datastyrt i scenen.
 - **1.73** – R61: veps som flyr (wasp.js, wasp_view.js): patruljerer i lufta, varsler med lyd og farge, stuper mot deg; kan unngås.
 - **1.72** – Runneren kan fortsette påbegynt arbeid etter containerstopp (`args.resume`): uferdige worktrees og branches slettes ikke, og byggeren fortsetter fra WIP-commit.
 - **1.71** – Byggefysikk 2: fagverk (trekanter), trykk mot strekk (Euler-knekking), materialtabell, gummistrikk og hjelp for ledd som svinger (R49a2).

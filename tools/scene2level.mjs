@@ -97,6 +97,7 @@ for (const b of boxes) {
   if (hot) continue;                                          // toppen ligger i en fare (kokeplate): ikke en trygg flate
   nodes.push(fromBox(b));
 }
+for (const q of scene.gates?.doors || []) if (q.kind === 'bridge') nodes.push({ id: q.id, x0: ux(q.box[0]), x1: ux(q.box[1]), z0: uz(q.box[4]), z1: uz(q.box[5]), top: uy(q.box[3]) });   // R60: en vindebro er en flate i rutekartet (spillet legger den ut når gåten er løst)
 const gapOf = (A, B) => {
   const dx = Math.max(0, Math.max(A.x0, B.x0) - Math.min(A.x1, B.x1));
   const dz = Math.max(0, Math.max(A.z0, B.z0) - Math.min(A.z1, B.z1));
@@ -337,6 +338,16 @@ const puzzles = (scene.puzzles || []).map((p) => {
     bridge: { min: [ux(bx0), uy(by0), uz(bz0)], max: [ux(bx1), uy(by1), uz(bz1)], axis: p.bridge.axis || 'x', anchor: p.bridge.anchor || 'max' } };
 });
 
+// gåteverktøy (R60, se plates_logic.js): gates: { plates: [{ id, on, box: [x0, x1, z0, z1], need }], switches: [{ id, on, at: [x, z] }], doors: [{ id, kind: 'door'|'bridge', box: [x0, x1, y0, y1, z0, z1], needs, latch?, dir?, axis?, anchor?, label?, en? }] } i cm.
+// Plater og brytere ligger på toppen av flata `on` (eller gulvet). Dører og broer er ikke med i `boxes` før de er stengt/ute: spillet legger dem inn (initGates).
+const gateTop = (on, what) => { if (!on || on === 'gulv') return 0; const o = scene.objects.find((q) => q.id === on); if (!o) throw new Error(`${what}: fant ikke flata ${on}`); return uy(o.box[3]); };
+const gates = scene.gates ? {
+  plates: (scene.gates.plates || []).map((q) => ({ id: q.id, x0: ux(q.box[0]), x1: ux(q.box[1]), z0: uz(q.box[2]), z1: uz(q.box[3]), y: gateTop(q.on, `plate ${q.id}`), need: q.need, ...(q.label ? { label: q.label } : {}), ...(q.en ? { en: q.en } : {}) })),
+  switches: (scene.gates.switches || []).map((q) => ({ id: q.id, x: ux(q.at[0]), y: gateTop(q.on, `bryter ${q.id}`), z: uz(q.at[1]), ...(q.label ? { label: q.label } : {}), ...(q.en ? { en: q.en } : {}) })),
+  doors: (scene.gates.doors || []).map((q) => ({ id: q.id, kind: q.kind || 'door', min: [ux(q.box[0]), uy(q.box[2]), uz(q.box[4])], max: [ux(q.box[1]), uy(q.box[3]), uz(q.box[5])], needs: q.needs || [],
+    ...(q.latch ? { latch: true } : {}), ...(q.dir ? { dir: q.dir } : {}), ...(q.axis ? { axis: q.axis } : {}), ...(q.anchor ? { anchor: q.anchor } : {}), ...(q.label ? { label: q.label } : {}), ...(q.en ? { en: q.en } : {}) })),
+} : null;
+
 // delmål (R23, se goals.js): { id, type: 'reach'|'crumbs'|'stomp'|'puzzle'|'boss'|'flag', label, en, gate?, req?, after?, on? (reach: id på flata), n?, puzzle?, flag? }
 // reach: flata (`on`) blir en rektangel + topp i enheter. gate = må være klart før målet åpner (må ligge på ruta).
 const goals = (scene.goals || []).map((g) => {
@@ -346,6 +357,7 @@ const goals = (scene.goals || []).map((g) => {
     const [a, b, , d, e, f] = o.box; Object.assign(out, { on: g.on, x0: ux(a), x1: ux(b), z0: uz(e), z1: uz(f), top: uy(d) });
   } else if (g.type === 'crumbs' || g.type === 'stomp') out.n = g.n;
   else if (g.type === 'puzzle') out.puzzle = g.puzzle;
+  else if (g.type === 'gate') out.door = g.door;
   else if (g.type === 'flag') out.flag = g.flag;
   return out;
 });
@@ -396,6 +408,7 @@ const level = {
   collectibles,
   ...(build ? { build } : {}),
   ...(puzzles.length ? { puzzles } : {}),
+  ...(gates ? { gates } : {}),
   ...(goals.length ? { goals } : {}),
   ...(shortcuts.length ? { shortcuts } : {}),
   ...(alts.length ? { alts } : {}),

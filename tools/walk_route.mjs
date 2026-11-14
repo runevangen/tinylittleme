@@ -4,12 +4,13 @@
 // Finner den frem, er ruta gjennomførbar. Finner den ikke frem, er det enten for vanskelig eller verktøyet er for dumt: se hvor det stopper.
 import fs from 'node:fs';
 import { P, newPlayer, step, applyPreset, initBodies, inHazard } from '../physics.js';
+import { initGates, openAllGates } from '../plates_logic.js';
 import { shortcutsOf, shortcutRoute, gateRoute, toolBoxes } from '../shortcut.js';
 
-export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [], helpers = true, only = null, wallJump = true, trace = null } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
+export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [], helpers = true, only = null, wallJump = true, trace = null, closedGates = false } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
   applyPreset(preset); Object.assign(P, { edgeGuard: helpers, autoJump: helpers, airSteady: helpers, magnet: helpers, holdGrab: helpers, shimmy: helpers, rollOn: helpers, carefulOn: helpers, ropeHeavy: helpers }); if (only) for (const k of only) P[k] = true;   // R32: helpers=false = streng modus (ingen sikte-hjelp)
   if (!wallJump) Object.assign(P, { wallKick: 0, wallUp: 0 });                                                                      // R32: wallJump=false = ingen veggsprang
-  const L = level ? JSON.parse(JSON.stringify(level)) : JSON.parse(fs.readFileSync(levelPath, 'utf8')); initBodies(L); for (const b of extraBoxes) L.boxes.push(JSON.parse(JSON.stringify(b)));
+  const L = level ? JSON.parse(JSON.stringify(level)) : JSON.parse(fs.readFileSync(levelPath, 'utf8')); initBodies(L); if (L.gates) { initGates(L); if (!closedGates) openAllGates(L); } for (const b of extraBoxes) L.boxes.push(JSON.parse(JSON.stringify(b)));
   const R = route || L.route || []; if (R.length < 2) return { ok: false, why: 'brettet har ingen rute' };
   const p = newPlayer(...L.start), idle = { mx: 0, mz: 0, jumpPressed: false, jumpHeld: false, grabPressed: false, grabHeld: false };
   let t = 0, fail = null; const log = [];

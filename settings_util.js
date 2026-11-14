@@ -87,14 +87,14 @@ export const GROUPS = [
 ];
 export const LAYOUT = {
   spill: ['lang', 'autosave', 'startscreen', 'confirm2', 'lostreturn'],
-  innhold: ['puzzles', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'wasp', 'wasplevel', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['buildsnap', 'buildslow', 'buildbudget', 'buildbonus'] }],
+  innhold: ['puzzles', 'gates', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'wasp', 'wasplevel', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['buildsnap', 'buildslow', 'buildbudget', 'buildbonus'] }],
   styring: ['preset', 'help', 'stickfloat', 'stickcurve', 'stickdead', 'btnscale', 'speedscale', 'inertia', 'autograb', 'magnet', 'aimthrow', 'dbltap', 'showcenter', 'showmapbtn', 'vib',
     { sub: 'Mus og tastatur (PC)', ids: ['pcbtns', 'mousesens', 'mouselook'] }],
   figur: ['stepadapt', 'reactanim', 'idlewink', 'shimmy', 'roll', 'careful', 'ropeheavy'],
   kamera: ['followstr', 'camdist', 'fov', 'pitchbase', 'lookahead', 'camassist', 'fade', 'fadeop', 'camsens', 'camrelay', 'blob', 'view',
     { sub: 'Skulderkamera', ids: ['shdist', 'shoff', 'shside', 'xhair'] }],
   grafikk: ['gfx', 'grade', 'gradefilter', 'softlight', 'ao', 'rays', 'dust', 'floordetail', 'clutter', 'resq', 'texsmall', 'lowprofile', 'fps'],
-  hjelp: ['tband', 'tbsize', 'goalarrow', 'shortcuthint', 'compassmode', 'beacon', 'minimap', 'markers', 'drawercue', 'griphi', 'failhint', 'bubbles', 'hudtech', 'puzcam', { sub: 'Nivåstart', ids: ['introsweep', 'intromark', 'introhint'] }],
+  hjelp: ['tband', 'tbsize', 'goalarrow', 'shortcuthint', 'compassmode', 'beacon', 'minimap', 'markers', 'drawercue', 'griphi', 'failhint', 'bubbles', 'hudtech', 'puzcam', 'gatecam', { sub: 'Nivåstart', ids: ['introsweep', 'intromark', 'introhint'] }],
   lyd: ['sound', 'vol', 'music', 'musicvol', 'voice', 'voicevol', { sub: 'Pust og lydnivåer', ids: ['restbreath', 'mix_breath', 'mix_steps', 'mix_move', 'mix_things', 'mix_toys', 'mix_room'] }],
   test: ['qbtn'],
 };
