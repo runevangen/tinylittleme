@@ -10,7 +10,9 @@ Du er noen få centimeter høy i et rom som er bygd for en annen skala: leker, m
 - **Byggespill som Bridge Builder**: du bygger din egen vei (bro, trapp, vippe) av det som finnes i rommet, med fysikk som er til å stole på, og du ser hvorfor det holdt eller brakk.
 - **Enkle gåter og eventyr som i Zelda**: små gåter med verktøy og nøkler, lesbare mål, belønning for å utforske, varierte fiender, musikk og stemning.
 
-Dette er **ikke tre minispill** ved siden av hverandre, men **én sammenhengende spillopplevelse**. Du er i samme rom, med samme figur og samme styring hele tiden: du hopper og klatrer, møter et hinder, bygger deg forbi det med ting du finner, og løser en gåte med det du har bygd eller bærer med deg. Bygging og gåter skal vokse ut av rommet og veien du går, ikke være egne moduser som bryter flyten mer enn nødvendig.
+Dette er **ikke tre minispill** ved siden av hverandre, men **én sammenhengende spillopplevelse**. Du er i samme rom, med samme figur og samme styring hele tiden: du hopper og klatrer, møter et hinder, bygger deg forbi det med ting du finner, og løser en gåte med det du har bygd eller bærer med deg. Bygging og gåter skal vokse ut av rommet og veien du går.
+
+Prøven er **om det bidrar til å komme videre i spillet**, ikke om det skjer på en egen skjerm. Byggeskjermen er en del av spillet: den gjør det enklere å bygge, og det du bygger trenger du for å komme deg gjennom rommet. Det vi ikke vil ha, er løsrevne innslag (et dartspill eller lignende) som ikke gir deg noe du bruker videre.
 
 Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 

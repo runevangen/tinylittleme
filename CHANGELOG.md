@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.79** – Veikart: visjonen presiserer at byggeskjermen er en del av spillet. Prøven er om noe bidrar til å komme videre, ikke om det skjer på egen skjerm; løsrevne minispill vil vi ikke ha.
 - **1.78** – Veikart: R65 (stigende vann i Nivå 4: delmål og veiledning tar hensyn til vannstanden), fra tester: Rune.
 - **1.77** – Veikart: R64 (tydelig veiledning når målet er under, bak eller ikke i bildet), fra tester: Rune (v1.76).
 - **1.76** – R63: nivå 9 Verkstedet (verksted.scene.json, workshop_logic.js): glatte flater (olje), vektgåte med to plater og mutre, byggested over porten, ny musikk/fortelling, og avslutning etter siste nivå.
