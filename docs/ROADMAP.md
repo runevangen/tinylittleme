@@ -27,10 +27,6 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Åpne punkter
 
-### [ ] R62 · Nivå 8: Stuen (sofa, sofabord, TV, bokhylle og et teppe som er en hel verden)
-Avhenger av R60 og R61. Nytt rom i barneskala, bygget som grunnscene (`scenes/stue.scene.json`, `tools/scene2level.mjs` eller samme oppsett som lekerommet `tools/make_leke.mjs`) og lagt inn som nivå 8 etter lekerommet. Idé: **sofa med puter** (klatre og hoppe mellom puter, myke landinger), **sofabord** med spill og fjernkontroll (fjernkontrollen er en tung ting som kan bære en plate), **bokhylle** (klatrevei), **teppe** med mønster (lesbare soner), **TV-benk** med en kabelfelle. Rommet har: minst 3 **delmål** (`goals`), en **gåte** med trykkplate (R60: bær fjernkontrollen eller en bok til plata så porten åpner seg), et **byggested** (bro mellom sofa og sofabord av puter, bøker og planker; R46-deler) med alltid en vanskelig vei uten bygging, en **veps** (R61) eller bakkefiender, 10 smuler, egen **musikk** og stemning (`music.js`), egen **fortelling og intro** (R22, `story.js`, `i18n.js` nb/en som nevner knappene), målskjerm, og **overgang** fra og til nabonivåene. Valider scenen (`tools/validate_scene.mjs`, `docs/scene.schema.json`), gå ruta (`node tools/walk_route.mjs levels/stue.level.json`) og la `walk_route` bevise både hovedveien og den alternative veien.
-Ferdig når: Stuen kan spilles fra startskjerm til mål på iPhone med stikke + TA/HOPP/GREP (skjermbilder sett på), `walk_route` og bot er grønne for nivået, nivåvalg/«Neste nivå»/målskjerm/lagring virker, `npm test` grønn (inkl. nye brett-tester), tegnekall og teksturminne holder `perf_budget.js`.
-
 ### [ ] R63 · Nivå 9: Verkstedet/garasjen (olje, verktøy og tung maskineri i liten skala)
 Avhenger av R60 og R61. Nytt rom som er det mest «tekniske» i huset: **verktøykasse** (skrutrekker som stav, spiker, teip og linjal som byggedeler), **arbeidsbenk** med skrustikke, **oljeflekk/såpe** som er glatte flater (`slick`, se BACKLOG «slick-flater»: man glir uten grep, med rød ✕ og glansstriper fra v1.00), **sykkeldekk** som ruller, **verktøyvegg** med hull (klatrevei), og et **tung-vekt-gåtekammer** med to trykkplater (R60) der man må balansere vekt. Minst 3 delmål, en bygging som kombinerer tau/tape (R25/R49a) og gåten, bakkefiender og veps, egen musikk og fortelling, 10 smuler, overgang til målskjerm og til slutten av spillet (utvid avslutningen etter siste nivå). Alt som i R62: validering, `walk_route`/bot-bevis, alternativ vei, nb/en-tekster, lagring.
 Ferdig når: som R62 for dette rommet, pluss at glatte flater oppfører seg riktig (test: gli uten grep, gripbar kant fungerer) og avslutningen etter siste nivå viser at spillet er ferdig.
@@ -49,6 +45,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Nivå 8: Stuen (sofa, sofabord, TV-benk, bokhylle, skyvedør med trykkplate, delmål, musikk, fortelling) (R62, v1.75)
 - [x] Gåteverktøy: trykkplate, dør og bryter (plates_logic.js, plates_view.js) (R60, v1.74)
 - [x] Fiende: veps som flyr, patruljerer, varsler og stuper (wasp.js, wasp_view.js) (R61, v1.73)
 - [x] Byggefysikk 2: fagverk, trykk mot strekk, materialtabell, gummistrikk og hjelp for ledd som svinger (build_truss.js, build_materials.js) (R49a2, v1.71)
