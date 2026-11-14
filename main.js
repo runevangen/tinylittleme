@@ -19,6 +19,8 @@ import { stueHint, isStue, stueSummary } from './stue_logic.js';   // R62: Stuen
 import { buildFlag, buildGoalRing } from './markers.js';
 import { GUIDE, aim, glyph, fmtM, danglerPhase, actionFor, bandHint, edgeMark, createStall, stepStall, stalled, nextSurface, ledgePoint, createShowMe, startShowMe, skipShowMe, stepShowMe, showMePlan } from './guide_logic.js';   // R64: veiledning når målet er skjult
 import { createGuideView } from './guide_view.js';
+import { FG, isWet, pickGoal, refuge, dropIntoWater, drownAlert, shakeOffset, beepDue, levelBadge, floodPct } from './flood_logic.js';   // R65: stigende vann i Nivå 4: mål og varsler tar hensyn til vannstanden
+import { createFloodView } from './flood_view.js';
 import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalLine, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
 import { createGoalView } from './goals_view.js';
 import { createTopBand } from './topband_view.js';   // R53: dynamisk toppbånd
@@ -1290,13 +1292,17 @@ function nextTarget() {
     else return { x: e.x, y: e.y, z: e.z, label: T('puz.bridgeLbl'), final: false, act: '', kind: 'route' };
   }
   if (puzzlesOn && mode === 'play') { const pt = puzzleTarget(LEVEL, player); if (pt) return { x: pt.x, y: pt.y, z: pt.z, label: T('puz.' + pt.key), final: false, act: pt.key === 'plate' ? T('btn.drop') : T('btn.take'), kind: pt.key === 'plate' ? 'plate' : 'key' }; }   // R7: nøkkel, så lås
+  const fw = mode === 'play' ? floodNow() : null;                                    // R65: stigende vann på: bare tørre mål, ellers høyeste tørre flate
   if (goalsOn && goalArrowOn && mode === 'play') {                                  // R23: pila peker mot aktivt delmål (reach/smuler/maur/sjef); gåter har egen veiledning over
-    const ag = activeGoal(LEVEL), gt = ag && goalTarget(LEVEL, ag, player);
+    let ag, gt;
+    if (fw) { const pk = pickGoal(LEVEL, player, fw.wl, { crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0 }); floodPick = pk; ag = pk.goal; gt = pk.target; if (!ag && pk.refuge) return { ...pk.refuge, label: T('water.refuge'), final: false, act: '', kind: 'reach' }; }
+    else { floodPick = null; ag = activeGoal(LEVEL); gt = ag && goalTarget(LEVEL, ag, player); }
     if (gt) return { x: gt.x, y: gt.y, z: gt.z, label: goalLabel(ag, lang), final: false, act: '', kind: guideKind(ag, gt), ref: guideRef(ag, gt) };
   }
   if (R?.length > 1) {
     routeIndex();
     const w = R[Math.min(routeCur + 1, R.length - 1)];
+    if (fw && w !== R[R.length - 1] && !w.grip && isWet(w.top, fw.wl)) { const rf = refugeOf(fw); if (rf) return { ...rf, label: T('water.refuge'), final: false, act: '', kind: 'reach' }; }   // R65: neste trinn er under vann
     if (w !== R[R.length - 1]) return { x: Math.max(w.x0, Math.min(w.x1, player.x)), y: w.top, z: Math.max(w.z0, Math.min(w.z1, player.z)), label: (lang === 'en' && w.en) || w.label || nameOfId(w.id).replace(/_/g, ' '), final: false, act: w.act || (w.grip ? 'klatre' : ''), kind: 'route', grip: !!w.grip };
   }
   return { x: g[0], y: g[1], z: g[2], label: T('compass.goal'), final: true, kind: 'route' };
@@ -1361,7 +1367,8 @@ tb.setSize(tbSize); tb.setOn(tbandOn); tbReady = tb;
 function bandCtx() {
   const act = activeGoal(LEVEL), total = goalTotal(LEVEL), st = { crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0 };
   const play = mode === 'play' && !won;
-  const c = { version: VERSION, levelLabel, nextText: play ? compState.text : null, nextHint: play ? compState.hint : '', nextAction: play ? compState.action : '', nextAng: compState.ang, goalHead: play && act ? goalLine(LEVEL, act, lang, st) : (total > 0 && goalDone(LEVEL) === total ? T('goal.all') : ''),
+  const fwn = play ? floodNow() : null;
+  const c = { water: fwn ? levelBadge(fwn.level, fwn.cfg) : '', version: VERSION, levelLabel, nextText: play ? compState.text : null, nextHint: play ? compState.hint : '', nextAction: play ? compState.action : '', nextAng: compState.ang, goalHead: play && act ? goalLine(LEVEL, act, lang, st) : (total > 0 && goalDone(LEVEL) === total ? T('goal.all') : ''),
     goalDone: goalDone(LEVEL), goalTotal: total, crumbs: crumbsOn && crumbTotal(LEVEL) ? { n: crumbCount(LEVEL), total: crumbTotal(LEVEL) } : null,
     infoOn: infoCard.style.display !== 'none', flagOn: qbtnOn, unread: $('qbtn').classList.contains('hasreply'), badge: markCount() + unsent('BACKLOGG') };
   if (tb.isOpen()) {
@@ -1410,6 +1417,32 @@ function showMeFrame(dt) {
 }
 document.addEventListener('pointerdown', (e) => { if ((showMe.phase === 'to' || showMe.phase === 'hold') && !e.target.closest?.('#guideEdge')) { skipShowMe(showMe); logEv('veiledning', 'vis meg: hoppet over'); } }, true);
 document.addEventListener('keydown', () => { if (showMe.phase === 'to' || showMe.phase === 'hold') skipShowMe(showMe); }, true);
+// R65: stigende vann i Nivå 4 (flood_logic.js, flood_view.js). Bare aktivt når «stigende vann» er på; «Av (vanlig vann)» er uendret.
+let floodWarnOn = store.get('tlm.floodwarn', true), floodShakeK = store.get('tlm.floodshake', 1), floodPick = null, floodVar = null;
+const floodV = createFloodView(), floodSt = { drop: null, under: 0, shake: 0, highAt: -1e9, pct: -1, keys: {}, sayAt: {} };
+function floodNow() { const cfg = floodWarnOn && floodVar?.floodCfg; return cfg ? { cfg, level: floodVar.water, wl: floodVar.water > 0.05 ? floodVar.floorY + floodVar.water : -Infinity, under: floodVar.under } : null; }   // wl = -Infinity så lenge vannet ikke har begynt å stige
+const refugeOf = (fw) => refuge(LEVEL, fw.wl, player);
+const floodEv = (k, detail) => { if (floodSt.keys[k] !== detail) { floodSt.keys[k] = detail; if (detail) logEv('vann', detail); } };
+function floodSay(id, prio, txt, ttl, kind, now) { if (tb.isOn()) tb.push(id, prio, txt, ttl, kind, now); else if (!(now - (floodSt.sayAt[id] || 0) < 4000)) { floodSt.sayAt[id] = now; toast(txt, true); } }
+function floodFrame(now, dt) {
+  const cfg = floodVar?.floodCfg || null;
+  floodV.style(floodVar?.waterMesh, cfg ? floodVar.water / cfg.max : 0, now / 1000, !!cfg);
+  const fw = mode === 'play' && !won ? floodNow() : null;
+  if (!fw) { floodV.vignette(0); floodSt.drop = null; floodSt.shake = 0; floodSt.under = 0; floodEv('under', ''); floodEv('drop', ''); floodEv('high', ''); return; }
+  const al = drownAlert(fw.under, fw.cfg.grace), drop = dropIntoWater(LEVEL, player, fw.wl);
+  floodV.vignette(al.on ? 0.2 + 0.5 * al.frac : 0); floodSt.shake = al.shake * floodShakeK;
+  if (beepDue(floodSt.under, fw.under)) { audio?.floodwarn?.(); buzz(40); }
+  floodSt.under = fw.under; floodSt.drop = drop;
+  const blocked = !!floodPick && !floodPick.goal && floodPick.blocked.length > 0;
+  const P = { jump: T('btn.jump'), grab: T('btn.grab') };
+  if (al.on) { floodSay('flood', PRIO.danger, T('water.deep', { ...P, n: Math.ceil(al.left) }), 0.6, 'danger', now); floodEv('under', `hodet under vann (${al.left.toFixed(1)} s igjen)`); }
+  else { floodEv('under', ''); if (drop) { floodSay('flood', PRIO.danger, T('water.below'), 0.6, 'danger', now); floodEv('drop', `varsel: nedhopp ${drop.drop.toFixed(1)} lander i vann`); } else floodEv('drop', ''); }
+  if (!al.on && !drop && blocked) {
+    if (now - floodSt.highAt > FG.highMs) { floodSt.highAt = now; floodSay('flood', PRIO.hint, T('water.high', P), 7, 'hint', now); }
+    floodEv('high', `mål under vann: ${floodPick.blocked.join(', ')} · pek mot ${floodPick.refuge?.id || 'ingen flate'}`);
+  } else if (!blocked) floodEv('high', '');
+  const pc = Math.floor(floodPct(fw.level, fw.cfg) / 25) * 25; if (pc !== floodSt.pct) { floodSt.pct = pc; logEv('vann', `vannstand ${pc} %+`); }
+}
 const guideHide = () => guideV.update({ ghost: null, ledge: null, mark: null, route: null, routeOn: false }, 0);
 // Hver ramme når pila vises: kantmerke, ring, uthevet flate og båndtekst. a: aim(), t: nextTarget(), show: pila vises
 function guideFrame(now, t, a, show) {
@@ -1421,7 +1454,7 @@ function guideFrame(now, t, a, show) {
   const surf = nextSurface(R, idx), routeOn = stalled(stall, now) && !!surf;
   let ledge = null;
   if (showMe.phase === 'hold') { const cur = R?.[idx]; const lp = cur && !cur.grip ? ledgePoint(cur, t) : null; if (lp && Math.hypot(lp.x - player.x, lp.z - player.z) > 0.5 && (a.vert !== 'up' || a.vertDom)) ledge = lp; }
-  guideV.update({ ghost: hidden && a.hdist + Math.abs(a.dy) > 1.5 ? t : null, ledge, mark, markText: mark ? `${glyph(a)} ${a.vertDom ? T(a.vert === 'down' ? 'guide.edge.down' : 'guide.edge.up') : T('guide.show')}`.trim() : '', route: surf, routeOn }, now);
+  guideV.update({ ghost: hidden && a.hdist + Math.abs(a.dy) > 1.5 ? t : null, ledge, mark, markText: mark ? (floodSt.drop ? `💧 ${T('water.edge')}` : `${glyph(a)} ${a.vertDom ? T(a.vert === 'down' ? 'guide.edge.down' : 'guide.edge.up') : T('guide.show')}`.trim()) : '', route: surf, routeOn }, now);
   if (routeOn && surf && guideRouteLogged !== surf.id) { guideRouteLogged = surf.id; logEv('veiledning', `rute utheves etter ${Math.round(GUIDE.stallMs / 1000)} s uten framdrift: ${surf.id}`); }
   if (!routeOn) guideRouteLogged = '';
   if (hidden) {                                                                    // hele handlingssetningen i båndet når målet er skjult (ved nytt mål og så med jevne mellomrom)
@@ -1457,6 +1490,7 @@ function compassFrame(now) {
   const distTxt = guideOn ? fmtM(ga.meters) : `${(dist * 0.05).toFixed(1).replace('.', ',')} m`;
   const hintTxt = guideOn ? bandHint(guideAction(t, ga), ga, (k) => T(k, guideP())) : t.act ? `▲ ${t.act}` : Math.abs(dy) > 0.6 ? (dy > 0 ? '▲ opp' : '▼ ned') : '';
   compTxt.textContent = distTxt + (hintTxt ? ` · ${hintTxt}` : '');
+  if (floodSt.drop) { $('compLbl').textContent = `💧 ${T('water.below')}`; }   // R65: pila viser vannvarselet når nedhoppet lander i vann
   if (bandNext) { compState.text = `${$('compLbl').textContent} · ${distTxt}`; compState.hint = hintTxt; compState.ang = ang; compState.action = guideOn ? (() => { const ac = guideAction(t, ga); return T(ac.key, { ...guideP(), ...ac.params }); })() : ''; }   // R56: knappehintet for seg, så det aldri kuttes
   const lowCam = innerWidth > innerHeight; guideFrame(now, t, ga, true); goalArrowG.scale.setScalar(lowCam ? 1.35 : 1);   // liggende: lavere kamera, så pila er større og hevet litt
   const placeArrow = (d) => goalArrowG.position.set(player.x + dx / dist * d, player.y + (lowCam ? 0.14 : 0.07) + 0.01 * Math.sin(now / 200), player.z + dz / dist * d);
@@ -1735,6 +1769,8 @@ const SETTINGS = [
   fl('stuehint', 'hjelp', 'Stuen: hint om fjernkontrollen, den gule plata og broen mellom sofaen og bordet (nivå 8)', true, () => stueHintOn, kp('tlm.stuehint', (v) => { stueHintOn = v; logEv('stue', v ? 'hint på' : 'hint av'); })),
   fl('shortcuthint', 'hjelp', 'Verktøy-genveier: varsel når du klatrer en trapp med hårgelé (nivå 4–6)', true, () => shortcutHintOn, kp('tlm.shortcuthint', (v) => { shortcutHintOn = v; logEv('genvei', v ? 'varsel på' : 'varsel av'); })),
   fl('guide', 'hjelp', 'Veiledning når målet er skjult: handling i teksten, pil ned/opp, kantmerke, ring gjennom hindre, «Vis meg» og glød på neste flate', true, () => guideOn, kp('tlm.guide', (v) => { guideOn = v; if (!v) guideHide(); logEv('veiledning', v ? 'på' : 'av'); })),
+  fl('floodwarn', 'hjelp', 'Stigende vann: pila og delmål hopper over mål under vann, varsel «Vann under deg», vannstand i båndet og rødt varsel før du drukner', true, () => floodWarnOn, kp('tlm.floodwarn', (v) => { floodWarnOn = v; if (!v) { floodSt.drop = null; floodSt.shake = 0; floodV.vignette(0); } logEv('vann', v ? 'varsel på' : 'varsel av'); })),
+  rg('floodshake', 'admin', 'Stigende vann: kameraskjelv før du drukner (0 = av)', 1, 0, 2, 0.1, () => floodShakeK, kp('tlm.floodshake', (v) => { floodShakeK = v; }), { digits: 1 }),
   rg('guidestall', 'admin', 'Veiledning: sekunder uten framdrift før neste flate utheves', 45, 15, 120, 1, () => Math.round(GUIDE.stallMs / 1000), kp('tlm.guidestall', (v) => { GUIDE.stallMs = v * 1000; }), { digits: 0 }),
   fl('goalarrow', 'hjelp', 'Pila og kompasset peker mot aktivt delmål', true, () => goalArrowOn, kp('tlm.goalarrow', (v) => { goalArrowOn = v; logEv('delmål', v ? 'pil følger delmål' : 'pil følger ruta'); })),
   fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; logEv('delmål', v ? 'lås på' : 'lås av'); })),
@@ -2491,6 +2527,7 @@ const variant = makeVariant({ scene, LEVEL, renderer, sun, floorY: Math.max(0, .
   opts: { moods: () => variantMoodOn, twists: () => variantTwistOn, lamp: () => lampPower, aim: () => cam.pitch, P, say: (k) => toast(T(k, { jump: T('btn.jump'), grab: T('btn.grab') })), logEv,
     flood: () => floodMode, floodMult: () => floodMult,
     onDrown: () => { failAt('druknet'); audio?.splash?.('pit'); buzz(60); say('knockout'); resetPlayer(player, ...save.pos); stats.respawns++; variant.restartFlood(); toast(T('flood.drown', { jump: T('btn.jump'), grab: T('btn.grab') }) + `  −${SCORE.respawn} poeng`); } } });
+floodVar = variant;
 if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
 const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
@@ -2689,6 +2726,7 @@ function render(now, dt) {
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   grade.follow(player, camera);
+  if (floodSt.shake > 0 && mode === 'play' && !window.__camLock) { const [sx, sy] = shakeOffset(floodSt.shake, now / 1000); camera.position.x += sx; camera.position.y += sy; }   // R65: lett kameraskjelv før man drukner
   renderer.render(scene, camera);
   if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const ds = drawerSummary(LEVEL); if (ds.total) logEv('skuffer', `${ds.open} åpne, ${ds.closed} lukkede, ${ds.fronts} frontfarger, tydelige ${drawerCue() ? 'på' : 'av'}`); const w = overBudget(st).concat(memOver(st, texLow || lowOn)); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
   goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
@@ -2883,7 +2921,7 @@ function frame(now) {
     { const lp = fr && mode === 'play' && !menuOpen ? lowP.decide(fr, renderer.getPixelRatio(), 1, lowMode, autoQC.warm) : null; if (lp !== null) { applyLowProfile(lp); if (lp && lowMode === 'auto') toast('Lav profil på for jevnere bilde. ⚙ → Test → Lav profil styrer det', true); } }
     if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); if (dq.dir === 'down' && !qToasted) { qToasted = true; toast('Lavere oppløsning for jevnere bilde. ⚙ → Test → Oppløsning styrer det', true); } } }   // én melding per økt, nede ved kanten så den ikke dekker målpilen; resten logges bare
   if (!window.__paused && !menuOpen && !ov.active && !bld.active) update(dt);   // R20: spillet venter mens oversikten vises
-  showMeFrame(dt); stepCamAnim(dt); compassFrame(now);
+  showMeFrame(dt); stepCamAnim(dt); compassFrame(now); floodFrame(now, dt);
   render(now, dt);
   requestAnimationFrame(frame);
 }

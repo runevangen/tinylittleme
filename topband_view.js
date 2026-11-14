@@ -13,6 +13,7 @@ body.tb.ovview #topband{visibility:hidden}
 #topband.big .tbt{-webkit-line-clamp:3}
 #topband.dim .tbt{color:#ffffff9e}#topband.next .tbt{color:#ffd9a0}#topband.hint .tbt{color:#eef2fa}
 #topband.danger .tbm{background:#b3261eee;border-color:#fff}#topband.reply .tbm{background:#2f6b45ee;border-color:#5ad17a}
+#topband .tbw{flex:none;color:#8fe3ff;font-weight:700;display:none;white-space:nowrap}#topband .tbw.on{display:block}
 #topband .tbs{flex:none;color:#ffd23f;font-weight:700;display:none}#topband .tbs.on{display:block}
 #topband .tbv{flex:none;font:600 11px ui-monospace,monospace;color:#cfd8ea}
 #topband .tbb{flex:none;position:relative;width:32px;height:var(--tbh);min-height:30px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;color:#ffd9a0;font:700 16px system-ui;display:flex;align-items:center;justify-content:center}
@@ -41,9 +42,9 @@ const ARROW = '<svg viewBox="-12 -12 24 24"><path d="M0 -10 L7 7 L0 3 L-7 7 Z" f
 export function createTopBand({ T, onInfo, onFlag, onNext, onOpen, logEv }) {
   if (!document.getElementById('tbcss')) { const s = document.createElement('style'); s.id = 'tbcss'; s.textContent = CSS; document.head.appendChild(s); }
   const el = document.createElement('div'); el.id = 'topband';
-  el.innerHTML = `<div class="tbm"><span class="tba">${ARROW}</span><span class="tbt"></span><span class="tbk"></span><span class="tbs"></span><span class="tbv"></span><button class="tbb" id="tbi" aria-label="${esc(T('tb.info'))}">i</button><button class="tbb" id="tbq" aria-label="${esc(T('tb.flag'))}">⚑<span class="tbn"></span></button></div><div class="tbp"></div>`;
+  el.innerHTML = `<div class="tbm"><span class="tba">${ARROW}</span><span class="tbt"></span><span class="tbk"></span><span class="tbw"></span><span class="tbs"></span><span class="tbv"></span><button class="tbb" id="tbi" aria-label="${esc(T('tb.info'))}">i</button><button class="tbb" id="tbq" aria-label="${esc(T('tb.flag'))}">⚑<span class="tbn"></span></button></div><div class="tbp"></div>`;
   document.body.appendChild(el);
-  const q = createQueue(), main = el.querySelector('.tbm'), arr = el.querySelector('.tba svg'), txt = el.querySelector('.tbt'), hnt = el.querySelector('.tbk'), st = el.querySelector('.tbs'), ver = el.querySelector('.tbv');
+  const q = createQueue(), main = el.querySelector('.tbm'), arr = el.querySelector('.tba svg'), txt = el.querySelector('.tbt'), hnt = el.querySelector('.tbk'), st = el.querySelector('.tbs'), wat = el.querySelector('.tbw'), ver = el.querySelector('.tbv');
   const bi = el.querySelector('#tbi'), bq = el.querySelector('#tbq'), bn = el.querySelector('.tbn'), panel = el.querySelector('.tbp');
   let on = false, open = false, lastTouch = 0, key = '', stKey = '', pKey = '', size = 'compact', last = null, ctxNow = null;
   const setOpen = (v, now = performance.now()) => {
@@ -96,8 +97,8 @@ export function createTopBand({ T, onInfo, onFlag, onNext, onOpen, logEv }) {
       }
       last = c;
       if (c.arrow !== null) arr.style.transform = `rotate(${c.arrow}rad)`;
-      const sp = statusParts(ctx), sk = `${sp.ver}|${sp.star}`;
-      if (sk !== stKey) { stKey = sk; ver.textContent = sp.ver; st.textContent = sp.star; st.classList.toggle('on', !!sp.star); }
+      const sp = statusParts(ctx), sk = `${sp.ver}|${sp.star}|${sp.water || ''}`;
+      if (sk !== stKey) { stKey = sk; ver.textContent = sp.ver; st.textContent = sp.star; st.classList.toggle('on', !!sp.star); wat.textContent = sp.water || ''; wat.classList.toggle('on', !!sp.water); }
       bi.classList.toggle('off', !ctx.infoOn); bq.classList.toggle('off', !ctx.flagOn);
       bq.classList.toggle('hasreply', !!ctx.unread); const bd = ctx.badge | 0; bn.textContent = bd; bn.style.display = bd ? 'flex' : 'none';
       if (open) { if (shouldClose(lastTouch, now, AUTO_CLOSE_MS)) setOpen(false, now); else renderPanel(ctx); }

@@ -82,7 +82,7 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
   if (!V) return off;
   const moodsOn = opts.moods || (() => true), twistsOn = opts.twists || (() => true), lampOpt = opts.lamp || (() => 1), aimOpt = opts.aim || (() => 0.26), say = opts.say || (() => ''), logEv = opts.logEv || (() => {});
   const room = LEVEL.room, group = new THREE.Group(); scene.add(group);
-  let vt = 0, ft = 0, under = 0, floodWas = false, deepWas = false, drownN = 0, wadeSaved = null, phase = null, waterNow = 0, wading = false, lightNow = 1, starsMat = null, prevWading = false;
+  let cfgNow = null, vt = 0, ft = 0, under = 0, floodWas = false, deepWas = false, drownN = 0, wadeSaved = null, phase = null, waterNow = 0, wading = false, lightNow = 1, starsMat = null, prevWading = false;
 
   // grunnverdier (fra grade.js og main.js) som stemningen blander fra
   const hemi = scene.children.find((o) => o.isHemisphereLight), dirs = scene.children.filter((o) => o.isDirectionalLight && o !== sun);
@@ -120,7 +120,7 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
 
   const api = {
     active: true, raysFactor: 1, mood: V.mood, twist: V.twist?.type, waterMesh: water,
-    get time() { return vt; }, get water() { return waterNow; }, get wading() { return wading; }, get light() { return lightNow; },
+    get time() { return vt; }, floorY, get floodCfg() { return floodWas ? cfgNow : null; }, get under() { return under; }, get water() { return waterNow; }, get wading() { return wading; }, get light() { return lightNow; },
     // før fysikken: vannet gjør figuren treg og sliten (bare mens du går i det)
     beforeStep(p, dt, active = true) {
       if (!active) return;
@@ -135,7 +135,7 @@ export function makeVariant({ scene, LEVEL, renderer, sun, floorY = 0, opts = {}
           if (st.warn !== deepWas) { deepWas = st.warn; if (st.warn) { say('flood.deep'); logEv('flood', 'hodet under vann'); } }
           if (st.drowned) { drownN++; logEv('flood', `druknet (${drownN})`); under = 0; ft = 0; waterNow = 0; deepWas = false; phase = null; if (opts.onDrown) opts.onDrown(); }
         } else if (floodWas) { floodWas = false; phase = null; }
-        floodWas = !!fc;
+        floodWas = !!fc; cfgNow = fc;
         wading = isWading(p.y, floorY, waterNow) && !['climb', 'hang', 'mantle', 'zip', 'swing'].includes(p.state);
         if (wading && opts.P) { wadeSaved = opts.P.speed; opts.P.speed = wadeSaved * WADE.speed; p.stam = Math.max(0, p.stam - WADE.drain * dt); }
         if (wading !== prevWading) { prevWading = wading; logEv('vri', wading ? 'vader' : 'tørr'); }

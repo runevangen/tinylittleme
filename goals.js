@@ -83,12 +83,14 @@ export function stepGoals(L, ctx, active = true) {
 }
 
 // Hvor peker pila for dette delmålet? { x, y, z } eller null (gåter og flagg har egen veiledning).
-export function goalTarget(L, g, p) {
+// R65: opts.dry(y) -> bool: bare mål som er tørre kommer med (stigende vann). Uten opts er alt som før.
+export function goalTarget(L, g, p, opts = {}) {
   if (!g) return null;
+  const dry = opts.dry || (() => true);
   const nearest = (list) => list.reduce((best, c) => { const d = Math.hypot(c.x - p.x, c.z - p.z); return !best || d < best.d ? { c, d } : best; }, null)?.c || null;
   if (g.type === 'reach') return { x: Math.max(g.x0, Math.min(g.x1, p.x)), y: g.top, z: Math.max(g.z0, Math.min(g.z1, p.z)) };
-  if (g.type === 'crumbs') { const c = nearest((L.crumbList || []).filter((q) => !q.got)); return c ? { x: c.x, y: c.y - 0.8, z: c.z } : null; }
-  if (g.type === 'stomp') { const a = nearest((L.antList || []).filter((q) => q.alive)); return a ? { x: a.x, y: a.y, z: a.z } : null; }
+  if (g.type === 'crumbs') { const c = nearest((L.crumbList || []).filter((q) => !q.got && dry(q.y - 0.8))); return c ? { x: c.x, y: c.y - 0.8, z: c.z } : null; }
+  if (g.type === 'stomp') { const a = nearest((L.antList || []).filter((q) => q.alive && dry(q.y))); return a ? { x: a.x, y: a.y, z: a.z } : null; }
   if (g.type === 'gate') {                                       // pila peker på første plate/bryter som ikke er trykket ennå
     const d = (L.gateS?.doors || []).find((q) => q.id === g.door); if (!d || d.t > 0) return null;
     for (const id of d.needs || []) { const pl = L.gateS.plates.find((q) => q.id === id); if (pl && !pl.on) return { x: (pl.x0 + pl.x1) / 2, y: pl.y, z: (pl.z0 + pl.z1) / 2 }; const sw = L.gateS.switches.find((q) => q.id === id); if (sw && !sw.on) return { x: sw.x, y: sw.y, z: sw.z }; }

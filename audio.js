@@ -57,6 +57,7 @@ export const SOUND_LIST = [
   { id: 'bbreak', label: 'Bygg: brudd (planke, tape, tau)', group: 'Bygg' },
   { id: 'bsplash', label: 'Bygg: testfiguren faller ned', group: 'Bygg' },
   { id: 'bhop', label: 'Bygg: testfiguren hopper', group: 'Bygg' },
+  { id: 'floodwarn', label: 'Stigende vann: varsel før du drukner', group: 'Hendelser' },
   { id: 'checkpoint', label: 'Sjekkpunkt', group: 'Hendelser' },
   { id: 'win', label: 'Mål', group: 'Hendelser' },
   { id: 'drip', label: 'Dryppende kran', group: 'Rom' },
@@ -239,6 +240,7 @@ export function createAudio(ctx, opts = {}) {
   const bcreak = (amp = 1) => use('bcreak', () => { const a = Math.min(1.5, amp); tone({ freq: rnd(150, 190), freq2: rnd(230, 300), type: 'sawtooth', gain: 0.05 * (0.5 + a / 2), attack: 0.02, decay: 0.32 }); burst({ type: 'bandpass', freq: 900, gain: 0.05 * a, decay: 0.2 }); });
   const bbreak = () => use('bbreak', () => { burst({ type: 'highpass', freq: 1800, gain: 0.35, decay: 0.12 }); tone({ freq: 190, freq2: 70, type: 'square', gain: 0.18, decay: 0.2 }); burst({ type: 'lowpass', freq: 600, gain: 0.3, decay: 0.3, delay: 0.05 }); });
   const bsplash = () => use('bsplash', () => { burst({ type: 'lowpass', freq: 1100, freq2: 200, gain: 0.3, attack: 0.02, decay: 0.5 }); tone({ freq: 160, freq2: 70, gain: 0.3, decay: 0.3 }); tone({ freq: 520, freq2: 220, type: 'sine', gain: 0.08, decay: 0.3, delay: 0.1 }); });
+  const floodwarn = () => use('floodwarn', () => { tone({ freq: 740, freq2: 560, type: 'triangle', gain: 0.14, decay: 0.16 }); tone({ freq: 740, freq2: 560, type: 'triangle', gain: 0.14, decay: 0.16, delay: 0.2 }); });   // R65: pip-pip før man drukner
   const bhop = () => use('bhop', () => { tone({ freq: 330, freq2: 560, type: 'sine', gain: 0.1, decay: 0.12 }); });
   const checkpoint = () => use('checkpoint', () => { tone({ freq: 880, type: 'triangle', gain: 0.1, decay: 0.35 }); tone({ freq: 1320, type: 'triangle', gain: 0.07, decay: 0.45, delay: 0.08 }); });
   // leker (R18): små, runde lyder. amp 0–1 gir litt variasjon etter hvor hardt det skjedde.
@@ -302,6 +304,7 @@ export function createAudio(ctx, opts = {}) {
       case 'bbreak': bbreak(); break;
       case 'bsplash': bsplash(); break;
       case 'bhop': bhop(); break;
+      case 'floodwarn': floodwarn(); break;
       case 'checkpoint': checkpoint(); break;
       case 'win': win(); break;
       case 'drip': drip(-0.3); drip(0.3); break;
@@ -321,7 +324,7 @@ export function createAudio(ctx, opts = {}) {
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
     ctx, out: bus, step, land, roll, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
-    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, waspbuzz, waspdive, bossroar, bossbump, fanfare, crumb, bcreak, bbreak, bsplash, bhop, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
+    pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, waspbuzz, waspdive, bossroar, bossbump, fanfare, crumb, bcreak, bbreak, bsplash, bhop, floodwarn, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
     resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
     setBreath: (on) => { breathOn = !!on; }, isBreath: () => breathOn,

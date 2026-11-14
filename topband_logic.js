@@ -44,7 +44,7 @@ export function compose(q, ctx, now) {
 // Det faste i båndet (alltid lesbart): versjon og ★-teller. ★ kommer fra delmål hvis de finnes, ellers fra smuler.
 export function statusParts(ctx) {
   const star = ctx.goalTotal > 0 ? `★ ${ctx.goalDone}/${ctx.goalTotal}` : ctx.crumbs && ctx.crumbs.total > 0 ? `★ ${ctx.crumbs.n}/${ctx.crumbs.total}` : '';
-  return { ver: ctx.version ? `v${ctx.version}` : '', star };
+  return ctx.water ? { ver: ctx.version ? `v${ctx.version}` : '', star, water: ctx.water } : { ver: ctx.version ? `v${ctx.version}` : '', star };   // R65: vannstand («💧 40 %») bare mens stigende vann er på
 }
 
 // Nøkkel som endres når båndets innhold bytter (brukes til logEv og til å unngå unødvendig DOM-skriving).

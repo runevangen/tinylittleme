@@ -4,6 +4,7 @@ export const LANGS = [['nb', 'Norsk'], ['en', 'English']];
 
 const DICT = {
   nb: {
+    'water.below': 'Vann under deg · ikke hopp ned', 'water.deep': 'Under vann! Opp med {jump} eller {grab} · {n} s', 'water.edge': 'Ikke hopp ned', 'water.high': 'Vannet står for høyt for dette målet. Klatre høyere ({grab}) til en tørr flate.', 'water.refuge': 'høyeste tørre flate',
     'flood.up': 'Vannet stiger sakte! Klatre opp på kurven ({grab}) og videre oppover før det blir for dypt.', 'flood.deep': 'Du er under vann! Klatre eller hopp ({jump}) opp på noe nå.', 'flood.drown': 'Du ble tatt av vannet! Tilbake til lagringspunktet. Klatre ({grab}) raskere denne gangen.',
     'var.water.up': 'Vannet stiger! Klatre opp på noe.', 'var.water.down': 'Vannet synker.', 'var.lights.off': 'Lyset gikk! Følg hjelmlykta.', 'var.lights.on': 'Lyset er på igjen.',
     'btn.take': 'TA', 'btn.drop': 'SLIPP', 'btn.place': 'SETT PÅ', 'btn.throw': 'KAST', 'btn.smear': 'SMØR', 'btn.unroll': 'RULL UT', 'btn.thread': 'TRÆ', 'btn.soak': 'SUG', 'btn.knot': 'KNYT', 'btn.press': 'PRESS', 'btn.hangrope': 'HENG TAU',
@@ -95,6 +96,7 @@ const DICT = {
     'menu.sure': 'Slette fremgangen? Trykk igjen', 'menu.nosave': 'Ingen lagret fremgang ennå', 'menu.byeTitle': 'Takk for nå!', 'menu.byeText': 'Fremgangen er lagret. Du kan lukke fanen eller bytte app. Neste gang fortsetter du der du var.', 'menu.back': 'Tilbake til menyen', 'menu.menu': 'Hovedmeny',
   },
   en: {
+    'water.below': 'Water below you · do not jump down', 'water.deep': 'Under water! Up with {jump} or {grab} · {n} s', 'water.edge': 'Do not jump', 'water.high': 'The water is too high for this goal. Climb higher ({grab}) to a dry surface.', 'water.refuge': 'highest dry surface',
     'flood.up': 'The water is slowly rising! Climb up onto the basket ({grab}) and keep going up before it gets too deep.', 'flood.deep': 'You are under water! Climb or jump ({jump}) onto something now.', 'flood.drown': 'The water got you! Back to the save point. Climb ({grab}) faster this time.',
     'var.water.up': 'The water is rising! Climb up onto something.', 'var.water.down': 'The water is going down.', 'var.lights.off': 'The lights went out! Follow your helmet lamp.', 'var.lights.on': 'The lights are back on.',
     'btn.take': 'TAKE', 'btn.drop': 'DROP', 'btn.place': 'PLACE', 'btn.throw': 'THROW', 'btn.smear': 'SMEAR', 'btn.unroll': 'UNROLL', 'btn.thread': 'THREAD', 'btn.soak': 'SOAK', 'btn.knot': 'KNOT', 'btn.press': 'PRESS', 'btn.hangrope': 'HANG ROPE',
