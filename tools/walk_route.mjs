@@ -57,9 +57,10 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario', level 
     }
     let staged = A.id === 'gulv' || B.id === 'gulv';
     const last = i === R.length - 1, there = () => on(B) || (last && p.onGround && Math.hypot(p.x - L.goal[0], p.z - L.goal[2]) < 2 && Math.abs(p.y - L.goal[1]) < 2.5);   // ved målet gjelder spillets egen regel
-    while (!fail && !there() && t - t0 < 60 * 30) {
+    const legMax = 60 * Math.max(30, 15 + 0.35 * Math.hypot(p.x - (B.x0 + B.x1) / 2, p.z - (B.z0 + B.z1) / 2));   // R67: tid per etappe vokser med avstanden (Bygglab er 230 enheter langt); alle vanlige brett holder seg på 30 s
+    while (!fail && !there() && t - t0 < legMax) {
       if (!staged && (Math.hypot(a1[0] - p.x, a1[1] - p.z) < 0.25 || !(p.onGround && Math.abs(p.y - A.top) < 0.06) || Math.max(B.x0 - p.x, p.x - B.x1, B.z0 - p.z, p.z - B.z1) < 0.45)) staged = true;   // fremme ved kanten, falt av, eller står allerede inntil neste flate
-      const inB = p.x > B.x0 && p.x < B.x1 && p.z > B.z0 && p.z < B.z1, [tx, tz] = staged ? (inB && p.onGround && Math.abs(p.y - B.top) > 0.06 && Math.abs(p.y - B.top) < 0.8 ? [(B.x0 + B.x1) / 2, (B.z0 + B.z1) / 2] : near(B)) : a1, dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1, rise = B.top - p.y;   // R26: står du på noe som stikker inn over flata (enden av en planke), gå mot midten av flata
+      const inB = p.x > B.x0 && p.x < B.x1 && p.z > B.z0 && p.z < B.z1, [tx, tz] = staged ? (inB && p.onGround && Math.abs(p.y - B.top) > 0.06 && (Math.abs(p.y - B.top) < 0.8 || (p.y > B.top && staged && t - t0 > 90)) ? [(B.x0 + B.x1) / 2, (B.z0 + B.z1) / 2] : near(B)) : a1, dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1, rise = B.top - p.y;   // R26: står du på noe som stikker inn over flata (enden av en planke), gå mot midten av flata
       if (p.state === 'hang') { tick({ jumpPressed: t % 20 === 0 }); continue; }
       const spd = staged ? 1 : Math.min(1, 0.45 + d * 0.4);       // rolig mot kanten, full fart over
       if (p.state === 'mantle') { tick({}); continue; }
@@ -72,6 +73,7 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario', level 
         if (rise <= 0.45 && gapAB > 0.7 && Math.abs(p.y - A.top) < 0.06 && offA > -0.32 && edge > 0.3) jump = true;   // gap til en flate som ikke er høyere: sats fra kanten
         if (p.onGround && p.y < R[i - 1].top - 0.5 && rise > 0.45 && edge >= 0.9 && t - t0 > 60 * 12) fail = `falt ned før ${B.id}`;
       }
+      if (!jump && staged && p.onGround && p.recover <= 0 && B.top < p.y - 0.5 && t - lastT >= 49 && t - jumpT > 50 && Math.hypot(p.x - lastPos[0], p.z - lastPos[1]) < 0.25) jump = true;   // R67: kanthjelpen holder deg igjen ved en kant mer enn en halv enhet ned: hopp ned (som en spiller ville gjort)
       if (jump) { jumpT = t; tries++; }
       if (t - lastT >= 50) {                                    // står du fast bak noe (en kran, en flaske): gå rundt, annenhver side og litt lenger for hver gang
         const edgeB = Math.max(0, Math.max(B.x0 - p.x, p.x - B.x1), Math.max(B.z0 - p.z, p.z - B.z1));
@@ -110,7 +112,7 @@ export function walkShortcut(levelPath, sc, { level = null, ...opts } = {}) {   
   return out;
 }
 
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) {
+if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) (async () => {   // (async: Bygglab-beviset importerer denne filen, så en top-level await ville låst seg)
   const file = process.argv[2]; if (!file) { console.error('bruk: walk_route.mjs <level.json> [--verbose]'); process.exit(1); }
   const r = walkRoute(file, { verbose: process.argv.includes('--verbose') });
   console.log(r.ok ? `RUTA GÅR: ${r.steps} steg på ${r.secs} s` : `RUTA GÅR IKKE: ${r.why}`);
@@ -125,5 +127,11 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop()
     console.log(w.ok ? `HARD VEI ${a.id}: går uten klatring på ${w.secs} s` : `HARD VEI ${a.id} FEILER: ${w.why}`);
     if (!w.ok) bad = true;
   }
+  const LV = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (LV.lab) {                                                                     // R67: Bygglab: hvert sted uten bygging og med hver kjente løsning, og hele banen på sokkelen med alle byggene (tools/walk_bygglab.mjs)
+    const { walkLab } = await import('./walk_bygglab.mjs'), w = walkLab(LV, { verbose: process.argv.includes('--verbose') });
+    console.log(w.ok ? `BYGGLAB: ${w.hard.length} steder kan gås uten bygging, ${w.built.length} løsninger går over bygget, hele banen på sokkelen tar ${w.chain.secs} s` : `BYGGLAB FEILER: ${[...w.hard.filter((q) => !q.ok).map((q) => `sted ${q.k} uten bygging: ${q.why}`), ...w.built.filter((q) => !q.ok).map((q) => `sted ${q.k} «${q.name}»: ${q.why}`), ...(w.chain.ok ? [] : [`hele banen: ${w.chain.why}`])].join('; ')}`);
+    if (!w.ok) bad = true;
+  }
   process.exit(bad ? 2 : 0);
-}
+})();

@@ -22,6 +22,8 @@ import { createRecorder, createReplay, ghostPose } from './build_replay.js';   /
 import { drawGhost } from './build_replay_view.js';
 import { submitBridge, bestBridges, bridgeLevel, netReady, standing } from './build_net.js';   // R50: beste bygg på nett
 import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum } from './build_world.js';   // R26: bygget flyttes ut i verdenen
+import { isLab, labSitesOf, labFill, labRegister, labTrayItems, labStepSite, labInfoOf, labNameKey, labTaskKey, labFlagStep, labReachedSave, labReachedLoad, labHome, labFar } from './bygglab_logic.js';   // R67: Bygglab
+import { labCss, labMarkup, labSync, LAB_TOP } from './bygglab_view.js';
 
 const css = `
 #bld{position:fixed;inset:0;z-index:7;display:none;background:linear-gradient(#26324bfa,#141a2cff);touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font:600 14px system-ui}
@@ -71,18 +73,20 @@ body.building #panel{z-index:10}
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined }) {
+export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
-  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  const labSites = isLab(LEVEL) ? labSitesOf(LEVEL) : [], lab = labSites.length ? { reached: new Set(), moved: false, home: null } : null;   // R67: Bygglab (bygglab_logic.js): stedene på rad, ◀ ▶, ubegrenset mengde, målflagg
+  const st = document.createElement('style'); st.textContent = css + (lab ? labCss() : ''); document.head.appendChild(st);
   const types = { ...partTypes(LEVEL), ...bonusTypes() };   // R47: ekstradelene (smulebudsjett) har egne id-er og bor i samme tabell
   const mem = new Map(), st0 = store || { get: (k, d) => (mem.has(k) ? mem.get(k) : d), set: (k, v) => mem.set(k, v) };   // uten lagring (tester) holdes alt i minnet
   const bonusOpen = () => (getBonus() ? [...new Set([...unlockedBonus(getCrumbs(), getBonusStep()).map((b) => b.id), ...getBonusUnlocks(st0, levelId, Object.keys(bonusTypes()))])] : []);
   const B0 = (site) => createBuild(site, types, bonusOpen());
   const builds = new Map();                  // stedets id -> byggetilstand
-  const getB = (site) => { let b = builds.get(site.id); if (!b) { b = B0(site); builds.set(site.id, b); } return b; };
-  const TOPPX = () => (innerHeight <= 520 ? 100 : 130), BOTPX = () => (innerHeight <= 520 ? 110 : 160) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
+  const labOpts = () => ({ unlimited: getLabFree() || allParts() });
+  const getB = (site) => { let b = builds.get(site.id); if (!b) { b = B0(site); builds.set(site.id, b); if (lab) labFill(b, types, labOpts()); } return b; };
+  const TOPPX = () => (innerHeight <= 520 ? 100 : 130) + (lab ? (innerHeight <= 520 ? LAB_TOP - 6 : LAB_TOP) : 0), BOTPX = () => (innerHeight <= 520 ? 110 : 160) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let lastTap = null, zoomMsg = '', zoomMsgT = 0;   // R44: dobbelttrykk og zoom-melding
   let loadMore = null, simLoad = DEFAULT_LOAD, sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [], simBreaks = [], simWhy = null, simHelp = null, breakAt = -9;   // R25: PRØV
@@ -101,8 +105,8 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     if (active) trayRender(); if (fresh.length) onChange?.();
   }
   const loadSel = new Map(), passedL = new Map();   // R48: valgt testlast per sted, og hvilke laster som har klart gjeldende bygg ({ sig, ids })
-  const loadsOn = () => (getLoads() || requiredLoads(active).length > 0);
-  const loadList = () => offered(active, getLoads());
+  const loadsOn = () => (getLoads() || !!lab || requiredLoads(active).length > 0);
+  const loadList = () => offered(active, getLoads() || !!lab);
   const curLoad = () => { const l = loadList(), v = loadSel.get(active.id); return l.includes(v) ? v : l.includes(DEFAULT_LOAD) ? DEFAULT_LOAD : l[0]; };
   const passedOf = (site) => { const b = builds.get(site.id), e = passedL.get(site.id); return e && b && e.sig === sigOf(b) ? e.ids : []; };
   const committed = new Map();               // R26: stedets id -> bygget (som tekst) som står i verdenen akkurat nå
@@ -144,7 +148,8 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   // ---- DOM ----
   const root = document.createElement('div'); root.id = 'bld';
   root.innerHTML = `<canvas></canvas><div class="bt top"><button data-a="back"></button><button data-a="undo"></button><button data-a="reset"></button><button data-a="try" class="go"></button></div>
-  <div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>`;
+  ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>`;
+  if (lab) root.classList.add('lab');
   document.body.appendChild(root);
   const cv = root.querySelector('canvas'), g2 = cv.getContext('2d'), tray = root.querySelector('.tray'), loadsEl = root.querySelector('.loads'), hintEl = root.querySelector('.hint'), modal = root.querySelector('.modal'), mTitle = modal.querySelector('.mt'), mText = modal.querySelector('textarea'), mList = modal.querySelector('.list'), sBtn = (k) => root.querySelector(`[data-s="${k}"]`);
   const btn = (a) => root.querySelector(`[data-a="${a}"]`);
@@ -156,7 +161,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     for (const k of LINK_KINDS) { const b = root.querySelector(`[data-t="${k}"]`); b.textContent = T('build.tool.' + k); b.classList.toggle('on', tool === k); }
     if (sim) btn('try').textContent = T('build.stop');
     for (const k of ['replay', 'copy', 'paste', 'best']) sBtn(k).textContent = T('build.share.' + k); modal.querySelector('[data-m="use"]').textContent = T('build.share.use'); modal.querySelector('[data-m="close"]').textContent = T('build.share.close'); shareSync();
-    enterBtn.textContent = TOUCH ? T('build.enter') : T('build.enterKey');
+    enterBtn.textContent = TOUCH ? T('build.enter') : T('build.enterKey'); labUI();
   }
   function size() { W = innerWidth; H = innerHeight; const d = dpr(); if (cv.width !== Math.round(W * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); } }
 
@@ -170,9 +175,12 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     if (!B) return;
     const have = B.have;
     if (!have.length) { const e = document.createElement('div'); e.textContent = T('build.noParts'); e.style.cssText = 'color:#ffd9a0;font-size:13px;padding:0 8px;text-align:center'; tray.appendChild(e); return; }
-    for (const id of have) {
-      const t = partType(B.types[id]), used = B.placed.some((p) => p.id === id);
-      const c = document.createElement('div'); c.className = 'chip' + (used ? ' used' : '') + (BONUS.some((b) => b.id === id) ? ' bonus' : ''); c.dataset.id = id; c.title = T('build.p.' + B.types[id]);
+    if (lab) labFill(B, types, labOpts());   // R67: Bygglab: alltid ubrukte deler av alle typer; én brikke per type, med ∞ (eller antall igjen)
+    const items = lab ? labTrayItems(B) : have.map((id) => ({ id, type: B.types[id], used: B.placed.some((p) => p.id === id) }));
+    for (const it of items) {
+      const id = it.id, t = partType(it.type), used = !!it.used;
+      const c = document.createElement('div'); c.className = 'chip' + (used ? ' used' : '') + (BONUS.some((b) => b.id === id) ? ' bonus' : ''); c.dataset.id = id; c.title = T('build.p.' + it.type);
+      if (it.lab) { const bd = document.createElement('b'); bd.textContent = labOpts().unlimited ? '∞' : String(it.free); bd.style.cssText = 'position:absolute;right:3px;top:1px;font:800 11px system-ui;color:#ffe9a8;pointer-events:none'; c.appendChild(bd); }
       const i = document.createElement('i'); const k = 6; i.style.cssText = `width:${Math.min(66, t.w * k)}px;height:${Math.max(t.icon ? 22 : 8, t.h * k)}px;background:${t.color}`; if (t.icon) { i.textContent = t.icon; i.style.cssText += ';display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;overflow:hidden'; } c.appendChild(i);
       c.addEventListener('pointerdown', (e) => { if (!used) startDrag(e, id, true); else { toast(T('build.usedHint')); } });
       tray.appendChild(c);
@@ -243,15 +251,16 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     if (drag && drag.part) { const r = tray.getBoundingClientRect(); if (drag.y > r.top) { g2.fillStyle = 'rgba(255,80,80,.18)'; g2.fillRect(0, r.top, W, r.height); } }
     drawBudget(B);
     const left = inTray(B).length;
-    hintEl.textContent = (zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || hint || (requiredLoads(active).length && B.placed.length ? T('build.loadNeed', { list: requiredLoads(active).filter((i) => !passedOf(active).includes(i)).map((i) => T('build.load.' + i)).join(', ') || T('build.loadAllDone') }) : '') || (linkFrom ? T('build.hint.link2') : tool ? T('build.hint.link1') : B.placed.length ? T('build.hintPlaced') : left ? T('build.hintEmpty') : B.have.length ? T('build.allUsed') : '');
+    hintEl.textContent = (zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || hint || (requiredLoads(active).length && B.placed.length ? T('build.loadNeed', { list: requiredLoads(active).filter((i) => !passedOf(active).includes(i)).map((i) => T('build.load.' + i)).join(', ') || T('build.loadAllDone') }) : '') || (linkFrom ? T('build.hint.link2') : tool ? T('build.hint.link1') : lab ? labLine() : B.placed.length ? T('build.hintPlaced') : left ? T('build.hintEmpty') : B.have.length ? T('build.allUsed') : '');
     btn('del').disabled = !sel && !selLink; btn('rotl').disabled = btn('rotr').disabled = !sel; btn('undo').disabled = !B.history.length; btn('reset').disabled = !B.placed.length;
   }
 
   // R47: kostnad og stjerner (og smuler) nede til høyre over brettet. Vanlige canvas-kall, ingen nye tegnejobber utover én avrundet boks og noen tekstlinjer.
   // R49a1: «Tåler ca. N klosser» (build_capacity.js): regnes ut litt etter at du slipper en del (ikke mens du drar), og bufres per bygg
   let capKey = '', capRes = null, capTimer = 0; const capCache = new Map();
+  const capOn = () => getCap() || (!!lab && !!active?.lab?.cap);   // R67: Bygglab: «Tåler X»-stedet viser alltid måleren
   function capUpdate(B) {
-    if (!getCap() || !B.placed.length) { capRes = null; capKey = ''; return; }
+    if (!capOn() || !B.placed.length) { capRes = null; capKey = ''; return; }
     if (drag) { capKey = ''; return; }
     const key = `${active.id}|${sigOf(B)}|${JSON.stringify(B.links)}|${getStrength()}`; if (key === capKey) return; capKey = key;
     if (capCache.has(key)) { capRes = capCache.get(key); return; }
@@ -279,9 +288,9 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   }
   function drawBudget(B) {
     capUpdate(B);
-    if (!getBudget() && !getBonus() && !getCap() && !getTruss()) return;
+    if (!getBudget() && !getBonus() && !capOn() && !getTruss()) return;
     const lines = [];
-    if (getCap() && B.placed.length) lines.push({ t: capRes ? (!capRes.n ? T('build.capNone') : capRes.capped ? T('build.capMax', { n: capRes.n }) : T('build.cap', { n: capRes.n })) : T('build.capWait'), c: '#9fe3ff', b: true });
+    if (capOn() && B.placed.length) lines.push({ t: capRes ? (!capRes.n ? T('build.capNone') : capRes.capped ? T('build.capMax', { n: capRes.n }) : T('build.cap', { n: capRes.n })) : T('build.capWait'), c: '#9fe3ff', b: true });
     if (getBudget()) {
       const r = starsFor(active, B.placed, B.links), best = getBuildStars(st0, levelId)[active.id], on = B.placed.length > 0;
       lines.push({ t: `${on ? starText(r.stars) : '☆☆☆'}  ${T('build.cost', { n: r.cost })} · ${(r.parts === 1 ? T('build.partOne') : T('build.partsN', { n: r.parts }))}`, c: '#ffe9a8', b: true });
@@ -438,6 +447,33 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
   addEventListener('pointerup', up); addEventListener('pointercancel', up);
   cv.addEventListener('wheel', (e) => { if (!active) return; e.preventDefault(); const r = loc(e); view = zoomAbout(view, W, H, r.x, r.y, view.scale * (e.deltaY < 0 ? 1.12 : 1 / 1.12)); }, { passive: false });
 
+  // ---- R67: Bygglab: velg sted (◀ ▶), nullstill sted/alle, oppgavetekst, målflagg ----
+  const labInfo = () => labInfoOf(active, labSites);
+  function labLine() {   // oppgaven for stedet som hint-tekst: «Sted 3/8: Fagverk — bygg en bro av trekanter» (✓ når «Tåler X»-målet er nådd)
+    const i = labInfo(), ok = i.cap && capRes && capRes.n >= i.cap ? ' ✓' : '';
+    return T('lab.line', { n: i.n, of: i.of, name: T(labNameKey(active)), task: T(labTaskKey(active), { n: i.cap }) }) + ok;
+  }
+  function labUI() { if (lab && active) labSync(root, T, labInfo(), T(labNameKey(active)), lab.reached.has(active.id)); }
+  function labGo(dir) {
+    if (!lab || !active) return false;
+    const next = labStepSite(labSites, active.id, dir); if (!next || next === active) return false;
+    if (sim) stopSim('sted');
+    const B = getB(active);
+    if (committed.has(active.id) && committed.get(active.id) !== sigOf(B)) { uncommitWorld(active, 'endret uten ny prøve'); solved.delete(active.id); }
+    closeModal(); tool = null; linkFrom = null; selLink = null; sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = '';
+    active = next; getB(next).snap = getSnap(); size(); view = fitView(next, W, H, 24, TOPPX(), BOTPX()); hint = ''; lab.moved = true;
+    labels(); trayRender(); const i = labInfo(); logEv('bygglab', `sted ${i.n}/${i.of} (${i.key})`); onChange?.(); return true;
+  }
+  function labReset(s, why) {
+    const b = getB(s), had = !!(b.placed.length || b.links.length || committed.has(s.id) || solved.has(s.id) || lab.reached.has(s.id) || passedL.has(s.id) || recs.has(s.id));
+    if (active === s && sim) stopSim('nullstill');
+    uncommitWorld(s, 'nullstilt'); b.placed = []; b.links = []; b.history = []; solved.delete(s.id); passedL.delete(s.id); recs.delete(s.id); lab.reached.delete(s.id); loadSel.delete(s.id);
+    if (active === s) { sel = null; selLink = null; linkFrom = null; drag = null; trayRender(); labUI(); }
+    logEv('bygglab', `nullstilt ${s.id} (${why})`); onChange?.(); return had;
+  }
+  function labResetAll() { if (!lab) return false; for (const s of labSites) labReset(s, 'alle'); logEv('bygglab', 'alle steder nullstilt'); toast(T('lab.allReset')); return true; }
+  const labAct = { prev: () => labGo(-1), next: () => labGo(1), site: () => { if (active && labReset(active, 'knapp') !== undefined) toast(T('lab.siteReset', { n: labInfo().n })); }, all: () => labResetAll() };
+
   // ---- knapper ----
   const act = {
     back: () => { if (sim) stopSim('tilbake'); else close('tilbake'); },
@@ -449,7 +485,7 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     del: () => { const B = getB(active); if (selLink && removeLink(B, selLink)) { logEv('bygg', `fjernet ${selLink}`); selLink = null; onChange?.(); } else if (sel && remove(B, sel)) { logEv('bygg', `tilbake i brettet ${sel}`); sel = null; trayRender(); onChange?.(); } },
   };
   function rot(d) { const B = getB(active); if (sel && rotate(B, sel, d)) { logEv('bygg', `roter ${sel}`); onChange?.(); } }
-  root.addEventListener('click', (e) => { const l = e.target.closest?.('button')?.dataset.l; if (l && active && !sim && loadList().includes(l)) { loadSel.set(active.id, l); logEv('bygg', `last valgt: ${l}`); loadsRender(); return; } const sh = e.target.closest?.('button')?.dataset.s; if (sh && active && shareAct[sh]) { shareAct[sh](); return; } const t = e.target.closest?.('button')?.dataset.t; if (t) { tool = tool === t ? null : t; linkFrom = null; labels(); return; } const a = e.target.closest?.('button')?.dataset.a; if (a && act[a]) act[a](); });
+  root.addEventListener('click', (e) => { const lb = e.target.closest?.('button')?.dataset.lb; if (lb && lab && active && labAct[lb]) { labAct[lb](); return; } const l = e.target.closest?.('button')?.dataset.l; if (l && active && !sim && loadList().includes(l)) { loadSel.set(active.id, l); logEv('bygg', `last valgt: ${l}`); loadsRender(); return; } const sh = e.target.closest?.('button')?.dataset.s; if (sh && active && shareAct[sh]) { shareAct[sh](); return; } const t = e.target.closest?.('button')?.dataset.t; if (t) { tool = tool === t ? null : t; linkFrom = null; labels(); return; } const a = e.target.closest?.('button')?.dataset.a; if (a && act[a]) act[a](); });
   enterBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); open(); });
   addEventListener('keydown', (e) => {
     if (active) {
@@ -579,6 +615,8 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     logEv('bygg', `ut (${why}): ${B.placed.length}/${B.have.length} plassert`);
     if (committed.has(active.id) && committed.get(active.id) !== sigOf(B)) { uncommitWorld(active, 'endret uten ny prøve'); solved.delete(active.id); }   // R26: et endret bygg må prøves på nytt før det står i verden
     sim = null; recorder = null; replaying = false; closeModal(); root.classList.remove('sim'); tool = null; linkFrom = null;
+    if (lab && (lab.moved || labFar(active, player))) { const h = labHome(active); Object.assign(player, { x: h.x, y: h.y, z: h.z, vx: 0, vy: 0, vz: 0, onGround: true }); logEv('bygglab', `figuren flyttet til sted ${labInfo().n}`); }   // R67: ut fra et annet sted enn der du sto: på sokkelen før gapet
+    if (lab) lab.moved = false;
     active = null; drag = null; gest = null; ptrs.clear(); document.body.classList.remove('building'); onChange?.();
   }
 
@@ -593,6 +631,9 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
     for (const { q, g } of partMeshes) { g.visible = !q.got; if (!q.got) { g.position.y = q.y + Math.sin(q.phase * 2) * 0.12; g.rotation.y = q.phase * 0.8; } }
     for (const { s, mat } of siteMeshes) mat.opacity = 0.5 + 0.35 * Math.sin(tNow * 2 + s.x);
     if (playing) { const c = getCrumbs(), bo = getBonus(); if (c !== lastCrumbs || bo !== lastBo) { lastCrumbs = c; lastBo = bo; syncBonus(); } }
+    if (lab && playing && !active) for (const ev of labFlagStep(labSites, lab.reached, player)) {   // R67: målflagg per sted
+      logEv('bygglab', `målflagg ${ev.n}/${ev.of} nådd (${ev.total}/${labSites.length})`); toast(T(ev.all ? 'lab.flagAll' : 'lab.flag', { n: ev.n, of: ev.of, total: ev.total })); audio?.crumb?.(ev.total, labSites.length); buzz?.(15); onChange?.();
+    }
     if (playing && !active) for (const ev of stepParts(LEVEL, player, dt, true)) {
       logEv('bygg', `plukket ${ev.id} ${ev.n}/${ev.total}`); audio?.crumb?.(ev.n, ev.total); buzz?.(15);
       toast(T('build.got', { name: T('build.p.' + ev.kind), n: ev.n, total: ev.total })); for (const b of builds.values()) addPart(b, ev.id); onChange?.();
@@ -602,20 +643,22 @@ export function createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, isPl
 
   return {
     get active() { return !!active; }, enabled, update, open, close, labels,
-    save: () => (enabled ? { got: gotPartIds(LEVEL), solved: [...solved], loads: Object.fromEntries([...passedL].map(([k, e]) => [k, cleanPassed(e.ids)])), sites: Object.fromEntries([...builds].map(([k, b]) => [k, serialize(b)])) } : undefined),
+    save: () => (enabled ? { ...(lab ? { lab: { flags: labReachedSave(lab.reached) } } : {}), got: gotPartIds(LEVEL), solved: [...solved], loads: Object.fromEntries([...passedL].map(([k, e]) => [k, cleanPassed(e.ids)])), sites: Object.fromEntries([...builds].map(([k, b]) => [k, serialize(b)])) } : undefined),
     load(data) {
       if (!enabled || !data) return; restoreParts(LEVEL, data.got); solved.clear(); for (const id of Array.isArray(data.solved) ? data.solved : []) solved.add(id);
-      for (const s of sites) { const d = data.sites?.[s.id]; if (!d) continue; const b = getB(s); restore(b, { have: d.have, placed: d.placed, links: d.links }); for (const id of data.got || []) addPart(b, id); }
+      if (lab) lab.reached = labReachedLoad(data.lab?.flags, labSites);
+      for (const s of sites) { const d = data.sites?.[s.id]; if (!d) continue; const b = getB(s); if (lab) labRegister(types, d.have); restore(b, { have: d.have, placed: d.placed, links: d.links }); for (const id of data.got || []) addPart(b, id); }
       lastBonusKey = ''; syncBonus(false);
       for (const s of sites) { const ids = cleanPassed(data.loads?.[s.id]); if (ids.length) passedL.set(s.id, { sig: sigOf(getB(s)), ids }); }
       for (const s of sites) if (solved.has(s.id) && getB(s).placed.length) commitWorld(s, 'fortsett');   // R26: bygget gjenopprettes i verdenen
     },
-    resetAll() { for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); passedL.clear(); loadSel.clear(); recs.clear(); recorder = null; replaying = false; sim = null; winRes = null; lastBonusKey = ''; lastCrumbs = -1; },
+    resetAll() { if (lab) { lab.reached.clear(); lab.moved = false; } for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); passedL.clear(); loadSel.clear(); recs.clear(); recorder = null; replaying = false; sim = null; winRes = null; lastBonusKey = ''; lastCrumbs = -1; },
     screenPos: (u, v) => (active && view ? toScreen(view, W, H, u, v) : null),   // til tester på mobil (Playwright)
     starsMap, bonusOpen, get lastResult() { return winRes; }, get cap() { return capRes; },
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'),
     startReplay: () => !!active && startReplay(), get replaying() { return replaying; }, record: (id) => recs.get(id) || null, importText: (t) => !!active && doImport(t), exportText: () => (active ? exportCode(getB(active)) : null),   // R50: til tester (node og Playwright)
+    lab: lab ? { go: labGo, resetSite: (id) => { const s = labSites.find((q) => q.id === id); return s ? labReset(s, 'kode') : false; }, resetAll: labResetAll, get reached() { return [...lab.reached]; }, sites: labSites.map((q) => q.id), line: () => (active ? labLine() : ''), info: () => (active ? labInfo() : null), get home() { return lab.moved; } } : null,   // R67: til tester
     state: () => ({ active: active?.id || null, builds: [...builds].map(([k, b]) => ({ id: k, have: b.have.length, placed: b.placed.length })) }),
   };
 }

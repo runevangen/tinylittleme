@@ -15,6 +15,7 @@ import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, 
 import { buildPuzzleViews } from './puzzle_view.js';
 import { GATE, initGates, resetGates, restoreGates, gatesSave, stepGates, nearSwitch, toggleSwitch, doorById, hasGates, gatesBudget } from './plates_logic.js';   // R60: trykkplate, dør, vindebro og bryter
 import { buildGateViews } from './plates_view.js';
+import { isLab, labAutoOpen } from './bygglab_logic.js';   // R67: Bygglab: byggeskjermen åpnes av seg selv ved start (build.js har resten)
 import { stueHint, isStue, stueSummary } from './stue_logic.js';   // R62: Stuen (nivå 8): hint om fjernkontrollen, plata og broen
 import { buildFlag, buildGoalRing } from './markers.js';
 import { GUIDE, aim, glyph, fmtM, danglerPhase, actionFor, bandHint, edgeMark, createStall, stepStall, stalled, nextSurface, ledgePoint, createShowMe, startShowMe, skipShowMe, stepShowMe, showMePlan } from './guide_logic.js';   // R64: veiledning når målet er skjult
@@ -116,6 +117,7 @@ const LEVELS = [
   { id: 'gaate', label: 'Prøverom: gåter (plate, dør, bryter og vindebro)', short: 'Gåter' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
   { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
+  { id: 'bygglab', label: 'Prøverom: Bygglab (starter i byggemodus, åtte byggesteder med alle deler)', short: 'Bygglab' },   // R67
   { id: 'kontroll', label: 'Kontrollbanen (test av styring og kamera)', short: 'Kontroll' },
 ];
 const levelParam = new URLSearchParams(location.search).get('level');
@@ -193,6 +195,7 @@ let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('t
 let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let shaderWarm = store.get('tlm.shaderwarm', true);   // R35: full tegning av alt under forvarmingen (admin)
+let labStart = store.get('tlm.labstart', true), labFree = store.get('tlm.labfree', true), labAuto = { done: false };   // R67: Bygglab: åpne byggeskjermen ved start, ubegrenset mengde av alle deler
 let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true), buildSeeHint = store.get('tlm.buildsee', true), buildDbl = store.get('tlm.builddbl', true), buildFine = store.get('tlm.buildfine', true), buildStress = store.get('tlm.buildstress', true), buildBreakFx = store.get('tlm.buildbreakfx', true), buildLego = store.get('tlm.buildlego', true), buildBudget = store.get('tlm.buildbudget', true), buildBonus = store.get('tlm.buildbonus', true), buildBonusStep = +store.get('tlm.buildbonusstep', 1) || 1, buildLoads = store.get('tlm.buildloads', true), buildShare = store.get('tlm.buildshare', true), buildGhost = store.get('tlm.buildghost', true), buildCap = store.get('tlm.buildcap', true), buildTruss = store.get('tlm.buildtruss', true), buildAxial = store.get('tlm.buildaxial', 1);   // R49a2: hjelp for fagverk, knekk-/strekkgrense   // R49a1: «Tåler»-måler;   // R50: deling, beste bygg og spøkelse;   // R47: kostnad/stjerner, smule-ekstradeler; R24: byggeskjermen
 let crumbsOn = store.get('tlm.crumbs', true);   // smuler (R3)
 let toysOn = store.get('tlm.toys', true);   // R18
@@ -1110,7 +1113,7 @@ const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, h
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 if (hasGates(LEVEL)) { const gb = gatesBudget(LEVEL); logEv('gåte', `${gateViews.count} deler, ${gb.calls} tegnekall, ${gb.tris} trekanter`); }
-const bld = createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
+const bld = createBuildMode({ scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getLabFree: () => labFree, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
 
 // Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
 const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
@@ -1843,6 +1846,8 @@ const SETTINGS = [
   fl('buildworld', 'admin', 'Byggeskjerm: et prøvd bygg står i verden som solid (figuren kan gå på det)', true, () => buildWorld, kp('tlm.buildworld', (v) => { buildWorld = v; })),
   fl('shaderwarm', 'admin', 'Forvarm alle shadere under oppstart (full tegning, også glass); av = bare renderer.compile', true, () => shaderWarm, kp('tlm.shaderwarm', (v) => { shaderWarm = v; })),
   fl('buildall', 'admin', 'Byggeskjerm: alle deler åpne (test)', false, () => buildAll, kp('tlm.buildall', (v) => { buildAll = v; })),
+  fl('labstart', 'spill', 'Bygglab: åpne byggeskjermen med en gang når prøverommet starter (TILBAKE går ut til rommet, BYGG-knappen tilbake inn)', true, () => labStart, kp('tlm.labstart', (v) => { labStart = v; logEv('bygglab', v ? 'start i byggemodus på' : 'start i byggemodus av'); })),
+  fl('labfree', 'admin', 'Bygglab: ubegrenset mengde av alle deler (av = bare to av hver type)', true, () => labFree, kp('tlm.labfree', (v) => { labFree = v; logEv('bygglab', v ? 'ubegrenset mengde på' : 'ubegrenset mengde av'); })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, wind-up og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
@@ -2769,7 +2774,9 @@ function render(now, dt) {
   if (fdet) { fdet.update(floorDetailOn && !lowOn && mode !== 'plan'); const sol = floorDetailOn && !lowOn && beadSolidOn; if (sol !== fdet.solid) logEv('perler', sol ? `${fdet.beads.length} solide` : 'ikke solide'); fdet.setSolid(sol); }   // R37
   if (leke) leke.update(legoOn && !lowOn && mode !== 'plan');
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
-  ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(dt, mode === 'play' && !won && !menuOpen && !ov.active); updateFades(dt); updateOffscreen();
+  ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(dt, mode === 'play' && !won && !menuOpen && !ov.active);
+  if (labAutoOpen({ lab: isLab(LEVEL), on: labStart, done: labAuto.done, playing: mode === 'play' && !won && !menuOpen && !ov.active && !bossFighting(), onGround: player.onGround || player.state === 'ground' }) && bld.open()) { labAuto.done = true; logEv('bygglab', 'byggeskjermen åpnet ved start'); }   // R67
+  updateFades(dt); updateOffscreen();
   heroSeen(bossMesh && bossOn && !LEVEL.bossS.gone && camBossK > 0.05 && mode === 'play' && !viewFirst);
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
