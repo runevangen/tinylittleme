@@ -3,7 +3,8 @@
 // Målene er skjermbaserte (minst ca. 44 px: nærmeste rutenettpunkt innen en halv rute treffes), så en finger treffer også når brettet er zoomet ut (R70).
 import { GRID_MATS, GRID_MAT, rodPrice } from './build_materials.js';
 import { siteAnchors } from './build_logic.js';
-import { isGrid, setMode, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
+import { applyExample, hasExample } from './grid_example.js';   // R73
+import { isGrid, setMode, isDeckRod, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
 
 export const GRID_PX = 44;   // minste avstand (px) mellom rutenettpunkter i standardvisningen
 export const gridCss = () => `
@@ -14,6 +15,13 @@ export const gridCss = () => `
 #bld .gtools{position:absolute;left:0;right:0;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px);display:none;gap:6px;justify-content:center;padding:0 8px;pointer-events:none}
 #bld.gridmode .gtools{display:flex}
 #bld.gridmode.sim .gtools{display:none}
+#bld .gsim{position:absolute;left:0;right:0;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px);display:none;gap:6px;justify-content:center;padding:0 8px;pointer-events:none}
+#bld.gridmode.sim .gsim{display:flex}
+#bld .gsim button{height:50px;flex:1 1 0;max-width:130px;font-size:15px}
+#bld .gsim button.on{background:#7a4a14;border-color:#fff}
+#bld .gsim button[disabled]{opacity:.35}
+#bld .gtools button.ex{border-color:#3df0b0;color:#c9ffe8;flex:1.2 1 0;max-width:130px}
+#bld:not(.gridex) .gtools button.ex{display:none}
 #bld .gtools button{height:50px;flex:1 1 0;max-width:110px;font-size:14px}
 #bld .gtools button.on{background:#7a4a14;border-color:#fff}
 #bld .gtools button{box-shadow:inset 0 -7px 0 var(--mc,#c98a45)}
@@ -22,7 +30,7 @@ export const gridCss = () => `
 #bld.gridmode.hasloads:not(.sim) .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px + 56px + 48px)}
 @media (orientation:landscape) and (max-height:520px){#bld .gtools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .gtools button{height:40px}#bld.gridmode:not(.sim) .share,#bld.gridmode:not(.sim) .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 44px)}#bld.gridmode.hasloads:not(.sim) .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 44px + 44px)}}
 `;
-export const gridMarkup = () => `<div class="gtools"><button data-g="wood"></button><button data-g="steel"></button><button data-g="rope"></button></div>`;
+export const gridMarkup = () => `<div class="gtools"><button data-g="wood"></button><button data-g="steel"></button><button data-g="rope"></button><button data-g="example" class="ex"></button></div><div class="gsim"><button data-gs="slow"></button><button data-gs="pause"></button></div>`;
 
 const COMMA = (x) => String(+x.toFixed(2)).replace('.', ',');
 export const colRow = (site, p) => { const a = siteAnchors(site), st = gridStep(site); return { c: Math.round((p.u - (a[0]?.u ?? 0)) / st), r: Math.round(p.v / st) }; };
@@ -41,16 +49,37 @@ export function createGridUI(ctx) {
 
   function sync() {   // knapper og klasser etter modus
     const s = site(); root.classList.toggle('hasgrid', !!s && enabledHere()); root.classList.toggle('gridmode', on());
+    root.classList.toggle('gridex', on() && !!ctx.getHint() && hasExample(s));   // R73: «SÅ SLIK» er en hjelp: borte på Ekspert og på steder uten kjøredekk
+    const eb = root.querySelector('[data-g="example"]'); if (eb) eb.textContent = T('grid.example');
+    simSync(speed, simDone);
     if (s && B()) B().gridMaxLen = ctx.getMaxLen();
     const mb = root.querySelector('[data-a="mode"]'); if (mb) mb.textContent = T('grid.modeBtn', { m: T(on() ? 'grid.mode.grid' : 'grid.mode.classic') });
     for (const m of GRID_MATS) { const b = root.querySelector(`[data-g="${m}"]`); if (!b) continue; b.textContent = T('grid.mat.' + m); b.style?.setProperty?.('--mc', GRID_MAT[m].color); b.classList.toggle('on', mat === m); b.setAttribute?.('aria-pressed', mat === m ? 'true' : 'false'); }
   }
   function toggleMode(why = 'knapp') {
     if (!site() || !enabledHere() || ctx.isSim()) return false;
+    B().gridDeck = !!ctx.getDeck?.();   // R73: kjøredekk mellom ankrene (nytt bygg i rutenett-modus)
     const to = on() ? 'classic' : 'grid'; if (!setMode(B(), to)) return false;
     clearSel(); gd = null; cursor = null; ctx.trayRender(); sync(); logEv('bygg', `modus ${to === 'grid' ? 'rutenett' : 'klassisk'} (${why}) ${site().id}`); onChange?.(); return true;
   }
-  function setMat(m) { if (!GRID_MATS.includes(m)) return; mat = m; sync(); logEv('bygg', `materiale ${m}`); }
+  // R73: SÅ SLIK: legger et ferdig fagverk på stedet (kan angres)
+  function example() {
+    if (!on() || ctx.isSim()) return false;
+    const r = applyExample(B()); if (!r.ok) { toast(T('grid.example.none')); return false; }
+    clearSel(); gd = null; logEv('bygg', `eksempelbro lagt inn: ${r.rods} staver (${site().id})`); toast(T('grid.example.done')); buzz?.(10); ctx.trayRender(); onChange?.(); return true;
+  }
+  // R73: SLOW og PAUSE under prøven (bare tempoet i visningen; fysikken er uberørt)
+  let speed = 'play', simDone = false;
+  function simSync(sp = speed, done = simDone) {
+    speed = sp; simDone = done;
+    for (const k of ['slow', 'pause']) { const b = root.querySelector(`[data-gs="${k}"]`); if (!b) continue; const act = speed === k; b.textContent = k === 'pause' ? T(act ? 'grid.resume' : 'grid.pause') : T('grid.slow'); b.classList.toggle('on', act); b.disabled = !!done; b.setAttribute?.('aria-pressed', act ? 'true' : 'false'); }
+  }
+  function setSpeed(k) {
+    if (simDone) return speed; const to = k === 'play' ? 'play' : speed === k ? 'play' : k;
+    if (to !== speed) { simSync(to, simDone); logEv('bygg', `tempo ${to === 'play' ? 'vanlig' : to === 'slow' ? 'sakte' : 'pause'}`); }
+    return speed;
+  }
+  function setMat(m) { if (m === 'example') { example(); return; } if (!GRID_MATS.includes(m)) return; mat = m; sync(); logEv('bygg', `materiale ${m}`); }
   const fail = (r) => toast(T('grid.err.' + (r.why || 'same'), { n: COMMA(maxLenOf(B())) }));
 
   // ---- trykk ----
@@ -72,7 +101,7 @@ export function createGridUI(ctx) {
     const d = gd; gd = null; if (cursor) cursor.down = false;
     if (!d.moved) { tapNode(d.id); return true; }
     const w = ctx.toWorld(d.x, d.y), n = nodeOf(G(), d.id); if (!n) return true;
-    if (n.fixed) { toast(T('grid.anchorFixed')); return true; }
+    if (n.fixed) { toast(T('grid.anchorFixed')); return true; } if (n.deck) { toast(T('grid.deckFixed')); return true; }
     const r = gMoveNode(B(), d.id, w.u, w.v);
     if (r.ok && r.moved) { logEv('bygg', `knute ${d.id} flyttet til ${logPt(r.node)}`); buzz?.(8); audio?.bhop?.(); selNode = d.id; selRod = null; ctx.trayRender(); onChange?.(); }
     else if (!r.ok) { fail(r); buzz?.(12); }
@@ -107,8 +136,8 @@ export function createGridUI(ctx) {
     if (r.ok) { selNode = r.node.id; selRod = null; logEv('bygg', `knute ${r.node.id} ${logPt(r.node)}`); buzz?.(8); ctx.trayRender(); onChange?.(); } else fail(r);
   }
   function del() {
-    if (selRod && rodOf(G(), selRod)) { const id = selRod; gRemoveRod(B(), id); selRod = null; logEv('bygg', `fjernet stav ${id}`); ctx.trayRender(); onChange?.(); return true; }
-    if (selNode) { const n = nodeOf(G(), selNode); if (n?.fixed) { toast(T('grid.anchorFixed')); return false; } if (n && gRemoveNode(B(), selNode)) { logEv('bygg', `fjernet knute ${selNode}`); selNode = null; ctx.trayRender(); onChange?.(); return true; } }
+    if (selRod && rodOf(G(), selRod)) { const id = selRod; if (isDeckRod(rodOf(G(), id))) { toast(T('grid.deckFixed')); return false; } gRemoveRod(B(), id); selRod = null; logEv('bygg', `fjernet stav ${id}`); ctx.trayRender(); onChange?.(); return true; }
+    if (selNode) { const n = nodeOf(G(), selNode); if (n?.fixed) { toast(T('grid.anchorFixed')); return false; } if (n?.deck) { toast(T('grid.deckFixed')); return false; } if (n && gRemoveNode(B(), selNode)) { logEv('bygg', `fjernet knute ${selNode}`); selNode = null; ctx.trayRender(); onChange?.(); return true; } }
     toast(T('grid.delNone')); return false;
   }
 
@@ -137,7 +166,7 @@ export function createGridUI(ctx) {
     for (const n of Gd.nodes) {
       const p = p2.get(n.id), q = sx(p.u, p.v), isSel = selNode === n.id, rr = n.fixed ? 8 : 7;
       if (isSel) { g2.beginPath(); g2.arc(q.x, q.y, 13 + 2 * Math.sin(tNow * 6), 0, 7); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 3; g2.stroke(); }
-      g2.beginPath(); g2.arc(q.x, q.y, rr, 0, 7); g2.fillStyle = !p.ok ? '#ff6a5a' : n.fixed ? '#3df0b0' : '#ffffff'; g2.fill(); g2.strokeStyle = '#0b1020'; g2.lineWidth = 2; g2.stroke();
+      g2.beginPath(); g2.arc(q.x, q.y, rr, 0, 7); g2.fillStyle = !p.ok ? '#ff6a5a' : n.fixed ? '#3df0b0' : n.deck ? '#cfd8ff' : '#ffffff'; g2.fill(); g2.strokeStyle = '#0b1020'; g2.lineWidth = 2; g2.stroke();
     }
     // mål for flytting: det punktet knuten lander på
     if (gd && gd.moved) { const n = nodeOf(Gd, gd.id), w = ctx.toWorld(gd.x, gd.y), p = n && canMoveTo(B(), gd.id, w.u, w.v); if (p) { const q = sx(p.u, p.v); g2.beginPath(); g2.arc(q.x, q.y, 11, 0, 7); g2.strokeStyle = '#3df0b0'; g2.lineWidth = 3; g2.stroke(); } }
@@ -166,7 +195,7 @@ export function createGridUI(ctx) {
   const cancel = () => { gd = null; };
   const tap = (x, y) => { const n = pickNode(x, y); if (n) tapNode(n.id); else tapPoint(x, y); };   // samme veivalg som en ekte berøring (til tester)
   return {
-    on, enabledHere, down, move, up, release, tapPoint, del, draw, hint, sync, setMat, toggleMode, reset, clearSel, cancel,
+    on, enabledHere, down, move, up, release, tapPoint, del, draw, hint, sync, setMat, toggleMode, example, simSync, setSpeed, get speed() { return speed; }, reset, clearSel, cancel,
     get mat() { return mat; }, get selNode() { return selNode; }, get selRod() { return selRod; },
     tapNode: (id) => tapNode(id), pickNode, tap,
   };

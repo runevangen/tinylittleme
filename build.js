@@ -24,8 +24,10 @@ import { submitBridge, bestBridges, bridgeLevel, netReady, standing } from './bu
 import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum } from './build_world.js';   // R26: bygget flyttes ut i verdenen
 import { isLab, labSitesOf, labFill, labRegister, labTrayItems, labStepSite, labInfoOf, labNameKey, labTaskKey, labFlagStep, labReachedSave, labReachedLoad, labHome, labFar } from './bygglab_logic.js';   // R67: Bygglab
 import { labCss, labMarkup, labSync, LAB_TOP } from './bygglab_view.js';
+import { parseRod } from './build_materials.js';
 import { createGridUI, gridCss, gridMarkup } from './grid_view.js';   // R72: rutenett-bygging: knutepunkter og staver
 import { GRID_PX } from './grid_view.js';
+import { createPeaks, loadsNow, peakSummary, stressCss as gStressCss, colorCss as gColorCss, widthK as gWidthK, isDanger as gDanger, shown as gShown, pct as gPct } from './grid_stress.js';   // R73: farge etter belastning, «største belastning»
 import { gridStep, isGrid, simDef as gridSimDef, gUndo, gReset, wipe as gridWipe, exportAny, importAny, gApplyImport, gridSave, gridLoad, gridStats } from './grid_logic.js';
 
 const css = `
@@ -79,7 +81,7 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridMax = () => 6.5 }) {
+export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3 }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -95,6 +97,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   const TOPPX = () => (innerHeight <= 520 ? 100 : 130) + (lab ? (innerHeight <= 520 ? LAB_TOP - 6 : LAB_TOP) : 0), BOTPX = () => (grid.on() ? (innerHeight <= 520 ? 96 : 124) : (innerHeight <= 520 ? 110 : 160)) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let lastTap = null, zoomMsg = '', zoomMsgT = 0;   // R44: dobbelttrykk og zoom-melding
+  let gPeaks = null, gSum = null, gSpeed = 'play';   // R73: topp per stav, «største belastning» etter prøven, tempo (SLOW/PAUSE)
   let loadMore = null, simLoad = DEFAULT_LOAD, sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [], simBreaks = [], simWhy = null, simHelp = null, breakAt = -9;   // R25: PRØV
   const solved = new Set(); let seeShown = false;
   const recs = new Map(); let recorder = null, ghostRec = null, replaying = false, winSolved = false;   // R50: siste prøve per sted (opptak), spøkelse, replay
@@ -163,7 +166,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   const dpr = () => Math.min(2, window.devicePixelRatio || 1);
   const grid = createGridUI({   // R72: rutenett-bygging (grid_view.js, grid_logic.js)
     root, T, toast, logEv, buzz, audio, onChange, getB: () => (active ? getB(active) : null), site: () => active, view: () => view, toWorld: (x, y) => toWorld(view, W, H, x, y), loc: (e) => loc(e), now: () => tNow, botY: () => H - BOTPX(), isSim: () => !!sim, trayRender: () => trayRender(),
-    getOn: () => getGrid(), getHint: () => getGridHint(), getMaxLen: () => getGridMax(),
+    getOn: () => getGrid(), getHint: () => getGridHint(), getMaxLen: () => getGridMax(), getDeck: () => getGridDeck(),
     startPan: (e, x, y) => { sel = null; gest = { kind: 'pan', x, y, cu: view.cu, cv: view.cv, t: e.timeStamp || performance.now(), moved: false }; try { cv.setPointerCapture(e.pointerId); } catch { /* ok */ } },
   });
   function labels() {
@@ -251,7 +254,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     if (grid.on()) {   // R72: rutenett-modus: prikker, knuter og staver i stedet for deler fra brettet
       grid.draw(sx, tNow, g2); drawBudget(B);
       hintEl.textContent = (zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || grid.hint();
-      btn('del').disabled = !(grid.selNode || grid.selRod); btn('undo').disabled = !B.history.length; btn('reset').disabled = !B.rg.rods.length; return;
+      btn('del').disabled = !(grid.selNode || grid.selRod); btn('undo').disabled = !B.history.length; btn('reset').disabled = !gridStats(B).rods; return;
     }
     // deler
     const all = B.placed.filter((p) => !(drag && drag.id === p.id)).concat(drag && drag.part ? [drag.part] : []);
@@ -350,6 +353,8 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   const mixCol = (hex, k) => { const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return `rgb(${Math.round(r + (230 - r) * k)},${Math.round(g * (1 - k * 0.8))},${Math.round(b * (1 - k * 0.8))})`; };
   function drawSim(S, sx) {
     const pose = sim.pose(), sc = view.scale, stressOn = getStress(), lm = loadMap(pose);
+    const gOn = !!gPeaks && !replaying && getGridStress() && isGrid(getB(active)), gamma = getGridGamma(), gLive = gOn && !simDone && sim.axial ? loadsNow(sim.axial()) : null;   // R73: farge etter belastning i rutenett-modus (nå under prøven, toppen etter)
+    const gR = (id) => (gOn ? (simDone ? gPeaks.peaks.get(id) : gLive?.get(id)) : null);
     if (ghostRec && !replaying && getGhost()) drawGhost(g2, ghostPose(ghostRec, Math.round(sim.t / DT)), sx, sc);   // R50: forrige prøve som spøkelse
     for (const p of pose.parts) {
       const t = partType(p.type);
@@ -357,9 +362,11 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
       if (p.kind === 'chain') {
         for (const seg of p.segs) {
           if (!seg.length) continue; const pts = seg.map((q) => sx(q.u, q.v));
-          for (const [w, col] of [[t.h * sc + 4, '#2a1d10'], [t.h * sc, stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : mixCol(t.color, Math.min(1, Math.max(0, (p.stress - 0.35) / 0.65)))]]) {
+          const gx = gR(p.id), gk = gx ? gWidthK(gx.kind) : 1;   // R73: strekk tynnere, trykk tykkere
+          for (const [w, col] of [[t.h * sc * gk + 4, '#2a1d10'], [t.h * sc * gk, gx ? gStressCss(gx.r, gamma) : stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : mixCol(t.color, Math.min(1, Math.max(0, (p.stress - 0.35) / 0.65)))]]) {
             g2.lineCap = 'round'; g2.lineJoin = 'round'; g2.lineWidth = w; g2.strokeStyle = col; g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); if (pts.length === 1) g2.lineTo(pts[0].x + 0.1, pts[0].y); g2.stroke();
           }
+          if (gx && gDanger(gx.r, gamma)) { g2.save(); g2.setLineDash([6, 6]); g2.lineDashOffset = -tNow * 18; g2.strokeStyle = 'rgba(255,255,255,.9)'; g2.lineWidth = Math.max(2, t.h * sc * gk * 0.22); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.stroke(); g2.restore(); }   // varselstrek (også uten farger)
           drawToyChain(g2, p.type, pts, sc);
         }
       } else {
@@ -383,14 +390,18 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     for (const m of simMarks) { const q = sx(m.u, m.v), k = 9 + 3 * Math.sin(tNow * 8); g2.strokeStyle = '#ff3b30'; g2.lineWidth = 4; g2.lineCap = 'round'; g2.beginPath(); g2.moveTo(q.x - k, q.y - k); g2.lineTo(q.x + k, q.y + k); g2.moveTo(q.x + k, q.y - k); g2.lineTo(q.x - k, q.y + k); g2.stroke(); }
     for (const m of simMarks) { const ring = ringAt(tNow - m.t0); if (!ring) continue; const q = sx(m.u, m.v); g2.beginPath(); g2.arc(q.x, q.y, ring.r, 0, 7); g2.strokeStyle = `rgba(255,59,48,${ring.a.toFixed(2)})`; g2.lineWidth = 4; g2.stroke(); }   // R45: ring der det røk
     if (simWhy && simDone) { const q = sx(simWhy.u, simWhy.v), k = 20 + 3 * Math.sin(tNow * 6); g2.beginPath(); g2.arc(q.x, q.y, k, 0, 7); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 3; g2.setLineDash([6, 5]); g2.stroke(); g2.setLineDash([]); }   // R45: gul ring rundt svakeste punkt
-    if (stressOn) { const lx = 12, ly = H - BOTPX() - 22 + (isGrid(getB(active)) ? 30 : 0), lw = Math.min(150, W * 0.4), gr = g2.createLinearGradient(lx, 0, lx + lw, 0); gr.addColorStop(0, stressCss(0)); gr.addColorStop(0.5, stressCss(0.5)); gr.addColorStop(1, stressCss(1)); g2.fillStyle = gr; g2.fillRect(lx, ly, lw, 7); g2.strokeStyle = '#2a1d10'; g2.lineWidth = 1; g2.strokeRect(lx, ly, lw, 7); g2.fillStyle = '#fff'; g2.font = '600 10px system-ui'; g2.textAlign = 'left'; g2.fillText(T('build.legend'), lx, ly - 3); g2.textAlign = 'right'; g2.fillText(T('build.legend2'), lx + lw, ly - 3); g2.textAlign = 'left'; }   // R45: forklaring på fargene
+    if (stressOn || gOn) { const lx = 12, ly = H - BOTPX() - 22 + (isGrid(getB(active)) ? 30 : 0), lw = Math.min(150, W * 0.4), gr = g2.createLinearGradient(lx, 0, lx + lw, 0); if (gOn) for (const q of [0, 0.4, 0.68, 1]) gr.addColorStop(q, gColorCss(q)); else { gr.addColorStop(0, stressCss(0)); gr.addColorStop(0.5, stressCss(0.5)); gr.addColorStop(1, stressCss(1)); } g2.fillStyle = gr; g2.fillRect(lx, ly, lw, 7); g2.strokeStyle = '#2a1d10'; g2.lineWidth = 1; g2.strokeRect(lx, ly, lw, 7); g2.fillStyle = '#fff'; g2.font = '600 10px system-ui'; g2.textAlign = 'left'; g2.fillText(T('build.legend'), lx, ly - 3); g2.textAlign = 'right'; g2.fillText(T('build.legend2'), lx + lw, ly - 3); g2.textAlign = 'left'; }   // R45: forklaring på fargene
     if (simDone && sim.state.state === 'lost' && getTruss() && simHelp) {      // R49a2: etter en feilet prøve: ledd som kan svinge (ringer ved leddene slik de ligger nå) og deler nær knekking
       const at = new Map(pose.links.map((l) => [l.id, l.a])); drawHelp({ joints: simHelp.joints, suggest: null, slender: [] }, sx, true, (j) => { const a = at.get(j.id); return a ? sx(a.u, a.v) : null; });
       for (const a of sim.axial()) { const r = a.nc / Math.min(a.pcr, a.ccap); if (a.broken || r < 0.6) continue; const part = pose.parts.find((p) => p.id === a.id); if (!part) continue; const m = part.pts[part.pts.length >> 1], q = sx(m.u, m.v); g2.font = '800 12px system-ui'; g2.textAlign = 'center'; g2.fillStyle = '#ffa940'; g2.fillText('⚠ ' + Math.round(r * 100) + '%', q.x, q.y - 12); g2.textAlign = 'start'; }
     }
+    if (gSum && simDone && getGridPeak()) {   // R73: «største belastning»: staven som brakk først, ellers den som var nærmest brudd
+      const hl = gSum.first || gSum.top, pr = hl && pose.parts.find((p) => p.id === hl.id);
+      if (pr) { const m = pr.pts[pr.pts.length >> 1], q = sx(m.u, m.v), txt = peakLine(); g2.font = '800 12px system-ui'; const w = Math.min(W - 16, g2.measureText(txt).width + 14), x0 = Math.max(8, Math.min(W - 8 - w, q.x - w / 2)), y0 = Math.max(TOPPX(), q.y - 46); g2.fillStyle = 'rgba(14,20,36,.9)'; g2.beginPath(); g2.roundRect ? g2.roundRect(x0, y0, w, 22, 8) : g2.rect(x0, y0, w, 22); g2.fill(); g2.strokeStyle = gSum.first ? '#ff6a5a' : '#ffd23f'; g2.lineWidth = 2; g2.stroke(); g2.fillStyle = '#ffe9a8'; g2.textAlign = 'center'; g2.fillText(txt, x0 + w / 2, y0 + 15, w - 8); g2.textAlign = 'start'; g2.beginPath(); g2.arc(q.x, q.y, 16, 0, 7); g2.strokeStyle = gSum.first ? '#ff6a5a' : '#ffd23f'; g2.lineWidth = 3; g2.stroke(); }
+    }
     for (const q of confetti) { const p = sx(q.u, q.v); g2.fillStyle = q.c; g2.fillRect(p.x, p.y, 5, 8); }
     const st = sim.state;
-    hintEl.textContent = simText();
+    hintEl.textContent = simText() + (gSum && simDone && getGridPeak() ? ' ' + peakLine() : '');
     btn('try').textContent = T('build.stop'); btn('del').disabled = true; btn('rotl').disabled = btn('rotr').disabled = true; btn('undo').disabled = btn('reset').disabled = true;
   }
 
@@ -526,7 +537,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     del: () => { const B = getB(active); if (isGrid(B)) { grid.del(); return; } if (selLink && removeLink(B, selLink)) { logEv('bygg', `fjernet ${selLink}`); selLink = null; onChange?.(); } else if (sel && remove(B, sel)) { logEv('bygg', `tilbake i brettet ${sel}`); sel = null; trayRender(); onChange?.(); } },
   };
   function rot(d) { const B = getB(active); if (sel && rotate(B, sel, d)) { logEv('bygg', `roter ${sel}`); onChange?.(); } }
-  root.addEventListener('click', (e) => { const gm = e.target.closest?.('button')?.dataset.g; if (gm && active && !sim) { grid.setMat(gm); return; } const lb = e.target.closest?.('button')?.dataset.lb; if (lb && lab && active && labAct[lb]) { labAct[lb](); return; } const l = e.target.closest?.('button')?.dataset.l; if (l && active && !sim && loadList().includes(l)) { loadSel.set(active.id, l); logEv('bygg', `last valgt: ${l}`); loadsRender(); return; } const sh = e.target.closest?.('button')?.dataset.s; if (sh && active && shareAct[sh]) { shareAct[sh](); return; } const t = e.target.closest?.('button')?.dataset.t; if (t) { tool = tool === t ? null : t; linkFrom = null; labels(); return; } const a = e.target.closest?.('button')?.dataset.a; if (a && act[a]) act[a](); });
+  root.addEventListener('click', (e) => { const gs = e.target.closest?.('button')?.dataset.gs; if (gs && active && sim && grid.on() && !simDone) { gSpeed = grid.setSpeed(gs); return; } const gm = e.target.closest?.('button')?.dataset.g; if (gm && active && !sim) { grid.setMat(gm); return; } const lb = e.target.closest?.('button')?.dataset.lb; if (lb && lab && active && labAct[lb]) { labAct[lb](); return; } const l = e.target.closest?.('button')?.dataset.l; if (l && active && !sim && loadList().includes(l)) { loadSel.set(active.id, l); logEv('bygg', `last valgt: ${l}`); loadsRender(); return; } const sh = e.target.closest?.('button')?.dataset.s; if (sh && active && shareAct[sh]) { shareAct[sh](); return; } const t = e.target.closest?.('button')?.dataset.t; if (t) { tool = tool === t ? null : t; linkFrom = null; labels(); return; } const a = e.target.closest?.('button')?.dataset.a; if (a && act[a]) act[a](); });
   enterBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); open(); });
   addEventListener('keydown', (e) => {
     if (e.target?.tagName === 'INPUT' || e.target?.tagName === 'TEXTAREA') return;   // R71: skriving i ⚑-boksen skal ikke trigge byggetaster
@@ -543,6 +554,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     const B = getB(active); if (!B.placed.length) { toast(T('build.tryEmpty')); return false; }
     sim = createSim(isGrid(B) ? gridSimDef(B) : { site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial() });
     simLoad = curLoad(); loadMore = null; replaying = false; winSolved = false; ghostRec = getGhost() ? recs.get(active.id) || null : null; recorder = createRecorder(sim, { load: simLoad }); simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; simHelp = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
+    gPeaks = isGrid(B) ? createPeaks() : null; gSum = null; gSpeed = 'play'; grid.simSync('play', false);
     root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}${ghostRec ? ', med spøkelse' : ''}`); return true;
   }
   const loadThe = (id) => T('build.loadThe.' + id);
@@ -554,12 +566,27 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     return simWhy ? T(simWhy.key) : simMarks.length ? T('build.lostBreak') : st.reason === 'fell' ? (L ? T('build.lostFellL', { name: nm }) : T('build.lostFell')) : (L ? T('build.lostStuckL', { name: nm }) : T('build.lostStuck'));
   }
   function stopSim(why) {
-    if (!sim) return; logEv('bygg', `stopp prøve (${why}) etter ${sim.t.toFixed(1)} s`); sim = null; recorder = null; ghostRec = null; replaying = false; simMarks = []; simBreaks = []; simWhy = null; simDone = false; confetti = []; root.classList.remove('sim'); labels(); trayRender();
+    if (!sim) return; logEv('bygg', `stopp prøve (${why}) etter ${sim.t.toFixed(1)} s`); sim = null; recorder = null; ghostRec = null; replaying = false; simMarks = []; simBreaks = []; simWhy = null; simDone = false; confetti = []; gPeaks = null; gSum = null; gSpeed = 'play'; root.classList.remove('sim'); labels(); trayRender();
+  }
+  // R73: «største belastning» (grid_stress.js): tekst om staven som brakk først, ellers den som var nærmest brudd
+  function rodName(id) { const p = getB(active).placed.find((q) => q.id === id), r = p && parseRod(p.type); return r ? `${T('grid.mat.' + r.mat).toLowerCase()} ${String(+r.len.toFixed(2)).replace('.', ',')}` : id; }
+  function peakLine() {
+    if (!gSum) return ''; const h = gSum.first, t = gSum.top; if (!h && !t) return '';
+    if (h) return T('grid.peak.first', { name: rodName(h.id), mat: T('grid.kind.' + (h.kind || 'trykk')), len: (+h.t || 0).toFixed(1).replace('.', ',') });
+    return T('grid.peak.top', { name: rodName(t.id), mat: T('grid.kind.' + t.kind), n: gPct(t.r) });
+  }
+  function peakFinish() {
+    gSpeed = 'play'; grid.simSync('play', true);
+    if (!gPeaks || replaying) return;
+    gSum = peakSummary(gPeaks.peaks, simBreaks.filter((b) => gPeaks.peaks.has(b.id)));
+    const h = gSum.first, t = gSum.top; if (!t) return;
+    logEv('bygg', `største belastning ${t.id} ${gPct(t.r)} % ${t.kind}${h ? `; brakk først ${h.id} ved ${(+h.t || 0).toFixed(1)} s` : ''}`);
   }
   function stepSim(dt) {
-    if (!sim || simDone) return; simAcc += dt * (getSlow() ? 0.35 : 1) * breakTempo(tNow - breakAt, getBreakFx());
+    if (!sim || simDone) return; simAcc += dt * (getSlow() ? 0.35 : 1) * (gSpeed === 'slow' ? getGridSlow() : 1) * (gSpeed === 'pause' ? 0 : 1) * breakTempo(tNow - breakAt, getBreakFx());   // R73: SLOW og PAUSE (rutenett)
     for (let n = 0; simAcc >= DT && n < 6 && !simDone; n++) {
       simAcc -= DT; sim.step();
+      if (gPeaks && sim.axial && !replaying) gPeaks.feed(sim.axial(), sim.t);   // R73: høyeste belastning per stav
       const evs = sim.drain(); recorder?.frame(sim, evs);   // R50: opptak (bare ekte prøver, ikke replay)
       for (const e of evs) {
         if (e.type === 'break') { simMarks.push({ u: e.u, v: e.v, t0: tNow }); simBreaks.push({ kind: e.mode || (isGrid(getB(active)) ? 'rod' : 'plank'), id: e.id, t: e.t, u: e.u, v: e.v }); breakAt = tNow; logEv('bygg', e.mode ? `${e.mode === 'buckle' ? 'knakk' : e.mode === 'tear' ? 'revnet' : 'knust'} ${e.id} ved ${e.t.toFixed(1)} s (kraft ${e.m} mot grense ${e.cap})` : `brakk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
@@ -570,7 +597,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
         else if (e.type === 'splash') audio?.bsplash?.();
         else if (e.type === 'win') { audio?.win?.(); buzz?.([30, 40, 30]); if (!replaying) { winRes = starsFor(active, getB(active).placed, getB(active).links); const r = afterWin(active, passedOf(active), simLoad); passedL.set(active.id, { sig: sigOf(getB(active)), ids: r.passed }); logEv('bygg', `last ${simLoad} bestått (${r.passed.length}/${requiredLoads(active).length || 1})`); winSolved = !replaying && r.solved; if (!replaying && r.solved) { const rec = recordBuildStars(st0, levelId, active.id, winRes); starsCache = null; logEv('bygg', `stjerner ${winRes.stars} (kostnad ${winRes.cost}, ${winRes.parts} deler) ${active.id}${rec.first ? ', første gang' : rec.improved ? ', ny rekord' : ''}`); solved.add(active.id); commitWorld(active, 'prøve klarte det'); onSolved(active.id); } else if (!replaying) loadMore = nextLoad(active, r.passed); } for (let i = 0; i < 46; i++) confetti.push({ u: e.u + (i % 9 - 4) * 0.3, v: e.v + 1 + (i % 5) * 0.2, vx: ((i * 37) % 13 - 6) * 0.4, vy: 5 + (i * 17) % 7, c: ['#ffd23f', '#3df0b0', '#ff6a5a', '#6ab8ff'][i % 4] }); }
       }
-      if (sim.state.state !== 'run') { simDone = true; if (recorder) { recs.set(active.id, recorder.finish(sim.state)); logEv('bygg', `opptak lagret: ${recorder.rec.frames.length} steg`); recorder = null; if (winSolved) submitBest(); } shareSync(); simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; simHelp = sim.state.state === 'lost' && getTruss() ? helpOf(getB(active)) : null; if (!simWhy && simHelp?.joints.length) { const j = simHelp.joints[0]; simWhy = { key: 'build.why.floppy', kind: 'floppy', id: j.id, u: j.u, v: j.v, t: sim.t }; } if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(simText()); onChange?.(); }
+      if (sim.state.state !== 'run') { simDone = true; if (recorder) { recs.set(active.id, recorder.finish(sim.state)); logEv('bygg', `opptak lagret: ${recorder.rec.frames.length} steg`); recorder = null; if (winSolved) submitBest(); } shareSync(); simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; simHelp = sim.state.state === 'lost' && getTruss() ? helpOf(getB(active)) : null; if (!simWhy && simHelp?.joints.length) { const j = simHelp.joints[0]; simWhy = { key: 'build.why.floppy', kind: 'floppy', id: j.id, u: j.u, v: j.v, t: sim.t }; } if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); peakFinish(); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(simText()); onChange?.(); }
     }
     for (const q of confetti) { q.u += q.vx * dt; q.v += q.vy * dt; q.vy -= 14 * dt; }
     confetti = confetti.filter((q) => q.v > -8);
@@ -588,7 +615,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     const rp = createReplay(rec), q = [], st = { state: 'run', reason: '' };
     sim = { state: st, get t() { return rp.i * DT; }, pose: () => rp.pose(), drain: () => q.splice(0, q.length), step() { for (const e of rp.step()) q.push(e); if (rp.done) { st.state = rec.result ? rec.result.state : 'lost'; st.reason = rec.result ? rec.result.reason : 'time'; } } };
     simLoad = rec.meta?.load || DEFAULT_LOAD; loadMore = null; replaying = true; recorder = null; ghostRec = null; simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = [];
-    sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear(); root.classList.add('sim'); labels();
+    sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear(); gPeaks = null; gSum = null; gSpeed = 'play'; grid.simSync('play', false); root.classList.add('sim'); labels();
     logEv('bygg', `replay ${active.id}: ${rec.frames.length - 1} steg, last ${simLoad}`); return true;
   }
   function submitBest() {   // etter et vellykket bygg: send til topplista (bare med tester-kode og nett; ellers skjer ingenting)
@@ -707,7 +734,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     starsMap, bonusOpen, get lastResult() { return winRes; }, get cap() { return capRes; },
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'),
-    grid: { get on() { return grid.on(); }, get available() { return !!active && grid.enabledHere(); }, toggle: () => grid.toggleMode('kode'), setMat: (m) => grid.setMat(m), tap: (x, y) => grid.tap(x, y), del: () => grid.del(), get mat() { return grid.mat; }, get selNode() { return grid.selNode; }, get selRod() { return grid.selRod; }, info: () => (active && getB(active).rg ? { mode: getB(active).mode || 'classic', ...gridStats(getB(active)), cost: starsFor(active, getB(active).placed, getB(active).links).cost, nodes: getB(active).rg.nodes.map((n) => ({ id: n.id, u: n.u, v: n.v, fixed: !!n.fixed })), rods: getB(active).rg.rods.map((r) => ({ ...r })) } : null) },   // R72: til tester (node og Playwright)
+    grid: { get speed() { return gSpeed; }, setSpeed: (k) => { if (sim && !simDone) gSpeed = grid.setSpeed(k); return gSpeed; }, example: () => grid.example(), get peaks() { return gPeaks ? [...gPeaks.peaks].map(([id, p]) => ({ id, ...p })) : null; }, get summary() { return gSum; }, get on() { return grid.on(); }, get available() { return !!active && grid.enabledHere(); }, toggle: () => grid.toggleMode('kode'), setMat: (m) => grid.setMat(m), tap: (x, y) => grid.tap(x, y), del: () => grid.del(), get mat() { return grid.mat; }, get selNode() { return grid.selNode; }, get selRod() { return grid.selRod; }, info: () => (active && getB(active).rg ? { mode: getB(active).mode || 'classic', ...gridStats(getB(active)), cost: starsFor(active, getB(active).placed, getB(active).links).cost, nodes: getB(active).rg.nodes.map((n) => ({ id: n.id, u: n.u, v: n.v, fixed: !!n.fixed, ...(n.deck ? { deck: true } : {}) })), rods: getB(active).rg.rods.map((r) => ({ ...r })) } : null) },   // R72: til tester (node og Playwright)
     startReplay: () => !!active && startReplay(), get replaying() { return replaying; }, record: (id) => recs.get(id) || null, importText: (t) => !!active && doImport(t), exportText: () => (active ? exportAny(getB(active), exportCode) : null),   // R50: til tester (node og Playwright)
     lab: lab ? { go: labGo, resetSite: (id) => { const s = labSites.find((q) => q.id === id); return s ? labReset(s, 'kode') : false; }, resetAll: labResetAll, get reached() { return [...lab.reached]; }, sites: labSites.map((q) => q.id), line: () => (active ? labLine() : ''), info: () => (active ? labInfo() : null), get home() { return lab.moved; } } : null,   // R67: til tester
     state: () => ({ active: active?.id || null, view: view ? { scale: view.scale, cu: view.cu, cv: view.cv, oy: view.oy || 0, W, H } : null, builds: [...builds].map(([k, b]) => ({ id: k, have: b.have.length, placed: b.placed.length, links: b.links.length, parts: b.placed.map((p) => ({ id: p.id, u: p.u, v: p.v, rot: p.rot })) })) }),

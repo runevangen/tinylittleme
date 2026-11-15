@@ -14,6 +14,7 @@ export const MIN_LEN = 1.2;            // kortere staver gir ingen mening (og ka
 export const MAX_LEN = 6.5;            // standard lengste stav (enheter); settes i ⚙ (admin)
 export const MAX_NODES = 60, MAX_RODS = 120;
 export const CODE_GRID = 2;            // kodeversjon (TLM1.<base64 av [2, sted, knuter, staver]>.<sum>): gamle koder (versjon 1) virker som før
+export const CODE_GRID_DECK = 3;       // R73: samme, men bygget har kjøredekk (dekket er ikke med i koden, bare det du la til)
 
 export const siteHasGrid = (site) => !!site && !!site.grid;
 export const gridStep = (site) => (Number.isFinite(site?.grid?.step) && site.grid.step > 0.4 ? site.grid.step : GRID_STEP);
@@ -37,11 +38,34 @@ export function nearestPoint(site, u, v, maxD = Infinity) {
   return best;
 }
 
-// ---------- bygget ----------
-export function createGrid(site) {
-  const nodes = siteAnchors(site).map((a, i) => ({ id: 'a' + (i + 1), u: r3(a.u), v: r3(a.v), fixed: true }));
-  return { nodes, rods: [], n: 1, r: 1 };
+// ---------- kjøredekk (R73) ----------
+// stedet har to ankre på samme høyde: dekket er en rett kjede av tre-staver langs rutenettets rad mellom dem. Knutene på dekket (id d1, d2 ...) og stavene (dk1 ...) kan ikke slettes eller flyttes,
+// men kan få staver over og under. Dekket er gratis og teller ikke som deler (build_budget.js), så terskler og stjerner gjelder det du bygger oppå.
+export const isDeckRod = (r) => !!r && !!r.deck;
+export function deckPoints(site) {
+  if (!siteHasGrid(site)) return null; const an = siteAnchors(site).slice().sort((a, b) => a.u - b.u);
+  if (an.length !== 2 || !same(an[0].v, an[1].v) || an[1].u - an[0].u < MIN_LEN) return null;
+  const mid = latticePoints(site).filter((p) => same(p.v, an[0].v) && p.u > an[0].u + 0.3 && p.u < an[1].u - 0.3).sort((a, b) => a.u - b.u);
+  return { left: an[0], right: an[1], mid };
 }
+function addDeck(G, site) {
+  const d = deckPoints(site); if (!d) return G;
+  const idOf = (a) => G.nodes.find((n) => n.fixed && same(n.u, a.u) && same(n.v, a.v)).id;
+  let prev = idOf(d.left), k = 1;
+  const link = (to) => { G.rods.push({ id: 'dk' + k++, a: prev, b: to, mat: 'wood', deck: true }); prev = to; };
+  d.mid.forEach((p, i) => { const n = { id: 'd' + (i + 1), u: p.u, v: p.v, deck: true }; G.nodes.push(n); link(n.id); });
+  link(idOf(d.right)); G.deck = true; return G;
+}
+
+// ---------- bygget ----------
+export function createGrid(site, deck = false) {
+  const nodes = siteAnchors(site).map((a, i) => ({ id: 'a' + (i + 1), u: r3(a.u), v: r3(a.v), fixed: true }));
+  const G = { nodes, rods: [], n: 1, r: 1 };
+  return deck ? addDeck(G, site) : G;
+}
+export const hasDeck = (G) => !!G && !!G.deck;
+const userRods = (G) => G.rods.filter((r) => !r.deck);
+const userNodes = (G) => G.nodes.filter((n) => !n.fixed && !n.deck);
 export const isGrid = (B) => B.mode === 'grid' && !!B.rg;
 export const nodeOf = (G, id) => G.nodes.find((n) => n.id === id);
 export const rodOf = (G, id) => G.rods.find((r) => r.id === id);
@@ -106,15 +130,15 @@ export function setMode(B, mode) {
   B.stash ||= {}; B.stash[cur] = { placed: B.placed, links: B.links, history: B.history, grid: B.rg || null };
   const st = B.stash[to];
   if (st) { B.placed = st.placed; B.links = st.links; B.history = st.history; B.rg = st.grid || null; }
-  else { B.placed = []; B.links = []; B.history = []; B.rg = to === 'grid' ? createGrid(B.site) : null; }
+  else { B.placed = []; B.links = []; B.history = []; B.rg = to === 'grid' ? createGrid(B.site, !!B.gridDeck) : null; }
   B.mode = to; if (to === 'grid') derive(B); return true;
 }
 // alt på stedet tilbake til start (klassisk modus, tomt)
 export function wipe(B) { B.mode = 'classic'; B.rg = null; B.stash = {}; B.placed = []; B.links = []; B.history = []; }
 // nullstill byggingen i gjeldende modus; i rutenett-modus står ankrene igjen
 export function gReset(B) {
-  if (!B.rg || (!B.rg.rods.length && B.rg.nodes.every((n) => n.fixed))) return false;
-  pushHist(B); B.rg = createGrid(B.site); derive(B); return true;
+  if (!B.rg || (!userRods(B.rg).length && B.rg.nodes.every((n) => n.fixed || n.deck))) return false;
+  pushHist(B); B.rg = createGrid(B.site, hasDeck(B.rg)); derive(B); return true;
 }
 
 // ---------- endringer (alle skriver historikk først, så ANGRE virker) ----------
@@ -139,17 +163,17 @@ export function gAddRodTo(B, aId, u, v, mat) {
   return { ok: true, rod: r, node: n, len: c.len, cost: rodPrice(mat, c.len), newNode: true };
 }
 export function gRemoveRod(B, id) {
-  const G = B.rg, i = G ? G.rods.findIndex((r) => r.id === id) : -1; if (i < 0) return false;
+  const G = B.rg, i = G ? G.rods.findIndex((r) => r.id === id) : -1; if (i < 0 || G.rods[i].deck) return false;
   pushHist(B); G.rods.splice(i, 1);
   const a = G.rods.length; void a; derive(B); return true;
 }
 export function gRemoveNode(B, id) {
-  const G = B.rg, n = G && nodeOf(G, id); if (!n || n.fixed) return false;
+  const G = B.rg, n = G && nodeOf(G, id); if (!n || n.fixed || n.deck) return false;
   pushHist(B); G.rods = G.rods.filter((r) => r.a !== id && r.b !== id); G.nodes = G.nodes.filter((q) => q.id !== id); derive(B); return true;
 }
 // flytt en knute til nærmeste rutenettpunkt; alle staver på den må fortsatt være lovlige
 export function gMoveNode(B, id, u, v) {
-  const G = B.rg, n = G && nodeOf(G, id); if (!n) return { ok: false, why: 'same' }; if (n.fixed) return { ok: false, why: 'fixed' };
+  const G = B.rg, n = G && nodeOf(G, id); if (!n) return { ok: false, why: 'same' }; if (n.fixed || n.deck) return { ok: false, why: 'fixed' };
   const p = nearestPoint(B.site, u, v); if (!p) return { ok: false, why: 'out' };
   if (same(p.u, n.u) && same(p.v, n.v)) return { ok: true, moved: false };
   if (nodeAt(G, p.u, p.v)) return { ok: false, why: 'taken' };
@@ -160,7 +184,7 @@ export function gMoveNode(B, id, u, v) {
 }
 // kan en knute flyttes dit (til forhåndsvisning mens du drar)?
 export function canMoveTo(B, id, u, v) {
-  const G = B.rg, n = G && nodeOf(G, id), p = G && nearestPoint(B.site, u, v); if (!n || n.fixed || !p) return null;
+  const G = B.rg, n = G && nodeOf(G, id), p = G && nearestPoint(B.site, u, v); if (!n || n.fixed || n.deck || !p) return null;
   if (nodeAt(G, p.u, p.v) && nodeAt(G, p.u, p.v) !== n) return null;
   const old = { u: n.u, v: n.v }; n.u = p.u; n.v = p.v; let ok = true;
   for (const r of rodsAt(G, id)) if (!rodCheck({ ...G, rods: G.rods.filter((q) => q !== r) }, r.a, r.b, maxLenOf(B)).ok) { ok = false; break; }
@@ -187,10 +211,10 @@ export function hitRod(G, u, v, scale, px = ROD_HIT_PX) {
 
 // ---------- lagring ----------
 const cleanMat = (m) => (GRID_MATS.includes(m) ? m : null);
-export function gridSnapshot(G) { return { nodes: G.nodes.filter((n) => !n.fixed).map((n) => [n.id, r3(n.u), r3(n.v)]), rods: G.rods.map((r) => [r.id, r.a, r.b, r.mat]) }; }
+export function gridSnapshot(G) { return { ...(G.deck ? { deck: true } : {}), nodes: userNodes(G).map((n) => [n.id, r3(n.u), r3(n.v)]), rods: userRods(G).map((r) => [r.id, r.a, r.b, r.mat]) }; }
 // tilbake fra lagring: ukjente eller ulovlige staver kastes. Returnerer et nytt rutenett.
 export function gridFromSnapshot(site, d, maxLen = MAX_LEN) {
-  const G = createGrid(site), ok = (x) => Number.isFinite(x), pts = latticePoints(site);
+  const G = createGrid(site, !!d?.deck), ok = (x) => Number.isFinite(x), pts = latticePoints(site);
   for (const q of Array.isArray(d?.nodes) ? d.nodes : []) {
     if (!Array.isArray(q) || typeof q[0] !== 'string' || !/^kn\d{1,4}$/.test(q[0]) || !ok(q[1]) || !ok(q[2])) continue;
     const p = pts.find((z) => same(z.u, q[1]) && same(z.v, q[2])); if (!p || nodeAt(G, p.u, p.v) || nodeOf(G, q[0]) || G.nodes.length >= MAX_NODES) continue;
@@ -209,10 +233,10 @@ export const gridClone = clone;
 // [2, stedets id, knuter [[u, v] i tusendeler, uten ankrene], staver [[a, b, materiale]] (a og b = nummer i listen ankre + knuter)]
 export function gridExport(B) {
   const G = B.rg; if (!G) return null;
-  const order = [...G.nodes.filter((n) => n.fixed), ...G.nodes.filter((n) => !n.fixed)], ix = new Map(order.map((n, i) => [n.id, i]));
-  const nodes = order.filter((n) => !n.fixed).map((n) => [Math.round(n.u * 1000), Math.round(n.v * 1000)]);
-  const rods = G.rods.map((r) => [ix.get(r.a), ix.get(r.b), GRID_MATS.indexOf(r.mat)]);
-  const body = toB64(JSON.stringify([CODE_GRID, B.site.id, nodes, rods])), code = `${CODE_PREFIX}${body}.${fnv(body)}`;
+  const order = [...G.nodes.filter((n) => n.fixed), ...G.nodes.filter((n) => n.deck), ...userNodes(G)], ix = new Map(order.map((n, i) => [n.id, i]));   // ankre, dekk, så det du la til
+  const nodes = userNodes(G).map((n) => [Math.round(n.u * 1000), Math.round(n.v * 1000)]);
+  const rods = userRods(G).map((r) => [ix.get(r.a), ix.get(r.b), GRID_MATS.indexOf(r.mat)]);
+  const body = toB64(JSON.stringify([G.deck ? CODE_GRID_DECK : CODE_GRID, B.site.id, nodes, rods])), code = `${CODE_PREFIX}${body}.${fnv(body)}`;
   return code.length <= CODE_MAX ? code : null;
 }
 export const exportAny = (B, classic) => (isGrid(B) ? gridExport(B) : classic(B));
@@ -221,13 +245,15 @@ export function gridImport(code, B) {
   if (typeof code !== 'string') return null; const s = code.replace(/\s+/g, ''); if (!s.startsWith(CODE_PREFIX) || s.length > CODE_MAX) return null;
   const parts = s.slice(CODE_PREFIX.length).split('.'); if (parts.length !== 2 || !/^[A-Za-z0-9_-]+$/.test(parts[0]) || fnv(parts[0]) !== parts[1]) return null;
   let j; try { j = JSON.parse(fromB64(parts[0])); } catch { return null; }
-  if (!Array.isArray(j) || j[0] !== CODE_GRID) return null;
+  if (!Array.isArray(j) || (j[0] !== CODE_GRID && j[0] !== CODE_GRID_DECK)) return null;
   const bad = (why) => ({ ok: false, why });
   if (!siteHasGrid(B.site)) return bad('sted');
+  if (j[0] === CODE_GRID_DECK && !deckPoints(B.site)) return bad('sted');
   if (j.length !== 4 || typeof j[1] !== 'string' || !Array.isArray(j[2]) || !Array.isArray(j[3])) return bad('format');
   if (j[1] !== B.site.id) return bad('sted');
   if (j[2].length > MAX_NODES || j[3].length > MAX_RODS) return bad('verdi');
-  const G = createGrid(B.site), pts = latticePoints(B.site), anchors = G.nodes.length, num = (x) => typeof x === 'number' && Number.isInteger(x) && Math.abs(x) <= 1e6;
+  const G = createGrid(B.site, j[0] === CODE_GRID_DECK), pts = latticePoints(B.site), anchors = G.nodes.length,
+     num = (x) => typeof x === 'number' && Number.isInteger(x) && Math.abs(x) <= 1e6;
   for (const q of j[2]) {
     if (!Array.isArray(q) || q.length !== 2 || !num(q[0]) || !num(q[1])) return bad('format');
     const p = pts.find((z) => same(z.u, q[0] / 1000) && same(z.v, q[1] / 1000)); if (!p || nodeAt(G, p.u, p.v)) return bad('verdi');
@@ -268,6 +294,7 @@ export function gridLoad(B, d, restoreClassic) {
 }
 
 // ---------- tekster og tall (til hjelp og rapport) ----------
-export const gridStats = (B) => (B.rg ? { nodes: B.rg.nodes.filter((n) => !n.fixed).length, rods: B.rg.rods.length, wood: B.rg.rods.filter((r) => r.mat === 'wood').length, steel: B.rg.rods.filter((r) => r.mat === 'steel').length, rope: B.rg.rods.filter((r) => r.mat === 'rope').length } : null);
+export const gridStats = (B) => (B.rg ? { nodes: userNodes(B.rg).length, rods: userRods(B.rg).length, deck: B.rg.deck ? B.rg.rods.length - userRods(B.rg).length : 0, wood: userRods(B.rg).filter((r) => r.mat === 'wood').length, steel: userRods(B.rg).filter((r) => r.mat === 'steel').length, rope: userRods(B.rg).filter((r) => r.mat === 'rope').length } : null);
 export const rodCostOf = (G, r) => rodPrice(r.mat, rodLen(G, r));
+export const pushHistGrid = (B) => pushHist(B);
 export { partType, parseRod, GRID_MAT, GRID_MATS, CODE_MAX_PARTS, CODE_MAX_LINKS };
