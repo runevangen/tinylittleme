@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.90** – Trailer: shotlist fra selve spillet (`tools/trailer/shotlist.json` og `SHOTLIST.md`): posisjoner, ruter, kamera og API-behov per klipp, med 8 testbilder. Ingen spillkode.
 - **1.89** – Backlogg ryddet mot changelog og kode (R28, R32, R39–R42, R44–R50, R60–R66, nivå 7–9 krysset av eller oppdatert; nye punkter R49b, R51, R52, R68, R69, R27).
 - **1.88** – Trailer: montasjeverktøy `tools/trailer/` (build.sh, edit.json med tekstkort, README), ingen spillkode.
 - **1.87** – Veikart: R69 (vanskelighetsnivå Nybegynner/Medium/Ekspert, avslutt til meny, spill opplåste brett på nytt på høyere nivå, merker per brett og nivå), fra tester: Rune.

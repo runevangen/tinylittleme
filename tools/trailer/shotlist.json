@@ -1,0 +1,214 @@
+{
+  "versjon": 1,
+  "beskrivelse": "Shotlist for trailer (docs/TRAILER.md): hvilke bilder fra selve spillmotoren som gir hvert klipp. Alle koordinater er spillenheter (1 enhet = 5 cm) slik de står i levels/*.level.json. Figurens yaw er i radianer og er retningen figuren ser: (sin yaw, cos yaw) i (x, z), altså yaw 0 = mot +z, PI = mot -z, PI/2 = mot +x, -PI/2 = mot -x. Kamerats yaw (cam.yaw) er motsatt vinkel: kameraet står på siden (sin yaw, cos yaw) av figuren, så cam.yaw 0 = kamera på +z-siden som ser mot -z, og pitch er løftet kameraet har over figuren (radianer). Bilder per klipp er ved 12 bilder/s; ett bilde = 5 fysikk-tikk (1/60 s) når spillet går i sanntid.",
+  "format": { "bredde": 960, "hoyde": 540, "fps": 12, "tikkPerBilde": 5, "fov": 52 },
+  "api": {
+    "dagens": "window.__game: player (x,y,z,vx,vy,vz,state,onGround), tick(n,dt) (kjører update()), LEVEL (boxes, bossS, buildSites, gates, route), cam (yaw,pitch,dist,target), camera (three.js) og window.__camLock = true (da setter ikke spillet kameraet: sett camera.position/lookAt selv), window.__paused = true, touch (x,y,jump,grab,carry: stikke og knapper), KeyboardEvent 'KeyE' for grab-kant (touch.grab gir bare holdt, ikke kanten), bld.open()/screenPos()/result/running/isSolved, renderer/scene, poseHero/animateHero. Innstillinger via localStorage før lasting (tlm.flood, tlm.floodrate, tlm.markers, tlm.minimap, tlm.compassmode, tlm.guide, tlm.story, tlm.introsweep, tlm.buildall). UI skjules med CSS.",
+    "r68": "cine.on(), setCam({x,y,z,tx,ty,tz,fov}), followCam({dist,yaw,pitch,height}), releaseCam(), lerpCam(fra,til,t), setHero({x,y,z,yaw}), step(n,dt), runRoute(id) (botens rute, helst med full tikk-for-tikk-bane), cine.build.open(siteId), cine.build.step(dt), fast frø for tilfeldighet, ingen lyd/lagring."
+  },
+  "mangler_i_dagens_api": [
+    "Gylne omriss rundt klatreflater og små gule markører står igjen selv med tlm.markers=false (sett på bilde A og B): kinomodus må skjule dem",
+    "Byggeskjermen (build.js) går i sanntid mot requestAnimationFrame: etter 9 s veggtid var prøven bare t=0.3 s (programvare-GL). Trenger cine.build.step(dt)",
+    "Byggeskjermen er et 2D-sidebilde med egen UI (TILBAKE, ANGRE, NULLSTILL, STOPP) og er lite i liggende format (broen er ca. 150 x 100 px midt i 960 x 540): trenger zoom (+ / ⤢) og helst at UI skjules og utsnittet beskjæres",
+    "walkRoute tracer bare hvert 6. tikk (10 Hz): for avspilling med 12 bilder/s trengs en bane per tikk, eller kjør ruta ekte i motoren med touch/KeyE",
+    "Ingen bot for sjefkamp, veps eller plater: de skriptes av hånd (se klippene)",
+    "cam.cur glattes (kameraet henger etter) og figuren kan havne i kanten av bildet etter teleportering: bruk followCam/setCam hvert bilde og la figuren stå i bildet"
+  ],
+  "klipp": [
+    {
+      "id": "01_bad_oversikt",
+      "manus": "0:00-0:05 «Du er 3 cm høy.»",
+      "brett": "bad",
+      "url": "?level=bad&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": -5.5, "y": 0, "z": 19.4, "yaw": 3.14159 },
+      "bilder": 60,
+      "handlinger": "Ingen. Figuren står stille som målestokk (smuler på gulvet, vaskekurven, trappa av esker). Boten trengs ikke.",
+      "rutesteg": null,
+      "kamera": {
+        "type": "fri",
+        "fov_fra": 62, "fov_til": 52,
+        "bane": [
+          { "t": 0.0, "pos": [-23, 17, 23], "mot": [20, 4, -2], "merknad": "VERIFISERT bilde A: gir oversikt over rommet, vaskekurven (x 1.5..9.9, z 3..11.8, h 12), eskertrappa og smuler" },
+          { "t": 1.0, "pos": [-2, 7, 22], "mot": [24, 20, -15], "merknad": "ikke prøvd: ender mot vinduet" }
+        ],
+        "merknad": "Badekaret (x 12.5..26.5, z -7.4..24.2, h 11) skjules av trekant-brettveggen ved høyre bildekant fra A-vinkelen. Bytt til hevet kamera over kurven for å se kar-kanten."
+      },
+      "lys": "Vindu på østveggen: pos [26.45, 30.6, -14.8], størrelse 11.2 x 11.6; sol [30, 60, -8]. Støvkorn (dust.points) gir lysstråler. IKKE VERIFISERT at lysstråler synes.",
+      "api": "dagens rekker (tick + __camLock); trenger R68 for å skjule gylne omriss og for jevn kamerabane",
+      "verifisert": "bilde A (kamera og utsnitt); lysstråler ikke sett"
+    },
+    {
+      "id": "02_klatring_vaskekurv",
+      "manus": "0:05-0:10 «Rommet er laget for noen andre.»",
+      "brett": "bad",
+      "url": "?level=bad&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": 3.5, "y": 0, "z": 13.0, "yaw": 3.14159 },
+      "bilder": 60,
+      "handlinger": "Stikka framover (touch.y = 1 når cam.yaw = 0), GREP holdt (touch.grab = true) og en KeyE-keydown (grab-kant) hvert 20. tikk. VERIFISERT: etter 327 tikk (5,5 s) står figuren på kurvens vegg (state 'climb', y = 7.0, x = 1.65, z = 12.1). Tidslinjen fra boten (walk_route): første klatring starter ved 3,2 s og er ferdig ved 10,8 s (krefter igjen 4,5 av 6). Hang/avspark: velg bilder der state er 'hang' ved kanten rett før hiv opp (bildet viser 'climb' langs veggen; 'hang' skjer ved kanten y = 12).",
+      "rutesteg": "levels/bad.level.json route[1] kurv_knagg (grip, x 1.5..9.9, z 3..11.8) til route[2] kurv_knagg top 12; deretter badekape_bla (grip, x 8.7..10.5, z 3.8..6.6, til knaggrekke top 27) hvis det skal bli lengre",
+      "kamera": {
+        "type": "følge",
+        "dist": 9, "yaw": -0.6, "pitch": 0.15, "height": 0.9,
+        "merknad": "Verifisert bilde B (yaw 0.5, pitch 0.2, dist 7) var DÅRLIG: kurven fyller halve bildet og figuren er kuttet øverst fordi kameraet henger etter. Bruk yaw negativ (fri side, mot venstre), større avstand og fest kameramålet på figuren hvert bilde (setCam eller followCam med height)."
+      },
+      "api": "dagens rekker for handling (touch + KeyE); kamera trenger followCam/setCam",
+      "verifisert": "handling og state 'climb' (nøytral test), bilde B (kamera dårlig)"
+    },
+    {
+      "id": "03_barnerom_leker",
+      "manus": "0:10-0:15 «Alt lever.» (sprettboks, leke-bil)",
+      "brett": "barnerom",
+      "url": "?level=barnerom&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": 2.0, "y": 0, "z": 24.4, "yaw": 3.14159 },
+      "bilder": 36,
+      "handlinger": "Gå til sprettboksen leke_sprettboks (min [5.2,0,-6], max [8,2.8,-3.2], senter [6.6, -4.6], topp 2.8) og hopp på den (HOPP): lokket slår opp, klovnen spretter ut og figuren kastes opp (R34). VERIFISERT i bilde C: figuren (teleportert til x 6.6, y 3.2, z -4.6) lander og kastes høyt med armene opp, klovnehatten blå i forgrunnen. Leke-bilen leke_bil (min [-5,0,-14.8], max [-0.2,2.2,-12.4]) tuter når figuren lander eller bærer den (TA): kutt til den som andre del.",
+      "rutesteg": "ingen (utenfor ruta). Barnerommets rute går gulv>bokstav_a>bokstav_b>lekekasse>dyne>nattbord>krakk>skrivebord...",
+      "kamera": {
+        "type": "fri",
+        "bane": [
+          { "t": 0.0, "pos": [-3, 3.5, 3], "mot": [6.6, 3.5, -4.6], "merknad": "ikke prøvd: fra siden så ikke klovnen står i veien" },
+          { "t": 1.0, "pos": [-1, 8, 1], "mot": [6.6, 7, -4.6], "merknad": "følger kastet oppover" }
+        ],
+        "merknad": "Bilde C brukte følgekamera med yaw 0.5, dist 8: klovnehatten dekker halve bildet. Veps finnes IKKE i barnerommet (se 03b)."
+      },
+      "api": "dagens rekker (teleport + tick); R68 setHero for rene starter",
+      "verifisert": "bilde C (kast fungerer, kamera må flyttes)"
+    },
+    {
+      "id": "03b_veps",
+      "manus": "0:10-0:15 «Alt lever.» (veps som varsler og stuper)",
+      "brett": "kjokken",
+      "url": "?level=kjokken&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": -12, "y": 0, "z": 6, "yaw": 1.5708 },
+      "bilder": 24,
+      "handlinger": "Vepsen veps_bord (type wasp) patruljerer a [-8,0,1.4] til b [13,0,1.4], flyhøyde 3.4. Den ser figuren innen 8 enheter vannrett (alert 8), varsler i 0,9 s (siger til 2.0 og lyser), stuper så med fart 10 mot der figuren sto. Figuren står stille ved x -4, z 6, venter på varselet, sidesteg til x -1 (touch.x) like før stupet; vepsen lander svimmel (rest 1.3 s). IKKE VERIFISERT i nettleser.",
+      "rutesteg": "ingen (utenfor ruta)",
+      "kamera": { "type": "følge", "dist": 7, "yaw": 1.2, "pitch": 0.2, "height": 0.5, "merknad": "sidekamera så både veps og figur er i bildet; vepsen er liten" },
+      "api": "dagens rekker (touch + tick); vepsetiming avhenger av vanskelighet (tlm.wasplevel normal)",
+      "verifisert": "bare data (levels/kjokken.level.json ants), ikke bilde",
+      "merknad": "Manuset sier veps i barnerommet, men barnerom og barnerom2 har ingen veps. Vepser finnes i kjokken, kjokken2, stue og verksted."
+    },
+    {
+      "id": "04_sjefmaur",
+      "manus": "0:15-0:20 «Og noen vokter.»",
+      "brett": "kjokken2",
+      "url": "?level=kjokken2&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": -25, "y": 0, "z": -14, "yaw": 0 },
+      "bilder": 60,
+      "handlinger": "Sjefen (L.boss: id sjef, a [-31,0,-8], b [-19,0,-8]) står i arena x -31..-19, z -8, ikke i kjokken (nivå 3): bare nivå 6 (kjokken2) har sjef. Sett L.bossS = {mode 'patrol', x -25, z -8, cool 0, hp 3}. VERIFISERT: etter ca. 1,5 s i tick ligger sjefen i 'windup' (reiser seg og lyser rødt), bilde D. Så: låst retning 0,65 av windup (1,1 s), 'charge' fart 9 mot figuren (z mot -z) og smeller i kjoleskap (min [-30,0,-30], max [-17,38,-17], front z = -17) -> 'stunned' i 4,8 s. Figuren går til siden i windup (touch.x = 1 i 0,5 s til x -22), vent på 'bump', gå til sjefens rygg og hopp på den (HOPP, event 'hit'). Tester: test_boss.mjs dekker logikken, tools/live_boss.cjs dekker kamera. Sidesteg og hopp er IKKE verifisert i denne sekvensen.",
+      "rutesteg": "ingen (sjefen hindrer ikke ruta). Ruta i kjokken2 er gulv>kasse>komfyrhandkle>komfyr_front>benk_o>...>overskap",
+      "kamera": {
+        "type": "følge",
+        "dist": 6, "yaw": 0.9, "pitch": 0.2, "height": 1.2,
+        "merknad": "Verifisert bilde D (dist 9, pitch 0.3, yaw 0): sjefen (rød i windup, store øyne) er tydelig, men figuren er bare ca. 30 px høy og kjøleskapet fyller venstre kant. Gå nærmere og fra siden så sjef, figur og kjøleskap synes samtidig."
+      },
+      "api": "dagens rekker (Object.assign på L.bossS + tick); R68 runRoute trengs ikke",
+      "verifisert": "bilde D (windup, kamera må justeres); sidesteg og hopp ikke prøvd"
+    },
+    {
+      "id": "05_stigende_vann",
+      "manus": "0:20-0:24 «Og vannet stiger.»",
+      "brett": "bad2",
+      "url": "?level=bad2&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false", "tlm.flood": "rask", "tlm.floodrate": "2.5" },
+      "startpose": { "x": 5.7, "y": 12, "z": 7, "yaw": 3.14159 },
+      "bilder": 48,
+      "handlinger": "Stigende vann er et VALG (tlm.flood = 'av' som standard): 'rask' gir delay 10 s og rate 0.26 x mult 2.5 = 0.65 enheter/s, så vannet når max 14 (70 cm) etter ca. 31,5 s; ellers er vanlig vann i brettet (twist 'water') bare vading (max 0.8). Hele sekvensen er 4 s i filmen = 48 bilder, så spol vannet: 15 tikk per bilde (3x). Figuren starter ved kurven (x 1.5..9.9, z 3..11.8, topp 12, som vannet dekker) og hopper videre på badekape_bla (x 8.7..10.5, z 3.8..6.6) til knaggrekke (top 27), ny_hylle (x 1.1..10.5, z 13..21.4, top 32.6), hylle (x 4.9..10.5, z 13..22.2, top 39.8). Ruta er gulv>vaskekurv>vaskekurv>badekape_bla>knaggrekke>handkle_ny_1>ny_hylle>handkle_ny_2>hylle. Bot: node tools/walk_route.mjs levels/bad2.level.json.",
+      "rutesteg": "levels/bad2.level.json route[3..8] fra vaskekurv topp til hylle; vannet må starte tidlig nok: sett vannstand ved å tikke før filmingen (60 x 22 tikk lastet uten feil, men IKKE sett på bilde)",
+      "kamera": { "type": "følge", "dist": 9, "yaw": 0.3, "pitch": 0.35, "height": 1.5, "merknad": "vannflaten må være synlig under figuren: lavt kamera. Sjekk at vannet (flood_view.js) tegnes fra kamera." },
+      "api": "dagens rekker (localStorage-valg + tick); R68 runRoute for bot",
+      "verifisert": "lastet uten feil, ikke sett"
+    },
+    {
+      "id": "06_bygging",
+      "manus": "0:24-0:34 «Så bygg.»",
+      "brett": "bygglab",
+      "url": "?level=bygglab&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false", "tlm.buildall": "true", "tlm.buildcap": "true" },
+      "startpose": { "x": 70, "y": 3, "z": 0, "yaw": 1.5708 },
+      "bilder": 120,
+      "handlinger": "Sted lab7 «Tåler» (levels/bygglab.level.json build.sites[6], x 80, y 3, z 0, w 20, h 14, mål cap 10, flagg [92.4, 3, 0]; pedestaler ped_a7 x 65..77.5 og ped_b7 x 82.5..95, topp 3; gapet er 5 bredt). Bygglab åpner byggeskjermen av seg selv ved start (R67 labAutoOpen), ellers bld.open() med figuren nær stedet. Del 1: dra plank_l (id p1) til (u 0, v 0.25): «Tåler ca. 4 klosser» (beregnet med capacity() i node), PRØV: broen bøyer seg og blir rød, holder testfiguren men ikke lasten (4 < 10). Del 2: NULLSTILL, bygg løsningen «to lange planker med tape»: plank_l a (u 0, v 0.25) og plank_l b (u 0, v 0.75) med tape t1 (a la {x 0,y 0.25} til b lb {x 0,y -0.25}): beregnet «Tåler ca. 12 klosser», sim 'won'. Brudd hvis lasten legges på bro med plank_l alene er IKKE sett i nettleser (capacity og runSim kjørt bare i node).",
+      "alternativ": "levels/bro.level.json site bro1 (x 3.5, y 8, z -4, gap u -3.5..3.5, plank_l d2 på u 0, v 0.25): VERIFISERT bilde F: «Tåler ca. 2 klosser midt på» ★★★ Kostnad 2 · 1 del, testfiguren går, sim 'run' t = 0.3 s. plank_s alene faller (node: result 'lost', reason 'fell', cap 0). Brudd uten last: plank_s alene i bro1 (figuren faller).",
+      "rutesteg": "ingen i rutetype 'ruta' (build.sites[...].ref.route). lab7 ref.route er gulv>ped_a7>@bro>ped_b7.",
+      "kamera": { "type": "byggeskjerm", "merknad": "Byggeskjermen er et eget 2D-sidebilde (build_view), ikke 3D-scenen. Filmes med cine.build.step(dt) og zoom (build_zoom.js: +, ⤢, dobbelttrykk). I liggende 960 x 540 er broen liten midt i en mørk flate: zoom 2.5x og beskjær i ffmpeg." },
+      "api": "dagens rekker IKKE for bilde-for-bilde (sanntid). Trenger cine.build.open(siteId) og cine.build.step(dt) (R68)",
+      "verifisert": "bilde F: byggeskjermen med bro1 (plassering og PRØV virker, men utsnittet er lite); tallene for lab7 beregnet i node (cap 4 og 12), ikke sett i nettleser"
+    },
+    {
+      "id": "07_stue_fjernkontroll",
+      "manus": "0:34-0:39 «Løs gåter.»",
+      "brett": "stue",
+      "url": "?level=stue&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": -49, "y": 0, "z": 12, "yaw": 3.14159 },
+      "bilder": 60,
+      "handlinger": "Fjernkontrollen fjernkontroll (kind remote, min [-55,0,19], max [-51.8,1,20.6]) ligger ved sofaen. Gå dit (TA ved den), bær den til plata p1 (x -38..-28, z -2..10, y 0, trenger vekt 2, gul plate) og slipp (TA). Skyvedøren d1 (min [-25,0,-28], max [-22.6,52,28], låses opp av p1, dir down, latch) synker. Plassering på plata ble gjort ved teleport av kroppen og 120 tikk, men dørstatus ble ikke lest (feltene heter ikke open/t i L.gates.doors): IKKE VERIFISERT at døra åpner seg.",
+      "rutesteg": "ingen i ruta (ruta er hylle_1..hylle_7 til maal). Port-delmålet er 'port' (type gate).",
+      "kamera": { "type": "følge", "dist": 8, "yaw": -1.5708, "pitch": 0.25, "height": 1, "merknad": "kamera på -x-siden ser mot +x: plata i forgrunnen og døra bak. Døra er 56 enheter bred, så den fyller bildet når den synker." },
+      "api": "dagens rekker (touch.carry + tick); R68 setHero",
+      "verifisert": "nei (dry run uten feil, ingen bilder)"
+    },
+    {
+      "id": "08a_verksted_olje",
+      "manus": "0:39-0:42 (raske klipp: oljeglidning)",
+      "brett": "verksted",
+      "url": "?level=verksted&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": -64, "y": 0, "z": 4, "yaw": 1.5708 },
+      "bilder": 12,
+      "handlinger": "Oljeflekken olje_1 (min [-56,0,-14], max [-35,0.4,15], slick). Stikka mot +x (touch.x/touch.y etter kamera) uten GREP, figuren sklir over (slickAccel 5, bremsene virker nesten ikke) og inn mot kasse_1 (x -32..-21, z -6..9, topp 3.6). IKKE VERIFISERT.",
+      "rutesteg": "verksted route[0] gulv til route[1] kasse_1 (bot: node tools/walk_route.mjs levels/verksted.level.json)",
+      "kamera": { "type": "følge", "dist": 7, "yaw": -0.7, "pitch": 0.18, "height": 0.6, "merknad": "lavt, glansstripene på oljen skal synes (oil tegnes med glansstriper og rød ✕)" },
+      "api": "dagens rekker",
+      "verifisert": "nei"
+    },
+    {
+      "id": "08b_edderkopp_i_traad",
+      "manus": "0:39-0:42 (raske klipp: edderkopp i tråd)",
+      "brett": "kjokken2",
+      "url": "?level=kjokken2&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": 14, "y": 0, "z": 3, "yaw": 1.5708 },
+      "bilder": 12,
+      "handlinger": "Edderkoppen i tråd traad_kjokken (type dangler) henger fra taket over [24, 0, 3]: oppe 4.6, varsler (rister, rød) 0.9 s når figuren er nærmere enn 8, stuper (0.25 s) og henger lavt i 1 s (farlig), trekkes opp. Gå mot x 22 og stopp, vent på stupet. Alternativ: bad2 traad_vask [16,0,-10] og traad_dusj [-18,0,-9]. IKKE VERIFISERT.",
+      "rutesteg": "ingen",
+      "kamera": { "type": "følge", "dist": 7, "yaw": -0.4, "pitch": 0.1, "height": 2.2, "merknad": "trenger tak-høyde i bildet så tråden synes: løft målet" },
+      "api": "dagens rekker",
+      "verifisert": "nei"
+    },
+    {
+      "id": "08c_lys_skygge",
+      "manus": "0:39-0:42 (raske klipp: lys og skygger)",
+      "brett": "kjokken2",
+      "url": "?level=kjokken2&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": 0, "y": 0, "z": 10, "yaw": 3.14159 },
+      "bilder": 12,
+      "handlinger": "Nivå 6 har twist 'lights' (variant: on 15 s, off 8 s, blink 1 s): tikk 15 s x 60 = 900 tikk, så slås lyset av og bare hjelmlykta lyser. Filmes rundt 15..23 s. Alternativ: barnerom2 (mood 'night', stjerner, hjelmlykt, leketog). Bilde D viser hard kast-skygge fra sjefen og figuren i kjokken2 (sollys/skygger virker allerede). IKKE VERIFISERT for mørket.",
+      "rutesteg": "ingen",
+      "kamera": { "type": "følge", "dist": 5, "yaw": 0.2, "pitch": 0.2, "height": 0.7, "merknad": "lykta er en lyskjegle foran figuren: kamera bak og litt over" },
+      "api": "dagens rekker (tikk i tid)",
+      "verifisert": "nei"
+    },
+    {
+      "id": "09_sluttbilde_kant",
+      "manus": "0:42-0:45 «tinylittleme» / «Snart til en telefon nær deg.»",
+      "brett": "verksted",
+      "url": "?level=verksted&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "startpose": { "x": 38.4, "y": 24.4, "z": -20, "yaw": 0.6 },
+      "bilder": 36,
+      "handlinger": "Stå stille på målet maal (x 35..42, z -24..-16, topp 24.4) på øverste hylle (hylle_o, x 30.5..46, z -26..-14, topp 21.2): høyeste punkt i siste brett, 122 cm over gulvet og rommet er 140 x 52 enheter. Alternativ: stue maal (x 58..67, z -24..-14, topp 19.2, yaw -PI/2, rommet er 134 bredt) eller bad medisinskap (x 7.5..10.5, z 3.4..11.4, topp 38 = 190 cm, rommet bare 53 bredt). Ligger figuren stille, idle-animasjon og lett kamerasvev (sakte bane) gir levende bilde. IKKE VERIFISERT (H-bildet ble ikke tatt).",
+      "rutesteg": "slutten av verksted route (maal), bot: node tools/walk_route.mjs levels/verksted.level.json (ca. 47 s)",
+      "kamera": { "type": "fri", "bane": [{ "t": 0, "pos": [42, 26, -12], "mot": [10, 10, 5] }, { "t": 1, "pos": [40, 26.5, -9], "mot": [5, 9, 6] }], "fov": 55, "merknad": "kamera bak og til siden av figuren, ser utover rommet mot start. Tittelkortet legges på i ffmpeg." },
+      "api": "dagens rekker (teleport + __camLock)",
+      "verifisert": "nei"
+    }
+  ],
+  "bildetall_sum": 540
+}
