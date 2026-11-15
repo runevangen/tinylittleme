@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.07** – R72 lagt i veikartet (rutenett-bygging med knutepunkter og staver, fra Rune).
 - **2.06** – R71 (fra tester): flagget ⚑ er tilgjengelig på alle skjermer (start, brettvalg, bygg, oversikt, mål, intro, panel); rapporten sier hvilken skjerm.
 - **2.05** – R70 (fra tester): i byggeskjermen kan plasserte deler flyttes igjen (bedre treff nær knapperaden, valgt verktøy hindrer ikke lenger flytting, skjermbasert treffmargin). Ny live_buildmove-sjekk.
 - **2.04** – Veikart fra tester (Rune): R70 (byggeskjermen: plasserte deler kan ikke flyttes) og R71 (flagget ⚑ tilgjengelig på alle skjermer).

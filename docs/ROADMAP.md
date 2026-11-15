@@ -29,6 +29,17 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Åpne punkter
 
+### [ ] R72 · Fra tester: Rune · Rutenett-bygging: knutepunkter og staver på koordinatene (som Poly Bridge / Bridge Constructor)
+Brukeren ønsker at byggingen skal festes på koordinatene på arket og være mer lik andre brobyggespill. Valgt i samtale: (a) **ny modus ved siden av** dagens bygging (planker/tape/ledd/tau/gummi beholdes urørt, ingen gamle brett eller koder slutter å virke), (b) **knutepunkter + staver**: trykk et rutenettpunkt, trykk et annet, så trekkes en stav mellom dem; (c) **materialer tre (billig, svak), stål (sterk, dyr) og tau (bærer bare strekk)**.
+Spesifikasjon: 
+(1) Byggeskjermen får en modusvelger (f.eks. «Rutenett» / «Klassisk») på brett/steder som tillater det; Bygglab får minst ett sted i Rutenett-modus. Ankerpunkter på klippene (de grønne prikkene) er faste knutepunkter og kan ikke slettes.
+(2) Rutenettpunkter vises tydelig (prikker, koordinatene i hjørnet ved berøring); trykk på et tomt punkt lager en knute, trykk på to knuter lager en stav i valgt materiale. Knuter kan flyttes (dra) så lenge broen ikke er under prøve; stav og knute slettes med FJERN. Bare staver mellom punkter innen tillatt maks lengde. Zoom/pan fra R44 virker som før. Berøringsmål minst 44 px, treffmargin skjermbasert (se R70, test med ekte berøringshendelser).
+(3) Fysikk: gjenbruk `build_phys.js` (posisjonsbasert, deterministisk) med knuter som masse-punkter og staver som avstandsbånd; tau gir bare strekk-bånd; materialer har styrke og pris per lengde (`build_materials.js`, `build_budget.js`); stang som overbelastes brekker (rød fargeovergang først, som `build_stress.js`). Samme bygg gir samme resultat (test).
+(4) Kost og stjerner som i dag (`build_budget.js`); PRØV, ANGRE, NULLSTILL, KODE/LIM INN/BESTE virker også i Rutenett-modus (egen kodeversjon, `tlm_submit_bridge` uendret om mulig).
+(5) Mobil først: alt med stikke/trykk og knappene, ingen taster; tekst nevner knapper. Innstillinger i `SETTINGS`, `logEv('bygg', …)` for knuter, staver, brudd og prøve. Ekspert/Nybegynner-hjelp (R69): nybegynner får hint om «trykk to punkter».
+Ikke med: ny fysikkmotor, dynamiske deler (R51), live-vekt (R49b).
+Ferdig når: man kan bygge en bro fra klippe til klippe med staver på rutenettet og PRØV kjører figuren over; tester for knute/stav-logikk, bruddgrenser og determinisme; en test med ekte berøringshendelser (CDP) bygger en bro; `npm test` og `npm run boot` grønne; Playwright-bilde i `devices['iPhone 14']` er sett; eksisterende brett uendret.
+
 ### [ ] R54 · Fra tester: Rune · Roligere kamera: følging av som standard og bredere synsfelt i høyformat
 Fra spilletest på iPhone (v1.32–v1.56): testerne blir desorientert og sier at skjermen veiver fram og tilbake. Med «Kamerafølging: styrke» på 0 og «Synsfelt» på 70 ble det klart bedre; med følgingen tilbake på 1 (synsfelt fortsatt 70) ble det mye verre. Den automatiske dreiningen bak figuren (`followYaw` i `camera_util.js`, kalt fra `main.js`) er altså hovedårsaken, og synsfeltet nummer to: 52° loddrett gir bare ca. 25° vannrett på stående iPhone, fordi synsfeltet ikke justeres for skjermformatet.
 (1) **Følging av som standard.** «Kameraet følger etter deg automatisk» (`tlm.follow`) er av for alle, også for dem som har den gamle verdien lagret (engangs-migrering, slik PUBG-standarden på PC ble satt i v0.72). Valget og «Kamerafølging: styrke» blir stående i ⚙ → Kamera, så den kan slås på igjen. Sjefkamp-kameraet, ◎ og dobbelttrykk virker som før.
