@@ -44,7 +44,7 @@ export function createTopBand({ T, onInfo, onFlag, onNext, onOpen, logEv }) {
   const el = document.createElement('div'); el.id = 'topband';
   el.innerHTML = `<div class="tbm"><span class="tba">${ARROW}</span><span class="tbt"></span><span class="tbk"></span><span class="tbw"></span><span class="tbs"></span><span class="tbv"></span><button class="tbb" id="tbi" aria-label="${esc(T('tb.info'))}">i</button><button class="tbb" id="tbq" aria-label="${esc(T('tb.flag'))}">⚑<span class="tbn"></span></button></div><div class="tbp"></div>`;
   document.body.appendChild(el);
-  const q = createQueue(), main = el.querySelector('.tbm'), arr = el.querySelector('.tba svg'), txt = el.querySelector('.tbt'), hnt = el.querySelector('.tbk'), st = el.querySelector('.tbs'), wat = el.querySelector('.tbw'), ver = el.querySelector('.tbv');
+  const q = createQueue(), tba = el.querySelector('.tba'), main = el.querySelector('.tbm'), arr = el.querySelector('.tba svg'), txt = el.querySelector('.tbt'), hnt = el.querySelector('.tbk'), st = el.querySelector('.tbs'), wat = el.querySelector('.tbw'), ver = el.querySelector('.tbv');
   const bi = el.querySelector('#tbi'), bq = el.querySelector('#tbq'), bn = el.querySelector('.tbn'), panel = el.querySelector('.tbp');
   let on = false, open = false, lastTouch = 0, key = '', stKey = '', pKey = '', size = 'compact', last = null, ctxNow = null;
   const setOpen = (v, now = performance.now()) => {
@@ -96,6 +96,7 @@ export function createTopBand({ T, onInfo, onFlag, onNext, onOpen, logEv }) {
         el.className = `${el.className.includes('open') ? 'open ' : ''}${el.className.includes('normal') ? 'normal ' : ''}${c.kind} ${c.dim ? 'dim ' : ''}${c.prio >= 3 ? 'big' : ''}`.trim();
       }
       last = c;
+      tba.style.display = ctx.noArrow ? 'none' : '';   // R69: Medium: NESTE-linja uten pil
       if (c.arrow !== null) arr.style.transform = `rotate(${c.arrow}rad)`;
       const sp = statusParts(ctx), sk = `${sp.ver}|${sp.star}|${sp.water || ''}`;
       if (sk !== stKey) { stKey = sk; ver.textContent = sp.ver; st.textContent = sp.star; st.classList.toggle('on', !!sp.star); wat.textContent = sp.water || ''; wat.classList.toggle('on', !!sp.water); }

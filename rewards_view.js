@@ -1,6 +1,6 @@
 // R16: tilbehør på figuren (three) og lekerom-skapet (DOM). Logikken ligger i rewards.js. main.js har bare tynne hekter.
 import * as THREE from 'three';
-import { ACCESSORIES, SLOTS, accById, getUnlocks, getEquipped, getBest, toggleEquip, rt } from './rewards.js';
+import { ACCESSORIES, SLOTS, accById, getUnlocks, getEquipped, getBest, toggleEquip, rt, badgeCount } from './rewards.js';
 import { heroSVG, fmtTime } from './story.js';
 
 const DEF_COLORS = { scarf: 0x1f9a94, pack: 0x66713a };
@@ -119,7 +119,7 @@ export function showCloset(el, ctx) {
       return `<button class="acc ${open ? '' : 'lock'} ${on ? 'on' : ''}" data-acc="${a.id}" ${open ? '' : 'aria-disabled="true"'}><b>${open ? ICON[a.id] : '🔒'}</b>${L('acc.' + a.id)}<small>${open ? (on ? L('rw.on') : L('rw.slot.' + a.slot)) : L('rw.locked', { n: a.n })}</small></button>`; }).join('');
     const recs = levels.filter((l) => l.n).map((l) => { const b = best[l.id]; return `<span>${l.short}</span><span>${b ? L('rw.best', { crumbs: b.crumbs, total: b.total, time: b.t ? fmtTime(b.t) : '-' }) : L('rw.none')}</span>`; }).join('');
     el.innerHTML = `<div class="closet"><h2>${L('rw.title')}</h2><p class="tag">${L('rw.sub')}</p>${previewSVG(eq).replace('<svg ', '<svg class="prev" ')}
-      <small style="opacity:.75">${L('rw.count', { n: unl.size, total: ACCESSORIES.length })}</small><div class="cgrid">${cards}</div>
+      <small style="opacity:.75">${L('rw.count', { n: unl.size, total: ACCESSORIES.length })}${(() => { const b = badgeCount(st); return b.total ? ` · 🥉${b.beginner} 🥈${b.medium} 🥇${b.expert}` : ''; })()}</small><div class="cgrid">${cards}</div>
       <div class="recs">${recs}</div><button class="mbtn" id="cBack">${L('rw.back')}</button></div>`;
     el.querySelectorAll('[data-acc]').forEach((b) => { b.onclick = () => { const r = toggleEquip(st, b.dataset.acc, all); if (r) { ctx.onChange?.(r); draw(); } }; });
     el.querySelector('#cBack').onclick = () => ctx.onBack?.();

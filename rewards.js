@@ -1,6 +1,7 @@
 // R16: belønning som varer. Ren logikk (ingen DOM/three, kan testes i node): beste smuler/tid per nivå, tilbehør som låses opp
 // når alle smulene i et nivå er tatt, og valget (hatt, skjerf, sekk) som huskes. `st` er { get(k, d), set(k, v) } (store i main.js).
 // Nøkler: tlm.best = { nivå-id: { crumbs, total, t } }, tlm.unlocks = [id], tlm.equip = { hat, scarf, pack }.
+import { badgeTotals } from './difficulty.js';
 export const SLOTS = ['hat', 'scarf', 'pack'];
 // n = nivået som gir tilbehøret (alle smuler tatt). color: ny farge for skjerf/sekk.
 export const ACCESSORIES = [
@@ -33,6 +34,8 @@ const TXT = {
 export const rt = (lang, key, vars = {}) => (TXT[lang]?.[key] ?? TXT.nb[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
 export const TEXT_KEYS = { nb: Object.keys(TXT.nb), en: Object.keys(TXT.en) };
 
+// R69: merker per brett og vanskelighet telles med i belønningene (difficulty.js)
+export const badgeCount = (st, levelIds) => badgeTotals(st, levelIds);
 export const getBest = (st) => { const b = st.get('tlm.best', {}); return b && typeof b === 'object' ? b : {}; };
 export const getUnlocks = (st) => { const u = st.get('tlm.unlocks', []); return Array.isArray(u) ? u.filter((id) => accById(id)) : []; };
 export const isUnlocked = (st, id, all = false) => !!accById(id) && (all || getUnlocks(st).includes(id));
