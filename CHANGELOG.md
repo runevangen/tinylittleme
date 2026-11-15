@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.01** – Trailer: 02_klatring_vaskekurv (hang i toppkanten, større figur), 03_barnerom_leker (leke-bil med, hest ut av forgrunnen) og 06_bygging (bøyning i sakte film med spenningsfarge før brudd; tapen tegnes tykkere i kinomodus).
 - **2.00** – Trailer: 05_stigende_vann med kamera som følger figuren skrått ovenfra, så vannflaten og stigningen synes (F1; bilde 1, 24, 41, 48 verifisert, figuren ca. 40–70 px).
 - **1.99** – Trailer: 04_sjefmaur (bredere startkamera, støt og hopp verifisert) og 08b_edderkopp_i_traad (sakte stup, ca. 5 bilder), verifisert med stillbilder.
 - **1.98** – Trailer: klippskript 07_stue_fjernkontroll, 08a_verksted_olje og 09_sluttbilde_kant (G4), testet med stillbilder; status i tools/trailer/SHOTLIST.md.

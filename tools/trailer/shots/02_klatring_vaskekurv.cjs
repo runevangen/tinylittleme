@@ -6,9 +6,10 @@ const mix = (a, b, t) => a + (b - a) * t;
 let ty = 0, cyS = 0;
 module.exports = {
   id: '02_klatring_vaskekurv',
+  ticksPerFrame: 9,   // 60 bilder x 9 tikk = 9 s: nok til å nå toppen av kurven (y 12) og få hang/mantle med, litt raskere enn sanntid (1,8x)
   async setup({ cine }) {
     await cine.seed(1);
-    await cine.setHero({ x: 3.5, y: 0, z: 15.0, yaw: 3.14159 });
+    await cine.setHero({ x: 3.5, y: 0, z: 13.4, yaw: 3.14159 });
     ty = 0.9; cyS = 1.2;
   },
   async frame({ page, cine, ticksPerFrame }, i, n) {
@@ -21,8 +22,9 @@ module.exports = {
     }, [i]);
     const h = await cine.get('hero');
     const p = h || (await page.evaluate(() => window.__game.cine.hero));
-    ty = mix(ty, p.y + 0.9, 0.4);
-    cyS = mix(cyS, 1.3 + 0.5 * p.y, 0.3);
-    await cine.setCam({ x: p.x - mix(5.0, 2.8, e), y: cyS, z: p.z + mix(5.6, 3.9, e), tx: p.x + 0.2, ty, tz: p.z - 0.8, fov: mix(48, 42, e) });
+    ty = mix(ty, p.y + 0.5, 0.4);
+    cyS = mix(cyS, Math.max(1.0, p.y - 0.3), 0.3);
+    // skrått fra venstre og nær: figuren minst ca. 100 px, kurvens venstre kant og toppkanten synlige mot rommet
+    await cine.setCam({ x: p.x - mix(3.4, 3.0, e), y: cyS, z: p.z + mix(4.0, 3.4, e), tx: p.x + 0.3, ty, tz: p.z - 0.6, fov: mix(46, 44, e) });
   },
 };

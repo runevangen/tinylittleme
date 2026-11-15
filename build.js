@@ -353,6 +353,9 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     for (const l of pose.links) {
       if (l.broken) continue; const a = sx(l.a.u, l.a.v), b = sx(l.b.u, l.b.v);
       g2.lineCap = 'round'; g2.strokeStyle = stressOn ? stressCss(lm.links.get(l.id)) : l.stress > 0.6 ? '#ff6a5a' : LINK_COL[l.kind]; g2.lineWidth = l.kind === 'tape' ? 5 : ropey(l) ? 3 : 2;
+      if (l.kind === 'tape' && document.body.classList.contains('cinema')) {   // kinomodus (trailer): tapen tegnes tykkere med mørk kant så den synes
+        const col = g2.strokeStyle; g2.beginPath(); g2.moveTo(a.x, a.y); g2.lineTo(b.x, b.y); g2.lineWidth = 13; g2.strokeStyle = '#2a1d10'; g2.stroke(); g2.lineWidth = 8; g2.strokeStyle = col; g2.stroke();
+      } else
       if (l.kind !== 'hinge') { g2.beginPath(); g2.moveTo(a.x, a.y); g2.lineTo(b.x, b.y); g2.stroke(); }
       g2.beginPath(); g2.arc(a.x, a.y, l.kind === 'hinge' ? 6 : 3.5, 0, 7); g2.fillStyle = l.kind === 'hinge' ? '#444' : LINK_COL[l.kind]; g2.fill(); g2.strokeStyle = '#fff'; g2.lineWidth = 1.5; g2.stroke();
     }

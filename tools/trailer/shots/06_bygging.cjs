@@ -2,16 +2,18 @@
 // Del 1: én lang planke + en stabel klosser (planka tåler ca. 4) -> PRØV -> brudd. Del 2: NULLSTILL, to lange planker med tape (tåler ca. 12) -> PRØV -> testfiguren går over (seier).
 // Byggeskjermen er et 2D-sidebilde, ikke 3D-scenen: vi zoomer (+) og panorerer til broen fyller bildet, og skjuler bare lastknappene/delingsknappene (ingen egen animasjon).
 const SITE = 'lab7';
-const DT_EDIT = 0.02, DT_SIM = 1 / 12;
+const DT_EDIT = 0.02, DT_SIM = 1 / 12, DT_SLOW = 1 / 60;
 const CHIP = { plank: '#bld .chip[data-id^="lab_plank_l_"]', block: '#bld .chip[data-id^="lab_block_"]' };
 const HIDE = '#bld .loads,#bld .share,#bld [data-a=menu],#bld .menu{display:none!important}#bld .tools{display:none!important}';
+let brokeAt = null;
 let held = null;   // pågående dra-og-slipp: { sel, u, v, f0, nf, sx, sy, tx, ty }
 
 // tidslinje (bilde-indekser, 120 bilder)
-const T = { plank1: 4, blocks: 10, blockN: 5, blockLen: 2, try1: 33, sim1End: 61, reset: 62, plankA: 64, plankB: 67, tapeTool: 71, tapeA: 72, tapeB: 73, try2: 77 };
+const T = { plank1: 9, blocks: 15, blockN: 5, blockLen: 2, try1: 38, sim1End: 72, reset: 73, plankA: 75, plankB: 78, tapeTool: 81, tapeA: 82, tapeB: 83, try2: 87 };   // sakte film (ca. 1/30 s per bilde) mens bygget bøyer seg og blir rødt, brudd ca. bilde 63; midtbildet (60) viser bøyningen rett før bruddet
 
 module.exports = {
   id: '06_bygging',
+  ticksPerFrame: 1,   // byggeprøven går bilde for bilde: 1 tikk (1/60 s) pluss dt fra klippet (se DT_SLOW / DT_SIM)
   async setup({ page, cine }) {
     await cine.seed(1);
     await cine.build.open(SITE);
@@ -22,7 +24,7 @@ module.exports = {
     const sp = await page.evaluate(() => window.__game.bld.screenPos(0, 0.25));
     const dy = 372 - sp.y;                                                    // broen opp i bildet, over delebrettet
     await page.mouse.move(150, 250); await page.mouse.down(); await page.mouse.move(150, 250 + dy, { steps: 5 }); await page.mouse.up(); await cine.build.step(DT_EDIT);
-    held = null;
+    held = null; brokeAt = null;
   },
   async frame({ page, cine, shot }, i, n) {
     const mouse = page.mouse;
@@ -41,13 +43,18 @@ module.exports = {
     await drag(CHIP.plank, 0, 0.25, T.plank1, 6);
     for (let b = 0; b < T.blockN; b++) await drag(CHIP.block, 0, 1.1 + 1.5 * b, T.blocks + b * T.blockLen, T.blockLen);
     if (i === T.try1) await cine.build.start();
-    if (i > T.try1 && i < T.sim1End) dt = DT_SIM;
+    if (i > T.try1 && i < T.sim1End) {                    // sakte film mens bygget bøyer seg og blir rødt; vanlig fart når det har brutt
+      const rs = await page.evaluate(() => { const r = window.__game.bld.result; return r && { t: r.t, m: r.marks }; });
+      if (rs && rs.m > 0) brokeAt = brokeAt == null ? i : brokeAt;
+      dt = brokeAt == null ? DT_SLOW : DT_SIM;
+    }
     if (i === T.sim1End - 1) await cine.build.stop();
     if (i === T.reset) { const r = await box('#bld button[data-a=reset]'); await mouse.click(r.x, r.y); }
     // del 2: to planker + tape
     await drag(CHIP.plank, 0, 0.25, T.plankA, 3);
     await drag(CHIP.plank, 0, 0.75, T.plankB, 3);
-    if (i === T.tapeTool) { await page.addStyleTag({ content: '#bld .tools{display:flex!important}' }); const r = await box('#bld .tools button[data-t=tape]'); await mouse.click(r.x, r.y); await page.addStyleTag({ content: '#bld .tools{display:none!important}' }); }
+    const tapeTool = async () => { await page.addStyleTag({ content: '#bld .tools{display:flex!important}' }); const r = await box('#bld .tools button[data-t=tape]'); await mouse.click(r.x, r.y); await page.addStyleTag({ content: '#bld .tools{display:none!important}' }); };
+    if (i === T.tapeTool) await tapeTool();
     if (i === T.tapeA) { const p = await pos(-2, 0.2); await mouse.click(p.x, p.y); }
     if (i === T.tapeB) { const p = await pos(-2, 0.8); await mouse.click(p.x, p.y); }
     if (i === T.try2) await cine.build.start();
