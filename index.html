@@ -40,7 +40,7 @@
   #minimap{position:fixed;border-radius:50%;border:2px solid #ffa940aa;box-sizing:border-box;z-index:3;touch-action:none;-webkit-tap-highlight-color:transparent}
   #ovdots{position:fixed;left:0;top:0;pointer-events:none}
   /* oversikten (R20): stikke, knapper og bobler skjules mens rommet vises, så prikkene aldri havner under TA/HOPP/GREP eller HUD-en */
-  body.ovview #stick,body.ovview .tbtn,body.ovview #bar,body.ovview #more,body.ovview #compass,body.ovview #hint,body.ovview #qbtn,body.ovview #qpop,body.ovview #infocard,body.ovview #soundPill,body.ovview #minimap,body.ovview #stam,body.ovview #wmark,body.ovview #offscreen,body.ovview #toast{visibility:hidden!important}
+  body.ovview #stick,body.ovview .tbtn,body.ovview #bar,body.ovview #more,body.ovview #compass,body.ovview #hint,body.ovview #infocard,body.ovview #soundPill,body.ovview #minimap,body.ovview #stam,body.ovview #wmark,body.ovview #offscreen,body.ovview #toast{visibility:hidden!important}
   #ovhint{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);background:#121a2ccc;color:#ffd9a0;border:2px solid #ffa940;padding:8px 16px;border-radius:999px;font:600 14px system-ui;pointer-events:none;display:none;z-index:4}
   body.ovview #ovhint{display:block}
   body.bossfight #minimap{display:none!important}
@@ -67,6 +67,15 @@
   #infotab.dim{opacity:.4}
   #infocard:not(.show) #infotab{opacity:.5}
   #qbtn:active{opacity:1}
+  /* R71: ⚑ på alle skjermer: øverst til høyre, over alle lag; boksen (#qpop) over alt (også ⚙-panelet) */
+  html body.flagscr #qbtn{display:flex!important;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));z-index:11;opacity:.8;width:34px;height:34px}
+  body.flagscr.building #qbtn{top:calc(max(8px,env(safe-area-inset-top)) + 7px)}
+  #qbtn::after{content:'';position:absolute;inset:-6px;border-radius:50%}
+  body.flagscr #qpop{top:calc(max(8px,env(safe-area-inset-top)) + 46px);z-index:12}
+  #qpop{z-index:12}
+  body.flagscr #start.dfl{padding-top:max(50px,calc(env(safe-area-inset-top) + 44px))}
+  body.flagscr #win h1{padding-right:48px;padding-left:48px}
+  #panel #pFlag{flex:none!important;width:auto!important;min-width:0;padding:8px 12px!important;font-size:16px;background:#e7e9ee!important;color:#7a4a14;border:0;border-radius:10px}
   #qcnt{position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 3px;box-sizing:border-box;border-radius:9px;background:#e8504a;color:#fff;font:700 11px system-ui;display:none;align-items:center;justify-content:center}
   #infobody{pointer-events:auto;flex:1;min-height:46px;box-sizing:border-box;background:#121a2cdd;border:2px solid #ffa940;border-right:0;border-radius:0 0 0 14px;padding:9px 13px;color:#eef2fa;font:500 14px/1.35 system-ui}
   #infocard:not(.show) #infobody{pointer-events:none}
@@ -213,7 +222,7 @@
   var v = String(Date.now());
   try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
   window.__assetV = v;
-  const files = ['main', 'physics', 'difficulty', 'difficulty_view', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'shaderwarm', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'camdrag', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'wasp', 'wasp_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'plates_logic', 'workshop_logic', 'plates_view', 'stue_logic', 'version', 'level', 'kinds', 'toys', 'toys_live', 'toy_kick', 'toys_view', 'shortcut', 'music', 'grade', 'grade_apply', 'story', 'polish', 'hero_move', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view', 'intro', 'intro_view', 'goals', 'goals_view', 'topband_logic', 'topband_view', 'build', 'build_logic', 'build_zoom', 'build_phys', 'build_capacity', 'build_materials', 'build_truss', 'build_stress', 'build_world', 'build_toys', 'build_toys_view', 'build_budget', 'build_loads', 'build_loads_view', 'build_replay', 'build_replay_view', 'build_net', 'floordetail', 'floordetail_logic', 'landing', 'finpuss', 'lekerom_logic', 'lekerom_view', 'feedback_send', 'combos', 'vault_anim', 'climbfeel', 'drawers', 'guide_logic', 'markers_rank', 'guide_view', 'flood_logic', 'flood_view', 'bygglab_logic', 'bygglab_view', 'cinema_logic', 'cinema_view'];
+  const files = ['main', 'physics', 'difficulty', 'difficulty_view', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'shaderwarm', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'camdrag', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'wasp', 'wasp_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'plates_logic', 'workshop_logic', 'plates_view', 'stue_logic', 'version', 'level', 'kinds', 'toys', 'toys_live', 'toy_kick', 'toys_view', 'shortcut', 'music', 'grade', 'grade_apply', 'story', 'polish', 'hero_move', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view', 'intro', 'intro_view', 'goals', 'goals_view', 'topband_logic', 'topband_view', 'flag_logic', 'build', 'build_logic', 'build_zoom', 'build_phys', 'build_capacity', 'build_materials', 'build_truss', 'build_stress', 'build_world', 'build_toys', 'build_toys_view', 'build_budget', 'build_loads', 'build_loads_view', 'build_replay', 'build_replay_view', 'build_net', 'floordetail', 'floordetail_logic', 'landing', 'finpuss', 'lekerom_logic', 'lekerom_view', 'feedback_send', 'combos', 'vault_anim', 'climbfeel', 'drawers', 'guide_logic', 'markers_rank', 'guide_view', 'flood_logic', 'flood_view', 'bygglab_logic', 'bygglab_view', 'cinema_logic', 'cinema_view'];
   var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
   document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
 })();

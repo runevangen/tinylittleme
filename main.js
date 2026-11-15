@@ -28,6 +28,7 @@ import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagLi
 import { createGoalView } from './goals_view.js';
 import { DIFFS, DEFAULT_DIFF, normDiff, diffProfile, offElements, markerBudget as diffBudget, progressKey as diffProgKey, awardBadge, badgeTotals, bestBadge, isCustomHelp, dt as dft, badgeRow } from './difficulty.js';   // R69: vanskelighetsnivå (difficulty.js, difficulty_view.js)
 import { createDifficultyView } from './difficulty_view.js';
+import { screenOf, floatOn } from './flag_logic.js';   // R71: ⚑ på alle skjermer
 import { createTopBand } from './topband_view.js';   // R53: dynamisk toppbånd
 import { PRIO } from './topband_logic.js';
 import { createSlickTracker, nextLevelOf, isLastLevel } from './workshop_logic.js';   // R63: verkstedet: glatte flater og nivårekkefølge
@@ -2048,9 +2049,19 @@ const marks = [];
     if (b.dataset.r) { const tx = qtext(); logEv('vurdering', `${b.dataset.r} · ${tag}${tx ? ' · ' + tx : ''}`); pop.classList.add('hide'); toast(`Takk! Registrert: ${b.textContent} (${tag})`); }
   });
   pop.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'qtext') { e.preventDefault(); pop.querySelector('[data-mark]').click(); } });
-  $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); draw(); if (!pop.classList.contains('hide')) refreshInbox(true); if (!pop.classList.contains('hide')) setTimeout(() => $('qtext').focus(), 30); });
-  document.addEventListener('pointerdown', (e) => { if (!pop.classList.contains('hide') && !pop.contains(e.target) && e.target !== $('qbtn') && !e.target.closest?.('#topband')) pop.classList.add('hide'); });
+  $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); logEv('flagg', `${pop.classList.contains('hide') ? 'lukket' : 'åpnet'} på ${currentScreen().id}`); draw(); if (!pop.classList.contains('hide')) refreshInbox(true); if (!pop.classList.contains('hide')) setTimeout(() => $('qtext').focus(), 30); });
+  document.addEventListener('pointerdown', (e) => { if (!pop.classList.contains('hide') && !pop.contains(e.target) && !e.target.closest?.('#qbtn, #pFlag, #topband')) pop.classList.add('hide'); }, true);   // R71: capture, så det også virker over byggeskjermen
 }
+// R71: hvilken skjerm er oppe (flag_logic.js): styrer den flytende ⚑ og står i rapporten
+const hidden = (id) => $(id).classList.contains('hide'), bodyHas = (c) => document.body.classList.contains(c);
+const currentScreen = () => screenOf({ panel: !hidden('panel'), building: bld.active, buildSite: bld.siteId, ov: bodyHas('ovview'), story: !hidden('story'), start: !hidden('start'), pick: !!$('start').querySelector('#dfBack'), win: !hidden('win'), intro: !hidden('introsw'), more: !hidden('more') });
+let flagScr = '';
+function syncFlagScreen() {
+  const scr = currentScreen(), on = floatOn(scr.id, { qbtnOn, tbOn: tbandOn, cinema: bodyHas('cinema') });
+  document.body.classList.toggle('flagscr', on);
+  const key = scr.id + (on ? '+' : '-'); if (key !== flagScr) { flagScr = key; if (scr.id !== 'spill') logEv('flagg', `skjerm ${scr.id}${on ? ': ⚑ øverst til høyre' : ''}`); }
+}
+setInterval(syncFlagScreen, 250);
 const unsent = (type) => evLog.filter((e) => e.type === type && !e.sent).length, markCount = () => unsent('MARKERT');
 function updateMarkBadge() { const n = markCount() + unsent('BACKLOGG'), el = $('qcnt'); el.textContent = n; el.style.display = n ? 'flex' : 'none'; const h = $('repHead'); if (h) h.innerHTML = repHeadHtml(); }
 function repHeadHtml() { const f = markCount(), b = unsent('BACKLOGG'); return f || b ? `<b>${f} feil meldt${b ? ` · ${b} i backloggen` : ''}</b><br>Send til Claude: <button id="hSend">📤 Send direkte</button> <button id="hShare">Del tilbakemeldinger</button> <button id="hCopy">Kopier tilbakemeldinger</button>` : ''; }
@@ -2103,7 +2114,7 @@ function buildReportInfo() {
   const t = nextTarget();
   return {
     version: VERSION, level: levelLabel, difficulty: `${difficulty}${isCustomHelp(store) ? ' (egendefinert hjelp)' : ''} · hjelp av: ${offElements(difficulty).join(', ') || 'ingen'} · merker ${badgeLine() || 'ingen'}`, when: new Date().toLocaleString('nb-NO'), device: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 90),
-    screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
+    where: currentScreen().label, screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
     perf: perfLine + ' · shadere ' + shw.line(),
     fps: perf.n ? `${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms` : 'fps ukjent',
     pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), state: player.state, target: t.final ? 'målet' : t.label, stats: { ...stats },
@@ -2152,7 +2163,7 @@ function buildPanel() {
     const n = changedSettings(items).length;
     return `<details data-g="${g}" ${open[g] ? 'open' : ''}${g === 'admin' ? ' class="adm"' : ''}><summary>${title}${n ? ` <em>${n} endret</em>` : ''}</summary>${items.filter((d) => !d.sub).map(row).join('')}${[...new Set(items.filter((d) => d.sub).map((d) => d.sub))].map((sb) => { const si = items.filter((d) => d.sub === sb), sn = changedSettings(si).length; return `<details class="sub" data-sub="${g}:${sb}"><summary>${sb}${sn ? ` <em>${sn} endret</em>` : ''}</summary>${si.map(row).join('')}</details>`; }).join('')}${extra}</details>`;
   };
-  p.innerHTML = `<div class="phead"><button id="pCloseTop" class="pclose" aria-label="Lukk">✕ Lukk</button><h3 id="pTitle">Innstillinger</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
+  p.innerHTML = `<div class="phead"><button id="pCloseTop" class="pclose" aria-label="Lukk">✕ Lukk</button><button id="pFlag" aria-label="Meld og vurder">⚑</button><h3 id="pTitle">Innstillinger</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
     <div id="repHead" class="rhead">${repHeadHtml()}</div>
     <input type="search" id="pSearch" placeholder="Søk i innstillinger" autocomplete="off" enterkeyhint="search">
     ${nChanged ? `<div class="pchg">${nChanged} innstilling${nChanged > 1 ? 'er' : ''} endret fra standard</div>` : ''}
@@ -2186,6 +2197,7 @@ function buildPanel() {
   $('pMenu').onclick = () => quitToMenu('⚙');
   $('closePanel').onclick = () => $('panel').classList.add('hide');
   $('pCloseTop').onclick = () => $('panel').classList.add('hide');
+  $('pFlag').onclick = (e) => { e.stopPropagation(); $('qbtn').click(); };   // R71: ⚑ i panelhodet åpner samme boks
   // admin skjules bak 7 trykk på tittelen (eller ?admin=1)
   let taps = 0, tapT = 0;
   $('pTitle').onclick = () => { const n = performance.now(); taps = n - tapT < 900 ? taps + 1 : 1; tapT = n; if (taps >= 7) { taps = 0; adminOn = !adminOn; store.set('tlm.admin', adminOn); toast(adminOn ? 'Admin på' : 'Admin av'); buildPanel(); } };

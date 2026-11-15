@@ -32,6 +32,7 @@ body.building #panel{z-index:10}
 #bld canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 #bld .bt{position:absolute;left:0;right:0;display:flex;flex-wrap:nowrap;gap:6px;justify-content:center;padding:0 8px;pointer-events:none}
 #bld .bt.top{top:max(8px,env(safe-area-inset-top))}
+body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px))}   /* R71: plass til ⚑ øverst til høyre */
 #bld .bmenu{position:absolute;left:max(8px,env(safe-area-inset-left));top:calc(max(8px,env(safe-area-inset-top)) + 54px);z-index:3;height:30px;padding:0 12px;border:1px solid #ffffff55;border-radius:15px;background:#121a2ccc;color:#ffd9a0;font:700 12px system-ui;touch-action:manipulation}   /* R69: Avslutt til meny fra byggeskjermen */
 #bld.sim .bmenu{display:none}
 #bld .bt.bot{bottom:max(8px,env(safe-area-inset-bottom))}
@@ -507,6 +508,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   root.addEventListener('click', (e) => { const lb = e.target.closest?.('button')?.dataset.lb; if (lb && lab && active && labAct[lb]) { labAct[lb](); return; } const l = e.target.closest?.('button')?.dataset.l; if (l && active && !sim && loadList().includes(l)) { loadSel.set(active.id, l); logEv('bygg', `last valgt: ${l}`); loadsRender(); return; } const sh = e.target.closest?.('button')?.dataset.s; if (sh && active && shareAct[sh]) { shareAct[sh](); return; } const t = e.target.closest?.('button')?.dataset.t; if (t) { tool = tool === t ? null : t; linkFrom = null; labels(); return; } const a = e.target.closest?.('button')?.dataset.a; if (a && act[a]) act[a](); });
   enterBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); open(); });
   addEventListener('keydown', (e) => {
+    if (e.target?.tagName === 'INPUT' || e.target?.tagName === 'TEXTAREA') return;   // R71: skriving i ⚑-boksen skal ikke trigge byggetaster
     if (active) {
       if (e.code === 'Escape' || e.code === 'KeyB') { e.preventDefault(); close('tast'); }
       else if (e.code === 'Equal' || e.code === 'NumpadAdd') zoomAct.in(); else if (e.code === 'Minus' || e.code === 'NumpadSubtract') zoomAct.out(); else if (e.code === 'Digit0' || e.code === 'Numpad0') zoomAct.fit(); else if (e.code === 'KeyZ') act.undo(); else if (e.code === 'KeyQ') rot(-ROT_STEP); else if (e.code === 'KeyR' || e.code === 'KeyE') rot(ROT_STEP); else if (e.code === 'Delete' || e.code === 'Backspace') act.del();
@@ -661,7 +663,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   }
 
   return {
-    get active() { return !!active; }, enabled, update, open, close, labels, get siteIds() { return sites.map((q) => q.id); }, placeRef(siteId) {   // R68: legger stedets referansebygg (site.ref) på brettet, som om du hadde plassert det selv (kinomodus; deler av samme type tas fra de du har)
+    get active() { return !!active; }, get siteId() { return active?.id || null; }, enabled, update, open, close, labels, get siteIds() { return sites.map((q) => q.id); }, placeRef(siteId) {   // R68: legger stedets referansebygg (site.ref) på brettet, som om du hadde plassert det selv (kinomodus; deler av samme type tas fra de du har)
       const s = sites.find((q) => q.id === siteId), ref = s?.ref; if (!enabled || !ref?.placed?.length) return false; const B = getB(s), used = new Set(), map = new Map();
       for (const p of ref.placed) { const id = B.have.find((h) => !used.has(h) && B.types[h] === p.type); if (!id) return false; used.add(id); map.set(p.id, id); }
       restore(B, { have: B.have, placed: ref.placed.map((p) => ({ ...p, id: map.get(p.id) })), links: (ref.links || []).map((l) => ({ ...l, a: map.get(l.a), b: l.b ? map.get(l.b) : null })) });
