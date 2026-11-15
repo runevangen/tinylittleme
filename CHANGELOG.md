@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.10** – R73 (fra tester): fagverk-følelse i rutenett-bygging: belastningsfarge, kjøredekk, SLOW/PAUSE, største belastning og eksempelbro.
 - **2.09** – R73 lagt i veikartet (fagverk-følelse i rutenett-bygging, fra Rune).
 - **2.08** – R72 (fra tester): rutenett-bygging, ny modus ved siden av den klassiske: knutepunkter og staver (tre, stål, tau) festet på koordinatene.
 - **2.07** – R72 lagt i veikartet (rutenett-bygging med knutepunkter og staver, fra Rune).

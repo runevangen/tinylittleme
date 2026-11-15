@@ -29,15 +29,6 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Åpne punkter
 
-### [ ] R73 · Fra tester: Rune · Rutenett-bygging, trinn 2: fagverk-følelse som Poly Bridge / Bridge Constructor
-Brukeren viste referansebilder av klassiske fagverksbroer: mange staver i trekanter, stavene farget etter belastning (grønn, gul, oransje, rød rett før brudd), et rett kjøredekk som lasten ruller på, og kontrollene SLOW, PAUSE og ZOOM IN/OUT med «største belastning» vist etter prøven. Bygger på R72 (`grid_logic.js`, `grid_view.js`, `build_stress.js`, `build_phys.js`).
-(1) **Belastningsfarge:** hver stav i Rutenett-modus farges jevnt grønn → gul → oransje → rød etter belastning mot styrke, under og etter prøven (grønn = lite, rød = nær brudd). Strekk og trykk kan skilles (f.eks. tynnere strek for strekk, tykkere for trykk), men fargene skal være lesbare også for fargesvake: legg til lys/mørk variasjon.
-(2) **Kjøredekk:** hvert Rutenett-sted har et kjøredekk (rett stav-kjede) mellom de to faste ankerpunktene på klippene. Figuren/ball/bil/robot kjører på dekket; knuter på dekket kan ikke slettes, men kan få ekstra staver under og over.
-(3) **SLOW og PAUSE** under prøven (knapper, ikke taster), og et valg «største belastning» som etter prøven viser hvilken stav som brakk først eller som var nærmest brudd. Bruk `logEv('bygg', …)` for brudd og første brudd.
-(4) **Eksempelbrett:** ett Rutenett-sted med ferdig fagverk som nybegynner-eksempel («Så slik»), tilgjengelig fra et hjelp-valg som forsvinner på Ekspert (R69).
-(5) Mobil først; ingen taster; tekst nevner knapper. Fysikken forblir deterministisk. Ingen endring i Klassisk-modus eller i eksisterende brett.
-Ferdig når: en bro av trekanter bærer figuren over og stavene skifter farge underveis; SLOW/PAUSE virker; «største belastning» vises; test for farge-skala, deterministisk belastning og at eksempelbroen holder; en test med ekte berøringshendelser bygger en bro; `npm test` og `npm run boot` grønne; Playwright-bilde i `devices['iPhone 14']` er sett.
-
 ### [ ] R54 · Fra tester: Rune · Roligere kamera: følging av som standard og bredere synsfelt i høyformat
 Fra spilletest på iPhone (v1.32–v1.56): testerne blir desorientert og sier at skjermen veiver fram og tilbake. Med «Kamerafølging: styrke» på 0 og «Synsfelt» på 70 ble det klart bedre; med følgingen tilbake på 1 (synsfelt fortsatt 70) ble det mye verre. Den automatiske dreiningen bak figuren (`followYaw` i `camera_util.js`, kalt fra `main.js`) er altså hovedårsaken, og synsfeltet nummer to: 52° loddrett gir bare ca. 25° vannrett på stående iPhone, fordi synsfeltet ikke justeres for skjermformatet.
 (1) **Følging av som standard.** «Kameraet følger etter deg automatisk» (`tlm.follow`) er av for alle, også for dem som har den gamle verdien lagret (engangs-migrering, slik PUBG-standarden på PC ble satt i v0.72). Valget og «Kamerafølging: styrke» blir stående i ⚙ → Kamera, så den kan slås på igjen. Sjefkamp-kameraet, ◎ og dobbelttrykk virker som før.
@@ -53,6 +44,7 @@ Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backl
 
 ## Ferdige punkter
 - [x] Fra tester: Rune · rutenett-bygging: knutepunkter og staver (tre, stål, tau) på koordinatene, ny modus ved siden av den klassiske (grid_logic.js, grid_view.js) (R72, v2.08)
+- [x] Fra tester: Rune · rutenett-bygging trinn 2: fagverk-følelse (belastningsfarge, kjøredekk, SLOW/PAUSE, største belastning, eksempelbro) (R73, v2.10)
 - [x] Fra tester: Rune · flagget (⚑) tilgjengelig på alle skjermer, rapporten sier hvilken skjerm (R71, v2.06)
 - [x] Fra tester: Rune · byggeskjermen: plasserte deler kan flyttes igjen (build.js, build_logic.js, tools/live_buildmove.cjs) (R70, v2.05)
 - [x] Kinomodus: skjult UI, kamera-API, fast tid og frø, byggeskjerm og bane per tikk for trailer-opptak (cinema_logic.js, cinema_view.js) (R68, v1.93)
