@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.93** – Kinomodus (?cinema=1): skjult UI, fast frø, kamera-API, fast tid, byggeskjerm og bane per tikk for trailer-opptak (R68).
 - **1.92** – Vanskelighetsnivå (Nybegynner, Medium, Ekspert) som styrer hjelpen, Avslutt til meny, og merker per brett og nivå (R69).
 - **1.91** – Trailer: manus rettet etter shotlisten (veps i kjøkkenet, sjefmaur i nivå 6, stigende vann er av som standard, bygging i Bygglab, renderingstid ca. 108 min) og R68 utvidet med det kinomodus må dekke.
 - **1.90** – Trailer: shotlist fra selve spillet (`tools/trailer/shotlist.json` og `SHOTLIST.md`): posisjoner, ruter, kamera og API-behov per klipp, med 8 testbilder. Ingen spillkode.
