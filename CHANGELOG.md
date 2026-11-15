@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.00** – Trailer: 05_stigende_vann med kamera som følger figuren skrått ovenfra, så vannflaten og stigningen synes (F1; bilde 1, 24, 41, 48 verifisert, figuren ca. 40–70 px).
 - **1.99** – Trailer: 04_sjefmaur (bredere startkamera, støt og hopp verifisert) og 08b_edderkopp_i_traad (sakte stup, ca. 5 bilder), verifisert med stillbilder.
 - **1.98** – Trailer: klippskript 07_stue_fjernkontroll, 08a_verksted_olje og 09_sluttbilde_kant (G4), testet med stillbilder; status i tools/trailer/SHOTLIST.md.
 - **1.97** – Trailer: klippskript 06_bygging (byggeskjermen i Bygglab: brudd og ny bro) og 08c_lys_skygge (lys som blinker og hjelmlykta), testet med stillbilder; status i tools/trailer/SHOTLIST.md.
