@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.05** – R70 (fra tester): i byggeskjermen kan plasserte deler flyttes igjen (bedre treff nær knapperaden, valgt verktøy hindrer ikke lenger flytting, skjermbasert treffmargin). Ny live_buildmove-sjekk.
 - **2.04** – Veikart fra tester (Rune): R70 (byggeskjermen: plasserte deler kan ikke flyttes) og R71 (flagget ⚑ tilgjengelig på alle skjermer).
 - **2.03** – Oppstartstest (`npm run boot`, `tools/boot_check.cjs`): åpner spillet i en ekte nettleser og krever at det starter uten feil. Ny regel i CLAUDE.md og runnerens integrasjonssteg: kjør den før hver push til main.
 - **2.02** – **Rettet: spillet startet ikke.** `version.js` var tom etter en sammenslåing i v2.01, så siden krasjet ved oppstart («does not provide an export named VERSION»). Ny test `test_version.mjs` sjekker at `VERSION` finnes og stemmer med endringsloggen.
