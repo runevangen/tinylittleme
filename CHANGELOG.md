@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.92** – Vanskelighetsnivå (Nybegynner, Medium, Ekspert) som styrer hjelpen, Avslutt til meny, og merker per brett og nivå (R69).
 - **1.91** – Trailer: manus rettet etter shotlisten (veps i kjøkkenet, sjefmaur i nivå 6, stigende vann er av som standard, bygging i Bygglab, renderingstid ca. 108 min) og R68 utvidet med det kinomodus må dekke.
 - **1.90** – Trailer: shotlist fra selve spillet (`tools/trailer/shotlist.json` og `SHOTLIST.md`): posisjoner, ruter, kamera og API-behov per klipp, med 8 testbilder. Ingen spillkode.
 - **1.89** – Backlogg ryddet mot changelog og kode (R28, R32, R39–R42, R44–R50, R60–R66, nivå 7–9 krysset av eller oppdatert; nye punkter R49b, R51, R52, R68, R69, R27).
