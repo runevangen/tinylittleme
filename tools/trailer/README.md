@@ -22,3 +22,18 @@ Flagg: `-f` bildemappe (standard `frames`), `-m` musikk, `-o` ut-fil (standard `
 3. Lyden mikses på og fades ut. Utdata er H.264 (crf 18) + AAC, `yuv420p`, `faststart`.
 
 Rendering av 45 s tar noen minutter på CPU (`minterpolate` er tregest).
+
+## Rendering
+Bildene tas av selve spillmotoren i kinomodus (`docs/TESTING.md`, «Kinomodus»), ett klipp om gangen: `tools/trailer/render.cjs` + `render_lib.cjs`, klippmoduler i `tools/trailer/shots/<id>.cjs`.
+```
+node tools/trailer/render.cjs --clip 01_bad_oversikt --out ~/frames          # alle bilder -> ~/frames/01_bad_oversikt/0001.png ...
+node tools/trailer/render.cjs --clip 01_bad_oversikt --out ~/frames --test   # bare første, midterste og siste bilde -> ~/frames/_test/<id>/
+node tools/trailer/render.cjs --clip <id> --out ~/frames --from 20 --to 39   # delområde (0-baserte indekser)
+```
+Utmappa gis med `--out` eller env `TRAILER_FRAMES` (hold den utenfor repoet; bilder sjekkes ikke inn). Programvare-GL tar ca. 12 s per bilde.
+
+**Biblioteket:** starter en statisk filserver (node `http`) på ledig port med repoets rot, starter Chromium (`--use-gl=swiftshader --enable-unsafe-swiftshader`, playwright via `NODE_PATH`), 960×540, laster klippets `url` fra `shotlist.json` med `&cinema=1&cine_hold=1`, setter `innstillinger` fra shotlist og eventuell `localStorage` fra klippmodulen (f.eks. `tlm.flood`) via `addInitScript`, og venter på `window.__game.cine`.
+
+**Klippmodul (CommonJS):** `module.exports = { id, async setup(ctx), async frame(ctx, i, n) }`, valgfritt `ticksPerFrame` og `localStorage`. `ctx` har `page`, `cine` (proxy: `cine.setCam(...)` kaller `window.__game.cine.setCam` med `page.evaluate`, også `cine.build.open(..)`; `cine.get('navn')` leser en egenskap), `fps` (12), `ticksPerFrame` (5 ved 1/60 s), `n` og `advance(ticks)`. Per bilde: `frame()` setter kamera/figur/handling, tiden stegges, så `cine.render()` + skjermbilde. Id-en må stå i `shotlist.json` (`bilder` gir `n`).
+
+**Gjenopptakbart:** finnes bildefila fra før, hoppes render og skjermbilde over, men tid og handlinger simuleres likevel (steg er billig), så spillet er i samme tilstand etter en krasj. Bare kjør samme kommando på nytt. Fremdriftslinjer viser brukt tid og anslått resttid; `.done` skrives i bildemappa når hele klippet er ferdig.
