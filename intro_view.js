@@ -14,6 +14,7 @@ export function createIntroView({ scene, $, T, low = false }) {
   return {
     setTarget(t) { target = t; if (t) arrow.position.set(t.x, t.y, t.z); },
     markerOn(on) { arrow.visible = !!(on && target); },
+    markerShown: () => arrow.visible,
     update(now) {
       if (!arrow.visible) return;
       const k = 0.5 + 0.5 * Math.sin(now * 0.004); arrow.position.y = target.y + 0.15 + k * 0.22; ring.scale.setScalar(1 + 0.25 * k); ring.material.opacity = 0.9 - 0.5 * k;

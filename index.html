@@ -153,6 +153,8 @@
   /* knappene ligger i en rad som blir stående nederst, også når innholdet er høyere enn skjermen (liggende mobil): «Neste nivå» skal alltid kunne trykkes */
   #win #winBtns{position:sticky;bottom:0;margin-bottom:auto;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;width:100%;box-sizing:border-box;padding:10px 12px max(12px,env(safe-area-inset-bottom));background:linear-gradient(#1d243300,#1d2433f2 38%);z-index:2}
   #win #winBtns button{margin-top:0}
+  .nohints #help,.nohints #introhint,.nohints #ovhint{display:none!important}   /* R69: Ekspert har ingen løse hint-bobler */
+  #win #winMenu{background:#ffffff26;color:#fff}
   #win h1{margin:0;font-size:clamp(24px,8vw,34px);padding:0 12px}
   #win #again{background:#ffffff26;color:#fff}
   #win button{font:700 15px system-ui;padding:11px 22px;border:0;border-radius:999px;background:var(--accent);color:var(--ink);margin-top:6px}
@@ -211,7 +213,7 @@
   var v = String(Date.now());
   try { var x = new XMLHttpRequest(); x.open('GET', './version.js?t=' + Date.now(), false); x.send(); var m = x.status === 200 && x.responseText.match(/VERSION = '([^']+)'/); if (m) v = m[1]; } catch (e) { /* uten nett: bruk det som finnes */ }
   window.__assetV = v;
-  const files = ['main', 'physics', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'shaderwarm', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'camdrag', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'wasp', 'wasp_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'plates_logic', 'workshop_logic', 'plates_view', 'stue_logic', 'version', 'level', 'kinds', 'toys', 'toys_live', 'toy_kick', 'toys_view', 'shortcut', 'music', 'grade', 'grade_apply', 'story', 'polish', 'hero_move', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view', 'intro', 'intro_view', 'goals', 'goals_view', 'topband_logic', 'topband_view', 'build', 'build_logic', 'build_zoom', 'build_phys', 'build_capacity', 'build_materials', 'build_truss', 'build_stress', 'build_world', 'build_toys', 'build_toys_view', 'build_budget', 'build_loads', 'build_loads_view', 'build_replay', 'build_replay_view', 'build_net', 'floordetail', 'floordetail_logic', 'landing', 'finpuss', 'lekerom_logic', 'lekerom_view', 'feedback_send', 'combos', 'vault_anim', 'climbfeel', 'drawers', 'guide_logic', 'markers_rank', 'guide_view', 'flood_logic', 'flood_view', 'bygglab_logic', 'bygglab_view'];
+  const files = ['main', 'physics', 'difficulty', 'difficulty_view', 'props', 'look', 'atmos', 'atmos_logic', 'softlight', 'softlight_logic', 'shaderwarm', 'hero', 'audio', 'voice', 'i18n', 'camera_util', 'camdrag', 'settings_util', 'ants', 'foes', 'creatures', 'creatures_view', 'wasp', 'wasp_view', 'boss', 'boss_model', 'boss_ui', 'collect', 'puzzle', 'puzzle_view', 'plates_logic', 'workshop_logic', 'plates_view', 'stue_logic', 'version', 'level', 'kinds', 'toys', 'toys_live', 'toy_kick', 'toys_view', 'shortcut', 'music', 'grade', 'grade_apply', 'story', 'polish', 'hero_move', 'variant', 'variant_view', 'perf_budget', 'markers', 'markers_logic', 'readable', 'readable_view', 'overview', 'overview_logic', 'rewards', 'rewards_view', 'intro', 'intro_view', 'goals', 'goals_view', 'topband_logic', 'topband_view', 'build', 'build_logic', 'build_zoom', 'build_phys', 'build_capacity', 'build_materials', 'build_truss', 'build_stress', 'build_world', 'build_toys', 'build_toys_view', 'build_budget', 'build_loads', 'build_loads_view', 'build_replay', 'build_replay_view', 'build_net', 'floordetail', 'floordetail_logic', 'landing', 'finpuss', 'lekerom_logic', 'lekerom_view', 'feedback_send', 'combos', 'vault_anim', 'climbfeel', 'drawers', 'guide_logic', 'markers_rank', 'guide_view', 'flood_logic', 'flood_view', 'bygglab_logic', 'bygglab_view'];
   var imports = { three: './lib/three.module.min.js' }; files.forEach(function (f) { imports['./' + f + '.js'] = './' + f + '.js?v=' + v; });
   document.write('<script type="importmap">' + JSON.stringify({ imports: imports }) + '<\/script>');
 })();
@@ -247,7 +249,7 @@
 <div id="story" class="hide"></div>
 <div id="introsw" class="hide"></div>
 <div id="introhint" class="hide"></div>
-<div id="win" class="hide"><div id="winConfetti" class="sconf"></div><div id="winHero"></div><h1 id="winTitle">Du kom opp!</h1><div id="winStats"></div><div id="winBtns"><button id="nextLevel" style="display:none">Neste nivå →</button><button id="again">Spill igjen</button></div></div>
+<div id="win" class="hide"><div id="winConfetti" class="sconf"></div><div id="winHero"></div><h1 id="winTitle">Du kom opp!</h1><div id="winStats"></div><div id="winBtns"><button id="nextLevel" style="display:none">Neste nivå →</button><button id="winMenu"></button><button id="again">Spill igjen</button></div></div>
 <div id="ovhint">Trykk for å gå videre</div>
 <div id="stick"><div id="knob"></div></div>
 <button class="tbtn" id="btnGrab">GREP</button>
@@ -262,6 +264,7 @@
   <button id="bPlan">Plan</button>
   <button id="bFly">Fly</button>
   <button id="bSound">Lyd</button>
+  <button id="bMenu">Avslutt til meny</button>
 </div>
 <div id="bar">
   <button id="bBack">Tilbake</button>
