@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.88** – Trailer: montasjeverktøy `tools/trailer/` (build.sh, edit.json med tekstkort, README), ingen spillkode.
 - **1.87** – Veikart: R69 (vanskelighetsnivå Nybegynner/Medium/Ekspert, avslutt til meny, spill opplåste brett på nytt på høyere nivå, merker per brett og nivå), fra tester: Rune.
 - **1.86** – R67 Bygglab: prøverom (`?level=bygglab`) som åpner byggeskjermen direkte, med åtte byggesteder, referansebygg og tester.
 - **1.85** – Trailer: manus og plan i `docs/TRAILER.md`, og veikart R68 (kinomodus for opptak fra selve spillmotoren).

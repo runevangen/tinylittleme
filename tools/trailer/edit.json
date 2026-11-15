@@ -1,0 +1,35 @@
+{
+  "_note": "Shotlist for traileren (docs/TRAILER.md). Tider i sekunder. 'dur' er synlig lengde i sluttfilmen; kryssfaden ('into') legges over slutten av forrige klipp, så summen av 'dur' er total lengde. Tekstkortenes 'at'/'to' er relative til klippstart. Mangler et klipp bildemappe i frames/, stopper bygget.",
+  "out": { "w": 1280, "h": 720, "fps": 24, "in_fps": 12, "crf": 18 },
+  "interp": "minterpolate",
+  "grade": { "saturation": 1.15, "contrast": 1.04, "gamma": 1.0, "warm": 0.05 },
+  "font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+  "audio": { "fade_in": 0.6, "fade_out": 2.5, "volume": 0.9 },
+  "clips": [
+    { "id": "bad", "dur": 5,
+      "cards": [ { "text": "Du er 3 cm høy.", "at": 1.0, "to": 4.6, "pos": "bottom" } ] },
+    { "id": "klatring", "dur": 5, "into": { "type": "fade", "dur": 0.5 },
+      "cards": [ { "text": "Rommet er laget for noen andre.", "at": 0.8, "to": 4.6, "pos": "bottom" } ] },
+    { "id": "barnerom", "dur": 5, "into": { "type": "cut" },
+      "cards": [ { "text": "Alt lever.", "at": 0.8, "to": 4.4, "pos": "bottom" } ] },
+    { "id": "kjokken", "dur": 5, "into": { "type": "cut" },
+      "cards": [ { "text": "Og noen vokter.", "at": 0.8, "to": 4.6, "pos": "bottom" } ] },
+    { "id": "niva4", "dur": 4, "into": { "type": "fade", "dur": 0.5 },
+      "cards": [ { "text": "Og vannet stiger.", "at": 0.6, "to": 3.8, "pos": "bottom" } ] },
+    { "id": "bygg", "dur": 10, "into": { "type": "fade", "dur": 0.6 },
+      "cards": [
+        { "text": "Så bygg.", "at": 0.6, "to": 3.0, "pos": "bottom" },
+        { "text": "Ok. Prøv igjen.", "at": 5.2, "to": 7.2, "pos": "bottom", "size": 48 },
+        { "text": "Tåler 12 klosser", "at": 7.8, "to": 9.8, "pos": "bottom" }
+      ] },
+    { "id": "stue", "dur": 5, "into": { "type": "fade", "dur": 0.5 },
+      "cards": [ { "text": "Løs gåter.", "at": 0.6, "to": 4.6, "pos": "bottom" } ] },
+    { "id": "raske", "dur": 3, "into": { "type": "cut" }, "cards": [] },
+    { "id": "slutt", "dur": 1.5, "into": { "type": "cut" }, "cards": [] },
+    { "id": "_tittel", "type": "black", "dur": 1.5, "into": { "type": "fade", "dur": 0.5 },
+      "cards": [
+        { "text": "tinylittleme", "at": 0.1, "to": 1.5, "fade": 0.4, "pos": "center", "size": 96, "y_off": -30 },
+        { "text": "Snart til en telefon nær deg.", "at": 0.4, "to": 1.5, "fade": 0.4, "pos": "center", "size": 36, "y_off": 60 }
+      ] }
+  ]
+}
