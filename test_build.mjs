@@ -87,6 +87,19 @@ for (const f of fs.readdirSync('levels')) {
   for (const st of lv.build.sites) for (const a of BL.siteAnchors(st)) assert.ok(Math.abs(a.u) <= st.w / 2 && a.v >= 0 && a.v <= st.h, `${f}: festepunkt utenfor ${st.id}`);
   assert.ok((lv.lab || lv.build.parts.length >= 2) && lv.build.sites.length >= 1, `${f}: bygg trenger sted og deler (Bygglab, R67, har alle deler i byggeskjermen i stedet for i rommet)`);
 }
+// R70: treffmargen følger skjermen: en tynn planke i utzoomet visning må kunne gripes med en finger (minst ~22 px)
+{
+  const B = BL.createBuild(site, { a: 'plank_s' }, ['a']); BL.place(B, 'a', 0, 3, 0);
+  const sc = 9, pad = BL.pickPad(sc);                                             // 9 px per enhet: planken er 4,5 px tykk
+  assert.ok(near(BL.pickPad(40), 0.55) && BL.pickPad(100) === 0.35 && BL.pickPad(sc) > 2, 'pad vokser når det zoomes ut, og er aldri under 0,35');
+  const dyPx = 12, dv = dyPx / sc;                                                // 12 px ved siden av planken
+  assert.equal(BL.topHit(B, 0, 3 + dv), null, 'med gammel pad bommer fingeren');
+  assert.equal(BL.topHit(B, 0, 3 + dv, pad)?.id, 'a', 'med skjermbasert pad treffer fingeren');
+  assert.equal(BL.topHit(B, 0, 3 + 40 / sc, pad), null, '40 px unna treffer ikke');
+  const B2 = BL.createBuild(site, { c: 'block', d: 'block' }, ['c', 'd']); BL.place(B2, 'c', 0, 3, 0); BL.place(B2, 'd', 1.5, 3, 0);   // side om side, d øverst
+  assert.equal(BL.topHit(B2, 0.3, 3, 0.95)?.id, 'c', 'selve delen vinner over nabodelens margen');
+  assert.equal(BL.topHit(B2, 0.75, 3, 0.95)?.id, 'd', 'i skjøten vinner den øverste');
+}
 // modulene er med i index.html
 const html = fs.readFileSync('index.html', 'utf8'); for (const m of ['build', 'build_logic', 'build_zoom', 'build_phys', 'build_stress']) assert.ok(html.includes(`'${m}'`), `${m} mangler i files`);
 console.log('bygg-tester grønne');

@@ -3,7 +3,7 @@
 // Kobles inn fra main.js med createBuildMode(). R25: tape/ledd/tau-verktøy og PRØV (fysikk i build_phys.js, tegnet her).
 import * as THREE from 'three';
 import {
-  PART_TYPES, partType, createBuild, inTray, addPart, place, rotate, remove, undo, reset, topHit, raise, corners, serialize, restore,
+  PART_TYPES, partType, createBuild, inTray, addPart, place, rotate, remove, undo, reset, topHit, pickPad, raise, corners, serialize, restore,
   addLink, removeLink, topLink, linkEnds, LINK_KINDS, twistRot, fitView, clampScale, toScreen, toWorld, canEnterBuild, nearestSite, initParts, partTypes, gotPartIds, stepParts, restoreParts, snapPoint, siteAnchors, ROT_STEP,
 } from './build_logic.js';
 import { ZOOM_STEP, gridForScale, anchorRadius, zoomAbout, zoomStep, freeCenter, isDoubleTap, dblTapView, zoomLabel } from './build_zoom.js';   // R44
@@ -385,20 +385,32 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     sel = id; if (ex) { raise(B, id); }
     try { root.setPointerCapture(e.pointerId); } catch { /* ok */ }
   }
-  cv.addEventListener('pointerdown', (e) => {
+  const onCanvasDown = (e) => {
     if (!active) return; e.preventDefault(); const { x, y } = loc(e), B = getB(active); ptrs.set(e.pointerId, { x, y });
     if (ptrs.size === 2) { drag = drag && drag.fromTray ? drag : null; startGesture(); return; }
-    const w = toWorld(view, W, H, x, y), hit = topHit(B, w.u, w.v);
+    const w = toWorld(view, W, H, x, y), hit = topHit(B, w.u, w.v, pickPad(view.scale));
     if (sim) { ptrs.delete(e.pointerId); return; }
     const cur = { t: e.timeStamp || performance.now(), x, y };
     if (getDbl() && !tool && !drag && isDoubleTap(lastTap, cur)) { lastTap = null; ptrs.delete(e.pointerId); setView(dblTapView(view, fitNow(), W, H, x, y), 'dobbelttrykk'); return; }   // R44
+    if (tool && hit) { const before = hit.rot; startDrag(e, hit.id, false); drag.before = { u: hit.u, v: hit.v, rot: before }; drag.x0 = x; drag.y0 = y; drag.tapLink = w; ptrs.delete(e.pointerId); return; }   // R70: med et verktøy valgt kan en del fortsatt dras; bare et trykk (uten å dra) kobler
     if (tool) { ptrs.delete(e.pointerId); linkTap(B, hit, w); return; }
     const lk = !hit && topLink(B, w.u, w.v);
     if (lk) { selLink = lk.id; sel = null; ptrs.delete(e.pointerId); return; }
     selLink = null;
     if (hit) { const before = hit.rot; startDrag(e, hit.id, false); drag.before = { u: hit.u, v: hit.v, rot: before }; }
     else { sel = null; gest = { kind: 'pan', x, y, cu: view.cu, cv: view.cv, t: cur.t, moved: false }; try { cv.setPointerCapture(e.pointerId); } catch { /* ok */ } }
-  });
+  };
+  cv.addEventListener('pointerdown', onCanvasDown);
+  // R70: delene ligger ofte rett ved bakken, der knapperaden (TAPE/LEDD/last/del) ligger like under: nettleserens berøringsjustering flytter da trykket over på knappen, og delen lar seg ikke gripe.
+  // Treffer fingeren en del, men ikke selve knappen, går trykket til delen, og klikket som følger svelges.
+  let swallowClick = 0;
+  root.addEventListener('pointerdown', (e) => {
+    if (!active || sim) return; const bt = e.target.closest?.('.tools button,.share button,.loads button'); if (!bt) return;
+    const r = bt.getBoundingClientRect(); if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) return;
+    const { x, y } = loc(e), w = toWorld(view, W, H, x, y); if (!topHit(getB(active), w.u, w.v, 0.1)) return;
+    swallowClick = performance.now(); logEv('bygg', 'grep del bak knapp'); e.stopPropagation(); onCanvasDown(e);
+  }, true);
+  root.addEventListener('click', (e) => { if (swallowClick && performance.now() - swallowClick < 900 && e.target.closest?.('.tools button,.share button,.loads button')) { swallowClick = 0; e.stopPropagation(); e.preventDefault(); } }, true);
   function linkTap(B, hit, w) {
     if (!linkFrom) { if (hit) { linkFrom = hit.id; sel = null; selLink = null; buzz?.(6); } return; }
     if (hit && hit.id === linkFrom) { linkFrom = null; return; }
@@ -439,6 +451,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     if (drag && e.pointerId === drag.pid) {
       const B = getB(active), tr = tray.getBoundingClientRect(), over = drag.y > tr.top - root.getBoundingClientRect().top;
       const ex = B.placed.find((p) => p.id === drag.id);
+      if (drag.tapLink && ex && Math.hypot(drag.x - drag.x0, drag.y - drag.y0) < 10) { const w0 = drag.tapLink; drag = null; if (tool) linkTap(B, ex, w0); trayRender(); return; }   // R70: trykk med verktøy = koble
       if (over) { if (ex) { remove(B, drag.id); logEv('bygg', `tilbake i brettet ${drag.id}`); onChange?.(); } sel = null; }
       else {
         const moved = ex ? Math.hypot(drag.part.u - drag.before.u, drag.part.v - drag.before.v) > 0.05 : true;
@@ -673,6 +686,6 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'),
     startReplay: () => !!active && startReplay(), get replaying() { return replaying; }, record: (id) => recs.get(id) || null, importText: (t) => !!active && doImport(t), exportText: () => (active ? exportCode(getB(active)) : null),   // R50: til tester (node og Playwright)
     lab: lab ? { go: labGo, resetSite: (id) => { const s = labSites.find((q) => q.id === id); return s ? labReset(s, 'kode') : false; }, resetAll: labResetAll, get reached() { return [...lab.reached]; }, sites: labSites.map((q) => q.id), line: () => (active ? labLine() : ''), info: () => (active ? labInfo() : null), get home() { return lab.moved; } } : null,   // R67: til tester
-    state: () => ({ active: active?.id || null, builds: [...builds].map(([k, b]) => ({ id: k, have: b.have.length, placed: b.placed.length })) }),
+    state: () => ({ active: active?.id || null, view: view ? { scale: view.scale, cu: view.cu, cv: view.cv, oy: view.oy || 0, W, H } : null, builds: [...builds].map(([k, b]) => ({ id: k, have: b.have.length, placed: b.placed.length, links: b.links.length, parts: b.placed.map((p) => ({ id: p.id, u: p.u, v: p.v, rot: p.rot })) })) }),
   };
 }

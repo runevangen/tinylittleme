@@ -149,7 +149,14 @@ export function topLink(B, u, v, r = 0.6) {
   return null;
 }
 export function removeLink(B, id) { const i = B.links.findIndex((l) => l.id === id); if (i < 0) return false; pushHist(B); B.links.splice(i, 1); return true; }
-export function topHit(B, u, v) { for (let i = B.placed.length - 1; i >= 0; i--) if (hitPart(B.placed[i], u, v)) return B.placed[i]; return null; }
+export function topHit(B, u, v, pad = 0.35) {
+  for (let i = B.placed.length - 1; i >= 0; i--) if (hitPart(B.placed[i], u, v, 0)) return B.placed[i];      // R70: treffer fingeren selve delen, vinner den (også om en annen del har større margen)
+  for (let i = B.placed.length - 1; i >= 0; i--) if (hitPart(B.placed[i], u, v, pad)) return B.placed[i];
+  return null;
+}
+// R70: treffmargen i verdens-enheter slik at den alltid er minst ~22 px på skjermen (en finger treffer ikke en 12 px tynn planke når brettet er zoomet ut)
+export const PICK_PX = 22;
+export const pickPad = (scale) => Math.max(0.35, PICK_PX / Math.max(1, scale || 1));
 // flytt en del først i tegnerekkefølgen (øverst)
 export function raise(B, id) { const i = B.placed.findIndex((p) => p.id === id); if (i >= 0 && i < B.placed.length - 1) B.placed.push(B.placed.splice(i, 1)[0]); }
 
