@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **1.95** – Trailer: klippskript 02_klatring_vaskekurv, 03_barnerom_leker og 03b_veps (testet med stillbilder), status i tools/trailer/SHOTLIST.md.
 
 - **1.94** – Trailer: rendringsbibliotek (`tools/trailer/render.cjs`, `render_lib.cjs`) og første klipp `01_bad_oversikt`; gjenopptakbar bilde-for-bilde-rendring fra kinomodus.
 - **1.93** – Kinomodus (?cinema=1): skjult UI, fast frø, kamera-API, fast tid, byggeskjerm og bane per tikk for trailer-opptak (R68).

@@ -46,3 +46,10 @@ Ikke tatt (bildebudsjettet var brukt): stigende vann (E ble bare lastet), stuen 
 - Liggende format kutter toppen og bunnen av høye klatrebilder (kurv 12 enheter, medisinskap 38): hold figuren i midten med `height`.
 - Byggeskjermen er laget for stående mobil; 16:9 gir mye tom flate.
 - Programvare-GL gir noe annen skygge og glans enn en iPhone.
+
+## Klippskript og teststatus (G1)
+Skript i `tools/trailer/shots/<id>.cjs`. Testet med `node tools/trailer/render.cjs --clip <id> --test` (første, midterste og siste bilde, 960 x 540, programvare-GL). Ikke rendret som hele klipp.
+
+- **02_klatring_vaskekurv:** testet 6 stillbilder (2 runder à 3), status ok. Ekte spillfysikk (stikke framover, GREP holdt og KeyE-grepkant hvert 20. tikk, som i bilde B), ikke boten: `runRoute` setter `state = 'climb'` uten gripeflate og kræsjer i `update` (`p.climb.box` er null), så banen fra `cine_route.mjs` brukes ikke her. Startpunkt (3.5, 0, 15), klatrer til y ca. 8 (ikke helt til kanten). Kamera skrått bakfra fra venstre, glattet blikkhøyde, dolly inn med ease. Gjenstår: figuren er liten midt i bildet mot kurvveggen (dominerer), kanten/hang-avspark nås ikke; kunne forlenget med flere bilder.
+- **03_barnerom_leker:** testet 6 stillbilder (2 runder), status ok. Figuren settes oppå sprettboksen i bilde 5 (kan ikke hoppe opp 2,8 selv), spillet kaster ham (R34), han vender mot -x så kastet går bort fra kommoden. Armene opp og klovnen synlige i midtbildet. Gjenstår: leke-bilen er ikke med (bare sprettboksen); vippehesten kommer i forgrunnen i siste bilde (kan flyttes kameraet litt); selve opp-hoppet til boksen er en skjult overgang.
+- **03b_veps (kjokken):** testet 6 stillbilder (2 runder), status ok. Vepsen settes på banen (t.s = 0.276) og varsler (rød ring/glød), stuper; figuren tar sidesteg (+x) i bilde 12-19 og vepsen lander svimmel. Figuren må stå foran bordet (z < 2), ellers skjuler bordplata ham for vepsen. Kamera fra +z-siden (fra -z-siden skjuler leker og maur figuren). Gjenstår: selve stupet (bilde 13-19) er ikke sett i stillbilde, bare varsel (bilde 12) og landing (bilde 24); timing verifisert i tall (varsel 0,9 s, stup, rest).
