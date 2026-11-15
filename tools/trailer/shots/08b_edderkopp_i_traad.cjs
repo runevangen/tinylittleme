@@ -4,8 +4,9 @@
 const sl = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', 'shotlist.json'), 'utf8')).klipp.find((k) => k.id === '08b_edderkopp_i_traad');
 const A = { x: 12.5, y: 2.4, z: 0.0, tx: 21, ty: 3.0, tz: 3, fov: 56 };
 const B = { x: 12.3, y: 2.4, z: 0.4, tx: 21.3, ty: 2.8, tz: 3, fov: 54 };   // justert etter test 2 (figuren ble kuttet nede til høyre i siste bilde); ikke testet etterpå
-const WARN_INTO = 27;   // tikk inn i varselet ved klippstart (varselet varer 0,9 s = 54 tikk)
+const WARN_INTO = 42;   // tikk inn i varselet ved klippstart (varselet varer 0,9 s = 54 tikk)
 module.exports = {
+  ticksPerFrame: 3,   // sakte: stupet (15 tikk) fyller ca. 5 bilder
   id: '08b_edderkopp_i_traad',
   async setup({ cine, page }) {
     await cine.seed(1); await cine.setHero({ x: 17, y: 0, z: 3, yaw: sl.startpose.yaw });

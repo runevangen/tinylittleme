@@ -2,7 +2,7 @@
 // Figuren styres som en spiller (stikke + HOPP): touch.x og et Space-tastetrykk per bilde. Kamera: fritt, jevn bane (ease inn/ut) skrått fra siden så sjef, figur og kjøleskap synes samtidig.
 // Tidsplan (bilde): 0-12 windup, 13-22 charge, 22 bump i kjøleskapet (stunned), 29 hopp, 40 sjefen får skade (hit).
 const sl = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', 'shotlist.json'), 'utf8')).klipp.find((k) => k.id === '04_sjefmaur');
-const A = { x: -17.5, y: 3.6, z: -9.5, tx: -24, ty: 1.6, tz: -10.8, fov: 52 };   // justert etter test 2 (boss var kuttet til venstre i bilde 1); ikke testet etterpå
+const A = { x: -14.5, y: 3.8, z: -6.5, tx: -24.5, ty: 1.6, tz: -11.5, fov: 56 };   // runde 3: lenger bak og bredere så hele mauren og figuren er med i bilde 1
 const B = { x: -16.5, y: 2.6, z: -11.8, tx: -24, ty: 1.6, tz: -14.5, fov: 46 };
 const S = { s0: 5, s1: 14, back0: 21, back1: 29, jump: 29, jumpEnd: 33 };   // sidesteg (touch.x = +1), tilbake (-1), hopp (Space)
 module.exports = {
