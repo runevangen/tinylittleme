@@ -10,7 +10,7 @@
 // Delene og koblingene løses i en fast rekkefølge uavhengig av hvilken rekkefølge de ble plassert i (sortert etter geometri), så samme bygg gir alltid samme resultat uansett.
 // Fast tidssteg og fast rekkefølge: samme bygg gir alltid samme resultat (se test_buildphys.mjs).
 import { partType, layout, toWorldPt, PR } from './build_logic.js';
-import { MATERIALS, BAND, buckleLoad, tensionCap, crushCap, FRIC_DEFAULT, CRUSH_FILTER, AXIAL_CAL } from './build_materials.js';   // R49a2: materialtabell (inkl. R46-lekene)
+import { MATERIALS, BAND, materialOf, buckleLoad, tensionCap, crushCap, FRIC_DEFAULT, CRUSH_FILTER, AXIAL_CAL } from './build_materials.js';   // R49a2: materialtabell (inkl. R46-lekene)
 import { loadParams, driveSpeed, isLoad, DEFAULT_LOAD } from './build_loads.js';   // R48: leker som testlast
 
 const MOM_FILTER = 0.03;                             // R49a1: glatting av momentet per delsteg (demper støt og numerisk støy)
@@ -30,7 +30,7 @@ export const MATERIAL = { ...MATERIALS };
 export const LINK_SNAP = { tape: 1000, hinge: 6000, rope: 1100, band: BAND.snap, pivot: 30000 };   // kraft (masse·enhet/s²) som får koblingen til å ryke; en vekt henger med 1440, en kloss med 288, så tau og tape ryker av en hengende vekt, ledd holder
 const FRICTION = 0.7;
 
-const mat = (t) => MATERIAL[t] || MATERIAL.block;
+const mat = (t) => MATERIAL[t] || materialOf(t);   // R72: staver (rod_*) har egne materialer
 const isChain = (t) => { const ty = partType(t); return ty.w >= ty.h * 2; };
 
 // byggestedets faste flater: dekk (hyller/kanter) som rektangler, topp = v (standard 0), 5 enheter tykke
@@ -57,10 +57,10 @@ export function createSim(def, opts = {}) {
     const t = part.type, M = mat(t), lay = layout(t), bi = bodies.length, chain = isChain(t), rad = chain && M.d > 1 ? Math.max(PR, partType(t).h / 2) : PR;   // høye bjelker (dybde > 1) har tykke kuler så formen og kontakten stemmer med tegningen
     const idx = lay.map((q) => { const w = toWorldPt(part, q.x, q.y); const k = mk(w.u, w.v, 1 / M.m, rad, bi); P[k].lx = q.x; P[k].ly = q.y; P[k].sx = 0; P[k].sy = 0; if (M.damp) P[k].d = M.damp; return k; });
     const ty = partType(t), body = { id: part.id, bi, oi: orig.get(part.id), type: t, kind: chain ? 'chain' : 'rect', idx, groups: [], alpha: M.alpha ?? 1, mcap: (M.mcap || (M.snap || 99) * 100) * strength, comp: 0, stress: 0, creakT: -9, broken: false, part,
-      pcr: chain ? buckleLoad(t, ty.w, ty.h) * strength * axialK : 0, tcap: chain ? tensionCap(t, ty.h) * strength * axialK : 0, ccapC: chain ? crushCap(t, ty.h) * strength * axialK : 0, ccap: chain ? 0 : crushCap(t, Math.min(ty.w, ty.h)) * strength,   // R49a2: knekk-, strekk- og knusekapasitet
+      pcr: chain ? (M.rope ? Infinity : buckleLoad(t, ty.w, ty.h) * strength * axialK) : 0, tcap: chain ? tensionCap(t, ty.h) * strength * axialK : 0, ccapC: chain ? (M.rope ? Infinity : crushCap(t, ty.h) * strength * axialK) : 0, ccap: chain ? 0 : crushCap(t, Math.min(ty.w, ty.h)) * strength,   // R49a2: knekk-, strekk- og knusekapasitet
       brittle: M.brittle ?? 1, duct: M.duct || 0, nc: 0, nt: 0, cf: 0, shattered: false, bars: [], yielded: false };
     for (const i of idx) P[i].fr = M.fric ?? FRIC_DEFAULT;
-    if (chain && member.has(part.id)) for (let k = 0; k + 1 < idx.length; k++) { const a = P[idx[k]], b = P[idx[k + 1]], c = { type: 'bar', a: idx[k], b: idx[k + 1], rest: Math.hypot(a.x - b.x, a.y - b.y), k: M.axial ?? 1, bar: true, off: false, lam: 0 }; cons.push(c); body.bars.push(c); }   // R49a2: stav mellom nabokuler: delen kan ikke strekkes eller presses sammen, og kraften langs den (trykk/strekk) leses av her
+    if (chain && member.has(part.id)) for (let k = 0; k + 1 < idx.length; k++) { const a = P[idx[k]], b = P[idx[k + 1]], c = { type: M.rope ? 'max' : 'bar', a: idx[k], b: idx[k + 1], rest: Math.hypot(a.x - b.x, a.y - b.y), k: M.axial ?? 1, bar: true, off: false, lam: 0 }; cons.push(c); body.bars.push(c); }   // R49a2: stav mellom nabokuler: delen kan ikke strekkes eller presses sammen, og kraften langs den (trykk/strekk) leses av her
     body.groups.push(mkGroup(idx));
     bodies.push(body); bodyOf.set(part.id, bi);
   }
@@ -117,7 +117,7 @@ export function createSim(def, opts = {}) {
     const bi = l.b ? bodyOf.get(l.b) : -1; if (l.b && bi === undefined) continue;
     const A = bodies[ai].part, wa = toWorldPt(A, l.la.x, l.la.y), B = l.b ? bodies[bi].part : null;
     const wb = l.b ? toWorldPt(B, l.lb.x, l.lb.y) : { u: l.g.u, v: l.g.v };
-    const link = { id: l.id, oi: origLink.get(l.id) ?? 1e9, la: l.la, lb: l.lb, kind: l.kind, a: ai, b: bi, cons: [], broken: false, over: 0, snap: LINK_SNAP[l.kind] * strength, pa: -1, pb: -1, hidden: l.kind === 'pivot' };
+    const link = { id: l.id, oi: origLink.get(l.id) ?? 1e9, la: l.la, lb: l.lb, kind: l.kind, a: ai, b: bi, cons: [], broken: false, over: 0, snap: LINK_SNAP[l.kind] * strength * (l.k || 1), pa: -1, pb: -1, hidden: l.kind === 'pivot' };
     if (l.kind === 'band') {
       link.pa = nearest(ai, wa.u, wa.v, 1)[0]; link.pb = bi >= 0 ? nearest(bi, wb.u, wb.v, 1)[0] : pin(wb.u, wb.v);
       const c = { a: link.pa, b: link.pb, rest: dist(link.pa, link.pb), k: 1, type: 'band', link, lam: 0 }; cons.push(c); link.cons.push(c);
@@ -172,6 +172,7 @@ export function createSim(def, opts = {}) {
     let lift = 0; for (const i of B.idx) for (const bx of boxes) { const p = P[i]; if (p.x > bx.x0 - p.r && p.x < bx.x1 + p.r && p.y < bx.y1 + p.r && p.y > bx.y0) lift = Math.max(lift, bx.y1 + p.r - p.y); }
     if (lift > 0 && lift < 1) for (const i of B.idx) { P[i].y += lift; P[i].py = P[i].y; }
   }
+  for (const q of def.noCollide || []) { const x = bodyOf.get(q[0]), y = bodyOf.get(q[1]); if (x !== undefined && y !== undefined && x !== y) noCol.add(x < y ? `${x},${y}` : `${y},${x}`); }   // R72: staver som møtes i samme knutepunkt skal ikke støte mot hverandre
   const nb = bodies.length, cl = new Float64Array(nb);   // cl: kontaktimpuls per del i dette delsteget (til knusing av klosser)
   const bbox = bodies.map(() => ({ x0: 0, y0: 0, x1: 0, y1: 0 }));
   const noColide = (a, b) => noCol.has(a < b ? `${a},${b}` : `${b},${a}`);

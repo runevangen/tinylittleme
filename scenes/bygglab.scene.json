@@ -802,6 +802,19 @@
               ]
             }
           ]
+        },
+        "grid": {
+          "step": 8.75,
+          "stars": {
+            "three": {
+              "cost": 5,
+              "parts": 4
+            },
+            "two": {
+              "cost": 9,
+              "parts": 8
+            }
+          }
         }
       },
       {
@@ -1427,6 +1440,19 @@
               ]
             }
           ]
+        },
+        "grid": {
+          "step": 6.25,
+          "stars": {
+            "three": {
+              "cost": 12,
+              "parts": 12
+            },
+            "two": {
+              "cost": 20,
+              "parts": 18
+            }
+          }
         }
       },
       {

@@ -14,7 +14,7 @@ const WANT = {
   markerBudget: [6, 2, 0], infoMarks: [true, false, false], worldArrow: [true, true, false], compass: [true, true, false], nextLine: ['full', 'plain', 'none'],
   guideText: [true, false, false], showMe: [true, true, false], routeGlow: [true, false, false], introSweep: [true, true, false], introMark: [true, false, false],
   introHint: [true, false, false], helpCards: ['always', 'first', 'off'], contextHints: [true, true, false], failTips: [3, 5, 0], landingMarker: [true, true, false],
-  waterWarn: [true, true, false], minimap: [true, true, false], subgoalText: [true, true, false], hintBubbles: [true, true, false],
+  waterWarn: [true, true, false], minimap: [true, true, false], subgoalText: [true, true, false], hintBubbles: [true, true, false], gridHint: [true, true, false],
 };
 assert.deepEqual([...HELP_KEYS].sort(), Object.keys(WANT).sort(), 'tabellen har akkurat de forventede radene');
 for (const [k, vals] of Object.entries(WANT)) DIFFS.forEach((d, i) => assert.equal(PROFILE[d][k], vals[i], `${k} på ${d}`));

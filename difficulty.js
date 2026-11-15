@@ -30,6 +30,7 @@ const ROWS = {
   waterWarn:     [true, true, false],                // vannvarsel og vannstand (R65)
   minimap:       [true, true, false],                // minikart og oversikt-knapp
   subgoalText:   [true, true, false],                // delmåltekst i toppbåndet og delmål-panelet
+  gridHint:      [true, true, false],                // R72: rutenett-bygging: lang hjelpetekst («trykk to punkter for en stav»); ellers kort tekst
   hintBubbles:   [true, true, false],                // løse hint-bobler (tastaturhjelpen H, «trykk for å gå videre»)
 };
 export const HELP_KEYS = Object.keys(ROWS);

@@ -3,6 +3,7 @@
 //  - terskler per byggested står som data i scenen (`stars` på stedet), ellers brukes DEFAULT_STARS
 //  - smuler «kjøper» ekstra deler: BONUS låser opp en ekstradel ved et antall smuler (tatt i brettet, eller beste noensinne i brettet)
 // Lagring (beste stjerner og opplåste ekstradeler) ligger i rewards.js (tlm.bstars, tlm.bbonus).
+import { parseRod, rodPrice } from './build_materials.js';
 export const PART_COST = {
   plank_s: 1, plank_l: 2, plank_t: 3, block: 1, weight: 4, seesaw: 3,          // tre er billig, tunge ting er dyre
   pencil: 1, ruler: 1, lego: 2, book: 4, sponge: 2,                 // leker (R46)
@@ -20,18 +21,18 @@ export const BONUS_IDS = BONUS.map((b) => b.id);
 export const bonusTypes = () => Object.fromEntries(BONUS.map((b) => [b.id, b.type]));
 export const isBonusId = (id) => BONUS_IDS.includes(id);
 
-export const partCost = (type) => PART_COST[type] ?? DEFAULT_COST;
+export const partCost = (type) => { const r = parseRod(type); return r ? rodPrice(r.mat, r.len) : (PART_COST[type] ?? DEFAULT_COST); };   // R72: stav = pris per lengde (build_materials.js)
 export const linkCost = (kind) => LINK_COST[kind] ?? 1;
 
 // placed: [{ type }] (plasserte deler), links: [{ kind }]. Kun det som ligger på brettet teller.
 export function buildCost(placed, links) {
   const ps = placed || [], ls = links || [];
-  return { parts: ps.length, cost: ps.reduce((s, p) => s + partCost(p.type), 0) + ls.reduce((s, l) => s + linkCost(l.kind), 0) };
+  return { parts: ps.length, cost: ps.reduce((s, p) => s + partCost(p.type), 0) + ls.reduce((s, l) => s + (l.free ? 0 : linkCost(l.kind)), 0) };   // R72: knutepunkt (free) er gratis
 }
 const num = (x) => (Number.isFinite(x) && x >= 0 ? x : null);
 // terskler for et sted: { three: { cost, parts }, two: { cost, parts } }. Ugyldig eller manglende data faller tilbake på standard.
-export function starThresholds(site) {
-  const s = site?.stars, D = DEFAULT_STARS, one = (k) => {
+export function starThresholds(site, grid = false) {
+  const s = (grid && site?.grid?.stars) || site?.stars, D = DEFAULT_STARS, one = (k) => {
     const c = num(s?.[k]?.cost), p = num(s?.[k]?.parts);
     return { cost: c ?? D[k].cost, parts: p ?? D[k].parts };
   };
@@ -40,7 +41,7 @@ export function starThresholds(site) {
 }
 // stjerner (1-3) for et vellykket bygg + hva som skal til for neste stjerne (null ved tre)
 export function starsFor(site, placed, links) {
-  const { cost, parts } = buildCost(placed, links), T = starThresholds(site);
+  const { cost, parts } = buildCost(placed, links), T = starThresholds(site, (placed || []).length > 0 && placed.every((p) => parseRod(p.type)));   // R72: rutenett-bygg har egne terskler (site.grid.stars)
   const stars = cost <= T.three.cost && parts <= T.three.parts ? 3 : cost <= T.two.cost && parts <= T.two.parts ? 2 : 1;
   const next = stars === 3 ? null : stars === 2 ? { stars: 3, ...T.three } : { stars: 2, ...T.two };
   return { cost, parts, stars, next };

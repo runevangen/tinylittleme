@@ -24,6 +24,9 @@ import { submitBridge, bestBridges, bridgeLevel, netReady, standing } from './bu
 import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum } from './build_world.js';   // R26: bygget flyttes ut i verdenen
 import { isLab, labSitesOf, labFill, labRegister, labTrayItems, labStepSite, labInfoOf, labNameKey, labTaskKey, labFlagStep, labReachedSave, labReachedLoad, labHome, labFar } from './bygglab_logic.js';   // R67: Bygglab
 import { labCss, labMarkup, labSync, LAB_TOP } from './bygglab_view.js';
+import { createGridUI, gridCss, gridMarkup } from './grid_view.js';   // R72: rutenett-bygging: knutepunkter og staver
+import { GRID_PX } from './grid_view.js';
+import { gridStep, isGrid, simDef as gridSimDef, gUndo, gReset, wipe as gridWipe, exportAny, importAny, gApplyImport, gridSave, gridLoad, gridStats } from './grid_logic.js';
 
 const css = `
 #bld{position:fixed;inset:0;z-index:7;display:none;background:linear-gradient(#26324bfa,#141a2cff);touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font:600 14px system-ui}
@@ -76,12 +79,12 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true }) {
+export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridMax = () => 6.5 }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
   const labSites = isLab(LEVEL) ? labSitesOf(LEVEL) : [], lab = labSites.length ? { reached: new Set(), moved: false, home: null } : null;   // R67: Bygglab (bygglab_logic.js): stedene på rad, ◀ ▶, ubegrenset mengde, målflagg
-  const st = document.createElement('style'); st.textContent = css + (lab ? labCss() : ''); document.head.appendChild(st);
+  const st = document.createElement('style'); st.textContent = css + gridCss() + (lab ? labCss() : ''); document.head.appendChild(st);
   const types = { ...partTypes(LEVEL), ...bonusTypes() };   // R47: ekstradelene (smulebudsjett) har egne id-er og bor i samme tabell
   const mem = new Map(), st0 = store || { get: (k, d) => (mem.has(k) ? mem.get(k) : d), set: (k, v) => mem.set(k, v) };   // uten lagring (tester) holdes alt i minnet
   const bonusOpen = () => (getBonus() ? [...new Set([...unlockedBonus(getCrumbs(), getBonusStep()).map((b) => b.id), ...getBonusUnlocks(st0, levelId, Object.keys(bonusTypes()))])] : []);
@@ -89,7 +92,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   const builds = new Map();                  // stedets id -> byggetilstand
   const labOpts = () => ({ unlimited: getLabFree() || allParts() });
   const getB = (site) => { let b = builds.get(site.id); if (!b) { b = B0(site); builds.set(site.id, b); if (lab) labFill(b, types, labOpts()); } return b; };
-  const TOPPX = () => (innerHeight <= 520 ? 100 : 130) + (lab ? (innerHeight <= 520 ? LAB_TOP - 6 : LAB_TOP) : 0), BOTPX = () => (innerHeight <= 520 ? 110 : 160) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
+  const TOPPX = () => (innerHeight <= 520 ? 100 : 130) + (lab ? (innerHeight <= 520 ? LAB_TOP - 6 : LAB_TOP) : 0), BOTPX = () => (grid.on() ? (innerHeight <= 520 ? 96 : 124) : (innerHeight <= 520 ? 110 : 160)) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let lastTap = null, zoomMsg = '', zoomMsgT = 0;   // R44: dobbelttrykk og zoom-melding
   let loadMore = null, simLoad = DEFAULT_LOAD, sim = null, simAcc = 0, simMarks = [], simDone = false, simT0 = 0, confetti = [], simBreaks = [], simWhy = null, simHelp = null, breakAt = -9;   // R25: PRØV
@@ -128,7 +131,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   function hideWorld(id) { const g = worldMeshes.get(id); if (g) { scene.remove(g); g.traverse?.((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); }); worldMeshes.delete(id); } }
   function commitWorld(site, why) {          // R26: flytt bygget ut i verdenen som solid
     if (!getWorld() || !LEVEL.boxes) return 0; const B = getB(site);
-    const wp = settledPlaced({ site, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() }); worldPlaced.set(site.id, wp);   // delene der de ender opp (klosser har falt på plass)
+    const wp = settledPlaced(isGrid(B) ? gridSimDef(B) : { site, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() }); worldPlaced.set(site.id, wp);   // delene der de ender opp (klosser har falt på plass)
     const n = applyBuilt(LEVEL, site, wp);
     committed.set(site.id, sigOf(B)); if (liftOut(LEVEL, player, site.id)) logEv('bygg', 'figuren løftet ut av bygget'); showWorld(site);
     logEv('bygg', `bygget står i verdenen (${why}): ${site.id}, ${B.placed.length} deler, ${n} flater`); return n;
@@ -151,20 +154,25 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   // ---- DOM ----
   const root = document.createElement('div'); root.id = 'bld';
   root.innerHTML = `<canvas></canvas><button class="bmenu" data-a="menu"></button><div class="bt top"><button data-a="back"></button><button data-a="undo"></button><button data-a="reset"></button><button data-a="try" class="go"></button></div>
-  ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>`;
+  ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-a="mode" class="bmode"></button><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>${gridMarkup()}`;   // R72: modusknapp og materialvalg (rutenett)
   if (lab) root.classList.add('lab');
   document.body.appendChild(root);
   const cv = root.querySelector('canvas'), g2 = cv.getContext('2d'), tray = root.querySelector('.tray'), loadsEl = root.querySelector('.loads'), hintEl = root.querySelector('.hint'), modal = root.querySelector('.modal'), mTitle = modal.querySelector('.mt'), mText = modal.querySelector('textarea'), mList = modal.querySelector('.list'), sBtn = (k) => root.querySelector(`[data-s="${k}"]`);
   const btn = (a) => root.querySelector(`[data-a="${a}"]`);
   const enterBtn = document.createElement('button'); enterBtn.id = 'btnBuild'; document.body.appendChild(enterBtn);
   const dpr = () => Math.min(2, window.devicePixelRatio || 1);
+  const grid = createGridUI({   // R72: rutenett-bygging (grid_view.js, grid_logic.js)
+    root, T, toast, logEv, buzz, audio, onChange, getB: () => (active ? getB(active) : null), site: () => active, view: () => view, toWorld: (x, y) => toWorld(view, W, H, x, y), loc: (e) => loc(e), now: () => tNow, botY: () => H - BOTPX(), isSim: () => !!sim, trayRender: () => trayRender(),
+    getOn: () => getGrid(), getHint: () => getGridHint(), getMaxLen: () => getGridMax(),
+    startPan: (e, x, y) => { sel = null; gest = { kind: 'pan', x, y, cu: view.cu, cv: view.cv, t: e.timeStamp || performance.now(), moved: false }; try { cv.setPointerCapture(e.pointerId); } catch { /* ok */ } },
+  });
   function labels() {
     btn('menu').textContent = menuLabel(); btn('back').textContent = T('build.back'); btn('undo').textContent = T('build.undo'); btn('reset').textContent = T('build.reset'); btn('try').textContent = T('build.try');
     btn('snap').textContent = T(getSnap() ? 'build.snapOn' : 'build.snapOff'); btn('snap').classList.toggle('on', getSnap()); btn('del').textContent = T('build.del');
     for (const k of LINK_KINDS) { const b = root.querySelector(`[data-t="${k}"]`); b.textContent = T('build.tool.' + k); b.classList.toggle('on', tool === k); }
     if (sim) btn('try').textContent = T('build.stop');
     for (const k of ['replay', 'copy', 'paste', 'best']) sBtn(k).textContent = T('build.share.' + k); modal.querySelector('[data-m="use"]').textContent = T('build.share.use'); modal.querySelector('[data-m="close"]').textContent = T('build.share.close'); shareSync();
-    enterBtn.textContent = TOUCH ? T('build.enter') : T('build.enterKey'); labUI();
+    enterBtn.textContent = TOUCH ? T('build.enter') : T('build.enterKey'); labUI(); grid.sync();
   }
   function size() { W = innerWidth; H = innerHeight; const d = dpr(); if (cv.width !== Math.round(W * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); } }
 
@@ -191,7 +199,11 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   }
 
   // ---- R44: zoom ----
-  const fitNow = () => fitView(active, W, H, 24, TOPPX(), BOTPX());
+  const fitNow = () => {   // R72: i rutenett-modus vises punktene minst 44 px fra hverandre (om stedet er bredt nok), midtstilt rundt dekket
+    const v = fitView(active, W, H, 24, TOPPX(), BOTPX()); if (!grid.on()) return v;
+    const sc = clampScale(Math.max(v.scale, GRID_PX / gridStep(active))), free = (H - TOPPX() - BOTPX()) / sc;
+    return { ...v, scale: sc, cu: 0, cv: Math.min(active.h / 2, Math.max(0.5, free / 2 - 1.2)), oy: (TOPPX() - BOTPX()) / 2 };
+  };
   const curGrid = () => gridForScale(view.scale, getFine());
   const syncSnap = (B) => { B.grid = curGrid(); B.snapR = anchorRadius(view.scale); B.lego = getLego(); };   // plassering er alltid et tall i enheter: samme verdi uansett zoom, bare rutenettets trinn følger zoomen
   const zoomTarget = () => { const B = getB(active), id = drag?.id || sel, p = id && (drag && drag.id === id ? drag.part : B.placed.find((z) => z.id === id)); return p ? { u: p.u, v: p.v } : null; };
@@ -236,6 +248,11 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     // festepunkter
     for (const an of siteAnchors(S)) { const p = sx(an.u, an.v); g2.beginPath(); g2.arc(p.x, p.y, 7, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); g2.strokeStyle = '#0b1020'; g2.lineWidth = 2; g2.stroke(); }
     if (sim) { drawSim(S, sx); drawBudget(B); return; }
+    if (grid.on()) {   // R72: rutenett-modus: prikker, knuter og staver i stedet for deler fra brettet
+      grid.draw(sx, tNow, g2); drawBudget(B);
+      hintEl.textContent = (zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || grid.hint();
+      btn('del').disabled = !(grid.selNode || grid.selRod); btn('undo').disabled = !B.history.length; btn('reset').disabled = !B.rg.rods.length; return;
+    }
     // deler
     const all = B.placed.filter((p) => !(drag && drag.id === p.id)).concat(drag && drag.part ? [drag.part] : []);
     for (const p of all) {
@@ -261,7 +278,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   // R47: kostnad og stjerner (og smuler) nede til høyre over brettet. Vanlige canvas-kall, ingen nye tegnejobber utover én avrundet boks og noen tekstlinjer.
   // R49a1: «Tåler ca. N klosser» (build_capacity.js): regnes ut litt etter at du slipper en del (ikke mens du drar), og bufres per bygg
   let capKey = '', capRes = null, capTimer = 0; const capCache = new Map();
-  const capOn = () => getCap() || (!!lab && !!active?.lab?.cap);   // R67: Bygglab: «Tåler X»-stedet viser alltid måleren
+  const capOn = () => !grid.on() && getCap() || (!!lab && !!active?.lab?.cap);   // R67: Bygglab: «Tåler X»-stedet viser alltid måleren
   function capUpdate(B) {
     if (!capOn() || !B.placed.length) { capRes = null; capKey = ''; return; }
     if (drag) { capKey = ''; return; }
@@ -277,7 +294,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   // R49a2: hjelp som viser ledd som kan svinge og slanke deler (build_truss.js). Algebra uten simulering, bufret per bygg.
   let helpKeyStr = '', helpRes = null;
   function helpOf(B) {
-    if (!getTruss() || !active) return null;
+    if (!getTruss() || !active || grid.on()) return null;
     const key = `${active.id}|${sigOf(B)}|${JSON.stringify(B.links)}|${getStrength() * getAxial()}`; if (key === helpKeyStr) return helpRes;
     helpKeyStr = key; helpRes = B.placed.length ? trussHelp({ placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() * getAxial() }) : null;
     if (helpRes && (helpRes.joints.length || helpRes.slender.length)) logEv('bygg', `hjelp: ${helpRes.joints.length} ledd kan svinge, ${helpRes.slender.length} slanke deler${helpRes.suggest ? ', diagonal foreslått' : ''}`);
@@ -366,7 +383,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     for (const m of simMarks) { const q = sx(m.u, m.v), k = 9 + 3 * Math.sin(tNow * 8); g2.strokeStyle = '#ff3b30'; g2.lineWidth = 4; g2.lineCap = 'round'; g2.beginPath(); g2.moveTo(q.x - k, q.y - k); g2.lineTo(q.x + k, q.y + k); g2.moveTo(q.x + k, q.y - k); g2.lineTo(q.x - k, q.y + k); g2.stroke(); }
     for (const m of simMarks) { const ring = ringAt(tNow - m.t0); if (!ring) continue; const q = sx(m.u, m.v); g2.beginPath(); g2.arc(q.x, q.y, ring.r, 0, 7); g2.strokeStyle = `rgba(255,59,48,${ring.a.toFixed(2)})`; g2.lineWidth = 4; g2.stroke(); }   // R45: ring der det røk
     if (simWhy && simDone) { const q = sx(simWhy.u, simWhy.v), k = 20 + 3 * Math.sin(tNow * 6); g2.beginPath(); g2.arc(q.x, q.y, k, 0, 7); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 3; g2.setLineDash([6, 5]); g2.stroke(); g2.setLineDash([]); }   // R45: gul ring rundt svakeste punkt
-    if (stressOn) { const lx = 12, ly = H - BOTPX() - 22, lw = Math.min(150, W * 0.4), gr = g2.createLinearGradient(lx, 0, lx + lw, 0); gr.addColorStop(0, stressCss(0)); gr.addColorStop(0.5, stressCss(0.5)); gr.addColorStop(1, stressCss(1)); g2.fillStyle = gr; g2.fillRect(lx, ly, lw, 7); g2.strokeStyle = '#2a1d10'; g2.lineWidth = 1; g2.strokeRect(lx, ly, lw, 7); g2.fillStyle = '#fff'; g2.font = '600 10px system-ui'; g2.textAlign = 'left'; g2.fillText(T('build.legend'), lx, ly - 3); g2.textAlign = 'right'; g2.fillText(T('build.legend2'), lx + lw, ly - 3); g2.textAlign = 'left'; }   // R45: forklaring på fargene
+    if (stressOn) { const lx = 12, ly = H - BOTPX() - 22 + (isGrid(getB(active)) ? 30 : 0), lw = Math.min(150, W * 0.4), gr = g2.createLinearGradient(lx, 0, lx + lw, 0); gr.addColorStop(0, stressCss(0)); gr.addColorStop(0.5, stressCss(0.5)); gr.addColorStop(1, stressCss(1)); g2.fillStyle = gr; g2.fillRect(lx, ly, lw, 7); g2.strokeStyle = '#2a1d10'; g2.lineWidth = 1; g2.strokeRect(lx, ly, lw, 7); g2.fillStyle = '#fff'; g2.font = '600 10px system-ui'; g2.textAlign = 'left'; g2.fillText(T('build.legend'), lx, ly - 3); g2.textAlign = 'right'; g2.fillText(T('build.legend2'), lx + lw, ly - 3); g2.textAlign = 'left'; }   // R45: forklaring på fargene
     if (simDone && sim.state.state === 'lost' && getTruss() && simHelp) {      // R49a2: etter en feilet prøve: ledd som kan svinge (ringer ved leddene slik de ligger nå) og deler nær knekking
       const at = new Map(pose.links.map((l) => [l.id, l.a])); drawHelp({ joints: simHelp.joints, suggest: null, slender: [] }, sx, true, (j) => { const a = at.get(j.id); return a ? sx(a.u, a.v) : null; });
       for (const a of sim.axial()) { const r = a.nc / Math.min(a.pcr, a.ccap); if (a.broken || r < 0.6) continue; const part = pose.parts.find((p) => p.id === a.id); if (!part) continue; const m = part.pts[part.pts.length >> 1], q = sx(m.u, m.v); g2.font = '800 12px system-ui'; g2.textAlign = 'center'; g2.fillStyle = '#ffa940'; g2.fillText('⚠ ' + Math.round(r * 100) + '%', q.x, q.y - 12); g2.textAlign = 'start'; }
@@ -388,9 +405,10 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   }
   const onCanvasDown = (e) => {
     if (!active) return; e.preventDefault(); const { x, y } = loc(e), B = getB(active); ptrs.set(e.pointerId, { x, y });
-    if (ptrs.size === 2) { drag = drag && drag.fromTray ? drag : null; startGesture(); return; }
+    if (ptrs.size === 2) { drag = drag && drag.fromTray ? drag : null; grid.cancel(); startGesture(); return; }
     const w = toWorld(view, W, H, x, y), hit = topHit(B, w.u, w.v, pickPad(view.scale));
     if (sim) { ptrs.delete(e.pointerId); return; }
+    if (grid.on()) { grid.down(e, x, y); return; }   // R72: rutenett-modus tolker trykket selv (knute, stav, flytt eller panorering)
     const cur = { t: e.timeStamp || performance.now(), x, y };
     if (getDbl() && !tool && !drag && isDoubleTap(lastTap, cur)) { lastTap = null; ptrs.delete(e.pointerId); setView(dblTapView(view, fitNow(), W, H, x, y), 'dobbelttrykk'); return; }   // R44
     if (tool && hit) { const before = hit.rot; startDrag(e, hit.id, false); drag.before = { u: hit.u, v: hit.v, rot: before }; drag.x0 = x; drag.y0 = y; drag.tapLink = w; ptrs.delete(e.pointerId); return; }   // R70: med et verktøy valgt kan en del fortsatt dras; bare et trykk (uten å dra) kobler
@@ -437,6 +455,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
       if (part && gest.rot != null) { const da = a - gest.a; if (Math.abs(da) > 0.12 || gest.twisted) { if (!gest.twisted) { gest.twisted = true; gest.hist = true; } part.rot = twistRot(gest.rot, gest.a, a); } }
       return;
     }
+    if (grid.on() && grid.move(e)) return;
     if (drag && e.pointerId === drag.pid) {
       const r = loc(e), w = toWorld(view, W, H, r.x, r.y); drag.x = r.x; drag.y = r.y; drag.part.u = w.u + drag.ox; drag.part.v = w.v + drag.oy;
     } else if (gest?.kind === 'pan' && ptrs.has(e.pointerId) && ptrs.size === 1) {
@@ -445,6 +464,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   });
   function up(e) {
     if (!active) return; ptrs.delete(e.pointerId); syncSnap(getB(active));
+    if (grid.on() && grid.up(e)) return;
     if (gest?.kind === 'two' && ptrs.size < 2) {
       if (gest.twisted) { const B = getB(active), p = B.placed.find((z) => z.id === sel); if (p) { const r = p.rot; p.rot = gest.rot; place(B, p.id, p.u, p.v, r); logEv('bygg', `vri ${p.id}`); onChange?.(); } }
       gest = null;
@@ -461,7 +481,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
       }
       drag = null; trayRender();
     }
-    if (ptrs.size === 0 && gest?.kind === 'pan') { if (!gest.moved && getDbl()) lastTap = { t: e.timeStamp || performance.now(), x: gest.x, y: gest.y }; gest = null; }
+    if (ptrs.size === 0 && gest?.kind === 'pan') { if (grid.on() && !sim) { if (!gest.moved) grid.tapPoint(gest.x, gest.y); grid.release(); } else if (!gest.moved && getDbl()) lastTap = { t: e.timeStamp || performance.now(), x: gest.x, y: gest.y }; gest = null; }
   }
   addEventListener('pointerup', up); addEventListener('pointercancel', up);
   cv.addEventListener('wheel', (e) => { if (!active) return; e.preventDefault(); const r = loc(e); view = zoomAbout(view, W, H, r.x, r.y, view.scale * (e.deltaY < 0 ? 1.12 : 1 / 1.12)); }, { passive: false });
@@ -479,14 +499,14 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     if (sim) stopSim('sted');
     const B = getB(active);
     if (committed.has(active.id) && committed.get(active.id) !== sigOf(B)) { uncommitWorld(active, 'endret uten ny prøve'); solved.delete(active.id); }
-    closeModal(); tool = null; linkFrom = null; selLink = null; sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = '';
-    active = next; getB(next).snap = getSnap(); size(); view = fitView(next, W, H, 24, TOPPX(), BOTPX()); hint = ''; lab.moved = true;
+    closeModal(); tool = null; linkFrom = null; selLink = null; sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; grid.reset();
+    active = next; getB(next).snap = getSnap(); size(); view = fitNow(); hint = ''; lab.moved = true;
     labels(); trayRender(); const i = labInfo(); logEv('bygglab', `sted ${i.n}/${i.of} (${i.key})`); onChange?.(); return true;
   }
   function labReset(s, why) {
     const b = getB(s), had = !!(b.placed.length || b.links.length || committed.has(s.id) || solved.has(s.id) || lab.reached.has(s.id) || passedL.has(s.id) || recs.has(s.id));
     if (active === s && sim) stopSim('nullstill');
-    uncommitWorld(s, 'nullstilt'); b.placed = []; b.links = []; b.history = []; solved.delete(s.id); passedL.delete(s.id); recs.delete(s.id); lab.reached.delete(s.id); loadSel.delete(s.id);
+    uncommitWorld(s, 'nullstilt'); gridWipe(b); if (active === s) grid.reset(); solved.delete(s.id); passedL.delete(s.id); recs.delete(s.id); lab.reached.delete(s.id); loadSel.delete(s.id);
     if (active === s) { sel = null; selLink = null; linkFrom = null; drag = null; trayRender(); labUI(); }
     logEv('bygglab', `nullstilt ${s.id} (${why})`); onChange?.(); return had;
   }
@@ -497,15 +517,16 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   const act = {
     back: () => { if (sim) stopSim('tilbake'); else close('tilbake'); },
     menu: () => { onMenu?.(); },
-    undo: () => { const B = getB(active); if (undo(B)) { logEv('bygg', 'angre'); sel = null; trayRender(); onChange?.(); } },
-    reset: () => { const B = getB(active); if (reset(B)) { logEv('bygg', 'nullstill'); sel = null; trayRender(); onChange?.(); } },
+    mode: () => { if (grid.toggleMode()) { sel = null; selLink = null; view = fitNow(); labels(); } },
+    undo: () => { const B = getB(active); if (gUndo(B)) { grid.clearSel(); logEv('bygg', 'angre'); sel = null; trayRender(); onChange?.(); } },
+    reset: () => { const B = getB(active); if (isGrid(B) ? gReset(B) : reset(B)) { grid.clearSel(); logEv('bygg', 'nullstill'); sel = null; trayRender(); onChange?.(); } },
     try: () => (sim ? stopSim('stopp') : startSim()),
     rotl: () => rot(ROT_STEP), rotr: () => rot(-ROT_STEP),   // R30: ↺ dreier mot klokka (positiv vinkel i sideriss med v oppover), ↻ med klokka
     snap: () => { setSnap(!getSnap()); const B = getB(active); B.snap = getSnap(); labels(); logEv('bygg', `snapping ${getSnap() ? 'på' : 'av'}`); },
-    del: () => { const B = getB(active); if (selLink && removeLink(B, selLink)) { logEv('bygg', `fjernet ${selLink}`); selLink = null; onChange?.(); } else if (sel && remove(B, sel)) { logEv('bygg', `tilbake i brettet ${sel}`); sel = null; trayRender(); onChange?.(); } },
+    del: () => { const B = getB(active); if (isGrid(B)) { grid.del(); return; } if (selLink && removeLink(B, selLink)) { logEv('bygg', `fjernet ${selLink}`); selLink = null; onChange?.(); } else if (sel && remove(B, sel)) { logEv('bygg', `tilbake i brettet ${sel}`); sel = null; trayRender(); onChange?.(); } },
   };
   function rot(d) { const B = getB(active); if (sel && rotate(B, sel, d)) { logEv('bygg', `roter ${sel}`); onChange?.(); } }
-  root.addEventListener('click', (e) => { const lb = e.target.closest?.('button')?.dataset.lb; if (lb && lab && active && labAct[lb]) { labAct[lb](); return; } const l = e.target.closest?.('button')?.dataset.l; if (l && active && !sim && loadList().includes(l)) { loadSel.set(active.id, l); logEv('bygg', `last valgt: ${l}`); loadsRender(); return; } const sh = e.target.closest?.('button')?.dataset.s; if (sh && active && shareAct[sh]) { shareAct[sh](); return; } const t = e.target.closest?.('button')?.dataset.t; if (t) { tool = tool === t ? null : t; linkFrom = null; labels(); return; } const a = e.target.closest?.('button')?.dataset.a; if (a && act[a]) act[a](); });
+  root.addEventListener('click', (e) => { const gm = e.target.closest?.('button')?.dataset.g; if (gm && active && !sim) { grid.setMat(gm); return; } const lb = e.target.closest?.('button')?.dataset.lb; if (lb && lab && active && labAct[lb]) { labAct[lb](); return; } const l = e.target.closest?.('button')?.dataset.l; if (l && active && !sim && loadList().includes(l)) { loadSel.set(active.id, l); logEv('bygg', `last valgt: ${l}`); loadsRender(); return; } const sh = e.target.closest?.('button')?.dataset.s; if (sh && active && shareAct[sh]) { shareAct[sh](); return; } const t = e.target.closest?.('button')?.dataset.t; if (t) { tool = tool === t ? null : t; linkFrom = null; labels(); return; } const a = e.target.closest?.('button')?.dataset.a; if (a && act[a]) act[a](); });
   enterBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); open(); });
   addEventListener('keydown', (e) => {
     if (e.target?.tagName === 'INPUT' || e.target?.tagName === 'TEXTAREA') return;   // R71: skriving i ⚑-boksen skal ikke trigge byggetaster
@@ -520,7 +541,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   // ---- PRØV (R25) ----
   function startSim() {
     const B = getB(active); if (!B.placed.length) { toast(T('build.tryEmpty')); return false; }
-    sim = createSim({ site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial() });
+    sim = createSim(isGrid(B) ? gridSimDef(B) : { site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial() });
     simLoad = curLoad(); loadMore = null; replaying = false; winSolved = false; ghostRec = getGhost() ? recs.get(active.id) || null : null; recorder = createRecorder(sim, { load: simLoad }); simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; simHelp = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
     root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}${ghostRec ? ', med spøkelse' : ''}`); return true;
   }
@@ -541,7 +562,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
       simAcc -= DT; sim.step();
       const evs = sim.drain(); recorder?.frame(sim, evs);   // R50: opptak (bare ekte prøver, ikke replay)
       for (const e of evs) {
-        if (e.type === 'break') { simMarks.push({ u: e.u, v: e.v, t0: tNow }); simBreaks.push({ kind: e.mode || 'plank', id: e.id, t: e.t, u: e.u, v: e.v }); breakAt = tNow; logEv('bygg', e.mode ? `${e.mode === 'buckle' ? 'knakk' : e.mode === 'tear' ? 'revnet' : 'knust'} ${e.id} ved ${e.t.toFixed(1)} s (kraft ${e.m} mot grense ${e.cap})` : `brakk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
+        if (e.type === 'break') { simMarks.push({ u: e.u, v: e.v, t0: tNow }); simBreaks.push({ kind: e.mode || (isGrid(getB(active)) ? 'rod' : 'plank'), id: e.id, t: e.t, u: e.u, v: e.v }); breakAt = tNow; logEv('bygg', e.mode ? `${e.mode === 'buckle' ? 'knakk' : e.mode === 'tear' ? 'revnet' : 'knust'} ${e.id} ved ${e.t.toFixed(1)} s (kraft ${e.m} mot grense ${e.cap})` : `brakk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
         else if (e.type === 'linkbreak') { simMarks.push({ u: e.u, v: e.v, t0: tNow }); simBreaks.push({ kind: e.kind, id: e.id, t: e.t, u: e.u, v: e.v }); breakAt = tNow; logEv('bygg', `${e.kind} røk ${e.id} ved ${e.t.toFixed(1)} s`); audio?.bbreak?.(); buzz?.(25); }
         else if (e.type === 'yield') logEv('bygg', `${e.id} bøyer seg (seigt materiale gir etter)`);
         else if (e.type === 'creak') audio?.bcreak?.(e.stress);
@@ -571,7 +592,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     logEv('bygg', `replay ${active.id}: ${rec.frames.length - 1} steg, last ${simLoad}`); return true;
   }
   function submitBest() {   // etter et vellykket bygg: send til topplista (bare med tester-kode og nett; ellers skjer ingenting)
-    if (!netOk() || !active) return; const B = getB(active), code = exportCode(B); if (!code) return;
+    if (!netOk() || !active) return; const B = getB(active), code = exportAny(B, exportCode); if (!code) return;
     const r = starsFor(active, B.placed, B.links), lvl = bridgeLevel(levelId, active.id); 
     submitBridge({ code: getCode(), level: lvl, version: getVersion(), parts: r.parts, cost: r.cost, stars: r.stars, bcode: code }, netFetch ? { fetchFn: netFetch } : undefined).then((res) => {
       if (res) { logEv('bygg', `beste bygg sendt ${lvl}: nr ${res.rank} (kostnad ${res.cost}, ${res.parts} deler)`); toast(T('build.share.rank', { rank: res.rank })); } else logEv('bygg', `beste bygg ikke sendt ${lvl} (nett eller kode)`);
@@ -584,9 +605,9 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   }
   const closeModal = () => { modal.classList.remove('open'); try { mText.blur?.(); } catch { /* ok */ } };
   function doImport(raw) {
-    const B = getB(active), r = importCode(raw, B);
+    const B = getB(active), r = importAny(raw, B, importCode);
     if (!r.ok) { logEv('bygg', `kode avvist: ${r.why}`); toast(T('build.share.err.' + r.why, { n: r.missing || 0 })); return false; }
-    applyImport(B, r); sel = null; selLink = null; syncSnap(B); logEv('bygg', `kode importert: ${r.placed.length} deler, ${r.links.length} koblinger`); toast(T('build.share.imported', { n: r.placed.length })); trayRender(); onChange?.(); return true;
+    if (r.grid) gApplyImport(B, r); else applyImport(B, r); grid.reset(); sel = null; selLink = null; syncSnap(B); labels(); const nP = r.grid ? r.grid.rods.length : r.placed.length; logEv('bygg', `kode importert: ${nP} ${r.grid ? 'staver' : 'deler'}${r.grid ? '' : ', ' + r.links.length + ' koblinger'}`); toast(T('build.share.imported', { n: nP })); trayRender(); onChange?.(); return true;
   }
   async function showBest() {
     openModal(T('build.share.bestTitle'), { list: true }); mList.textContent = T('build.share.loading'); const site = active, lvl = bridgeLevel(levelId, site.id);
@@ -604,8 +625,8 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     replay: () => { if (sim && !simDone) return; startReplay(); },
     copy: async () => {
       const B = getB(active); if (!B.placed.length) { toast(T('build.share.none')); return; }
-      const code = exportCode(B); if (!code) { toast(T('build.share.long')); return; }
-      logEv('bygg', `kode eksportert: ${code.length} tegn, ${B.placed.length} deler`);
+      const code = exportAny(B, exportCode); if (!code) { toast(T('build.share.long')); return; }
+      logEv('bygg', `kode eksportert: ${code.length} tegn, ${B.placed.length} deler${isGrid(B) ? ' (rutenett)' : ''}`);
       try { if (copyText) await copyText(code); else await navigator.clipboard.writeText(code); toast(T('build.share.copied', { n: code.length })); }
       catch { openModal(T('build.share.show'), { text: code }); }
     },
@@ -626,7 +647,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     for (const q of parts) if (q.got) addPart(B, q.id);
     if (allParts()) for (const q of parts) addPart(B, q.id);
     sim = null; simDone = false; recorder = null; ghostRec = null; replaying = false; closeModal(); root.classList.remove('sim'); tool = null; linkFrom = null; selLink = null;
-    sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; size(); view = fitView(s, W, H, 24, TOPPX(), BOTPX()); hint = '';
+    sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; grid.reset(); size(); view = fitNow(); hint = '';
     document.body.classList.add('building'); labels(); trayRender();
     logEv('bygg', `inn ${s.id}: ${B.have.length} deler, ${B.placed.length} plassert`);
     return true;
@@ -672,11 +693,11 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     },
     showMarks(v) { for (const { g } of siteMeshes) g.visible = !!v; },   // R68: stedsrammene kan skjules (kinomodus)
     
-    save: () => (enabled ? { ...(lab ? { lab: { flags: labReachedSave(lab.reached) } } : {}), got: gotPartIds(LEVEL), solved: [...solved], loads: Object.fromEntries([...passedL].map(([k, e]) => [k, cleanPassed(e.ids)])), sites: Object.fromEntries([...builds].map(([k, b]) => [k, serialize(b)])) } : undefined),
+    save: () => (enabled ? { ...(lab ? { lab: { flags: labReachedSave(lab.reached) } } : {}), got: gotPartIds(LEVEL), solved: [...solved], loads: Object.fromEntries([...passedL].map(([k, e]) => [k, cleanPassed(e.ids)])), sites: Object.fromEntries([...builds].map(([k, b]) => [k, { ...serialize(b), ...gridSave(b, serialize) }])) } : undefined),
     load(data) {
       if (!enabled || !data) return; restoreParts(LEVEL, data.got); solved.clear(); for (const id of Array.isArray(data.solved) ? data.solved : []) solved.add(id);
       if (lab) lab.reached = labReachedLoad(data.lab?.flags, labSites);
-      for (const s of sites) { const d = data.sites?.[s.id]; if (!d) continue; const b = getB(s); if (lab) labRegister(types, d.have); restore(b, { have: d.have, placed: d.placed, links: d.links }); for (const id of data.got || []) addPart(b, id); }
+      for (const s of sites) { const d = data.sites?.[s.id]; if (!d) continue; const b = getB(s); if (lab) labRegister(types, d.have); restore(b, { have: d.have, placed: d.placed, links: d.links }); gridLoad(b, d, (B2, c) => restore(B2, { have: d.have, placed: c.placed, links: c.links })); for (const id of data.got || []) addPart(b, id); }
       lastBonusKey = ''; syncBonus(false);
       for (const s of sites) { const ids = cleanPassed(data.loads?.[s.id]); if (ids.length) passedL.set(s.id, { sig: sigOf(getB(s)), ids }); }
       for (const s of sites) if (solved.has(s.id) && getB(s).placed.length) commitWorld(s, 'fortsett');   // R26: bygget gjenopprettes i verdenen
@@ -686,7 +707,8 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     starsMap, bonusOpen, get lastResult() { return winRes; }, get cap() { return capRes; },
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'),
-    startReplay: () => !!active && startReplay(), get replaying() { return replaying; }, record: (id) => recs.get(id) || null, importText: (t) => !!active && doImport(t), exportText: () => (active ? exportCode(getB(active)) : null),   // R50: til tester (node og Playwright)
+    grid: { get on() { return grid.on(); }, get available() { return !!active && grid.enabledHere(); }, toggle: () => grid.toggleMode('kode'), setMat: (m) => grid.setMat(m), tap: (x, y) => grid.tap(x, y), del: () => grid.del(), get mat() { return grid.mat; }, get selNode() { return grid.selNode; }, get selRod() { return grid.selRod; }, info: () => (active && getB(active).rg ? { mode: getB(active).mode || 'classic', ...gridStats(getB(active)), cost: starsFor(active, getB(active).placed, getB(active).links).cost, nodes: getB(active).rg.nodes.map((n) => ({ id: n.id, u: n.u, v: n.v, fixed: !!n.fixed })), rods: getB(active).rg.rods.map((r) => ({ ...r })) } : null) },   // R72: til tester (node og Playwright)
+    startReplay: () => !!active && startReplay(), get replaying() { return replaying; }, record: (id) => recs.get(id) || null, importText: (t) => !!active && doImport(t), exportText: () => (active ? exportAny(getB(active), exportCode) : null),   // R50: til tester (node og Playwright)
     lab: lab ? { go: labGo, resetSite: (id) => { const s = labSites.find((q) => q.id === id); return s ? labReset(s, 'kode') : false; }, resetAll: labResetAll, get reached() { return [...lab.reached]; }, sites: labSites.map((q) => q.id), line: () => (active ? labLine() : ''), info: () => (active ? labInfo() : null), get home() { return lab.moved; } } : null,   // R67: til tester
     state: () => ({ active: active?.id || null, view: view ? { scale: view.scale, cu: view.cu, cv: view.cv, oy: view.oy || 0, W, H } : null, builds: [...builds].map(([k, b]) => ({ id: k, have: b.have.length, placed: b.placed.length, links: b.links.length, parts: b.placed.map((p) => ({ id: p.id, u: p.u, v: p.v, rot: p.rot })) })) }),
   };

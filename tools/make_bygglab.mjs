@@ -83,6 +83,9 @@ SITES.forEach((s, i) => {
     start: [-40, 0], goal: [40, rise], ...(s.drop ? { drop: s.drop * U } : {}), ...(s.loads ? { loads: s.loads } : {}),
     ref: { placed: ref.placed, links: ref.links, surfaces: ref.surfaces },   // (uten route: ruta over hvert sted går fra gulvet og står i lab.solutions; boten går hovedruta)
     lab: { key: s.key, n: k, of: N, flag: [fx, top, ZC], ...(s.cap ? { cap: s.cap } : {}), solutions: [ref, ...rest].map((q) => ({ name: q.name, placed: q.placed, links: q.links, surfaces: q.surfaces, route: ['gulv', `ped_a${k}`, ...((q.steps ?? q.surfaces.map((z) => z.id))), `ped_b${k}`] })) } };
+  // R72: rutenett-modus på «bro» og «fagverk»: trinnet er gapet delt i fire, slik at begge ankrene ligger på rutenettet (stjerner: { three, two } = { kostnad, staver })
+  if (s.key === 'bro') site.grid = { step: s.gap * U / 4, stars: { three: { cost: 5, parts: 4 }, two: { cost: 9, parts: 8 } } };
+  if (s.key === 'fagverk') site.grid = { step: s.gap * U / 4, stars: { three: { cost: 12, parts: 12 }, two: { cost: 20, parts: 18 } } };
   if (s.key === 'vippe') site.anchors = [[0, 2 * U]];   // vippas dreiepunkt
   if (s.key === 'trapp') site.start = [-40, 0];
   sites.push(site);

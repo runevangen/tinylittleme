@@ -874,6 +874,19 @@
      "v": 0
     },
     "d": 4,
+    "grid": {
+     "step": 1.75,
+     "stars": {
+      "three": {
+       "cost": 5,
+       "parts": 4
+      },
+      "two": {
+       "cost": 9,
+       "parts": 8
+      }
+     }
+    },
     "ref": {
      "placed": [
       {
@@ -1356,6 +1369,19 @@
      "v": 0
     },
     "d": 4,
+    "grid": {
+     "step": 1.25,
+     "stars": {
+      "three": {
+       "cost": 12,
+       "parts": 12
+      },
+      "two": {
+       "cost": 20,
+       "parts": 18
+      }
+     }
+    },
     "ref": {
      "placed": [
       {

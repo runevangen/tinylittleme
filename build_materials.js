@@ -38,7 +38,7 @@ export const MATERIALS = {
 // gummistrikk: ekte fjær (kraft = K · utstrekning), bare i strekk; ryker ved BAND.snap
 export const BAND = { K: 240, snap: 1500 };
 
-export const materialOf = (t) => MATERIALS[t] || MATERIALS.block;
+export const materialOf = (t) => MATERIALS[t] || rodMaterial(t) || MATERIALS.block;
 // areal per kule (kjedene har kulene på en linje, tykkelsen er h): tetthet = masse / areal
 export function density(type, ty) { const M = materialOf(type), slim = ty.w >= ty.h * 2, ball = slim ? 0.5 * ty.h : 0.25; return +(M.m / ball).toFixed(3); }
 
@@ -53,3 +53,31 @@ export function capacities(type, ty) {
 }
 // R49a2: hvor nær knekking er en del (0 = ingen last, 1 = knekker nå)? n = trykkraft langs delen.
 export const buckleRatio = (n, pcr) => (pcr > 0 ? Math.max(0, n) / pcr : 0);
+
+// ---------- R72: rutenett-bygging: staver av tre, stål og tau ----------
+// En stav mellom to knutepunkter er en vanlig «kjede» i fysikken (build_phys.js) med egen type `rod_<materiale>_<lengde·10>` (lengden er med i typen, så layout og kapasitet følger av vanlig partType/materialOf).
+// pris: kostnad per enhet lengde (avrundet opp til hele poeng, minst 1). Tau bærer bare strekk (rope: true): ingen knekking, og i fysikken en ensidig avstandsbinding.
+export const GRID_MATS = ['wood', 'steel', 'rope'];
+export const GRID_MAT = {
+  wood:  { joint: 1, name: 'Tre', en: 'Wood', color: '#c98a45', h: 0.5, price: 0.5, m: 0.5, alpha: 0.12, mcap: 2200, E: 1000, st: 12000, sc: 14000, brittle: 1, duct: 0, fric: FRIC_DEFAULT, axial: 1 },
+  steel: { joint: 3, name: 'Stål', en: 'Steel', color: '#8fa3b8', h: 0.5, price: 1.5, m: 0.9, alpha: 0.12, mcap: 7000, E: 3000, st: 36000, sc: 40000, brittle: 0, duct: 0.6, fric: 0.5, axial: 1 },
+  rope:  { joint: 1, name: 'Tau', en: 'Rope', color: '#d8b46a', h: 0.3, price: 0.4, m: 0.15, alpha: 0.02, mcap: 200, E: 5, st: 16000, sc: 50, brittle: 1, duct: 0, fric: 0.8, axial: 1, rope: true },
+};
+export const rodType = (mat, len) => `rod_${mat}_${Math.round(len * 100)}`;   // lengde i hundredeler (1,75 -> 175)
+const ROD_RE = /^rod_(wood|steel|rope)_(\d{1,5})$/;
+export function parseRod(t) { const m = typeof t === 'string' && ROD_RE.exec(t); return m ? { mat: m[1], len: +m[2] / 100 } : null; }
+export const isRod = (t) => !!parseRod(t);
+export const rodPrice = (mat, len) => Math.max(1, Math.ceil(GRID_MAT[mat].price * len - 1e-9));
+const rodMem = new Map();
+// den delen av partType som en stav trenger (cache, så hvert kall gir samme objekt)
+export function rodPartType(t) {
+  const r = parseRod(t); if (!r) return null; let p = rodMem.get(t);
+  if (!p) { const g = GRID_MAT[r.mat]; p = { w: r.len, h: g.h, name: g.name, en: g.en, color: g.color, rod: true, mat: r.mat }; rodMem.set(t, p); }
+  return p;
+}
+const rodMat = new Map();
+function rodMaterial(t) {   // staver: materialet følger av typen (cachet)
+  const r = parseRod(t); if (!r) return null; let m = rodMat.get(t);
+  if (!m) { const { name, en, color, price, h, joint, ...rest } = GRID_MAT[r.mat]; m = { ...rest, snap: 0.9, d: 1 }; rodMat.set(t, m); }
+  return m;
+}

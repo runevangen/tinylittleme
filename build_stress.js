@@ -37,7 +37,7 @@ export function whyBroke(breaks) {
   const b = breaks.slice().sort((x, y) => (x.t ?? 0) - (y.t ?? 0))[0], kind = b.kind || 'plank';
   return { key: `build.why.${kind}`, kind, id: b.id, u: b.u, v: b.v, t: b.t };
 }
-export const WHY_KEYS = ['build.why.plank', 'build.why.tape', 'build.why.hinge', 'build.why.rope', 'build.why.band', 'build.why.buckle', 'build.why.tear', 'build.why.crush', 'build.why.floppy'];   // R49a2: knekking, strekk, knusing, gummistrikk og «ledd som svinger»
+export const WHY_KEYS = ['build.why.plank', 'build.why.tape', 'build.why.hinge', 'build.why.rope', 'build.why.band', 'build.why.buckle', 'build.why.tear', 'build.why.crush', 'build.why.floppy', 'build.why.rod'];   // R49a2: knekking, strekk, knusing, gummistrikk og «ledd som svinger»
 
 // tempo i visningen etter et brudd: 0 under pausen, så sakte film, så normalt. since = sekunder siden bruddet (null/negativ = ingen brudd)
 export function breakTempo(since, on = true) {

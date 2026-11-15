@@ -5,6 +5,7 @@
 
 import { clampZoom } from './build_zoom.js';
 import { TOY_TYPES, legoSnap } from './build_toys.js';   // R46: leker som materialer
+import { rodPartType } from './build_materials.js';          // R72: staver i rutenett-modus har egne typer (rod_*)
 
 export const GRID = 0.5;                 // rutenett (enheter)
 export const ROT_STEP = Math.PI / 12;    // rotasjonstrinn: 15 grader
@@ -35,7 +36,7 @@ export const layout = (t) => {                                         // R25: k
 export const toWorldPt = (p, x, y) => { const c = Math.cos(p.rot || 0), s = Math.sin(p.rot || 0); return { u: p.u + x * c - y * s, v: p.v + x * s + y * c }; };
 export const toLocalPt = (p, u, v) => { const c = Math.cos(-(p.rot || 0)), s = Math.sin(-(p.rot || 0)), dx = u - p.u, dy = v - p.v; return { x: dx * c - dy * s, y: dx * s + dy * c }; };
 export const partPoints = (p) => layout(p.type).map((q) => toWorldPt(p, q.x, q.y));
-export const partType = (t) => PART_TYPES[t] || PART_TYPES.block;
+export const partType = (t) => PART_TYPES[t] || rodPartType(t) || PART_TYPES.block;
 
 export const snapRot = (r) => { const k = Math.round(r / ROT_STEP) * ROT_STEP; return Math.abs(k) < 1e-9 ? 0 : k; };
 export const normRot = (r) => { const t = Math.PI * 2; let x = r % t; if (x > Math.PI) x -= t; if (x <= -Math.PI) x += t; return x; };
@@ -77,8 +78,8 @@ export function createBuild(site, types = {}, have = []) {
 }
 const placedOf = (B, id) => B.placed.find((p) => p.id === id);
 const clone = (placed) => placed.map((p) => ({ ...p }));
-const snapshot = (B) => ({ placed: clone(B.placed), links: B.links.map((l) => ({ ...l, la: l.la && { ...l.la }, lb: l.lb && { ...l.lb }, g: l.g && { ...l.g } })) });
-const pushHist = (B) => { B.history.push(snapshot(B)); if (B.history.length > 60) B.history.shift(); };
+const snapshot = (B) => ({ ...(B.rg ? { grid: JSON.parse(JSON.stringify(B.rg)) } : {}), placed: clone(B.placed), links: B.links.map((l) => ({ ...l, la: l.la && { ...l.la }, lb: l.lb && { ...l.lb }, g: l.g && { ...l.g } })) });
+export const pushHist = (B) => { B.history.push(snapshot(B)); if (B.history.length > 60) B.history.shift(); };
 
 export const inTray = (B) => B.have.filter((id) => !placedOf(B, id));
 export const partCount = (B) => B.have.length;
@@ -107,7 +108,7 @@ export function remove(B, id) {          // tilbake i brettet
   const i = B.placed.findIndex((p) => p.id === id); if (i < 0) return false;
   pushHist(B); B.placed.splice(i, 1); B.links = B.links.filter((l) => l.a !== id && l.b !== id); return true;
 }
-export function undo(B) { const h = B.history.pop(); if (!h) return false; B.placed = h.placed; B.links = h.links; return true; }
+export function undo(B) { const h = B.history.pop(); if (!h) return false; B.placed = h.placed; B.links = h.links; if (h.grid) B.rg = h.grid; return true; }   // R72: rutenett-modus lagrer også knutene
 export function reset(B) { if (!B.placed.length && !B.links.length) return false; pushHist(B); B.placed = []; B.links = []; return true; }
 
 // ---------- R25: koblinger (tape, ledd, tau) ----------
@@ -222,9 +223,9 @@ export function restoreParts(L, ids) { const set = new Set(Array.isArray(ids) ? 
 // Koden gjelder ett byggested og tar bare med det som ligger på brettet. Import validerer alt: ukjente deler, deler du ikke har plukket, tall utenfor stedet og ødelagt tekst avvises.
 export const CODE_MAX = 6000, CODE_PREFIX = 'TLM1.', CODE_MAX_PARTS = 60, CODE_MAX_LINKS = 120;
 const CODE_KINDS = LINK_KINDS;   // rekkefølgen er en del av formatet (tape, ledd, tau)
-const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); };
-const toB64 = (s) => { const by = new TextEncoder().encode(s); let bin = ''; for (const b of by) bin += String.fromCharCode(b); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
-const fromB64 = (t) => { const bin = atob(t.replace(/-/g, '+').replace(/_/g, '/')); const by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i); return new TextDecoder('utf-8', { fatal: true }).decode(by); };
+export const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); };
+export const toB64 = (s) => { const by = new TextEncoder().encode(s); let bin = ''; for (const b of by) bin += String.fromCharCode(b); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+export const fromB64 = (t) => { const bin = atob(t.replace(/-/g, '+').replace(/_/g, '/')); const by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i); return new TextDecoder('utf-8', { fatal: true }).decode(by); };
 const ik = (x, k) => Math.round(x * k);
 export function exportCode(B) {
   const d = serialize(B);
