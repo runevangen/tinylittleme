@@ -2,6 +2,7 @@
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
 
+- **1.86** – R67 Bygglab: prøverom (`?level=bygglab`) som åpner byggeskjermen direkte, med åtte byggesteder, referansebygg og tester.
 - **1.85** – Trailer: manus og plan i `docs/TRAILER.md`, og veikart R68 (kinomodus for opptak fra selve spillmotoren).
 - **1.84** – Veikart: R67 (Bygglab: prøvebrett som starter i byggemodus for å teste alle byggefunksjoner), fra tester: Rune.
 - **1.83** – R66: markørbudsjett og rangering: høyst 3/6 verdensmarkører, én retningsangivelse, dempet med avstand og erfaring (fra tester: Rune).
