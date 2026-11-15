@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.03** – Oppstartstest (`npm run boot`, `tools/boot_check.cjs`): åpner spillet i en ekte nettleser og krever at det starter uten feil. Ny regel i CLAUDE.md og runnerens integrasjonssteg: kjør den før hver push til main.
 - **2.02** – **Rettet: spillet startet ikke.** `version.js` var tom etter en sammenslåing i v2.01, så siden krasjet ved oppstart («does not provide an export named VERSION»). Ny test `test_version.mjs` sjekker at `VERSION` finnes og stemmer med endringsloggen.
 - **2.01** – Trailer: 02_klatring_vaskekurv (hang i toppkanten, større figur), 03_barnerom_leker (leke-bil med, hest ut av forgrunnen) og 06_bygging (bøyning i sakte film med spenningsfarge før brudd; tapen tegnes tykkere i kinomodus).
 - **2.00** – Trailer: 05_stigende_vann med kamera som følger figuren skrått ovenfra, så vannflaten og stigningen synes (F1; bilde 1, 24, 41, 48 verifisert, figuren ca. 40–70 px).
