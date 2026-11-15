@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.04** – Veikart fra tester (Rune): R70 (byggeskjermen: plasserte deler kan ikke flyttes) og R71 (flagget ⚑ tilgjengelig på alle skjermer).
 - **2.03** – Oppstartstest (`npm run boot`, `tools/boot_check.cjs`): åpner spillet i en ekte nettleser og krever at det starter uten feil. Ny regel i CLAUDE.md og runnerens integrasjonssteg: kjør den før hver push til main.
 - **2.02** – **Rettet: spillet startet ikke.** `version.js` var tom etter en sammenslåing i v2.01, så siden krasjet ved oppstart («does not provide an export named VERSION»). Ny test `test_version.mjs` sjekker at `VERSION` finnes og stemmer med endringsloggen.
 - **2.01** – Trailer: 02_klatring_vaskekurv (hang i toppkanten, større figur), 03_barnerom_leker (leke-bil med, hest ut av forgrunnen) og 06_bygging (bøyning i sakte film med spenningsfarge før brudd; tapen tegnes tykkere i kinomodus).
