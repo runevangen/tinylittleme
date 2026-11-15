@@ -85,7 +85,7 @@ for (const f of fs.readdirSync('levels')) {
   const ids = new Set();
   for (const q of lv.build.parts) { assert.ok(BL.PART_TYPES[q.type], `${f}: ukjent deltype ${q.type}`); assert.ok(!ids.has(q.id), `${f}: dobbel id ${q.id}`); ids.add(q.id); }
   for (const st of lv.build.sites) for (const a of BL.siteAnchors(st)) assert.ok(Math.abs(a.u) <= st.w / 2 && a.v >= 0 && a.v <= st.h, `${f}: festepunkt utenfor ${st.id}`);
-  assert.ok(lv.build.parts.length >= 2 && lv.build.sites.length >= 1, `${f}: bygg trenger sted og deler`);
+  assert.ok((lv.lab || lv.build.parts.length >= 2) && lv.build.sites.length >= 1, `${f}: bygg trenger sted og deler (Bygglab, R67, har alle deler i byggeskjermen i stedet for i rommet)`);
 }
 // modulene er med i index.html
 const html = fs.readFileSync('index.html', 'utf8'); for (const m of ['build', 'build_logic', 'build_zoom', 'build_phys', 'build_stress']) assert.ok(html.includes(`'${m}'`), `${m} mangler i files`);

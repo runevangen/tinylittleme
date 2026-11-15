@@ -1,0 +1,2596 @@
+{
+ "name": "Prøverom: Bygglab",
+ "rev": 1,
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -130,
+    -2,
+    -20
+   ],
+   "max": [
+    130,
+    0,
+    20
+   ],
+   "id": "gulv",
+   "color": 14267266,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -131,
+    0,
+    -20
+   ],
+   "max": [
+    -130,
+    48,
+    20
+   ],
+   "id": "vegg_v",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    130,
+    0,
+    -20
+   ],
+   "max": [
+    131,
+    48,
+    20
+   ],
+   "id": "vegg_o",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -130,
+    0,
+    -21
+   ],
+   "max": [
+    130,
+    48,
+    -20
+   ],
+   "id": "vegg_n",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -130,
+    0,
+    20
+   ],
+   "max": [
+    130,
+    48,
+    21
+   ],
+   "id": "vegg_s",
+   "color": 15327699,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    -115,
+    0,
+    -8
+   ],
+   "max": [
+    -103.5,
+    3,
+    8
+   ],
+   "id": "ped_a1",
+   "kind": "box",
+   "color": 12159573,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -96.5,
+    0,
+    -8
+   ],
+   "max": [
+    -85,
+    3,
+    8
+   ],
+   "id": "ped_b1",
+   "kind": "box",
+   "color": 13212261,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -85,
+    0,
+    -8
+   ],
+   "max": [
+    -65.75,
+    3,
+    8
+   ],
+   "id": "ped_a2",
+   "kind": "box",
+   "color": 11108432,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -65.75,
+    0,
+    -8
+   ],
+   "max": [
+    -55,
+    8,
+    8
+   ],
+   "id": "ped_b2",
+   "kind": "box",
+   "color": 12159573,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -55,
+    0,
+    -8
+   ],
+   "max": [
+    -43.25,
+    3,
+    8
+   ],
+   "id": "ped_a3",
+   "kind": "box",
+   "color": 12159573,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -36.75,
+    0,
+    -8
+   ],
+   "max": [
+    -25,
+    6.5,
+    8
+   ],
+   "id": "ped_b3",
+   "kind": "box",
+   "color": 13212261,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -25,
+    0,
+    -8
+   ],
+   "max": [
+    -12.5,
+    3,
+    8
+   ],
+   "id": "ped_a4",
+   "kind": "box",
+   "color": 11108432,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -7.5,
+    0,
+    -8
+   ],
+   "max": [
+    5,
+    3,
+    8
+   ],
+   "id": "ped_b4",
+   "kind": "box",
+   "color": 12159573,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    5,
+    0,
+    -8
+   ],
+   "max": [
+    16.5,
+    3,
+    8
+   ],
+   "id": "ped_a5",
+   "kind": "box",
+   "color": 12159573,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    23.5,
+    0,
+    -8
+   ],
+   "max": [
+    35,
+    3,
+    8
+   ],
+   "id": "ped_b5",
+   "kind": "box",
+   "color": 13212261,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    35,
+    0,
+    -8
+   ],
+   "max": [
+    46.5,
+    3,
+    8
+   ],
+   "id": "ped_a6",
+   "kind": "box",
+   "color": 11108432,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    53.5,
+    0,
+    -8
+   ],
+   "max": [
+    65,
+    3,
+    8
+   ],
+   "id": "ped_b6",
+   "kind": "box",
+   "color": 12159573,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    65,
+    0,
+    -8
+   ],
+   "max": [
+    77.5,
+    3,
+    8
+   ],
+   "id": "ped_a7",
+   "kind": "box",
+   "color": 12159573,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    82.5,
+    0,
+    -8
+   ],
+   "max": [
+    95,
+    3,
+    8
+   ],
+   "id": "ped_b7",
+   "kind": "box",
+   "color": 13212261,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    95,
+    0,
+    -8
+   ],
+   "max": [
+    106.5,
+    3,
+    8
+   ],
+   "id": "ped_a8",
+   "kind": "box",
+   "color": 11108432,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    113.5,
+    0,
+    -20
+   ],
+   "max": [
+    125,
+    3,
+    20
+   ],
+   "id": "ped_b8",
+   "kind": "box",
+   "color": 12159573,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -55,
+    3,
+    -8
+   ],
+   "max": [
+    -52,
+    5.5,
+    8
+   ],
+   "id": "trinn_2",
+   "kind": "box",
+   "color": 9202239,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -25,
+    3,
+    -8
+   ],
+   "max": [
+    -22,
+    4.75,
+    8
+   ],
+   "id": "trinn_3",
+   "kind": "box",
+   "color": 9202239,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  }
+ ],
+ "movables": [],
+ "decor": [
+  {
+   "shape": "box",
+   "id": "flagg_stang_1",
+   "kind": "box",
+   "pos": [
+    -87.6,
+    6,
+    0
+   ],
+   "size": [
+    0.32,
+    6,
+    0.32
+   ],
+   "color": 16118248,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_duk_1",
+   "kind": "box",
+   "pos": [
+    -86.32,
+    8,
+    0
+   ],
+   "size": [
+    2.24,
+    2,
+    0.2
+   ],
+   "color": 14697786,
+   "material": "fabric"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_stang_2",
+   "kind": "box",
+   "pos": [
+    -57.6,
+    11,
+    0
+   ],
+   "size": [
+    0.32,
+    6,
+    0.32
+   ],
+   "color": 16118248,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_duk_2",
+   "kind": "box",
+   "pos": [
+    -56.32,
+    13,
+    0
+   ],
+   "size": [
+    2.24,
+    2,
+    0.2
+   ],
+   "color": 14697786,
+   "material": "fabric"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_stang_3",
+   "kind": "box",
+   "pos": [
+    -27.6,
+    9.5,
+    0
+   ],
+   "size": [
+    0.32,
+    6,
+    0.32
+   ],
+   "color": 16118248,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_duk_3",
+   "kind": "box",
+   "pos": [
+    -26.32,
+    11.5,
+    0
+   ],
+   "size": [
+    2.24,
+    2,
+    0.2
+   ],
+   "color": 14697786,
+   "material": "fabric"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_stang_4",
+   "kind": "box",
+   "pos": [
+    2.4,
+    6,
+    0
+   ],
+   "size": [
+    0.32,
+    6,
+    0.32
+   ],
+   "color": 16118248,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_duk_4",
+   "kind": "box",
+   "pos": [
+    3.68,
+    8,
+    0
+   ],
+   "size": [
+    2.24,
+    2,
+    0.2
+   ],
+   "color": 14697786,
+   "material": "fabric"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_stang_5",
+   "kind": "box",
+   "pos": [
+    32.4,
+    6,
+    0
+   ],
+   "size": [
+    0.32,
+    6,
+    0.32
+   ],
+   "color": 16118248,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_duk_5",
+   "kind": "box",
+   "pos": [
+    33.68,
+    8,
+    0
+   ],
+   "size": [
+    2.24,
+    2,
+    0.2
+   ],
+   "color": 14697786,
+   "material": "fabric"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_stang_6",
+   "kind": "box",
+   "pos": [
+    62.4,
+    6,
+    0
+   ],
+   "size": [
+    0.32,
+    6,
+    0.32
+   ],
+   "color": 16118248,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_duk_6",
+   "kind": "box",
+   "pos": [
+    63.68,
+    8,
+    0
+   ],
+   "size": [
+    2.24,
+    2,
+    0.2
+   ],
+   "color": 14697786,
+   "material": "fabric"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_stang_7",
+   "kind": "box",
+   "pos": [
+    92.4,
+    6,
+    0
+   ],
+   "size": [
+    0.32,
+    6,
+    0.32
+   ],
+   "color": 16118248,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_duk_7",
+   "kind": "box",
+   "pos": [
+    93.68,
+    8,
+    0
+   ],
+   "size": [
+    2.24,
+    2,
+    0.2
+   ],
+   "color": 14697786,
+   "material": "fabric"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_stang_8",
+   "kind": "box",
+   "pos": [
+    122.4,
+    6,
+    0
+   ],
+   "size": [
+    0.32,
+    6,
+    0.32
+   ],
+   "color": 16118248,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_duk_8",
+   "kind": "box",
+   "pos": [
+    123.68,
+    8,
+    0
+   ],
+   "size": [
+    2.24,
+    2,
+    0.2
+   ],
+   "color": 14697786,
+   "material": "fabric"
+  }
+ ],
+ "hints": [
+  {
+   "id": "ped_a1",
+   "text": "Sted 1/8\nTrykk BYGG for å bygge her.",
+   "pos": [
+    -109.25,
+    3.9,
+    0
+   ]
+  },
+  {
+   "id": "ped_a2",
+   "text": "Sted 2/8\nTrykk BYGG for å bygge her.",
+   "pos": [
+    -75.375,
+    3.9,
+    0
+   ]
+  },
+  {
+   "id": "ped_a3",
+   "text": "Sted 3/8\nTrykk BYGG for å bygge her.",
+   "pos": [
+    -49.125,
+    3.9,
+    0
+   ]
+  },
+  {
+   "id": "ped_a4",
+   "text": "Sted 4/8\nTrykk BYGG for å bygge her.",
+   "pos": [
+    -18.75,
+    3.9,
+    0
+   ]
+  },
+  {
+   "id": "ped_a5",
+   "text": "Sted 5/8\nTrykk BYGG for å bygge her.",
+   "pos": [
+    10.75,
+    3.9,
+    0
+   ]
+  },
+  {
+   "id": "ped_a6",
+   "text": "Sted 6/8\nTrykk BYGG for å bygge her.",
+   "pos": [
+    40.75,
+    3.9,
+    0
+   ]
+  },
+  {
+   "id": "ped_a7",
+   "text": "Sted 7/8\nTrykk BYGG for å bygge her.",
+   "pos": [
+    71.25,
+    3.9,
+    0
+   ]
+  },
+  {
+   "id": "ped_a8",
+   "text": "Sted 8/8\nTrykk BYGG for å bygge her.",
+   "pos": [
+    100.75,
+    3.9,
+    0
+   ]
+  },
+  {
+   "id": "trinn_2",
+   "text": "Trinn\nVeien opp på den høye hylla uten å bygge.",
+   "pos": [
+    -53.5,
+    6.4,
+    0
+   ]
+  },
+  {
+   "id": "trinn_3",
+   "text": "Trinn\nVeien opp på den høye hylla uten å bygge.",
+   "pos": [
+    -23.5,
+    5.65,
+    0
+   ]
+  }
+ ],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    -64,
+    30,
+    -19.95
+   ],
+   "size": [
+    30,
+    16
+   ]
+  },
+  {
+   "wall": "N",
+   "pos": [
+    56,
+    30,
+    -19.95
+   ],
+   "size": [
+    30,
+    16
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ants": [],
+ "collectibles": [],
+ "build": {
+  "sites": [
+   {
+    "id": "lab1",
+    "label": "Sted 1/8",
+    "x": -100,
+    "y": 3,
+    "z": 0,
+    "w": 20,
+    "h": 12,
+    "anchors": [
+     {
+      "u": -3.5,
+      "v": 0
+     },
+     {
+      "u": 3.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.5
+     },
+     {
+      "u0": 3.5,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "p1",
+       "type": "plank_l",
+       "u": 0,
+       "v": 0.25,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
+      }
+     ]
+    },
+    "lab": {
+     "key": "bro",
+     "n": 1,
+     "of": 8,
+     "flag": [
+      -87.6,
+      3,
+      0
+     ],
+     "solutions": [
+      {
+       "name": "lang planke",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.25,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 0.5
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a1",
+        "@bro",
+        "ped_b1"
+       ]
+      },
+      {
+       "name": "linjal",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "ruler",
+         "u": 0,
+         "v": 0.2,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -5,
+         "u1": 5,
+         "top": 0.4
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a1",
+        "@bro",
+        "ped_b1"
+       ]
+      },
+      {
+       "name": "lang planke med en kort oppå",
+       "placed": [
+        {
+         "id": "a",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.25,
+         "rot": 0
+        },
+        {
+         "id": "b",
+         "type": "plank_s",
+         "u": 0,
+         "v": 0.75,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 1
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a1",
+        "@bro",
+        "ped_b1"
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "lab2",
+    "label": "Sted 2/8",
+    "x": -70,
+    "y": 3,
+    "z": 0,
+    "w": 20,
+    "h": 12,
+    "anchors": [],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": 4.25
+     },
+     {
+      "u0": 4.25,
+      "u1": 9.5,
+      "top": 5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 5
+    },
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "k1",
+       "type": "block",
+       "u": 0,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k2",
+       "type": "block",
+       "u": 1.5,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k3",
+       "type": "block",
+       "u": 1.5,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k4",
+       "type": "block",
+       "u": 3,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k5",
+       "type": "block",
+       "u": 3,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k6",
+       "type": "block",
+       "u": 3,
+       "v": 3.75,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@t1",
+       "u0": -0.75,
+       "u1": 0.75,
+       "top": 1.5
+      },
+      {
+       "id": "@t2",
+       "u0": 0.75,
+       "u1": 2.25,
+       "top": 3
+      },
+      {
+       "id": "@t3",
+       "u0": 2.25,
+       "u1": 3.75,
+       "top": 4.5
+      }
+     ]
+    },
+    "lab": {
+     "key": "trapp",
+     "n": 2,
+     "of": 8,
+     "flag": [
+      -57.6,
+      8,
+      0
+     ],
+     "solutions": [
+      {
+       "name": "trapp av seks klosser",
+       "placed": [
+        {
+         "id": "k1",
+         "type": "block",
+         "u": 0,
+         "v": 0.75,
+         "rot": 0
+        },
+        {
+         "id": "k2",
+         "type": "block",
+         "u": 1.5,
+         "v": 0.75,
+         "rot": 0
+        },
+        {
+         "id": "k3",
+         "type": "block",
+         "u": 1.5,
+         "v": 2.25,
+         "rot": 0
+        },
+        {
+         "id": "k4",
+         "type": "block",
+         "u": 3,
+         "v": 0.75,
+         "rot": 0
+        },
+        {
+         "id": "k5",
+         "type": "block",
+         "u": 3,
+         "v": 2.25,
+         "rot": 0
+        },
+        {
+         "id": "k6",
+         "type": "block",
+         "u": 3,
+         "v": 3.75,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@t1",
+         "u0": -0.75,
+         "u1": 0.75,
+         "top": 1.5
+        },
+        {
+         "id": "@t2",
+         "u0": 0.75,
+         "u1": 2.25,
+         "top": 3
+        },
+        {
+         "id": "@t3",
+         "u0": 2.25,
+         "u1": 3.75,
+         "top": 4.5
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a2",
+        "@t1",
+        "@t2",
+        "@t3",
+        "ped_b2"
+       ]
+      },
+      {
+       "name": "tårn av tre klosser og en rampe",
+       "placed": [
+        {
+         "id": "k1",
+         "type": "block",
+         "u": 3.25,
+         "v": 0.75,
+         "rot": 0
+        },
+        {
+         "id": "k2",
+         "type": "block",
+         "u": 3.25,
+         "v": 2.25,
+         "rot": 0
+        },
+        {
+         "id": "k3",
+         "type": "block",
+         "u": 3.25,
+         "v": 3.75,
+         "rot": 0
+        },
+        {
+         "id": "a",
+         "type": "plank_l",
+         "u": 0,
+         "v": 3.2,
+         "rot": 0.45
+        }
+       ],
+       "links": [],
+       "surfaces": [],
+       "route": [
+        "gulv",
+        "ped_a2",
+        "ped_b2"
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "lab3",
+    "label": "Sted 3/8",
+    "x": -40,
+    "y": 3,
+    "z": 0,
+    "w": 20,
+    "h": 12,
+    "anchors": [
+     {
+      "u": 0,
+      "v": 2
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.25
+     },
+     {
+      "u0": 3.25,
+      "u1": 9.5,
+      "top": 3.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 3.5
+    },
+    "d": 4,
+    "drop": 3,
+    "ref": {
+     "placed": [
+      {
+       "id": "v1",
+       "type": "seesaw",
+       "u": 0,
+       "v": 2,
+       "rot": 0.2618
+      }
+     ],
+     "links": [],
+     "surfaces": []
+    },
+    "lab": {
+     "key": "vippe",
+     "n": 3,
+     "of": 8,
+     "flag": [
+      -27.6,
+      6.5,
+      0
+     ],
+     "solutions": [
+      {
+       "name": "vippe",
+       "placed": [
+        {
+         "id": "v1",
+         "type": "seesaw",
+         "u": 0,
+         "v": 2,
+         "rot": 0.2618
+        }
+       ],
+       "links": [],
+       "surfaces": [],
+       "route": [
+        "gulv",
+        "ped_a3",
+        "ped_b3"
+       ]
+      },
+      {
+       "name": "skrå lang planke",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "plank_l",
+         "u": 0,
+         "v": 2,
+         "rot": 0.5236
+        }
+       ],
+       "links": [],
+       "surfaces": [],
+       "route": [
+        "gulv",
+        "ped_a3",
+        "ped_b3"
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "lab4",
+    "label": "Sted 4/8",
+    "x": -10,
+    "y": 3,
+    "z": 0,
+    "w": 20,
+    "h": 14,
+    "anchors": [
+     {
+      "u": -2.5,
+      "v": 0
+     },
+     {
+      "u": 2.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -2.5
+     },
+     {
+      "u0": 2.5,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "b",
+       "type": "plank_l",
+       "u": 0,
+       "v": 0.25,
+       "rot": 0
+      },
+      {
+       "id": "rl",
+       "type": "plank_s",
+       "u": -1.5,
+       "v": 1.8228756555322954,
+       "rot": 0.7227342478134156
+      },
+      {
+       "id": "rr",
+       "type": "plank_s",
+       "u": 1.5,
+       "v": 1.8228756555322954,
+       "rot": -0.7227342478134156
+      }
+     ],
+     "links": [
+      {
+       "id": "h1",
+       "kind": "hinge",
+       "a": "b",
+       "la": {
+        "x": -3,
+        "y": 0.25
+       },
+       "b": "rl",
+       "lb": {
+        "x": -2,
+        "y": 0
+       }
+      },
+      {
+       "id": "h2",
+       "kind": "hinge",
+       "a": "b",
+       "la": {
+        "x": 3,
+        "y": 0.25
+       },
+       "b": "rr",
+       "lb": {
+        "x": 2,
+        "y": 0
+       }
+      },
+      {
+       "id": "h3",
+       "kind": "hinge",
+       "a": "rl",
+       "la": {
+        "x": 2,
+        "y": 0
+       },
+       "b": "rr",
+       "lb": {
+        "x": -2,
+        "y": 0
+       }
+      }
+     ],
+     "surfaces": [
+      {
+       "id": "@topp",
+       "u0": -0.6,
+       "u1": 0.6,
+       "top": 3.29
+      }
+     ]
+    },
+    "lab": {
+     "key": "fagverk",
+     "n": 4,
+     "of": 8,
+     "flag": [
+      2.4,
+      3,
+      0
+     ],
+     "solutions": [
+      {
+       "name": "trekant, lav (sperrer 4 lange, 3 ut)",
+       "placed": [
+        {
+         "id": "b",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.25,
+         "rot": 0
+        },
+        {
+         "id": "rl",
+         "type": "plank_s",
+         "u": -1.5,
+         "v": 1.8228756555322954,
+         "rot": 0.7227342478134156
+        },
+        {
+         "id": "rr",
+         "type": "plank_s",
+         "u": 1.5,
+         "v": 1.8228756555322954,
+         "rot": -0.7227342478134156
+        }
+       ],
+       "links": [
+        {
+         "id": "h1",
+         "kind": "hinge",
+         "a": "b",
+         "la": {
+          "x": -3,
+          "y": 0.25
+         },
+         "b": "rl",
+         "lb": {
+          "x": -2,
+          "y": 0
+         }
+        },
+        {
+         "id": "h2",
+         "kind": "hinge",
+         "a": "b",
+         "la": {
+          "x": 3,
+          "y": 0.25
+         },
+         "b": "rr",
+         "lb": {
+          "x": 2,
+          "y": 0
+         }
+        },
+        {
+         "id": "h3",
+         "kind": "hinge",
+         "a": "rl",
+         "la": {
+          "x": 2,
+          "y": 0
+         },
+         "b": "rr",
+         "lb": {
+          "x": -2,
+          "y": 0
+         }
+        }
+       ],
+       "surfaces": [
+        {
+         "id": "@topp",
+         "u0": -0.6,
+         "u1": 0.6,
+         "top": 3.29
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a4",
+        "@topp",
+        "ped_b4"
+       ]
+      },
+      {
+       "name": "trekant, høy (sperrer 4 lange, 2 ut)",
+       "placed": [
+        {
+         "id": "b",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.25,
+         "rot": 0
+        },
+        {
+         "id": "rl",
+         "type": "plank_s",
+         "u": -1,
+         "v": 2.232050807568877,
+         "rot": 1.0471975511965976
+        },
+        {
+         "id": "rr",
+         "type": "plank_s",
+         "u": 1,
+         "v": 2.232050807568877,
+         "rot": -1.0471975511965976
+        }
+       ],
+       "links": [
+        {
+         "id": "h1",
+         "kind": "hinge",
+         "a": "b",
+         "la": {
+          "x": -2,
+          "y": 0.25
+         },
+         "b": "rl",
+         "lb": {
+          "x": -2,
+          "y": 0
+         }
+        },
+        {
+         "id": "h2",
+         "kind": "hinge",
+         "a": "b",
+         "la": {
+          "x": 2,
+          "y": 0.25
+         },
+         "b": "rr",
+         "lb": {
+          "x": 2,
+          "y": 0
+         }
+        },
+        {
+         "id": "h3",
+         "kind": "hinge",
+         "a": "rl",
+         "la": {
+          "x": 2,
+          "y": 0
+         },
+         "b": "rr",
+         "lb": {
+          "x": -2,
+          "y": 0
+         }
+        }
+       ],
+       "surfaces": [
+        {
+         "id": "@topp",
+         "u0": -0.6,
+         "u1": 0.6,
+         "top": 4.04
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a4",
+        "@topp",
+        "ped_b4"
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "lab5",
+    "label": "Sted 5/8",
+    "x": 20,
+    "y": 3,
+    "z": 0,
+    "w": 20,
+    "h": 12,
+    "anchors": [
+     {
+      "u": -3.5,
+      "v": 0
+     },
+     {
+      "u": 3.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.5
+     },
+     {
+      "u0": 3.5,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "a",
+       "type": "plank_s",
+       "u": -2,
+       "v": 0.25,
+       "rot": 0
+      },
+      {
+       "id": "b",
+       "type": "plank_s",
+       "u": 2,
+       "v": 0.25,
+       "rot": 0
+      }
+     ],
+     "links": [
+      {
+       "id": "t1",
+       "kind": "tape",
+       "a": "a",
+       "la": {
+        "x": 2,
+        "y": 0
+       },
+       "b": "b",
+       "lb": {
+        "x": -2,
+        "y": 0
+       }
+      },
+      {
+       "id": "r1",
+       "kind": "rope",
+       "a": "a",
+       "la": {
+        "x": 0,
+        "y": 0
+       },
+       "b": null,
+       "lb": null,
+       "g": {
+        "u": 0,
+        "v": 6
+       }
+      }
+     ],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
+      }
+     ]
+    },
+    "lab": {
+     "key": "tau",
+     "n": 5,
+     "of": 8,
+     "flag": [
+      32.4,
+      3,
+      0
+     ],
+     "solutions": [
+      {
+       "name": "to korte planker, tape og tau",
+       "placed": [
+        {
+         "id": "a",
+         "type": "plank_s",
+         "u": -2,
+         "v": 0.25,
+         "rot": 0
+        },
+        {
+         "id": "b",
+         "type": "plank_s",
+         "u": 2,
+         "v": 0.25,
+         "rot": 0
+        }
+       ],
+       "links": [
+        {
+         "id": "t1",
+         "kind": "tape",
+         "a": "a",
+         "la": {
+          "x": 2,
+          "y": 0
+         },
+         "b": "b",
+         "lb": {
+          "x": -2,
+          "y": 0
+         }
+        },
+        {
+         "id": "r1",
+         "kind": "rope",
+         "a": "a",
+         "la": {
+          "x": 0,
+          "y": 0
+         },
+         "b": null,
+         "lb": null,
+         "g": {
+          "u": 0,
+          "v": 6
+         }
+        }
+       ],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 0.5
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a5",
+        "@bro",
+        "ped_b5"
+       ]
+      },
+      {
+       "name": "to korte planker, ledd og gummistrikk",
+       "placed": [
+        {
+         "id": "a",
+         "type": "plank_s",
+         "u": -2,
+         "v": 0.25,
+         "rot": 0
+        },
+        {
+         "id": "b",
+         "type": "plank_s",
+         "u": 2,
+         "v": 0.25,
+         "rot": 0
+        }
+       ],
+       "links": [
+        {
+         "id": "h1",
+         "kind": "hinge",
+         "a": "a",
+         "la": {
+          "x": 2,
+          "y": 0
+         },
+         "b": "b",
+         "lb": {
+          "x": -2,
+          "y": 0
+         }
+        },
+        {
+         "id": "g1",
+         "kind": "band",
+         "a": "a",
+         "la": {
+          "x": 0,
+          "y": 0
+         },
+         "b": null,
+         "lb": null,
+         "g": {
+          "u": -2,
+          "v": 4
+         }
+        },
+        {
+         "id": "g2",
+         "kind": "band",
+         "a": "b",
+         "la": {
+          "x": 0,
+          "y": 0
+         },
+         "b": null,
+         "lb": null,
+         "g": {
+          "u": 2,
+          "v": 4
+         }
+        }
+       ],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 0.5
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a5",
+        "@bro",
+        "ped_b5"
+       ]
+      },
+      {
+       "name": "lang planke i to tau",
+       "placed": [
+        {
+         "id": "a",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.25,
+         "rot": 0
+        }
+       ],
+       "links": [
+        {
+         "id": "r1",
+         "kind": "rope",
+         "a": "a",
+         "la": {
+          "x": 0,
+          "y": 0
+         },
+         "b": null,
+         "lb": null,
+         "g": {
+          "u": -3,
+          "v": 8
+         }
+        },
+        {
+         "id": "r2",
+         "kind": "rope",
+         "a": "a",
+         "la": {
+          "x": 0,
+          "y": 0
+         },
+         "b": null,
+         "lb": null,
+         "g": {
+          "u": 3,
+          "v": 8
+         }
+        }
+       ],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 0.5
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a5",
+        "@bro",
+        "ped_b5"
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "lab6",
+    "label": "Sted 6/8",
+    "x": 50,
+    "y": 3,
+    "z": 0,
+    "w": 20,
+    "h": 12,
+    "anchors": [
+     {
+      "u": -3.5,
+      "v": 0
+     },
+     {
+      "u": 3.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.5
+     },
+     {
+      "u0": 3.5,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "loads": [
+     "ball",
+     "car",
+     "robot"
+    ],
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "p1",
+       "type": "plank_l",
+       "u": 0,
+       "v": 0.25,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
+      }
+     ]
+    },
+    "lab": {
+     "key": "last",
+     "n": 6,
+     "of": 8,
+     "flag": [
+      62.4,
+      3,
+      0
+     ],
+     "solutions": [
+      {
+       "name": "lang planke",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.25,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 0.5
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a6",
+        "@bro",
+        "ped_b6"
+       ]
+      },
+      {
+       "name": "linjal",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "ruler",
+         "u": 0,
+         "v": 0.2,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -5,
+         "u1": 5,
+         "top": 0.4
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a6",
+        "@bro",
+        "ped_b6"
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "lab7",
+    "label": "Sted 7/8",
+    "x": 80,
+    "y": 3,
+    "z": 0,
+    "w": 20,
+    "h": 14,
+    "anchors": [
+     {
+      "u": -2.5,
+      "v": 0
+     },
+     {
+      "u": 2.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -2.5
+     },
+     {
+      "u0": 2.5,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "b",
+       "type": "plank_l",
+       "u": 0,
+       "v": 0.25,
+       "rot": 0
+      },
+      {
+       "id": "rl",
+       "type": "plank_s",
+       "u": -1.5,
+       "v": 1.8228756555322954,
+       "rot": 0.7227342478134156
+      },
+      {
+       "id": "rr",
+       "type": "plank_s",
+       "u": 1.5,
+       "v": 1.8228756555322954,
+       "rot": -0.7227342478134156
+      }
+     ],
+     "links": [
+      {
+       "id": "h1",
+       "kind": "hinge",
+       "a": "b",
+       "la": {
+        "x": -3,
+        "y": 0.25
+       },
+       "b": "rl",
+       "lb": {
+        "x": -2,
+        "y": 0
+       }
+      },
+      {
+       "id": "h2",
+       "kind": "hinge",
+       "a": "b",
+       "la": {
+        "x": 3,
+        "y": 0.25
+       },
+       "b": "rr",
+       "lb": {
+        "x": 2,
+        "y": 0
+       }
+      },
+      {
+       "id": "h3",
+       "kind": "hinge",
+       "a": "rl",
+       "la": {
+        "x": 2,
+        "y": 0
+       },
+       "b": "rr",
+       "lb": {
+        "x": -2,
+        "y": 0
+       }
+      }
+     ],
+     "surfaces": [
+      {
+       "id": "@topp",
+       "u0": -0.6,
+       "u1": 0.6,
+       "top": 3.29
+      }
+     ]
+    },
+    "lab": {
+     "key": "taaler",
+     "n": 7,
+     "of": 8,
+     "flag": [
+      92.4,
+      3,
+      0
+     ],
+     "cap": 10,
+     "solutions": [
+      {
+       "name": "trekant (fagverk)",
+       "placed": [
+        {
+         "id": "b",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.25,
+         "rot": 0
+        },
+        {
+         "id": "rl",
+         "type": "plank_s",
+         "u": -1.5,
+         "v": 1.8228756555322954,
+         "rot": 0.7227342478134156
+        },
+        {
+         "id": "rr",
+         "type": "plank_s",
+         "u": 1.5,
+         "v": 1.8228756555322954,
+         "rot": -0.7227342478134156
+        }
+       ],
+       "links": [
+        {
+         "id": "h1",
+         "kind": "hinge",
+         "a": "b",
+         "la": {
+          "x": -3,
+          "y": 0.25
+         },
+         "b": "rl",
+         "lb": {
+          "x": -2,
+          "y": 0
+         }
+        },
+        {
+         "id": "h2",
+         "kind": "hinge",
+         "a": "b",
+         "la": {
+          "x": 3,
+          "y": 0.25
+         },
+         "b": "rr",
+         "lb": {
+          "x": 2,
+          "y": 0
+         }
+        },
+        {
+         "id": "h3",
+         "kind": "hinge",
+         "a": "rl",
+         "la": {
+          "x": 2,
+          "y": 0
+         },
+         "b": "rr",
+         "lb": {
+          "x": -2,
+          "y": 0
+         }
+        }
+       ],
+       "surfaces": [
+        {
+         "id": "@topp",
+         "u0": -0.6,
+         "u1": 0.6,
+         "top": 3.29
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a7",
+        "@topp",
+        "ped_b7"
+       ]
+      },
+      {
+       "name": "to lange planker med tape",
+       "placed": [
+        {
+         "id": "a",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.25,
+         "rot": 0
+        },
+        {
+         "id": "b",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.75,
+         "rot": 0
+        }
+       ],
+       "links": [
+        {
+         "id": "t1",
+         "kind": "tape",
+         "a": "a",
+         "la": {
+          "x": 0,
+          "y": 0.25
+         },
+         "b": "b",
+         "lb": {
+          "x": 0,
+          "y": -0.25
+         }
+        }
+       ],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 1
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a7",
+        "@bro",
+        "ped_b7"
+       ]
+      },
+      {
+       "name": "høykant-planke",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "plank_t",
+         "u": 0,
+         "v": 0.6,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 1.2
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a7",
+        "@bro",
+        "ped_b7"
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "lab8",
+    "label": "Sted 8/8",
+    "x": 110,
+    "y": 3,
+    "z": 0,
+    "w": 20,
+    "h": 12,
+    "anchors": [
+     {
+      "u": -3.5,
+      "v": 0
+     },
+     {
+      "u": 3.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.5
+     },
+     {
+      "u0": 3.5,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "d": 4,
+    "ref": {
+     "placed": [
+      {
+       "id": "p1",
+       "type": "ruler",
+       "u": 0,
+       "v": 0.2,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -5,
+       "u1": 5,
+       "top": 0.4
+      }
+     ]
+    },
+    "lab": {
+     "key": "materialer",
+     "n": 8,
+     "of": 8,
+     "flag": [
+      122.4,
+      3,
+      0
+     ],
+     "solutions": [
+      {
+       "name": "linjal",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "ruler",
+         "u": 0,
+         "v": 0.2,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -5,
+         "u1": 5,
+         "top": 0.4
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a8",
+        "@bro",
+        "ped_b8"
+       ]
+      },
+      {
+       "name": "to linjaler teipet oppå hverandre",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "ruler",
+         "u": 0,
+         "v": 0.2,
+         "rot": 0
+        },
+        {
+         "id": "p2",
+         "type": "ruler",
+         "u": 0,
+         "v": 0.6,
+         "rot": 0
+        }
+       ],
+       "links": [
+        {
+         "id": "t1",
+         "kind": "tape",
+         "a": "p1",
+         "la": {
+          "x": 0,
+          "y": 0.2
+         },
+         "b": "p2",
+         "lb": {
+          "x": 0,
+          "y": -0.2
+         }
+        }
+       ],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -5,
+         "u1": 5,
+         "top": 0.8
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a8",
+        "@bro",
+        "ped_b8"
+       ]
+      },
+      {
+       "name": "linjal med en blyant oppå",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "ruler",
+         "u": 0,
+         "v": 0.2,
+         "rot": 0
+        },
+        {
+         "id": "p2",
+         "type": "pencil",
+         "u": 0,
+         "v": 0.6,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -5,
+         "u1": 5,
+         "top": 0.8
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a8",
+        "@bro",
+        "ped_b8"
+       ]
+      }
+     ]
+    }
+   }
+  ],
+  "parts": []
+ },
+ "lab": {
+  "start": true
+ },
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -130,
+   "x1": 130,
+   "z0": -20,
+   "z1": 20,
+   "top": 0
+  },
+  {
+   "id": "ped_b8",
+   "x0": 113.5,
+   "x1": 125,
+   "z0": -20,
+   "z1": 20,
+   "top": 3
+  }
+ ],
+ "start": [
+  -108,
+  0,
+  -9
+ ],
+ "goal": [
+  123.2,
+  3,
+  0
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -130,
+  "x1": 130,
+  "z0": -20,
+  "z1": 20,
+  "height": 48,
+  "floor": {
+   "material": "wood",
+   "color": "#d9b382",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#e9e1d3"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  },
+  "fdetMax": 60
+ },
+ "report": {
+  "source": {
+   "photos": 0,
+   "views": [],
+   "interpreted_by": "Oppdiktet prøverom (ikke fra bilder), laget for R67: alle byggestedene på rad.",
+   "scale_anchors": [
+    "sokkel 15 cm",
+    "gap 25–35 cm"
+   ],
+   "uncertainty": "Ingen: rommet er tegnet for testing.",
+   "note": "Bygglab (R67). Åtte byggesteder i én bane; spillet åpner byggeskjermen ved start (valg i ⚙). Vanskelig vei uten bygging: gå på gulvet og hopp opp på sokkelen."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 19,
+  "reachable": 19
+ }
+}

@@ -372,7 +372,9 @@ const build = scene.build ? {
     ...(s.drop ? { drop: round(s.drop / U) } : {}),                         // R30: hvor langt ned støtta under en vippe når (cm), ned til rommets gulv
     // R26: referansebygg (kjent god bygging) og ruta gjennom det: ref = { placed: [{id,type,u,v,rot}] (enheter, som lagret), links: [], surfaces: [{id,u0,u1,top}] (enheter), route: [id i ruta eller i surfaces] }
     ...(s.stars ? { stars: s.stars } : {}),                                  // R47: stjerne-terskler { three: { cost, parts }, two: { cost, parts } } (build_budget.js)
-    ...(s.ref ? { ref: s.ref } : {}) })),
+    ...(s.ref ? { ref: s.ref } : {}),
+    ...(s.lab ? { lab: { ...s.lab, ...(s.lab.flag ? { flag: [ux(s.lab.flag[0]), uy(s.lab.flag[1]), uz(s.lab.flag[2])] } : {}) } } : {}) })),   // R67: Bygglab (bygglab_logic.js): stedets nøkkel, nummer, målflagg (cm → enheter) og kjente løsninger
+
   parts: (scene.build.parts || []).map((q) => {
     const on = q.on && q.on !== 'gulv' ? scene.objects.find((o) => o.id === q.on) : null;
     if (q.on && q.on !== 'gulv' && !on) throw new Error(`byggedel ${q.id}: fant ikke flaten ${q.on}`);
@@ -407,6 +409,7 @@ const level = {
   ...(boss ? { boss } : {}),
   collectibles,
   ...(build ? { build } : {}),
+  ...(scene.lab ? { lab: scene.lab } : {}),                   // R67: Bygglab (prøverommet som starter i byggemodus)
   ...(puzzles.length ? { puzzles } : {}),
   ...(gates ? { gates } : {}),
   ...(goals.length ? { goals } : {}),
