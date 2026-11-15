@@ -7,14 +7,14 @@ import { P, newPlayer, step, applyPreset, initBodies, inHazard } from '../physic
 import { initGates, openAllGates } from '../plates_logic.js';
 import { shortcutsOf, shortcutRoute, gateRoute, toolBoxes } from '../shortcut.js';
 
-export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [], helpers = true, only = null, wallJump = true, trace = null, closedGates = false } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
+export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [], helpers = true, only = null, wallJump = true, trace = null, traceEvery = 6, closedGates = false } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
   applyPreset(preset); Object.assign(P, { edgeGuard: helpers, autoJump: helpers, airSteady: helpers, magnet: helpers, holdGrab: helpers, shimmy: helpers, rollOn: helpers, carefulOn: helpers, ropeHeavy: helpers }); if (only) for (const k of only) P[k] = true;   // R32: helpers=false = streng modus (ingen sikte-hjelp)
   if (!wallJump) Object.assign(P, { wallKick: 0, wallUp: 0 });                                                                      // R32: wallJump=false = ingen veggsprang
   const L = level ? JSON.parse(JSON.stringify(level)) : JSON.parse(fs.readFileSync(levelPath, 'utf8')); initBodies(L); if (L.gates) { initGates(L); if (!closedGates) openAllGates(L); } for (const b of extraBoxes) L.boxes.push(JSON.parse(JSON.stringify(b)));
   const R = route || L.route || []; if (R.length < 2) return { ok: false, why: 'brettet har ingen rute' };
   const p = newPlayer(...L.start), idle = { mx: 0, mz: 0, jumpPressed: false, jumpHeld: false, grabPressed: false, grabHeld: false };
   let t = 0, fail = null; const log = [];
-  const tick = (inp) => { step(p, { ...idle, ...inp }, 1 / 60, L); t++; if (trace && t % 6 === 0) trace.push([+(t / 60).toFixed(2), +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), p.state]); if (inHazard(L, p)) fail = `fare: ${inHazard(L, p).id}`; else if (p.knockout) fail = 'for hardt fall'; else if (p.y < L.deathY) fail = 'falt ut'; };
+  const tick = (inp) => { step(p, { ...idle, ...inp }, 1 / 60, L); t++; if (trace && t % traceEvery === 0) trace.push([+(t / 60).toFixed(2), +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), p.state, +p.fx.toFixed(3), +p.fz.toFixed(3)]); if (inHazard(L, p)) fail = `fare: ${inHazard(L, p).id}`; else if (p.knockout) fail = 'for hardt fall'; else if (p.y < L.deathY) fail = 'falt ut'; };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const near = (n, m = 0.35) => [clamp(p.x, Math.min(n.x0 + m, (n.x0 + n.x1) / 2), Math.max(n.x1 - m, (n.x0 + n.x1) / 2)), clamp(p.z, Math.min(n.z0 + m, (n.z0 + n.z1) / 2), Math.max(n.z1 - m, (n.z0 + n.z1) / 2))];
   const on = (n) => p.onGround && Math.abs(p.y - n.top) < (n.tol || 0.06) && p.x > n.x0 - 0.32 && p.x < n.x1 + 0.32 && p.z > n.z0 - 0.32 && p.z < n.z1 + 0.32;

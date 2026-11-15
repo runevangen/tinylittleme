@@ -25,8 +25,8 @@ export const routeLen = (R, start) => { let q = start, t = 0; for (const n of (R
 export const isLong = (r) => r.steps >= LONG.steps || (r.len || 0) >= LONG.len;
 
 // Én vei i ett nivå av evner. Returnerer { id, kind, ok, why, secs, steps, trace, nodes }.
-function runPlan(L, levelPath, plan, mode) {
-  const trace = [], base = { ...MODES[mode], trace, level: L };
+export function runPlan(L, levelPath, plan, mode, extra = {}) {   // extra: f.eks. { traceEvery: 1 } (R68: bane per tikk)
+  const trace = [], base = { ...MODES[mode], trace, level: L, ...extra };
   let r;
   if (plan.kind === 'ruta') r = walkRoute(levelPath, { ...base });
   else if (plan.kind === 'genvei') {

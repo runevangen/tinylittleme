@@ -1,3 +1,4 @@
+import { parseCinema, installRandom, cineStore } from './cinema_logic.js';   // R68: kinomodus (først: fast frø for Math.random før noe annet kjører)
 import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
@@ -37,6 +38,7 @@ import { initBoss, resetBoss, stepBoss } from './boss.js';   // R9: sjef-maur i 
 import { buildBoss, buildPrize } from './boss_model.js';
 import { createBossBar } from './boss_ui.js';
 import { createBuildMode } from './build.js';
+import { createCinema } from './cinema_view.js';   // R68: kinomodus: kamera-API, fast tid og byggeskjerm for trailer-opptak
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
 import { makeAtmos } from './atmos.js';
@@ -94,10 +96,11 @@ let lang = (() => { try { return JSON.parse(localStorage.getItem('tlm.lang')) ||
 const { T, name: kindName } = makeT(() => lang);
 let GREP = TOUCH ? T('btn.grab') : 'Shift/E', TA = TOUCH ? T('btn.take') : 'F';          // TA følger knappen: sier den SMØR, heter den SMØR i teksten
 const key = (k) => (TOUCH ? '' : ` (${k})`);
-const store = {
+const CINE = parseCinema(location.search), cineRnd = CINE.on ? installRandom(CINE.seed) : null;   // R68: ?cinema=1 (alt under er av ellers)
+const store = cineStore({
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* privat modus e.l. */ } },
-};
+}, CINE.opts, CINE.on);   // kinomodus: leser bare standardene (+ cine_opt) og skriver aldri (ingen fremgang, ingen autolagring)
 
 // Brett: ?level=bad (eller barnerom/kjokken/soverom …). Uten parameter åpnes brettet du sist spilte; første gang nivå 1.
 // De åtte første er nivåene (n = nivånummer, stigende vanskelighetsgrad; 4–6 er de samme rommene ommøblert); resten er ekstra- og prøverom.
@@ -145,6 +148,7 @@ let audio = null, music = null, musicMood = 'calm';
 let soundMuted = store.get('tlm.muted', false);
 function primeVoice() { try { if (hasTTS) speechSynthesis.speak(Object.assign(new SpeechSynthesisUtterance(' '), { volume: 0 })); } catch { /* ok */ } }
 function unlockAudio(e) {
+  if (CINE.on) return;   // R68: ingen lyd i kinomodus
   if (!e || ['pointerdown', 'keydown', 'touchend'].includes(e.type)) primeVoice();      // (de nye hendelsene touchstart/pointerup/click gjelder bare lydmotoren)
   if (!audio) {
     try {
@@ -1232,6 +1236,7 @@ const camReady0 = (camReady = true);
 const cam = { yaw: 0.35, pitch: viewMode === 'shoulder' ? 0.18 : viewMode === 'first' ? 0.05 : 0.3, dist: camDistSet, cur: viewMode === 'shoulder' ? shDist : camDistSet, target: new THREE.Vector3(...LEVEL.start) };
 let camBossOx = 0, camBossOz = 0, camBossK = 0, camBossShift = 0, camBossDist = 0, camBossPitch = 0;   // sjef-kamera (R9), glattet
 let camLook = 0, camPitchBias = 0, camLift = 0, camUpTilt = 0, camAssist = store.get('tlm.camassist', true);
+let cineH = 0;   // R68: kinomodus: ekstra høyde på blikkpunktet i følgekameraet
 let camFocusY = null;   // rolig høydefølging: kameraet hopper ikke med hvert hopp
 const planCam = { yaw: 0.6, pitch: 0.7, dist: 55, pivot: new THREE.Vector3(8, 15, 0) };
 if (levelName) {                                   // mindre rom: nærmere og mer ovenfra
@@ -1897,6 +1902,7 @@ const SETTINGS = [
     fl('beadsolid', 'spill', 'Perler på gulvet er solide: du stoppes av dem og kan stå på dem (Detaljert grafikk)', true, () => beadSolidOn, kp('tlm.beadsolid', (v) => { beadSolidOn = v; logEv('perler', v ? 'solide' : 'gjennomtrengelige'); })),
     fl('lego', 'spill', 'Legoknotter på gulv og tak i lekerommet, nivå 7 (Detaljert grafikk)', true, () => legoOn, kp('tlm.lego', (v) => { legoOn = v; logEv('legoknotter', v ? 'på' : 'av'); })),
     sl('legodens', 'admin', 'Legoknotter: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(legoDens), (v) => { if (+v === +legoDens) return; store.set('tlm.legodens', +v); logEv('legoknotter', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
+    sl('cinema', 'admin', 'Kinomodus for trailer-opptak: skjuler all UI, ingen lyd og lagring, fast frø, skript styrer kamera og tid (laster siden på nytt; slå av igjen med ?cinema=0 eller ved å fjerne cinema fra adressen)', 'av', [['av', 'Av'], ['paa', 'På (kinomodus)']], () => (CINE.on ? 'paa' : 'av'), (v) => { if ((v === 'paa') === CINE.on) return; logEv('kino', `valg: ${v}`); setTimeout(() => (v === 'paa' ? window.__game.cine.on() : window.__game.cine.off()), 150); }),
     sl('fdens', 'admin', 'Gulvdetaljer: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(fdDens), (v) => { if (+v === +fdDens) return; store.set('tlm.fdens', +v); logEv('gulvdetaljer', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     fl('clutter', 'spill', 'Småting på gulv og hyller: smuler, knapper, hår (Detaljert grafikk)', true, () => clutterOn, kp('tlm.clutter', (v) => { clutterOn = v; logEv('smating', v ? 'på' : 'av'); }))]),
   fl('hudtech', 'spill', 'Vis alltid tekniske tall (høyde, tid, poeng). Ellers: trykk på teksten øverst', false, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
@@ -2631,7 +2637,7 @@ function render(now, dt) {
   poseHero(player, now, dt, mode); animateHero(player, now, dt); updateBubble(now); updateStam();
   updateArc(); syncMade(); syncZips(); markerPlanFrame(now); updateLabels(); mv.update(now, dt);
   const pulse = 0.5 + 0.5 * Math.sin(now / 260);
-  for (const m of gripMarks) { m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
+  for (const m of gripMarks) { m.g.visible = !CINE.on; m.edges.material.opacity = gripHi ? 0.7 + 0.3 * pulse : 0.85; m.glow.material.opacity = gripHi ? 0.12 + 0.2 * pulse : 0.07; }
   hero.stepOff = (hero.stepOff || 0) * Math.exp(-dt / 0.07) + (player.stepDy || 0); player.stepDy = 0;                     // trinnhopp: figuren glir opp i stedet for å poppe
   { const rx = react.out, on = reactAnim && rx.active;                      // bare korte, tydelige strekk/klem etter knus/støt (ikke konstant puls)
     hero.root.position.set(player.x, player.y - hero.stepOff + (on ? rx.hop : 0), player.z); updateBlob(now);
@@ -2736,7 +2742,7 @@ function render(now, dt) {
     const lookT = camAssist ? (falling ? -0.9 : climbing ? 0.8 : 0) : 0, pitchT = (camAssist ? (falling ? 0.14 : climbing ? -0.08 : 0) : 0);
     const ka = 1 - Math.pow(0.15, dt);
     camLook += (lookT - camLook) * ka; camPitchBias += (pitchT - camPitchBias) * ka;
-    cam.target.y = camFocusY + 0.62 + camLook;
+    cam.target.y = camFocusY + 0.62 + camLook + cineH;
     const SH = viewMode === 'shoulder', baseDist = (SH ? shDist : cam.dist) + camBossDist;
     const sdx = (SH ? shSide * shOff * Math.cos(cam.yaw) : 0) + camBossOx, sdz = (SH ? -shSide * shOff * Math.sin(cam.yaw) : 0) + camBossOz;       // sideforskyvning: kameraet over skulderen
     const dirAt = (pitch) => { const c = Math.cos(pitch); return new THREE.Vector3(Math.sin(cam.yaw) * c, Math.sin(pitch), Math.cos(cam.yaw) * c); };
@@ -2787,14 +2793,15 @@ function render(now, dt) {
   if (fdet) { fdet.update(floorDetailOn && !lowOn && mode !== 'plan'); const sol = floorDetailOn && !lowOn && beadSolidOn; if (sol !== fdet.solid) logEv('perler', sol ? `${fdet.beads.length} solide` : 'ikke solide'); fdet.setSolid(sol); }   // R37
   if (leke) leke.update(legoOn && !lowOn && mode !== 'plan');
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
-  ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(dt, mode === 'play' && !won && !menuOpen && !ov.active);
+  ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(CINE.on ? 0 : dt, mode === 'play' && !won && !menuOpen && !ov.active);   // kinomodus: byggetiden går bare i cine.step / cine.build.step
   if (labAutoOpen({ lab: isLab(LEVEL), on: labStart, done: labAuto.done, playing: mode === 'play' && !won && !menuOpen && !ov.active && !bossFighting(), onGround: player.onGround || player.state === 'ground' }) && bld.open()) { labAuto.done = true; logEv('bygglab', 'byggeskjermen åpnet ved start'); }   // R67
   updateFades(dt); updateOffscreen();
   heroSeen(bossMesh && bossOn && !LEVEL.bossS.gone && camBossK > 0.05 && mode === 'play' && !viewFirst);
   sun.target.position.set(player.x, player.y, player.z);
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   grade.follow(player, camera);
-  if (floodSt.shake > 0 && mode === 'play' && !window.__camLock) { const [sx, sy] = shakeOffset(floodSt.shake, now / 1000); camera.position.x += sx; camera.position.y += sy; }   // R65: lett kameraskjelv før man drukner
+  if (floodSt.shake > 0 && mode === 'play' && !window.__camLock && !CINE.on) { const [sx, sy] = shakeOffset(floodSt.shake, now / 1000); camera.position.x += sx; camera.position.y += sy; }   // R65: lett kameraskjelv før man drukner
+  cine.applyCam();   // R68: fritt kamera (setCam) overstyrer følgekameraet per bilde
   renderer.render(scene, camera);
   if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const ds = drawerSummary(LEVEL); if (ds.total) logEv('skuffer', `${ds.open} åpne, ${ds.closed} lukkede, ${ds.fronts} frontfarger, tydelige ${drawerCue() ? 'på' : 'av'}`); const w = overBudget(st).concat(memOver(st, texLow || lowOn)); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
   goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
@@ -2911,7 +2918,7 @@ function showEnding() {
 // ---------- startskjerm (v0.73): Nytt spill · Fortsett · Innstillinger · Avslutt ----------
 // Vises når siden åpnes uten ?level=… (en lenke med brett, «Neste nivå» og brettvelgeren hopper over den). Spillet står stille bak.
 let startScreenOn = store.get('tlm.startscreen', true), menuOpen = false;
-const startWanted = startScreenOn && levelParam === null && new URLSearchParams(location.search).get('start') !== '0';
+const startWanted = !CINE.on && startScreenOn && levelParam === null && new URLSearchParams(location.search).get('start') !== '0';
 let gameDone = store.get('tlm.done', false);   // satt etter avslutningen: menyen viser da bare Nytt spill
 const hasProgress = () => !gameDone && (resumed || clock > 4 || levelId !== 'bad' || Object.keys(store.get('tlm.cleared', {})).length > 0);
 function clearAllProgress() { try { Object.keys(localStorage).filter((k) => k.startsWith('tlm.progress.') || k.startsWith('tlm.storySeen.') || k.startsWith('tlm.cardseen.') || k === 'tlm.runs').forEach((k) => localStorage.removeItem(k)); } catch { /* privat modus */ } }
@@ -3027,6 +3034,7 @@ requestAnimationFrame(() => setTimeout(warmUp, 50));
 let lastHitch = -99, shwN = 0;
 let last = performance.now();
 function frame(now) {
+  if (CINE.on) { cine.frame(now); requestAnimationFrame(frame); return; }   // R68: kinomodus: skriptet styrer tid og bilde; før det tar over går spillet vanlig (med skjult UI)
   const raw = now - last, dt = Math.max(0, Math.min(0.05, raw / 1000)); last = now;      // aldri negativ tid (første bilde kan ha et tidsstempel fra før oppstarten var ferdig)
   if (raw > 90 && raw < 3000 && mode === 'play' && !menuOpen && clock - lastHitch > 2) {          // v0.97: hakking logges med det som skjedde like før, så vi ser årsaken i neste rapport
     lastHitch = clock; const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'lav fps').slice(-3).map((e) => e.type).join(', ');
@@ -3050,4 +3058,6 @@ window.__markDrag = () => { lastDrag = performance.now() / 1000; };   // testing
 window.__camDbg = () => ({ camLook, camPitchBias, camLift, camUpTilt, cur: cam.cur, pitch: cam.pitch });
 window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
-window.__game = { diff: { get: () => difficulty, set: (v) => applyDifficulty(v, { carry: true, why: 'test' }), profile: () => DIF, count: helpVisibleCount, quit: quitToMenu, start: showStart, key: () => progKey, tb }, markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+const cine = createCinema({ state: CINE, rng: cineRnd || { reseed() {} }, camera, canvas: renderer.domElement, cam, player, update, render, bld, settings: () => SETTINGS, logEv, onFollow: (h) => { cineH = h; }, snapCam: () => { camFocusY = null; }, isPlay: () => mode === 'play' && !won && !menuOpen && !ov.active, levelId: () => levelId, version: VERSION });   // R68: kinomodus (cinema_view.js)
+if (CINE.on) bld.showMarks(false);   // de gule rammene rundt byggesteder skjules (gripMarks skjules i render())
+window.__game = { cine, diff: { get: () => difficulty, set: (v) => applyDifficulty(v, { carry: true, why: 'test' }), profile: () => DIF, count: helpVisibleCount, quit: quitToMenu, start: showStart, key: () => progKey, tb }, markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)

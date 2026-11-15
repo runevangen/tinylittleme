@@ -600,10 +600,10 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
 
   // ---- inn og ut ----
   let near = null;
-  function open() {
+  function open(siteId, { force = false } = {}) {   // R68: open('<sted>', { force: true }) åpner et bestemt sted uten nærhets- og tilstandssjekk (kinomodus)
     if (!enabled || active) return false;
-    const s = near || nearestSite(sites, player);
-    if (!s || !canEnterBuild({ play: isPlay(), won: isWon(), menu: isMenu(), boss: isBoss(), ov: isOv(), onGround: player.onGround || player.state === 'ground' })) return false;
+    const s = typeof siteId === 'string' ? sites.find((q) => q.id === siteId) : near || nearestSite(sites, player);
+    if (!s || !(force && typeof siteId === 'string') && !canEnterBuild({ play: isPlay(), won: isWon(), menu: isMenu(), boss: isBoss(), ov: isOv(), onGround: player.onGround || player.state === 'ground' })) return false;
     active = s; const B = getB(s); B.snap = getSnap();
     for (const q of parts) if (q.got) addPart(B, q.id);
     if (allParts()) for (const q of parts) addPart(B, q.id);
@@ -645,7 +645,15 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   }
 
   return {
-    get active() { return !!active; }, enabled, update, open, close, labels,
+    get active() { return !!active; }, enabled, update, open, close, labels, get siteIds() { return sites.map((q) => q.id); }, placeRef(siteId) {   // R68: legger stedets referansebygg (site.ref) på brettet, som om du hadde plassert det selv (kinomodus; deler av samme type tas fra de du har)
+      const s = sites.find((q) => q.id === siteId), ref = s?.ref; if (!enabled || !ref?.placed?.length) return false; const B = getB(s), used = new Set(), map = new Map();
+      for (const p of ref.placed) { const id = B.have.find((h) => !used.has(h) && B.types[h] === p.type); if (!id) return false; used.add(id); map.set(p.id, id); }
+      restore(B, { have: B.have, placed: ref.placed.map((p) => ({ ...p, id: map.get(p.id) })), links: (ref.links || []).map((l) => ({ ...l, a: map.get(l.a), b: l.b ? map.get(l.b) : null })) });
+      if (active && active.id === s.id) { sim = null; simDone = false; root.classList.remove('sim'); labels(); trayRender(); draw(); }
+      logEv('bygg', `referansebygg lagt inn ${s.id}: ${B.placed.length} deler`); return true;
+    },
+    showMarks(v) { for (const { g } of siteMeshes) g.visible = !!v; },   // R68: stedsrammene kan skjules (kinomodus)
+    
     save: () => (enabled ? { ...(lab ? { lab: { flags: labReachedSave(lab.reached) } } : {}), got: gotPartIds(LEVEL), solved: [...solved], loads: Object.fromEntries([...passedL].map(([k, e]) => [k, cleanPassed(e.ids)])), sites: Object.fromEntries([...builds].map(([k, b]) => [k, serialize(b)])) } : undefined),
     load(data) {
       if (!enabled || !data) return; restoreParts(LEVEL, data.got); solved.clear(); for (const id of Array.isArray(data.solved) ? data.solved : []) solved.add(id);
