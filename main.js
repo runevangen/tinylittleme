@@ -123,7 +123,7 @@ const LEVELS = [
   { id: 'gaate', label: 'Prøverom: gåter (plate, dør, bryter og vindebro)', short: 'Gåter' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
   { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
-  { id: 'bygglab', label: 'Prøverom: Bygglab (starter i byggemodus, åtte byggesteder med alle deler)', short: 'Bygglab' },   // R67
+  { id: 'bygglab', label: 'Prøverom: Bygglab · NY BYGGETEKNIKK (rutenett: trykk punkter og bygg staver av tre, stål og tau, åtte byggesteder)', short: 'Bygglab · ny byggeteknikk' },   // R67
   { id: 'kontroll', label: 'Kontrollbanen (test av styring og kamera)', short: 'Kontroll' },
 ];
 const levelParam = new URLSearchParams(location.search).get('level');

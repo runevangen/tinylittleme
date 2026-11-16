@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.13** – Brettvelgeren: Bygglab heter nå «Bygglab · ny byggeteknikk» (rutenett-bygging).
 - **2.12** – Trailer v3: nytt bygge-klipp der broen brister (06b), lengre sluttkort med saktere fade (kun verktøy, ikke spillet).
 - **2.11** – Trailer v2: kamera nærmere i klippene 03, 05, 07, 08; rutenett-bygging i bygge-klippet; lengre verksted/edderkopp/lys-klipp (kun verktøy, ikke spillet).
 - **2.10** – R73 (fra tester): fagverk-følelse i rutenett-bygging: belastningsfarge, kjøredekk, SLOW/PAUSE, største belastning og eksempelbro.
