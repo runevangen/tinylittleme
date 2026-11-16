@@ -39,6 +39,7 @@ import { initBoss, resetBoss, stepBoss } from './boss.js';   // R9: sjef-maur i 
 import { buildBoss, buildPrize } from './boss_model.js';
 import { createBossBar } from './boss_ui.js';
 import { createBuildMode } from './build.js';
+import { createVersionCheck } from './version_check_view.js';   // R77: versjonsjekk og «Start ny versjon» (version_check_logic.js)
 import { createCinema } from './cinema_view.js';   // R68: kinomodus: kamera-API, fast tid og byggeskjerm for trailer-opptak
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
 import { makeLook } from './look.js';
@@ -1810,11 +1811,14 @@ const ADMIN_TUNE = [
 ];
 const PSET = (k) => (v) => { P[k] = v; saveCustom(); };
 function setViewMode(v) { viewMode = v; viewFirst = v === 'first'; store.set('tlm.view3', v); cam.pitch = v === 'shoulder' ? pitchBase - 0.08 : v === 'first' ? 0.05 : pitchBase; if (v === 'third') cam.cur = camDistSet; }
+let verCheckOn = store.get('tlm.vercheck', true), verCheckMin = store.get('tlm.vercheckmin', 5), verView = null;   // R77
 const SETTINGS = [
   // Spill
   fl('pcbtns', 'styring', 'Vis skjermknapper på PC (TA, HOPP, GREP)', true, () => pcButtons, kp('tlm.pcbtns', (v) => { pcButtons = v; applyPlatformUi(); })),
   sl('lang', 'spill', 'Språk / Language', 'nb', LANGS, () => lang, kp('tlm.lang', (v) => { lang = v; applyLang(); })),
   fl('autosave', 'spill', 'Autolagring: fortsett der du var', true, () => autosaveOn, kp('tlm.autosave', (v) => { autosaveOn = v; if (!v) store.set(progKey, null); })),
+  fl('versionCheck', 'spill', 'Sjekk om det finnes en nyere versjon (kort øverst: «NY VERSJON · TRYKK FOR Å OPPDATERE»; fremgangen beholdes)', true, () => verCheckOn, kp('tlm.vercheck', (v) => { verCheckOn = v; logEv('versjon', v ? 'sjekk på' : 'sjekk av'); verView?.render(); })),
+  rg('versionCheckInterval', 'admin', 'Versjonsjekk: hvor ofte spillet sjekker (minutter)', 5, 1, 60, 1, () => verCheckMin, kp('tlm.vercheckmin', (v) => { verCheckMin = v; }), { digits: 0 }),
   fl('startscreen', 'spill', 'Vis startskjerm (Nytt spill / Fortsett) når spillet åpnes', true, () => startScreenOn, kp('tlm.startscreen', (v) => { startScreenOn = v; })),
   fl('puzzles', 'spill', 'Gåter (nøkkel og lås: en snarvei du åpner)', true, () => puzzlesOn, kp('tlm.puzzles', (v) => { puzzlesOn = v; })),
   fl('gates', 'spill', 'Gåteverktøy (trykkplater, porter, vindebroer og brytere: bær ting til plata, slå bryteren med TA)', true, () => gatesOn, kp('tlm.gates', (v) => { gatesOn = v; logEv('gåte', v ? 'på' : 'av'); })),
@@ -2067,6 +2071,7 @@ const marks = [];
 // R71: hvilken skjerm er oppe (flag_logic.js): styrer den flytende ⚑ og står i rapporten
 const hidden = (id) => $(id).classList.contains('hide'), bodyHas = (c) => document.body.classList.contains(c);
 const currentScreen = () => screenOf({ panel: !hidden('panel'), building: bld.active, buildSite: bld.siteId, ov: bodyHas('ovview'), story: !hidden('story'), start: !hidden('start'), pick: !!$('start').querySelector('#dfBack'), win: !hidden('win'), intro: !hidden('introsw'), more: !hidden('more') });
+verView = createVersionCheck({ version: VERSION, $, logEv, toast, store, getScreen: () => currentScreen().id, getClock: () => clock, isBoss: () => bossFighting(), isCinema: () => CINE.on || bodyHas('cinema'), isTesting: () => bld.active, isOn: () => verCheckOn, getIntervalMin: () => verCheckMin, beforeUpdate: () => saveProgress() });   // R77
 let flagScr = '';
 function syncFlagScreen() {
   const scr = currentScreen(), on = floatOn(scr.id, { qbtnOn, tbOn: tbandOn, cinema: bodyHas('cinema') });
@@ -2126,6 +2131,7 @@ function buildReportInfo() {
   const t = nextTarget();
   return {
     version: VERSION, level: levelLabel, difficulty: `${difficulty}${isCustomHelp(store) ? ' (egendefinert hjelp)' : ''} · hjelp av: ${offElements(difficulty).join(', ') || 'ingen'} · merker ${badgeLine() || 'ingen'}`, when: new Date().toLocaleString('nb-NO'), device: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 90),
+    verCheck: verView ? verView.info() : '',
     where: currentScreen().label, screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
     perf: perfLine + ' · shadere ' + shw.line(),
     fps: perf.n ? `${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms` : 'fps ukjent',
@@ -2177,6 +2183,7 @@ function buildPanel() {
   };
   p.innerHTML = `<div class="phead"><button id="pCloseTop" class="pclose" aria-label="Lukk">✕ Lukk</button><button id="pFlag" aria-label="Meld og vurder">⚑</button><h3 id="pTitle">Innstillinger</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
     <div id="repHead" class="rhead">${repHeadHtml()}</div>
+    <div class="row"><button id="bVerCheck"></button></div><small id="verNote"></small>
     <input type="search" id="pSearch" placeholder="Søk i innstillinger" autocomplete="off" enterkeyhint="search">
     ${nChanged ? `<div class="pchg">${nChanged} innstilling${nChanged > 1 ? 'er' : ''} endret fra standard</div>` : ''}
     ${GROUPS.filter(([g]) => g !== 'admin' || adminOn).map(([g, t]) => groupHtml(g, t)).join('')}
@@ -2209,6 +2216,7 @@ function buildPanel() {
   $('pMenu').onclick = () => quitToMenu('⚙');
   $('closePanel').onclick = () => $('panel').classList.add('hide');
   $('pCloseTop').onclick = () => $('panel').classList.add('hide');
+  verView?.bindPanel($('bVerCheck'), $('verNote'));   // R77
   $('pFlag').onclick = (e) => { e.stopPropagation(); $('qbtn').click(); };   // R71: ⚑ i panelhodet åpner samme boks
   // admin skjules bak 7 trykk på tittelen (eller ?admin=1)
   let taps = 0, tapT = 0;
@@ -3085,3 +3093,4 @@ window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxe
 const cine = createCinema({ state: CINE, rng: cineRnd || { reseed() {} }, camera, canvas: renderer.domElement, cam, player, update, render, bld, settings: () => SETTINGS, logEv, onFollow: (h) => { cineH = h; }, snapCam: () => { camFocusY = null; }, isPlay: () => mode === 'play' && !won && !menuOpen && !ov.active, levelId: () => levelId, version: VERSION, THREE, scene, hero, onHeroScale: (k) => { cineHS = k; } });   // R68: kinomodus (cinema_view.js)
 if (CINE.on) bld.showMarks(false);   // de gule rammene rundt byggesteder skjules (gripMarks skjules i render())
 window.__game = { cine, diff: { get: () => difficulty, set: (v) => applyDifficulty(v, { carry: true, why: 'test' }), profile: () => DIF, count: helpVisibleCount, quit: quitToMenu, start: showStart, key: () => progKey, tb }, markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game.verView = verView;   // R77: test-hekte
