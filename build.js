@@ -23,7 +23,7 @@ import { drawGhost } from './build_replay_view.js';
 import { submitBridge, bestBridges, bridgeLevel, netReady, standing } from './build_net.js';   // R50: beste bygg på nett
 import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum } from './build_world.js';   // R26: bygget flyttes ut i verdenen
 import { isLab, labSitesOf, labFill, labRegister, labTrayItems, labStepSite, labInfoOf, labNameKey, labTaskKey, labFlagStep, labReachedSave, labReachedLoad, labHome, labFar } from './bygglab_logic.js';   // R67: Bygglab
-import { labCss, labMarkup, labSync, LAB_TOP } from './bygglab_view.js';
+import { labCss, labMarkup, labSync, LAB_TOP, LAB_TOP_LAND } from './bygglab_view.js';
 import { parseRod } from './build_materials.js';
 import { createGridUI, gridCss, gridMarkup } from './grid_view.js';   // R72: rutenett-bygging: knutepunkter og staver
 import { GRID_PX } from './grid_view.js';
@@ -38,7 +38,9 @@ body.building #panel{z-index:10}
 #bld .bt{position:absolute;left:0;right:0;display:flex;flex-wrap:nowrap;gap:6px;justify-content:center;padding:0 8px;pointer-events:none}
 #bld .bt.top{top:max(8px,env(safe-area-inset-top))}
 body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px))}   /* R71: plass til ⚑ øverst til høyre */
-#bld .bmenu{position:absolute;left:max(8px,env(safe-area-inset-left));top:calc(max(8px,env(safe-area-inset-top)) + 54px);z-index:3;height:30px;padding:0 12px;border:1px solid #ffffff55;border-radius:15px;background:#121a2ccc;color:#ffd9a0;font:700 12px system-ui;touch-action:manipulation}   /* R69: Avslutt til meny fra byggeskjermen */
+#bld .bt.top button{font-size:12px;padding:0 3px;overflow:hidden;text-overflow:clip;flex:1 1 auto}   /* R76: fem knapper i toppraden; teksten får ikke stikke ut */
+#bld .bt.top button[data-a="menu"]{border-color:#ffffff66;color:#ffd9a0;background:#121a2cb3}   /* R69/R76: Avslutt til meny står i toppraden (dekker ingenting) */
+@media (max-width:380px){#bld .bt.top button{font-size:11px;padding:0 2px}}
 #bld.sim .bmenu{display:none}
 #bld .bt.bot{bottom:max(8px,env(safe-area-inset-bottom))}
 #bld button{pointer-events:auto;flex:1 1 0;min-width:0;height:48px;padding:0 4px;border-radius:14px;border:2px solid #ffa940;background:#121a2ce6;color:#ffd9a0;font:700 14px system-ui;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -94,7 +96,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
   const builds = new Map();                  // stedets id -> byggetilstand
   const labOpts = () => ({ unlimited: getLabFree() || allParts() });
   const getB = (site) => { let b = builds.get(site.id); if (!b) { b = B0(site); builds.set(site.id, b); if (lab) labFill(b, types, labOpts()); } return b; };
-  const TOPPX = () => (innerHeight <= 520 ? 100 : 130) + (lab ? (innerHeight <= 520 ? LAB_TOP - 6 : LAB_TOP) : 0), BOTPX = () => (grid.on() ? (innerHeight <= 520 ? 96 : 124) : (innerHeight <= 520 ? 110 : 160)) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
+  const TOPPX = () => (innerHeight <= 520 ? 100 : 130) + (lab ? (innerHeight <= 520 ? LAB_TOP_LAND : LAB_TOP) : 0), BOTPX = () => (grid.on() ? (innerHeight <= 520 ? 96 : 124) : (innerHeight <= 520 ? 110 : 160)) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let lastTap = null, zoomMsg = '', zoomMsgT = 0;   // R44: dobbelttrykk og zoom-melding
   let gPeaks = null, gSum = null, gSpeed = 'play';   // R73: topp per stav, «største belastning» etter prøven, tempo (SLOW/PAUSE)
@@ -156,7 +158,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
 
   // ---- DOM ----
   const root = document.createElement('div'); root.id = 'bld';
-  root.innerHTML = `<canvas></canvas><button class="bmenu" data-a="menu"></button><div class="bt top"><button data-a="back"></button><button data-a="undo"></button><button data-a="reset"></button><button data-a="try" class="go"></button></div>
+  root.innerHTML = `<canvas></canvas><div class="bt top"><button data-a="menu"></button><button data-a="back"></button><button data-a="undo"></button><button data-a="reset"></button><button data-a="try" class="go"></button></div>
   ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-a="mode" class="bmode"></button><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>${gridMarkup()}`;   // R72: modusknapp og materialvalg (rutenett)
   if (lab) root.classList.add('lab');
   document.body.appendChild(root);
@@ -170,7 +172,7 @@ export function createBuildMode({ onMenu, menuLabel = () => 'Avslutt til meny', 
     startPan: (e, x, y) => { sel = null; gest = { kind: 'pan', x, y, cu: view.cu, cv: view.cv, t: e.timeStamp || performance.now(), moved: false }; try { cv.setPointerCapture(e.pointerId); } catch { /* ok */ } },
   });
   function labels() {
-    btn('menu').textContent = menuLabel(); btn('back').textContent = T('build.back'); btn('undo').textContent = T('build.undo'); btn('reset').textContent = T('build.reset'); btn('try').textContent = T('build.try');
+    btn('menu').textContent = T('build.menu'); btn('menu').setAttribute?.('aria-label', menuLabel()); btn('back').textContent = T('build.back'); btn('undo').textContent = T('build.undo'); btn('reset').textContent = T('build.reset'); btn('try').textContent = T('build.try');
     btn('snap').textContent = T(getSnap() ? 'build.snapOn' : 'build.snapOff'); btn('snap').classList.toggle('on', getSnap()); btn('del').textContent = T('build.del');
     for (const k of LINK_KINDS) { const b = root.querySelector(`[data-t="${k}"]`); b.textContent = T('build.tool.' + k); b.classList.toggle('on', tool === k); }
     if (sim) btn('try').textContent = T('build.stop');
