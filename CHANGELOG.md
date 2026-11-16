@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.21** – Forhistorien «Leggetid» (fem klipp), cine.prop og cine.heroScale for kinomodus, tidskode-skript (tools/trailer/timecode.sh). Bare film-verktøy, spillet er uendret.
 - **2.20** – R75: veiledning for rutenett-bygging (Så slik-guide, MODUS-hint, husket modus).
 - **2.19** – R74: rutenett-bygging med mål, budsjett og stjerner; kortet viser bare det som trengs etter bestått.
 - **2.18** – R76: byggeskjermens oppsett: ⌂ MENY i toppraden uten overlapp, NULLSTILL passer i knappen, strammere topp i Bygglab.
