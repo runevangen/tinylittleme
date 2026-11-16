@@ -29,9 +29,6 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Åpne punkter
 
-### [ ] R74 · Fra tester: Rune · Rutenett: kamp og mål, tyngre laster, budsjett og stjerner
-Bygger på R72/R73 og det svakere treverket (egen endring). Mål: rutenett-bygging føles som Poly Bridge/Bridge Constructor: hvert sted har et gap, et budsjett og en last, og tre alene holder ikke på de vanskelige stedene, så stål og tau må brukes smart. (1) De åtte Bygglab-stedene får stigende vanskelighet (lett last først, så bil, så tung last, bredere gap, høyere dekk), hver med kostnadsbudsjett (`build_budget.js`) og stjerner (billigere = flere). (2) Tydelig mål og vurdering etter prøve: bestått/ikke bestått, kostnad, stjerner, hvilken stav som brakk først (R73 «største belastning»). (3) Bestått sted låser opp neste (som i dag for byggestedene); lagring i spillerens data; ingen endring i klassisk modus eller koder. (4) Valgfri «tar den harde veien» er uendret for brettene R45–R50. Ferdig når: stedene kan løses med minst én tre/stål/tau-bygg hver (verifisert av test som bygger en kjent løsning deterministisk og at kjent for-svak bygg feiler), `npm test` og `npm run boot` grønne, Playwright-bilde i `devices['iPhone 14']` sett.
-
 ### [ ] R75 · Fra tester: Rune · Veiledning for rutenett-bygging
 Første gang rutenett-modus brukes (og for Nybegynner i R69): kort «Så slik»-guide med to-trinn (trykk et punkt, trykk et punkt til; velg materiale; PRØV), hint som peker på MODUS-knappen når brettet har rutenett, og at modusvalget huskes. Hjelp og piler følger vanskelighetsprofilen (R69): av på Ekspert. Alt med knapper, ingen taster. Ferdig når: guiden vises én gang, kan hoppes over og åpnes igjen fra ⚙/⋯, og testes (DOM + Playwright, iPhone 14).
 
@@ -49,6 +46,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Fra tester: Rune · rutenett: kamp og mål, tyngre laster, budsjett og stjerner (R74, v2.19)
 - [x] Fra tester: Rune · byggeskjermens oppsett: ⌂ MENY i toppraden, NULLSTILL passer, strammere Bygglab-topp (R76, v2.18)
 - [x] Fra tester: Rune · rutenett-bygging: knutepunkter og staver (tre, stål, tau) på koordinatene, ny modus ved siden av den klassiske (grid_logic.js, grid_view.js) (R72, v2.08)
 - [x] Fra tester: Rune · rutenett-bygging trinn 2: fagverk-følelse (belastningsfarge, kjøredekk, SLOW/PAUSE, største belastning, eksempelbro) (R73, v2.10)

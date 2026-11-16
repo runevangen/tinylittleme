@@ -17,6 +17,8 @@ export const CODE_GRID = 2;            // kodeversjon (TLM1.<base64 av [2, sted,
 export const CODE_GRID_DECK = 3;       // R73: samme, men bygget har kjøredekk (dekket er ikke med i koden, bare det du la til)
 
 export const siteHasGrid = (site) => !!site && !!site.grid;
+// R74: et sted kan ha egne ankre i rutenett-modus (`site.grid.anchors`), f.eks. der den klassiske løsningen bruker et dreiepunkt eller trapp i stedet for to klipper
+export const gridAnchors = (site) => (Array.isArray(site?.grid?.anchors) && site.grid.anchors.length ? site.grid.anchors : siteAnchors(site));
 export const gridStep = (site) => (Number.isFinite(site?.grid?.step) && site.grid.step > 0.4 ? site.grid.step : GRID_STEP);
 const r3 = (x) => Math.round(x * 1000) / 1000;
 const same = (a, b) => Math.abs(a - b) < 1e-3;
@@ -25,7 +27,7 @@ const clone = (G) => JSON.parse(JSON.stringify(G));
 // ---------- rutenettet ----------
 // alle punkt knutene kan stå på (rutenett + ankre), i en fast rekkefølge
 export function latticePoints(site) {
-  const st = gridStep(site), an = siteAnchors(site), u0 = an[0]?.u ?? 0, out = [], hw = site.w / 2;
+  const st = gridStep(site), an = gridAnchors(site), u0 = an[0]?.u ?? 0, out = [], hw = site.w / 2;
   const kmin = Math.ceil((-hw - u0) / st - 1e-9), kmax = Math.floor((hw - u0) / st + 1e-9), jmax = Math.floor(site.h / st + 1e-9);
   for (let j = 0; j <= jmax; j++) for (let k = kmin; k <= kmax; k++) out.push({ u: r3(u0 + k * st), v: r3(j * st) });
   for (const a of an) if (!out.some((p) => same(p.u, a.u) && same(p.v, a.v))) out.push({ u: r3(a.u), v: r3(a.v) });
@@ -43,7 +45,7 @@ export function nearestPoint(site, u, v, maxD = Infinity) {
 // men kan få staver over og under. Dekket er gratis og teller ikke som deler (build_budget.js), så terskler og stjerner gjelder det du bygger oppå.
 export const isDeckRod = (r) => !!r && !!r.deck;
 export function deckPoints(site) {
-  if (!siteHasGrid(site)) return null; const an = siteAnchors(site).slice().sort((a, b) => a.u - b.u);
+  if (!siteHasGrid(site)) return null; const an = gridAnchors(site).slice().sort((a, b) => a.u - b.u);
   if (an.length !== 2 || !same(an[0].v, an[1].v) || an[1].u - an[0].u < MIN_LEN) return null;
   const mid = latticePoints(site).filter((p) => same(p.v, an[0].v) && p.u > an[0].u + 0.3 && p.u < an[1].u - 0.3).sort((a, b) => a.u - b.u);
   return { left: an[0], right: an[1], mid };
@@ -59,7 +61,7 @@ function addDeck(G, site) {
 
 // ---------- bygget ----------
 export function createGrid(site, deck = false) {
-  const nodes = siteAnchors(site).map((a, i) => ({ id: 'a' + (i + 1), u: r3(a.u), v: r3(a.v), fixed: true }));
+  const nodes = gridAnchors(site).map((a, i) => ({ id: 'a' + (i + 1), u: r3(a.u), v: r3(a.v), fixed: true }));
   const G = { nodes, rods: [], n: 1, r: 1 };
   return deck ? addDeck(G, site) : G;
 }

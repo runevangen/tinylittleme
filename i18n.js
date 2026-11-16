@@ -104,6 +104,11 @@ const DICT = {
     'story.endTitle': 'Du klarte det!', 'story.end': 'Motgiften virker. Du vokser forbi oljeflekken, verktøykassa og benken, og alle rommene blir vanlig store igjen. Spillet er ferdig: takk for turen, lille deg!', 'story.endBtn': 'Til menyen', 'story.endTotal': 'Hele reisen',
     'win.time': 'Tid', 'win.ants': 'Maur knust', 'win.crumbs': 'Smuler', 'win.points': 'Poeng', 'win.record': 'Ny rekord!', 'win.flew': 'Flymodus ble brukt, resultatet er ikke gyldig',
     'win.level': 'Nivå {n} klart!', 'win.all': 'Alle nivåene klart!', 'win.top': 'Du kom opp!', 'win.next': 'NESTE NIVÅ', 'win.ending': 'SE AVSLUTNINGEN', 'win.again': 'Spill igjen',
+    // R74: rutenett-oppdrag (grid_stage.js): mål, budsjett, tung last, vurdering og låsing (tekstene nevner knappene)
+    'gstage.goal': 'Mål: {loads}{heavy} over. Budsjett {budget}.', 'gstage.heavy': ' ({k}× tung)', 'gstage.passed': 'BESTÅTT {stars} · kostnad {cost} av {budget}', 'gstage.over': 'Holdt, men for dyrt: {cost} av {budget}. Bygg billigere og trykk PRØV.',
+    'gstage.moreLoads': 'Over! Mangler: {list}. Velg last og trykk PRØV.', 'gstage.failed': 'IKKE BESTÅTT. Se hva som brakk, bygg om og trykk PRØV.', 'gstage.cost': '{stars} Kostnad {cost} av {budget} · {parts} staver',
+    'gstage.empty': 'Tomt. Budsjett {budget}: trykk to punkter og bygg staver av tre, stål og tau.', 'gstage.overNow': 'Over budsjettet med {n}. Trykk FJERN eller bytt til billigere staver.', 'gstage.nextStar': 'Under {n} gir neste stjerne.', 'gstage.threeStars': 'Tre stjerner!',
+    'gstage.done': '✓ Dette stedet er bestått', 'gstage.locked': 'Låst: bestå sted {n} ({name}) med rutenett først.', 'gstage.unlocked': 'Bestått! Sted {n} er åpnet i rutenett.', 'gstage.allDone': 'Alle rutenett-stedene er bestått!', 'grid.modeLocked': 'RUTENETT 🔒',
     // R67: Bygglab (bygglab_logic.js, bygglab_view.js): stedene, nullstilling, målflagg og oppgave per sted (tekstene nevner knappene)
     'lab.bar': '{n}/{of} · {name}', 'lab.line': 'Sted {n}/{of}: {name} — {task}', 'lab.resetSite': 'NULLSTILL STED', 'lab.resetAll': 'NULLSTILL ALLE', 'lab.prev': 'Forrige sted', 'lab.next': 'Neste sted',
     'lab.siteReset': 'Sted {n} nullstilt', 'lab.allReset': 'Alle steder nullstilt', 'lab.flag': 'Målflagg {n}/{of} nådd ({total} flagg)', 'lab.flagAll': 'Alle målflaggene er nådd!',
@@ -219,6 +224,11 @@ const DICT = {
     'story.endTitle': 'You did it!', 'story.end': 'The antidote works. You grow past the oil patch, the toolbox and the bench, and every room is normal-sized again. The game is finished: thanks for the ride, little you!', 'story.endBtn': 'To the menu', 'story.endTotal': 'The whole trip',
     'win.time': 'Time', 'win.ants': 'Ants squashed', 'win.crumbs': 'Crumbs', 'win.points': 'Points', 'win.record': 'New record!', 'win.flew': 'Fly mode was used, the result is not valid',
     'win.level': 'Level {n} complete!', 'win.all': 'All levels complete!', 'win.top': 'You made it up!', 'win.next': 'NEXT LEVEL', 'win.ending': 'SEE THE ENDING', 'win.again': 'Play again',
+    // R74: grid stages (grid_stage.js): goal, budget, heavy load, verdict and locking (texts name the buttons)
+    'gstage.goal': 'Goal: {loads}{heavy} across. Budget {budget}.', 'gstage.heavy': ' ({k}× heavy)', 'gstage.passed': 'PASSED {stars} · cost {cost} of {budget}', 'gstage.over': 'It held, but too expensive: {cost} of {budget}. Build cheaper and press TRY.',
+    'gstage.moreLoads': 'Across! Still needed: {list}. Pick a load and press TRY.', 'gstage.failed': 'NOT PASSED. See what broke, rebuild and press TRY.', 'gstage.cost': '{stars} Cost {cost} of {budget} · {parts} rods',
+    'gstage.empty': 'Empty. Budget {budget}: tap two points and build rods of wood, steel and rope.', 'gstage.overNow': 'Over budget by {n}. Press REMOVE or switch to cheaper rods.', 'gstage.nextStar': 'Under {n} gives the next star.', 'gstage.threeStars': 'Three stars!',
+    'gstage.done': '✓ This site is passed', 'gstage.locked': 'Locked: pass site {n} ({name}) with the grid first.', 'gstage.unlocked': 'Passed! Site {n} is open in grid mode.', 'gstage.allDone': 'All grid sites are passed!', 'grid.modeLocked': 'GRID 🔒',
     // R67: Bygglab (bygglab_logic.js, bygglab_view.js): the sites, reset, goal flags and a task per site (texts name the buttons)
     'lab.bar': '{n}/{of} · {name}', 'lab.line': 'Site {n}/{of}: {name} — {task}', 'lab.resetSite': 'RESET SITE', 'lab.resetAll': 'RESET ALL', 'lab.prev': 'Previous site', 'lab.next': 'Next site',
     'lab.siteReset': 'Site {n} reset', 'lab.allReset': 'All sites reset', 'lab.flag': 'Goal flag {n}/{of} reached ({total} flags)', 'lab.flagAll': 'All goal flags reached!',

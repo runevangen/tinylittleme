@@ -8,7 +8,7 @@ const { chromium, devices } = require('playwright');
   const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
   const ctx = await b.newContext({ ...devices['iPhone 14'] }), pg = await ctx.newPage(), errs = [];
   pg.on('pageerror', (e) => errs.push(e.message)); pg.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
-  await pg.addInitScript(() => { try { localStorage.setItem('tlm.buildgriddeck', 'false'); } catch (e) { /* ok */ } });   // R73: denne testen bygger dekket selv (uten kjøredekk)
+  await pg.addInitScript(() => { try { localStorage.setItem('tlm.buildgriddeck', 'false'); localStorage.setItem('tlm.gridstage', 'false'); } catch (e) { /* ok */ } });   // R73: denne testen bygger dekket selv (uten kjøredekk)
   await pg.goto(`http://localhost:${port}/?level=bygglab`);
   await pg.waitForFunction(() => window.__game && window.__game.LEVEL.buildSites && window.__game.LEVEL.lab, null, { timeout: 90000 });
   const run = (n) => pg.evaluate((n) => window.__game.tick(n, 1 / 60), n);

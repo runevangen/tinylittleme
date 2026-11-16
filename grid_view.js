@@ -2,9 +2,8 @@
 // Alt går med trykk: trykk et punkt = knute, trykk en knute og så et punkt (eller en annen knute) = stav i valgt materiale, dra en knute = flytt, FJERN = slett valgt knute/stav.
 // Målene er skjermbaserte (minst ca. 44 px: nærmeste rutenettpunkt innen en halv rute treffes), så en finger treffer også når brettet er zoomet ut (R70).
 import { GRID_MATS, GRID_MAT, rodPrice } from './build_materials.js';
-import { siteAnchors } from './build_logic.js';
 import { applyExample, hasExample } from './grid_example.js';   // R73
-import { isGrid, setMode, isDeckRod, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
+import { gridAnchors, isGrid, setMode, isDeckRod, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
 
 export const GRID_PX = 44;   // minste avstand (px) mellom rutenettpunkter i standardvisningen
 export const gridCss = () => `
@@ -33,7 +32,7 @@ export const gridCss = () => `
 export const gridMarkup = () => `<div class="gtools"><button data-g="wood"></button><button data-g="steel"></button><button data-g="rope"></button><button data-g="example" class="ex"></button></div><div class="gsim"><button data-gs="slow"></button><button data-gs="pause"></button></div>`;
 
 const COMMA = (x) => String(+x.toFixed(2)).replace('.', ',');
-export const colRow = (site, p) => { const a = siteAnchors(site), st = gridStep(site); return { c: Math.round((p.u - (a[0]?.u ?? 0)) / st), r: Math.round(p.v / st) }; };
+export const colRow = (site, p) => { const a = gridAnchors(site), st = gridStep(site); return { c: Math.round((p.u - (a[0]?.u ?? 0)) / st), r: Math.round(p.v / st) }; };
 
 export function createGridUI(ctx) {
   const { root, T, toast, logEv, buzz, audio, onChange } = ctx;
@@ -49,17 +48,19 @@ export function createGridUI(ctx) {
 
   function sync() {   // knapper og klasser etter modus
     const s = site(); root.classList.toggle('hasgrid', !!s && enabledHere()); root.classList.toggle('gridmode', on());
-    root.classList.toggle('gridex', on() && !!ctx.getHint() && hasExample(s));   // R73: «SÅ SLIK» er en hjelp: borte på Ekspert og på steder uten kjøredekk
+    root.classList.toggle('gridex', on() && !!ctx.getHint() && hasExample(s) && !ctx.stageOn?.());   // R73: «SÅ SLIK» er en hjelp: borte på Ekspert og på steder uten kjøredekk
     const eb = root.querySelector('[data-g="example"]'); if (eb) eb.textContent = T('grid.example');
     simSync(speed, simDone);
     if (s && B()) B().gridMaxLen = ctx.getMaxLen();
-    const mb = root.querySelector('[data-a="mode"]'); if (mb) mb.textContent = T('grid.modeBtn', { m: T(on() ? 'grid.mode.grid' : 'grid.mode.classic') });
+    const mb = root.querySelector('[data-a="mode"]'); if (mb) mb.textContent = !on() && enabledHere() && ctx.locked?.() ? T('grid.modeLocked') : T('grid.modeBtn', { m: T(on() ? 'grid.mode.grid' : 'grid.mode.classic') });
     for (const m of GRID_MATS) { const b = root.querySelector(`[data-g="${m}"]`); if (!b) continue; b.textContent = T('grid.mat.' + m); b.style?.setProperty?.('--mc', GRID_MAT[m].color); b.classList.toggle('on', mat === m); b.setAttribute?.('aria-pressed', mat === m ? 'true' : 'false'); }
   }
   function toggleMode(why = 'knapp') {
     if (!site() || !enabledHere() || ctx.isSim()) return false;
     B().gridDeck = !!ctx.getDeck?.();   // R73: kjøredekk mellom ankrene (nytt bygg i rutenett-modus)
-    const to = on() ? 'classic' : 'grid'; if (!setMode(B(), to)) return false;
+    const to = on() ? 'classic' : 'grid';
+    if (to === 'grid' && ctx.locked?.()) { toast(ctx.lockText()); logEv('bygg', `rutenett låst ${site().id}: bestå forrige sted først`); buzz?.(12); return false; }   // R74: neste sted åpnes når forrige er bestått
+    if (!setMode(B(), to)) return false;
     clearSel(); gd = null; cursor = null; ctx.trayRender(); sync(); logEv('bygg', `modus ${to === 'grid' ? 'rutenett' : 'klassisk'} (${why}) ${site().id}`); onChange?.(); return true;
   }
   // R73: SÅ SLIK: legger et ferdig fagverk på stedet (kan angres)

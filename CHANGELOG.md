@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.19** – R74: rutenett-bygging med mål, budsjett og stjerner; kortet viser bare det som trengs etter bestått.
 - **2.18** – R76: byggeskjermens oppsett: ⌂ MENY i toppraden uten overlapp, NULLSTILL passer i knappen, strammere topp i Bygglab.
 - **2.17** – Trailer og forhistorie: «Du har blitt 3 cm høy.» i stedet for «Du er 3 cm høy.» (kun tekst i filmmanus).
 - **2.16** – docs/FORHISTORIE.md: manus for forhistorien «Leggetid» (kun dokument).
