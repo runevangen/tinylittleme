@@ -3,6 +3,7 @@
 // Armen (til å rekke mot skapet og holde tabletten) styres fra skriptet ved at armleddenes rotasjon overstyres i siden (forceArm); ingen endring i spillkoden.
 const HS = 24;                          // figuren er ca. 1 enhet høy (5 cm); 24 = ca. 1,2 m i et bad der vasken er 0,8 m høy
 const HERO = { x: -1, y: 0, z: -12, yaw: Math.PI };
+const MX = -3.8, MW = 13.4;             // speilets midte og bredde
 const MZ = -24.9;                       // speilflata (mot veggen over vasken)
 const sm = (t) => t * t * (3 - 2 * t);
 const mix = (a, b, t) => a + (b - a) * t;
@@ -41,8 +42,9 @@ async function build(ctx, opts = {}) {
   // mørkt vindu (kveld) utenfor ruta i østveggen
   await box({ shape: 'plane', x: 26.36, y: 30.6, z: -14.8, sx: 11.6, sy: 12, ry: -Math.PI / 2, color: 0x0a1230, emissive: 0x0a1230 });
   // speil over vasken (blank flate + hvit ramme) og en varm lampe over det
-  ids.mirror = await add({ shape: 'plane', x: -1.8, y: 27, z: MZ + 0.05, sx: 9.6, sy: 20, color: 0xa9c2d4, emissive: 0x23303a });
-  for (const [x, y, sx, sy] of [[-1.8, 37.2, 10.4, 0.8], [-1.8, 16.9, 10.4, 0.5], [-6.8, 27, 0.8, 20], [3.2, 27, 0.8, 20]]) await box({ x, y, z: MZ + 0.25, sx, sy, sz: 0.5, color: 0xf2efe6 });
+  ids.mirror = await add({ shape: 'plane', x: MX, y: 27, z: MZ + 0.05, sx: MW, sy: 20, color: 0x8fa9c4, emissive: 0x1c2a3a });
+  for (const [x, y, sx, sy] of [[MX, 37.2, MW + 0.8, 0.8], [MX, 16.9, MW + 0.8, 0.5], [MX - MW / 2 - 0.4, 27, 0.8, 20], [MX + MW / 2 + 0.4, 27, 0.8, 20]]) await box({ x, y, z: MZ + 0.25, sx, sy, sz: 0.5, color: 0xf2efe6 });
+  ids.tint = await add({ shape: 'plane', x: MX, y: 27, z: MZ + 1.7, sx: MW, sy: 20, color: 0x4f78b8, opacity: 0.28 });      // blålig glassfilm foran speilbildet: gjør det til refleksjon
   ids.lamp = await P.add({ shape: 'light', x: -1.8, y: 40, z: -14, color: 0xffd9a0, intensity: 90, dist: 60 });
   // speilskapets åpne hyller (skapet står fra før i brettet; døra er åpen): mørk bakvegg, to hyller, flaske, tannkrem og plaster
   await box({ x: 6.3, y: 30.8, z: -21.72, sx: 4.8, sy: 15.6, sz: 0.2, color: 0x1d2530 });
@@ -70,7 +72,7 @@ async function reflect(ctx, ids, cam, blink = 0, h = HERO, scale = HS) {
   const vz = 2 * MZ - h.z, t = (MZ - cam.z) / (vz - cam.z);
   const px = cam.x + t * (h.x - cam.x), py = cam.y + t * (h.y - cam.y);
   const k = scale * t;
-  await ctx.cine.prop.set(ids.refl, { x: px, y: py, z: MZ + 0.9, sx: k, sy: k, sz: -k * 0.12, blink });
+  await ctx.cine.prop.set(ids.refl, { x: px, y: py, z: MZ + 0.9, sx: k, sy: k, sz: -k * 0.12, blink, ry: h.yaw });
 }
 
 // Armen: overstyrer skulder (aR) og albue (eR) på høyrearmen i siden (spillets egen animasjon skriver ellers over). Verdier som i animateHero (aR: -1,6 = fram, -3 = rett opp).
@@ -94,7 +96,7 @@ async function handPos(page, side = 1) {
 // Tona alle props (utenom speilbildet) til 0..1 gjennomsiktighet; a = 1 er synlig
 async function fadeProps(ctx, ids, a) {
   const P = ctx.cine.prop;
-  for (const id of ids.all) await P.set(id, { opacity: a });
+  for (const id of ids.all) await P.set(id, { opacity: id === ids.tint ? 0.28 * a : a });
   await P.set(ids.lamp, { intensity: 90 * a });
 }
 

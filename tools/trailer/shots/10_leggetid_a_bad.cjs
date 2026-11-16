@@ -7,7 +7,7 @@ module.exports = {
   async setup(ctx) { ids = await L.build(ctx); await ctx.cine.step(30, 1 / 60); },
   async frame(ctx, i, n) {
     const t = n > 1 ? i / (n - 1) : 0, e = L.sm(t);
-    const cam = L.envCam() || { x: L.mix(-13.5, -9.5, e), y: L.mix(27, 27, e), z: L.mix(0, -4, e), tx: L.mix(-0.5, -1.5, e), ty: L.mix(24.5, 26, e), tz: -22, fov: L.mix(52, 46, e) };
+    const cam = L.envCam() || { x: L.mix(-11.5, -8.5, e), y: 27, z: L.mix(15, 12, e), tx: -3, ty: L.mix(21.5, 23, e), tz: -20, fov: L.mix(44, 40, e) };
     await L.night(ctx.page); await ctx.cine.setCam(cam); await L.reflect(ctx, ids, cam);
   },
 };

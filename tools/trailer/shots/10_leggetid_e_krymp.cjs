@@ -3,7 +3,7 @@
 const L = require('./_leggetid.cjs');
 const sl = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', 'shotlist.json'), 'utf8')).klipp.find((k) => k.id === '01_bad_oversikt');
 const A = sl.kamera.bane[0], F0 = sl.kamera.fov_fra, SP = sl.startpose;
-const P0 = { x: -4.2, y: 27.2, z: -6.5, tx: -1.2, ty: 27, tz: -22, fov: 36 };                    // der 10_leggetid_d_speil slutter
+const P0 = { x: -8, y: 26.5, z: 8, tx: -3.2, ty: 24.5, tz: -20, fov: 34 };                    // der 10_leggetid_d_speil slutter
 const P1 = { x: A.pos[0], y: A.pos[1], z: A.pos[2], tx: A.mot[0], ty: A.mot[1], tz: A.mot[2], fov: F0 };
 const H0 = { x: -1, z: -12 };
 let ids = null;

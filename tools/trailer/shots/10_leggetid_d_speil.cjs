@@ -9,7 +9,7 @@ module.exports = {
   async frame(ctx, i, n) {
     const t = n > 1 ? i / (n - 1) : 0, e = L.sm(t);
     const blink = BLINK.includes(i) ? (i === 26 || i === 29 ? 0.6 : 1) : 0;
-    const cam = L.envCam() || { x: L.mix(-6.5, -4.2, e), y: L.mix(27.5, 27.2, e), z: L.mix(-4, -6.5, e), tx: -1.2, ty: L.mix(26, 27, e), tz: -22, fov: L.mix(46, 36, e) };
+    const cam = L.envCam() || { x: L.mix(-10, -8, e), y: 26.5, z: L.mix(11, 8, e), tx: -3.2, ty: L.mix(23, 24.5, e), tz: -20, fov: L.mix(40, 34, e) };
     await L.night(ctx.page, 1); await ctx.cine.setCam(cam); await L.reflect(ctx, ids, cam, blink);
   },
 };
