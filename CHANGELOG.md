@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.24** – R78 lagt i veikartet (fjernet del dukker opp igjen ved PRØV, fra Rune).
 - **2.23** – R77: versjonsjekk i spillet. Sjekker rolig om nyere versjon ligger ute, kort «NY VERSJON · TRYKK FOR Å OPPDATERE», «SJEKK NÅ» i ⚙, innstillinger versionCheck/versionCheckInterval, lagrede data beholdes.
 - **2.22** – R77 lagt i veikartet (versjonsjekk i spillet og «Start ny versjon», fra Rune).
 - **2.21** – Forhistorien «Leggetid» (fem klipp), cine.prop og cine.heroScale for kinomodus, tidskode-skript (tools/trailer/timecode.sh). Bare film-verktøy, spillet er uendret.
