@@ -12,7 +12,7 @@ Mål: en filmtrailer på ca. 45 sekunder som viser de kuleste tingene i spillet.
 ## Manus
 | Tid | Tekstkort | Bilder fra spillet (motoren) |
 |---|---|---|
-| 0:00–0:05 | «Du er 3 cm høy.» | Badet (Nivå 1): langsom kamerabane over badekaret, lysstråler fra vinduet, smuler og gulvdetaljer som gir målestokk. |
+| 0:00–0:05 | «Du har blitt 3 cm høy.» | Badet (Nivå 1): langsom kamerabane over badekaret, lysstråler fra vinduet, smuler og gulvdetaljer som gir målestokk. |
 | 0:05–0:10 | «Rommet er laget for noen andre.» | Figuren klatrer opp vaskekurven: hang med vekt, grep og skyv fra med bena (R58). |
 | 0:10–0:13 | «Alt lever.» | Barnerommet (Nivå 2): sprettboksen kaster figuren (R34) og leke-bilen. |
 | 0:13–0:15 | (klipp) | Kjøkkenet (Nivå 3): **vepsen** (R61) varsler og stuper. Vepsen finnes i kjøkkenet, ikke i barnerommet. |

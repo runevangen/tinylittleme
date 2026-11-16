@@ -7,7 +7,7 @@
   "audio": { "fade_in": 0.6, "fade_out": 2.5, "volume": 0.9 },
   "clips": [
     { "id": "bad", "dur": 5,
-      "cards": [ { "text": "Du er 3 cm høy.", "at": 1.0, "to": 4.6, "pos": "bottom" } ] },
+      "cards": [ { "text": "Du har blitt 3 cm høy.", "at": 1.0, "to": 4.6, "pos": "bottom" } ] },
     { "id": "klatring", "dur": 5, "into": { "type": "fade", "dur": 0.5 },
       "cards": [ { "text": "Rommet er laget for noen andre.", "at": 0.8, "to": 4.6, "pos": "bottom" } ] },
     { "id": "barnerom", "dur": 5, "into": { "type": "cut" },

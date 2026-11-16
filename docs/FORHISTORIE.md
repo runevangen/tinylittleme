@@ -13,7 +13,7 @@ Tonen er hverdagslig og litt leken (Alice i Eventyrland, ikke medisin): tablette
 | 3 | Nærbilde: én tablett i hånda, glass med vann. | Tanke: «Bare én.» Lyd: en liten «plopp». |
 | 4 | Speilbildet ser på, og blunker for sent. | Tanke: «…Blunket du?» |
 | 5 | Krympingen: lyden strekkes, badet vokser. Speilet blir en vegg, vasken et fjell, tannbørsten en stolpe. | Tanke: «Å nei.» Så, i bunn: «Åh.» |
-| 6 | Match-cut: gulvnivå, samme kamera som «Du er 3 cm høy.» i traileren. | Trailerkort: «Du er 3 cm høy.» → tittel **tinylittleme** |
+| 6 | Match-cut: gulvnivå, samme kamera som «Du har blitt 3 cm høy.» i traileren. | Trailerkort: «Du har blitt 3 cm høy.» → tittel **tinylittleme** |
 
 ## Hva som må filmes (motor)
 - Badet i full skala (kamera nær figuren, speil som flate; speilbildet kan være en kopi av figuren speilvendt, med blunk som egen animasjonstilstand).
@@ -22,5 +22,5 @@ Tonen er hverdagslig og litt leken (Alice i Eventyrland, ikke medisin): tablette
 - Tankebobler: tekstkort i `build.sh` (som kortene i traileren), eventuelt egen boble-stil.
 
 ## Åpne spørsmål
-- Skal «Du er 3 cm høy.» beholdes i traileren etter denne filmen, eller kuttes (forhistorien sier det allerede)?
+- Skal «Du har blitt 3 cm høy.» beholdes i traileren etter denne filmen, eller kuttes (forhistorien sier det allerede)?
 - Skal forhistorien også være en kort, spillbar intro (valg C), eller bare film?

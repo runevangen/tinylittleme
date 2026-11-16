@@ -17,7 +17,7 @@
   "klipp": [
     {
       "id": "01_bad_oversikt",
-      "manus": "0:00-0:05 «Du er 3 cm høy.»",
+      "manus": "0:00-0:05 «Du har blitt 3 cm høy.»",
       "brett": "bad",
       "url": "?level=bad&start=0",
       "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
