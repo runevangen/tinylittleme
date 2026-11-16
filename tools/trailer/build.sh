@@ -27,8 +27,9 @@ ov() {
   if [ "$t" = cut ]; then echo "$CUTD"; else echo "$d"; fi
 }
 
-fade_expr() { # start slutt fade -> alpha-uttrykk (fade inn og ut)
-  echo "if(lt(t,$1),0,if(lt(t,$1+$3),(t-$1)/$3,if(lt(t,$2-$3),1,if(lt(t,$2),($2-t)/$3,0))))"
+fade_expr() { # start slutt fade_inn [fade_ut] -> alpha-uttrykk (fade inn og ut; fade_ut er valgfri, ellers lik fade_inn)
+  local fo="${4:-$3}"
+  echo "if(lt(t,$1),0,if(lt(t,$1+$3),(t-$1)/$3,if(lt(t,$2-$fo),1,if(lt(t,$2),($2-t)/$fo,0))))"
 }
 
 DURS=()
@@ -63,7 +64,7 @@ for ((i=0;i<N;i++)); do
     sz=$(J ".clips[$i].cards[$c].size // 56"); pos=$(J ".clips[$i].cards[$c].pos // \"bottom\"")
     yo=$(J ".clips[$i].cards[$c].y_off // 0")
     if [ "$pos" = center ]; then y="(h-th)/2+($yo)"; else y="h-th-96+($yo)"; fi
-    a=$(fade_expr "$s" "$e" "$f")
+    fo=$(J ".clips[$i].cards[$c].fade_out // $f"); a=$(fade_expr "$s" "$e" "$f" "$fo")
     common="fontfile=$FONT:textfile=$txt:fontsize=$sz"
     # myk skygge: svart tekst på gjennomsiktig lag, gaussisk uskarphet, legges under hvit tekst
     fg="$fg;color=c=black@0:s=${W}x${H}:r=$FPS,format=yuva420p,drawtext=$common:fontcolor=black@0.85:alpha='$a':x=(w-tw)/2+3:y=$y+4,gblur=sigma=7[sh$c]"

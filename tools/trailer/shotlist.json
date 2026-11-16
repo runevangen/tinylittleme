@@ -140,6 +140,33 @@
       "verifisert": "bilde F: byggeskjermen med bro1 (plassering og PRØV virker, men utsnittet er lite); tallene for lab7 beregnet i node (cap 4 og 12), ikke sett i nettleser"
     },
     {
+      "id": "06b_bro_brister",
+      "manus": "Etter «Så bygg.»: broen brister (humor «Ok. Prøv igjen.» legges i edit-filen)",
+      "brett": "bygglab",
+      "url": "?level=bygglab&start=0&cine_opt=tlm.buildstrength:0.38",
+      "innstillinger": {
+        "tlm.story": "false",
+        "tlm.introsweep": "false",
+        "tlm.buildall": "true",
+        "tlm.buildcap": "true"
+      },
+      "startpose": {
+        "x": 70,
+        "y": 3,
+        "z": 0,
+        "yaw": 1.5708
+      },
+      "bilder": 66,
+      "handlinger": "Sted lab4 «Fagverk» (Rutenett): samme fagverk som 06 bygges raskt med 14 trykk (ett per bilde), last Robot, PRØV. Prøven kjøres med admin-innstillingen byggestyrke 0,38 (cine_opt tlm.buildstrength:0.388; ingen kodeendring): stavene går grønn-gul-oransje-rød, SLOW trykkes som i spillet, ledd ryker og broen faller. Deterministisk.",
+      "rutesteg": "ingen i rutetype 'ruta' (build.sites[...].ref.route). lab7 ref.route er gulv>ped_a7>@bro>ped_b7.",
+      "kamera": {
+        "type": "byggeskjerm",
+        "merknad": "Byggeskjermen er et eget 2D-sidebilde (build_view), ikke 3D-scenen. Filmes med cine.build.step(dt) og zoom (build_zoom.js: +, ⤢, dobbelttrykk). I liggende 960 x 540 er broen liten midt i en mørk flate: zoom 2.5x og beskjær i ffmpeg."
+      },
+      "api": "dagens rekker IKKE for bilde-for-bilde (sanntid). Trenger cine.build.open(siteId) og cine.build.step(dt) (R68)",
+      "verifisert": "bilde F: byggeskjermen med bro1 (plassering og PRØV virker, men utsnittet er lite); tallene for lab7 beregnet i node (cap 4 og 12), ikke sett i nettleser"
+    },
+    {
       "id": "07_stue_fjernkontroll",
       "manus": "0:34-0:39 «Løs gåter.»",
       "brett": "stue",
