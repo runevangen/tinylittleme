@@ -3,9 +3,10 @@
 // Merk: i kinomodus leser store.get() bare standardene, så localStorage (tlm.flood) virker ikke. Valgene settes derfor med cine.set('flood' | 'floodrate'); localStorage-feltet under er bare med for fullstendighetens skyld.
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..', '..', '..');
-const T0 = 840, PER = 15, PRE = 1260;   // rutetikk ved klippstart, tikk per bilde, forhåndskjøring av vannet (21 s)
+const T0 = 840, PER = 15, RP = 6, PRE = 1506;   // rutetikk ved klippstart, spilltikk per bilde, rutetikk per bilde (figuren klatrer saktere enn vannet stiger), forhåndskjøring av vannet (25 s: vannet står på ca. 9,8, rett under kurvtoppen)
 const A_ = { x: -3.5, y: 14.5, z: 9.5, tx: 6.5, ty: 12.8, tz: 7.5, fov: 50 };
 const B_ = { x: -5.5, y: 20.5, z: 8.5, tx: 8.8, ty: 20.3, tz: 7, fov: 60 };
+const mix = (a, b, t) => a + (b - a) * t;
 module.exports = {
   id: '05_stigende_vann',
   ticksPerFrame: 0.0001,   // lib-steget gjør ingenting (floor = 0 tikk); frame() stegger selv sammen med ruta
@@ -23,11 +24,14 @@ module.exports = {
   },
   async frame({ cine, page }, i, n) {
     const t = n > 1 ? i / (n - 1) : 0;
-    if (i > 0) await page.evaluate((k) => { const r = window.__route, c = window.__game.cine; const p = window.__game.player; for (let j = 0; j < k; j++) { p.state = 'air'; c.step(1, 1 / 60); r.advance(1); } }, PER);
-    // Kameraet henger høyt over og foran figuren (mot sørvest) og ser skrått ned mot henne og flisveggen i vest, så vannflaten og vannlinjen mot hyllene synes; mot slutten går det lavere og nærmere så vannet fyller mer av bildet.
-    const h = await page.evaluate(() => { const p = window.__game.player; return { x: p.x, y: p.y, z: p.z }; });
+    // spilltiden går PER tikk per bilde (vannet stiger i den), men figuren følger bare RP av dem langs ruta, så vannet tar ham igjen og går over kurvtoppen
+    if (i > 0) await page.evaluate(([k, r]) => { const rt = window.__route, c = window.__game.cine, p = window.__game.player; for (let j = 0; j < k; j++) { p.state = 'air'; c.step(1, 1 / 60); if (j < r) rt.advance(1); } }, [PER, RP]);
+    const h = await page.evaluate(() => { const g = window.__game, p = g.player; return { x: p.x, y: p.y, z: p.z, w: g.variant.floorY + g.variant.water }; });
+    // Lavt kamera tett på figuren med vannflaten rett under ham; mot slutten synker kameraet ned mot overflaten og ser over vannet så vannlinjen og flaten fyller nedre halvdel.
     const e = t * t * (3 - 2 * t);
-    const cam = { x: h.x - 4.2, y: h.y + 5, z: h.z + 3.4, tx: h.x - 0.4, ty: h.y - 2.4 - 1.2 * e, tz: h.z + 0.2, fov: 50 };
-    await cine.setCam(cam);
+    const wy = Math.max(h.w, 0);
+    const camY = mix(h.y + 1.0, wy + 0.9, e), lookY = mix(h.y - 0.5, h.y * 0.62 + wy * 0.38, e);
+    const d = mix(5.2, 5.6, e);
+    await cine.setCam({ x: h.x - d * 0.72, y: camY, z: h.z + d * 0.7, tx: h.x + 0.4, ty: lookY, tz: h.z - 0.3, fov: mix(54, 58, e) });
   },
 };

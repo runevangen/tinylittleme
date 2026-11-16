@@ -34,8 +34,8 @@ module.exports = {
     if (phase === 'drop' && i === dropAt + 2) { await key('KeyF', 'keyup'); phase = 'done'; }
     await page.evaluate(([x, y]) => { const g = window.__game; g.cam.yaw = 0; g.touch.x = x; g.touch.y = y; }, [tx, ty]);
     // kamera hengt på figuren (jevn, eased offset): fra +z-siden (figuren går fra venstre mot høyre, fjernkontrollen foran ham skjuler ham ikke); starter nær ved fjernkontrollen og veggen, glir bakover og opp så plata og døra (til høyre) kommer med mot slutten
-    const o = { x: mix(-0.6, -2.8, e), y: mix(1.3, 2.4, e), z: mix(4.6, 5.6, e) };
-    const l = { x: mix(0.9, 3.6, e), y: mix(0.6, 1.0, e), z: -0.5 };
-    await cine.setCam({ x: p.x + o.x, y: o.y, z: p.z + o.z, tx: p.x + l.x, ty: l.y, tz: p.z + l.z, fov: mix(46, 50, e) });
+    const o = { x: mix(-0.8, -1.8, e), y: mix(0.9, 1.5, e), z: mix(3.4, 3.9, e) };
+    const l = { x: mix(0.6, 2.2, e), y: mix(0.5, 0.7, e), z: -0.3 };
+    await cine.setCam({ x: p.x + o.x, y: o.y, z: p.z + o.z, tx: p.x + l.x, ty: l.y, tz: p.z + l.z, fov: mix(46, 48, e) });
   },
 };

@@ -6,7 +6,7 @@ const mix = (a, b, t) => a + (b - a) * t;
 let look = null, camPos = null;
 module.exports = {
   id: '08a_verksted_olje',
-  ticksPerFrame: 8,
+  ticksPerFrame: 6,
   async setup({ cine, page }) {
     await cine.seed(1);
     await cine.setHero({ x: -59.5, y: 0, z: 4, yaw: 1.5708 });
@@ -20,9 +20,9 @@ module.exports = {
     // bilde 0-3: rett fram (+x) mot oljen; så stikka mot -z (bort fra kamera), men han sklir videre mot +x
     const tx = i < 5 ? 1 : 0.15, ty = i < 5 ? 0 : 1;
     await page.evaluate(([x, y]) => { const g = window.__game; g.cam.yaw = 0; g.touch.x = x; g.touch.y = y; }, [tx, ty]);
-    const want = { x: p.x + mix(1.6, 1.4, e), y: 0.7, z: p.z };
+    const want = { x: p.x + mix(1.2, 1.0, e), y: 0.55, z: p.z };
     look = look ? { x: mix(look.x, want.x, 0.4), y: want.y, z: mix(look.z, want.z, 0.4) } : want;
-    const wp = { x: p.x + mix(-1.2, 0.3, e), y: mix(1.1, 0.9, e), z: p.z + mix(5.8, 4.8, e) };
+    const wp = { x: p.x + mix(-1.0, 0.3, e), y: mix(0.8, 0.7, e), z: p.z + mix(3.6, 3.1, e) };
     camPos = camPos ? { x: mix(camPos.x, wp.x, 0.4), y: wp.y, z: mix(camPos.z, wp.z, 0.4) } : wp;
     await cine.setCam({ x: camPos.x, y: camPos.y, z: camPos.z, tx: look.x, ty: look.y, tz: look.z, fov: mix(54, 50, e) });
   },

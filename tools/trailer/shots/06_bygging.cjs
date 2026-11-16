@@ -1,64 +1,43 @@
-// 06_bygging (shotlist.json): byggeskjermen i Bygglab, sted lab7 «Tåler». Alt er ekte byggeskjerm og fysikk (build.js / build_phys.js), styrt med musa som på mobil.
-// Del 1: én lang planke + en stabel klosser (planka tåler ca. 4) -> PRØV -> brudd. Del 2: NULLSTILL, to lange planker med tape (tåler ca. 12) -> PRØV -> testfiguren går over (seier).
-// Byggeskjermen er et 2D-sidebilde, ikke 3D-scenen: vi zoomer (+) og panorerer til broen fyller bildet, og skjuler bare lastknappene/delingsknappene (ingen egen animasjon).
-const SITE = 'lab7';
-const DT_EDIT = 0.02, DT_SIM = 1 / 12, DT_SLOW = 1 / 60;
-const CHIP = { plank: '#bld .chip[data-id^="lab_plank_l_"]', block: '#bld .chip[data-id^="lab_block_"]' };
-const HIDE = '#bld .loads,#bld .share,#bld [data-a=menu],#bld .menu{display:none!important}#bld .tools{display:none!important}';
-let brokeAt = null;
-let held = null;   // pågående dra-og-slipp: { sel, u, v, f0, nf, sx, sy, tx, ty }
-
-// tidslinje (bilde-indekser, 120 bilder)
-const T = { plank1: 9, blocks: 15, blockN: 5, blockLen: 2, try1: 38, sim1End: 72, reset: 73, plankA: 75, plankB: 78, tapeTool: 81, tapeA: 82, tapeB: 83, try2: 87 };   // sakte film (ca. 1/30 s per bilde) mens bygget bøyer seg og blir rødt, brudd ca. bilde 63; midtbildet (60) viser bøyningen rett før bruddet
-
+// 06_bygging (shotlist.json): byggeskjermen i Bygglab, sted lab4 «Fagverk», MODUS Rutenett (grid_logic.js / grid_view.js, v2.08+). Alt er ekte byggeskjerm og fysikk, styrt med trykk (musa) som på mobil.
+// Del 1 (bilde 8-36): en bro av trekanter bygges med trykk: trykk et punkt/knute og så neste (kjede: hver stav starter der forrige slapp), 14 trykk, 9 staver i tre (Pratt-fagverk over kjøredekket).
+// Del 2 (bilde 40-119): last Robot valgt, PRØV: roboten går over; stavene skifter farge etter belastning (grønn -> gul, spillets egen belastningsfarge, v2.10) mens fagverket tåler lasten.
+// Byggeskjermen er et 2D-sidebilde, ikke 3D-scenen: vi zoomer med spillets egen + (2 trykk) og panorerer; skjuler bare delings-/menyknappene (ingen egen animasjon).
+const SITE = 'lab4';
+const DT_EDIT = 0.02, DT_SIM = 0.12;
+const HIDE = '#bld .loads,#bld .share,#bld [data-a=menu],#bld .menu{display:none!important}';
+const ST = 1.25, X = [-2.5, -1.25, 0, 1.25, 2.5];
+// trykkrekkefølge (u, v): kjede d0 -> t1 -> t2 -> t3 -> d4, (velg bort), d1 -> t1 -> d2 -> t2, (velg bort), d3 -> t3 -> d2; d = dekkpunkt (v 0), t = toppunkt (v 1 rad opp)
+const TAPS = [[X[0], 0], [X[1], ST], [X[2], ST], [X[3], ST], [X[4], 0], [X[4], 0], [X[1], 0], [X[1], ST], [X[2], 0], [X[2], ST], [X[2], ST], [X[3], 0], [X[3], ST], [X[2], 0]];
+const T = { tap0: 8, perTap: 2, deselect: 38, robot: 42, try: 48 };
 module.exports = {
   id: '06_bygging',
-  ticksPerFrame: 1,   // byggeprøven går bilde for bilde: 1 tikk (1/60 s) pluss dt fra klippet (se DT_SLOW / DT_SIM)
+  ticksPerFrame: 1,   // byggeprøven går bilde for bilde: 1 tikk (1/60 s) pluss dt fra klippet
   async setup({ page, cine }) {
     await cine.seed(1);
     await cine.build.open(SITE);
-    await page.addStyleTag({ content: HIDE });
     await cine.build.step(DT_EDIT);
     const click = async (sel) => { const r = await page.locator(sel).first().boundingBox(); await page.mouse.click(r.x + r.width / 2, r.y + r.height / 2); await cine.build.step(DT_EDIT); };
-    for (let k = 0; k < 5; k++) await click('#bld .zoom button[data-z=in]');      // zoom ca. x7,6
-    const sp = await page.evaluate(() => window.__game.bld.screenPos(0, 0.25));
-    const dy = 372 - sp.y;                                                    // broen opp i bildet, over delebrettet
-    await page.mouse.move(150, 250); await page.mouse.down(); await page.mouse.move(150, 250 + dy, { steps: 5 }); await page.mouse.up(); await cine.build.step(DT_EDIT);
-    held = null; brokeAt = null;
+    await click('#bld [data-a=mode]');                                          // MODUS: Rutenett (knappen er skjult etterpå)
+    await page.addStyleTag({ content: HIDE });
+    for (let k = 0; k < 2; k++) await click('#bld .zoom button[data-z=in]');
+    const sp = await page.evaluate(() => window.__game.bld.screenPos(0, 0));
+    const dy = 300 - sp.y;                                                    // dekket (v 0) ned mot nedre halvdel, trekantene over
+    await page.mouse.move(480, 200); await page.mouse.down(); await page.mouse.move(480, 200 + dy, { steps: 5 }); await page.mouse.up(); await cine.build.step(DT_EDIT);
   },
-  async frame({ page, cine, shot }, i, n) {
-    const mouse = page.mouse;
+  async frame({ page, cine }, i, n) {
     const pos = (u, v) => page.evaluate(([u, v]) => window.__game.bld.screenPos(u, v), [u, v]);
     const box = async (sel) => { const r = await page.locator(sel).first().boundingBox(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; };
-    // dra en del fra delebrettet til (u,v) over nf bilder, startbilde f0
-    const drag = async (sel, u, v, f0, nf) => {
-      if (i < f0 || i >= f0 + nf) return;
-      const k = i - f0;
-      if (k === 0) { const a = await box(sel), b = await pos(u, v); held = { sx: a.x, sy: a.y, tx: b.x, ty: b.y }; await mouse.move(a.x, a.y); await mouse.down(); return; }
-      const t = Math.min(1, k / (nf - 1)), e = t * t * (3 - 2 * t);
-      await mouse.move(held.sx + (held.tx - held.sx) * e, held.sy + (held.ty - held.sy) * e);
-      if (k === nf - 1) await mouse.up();
-    };
     let dt = DT_EDIT;
-    await drag(CHIP.plank, 0, 0.25, T.plank1, 6);
-    for (let b = 0; b < T.blockN; b++) await drag(CHIP.block, 0, 1.1 + 1.5 * b, T.blocks + b * T.blockLen, T.blockLen);
-    if (i === T.try1) await cine.build.start();
-    if (i > T.try1 && i < T.sim1End) {                    // sakte film mens bygget bøyer seg og blir rødt; vanlig fart når det har brutt
-      const rs = await page.evaluate(() => { const r = window.__game.bld.result; return r && { t: r.t, m: r.marks }; });
-      if (rs && rs.m > 0) brokeAt = brokeAt == null ? i : brokeAt;
-      dt = brokeAt == null ? DT_SLOW : DT_SIM;
+    const k = i - T.tap0;
+    if (k >= 0 && k % T.perTap === 0 && k / T.perTap < TAPS.length) { const [u, v] = TAPS[k / T.perTap], p = await pos(u, v); await page.mouse.click(p.x, p.y); }
+    if (i === T.deselect) { const p = await pos(X[2], 0); await page.mouse.click(p.x, p.y); }   // selve valget av siste knute oppheves
+    if (i === T.robot) {                                                         // velg lasten Robot (lastknappene vises bare mens vi trykker)
+      await page.addStyleTag({ content: '#bld .loads{display:flex!important}' });
+      for (const b of await page.locator('#bld .loads button').all()) if ((await b.textContent()).includes('Robot')) { const r = await b.boundingBox(); await page.mouse.click(r.x + r.width / 2, r.y + r.height / 2); }
+      await page.addStyleTag({ content: HIDE });
     }
-    if (i === T.sim1End - 1) await cine.build.stop();
-    if (i === T.reset) { const r = await box('#bld button[data-a=reset]'); await mouse.click(r.x, r.y); }
-    // del 2: to planker + tape
-    await drag(CHIP.plank, 0, 0.25, T.plankA, 3);
-    await drag(CHIP.plank, 0, 0.75, T.plankB, 3);
-    const tapeTool = async () => { await page.addStyleTag({ content: '#bld .tools{display:flex!important}' }); const r = await box('#bld .tools button[data-t=tape]'); await mouse.click(r.x, r.y); await page.addStyleTag({ content: '#bld .tools{display:none!important}' }); };
-    if (i === T.tapeTool) await tapeTool();
-    if (i === T.tapeA) { const p = await pos(-2, 0.2); await mouse.click(p.x, p.y); }
-    if (i === T.tapeB) { const p = await pos(-2, 0.8); await mouse.click(p.x, p.y); }
-    if (i === T.try2) await cine.build.start();
-    if (i > T.try2) dt = 0.28;
+    if (i === T.try) { const r = await box('#bld [data-a=try]'); await page.mouse.click(r.x, r.y); }
+    if (i > T.try) dt = DT_SIM;
     await cine.build.step(dt);
     if (process.env.CLIP_DEBUG && i % 6 === 0) console.log(i, JSON.stringify(await page.evaluate(() => { const b = window.__game.bld; return { r: b.result && { s: b.result.state, why: b.result.reason, t: +b.result.t.toFixed(2) }, p: b.state().builds[0] && b.state().builds[0].placed }; })));
   },

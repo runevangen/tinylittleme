@@ -7,7 +7,7 @@ const START_TICKS = 13.55 * 60;      // lyset går ut etter 15 s (blinker fra 14
 let cx = 0, cy = 0, cz = 0;
 module.exports = {
   id: '08c_lys_skygge',
-  ticksPerFrame: 7,
+  ticksPerFrame: 5,
   async setup({ page, cine }) {
     await cine.seed(1);
     await cine.setHero({ x: 0, y: 0, z: 10, yaw: Math.PI });
