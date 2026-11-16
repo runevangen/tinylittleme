@@ -151,8 +151,8 @@ const CASES = {
   const b2 = mkB(); b2.update(0.016, true); assert.equal(b2.stage.locked('trapp'), false); cfg.lock = false; const b3 = mkB(); assert.equal(b3.stage.locked('trapp'), false); cfg.lock = true;
   { const fresh = mkB({ store: { get: (k, d) => d, set() {} } }); fresh.update(0.016, true); assert.equal(fresh.stage.locked('trapp'), true, 'ny spiller: låst'); cfg.on = false; assert.equal(fresh.stage.locked('trapp'), false, 'oppdrag av: ikke låst'); assert.ok(fresh.open('bro', { force: true }) && fresh.grid.toggle() && fresh.stage.now === null, 'fri rutenett-bygging uten krav'); assert.equal(fresh.grid.info().deck, 4, 'uten oppdrag er kjøredekket som før'); cfg.on = true; }
   // oppdraget bruker tyngre last: simuleringen får massK (bilen på sted 4 er ikke den vanlige bilen)
-  { const c = { ...cfg, massK: 3 }; const b4 = mkB({ getStage: () => c }); b4.update(0.016, true); b4.open('bro', { force: true }); b4.grid.toggle(); assert.equal(b4.stage.now.massK, 3, 'admin-faktor på lasten'); c.budgetK = 2; assert.equal(b4.stage.now.budget, 16, 'admin-faktor på budsjettet'); }
+  { const c = { ...cfg, massK: 3 }; const b4 = mkB({ getStage: () => c }); b4.update(0.016, true); b4.open('bro', { force: true }); if (!b4.grid.on) b4.grid.toggle(); assert.equal(b4.stage.now.massK, 3, 'admin-faktor på lasten'); c.budgetK = 2; assert.equal(b4.stage.now.budget, 16, 'admin-faktor på budsjettet'); }
   // klassisk modus er uendret på samme sted: ingen kort, ingen krav, last som før
-  { const b5 = mkB(); b5.update(0.016, true); b5.open('bro', { force: true }); assert.equal(b5.stage.now, null); assert.deepEqual(b5.stage.lines(), []); }
+  { const b5 = mkB({ store: { get: (k, d) => d, set() {} } }); b5.update(0.016, true); b5.open('bro', { force: true }); assert.equal(b5.stage.now, null); assert.deepEqual(b5.stage.lines(), []); }
 }
 console.log('rutenett-oppdrag-tester grønne');

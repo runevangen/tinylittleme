@@ -2,6 +2,8 @@
 // Alt går med trykk: trykk et punkt = knute, trykk en knute og så et punkt (eller en annen knute) = stav i valgt materiale, dra en knute = flytt, FJERN = slett valgt knute/stav.
 // Målene er skjermbaserte (minst ca. 44 px: nærmeste rutenettpunkt innen en halv rute treffes), så en finger treffer også når brettet er zoomet ut (R70).
 import { GRID_MATS, GRID_MAT, rodPrice } from './build_materials.js';
+import { guideCss } from './grid_guide_view.js';   // R75
+import { shouldTipMode, showHelpBtn, shouldRestoreMode, getMode, setModeMem, KEY_TIP } from './grid_guide_logic.js';
 import { applyExample, hasExample } from './grid_example.js';   // R73
 import { gridAnchors, isGrid, setMode, isDeckRod, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
 
@@ -27,6 +29,7 @@ export const gridCss = () => `
 #bld.gridmode .tray,#bld.gridmode .tools,#bld.gridmode button[data-a="rotl"],#bld.gridmode button[data-a="rotr"],#bld.gridmode button[data-a="snap"]{display:none}
 #bld.gridmode:not(.sim) .share,#bld.gridmode:not(.sim) .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px + 56px)}
 #bld.gridmode.hasloads:not(.sim) .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 56px + 56px + 48px)}
+${guideCss()}
 @media (orientation:landscape) and (max-height:520px){#bld .gtools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .gtools button{height:40px}#bld.gridmode:not(.sim) .share,#bld.gridmode:not(.sim) .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 44px)}#bld.gridmode.hasloads:not(.sim) .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 44px + 44px)}}
 `;
 export const gridMarkup = () => `<div class="gtools"><button data-g="wood"></button><button data-g="steel"></button><button data-g="rope"></button><button data-g="example" class="ex"></button></div><div class="gsim"><button data-gs="slow"></button><button data-gs="pause"></button></div>`;
@@ -35,7 +38,7 @@ const COMMA = (x) => String(+x.toFixed(2)).replace('.', ',');
 export const colRow = (site, p) => { const a = gridAnchors(site), st = gridStep(site); return { c: Math.round((p.u - (a[0]?.u ?? 0)) / st), r: Math.round(p.v / st) }; };
 
 export function createGridUI(ctx) {
-  const { root, T, toast, logEv, buzz, audio, onChange } = ctx;
+  const { root, T, toast, logEv, buzz, audio, onChange } = ctx;   // ctx.store, ctx.guide (R75)
   let mat = 'wood', selNode = null, selRod = null, gd = null, cursor = null, tHint = 0;
 
   const B = () => ctx.getB(), site = () => ctx.site();
@@ -51,18 +54,32 @@ export function createGridUI(ctx) {
     root.classList.toggle('gridex', on() && !!ctx.getHint() && hasExample(s) && !ctx.stageOn?.());   // R73: «SÅ SLIK» er en hjelp: borte på Ekspert og på steder uten kjøredekk
     const eb = root.querySelector('[data-g="example"]'); if (eb) eb.textContent = T('grid.example');
     simSync(speed, simDone);
+    root.classList.toggle('gguidebtn', showHelpBtn({ enabled: enabledHere(), hint: !!ctx.getHint() }));   // R75: ?-knapp og MODUS-hint følger hjelpenivået
+    root.classList.toggle('gmodetip', tipOn());
+    const gb = root.querySelector('[data-a="gguide"]'); if (gb) gb.textContent = T('gguide.btn');
     if (s && B()) B().gridMaxLen = ctx.getMaxLen();
     const mb = root.querySelector('[data-a="mode"]'); if (mb) mb.textContent = !on() && enabledHere() && ctx.locked?.() ? T('grid.modeLocked') : T('grid.modeBtn', { m: T(on() ? 'grid.mode.grid' : 'grid.mode.classic') });
     for (const m of GRID_MATS) { const b = root.querySelector(`[data-g="${m}"]`); if (!b) continue; b.textContent = T('grid.mat.' + m); b.style?.setProperty?.('--mc', GRID_MAT[m].color); b.classList.toggle('on', mat === m); b.setAttribute?.('aria-pressed', mat === m ? 'true' : 'false'); }
   }
+  const tipOn = () => !!site() && ctx.store && shouldTipMode({ enabled: enabledHere(), inGrid: on(), hint: !!ctx.getHint() && ctx.getGuideOn?.() !== false, tipped: !!ctx.store.get(KEY_TIP, 0), locked: !!ctx.locked?.() });
   function toggleMode(why = 'knapp') {
     if (!site() || !enabledHere() || ctx.isSim()) return false;
     B().gridDeck = !!ctx.getDeck?.();   // R73: kjøredekk mellom ankrene (nytt bygg i rutenett-modus)
     const to = on() ? 'classic' : 'grid';
     if (to === 'grid' && ctx.locked?.()) { toast(ctx.lockText()); logEv('bygg', `rutenett låst ${site().id}: bestå forrige sted først`); buzz?.(12); return false; }   // R74: neste sted åpnes når forrige er bestått
     if (!setMode(B(), to)) return false;
-    clearSel(); gd = null; cursor = null; ctx.trayRender(); sync(); logEv('bygg', `modus ${to === 'grid' ? 'rutenett' : 'klassisk'} (${why}) ${site().id}`); onChange?.(); return true;
+    clearSel(); gd = null; cursor = null;
+    if (ctx.store) { setModeMem(ctx.store, to); if (to === 'grid') ctx.store.set(KEY_TIP, 1); }   // R75: valget huskes, og MODUS-hintet har gjort nytten sin
+    ctx.trayRender(); sync(); logEv('bygg', `modus ${to === 'grid' ? 'rutenett' : 'klassisk'} (${why}) ${site().id}`); onChange?.();
+    if (to === 'grid') ctx.guide?.auto();   // R75: «Så slik» første gang
+    return true;
   }
+  // R75: ved inngang til et sted: rutenett igjen hvis det var sist valgt (og klassisk bygg er tomt, stedet er åpent)
+  function restoreMode() {
+    if (!site() || !ctx.store || !shouldRestoreMode({ mem: getMode(ctx.store), enabled: enabledHere(), inGrid: on(), locked: !!ctx.locked?.(), placed: B().placed.length > 0 })) return false;
+    return toggleMode('husket');
+  }
+  const modeTip = () => (tipOn() ? T('gguide.modeTip') : '');
   // R73: SÅ SLIK: legger et ferdig fagverk på stedet (kan angres)
   function example() {
     if (!on() || ctx.isSim()) return false;
@@ -196,7 +213,7 @@ export function createGridUI(ctx) {
   const cancel = () => { gd = null; };
   const tap = (x, y) => { const n = pickNode(x, y); if (n) tapNode(n.id); else tapPoint(x, y); };   // samme veivalg som en ekte berøring (til tester)
   return {
-    on, enabledHere, down, move, up, release, tapPoint, del, draw, hint, sync, setMat, toggleMode, example, simSync, setSpeed, get speed() { return speed; }, reset, clearSel, cancel,
+    on, enabledHere, down, move, up, release, tapPoint, del, draw, hint, sync, setMat, toggleMode, restoreMode, modeTip, example, simSync, setSpeed, get speed() { return speed; }, reset, clearSel, cancel,
     get mat() { return mat; }, get selNode() { return selNode; }, get selRod() { return selRod; },
     tapNode: (id) => tapNode(id), pickNode, tap,
   };
