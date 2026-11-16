@@ -2,7 +2,7 @@
 // bane per tikk fra boten, tid (step), byggeskjerm (open/step), at ingenting endres uten ?cinema, og at main.js/index.html/docs har koblingene.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { FRAME_DT, CINE_DEFAULTS, parseOpts, parseCinema, makeRng, installRandom, cineStore, normPose, lerpPose, poseLook, normFollow, followPose, FOLLOW_DEFAULT, heroYaw, normHero, traceAt, traceLen, fnv1a, HIDDEN_UI, CINE_CSS, DEFAULT_FOV } from './cinema_logic.js';
+import { FRAME_DT, CINE_DEFAULTS, parseOpts, parseCinema, makeRng, installRandom, cineStore, normPose, lerpPose, poseLook, normFollow, followPose, FOLLOW_DEFAULT, heroYaw, normHero, traceAt, traceLen, fnv1a, normProp, PROP_SHAPES, HIDDEN_UI, CINE_CSS, DEFAULT_FOV } from './cinema_logic.js';
 import { routeTrace } from './tools/cine_route.mjs';
 const near = (a, b, e = 1e-9) => Math.abs(a - b) < e;
 
@@ -112,6 +112,31 @@ assert.equal(fnv1a('abc'), fnv1a(Uint8Array.from([97, 98, 99]))); assert.notEqua
   assert.equal(mk({ on: true, hold: false, seed: 1 }).live, true);
 }
 
+// ---- props og figurskala (ren normalisering + falsk three) ----
+{
+  assert.equal(normProp(null), null); assert.equal(normProp({ shape: 'torus' }), null); assert.equal(normProp({ shape: 'box', x: 'a' }), null); assert.equal(normProp({ shape: 'box', sx: 0 }), null, 'null-størrelse nektes');
+  const b = normProp({ shape: 'cyl', x: 1, sx: 2, sy: 3, opacity: 5, color: 0xff0000 }); assert.equal(b.shape, 'cyl'); assert.equal(b.x, 1); assert.equal(b.opacity, 1, 'opacity klemmes'); assert.equal(b.sz, 1);
+  assert.equal(normProp({ y: 4 }, b).y, 4); assert.equal(normProp({ y: 4 }, b).sx, 2, 'delvis endring beholder resten'); assert.equal(normProp({ shape: 'box' }, b), null, 'formen kan ikke byttes');
+  assert.equal(normProp({ shape: 'hero', sz: -0.1, blink: 3 }).blink, 1); assert.ok(PROP_SHAPES.includes('light')); assert.equal(normProp({ shape: 'plane', text: 'x'.repeat(200) }).text.length, 80);
+  const mkO = () => { const o = { position: { set(...a) { o.p = a; } }, rotation: { set(...a) { o.r = a; } }, scale: { set(...a) { o.s = a; } }, children: [], add(c) { c.parent = o; o.children.push(c); }, clone() { const c = mkO(); c.s = [1, 1, 1]; return c; } }; return o; };
+  class V { constructor() { this.v = []; } set(...a) { this.v = a; } setHex() {} }
+  const THREE = { Group: function () { return mkO(); }, BoxGeometry: function () {}, CylinderGeometry: function () {}, SphereGeometry: function () {}, PlaneGeometry: function () {}, PointLight: function (c, i, d) { const o = mkO(); o.userData = {}; o.color = new V(); o.color.setHex = () => {}; o.intensity = i; o.distance = d; return o; },
+    MeshStandardMaterial: function () { return { color: { setHex() {} }, emissive: { setHex() {} } }; }, Mesh: function (g, m) { const o = mkO(); o.material = m; return o; }, SRGBColorSpace: 'srgb' };
+  const sc = { kids: [], add(o) { this.kids.push(o); }, remove(o) { this.kids = this.kids.filter((x) => x !== o); } }; let hs = 1;
+  globalThis.document = { body: { classList: { add() {} } }, head: { appendChild() {} }, createElement: () => ({}) };
+  const { createCinema } = await import('./cinema_view.js');
+  const heroRoot = mkO(); const eye = mkO(); eye.scale = { y: 1 }; heroRoot.add(eye); eye.parent = heroRoot; const heroObj = { root: heroRoot, face: { eyes: [eye] } };
+  heroRoot.clone = () => { const r = mkO(); const e = mkO(); e.scale = { y: 1 }; r.add(e); return r; };
+  const mk = (on) => createCinema({ state: { on, hold: true, seed: 1 }, rng: { reseed() {} }, camera: {}, canvas: {}, cam: {}, player: {}, update() {}, render() {}, bld: { update() {} }, settings: () => [], logEv() {}, onFollow() {}, snapCam() {}, isPlay: () => true, levelId: () => 'bad', version: 't', THREE, scene: sc, hero: heroObj, onHeroScale: (k) => { hs = k; } });
+  assert.throws(() => mk(false).prop.add({ shape: 'box' }), /kinomodus er av/); assert.throws(() => mk(false).heroScale(2), /kinomodus er av/);
+  const c = mk(true); const id = c.prop.add({ shape: 'box', x: 1, y: 2, z: 3, sx: 2, sy: 2, sz: 2 }); assert.equal(c.prop.count, 1); assert.deepEqual(sc.kids[0].p, [1, 2, 3]); assert.deepEqual(sc.kids[0].s, [2, 2, 2]);
+  c.prop.set(id, { y: 5 }); assert.deepEqual(sc.kids[0].p, [1, 5, 3]); assert.throws(() => c.prop.set(99, { y: 1 }), /ukjent/); assert.throws(() => c.prop.add({ shape: 'x' }), /ugyldig/);
+  const hid = c.prop.add({ shape: 'hero', sx: 2, sy: 2, sz: -0.1 }); assert.deepEqual(sc.kids[1].s, [2, 2, -0.1]); c.prop.set(hid, { blink: 1 }); assert.ok(Math.abs(sc.kids[1].children[0].children[0].scale.y - 0.07) < 1e-9, 'blunk lukker øynene på kopien');
+  c.prop.set(hid, { blink: 0 }); assert.equal(sc.kids[1].children[0].children[0].scale.y, 1);
+  c.prop.add({ shape: 'light', intensity: 2, dist: 9 }); assert.equal(c.prop.count, 3); assert.equal(c.prop.remove(id), true); assert.equal(c.prop.remove(id), false); c.prop.clear(); assert.equal(c.prop.count, 0); assert.equal(sc.kids.length, 0);
+  assert.equal(c.heroScale(30), 30); assert.equal(hs, 30); assert.equal(c.heroS, 30); assert.throws(() => c.heroScale(0), /heroScale/);
+}
+
 // ---- koblinger i filene ----
 const read = (f) => fs.readFileSync(new URL(f, import.meta.url), 'utf8');
 const main = read('./main.js'), idx = read('./index.html'), build = read('./build.js'), testing = read('./docs/TESTING.md');
@@ -125,5 +150,6 @@ const cssIds = new Set(); const src = [main, idx, ...fs.readdirSync(new URL('.',
 for (const id of HIDDEN_UI) { assert.ok(new RegExp(`['"#]${id}['"\\s]|id="${id}"|id = '${id}'|\\$\\('${id}'\\)`).test(src) || id === 'ovdots' || id === 'knob', `UI-elementet ${id} finnes (listen over det som skjules er ikke utdatert)`); cssIds.add(id); }
 assert.ok(/body\.cinema>\*:not\(canvas\):not\(#bld\)\{display:none!important\}/.test(CINE_CSS), 'alt unntatt tegneflata og byggeskjermen skjules'); assert.ok(HIDDEN_UI.includes('hud') && HIDDEN_UI.includes('minimap') && HIDDEN_UI.includes('topband') && HIDDEN_UI.includes('stick') && HIDDEN_UI.includes('qbtn'));
 assert.ok(/## Kinomodus/.test(testing) && /cine\.setCam/.test(testing) && /cine\.build\.step/.test(testing) && /cine_hold/.test(testing), 'dokumentert i docs/TESTING.md');
+assert.ok(/multiplyScalar\(cineHS\)/.test(main) && /onHeroScale/.test(main), 'figurskala (cine.heroScale) brukes i main.js'); assert.ok(/cine\.prop\.add/.test(testing) && /cine\.heroScale/.test(testing), 'props og heroScale dokumentert');
 assert.equal(FRAME_DT, 1 / 60);
 console.log('test_cinema ok');

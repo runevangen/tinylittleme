@@ -37,3 +37,11 @@ Utmappa gis med `--out` eller env `TRAILER_FRAMES` (hold den utenfor repoet; bil
 **Klippmodul (CommonJS):** `module.exports = { id, async setup(ctx), async frame(ctx, i, n) }`, valgfritt `ticksPerFrame` og `localStorage`. `ctx` har `page`, `cine` (proxy: `cine.setCam(...)` kaller `window.__game.cine.setCam` med `page.evaluate`, også `cine.build.open(..)`; `cine.get('navn')` leser en egenskap), `fps` (12), `ticksPerFrame` (5 ved 1/60 s), `n` og `advance(ticks)`. Per bilde: `frame()` setter kamera/figur/handling, tiden stegges, så `cine.render()` + skjermbilde. Id-en må stå i `shotlist.json` (`bilder` gir `n`).
 
 **Gjenopptakbart:** finnes bildefila fra før, hoppes render og skjermbilde over, men tid og handlinger simuleres likevel (steg er billig), så spillet er i samme tilstand etter en krasj. Bare kjør samme kommando på nytt. Fremdriftslinjer viser brukt tid og anslått resttid; `.done` skrives i bildemappa når hele klippet er ferdig.
+
+## Forhistorien «Leggetid»
+Manus: `docs/FORHISTORIE.md`. Fem klipp (`10_leggetid_a_bad`, `_b_skap`, `_c_tablett`, `_d_speil`, `_e_krymp`, 294 bilder) med felles oppsett i `shots/_leggetid.cjs`: badet (nivå 1) om kvelden med figuren skalert 24x (`cine.heroScale`), speil, speilskap, flaske, lapp, glass og tablett som enkle props (`cine.prop`, se `docs/TESTING.md`), speilbildet som flat, speilvendt kopi av figuren (`prop` `hero`, med `blink`) som projiseres inn på speilflata fra kameraet. Armen styres ved at skriptet overstyrer armleddenes rotasjon i siden (`forceArm`), uten å røre spillkoden. Krympingen (`_e_krymp`) skalerer figuren ned mens kameraet går til gulvnivå-posen som `01_bad_oversikt` starter på, og siste bilde er likt første bilde der (match-cut). Tekstkort/tankebobler: `edit_leggetid.json` (forhistorien alene) og `edit_v4.json` (forhistorie + trailer).
+```
+for c in a_bad b_skap c_tablett d_speil e_krymp; do node tools/trailer/render.cjs --clip 10_leggetid_$c --out ~/frames; done
+tools/trailer/build.sh -f ~/frames -m music.wav -e tools/trailer/edit_leggetid.json -o leggetid.mp4
+```
+Merk: `--from/--to` hopper over tegning av tidligere bilder, så hånda i `_c_tablett` (leses fra forrige tegning) er bare riktig når klippet rendres fra bilde 0.

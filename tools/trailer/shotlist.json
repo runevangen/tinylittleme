@@ -236,6 +236,46 @@
       "api": "dagens rekker (teleport + __camLock)",
       "verifisert": "nei"
     }
+    ,{
+      "id": "10_leggetid_a_bad",
+      "manus": "Forhistorie 1: bad om kvelden, figuren i full skala foran speilet",
+      "brett": "bad", "url": "?level=bad&start=0", "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "bilder": 60,
+      "handlinger": "Figuren (skalert 32x med cine.heroScale) står stille; kamera glir inn mot speilet. Speilbildet er en flat, speilvendt kopi (cine.prop hero) projisert per bilde.",
+      "api": "cine.prop og cine.heroScale (forhistorien «Leggetid», docs/FORHISTORIE.md)"
+    }
+    ,{
+      "id": "10_leggetid_b_skap",
+      "manus": "Forhistorie 2: speilskapet med flaska og lappen «IKKE ta denne.»",
+      "brett": "bad", "url": "?level=bad&start=0", "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "bilder": 60,
+      "handlinger": "Figuren snur seg mot skapet og rekker ut hånda; kamera går fra skuldervinkel til lappen.",
+      "api": "cine.prop og cine.heroScale (forhistorien «Leggetid», docs/FORHISTORIE.md)"
+    }
+    ,{
+      "id": "10_leggetid_c_tablett",
+      "manus": "Forhistorie 3: tablett i hånda, nærbilde",
+      "brett": "bad", "url": "?level=bad&start=0", "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "bilder": 48,
+      "handlinger": "Hånda rekkes fram med tabletten (prop), glass med vann ved siden av.",
+      "api": "cine.prop og cine.heroScale (forhistorien «Leggetid», docs/FORHISTORIE.md)"
+    }
+    ,{
+      "id": "10_leggetid_d_speil",
+      "manus": "Forhistorie 4: speilbildet blunker for sent",
+      "brett": "bad", "url": "?level=bad&start=0", "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "bilder": 48,
+      "handlinger": "Kamera mot speilet; figuren blunker ikke, men speilbildet blunker (cine.prop hero, blink).",
+      "api": "cine.prop og cine.heroScale (forhistorien «Leggetid», docs/FORHISTORIE.md)"
+    }
+    ,{
+      "id": "10_leggetid_e_krymp",
+      "manus": "Forhistorie 5-6: krympingen og match-cut til gulvnivå",
+      "brett": "bad", "url": "?level=bad&start=0", "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false" },
+      "bilder": 78,
+      "handlinger": "Figurens skala 32 til 1 (cine.heroScale) mens kameraet går fra speilvinkel til gulvnivå-posen i 01_bad_oversikt.",
+      "api": "cine.prop og cine.heroScale (forhistorien «Leggetid», docs/FORHISTORIE.md)"
+    }
   ],
   "bildetall_sum": 540
 }
