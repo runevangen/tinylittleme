@@ -75,11 +75,11 @@ export function stageLines(s, T) {
   else if (s.ran && s.won) out.push({ t: T('gstage.moreLoads', { list: (s.loadsLeft || []).map((i) => T('build.load.' + i)).join(', ') }), c: '#ffe9a8', b: true });
   else if (s.ran) out.push({ t: T('gstage.failed'), c: '#ff9a8a', b: true });
   const left = s.st.budget - s.cost;
-  if (s.on) out.push({ t: T('gstage.cost', { stars: starText(s.over ? 0 : s.stars), cost: s.cost, budget: s.st.budget, parts: s.parts }), c: s.over ? '#ff9a8a' : '#ffe9a8', b: !s.ran });
+  if (s.on) { if (!(s.ran && s.passed)) out.push({ t: T('gstage.cost', { stars: starText(s.over ? 0 : s.stars), cost: s.cost, budget: s.st.budget, parts: s.parts }), c: s.over ? '#ff9a8a' : '#ffe9a8', b: !s.ran }); }
   else out.push({ t: T('gstage.empty', { budget: s.st.budget }), c: '#ffd9a0' });
   if (s.on && !s.ran) out.push({ t: s.over ? T('gstage.overNow', { n: -left }) : s.next ? T('gstage.nextStar', { n: s.next.cost }) : T('gstage.threeStars'), c: s.over ? '#ff9a8a' : '#ffd9a0' });
   if (!s.ran && s.done) out.push({ t: T('gstage.done'), c: '#7dffb0', b: true });
-  if (s.ran && s.peak) out.push({ t: s.peak, c: '#ffd9a0' });
+  if (s.ran && s.peak && !s.passed) out.push({ t: s.peak, c: '#ffd9a0' });
   return out;
 }
 export const stageLockText = (sites, id, T) => { const p = stagePrev(sites, id); return T('gstage.locked', { n: p?.lab?.n || 0, name: p ? T('lab.name.' + (p.lab?.key || p.id)) : '' }); };

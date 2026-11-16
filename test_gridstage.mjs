@@ -102,6 +102,7 @@ const CASES = {
     for (const k of ['gstage.locked', 'gstage.unlocked', 'gstage.allDone', 'grid.modeLocked']) { const t = T(k, { n: 3, name: 'Fagverk' }); assert.ok(t && t !== k && !/\{\w+\}/.test(t), `${l}:${k}`); }
     if (l === 'nb') { const txt = all.join(' '); assert.ok(/PRØV/.test(txt) && /FJERN/.test(txt), 'nevner knappene'); assert.ok(!/\b(tast|Enter|Esc|klikk|mus)\b/i.test(txt), 'ingen taster'); assert.ok(/BESTÅTT/.test(txt) && /IKKE BESTÅTT/.test(GS.stageLines({ ...base, ran: true }, T).map((x) => x.t).join(' ')), 'bestått og ikke bestått'); assert.ok(/× tung/.test(txt), 'tung last står der'); }
   }
+  { const p = GS.stageLines({ ...base, ran: true, won: true, passed: true, peak: 'x' }, (k) => k).map((x) => x.t); assert.ok(p.includes('gstage.passed') && !p.includes('gstage.empty') && !p.includes('gstage.cost') && !p.includes('x'), 'bestått: kort og uten tomt-linje: ' + p); }
   assert.deepEqual(GS.stageLines(null, (k) => k), []); lang = 'nb'; assert.ok(/Fagverk/.test(GS.stageLockText(sites, 'lab5', T)));
   const main = fs.readFileSync(new URL('./main.js', import.meta.url), 'utf8'); for (const id of ['gridstage', 'gridlock', 'gridmassk', 'gridbudgetk']) assert.ok(main.includes(`'${id}'`), 'innstilling ' + id);
   assert.ok(/'gridmassk', 'admin'/.test(main) && /'gridbudgetk', 'admin'/.test(main), 'finjustering er admin'); assert.ok(/'gridstage', 'spill'/.test(main) && /'gridlock', 'spill'/.test(main));
