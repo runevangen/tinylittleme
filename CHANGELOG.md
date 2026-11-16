@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.16** – docs/FORHISTORIE.md: manus for forhistorien «Leggetid» (kun dokument).
 - **2.15** – Tre i rutenett-bygging er mye svakere (staver ×0,3, ledd 0,43): trailer-broen brister med Leke-bil på standard (største belastning 0,22 → 1,05), stål holder (0,54); eksempelbroen er nå i stål; ved fast anker gjelder det sterkeste materialet i knuten.
 - **2.14** – R74–R76 lagt i veikartet (rutenett: kamp og mål, veiledning, byggeskjermens oppsett).
 - **2.13** – Brettvelgeren: Bygglab heter nå «Bygglab · ny byggeteknikk» (rutenett-bygging).
