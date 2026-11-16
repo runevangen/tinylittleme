@@ -110,6 +110,23 @@ export function traceAt(tr, i) {
   return { t: e[0], x: e[1], y: e[2], z: e[3], state: e[4], fx, fz, yaw: Math.atan2(fx, fz) };
 }
 
+
+// ---- props: enkle former som kan legges inn i scenen (speil, flaske, lapp, tablett ...). Ren normalisering; selve meshene bygges i cinema_view.js ----
+export const PROP_SHAPES = Object.freeze(['box', 'cyl', 'sphere', 'plane', 'light', 'hero']);
+// box/cyl/sphere: sx,sy,sz er mål (cyl: sx = diameter, sy = høyde, sz = diameter; senter i midten) · plane: sx = bredde, sy = høyde (vender mot +z; text tegnes på den)
+// light: punktlys (color, intensity, dist) · hero: kopi av figuren som den står nå (sx,sy,sz = skala; negativ sz speilvender; ry = retning figuren ser; blink 0..1 lukker øynene)
+export function normProp(p, prev = null) {
+  if (!p || typeof p !== 'object') return null;
+  const base = prev || { shape: 'box', x: 0, y: 0, z: 0, sx: 1, sy: 1, sz: 1, rx: 0, ry: 0, rz: 0, color: 0xcccccc, opacity: 1, emissive: 0, intensity: 1, dist: 0, blink: 0, text: '', tbg: 0xfff2b0, tfg: 0x222222 };
+  const o = { ...base };
+  if (p.shape !== undefined) { if (prev && p.shape !== prev.shape) return null; if (!PROP_SHAPES.includes(p.shape)) return null; o.shape = p.shape; }
+  for (const k of ['x', 'y', 'z', 'sx', 'sy', 'sz', 'rx', 'ry', 'rz', 'opacity', 'emissive', 'intensity', 'dist', 'blink', 'color', 'tbg', 'tfg']) if (p[k] !== undefined) { if (!NUM(p[k])) return null; o[k] = p[k]; }
+  if (p.text !== undefined) o.text = String(p.text).slice(0, 80);
+  if (o.shape !== 'hero' && o.shape !== 'light' && (o.sx === 0 || o.sy === 0 || o.sz === 0)) return null;
+  o.opacity = Math.max(0, Math.min(1, o.opacity)); o.blink = Math.max(0, Math.min(1, o.blink));
+  return o;
+}
+
 // ---- hash av bildefiler (to renderinger skal gi like filer) ----
 export function fnv1a(bytes) {           // streng eller Uint8Array
   let h = 0x811c9dc5;

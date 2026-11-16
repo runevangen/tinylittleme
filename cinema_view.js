@@ -2,9 +2,9 @@
 // Alt er av som standard. Med ?cinema=1 skjules all UI, lyd og lagring er av, tilfeldighet har fast frø, og et skript styrer kamera, figur og tid.
 // Tid står stille mellom kallene: bare cine.step(n, dt) går framover (samme update() som testene), og bare cine.render() tegner et bilde.
 import { resetPlayer } from './physics.js';
-import { CINE_CSS, FRAME_DT, normPose, lerpPose, poseLook, normFollow, FOLLOW_DEFAULT, followPose, normHero, heroYaw, traceAt, traceLen, fnv1a } from './cinema_logic.js';
+import { CINE_CSS, FRAME_DT, normPose, lerpPose, poseLook, normFollow, FOLLOW_DEFAULT, followPose, normHero, heroYaw, normProp, traceAt, traceLen, fnv1a } from './cinema_logic.js';
 
-export function createCinema({ state, rng, camera, canvas, cam, player, update, render, bld, settings, logEv, onFollow, snapCam, isPlay, levelId, version }) {
+export function createCinema({ state, rng, camera, canvas, cam, player, update, render, bld, settings, logEv, onFollow, snapCam, isPlay, levelId, version, THREE, scene, hero, onHeroScale }) {
   const on = !!state.on;
   let free = null, follow = null, t = 0, pending = 0, live = !state.hold, tr = null, trI = 0, shots = 0;
   const need = (what) => { if (!on) throw new Error(`kinomodus er av: åpne siden med ?cinema=1 (${what})`); };
@@ -27,6 +27,37 @@ export function createCinema({ state, rng, camera, canvas, cam, player, update, 
     t += dt; render(now, dt);
   };
   const chunked = (dt, fn) => { let left = dt; while (left > 1e-9) { const d = Math.min(left, 1 / 30); fn(d); left -= d; } };   // byggeprøven tåler maks 6 delsteg per kall (1/60 s hver)
+
+  // ---- props (enkle former i scenen) og figurens størrelse ----
+  const props = new Map(); let propN = 0, heroS = 1;
+  const eyePaths = () => (hero && hero.face ? hero.face.eyes.map((e) => { const path = []; for (let o = e; o && o !== hero.root; o = o.parent) path.unshift(o.parent.children.indexOf(o)); return path; }) : []);
+  const labelTex = (spec) => { const c = document.createElement('canvas'); c.width = 512; c.height = Math.max(64, Math.round(512 * spec.sy / spec.sx)); const g = c.getContext('2d');
+    g.fillStyle = '#' + spec.tbg.toString(16).padStart(6, '0'); g.fillRect(0, 0, c.width, c.height); g.fillStyle = '#' + spec.tfg.toString(16).padStart(6, '0');
+    const lines = spec.text.split('\n'), fs = Math.min(c.height / (lines.length * 1.25), c.height * 0.5);
+    g.font = `bold ${Math.round(fs)}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    lines.forEach((ln, i) => g.fillText(ln, c.width / 2, c.height * (i + 0.5) / lines.length, c.width * 0.94));
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  const build = (s) => {
+    if (s.shape === 'light') { const l = new THREE.PointLight(s.color, s.intensity, s.dist, 1); l.userData.cineProp = true; return { obj: l, kind: 'light' }; }
+    if (s.shape === 'hero') { const paths = eyePaths(), g = new THREE.Group(), c = hero.root.clone(true); c.position.set(0, 0, 0); c.scale.set(1, 1, 1); g.add(c); const eyes = paths.map((pa) => pa.reduce((o, i) => o && o.children[i], c)).filter(Boolean); return { obj: g, kind: 'hero', inner: c, eyes, eyeY: eyes.map((e) => e.scale.y) }; }
+    const geo = s.shape === 'cyl' ? new THREE.CylinderGeometry(0.5, 0.5, 1, 20) : s.shape === 'sphere' ? new THREE.SphereGeometry(0.5, 20, 14) : s.shape === 'plane' ? new THREE.PlaneGeometry(1, 1) : new THREE.BoxGeometry(1, 1, 1);
+    const mat = new THREE.MeshStandardMaterial({ color: s.color, roughness: 0.6, metalness: 0.05 }); const m = new THREE.Mesh(geo, mat); m.castShadow = s.shape !== 'plane'; m.receiveShadow = true; return { obj: m, kind: 'mesh' };
+  };
+  const applyProp = (e, s) => {
+    const o = e.obj; o.position.set(s.x, s.y, s.z); if (e.kind === 'hero') o.rotation.set(0, 0, 0); else o.rotation.set(s.rx, s.ry, s.rz);
+    if (e.kind === 'light') { o.color.setHex(s.color); o.intensity = s.intensity; o.distance = s.dist; return; }
+    if (e.kind === 'hero') { o.scale.set(s.sx, s.sy, s.sz); e.inner.rotation.y = s.ry; e.eyes.forEach((ey, i) => { ey.scale.y = e.eyeY[i] * (1 - 0.93 * s.blink); }); return; }
+    o.scale.set(s.sx, s.sy, s.shape === 'plane' ? 1 : s.sz);
+    const m = o.material; m.color.setHex(s.color); m.emissive.setHex(s.emissive); m.transparent = s.opacity < 1; m.opacity = s.opacity;
+    if (s.shape === 'plane' && s.text) { if (e.text !== s.text) { if (m.map) m.map.dispose(); m.map = labelTex(s); m.color.setHex(0xffffff); m.needsUpdate = true; e.text = s.text; } } else if (m.map) { m.map.dispose(); m.map = null; m.needsUpdate = true; e.text = ''; }
+  };
+  const prop = {
+    add(spec) { need('prop.add'); hold(); if (!THREE) throw new Error('prop: ingen three'); const s = normProp(spec); if (!s) throw new Error('prop.add: ugyldig (shape box|cyl|sphere|plane|light|hero, tall for x,y,z,sx,sy,sz)'); const e = build(s); e.spec = s; applyProp(e, s); scene.add(e.obj); const id = ++propN; props.set(id, e); logEv('kino', `prop ${id} ${s.shape}`); return id; },
+    set(id, patch) { need('prop.set'); const e = props.get(id); if (!e) throw new Error(`prop.set: ukjent prop ${id}`); const s = normProp(patch, e.spec); if (!s) throw new Error('prop.set: ugyldig verdi'); e.spec = s; applyProp(e, s); return { ...s }; },
+    remove(id) { need('prop.remove'); const e = props.get(id); if (!e) return false; scene.remove(e.obj); props.delete(id); return true; },
+    clear() { need('prop.clear'); for (const id of [...props.keys()]) prop.remove(id); return true; },
+    get count() { return props.size; },
+  };
 
   const api = {
     get isOn() { return on; }, get live() { return live; }, get t() { return t; }, get ticks() { return Math.round(t / FRAME_DT); },
@@ -54,6 +85,10 @@ export function createCinema({ state, rng, camera, canvas, cam, player, update, 
     get cam() { return free ? { ...free } : null; },
     get look() { return free ? poseLook(free) : null; },
     applyCam,
+    // ---- props og figurens skala ----
+    prop,
+    heroScale(k) { need('heroScale'); hold(); if (!(typeof k === 'number' && k > 0 && k <= 200)) throw new Error('heroScale: tall mellom 0 og 200'); heroS = k; onHeroScale(k); return k; },   // figuren tegnes k ganger større (fysikken er uendret); 1 = vanlig
+    get heroS() { return heroS; },
     // ---- figur ----
     setHero(h) {
       need('setHero'); hold(); const o = normHero(h); if (!o) throw new Error('setHero: trenger x, y, z (og yaw)');

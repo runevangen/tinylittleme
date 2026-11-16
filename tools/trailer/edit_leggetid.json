@@ -1,0 +1,155 @@
+{
+ "_note": "Forhistorien «Leggetid» (docs/FORHISTORIE.md) alene: bad om kvelden, krymping, match-cut til gulvnivå, trailerkortet og tittel.",
+ "out": {
+  "w": 1280,
+  "h": 720,
+  "fps": 24,
+  "in_fps": 12,
+  "crf": 18
+ },
+ "interp": "minterpolate",
+ "grade": {
+  "saturation": 1.15,
+  "contrast": 1.04,
+  "gamma": 1.0,
+  "warm": 0.05
+ },
+ "font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+ "audio": {
+  "fade_in": 0.6,
+  "fade_out": 3.0,
+  "volume": 0.9
+ },
+ "clips": [
+  {
+   "id": "10_leggetid_a_bad",
+   "dur": 5,
+   "cards": [
+    {
+     "text": "Tirsdag. 21.47.",
+     "at": 0.4,
+     "to": 2.4,
+     "pos": "bottom"
+    },
+    {
+     "text": "Tenner. Pyjamas. Lys av.",
+     "at": 2.7,
+     "to": 4.8,
+     "pos": "bottom"
+    }
+   ]
+  },
+  {
+   "id": "10_leggetid_b_skap",
+   "dur": 5,
+   "into": {
+    "type": "cut"
+   },
+   "cards": [
+    {
+     "text": "Selvfølgelig ikke.",
+     "at": 3.0,
+     "to": 4.8,
+     "pos": "bottom"
+    }
+   ]
+  },
+  {
+   "id": "10_leggetid_c_tablett",
+   "dur": 4,
+   "into": {
+    "type": "cut"
+   },
+   "cards": [
+    {
+     "text": "Bare én.",
+     "at": 0.8,
+     "to": 3.4,
+     "pos": "bottom"
+    }
+   ]
+  },
+  {
+   "id": "10_leggetid_d_speil",
+   "dur": 4,
+   "into": {
+    "type": "cut"
+   },
+   "cards": [
+    {
+     "text": "…Blunket du?",
+     "at": 2.4,
+     "to": 3.9,
+     "pos": "bottom"
+    }
+   ]
+  },
+  {
+   "id": "10_leggetid_e_krymp",
+   "dur": 6.5,
+   "into": {
+    "type": "cut"
+   },
+   "cards": [
+    {
+     "text": "Å nei.",
+     "at": 1.0,
+     "to": 2.6,
+     "pos": "bottom"
+    },
+    {
+     "text": "Åh.",
+     "at": 4.2,
+     "to": 6.0,
+     "pos": "bottom"
+    }
+   ]
+  },
+  {
+   "id": "01_bad_oversikt",
+   "dur": 3.2,
+   "cards": [
+    {
+     "text": "Du har blitt 3 cm høy.",
+     "at": 0.5,
+     "to": 3.0,
+     "pos": "bottom"
+    }
+   ],
+   "into": {
+    "type": "cut"
+   }
+  },
+  {
+   "id": "_tittel",
+   "type": "black",
+   "dur": 3.5,
+   "into": {
+    "type": "fade",
+    "dur": 0.5
+   },
+   "cards": [
+    {
+     "text": "tinylittleme",
+     "at": 0.3,
+     "to": 3.6,
+     "fade": 0.5,
+     "fade_out": 1.0,
+     "pos": "center",
+     "size": 96,
+     "y_off": -30
+    },
+    {
+     "text": "Snart til en telefon nær deg.",
+     "at": 0.8,
+     "to": 3.6,
+     "fade": 0.5,
+     "fade_out": 1.0,
+     "pos": "center",
+     "size": 36,
+     "y_off": 60
+    }
+   ]
+  }
+ ]
+}
