@@ -6,9 +6,10 @@ import assert from 'node:assert/strict';
 register('data:text/javascript,' + encodeURIComponent(`export async function resolve(s,c,n){ if(s==='three') return {url:${JSON.stringify(new URL('./lib/three.module.min.js', import.meta.url).href)},shortCircuit:true}; return n(s,c); }`));
 const BM = await import('./build_materials.js'), BL = await import('./build_logic.js'), G = await import('./grid_logic.js'), BP = await import('./build_phys.js'), BB = await import('./build_budget.js'), GS = await import('./grid_stress.js'), EX = await import('./grid_example.js'), I18 = await import('./i18n.js');
 const lab = JSON.parse(fs.readFileSync(new URL('./levels/bygglab.level.json', import.meta.url), 'utf8'));
-const gridSites = lab.build.sites.filter((s) => s.grid), site = (k) => lab.build.sites.find((s) => s.lab.key === k);
+const gridSites = lab.build.sites.filter((s) => s.grid && !s.grid.anchors),   // R74: de to med egne ankre (trapp, vippe) har ikke kjøredekk
+  allGrid = lab.build.sites.filter((s) => s.grid), site = (k) => lab.build.sites.find((s) => s.lab.key === k);
 const mk = (s, deck = true) => { const B = BL.createBuild(s, {}, []); B.gridDeck = deck; G.setMode(B, 'grid'); return B; };
-assert.equal(gridSites.length, 2, 'to rutenettsteder i Bygglab');
+assert.equal(allGrid.length, 8, 'R74: åtte rutenettsteder i Bygglab'); assert.equal(gridSites.length, 6, 'seks av dem har to ankre på lik høyde');
 
 // ---------- 1) farge-skala ----------
 {

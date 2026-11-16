@@ -163,7 +163,8 @@ export function createSim(def, opts = {}) {
   const st = siteStart(site), goal = siteGoal(site);
   const fig = bodies.length; bodies.push({ id: 'figur', kind: 'ball', idx: [], groups: [] });
   const loadId = isLoad(opts.load) ? opts.load : DEFAULT_LOAD, LD = loadParams(loadId);   // R48: lasten har egen masse, radius, fart og friksjon
-  const fi = mk(st.u, st.v + LD.r, 1 / LD.mass, LD.r, fig); bodies[fig].idx.push(fi);
+  const massK = Number.isFinite(opts.massK) && opts.massK > 0 ? opts.massK : 1;   // R74: tung last i rutenett-brett (lasten veier massK ganger så mye; standard 1 = som før)
+  const fi = mk(st.u, st.v + LD.r, 1 / (LD.mass * massK), LD.r, fig); bodies[fig].idx.push(fi);
   const F = P[fi]; let supported = false, blocked = false, hopCd = 0;
   const state = { t: 0, state: 'run', reason: '', won: 0, stuckX: F.x, stuckT: 0 };
 

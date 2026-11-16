@@ -62,6 +62,17 @@ const SITES = [
     { name: 'linjal med en blyant oppå', placed: [P('p1', 'ruler', 0, 0.2), P('p2', 'pencil', 0, 0.6)], links: [], surfaces: [BRO('@bro', -5, 5, 0.8)] },
   ] },
 ];
+// R74: rutenett-oppdrag per sted (cm for ankre og trinn). Ankre i rutenett-modus: stedene uten to klipper på lik høyde (trapp, vippe) har egne.
+const GRID_STAGES = {
+  bro: { stars: { three: { cost: 5, parts: 4 }, two: { cost: 7, parts: 6 } }, stage: { loads: ['ball'], massK: 1, budget: 8 } },
+  trapp: { step: 1.25 * U, anchors: [[-2 * U, 0], [4.25 * U, 5 * U]], stars: { three: { cost: 6, parts: 2 }, two: { cost: 8, parts: 3 } }, stage: { loads: ['figure'], massK: 1, budget: 8 } },
+  vippe: { step: 1.625 * U, anchors: [[-3.25 * U, 0], [3.25 * U, 3.5 * U]], stars: { three: { cost: 5, parts: 2 }, two: { cost: 9, parts: 3 } }, stage: { loads: ['figure', 'robot'], massK: 1, budget: 9 } },
+  fagverk: { stars: { three: { cost: 4, parts: 4 }, two: { cost: 6, parts: 5 } }, stage: { loads: ['car'], massK: 2, budget: 7 } },
+  tau: { stars: { three: { cost: 4, parts: 4 }, two: { cost: 6, parts: 6 } }, stage: { loads: ['car'], massK: 3, budget: 6 } },
+  last: { stars: { three: { cost: 4, parts: 4 }, two: { cost: 6, parts: 5 } }, stage: { loads: ['ball', 'car', 'robot'], massK: 4, budget: 6 } },
+  taaler: { stars: { three: { cost: 8, parts: 4 }, two: { cost: 9, parts: 6 } }, stage: { loads: ['car'], massK: 12, budget: 9 } },
+  materialer: { stars: { three: { cost: 10, parts: 4 }, two: { cost: 11, parts: 5 } }, stage: { loads: ['car'], massK: 8, budget: 11 } },
+};
 const N = SITES.length;
 const nameOf = (s) => `sted${SITES.indexOf(s) + 1}`;
 
@@ -83,9 +94,9 @@ SITES.forEach((s, i) => {
     start: [-40, 0], goal: [40, rise], ...(s.drop ? { drop: s.drop * U } : {}), ...(s.loads ? { loads: s.loads } : {}),
     ref: { placed: ref.placed, links: ref.links, surfaces: ref.surfaces },   // (uten route: ruta over hvert sted går fra gulvet og står i lab.solutions; boten går hovedruta)
     lab: { key: s.key, n: k, of: N, flag: [fx, top, ZC], ...(s.cap ? { cap: s.cap } : {}), solutions: [ref, ...rest].map((q) => ({ name: q.name, placed: q.placed, links: q.links, surfaces: q.surfaces, route: ['gulv', `ped_a${k}`, ...((q.steps ?? q.surfaces.map((z) => z.id))), `ped_b${k}`] })) } };
-  // R72: rutenett-modus på «bro» og «fagverk»: trinnet er gapet delt i fire, slik at begge ankrene ligger på rutenettet (stjerner: { three, two } = { kostnad, staver })
-  if (s.key === 'bro') site.grid = { step: s.gap * U / 4, stars: { three: { cost: 5, parts: 4 }, two: { cost: 9, parts: 8 } } };
-  if (s.key === 'fagverk') site.grid = { step: s.gap * U / 4, stars: { three: { cost: 12, parts: 12 }, two: { cost: 20, parts: 18 } } };
+  // R72/R74: rutenett-modus på alle åtte steder. Trinnet er gapet delt i fire (begge ankrene på rutenettet). `stage` = oppdraget i rutenett-modus (grid_stage.js): laster som må over, hvor mye tyngre lasten er (massK) og budsjett;
+  // `stars` = terskler { three, two } = { kostnad, staver } (grid_stage/build_budget). Vanskelighet stiger fra sted 1 til 8 (lett ball, så figur og robot, så bil, tyngre og tyngre, tightere budsjett). Kjente løsninger står i test_gridstage.mjs.
+  const GS = GRID_STAGES[s.key]; site.grid = { step: GS.step ?? s.gap * U / 4, ...(GS.anchors ? { anchors: GS.anchors } : {}), stars: GS.stars, stage: GS.stage };
   if (s.key === 'vippe') site.anchors = [[0, 2 * U]];   // vippas dreiepunkt
   if (s.key === 'trapp') site.start = [-40, 0];
   sites.push(site);

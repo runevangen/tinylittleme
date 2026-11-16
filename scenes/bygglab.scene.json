@@ -811,9 +811,16 @@
               "parts": 4
             },
             "two": {
-              "cost": 9,
-              "parts": 8
+              "cost": 7,
+              "parts": 6
             }
+          },
+          "stage": {
+            "loads": [
+              "ball"
+            ],
+            "massK": 1,
+            "budget": 8
           }
         }
       },
@@ -1042,6 +1049,36 @@
               ]
             }
           ]
+        },
+        "grid": {
+          "step": 6.25,
+          "anchors": [
+            [
+              -10,
+              0
+            ],
+            [
+              21.25,
+              25
+            ]
+          ],
+          "stars": {
+            "three": {
+              "cost": 6,
+              "parts": 2
+            },
+            "two": {
+              "cost": 8,
+              "parts": 3
+            }
+          },
+          "stage": {
+            "loads": [
+              "figure"
+            ],
+            "massK": 1,
+            "budget": 8
+          }
         }
       },
       {
@@ -1143,6 +1180,37 @@
               ]
             }
           ]
+        },
+        "grid": {
+          "step": 8.125,
+          "anchors": [
+            [
+              -16.25,
+              0
+            ],
+            [
+              16.25,
+              17.5
+            ]
+          ],
+          "stars": {
+            "three": {
+              "cost": 5,
+              "parts": 2
+            },
+            "two": {
+              "cost": 9,
+              "parts": 3
+            }
+          },
+          "stage": {
+            "loads": [
+              "figure",
+              "robot"
+            ],
+            "massK": 1,
+            "budget": 9
+          }
         }
       },
       {
@@ -1445,13 +1513,20 @@
           "step": 6.25,
           "stars": {
             "three": {
-              "cost": 12,
-              "parts": 12
+              "cost": 4,
+              "parts": 4
             },
             "two": {
-              "cost": 20,
-              "parts": 18
+              "cost": 6,
+              "parts": 5
             }
+          },
+          "stage": {
+            "loads": [
+              "car"
+            ],
+            "massK": 2,
+            "budget": 7
           }
         }
       },
@@ -1763,6 +1838,26 @@
               ]
             }
           ]
+        },
+        "grid": {
+          "step": 8.75,
+          "stars": {
+            "three": {
+              "cost": 4,
+              "parts": 4
+            },
+            "two": {
+              "cost": 6,
+              "parts": 6
+            }
+          },
+          "stage": {
+            "loads": [
+              "car"
+            ],
+            "massK": 3,
+            "budget": 6
+          }
         }
       },
       {
@@ -1894,6 +1989,28 @@
               ]
             }
           ]
+        },
+        "grid": {
+          "step": 8.75,
+          "stars": {
+            "three": {
+              "cost": 4,
+              "parts": 4
+            },
+            "two": {
+              "cost": 6,
+              "parts": 5
+            }
+          },
+          "stage": {
+            "loads": [
+              "ball",
+              "car",
+              "robot"
+            ],
+            "massK": 4,
+            "budget": 6
+          }
         }
       },
       {
@@ -2184,6 +2301,26 @@
               ]
             }
           ]
+        },
+        "grid": {
+          "step": 6.25,
+          "stars": {
+            "three": {
+              "cost": 8,
+              "parts": 4
+            },
+            "two": {
+              "cost": 9,
+              "parts": 6
+            }
+          },
+          "stage": {
+            "loads": [
+              "car"
+            ],
+            "massK": 12,
+            "budget": 9
+          }
         }
       },
       {
@@ -2366,6 +2503,26 @@
               ]
             }
           ]
+        },
+        "grid": {
+          "step": 8.75,
+          "stars": {
+            "three": {
+              "cost": 10,
+              "parts": 4
+            },
+            "two": {
+              "cost": 11,
+              "parts": 5
+            }
+          },
+          "stage": {
+            "loads": [
+              "car"
+            ],
+            "massK": 8,
+            "budget": 11
+          }
         }
       }
     ],

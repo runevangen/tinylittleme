@@ -32,7 +32,7 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   const waitDone = async (pg, n = 160) => { for (let i = 0; i < n; i++) { await pg.waitForTimeout(250); if (!(await pg.evaluate(() => window.__game.bld.running))) break; } };
 
   // ---- 1) bygg en bro av trekanter med trykk, SLOW og PAUSE, farger og største belastning (svak bro så fargene skifter) ----
-  await session({ 'tlm.buildstrength': '0.4' }, async (S) => {
+  await session({ 'tlm.buildstrength': '0.4', 'tlm.gridstage': 'false' }, async (S) => {
     const { pg, run, tapUV, tapSel, info, sh, pixel } = S;
     ok('byggeskjermen er åpen i Bygglab', await pg.evaluate(() => document.body.classList.contains('building')));
     await tapSel('#bld button[data-a="mode"]'); ok('MODUS bytter til rutenett', await pg.evaluate(() => window.__game.bld.grid.on));
@@ -69,7 +69,7 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   });
 
   // ---- 2) SÅ SLIK på vanlig vanskelighet, og pikselfargene på lerretet i en vanlig prøve ----
-  await session({}, async (S) => {
+  await session({ 'tlm.gridstage': 'false' }, async (S) => {
     const { pg, run, tapSel, info, sh, pixel, tapUV } = S;
     await tapSel('#bld button[data-a="mode"]');
     const ex = pg.locator('#bld .gtools button[data-g="example"]'); const eb = await ex.boundingBox(); ok('SÅ SLIK-knappen vises (ikke Ekspert), stor nok', !!eb && eb.height >= 44 && eb.width >= 60, JSON.stringify(eb)); ok('knappen heter SÅ SLIK', /SÅ SLIK/.test(await ex.textContent()));
@@ -83,7 +83,7 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   });
 
   // ---- 3) Ekspert: ingen SÅ SLIK ----
-  await session({ 'tlm.difficulty': '"expert"' }, async (S) => {
+  await session({ 'tlm.difficulty': '"expert"', 'tlm.gridstage': 'false' }, async (S) => {
     const { pg, tapSel } = S; await tapSel('#bld button[data-a="mode"]'); const vis = await pg.locator('#bld .gtools button[data-g="example"]').isVisible();
     const lvl = await pg.evaluate(() => localStorage.getItem('tlm.difficulty')); ok('SÅ SLIK er borte på Ekspert', !vis, 'nivå ' + lvl);
   });
