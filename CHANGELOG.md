@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.25** – R78: fjernet del dukket opp igjen ved PRØV. Spøkelset fra forrige prøve skjules nå når delelisten er endret (build_ghost.js, test_buildremove.mjs).
 - **2.24** – R78 lagt i veikartet (fjernet del dukker opp igjen ved PRØV, fra Rune).
 - **2.23** – R77: versjonsjekk i spillet. Sjekker rolig om nyere versjon ligger ute, kort «NY VERSJON · TRYKK FOR Å OPPDATERE», «SJEKK NÅ» i ⚙, innstillinger versionCheck/versionCheckInterval, lagrede data beholdes.
 - **2.22** – R77 lagt i veikartet (versjonsjekk i spillet og «Start ny versjon», fra Rune).
