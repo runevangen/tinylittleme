@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.14** – R74–R76 lagt i veikartet (rutenett: kamp og mål, veiledning, byggeskjermens oppsett).
 - **2.13** – Brettvelgeren: Bygglab heter nå «Bygglab · ny byggeteknikk» (rutenett-bygging).
 - **2.12** – Trailer v3: nytt bygge-klipp der broen brister (06b), lengre sluttkort med saktere fade (kun verktøy, ikke spillet).
 - **2.11** – Trailer v2: kamera nærmere i klippene 03, 05, 07, 08; rutenett-bygging i bygge-klippet; lengre verksted/edderkopp/lys-klipp (kun verktøy, ikke spillet).
