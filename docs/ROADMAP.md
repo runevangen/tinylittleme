@@ -29,9 +29,6 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Åpne punkter
 
-### [ ] R75 · Fra tester: Rune · Veiledning for rutenett-bygging
-Første gang rutenett-modus brukes (og for Nybegynner i R69): kort «Så slik»-guide med to-trinn (trykk et punkt, trykk et punkt til; velg materiale; PRØV), hint som peker på MODUS-knappen når brettet har rutenett, og at modusvalget huskes. Hjelp og piler følger vanskelighetsprofilen (R69): av på Ekspert. Alt med knapper, ingen taster. Ferdig når: guiden vises én gang, kan hoppes over og åpnes igjen fra ⚙/⋯, og testes (DOM + Playwright, iPhone 14).
-
 ### [ ] R54 · Fra tester: Rune · Roligere kamera: følging av som standard og bredere synsfelt i høyformat
 Fra spilletest på iPhone (v1.32–v1.56): testerne blir desorientert og sier at skjermen veiver fram og tilbake. Med «Kamerafølging: styrke» på 0 og «Synsfelt» på 70 ble det klart bedre; med følgingen tilbake på 1 (synsfelt fortsatt 70) ble det mye verre. Den automatiske dreiningen bak figuren (`followYaw` i `camera_util.js`, kalt fra `main.js`) er altså hovedårsaken, og synsfeltet nummer to: 52° loddrett gir bare ca. 25° vannrett på stående iPhone, fordi synsfeltet ikke justeres for skjermformatet.
 (1) **Følging av som standard.** «Kameraet følger etter deg automatisk» (`tlm.follow`) er av for alle, også for dem som har den gamle verdien lagret (engangs-migrering, slik PUBG-standarden på PC ble satt i v0.72). Valget og «Kamerafølging: styrke» blir stående i ⚙ → Kamera, så den kan slås på igjen. Sjefkamp-kameraet, ◎ og dobbelttrykk virker som før.
@@ -46,6 +43,7 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+- [x] Fra tester: Rune · veiledning for rutenett-bygging: Så slik-guide, MODUS-hint, husket modus (R75, v2.20)
 - [x] Fra tester: Rune · rutenett: kamp og mål, tyngre laster, budsjett og stjerner (R74, v2.19)
 - [x] Fra tester: Rune · byggeskjermens oppsett: ⌂ MENY i toppraden, NULLSTILL passer, strammere Bygglab-topp (R76, v2.18)
 - [x] Fra tester: Rune · rutenett-bygging: knutepunkter og staver (tre, stål, tau) på koordinatene, ny modus ved siden av den klassiske (grid_logic.js, grid_view.js) (R72, v2.08)
