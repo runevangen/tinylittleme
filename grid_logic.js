@@ -110,7 +110,7 @@ export function derive(B) {
   let k = 1;
   for (const n of G.nodes) {
     const rs = rodsAt(G, n.id).sort((x, y) => order.get(x.id) - order.get(y.id)); if (!rs.length) continue;
-    if (n.fixed) { for (const r of rs) links.push({ id: 'h' + k++, kind: 'hinge', a: r.id, la: local(r, n.id), b: null, lb: null, g: { u: n.u, v: n.v }, free: true, k: jk(r) }); }
+    if (n.fixed) { const kf = Math.max(...rs.map(jk)); for (const r of rs) links.push({ id: 'h' + k++, kind: 'hinge', a: r.id, la: local(r, n.id), b: null, lb: null, g: { u: n.u, v: n.v }, free: true, k: kf }); }   // R74: ved ankeret holder det sterkeste materialet (stål) på ankerleddene
     else for (let i = 1; i < rs.length; i++) links.push({ id: 'h' + k++, kind: 'hinge', a: rs[0].id, la: local(rs[0], n.id), b: rs[i].id, lb: local(rs[i], n.id), g: null, free: true, k: Math.min(jk(rs[0]), jk(rs[i])) });
   }
   B.placed = placed.map(({ _a, _b, ...p }) => p); B.links = links; return B;

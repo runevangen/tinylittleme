@@ -1,5 +1,5 @@
 // R73: eksempelbro for rutenett-bygging («SÅ SLIK»): et ferdig fagverk av trekanter over kjøredekket, regnet ut fra stedets rutenett. Ren logikk (ingen DOM), kjøres i node.
-// Utformingen er en Pratt-bjelke: topp-knuter rett over hver dekk-knute, en loddrett stav ved hver, topp-stav mellom dem og skråstaver som heller ned mot midten (de blir strukket, de korte loddrette presses).
+// Utformingen er en Pratt-bjelke: topp-knuter rett over hver dekk-knute, en loddrett stav ved hver, topp-stav mellom dem og skråstaver som heller ned mot midten (de blir strukket, de korte loddrette presses). R74: alt i stål (tre er svakt i rutenett).
 // Alle staver ligger på rutenettet og er lovlige etter reglene i grid_logic.js; eksempelet gjelder bare steder med kjøredekk og minst tre felt.
 import { createGrid, deckPoints, nodeAt, rodCheck, maxLenOf, pushHistGrid, derive, hasDeck, MAX_LEN } from './grid_logic.js';
 import { gridStep } from './grid_logic.js';
@@ -9,7 +9,7 @@ export const EXAMPLE_MIN_PANELS = 3;
 export function exampleSpec(site, opts = {}) {
   const d = deckPoints(site); if (!d) return null;
   const cols = [d.left, ...d.mid, d.right], N = cols.length - 1; if (N < EXAMPLE_MIN_PANELS) return null;
-  const st = gridStep(site), rows = opts.rows || 1, v = d.left.v + rows * st, steel = opts.top || 'steel', side = opts.side || 'wood';
+  const st = gridStep(site), rows = opts.rows || 1, v = d.left.v + rows * st, steel = opts.top || 'steel', side = opts.side || 'steel';
   const nodes = [], rods = [];
   for (let i = 1; i < N; i++) nodes.push([`t${i}`, cols[i].u, v]);
   for (let i = 1; i < N; i++) rods.push([`d${i}`, `t${i}`, side]);   // loddrette

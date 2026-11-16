@@ -143,7 +143,7 @@
       "id": "06b_bro_brister",
       "manus": "Etter «Så bygg.»: broen brister (humor «Ok. Prøv igjen.» legges i edit-filen)",
       "brett": "bygglab",
-      "url": "?level=bygglab&start=0&cine_opt=tlm.buildstrength:0.38",
+      "url": "?level=bygglab&start=0",
       "innstillinger": {
         "tlm.story": "false",
         "tlm.introsweep": "false",
@@ -157,7 +157,7 @@
         "yaw": 1.5708
       },
       "bilder": 66,
-      "handlinger": "Sted lab4 «Fagverk» (Rutenett): samme fagverk som 06 bygges raskt med 14 trykk (ett per bilde), last Robot, PRØV. Prøven kjøres med admin-innstillingen byggestyrke 0,38 (cine_opt tlm.buildstrength:0.388; ingen kodeendring): stavene går grønn-gul-oransje-rød, SLOW trykkes som i spillet, ledd ryker og broen faller. Deterministisk.",
+      "handlinger": "Sted lab4 «Fagverk» (Rutenett): samme fagverk som 06 bygges raskt med 14 trykk (ett per bilde), last Leke-bil, PRØV. Prøven kjøres med standard styrke (tre er svakt i rutenett siden R74; last Leke-bil): stavene går grønn-gul-oransje-rød, SLOW trykkes som i spillet, ledd ryker og broen faller. Deterministisk.",
       "rutesteg": "ingen i rutetype 'ruta' (build.sites[...].ref.route). lab7 ref.route er gulv>ped_a7>@bro>ped_b7.",
       "kamera": {
         "type": "byggeskjerm",

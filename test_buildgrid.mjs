@@ -78,7 +78,7 @@ const bridge = (site, mat = 'wood', order = null) => {   // flatt dekke fra anke
     for (let i = 1; i <= 7; i++) R(id(us[i], 0), id(us[i], 2), mat); for (let i = 1; i < 4; i++) R(id(us[i], 0), id(us[i + 1], 2), mat); for (let i = 5; i < 8; i++) R(id(us[i], 0), id(us[i - 1], 2), mat); return B;
   };
   const pw = pratt('wood'), ps = pratt('steel');
-  assert.equal(BP.runSim(G.simDef(pw), {}).result, 'won', 'trekantbro av tre over 16 enheter'); assert.equal(BP.runSim(G.simDef(ps), {}).result, 'won', 'og av stål');
+  assert.equal(BP.runSim(G.simDef(pw), {}).result, 'lost', 'R74: trekantbro av tre over 16 enheter (åtte felt) er for svak på standard'); assert.equal(BP.runSim(G.simDef(pw), { strength: 2 }).result, 'won', 'men holder med dobbel styrke'); assert.equal(BP.runSim(G.simDef(ps), {}).result, 'won', 'og av stål holder på standard');
   const w5 = BP.runSim(G.simDef(pw), { strength: 0.5 }), s5 = BP.runSim(G.simDef(ps), { strength: 0.5 });
   assert.equal(w5.result, 'lost', 'tre ryker når grensene halveres'); assert.ok(w5.linkBreaks.length > 0, 'leddene ryker (kraft over grensen)'); assert.equal(s5.result, 'won', 'stål holder ved halv styrke'); assert.ok(BB.starsFor(wide, pw.placed, pw.links).cost < BB.starsFor(wide, ps.placed, ps.links).cost, 'tre er billigere enn stål');
   // tau bærer bare strekk: en stående tau-stav kollapser under en vekt, tre og stål bærer den

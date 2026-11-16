@@ -1,5 +1,5 @@
 // 06b_bro_brister (shotlist.json): byggeskjermen i Bygglab, sted lab4 «Fagverk», MODUS Rutenett. Samme bro som i 06_bygging (9 staver i tre, Pratt-fagverk), bygd raskt med trykk,
-// men prøven kjøres med «byggestyrke» 0,38 (spillets egen admin-innstilling tlm.buildstrength, satt med cine_opt i shotlist-url; fysikken og koden er uendret): stavene går grønn -> gul -> oransje -> rød,
+// med last Leke-bil og spillets standardstyrke (tre er svakt i rutenett, R74; ingen innstilling endret): stavene går grønn -> gul -> oransje -> rød,
 // ledd røyker, broen faller og lasten havner i gapet. SLOW trykkes som i spillet (knapp). Alt er ekte byggeskjerm; ingen egne animasjoner.
 // Deterministisk: samme bygg, samme frø og samme dt gir samme utfall.
 const SITE = 'lab4';

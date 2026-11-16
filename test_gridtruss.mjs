@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { register } from 'node:module';
 import assert from 'node:assert/strict';
 register('data:text/javascript,' + encodeURIComponent(`export async function resolve(s,c,n){ if(s==='three') return {url:${JSON.stringify(new URL('./lib/three.module.min.js', import.meta.url).href)},shortCircuit:true}; return n(s,c); }`));
-const BL = await import('./build_logic.js'), G = await import('./grid_logic.js'), BP = await import('./build_phys.js'), BB = await import('./build_budget.js'), GS = await import('./grid_stress.js'), EX = await import('./grid_example.js'), I18 = await import('./i18n.js');
+const BM = await import('./build_materials.js'), BL = await import('./build_logic.js'), G = await import('./grid_logic.js'), BP = await import('./build_phys.js'), BB = await import('./build_budget.js'), GS = await import('./grid_stress.js'), EX = await import('./grid_example.js'), I18 = await import('./i18n.js');
 const lab = JSON.parse(fs.readFileSync(new URL('./levels/bygglab.level.json', import.meta.url), 'utf8'));
 const gridSites = lab.build.sites.filter((s) => s.grid), site = (k) => lab.build.sites.find((s) => s.lab.key === k);
 const mk = (s, deck = true) => { const B = BL.createBuild(s, {}, []); B.gridDeck = deck; G.setMode(B, 'grid'); return B; };
@@ -93,6 +93,17 @@ assert.equal(gridSites.length, 2, 'to rutenettsteder i Bygglab');
   const W = mk(site('bro'), true); const wk = track(W, 'car', 0.05); assert.equal(wk.state, 'lost'); assert.ok(wk.br.length >= 1, 'brudd med svak styrke');
   const ws = GS.peakSummary(wk.P.peaks, wk.br); assert.ok(ws.first && ws.first.id === wk.br.slice().sort((x, y) => x.t - y.t)[0].id && ws.first.kind, 'første brudd'); assert.equal(wk.P.peaks.get(ws.first.id).r >= 0.99, true, 'staven som brakk står med full belastning'); assert.ok(wk.P.peaks.get(ws.first.id).broken);
   const w2 = track(W, 'car', 0.05); assert.equal(JSON.stringify([...w2.P.peaks]), JSON.stringify([...wk.P.peaks]), 'også bruddet er deterministisk');
+  // R74: tre er svakt i rutenett. Trailer-broen (9 staver Pratt på «fagverk», som i tools/trailer/shots/06b_bro_brister.cjs) brister på standardstyrke med Leke-bil; samme geometri i stål holder; lette laster holder på tre; deterministisk
+  const trailer = (mat) => { const S = site('fagverk'), B = mk(S), st = G.gridStep(S), d = B.rg.nodes.filter((n) => n.deck).sort((p, q) => p.u - q.u), an = B.rg.nodes.filter((n) => n.fixed).sort((p, q) => p.u - q.u), c = [an[0], ...d, an[1]];
+    const t = [null, 1, 2, 3].map((i) => i && G.gAddNode(B, c[i].u, st).node), add = (a, b) => assert.ok(G.gAddRod(B, a.id, b.id, mat).ok);
+    add(c[0], t[1]); add(t[1], t[2]); add(t[2], t[3]); add(t[3], c[4]); add(c[1], t[1]); add(c[2], t[2]); add(c[3], t[3]); add(t[1], c[2]); add(t[3], c[2]); return B; };
+  const tw = trailer('wood'), tsx = trailer('steel'), twc = track(tw, 'car'), tsc = track(tsx, 'car');
+  const topOf = (x) => Math.max(...[...x.P.peaks.values()].map((q) => q.r));
+  assert.equal(twc.state, 'lost', 'tre-broen brister med Leke-bil på standardstyrke'); assert.ok(twc.br.length >= 1, 'og noe brekker: ' + JSON.stringify(twc.br)); assert.ok(topOf(twc) > 0.9, 'stavene når rødt: ' + topOf(twc).toFixed(2));
+  assert.equal(tsc.state, 'won', 'stål-bro med samme geometri holder'); assert.equal(tsc.br.length, 0); assert.ok(topOf(tsc) < 0.7 && topOf(tsc) < topOf(twc) * 0.7, 'stål-broen er tydelig mindre belastet enn tre-broen: ' + topOf(tsc).toFixed(2));
+  for (const load of ['figure', 'robot']) { const x = track(tw, load); assert.equal(x.state, 'won', `tre-broen bærer ${load}`); assert.equal(x.br.length, 0, 'uten brudd'); assert.ok(topOf(x) < 0.7, 'under oransje/rødt: ' + topOf(x).toFixed(2)); }
+  const twc2 = track(trailer('wood'), 'car'); assert.equal(JSON.stringify([...twc2.P.peaks]), JSON.stringify([...twc.P.peaks]), 'deterministisk (samme bygg, samme brudd)'); assert.equal(JSON.stringify(twc2.br), JSON.stringify(twc.br));
+  assert.ok(GRID_MATS_OK(), 'tre er svakere enn stål i alle grenser'); function GRID_MATS_OK() { const M = (m) => BM.GRID_MAT[m]; return ['st', 'sc', 'E', 'mcap', 'joint'].every((k) => M('wood')[k] < M('steel')[k]) && M('wood').st < 12000; }
 }
 
 // ---------- 5) byggeskjermen mot en DOM-stubb: SLOW, PAUSE, farge og største belastning ----------
