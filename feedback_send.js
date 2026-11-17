@@ -76,6 +76,7 @@ export async function rpc(name, args, { fetchFn = globalThis.fetch, cfg = FEEDBA
   } catch { return { ok: false, status: 0 }; } finally { if (timer) clearTimeout(timer); }
 }
 
+const cleanSpot = (s) => (s && [s.x, s.y, s.z].every((v) => typeof v === 'number' && Number.isFinite(v)) ? { x: s.x, y: s.y, z: s.z } : null);
 const num = (v) => (Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);
 // Gjør svaret fra serveren trygt å vise (kutter lengde, tvinger tall og tekst)
 export function parseInbox(d) {
@@ -84,8 +85,9 @@ export function parseInbox(d) {
   return {
     me: { sent: num(m.sent), fixed: num(m.fixed), working: num(m.working) },
     all: { sent: num(a.sent), fixed: num(a.fixed), testers: num(a.testers) },
-    replies: (Array.isArray(d.replies) ? d.replies : []).slice(0, 20).map((r) => ({
+    replies: (Array.isArray(d.replies) ? d.replies : []).slice(0, 30).map((r) => ({
       id: String(r.id || ''), version: String(r.version || '').slice(0, 20), message: String(r.message || '').slice(0, 300), read: !!r.read, at: String(r.at || ''),
+      level: String(r.level || '').slice(0, 40), spot: cleanSpot(r.spot), check: r.check === 'ok' || r.check === 'fail' ? r.check : null, note: String(r.note || '').slice(0, 200),   // R80: brett, sted og avkryssing
     })).filter((r) => r.id && r.message),
   };
 }
@@ -98,6 +100,12 @@ export async function markRead(code, ids, opts) {
   if (!ids?.length) return 0;
   const r = await rpc('tlm_mark_read', { c: cleanCode(code), ids }, opts);
   return r.ok ? num(r.data) : 0;
+}
+// R80: tester krysser av at en rettelse virker (res 'ok') eller ikke (res 'fail', valgfri kort tekst). Serveren lager ny tilbakemelding ved første 'fail'.
+export async function checkReply(code, rid, res, note = '', opts) {
+  if (!rid || (res !== 'ok' && res !== 'fail')) return false;
+  const r = await rpc('tlm_check_reply', { c: cleanCode(code), rid, res, note: String(note || '').trim().slice(0, 200) }, opts);
+  return r.ok;
 }
 export const unreadReplies = (inbox) => (inbox?.replies || []).filter((r) => !r.read);
 

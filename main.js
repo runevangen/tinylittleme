@@ -4,7 +4,9 @@ import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
-import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT, fetchInbox, markRead, unreadReplies, statsLines } from './feedback_send.js';
+import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT, fetchInbox, markRead, unreadReplies, statsLines, checkReply } from './feedback_send.js';
+import { menuVisible, buttonLabel, uncheckedCount, parseGo, safePlacement, goUrl } from './fixes_logic.js';   // R80: Rettelser-menyen (fixes_logic.js, fixes_view.js)
+import { showFixes } from './fixes_view.js';
 import { setDrawerCue, drawerCue, drawerSummary } from './drawers.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
@@ -3015,16 +3017,27 @@ function quitGame() {
   $('mBack').onclick = showStart;
   try { window.close(); } catch { /* nettlesere lar bare skript-åpnede vinduer lukkes: da blir takkesiden stående */ }
 }
+// R80: Rettelser-menyen. fixList huskes i økta så tallet på knappen står der med en gang; hentes på nytt hver gang startskjermen vises.
+let fixList = [];
+const testerCode = () => store.get('tlm.tcode', '');
+async function fetchFixes() { const code = testerCode(); if (!validCode(code)) return null; const got = await fetchInbox(code); if (got) fixList = got.replies; return got ? fixList : null; }
+function fixesBtnRefresh() { const b = $('mFix'); if (b) b.textContent = buttonLabel(uncheckedCount(fixList)); }
+function openFixes() {
+  const el = $('start');
+  showFixes(el, { list: fixList, version: VERSION, levels: LEVELS, logEv, refresh: fetchFixes, check: (id, res, note) => checkReply(testerCode(), id, res, note), onChange: (l) => { fixList = l; },
+    goTo: (fix) => { saveProgress(); location.href = goUrl(location.href, fix); }, update: async () => { await verView.check({ force: true, why: 'rettelser' }); await verView.update(); }, onBack: () => showStart() });
+}
 function showStart(o = {}) {
   menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; saveProgress();
   if (document.pointerLockElement) document.exitPointerLock();
   const has = hasProgress(), bl = badgeLine(), dn = dft(lang, 'df.' + difficulty);
-  $('start').classList.remove('dfl');
+  $('start').classList.remove('dfl', 'fxl');
   $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${o.saved ? '✓ ' + dft(lang, 'df.saved') : T('menu.tagline')}</p>
     <button class="mbtn" id="mCont" ${has ? '' : 'disabled'}>${T('menu.continue')}<small>${has ? levelLabel + ' · ' + dn : T('menu.nosave')}</small></button>
     <button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
     <button class="mbtn sec" id="mLevels">${dft(lang, 'df.pick')}${bl ? `<small>${bl}</small>` : ''}</button>
     <button class="mbtn sec" id="mToys">🧸 ${rwT(lang, 'rw.closet')}</button>
+    ${menuVisible(testerCode(), validCode) ? `<button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button>` : ''}
     <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
     <button class="mbtn sec" id="mQuit">${T('menu.quit')}</button>
     <div class="ver">v${VERSION}</div>`;
@@ -3038,8 +3051,22 @@ function showStart(o = {}) {
   };
   $('mLevels').onclick = () => { unlockAudio(); dv.pickLevel({ levels: LEVELS, st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart }); };
   $('mToys').onclick = () => { logEv('belønning', 'lekerom åpnet'); showCloset($('start'), { st: store, lang, all: rewardsAll, levels: LEVELS, onChange: (e) => { refreshAccessories(); logEv('belønning', `valgt ${Object.values(e).filter(Boolean).join(',') || 'ingen'}`); }, onBack: showStart }); };
+  if ($('mFix')) { $('mFix').onclick = openFixes; const tryFx = (left) => fetchFixes().then((l) => { if (l) fixesBtnRefresh(); else if (left > 0) setTimeout(() => { if ($('mFix')) tryFx(left - 1); }, 8000); }).catch(() => {}); tryFx(2); }   // stille: ingen nett eller treg start gir nytt forsøk, ikke feil
   $('mSet').onclick = () => { buildPanel(); $('help').classList.add('hide'); $('panel').classList.remove('hide'); };
   $('mQuit').onclick = quitGame;
+}
+// R80: «GÅ DIT» i Rettelser-menyen åpner ?level=<id>&go=x,y,z: figuren settes på fast grunn et par enheter fra stedet, med kameraet mot det. Ingen fysikk endres.
+{
+  const spot = parseGo(location.search);
+  if (spot) {
+    try { const u = new URL(location.href); u.searchParams.delete('go'); history.replaceState(null, '', u.pathname + u.search); } catch { /* ingen historikk */ }
+    const pl = safePlacement(spot, LEVEL);
+    if (pl) {
+      resetPlayer(player, pl.x, pl.y, pl.z); cam.yaw = pl.yaw; camFocusY = null; cam.target.set(pl.x, pl.y + 0.62, pl.z); resumed = true;   // resumed: hopp over fortelling og intro
+      logEv('rettelser', `ankom ${levelId} ved ${spot.x.toFixed(1)},${spot.y.toFixed(1)},${spot.z.toFixed(1)}: stod ${pl.dist} unna`);
+      setTimeout(() => toast('Her ble det rettet. Prøv stedet, og kryss av i RETTELSER.'), 1200);
+    } else { logEv('rettelser', `ankom ${levelId}: ingen trygg plass ved stedet, vanlig start`); setTimeout(() => toast('Fant ikke stedet, så du starter vanlig'), 1200); }
+  }
 }
 if (startWanted) showStart(); else showIntro();
 
