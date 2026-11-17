@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.27** – R79: trykkplata tegnes flush med gulvet (plateGeom i plates_logic.js), så figuren ikke går igjennom en hevet plate i Verkstedet.
 - **2.26** – R79 lagt i veikartet (figuren går igjennom trykkplata i Verkstedet, fra Rune).
 - **2.25** – R78: fjernet del dukket opp igjen ved PRØV. Spøkelset fra forrige prøve skjules nå når delelisten er endret (build_ghost.js, test_buildremove.mjs).
 - **2.24** – R78 lagt i veikartet (fjernet del dukker opp igjen ved PRØV, fra Rune).
