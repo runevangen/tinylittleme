@@ -3,6 +3,10 @@
 // Armen (til å rekke mot skapet og holde tabletten) styres fra skriptet ved at armleddenes rotasjon overstyres i siden (forceArm); ingen endring i spillkoden.
 const HS = 24;                          // figuren er ca. 1 enhet høy (5 cm); 24 = ca. 1,2 m i et bad der vasken er 0,8 m høy
 const HERO = { x: -1, y: 0, z: -12, yaw: Math.PI };
+// Felles sted S for figuren i alle Leggetid-klipp, krympingen og starten av 01_bad_oversikt: hun flyttes aldri; bare skalaen (og kameraet) endres.
+const S = { x: HERO.x, z: HERO.z };
+// siste kamerapose i krympingen (gulvnivå, litt skrått bakfra) = første pose i 01_bad_oversikt (match-cut). Blikkpunktet er brystet til figuren i skala 1.
+const END_CAM = { x: S.x - 3.0, y: 2.4, z: S.z + 4.8, tx: S.x, ty: 0.58, tz: S.z, fov: 42 };
 const MX = -3.8, MW = 13.4;             // speilets midte og bredde
 const MZ = -24.9;                       // speilflata (mot veggen over vasken)
 const sm = (t) => t * t * (3 - 2 * t);
@@ -103,4 +107,4 @@ async function fadeProps(ctx, ids, a) {
 // valgfritt kamera fra miljøvariabel (utforsking): LT_CAM="x,y,z,tx,ty,tz,fov"
 function envCam() { const v = process.env.LT_CAM; if (!v) return null; const a = v.split(',').map(Number); return { x: a[0], y: a[1], z: a[2], tx: a[3], ty: a[4], tz: a[5], fov: a[6] || 50 }; }
 
-module.exports = { HS, HERO, MZ, sm, mix, cl, build, reflect, night, forceArm, handPos, fadeProps, envCam };
+module.exports = { HS, HERO, S, END_CAM, MZ, sm, mix, cl, build, reflect, night, forceArm, handPos, fadeProps, envCam };
