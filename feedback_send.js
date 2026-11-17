@@ -87,7 +87,7 @@ export function parseInbox(d) {
     all: { sent: num(a.sent), fixed: num(a.fixed), testers: num(a.testers) },
     replies: (Array.isArray(d.replies) ? d.replies : []).slice(0, 30).map((r) => ({
       id: String(r.id || ''), version: String(r.version || '').slice(0, 20), message: String(r.message || '').slice(0, 300), read: !!r.read, at: String(r.at || ''),
-      level: String(r.level || '').slice(0, 40), spot: cleanSpot(r.spot), check: r.check === 'ok' || r.check === 'fail' ? r.check : null, note: String(r.note || '').slice(0, 200),   // R80: brett, sted og avkryssing
+      level: String(r.level || '').slice(0, 40), spot: cleanSpot(r.spot), check: r.check === 'ok' || r.check === 'fail' ? r.check : null, note: String(r.note || '').slice(0, 200), checked_at: r.checked_at ? String(r.checked_at) : null,   // R80: brett, sted og avkryssing
     })).filter((r) => r.id && r.message),
   };
 }

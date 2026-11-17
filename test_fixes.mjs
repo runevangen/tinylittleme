@@ -2,7 +2,7 @@
 // Hele flyten i nettleser (falsk server, GÅ DIT, avkryssing, bilder): node tools/fixes_check.cjs (Playwright, som boot).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { sortFixes, stateOf, stateText, uncheckedCount, buttonLabel, menuVisible, versionStatus, versionLine, levelLabel, validSpot, safePlacement, goUrl, parseGo, withCheck } from './fixes_logic.js';
+import { sortFixes, stateOf, stateText, uncheckedCount, buttonLabel, menuVisible, versionStatus, versionLine, levelLabel, validSpot, safePlacement, goUrl, parseGo, withCheck, OLD_UNCHECKED_DAYS, OLD_OK_DAYS, tabOf, isOld, tabCounts, defaultTab, tabLabel, tabView, showAllLabel } from './fixes_logic.js';
 import { parseInbox, checkReply, validCode, FEEDBACK } from './feedback_send.js';
 
 // sortering: nyeste først, endrer ikke originalen
@@ -15,6 +15,30 @@ const mix = [{ id: '1' }, { id: '2', check: 'ok' }, { id: '3', check: 'fail' }, 
 assert.equal(uncheckedCount(mix), 2); assert.equal(buttonLabel(2), 'RETTELSER · 2'); assert.equal(buttonLabel(0), 'RETTELSER');
 const after = withCheck(mix, '1', 'ok'); assert.equal(uncheckedCount(after), 1); assert.equal(uncheckedCount(mix), 2, 'original uendret');
 assert.equal(withCheck(mix, '1', 'fail', 'x'.repeat(500))[0].note.length, 200); assert.equal(withCheck(mix, '3', 'ok')[2].note, '', 'ok sletter teksten');
+// R81: faner, 14- og 7-dagersgrenser (fast now)
+{
+  const NOW = Date.parse('2026-06-30T12:00:00Z'), D = 86400000, iso = (d) => new Date(NOW - d * D).toISOString();
+  assert.equal(OLD_UNCHECKED_DAYS, 14); assert.equal(OLD_OK_DAYS, 7);
+  const R = [
+    { id: 'u-ny', at: iso(1) }, { id: 'u-14', at: iso(14) }, { id: 'u-15', at: iso(15) }, { id: 'u-gammel', at: iso(90) }, { id: 'u-søppel', at: 'søppel' },
+    { id: 'o-ny', at: iso(60), check: 'ok', checked_at: iso(2) }, { id: 'o-7', at: iso(60), check: 'ok', checked_at: iso(7) }, { id: 'o-8', at: iso(60), check: 'ok', checked_at: iso(8) },
+    { id: 'o-mangler', at: iso(60), check: 'ok' }, { id: 'o-null', at: iso(60), check: 'ok', checked_at: null },
+    { id: 'f-ny', at: iso(60), check: 'fail', checked_at: iso(1) }, { id: 'f-gammel', at: iso(200), check: 'fail', checked_at: iso(100) }, { id: 'f-mangler', at: iso(200), check: 'fail' }];
+  assert.deepEqual(tabCounts(R), { sjekke: 5, sjekket: 8 }); assert.equal(tabOf({ check: 'fail' }), 'sjekket'); assert.equal(tabOf({}), 'sjekke');
+  assert.equal(uncheckedCount(R), tabCounts(R).sjekke, 'knappetallet = «Å SJEKKE»');
+  assert.equal(defaultTab(R), 'sjekke'); assert.equal(defaultTab(R.filter((r) => r.check)), 'sjekket'); assert.equal(defaultTab([]), 'sjekket');
+  const ids = (v) => v.shown.map((r) => r.id).sort();
+  let v = tabView(R, 'sjekke', false, NOW); assert.deepEqual(ids(v), ['u-14', 'u-ny', 'u-søppel'].sort(), '14 dager er ikke «eldre enn»; ugyldig dato skjules ikke'); assert.equal(v.hidden, 2);
+  v = tabView(R, 'sjekke', true, NOW); assert.equal(v.shown.length, 5); assert.equal(v.hidden, 2);
+  v = tabView(R, 'sjekket', false, NOW); assert.deepEqual(ids(v), ['f-gammel', 'f-mangler', 'f-ny', 'o-7', 'o-mangler', 'o-null', 'o-ny'], 'fail skjules aldri; manglende checked_at = nylig'); assert.equal(v.hidden, 1);
+  assert.deepEqual(tabView(R, 'sjekket', true, NOW).shown.map((r) => r.id).includes('o-8'), true);
+  assert.ok(!isOld({ check: 'fail', checked_at: iso(999), at: iso(999) }, NOW));
+  // avkryssing flytter med en gang, også en gammel usjekket
+  const c = withCheck(R, 'u-gammel', 'ok', '', NOW); assert.deepEqual(tabCounts(c), { sjekke: 4, sjekket: 9 }); assert.equal(c.find((r) => r.id === 'u-gammel').checked_at, new Date(NOW).toISOString());
+  assert.ok(tabView(c, 'sjekket', false, NOW).shown.some((r) => r.id === 'u-gammel'), 'nysjekket vises i SJEKKET');
+  assert.equal(tabLabel('sjekke', 3), 'Å SJEKKE (3)'); assert.equal(tabLabel('sjekket', 0), 'SJEKKET (0)');
+  assert.equal(showAllLabel(false, 4), 'VIS ALLE (4 eldre)'); assert.equal(showAllLabel(true, 4), 'SKJUL ELDRE');
+}
 // bare for dem med tester-kode
 assert.ok(menuVisible('rune', validCode)); assert.ok(!menuVisible('', validCode)); assert.ok(!menuVisible('ab', validCode)); assert.ok(!menuVisible(null, validCode));
 // versjon
@@ -49,6 +73,7 @@ const inb = parseInbox({ ok: true, me: {}, all: {}, replies: [
   { id: 'a', version: '2.27', message: 'Rettet: plata', read: true, at: '2026-05-01', level: 'verksted', spot: { x: -30, y: 0, z: 10 }, check: 'ok', note: 'bra' },
   { id: 'b', message: 'Uten sted', level: 'bad', spot: null, check: 'rart' }, { id: 'c', message: 'x', spot: { x: 'a' } }] });
 assert.deepEqual(inb.replies[0].spot, { x: -30, y: 0, z: 10 }); assert.equal(inb.replies[0].check, 'ok'); assert.equal(inb.replies[0].level, 'verksted');
+assert.equal(inb.replies[0].checked_at, null, 'manglende checked_at = null'); assert.equal(parseInbox({ ok: true, replies: [{ id: 'z', message: 'm', check: 'ok', checked_at: '2026-06-01T10:00:00Z' }] }).replies[0].checked_at, '2026-06-01T10:00:00Z');
 assert.equal(inb.replies[1].spot, null); assert.equal(inb.replies[1].check, null, 'ukjent avkryssing blir null'); assert.equal(inb.replies[2].spot, null); assert.equal(inb.replies[2].level, '');
 let call; const okFetch = async (url, init) => { call = { url, body: JSON.parse(init.body) }; return { ok: true, status: 200, json: async () => ({ ok: true }) }; };
 assert.equal(await checkReply(' Rune ', 'r1', 'fail', '  virker ikke  ', { fetchFn: okFetch }), true);
@@ -63,5 +88,6 @@ const idx = fs.readFileSync('index.html', 'utf8'), main = fs.readFileSync('main.
 for (const f of ['fixes_logic', 'fixes_view']) assert.ok(idx.includes(`'${f}'`), `${f} i files i index.html`);
 assert.ok(main.includes('id="mFix"') && main.includes('parseGo(location.search)') && main.includes('showFixes('), 'hekter i main.js');
 assert.ok(view.includes("logEv?.('rettelser'") && main.includes("logEv('rettelser'"), 'logEv(rettelser)');
+assert.ok(view.includes('data-tab') && view.includes('fxAll') && view.includes("'rettelser', `fane"), 'faner og VIS ALLE i fixes_view.js');
 assert.ok(!/\b(tast|trykk [A-Z]\b)/i.test(view.replace(/Trykk GÅ DIT/g, '')), 'ingen taster i teksten');
 console.log('fixes: ok');

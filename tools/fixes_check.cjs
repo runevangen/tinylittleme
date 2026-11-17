@@ -12,11 +12,15 @@ const srv = http.createServer((q, r) => {
 });
 const vk = JSON.parse(fs.readFileSync(path.join(root, 'levels/verksted.level.json'), 'utf8')), pl = vk.gates.plates[0];
 const spot = { x: +((pl.x0 + pl.x1) / 2).toFixed(2), y: pl.y, z: +((pl.z0 + pl.z1) / 2).toFixed(2) };
+const dAgo = (d) => new Date(Date.now() - d * 86400000).toISOString();
 const rows = [
-  { id: 'r-plate', at: '2026-05-02T10:00:00Z', version: '2.27', message: 'Rettet: trykkplata er flush med gulvet i Verkstedet', read: true, level: 'verksted', spot, check: null, note: '' },
-  { id: 'r-old', at: '2026-04-20T10:00:00Z', version: '2.20', message: 'Rettet: veiledningen for rutenett-bygging', read: true, level: 'bygglab', spot: null, check: null, note: '' },
-  { id: 'r-done', at: '2026-04-10T10:00:00Z', version: '2.10', message: 'Rettet: eksempelbroen', read: true, level: 'bro', spot: null, check: 'ok', note: '' },
-  { id: 'r-new', at: '2026-05-03T10:00:00Z', version: '9.99', message: 'Rettet: noe som ikke er utlagt her ennå', read: true, level: 'bad', spot: null, check: null, note: '' },
+  { id: 'r-plate', at: dAgo(3), version: '2.27', message: 'Rettet: trykkplata er flush med gulvet i Verkstedet', read: true, level: 'verksted', spot, check: null, note: '' },
+  { id: 'r-old', at: dAgo(5), version: '2.20', message: 'Rettet: veiledningen for rutenett-bygging', read: true, level: 'bygglab', spot: null, check: null, note: '' },
+  { id: 'r-done', at: dAgo(40), version: '2.10', message: 'Rettet: eksempelbroen', read: true, level: 'bro', spot: null, check: 'ok', checked_at: dAgo(2), note: '' },
+  { id: 'r-ancient', at: dAgo(60), version: '1.50', message: 'Rettet: gammel sak ingen har sjekket', read: true, level: 'bad', spot: null, check: null, note: '' },
+  { id: 'r-okold', at: dAgo(80), version: '1.60', message: 'Rettet: gammel avkrysset sak', read: true, level: 'bad', spot: null, check: 'ok', checked_at: dAgo(30), note: '' },
+  { id: 'r-failold', at: dAgo(80), version: '1.61', message: 'Rettet: gammel sak som ikke virket', read: true, level: 'bad', spot: null, check: 'fail', checked_at: dAgo(40), note: 'nei' },
+  { id: 'r-new', at: dAgo(1), version: '9.99', message: 'Rettet: noe som ikke er utlagt her ennå', read: true, level: 'bad', spot: null, check: null, note: '' },
 ];
 (async () => {
   await new Promise((ok) => srv.listen(0, ok)); const port = srv.address().port, base = `http://localhost:${port}`;
@@ -35,26 +39,36 @@ const rows = [
   pg.on('pageerror', (e) => errs.push('pageerror: ' + e.message.slice(0, 250))); pg.on('console', (m) => m.type() === 'error' && !/Failed to load resource/.test(m.text()) && errs.push('console: ' + m.text().slice(0, 250)));
   const shot = async (n) => { if (shots) await pg.screenshot({ path: path.join(shots, n + '.png') }); };
   await pg.goto(base + '/'); await pg.waitForSelector('#mFix', { timeout: 120000 });
-  await pg.waitForFunction(() => /· 3/.test(document.getElementById('mFix').textContent), null, { timeout: 60000 }).catch(async (e) => { console.error('dbg:', JSON.stringify(await pg.evaluate(async () => { try { const m = await import('./feedback_send.js'); const r = await m.fetchInbox('rune'); return r ? r.replies.map((x) => x.check) : 'null'; } catch (e) { return 'ERR ' + e.message; } })), 'knapp:', await pg.textContent('#mFix'), 'kall:', JSON.stringify(calls), 'feil:', errs.join('|')); throw e; });
-  assert.equal((await pg.textContent('#mFix')).trim(), 'RETTELSER · 3', 'tallet = ikke avkrysset'); await shot('1_meny');
+  await pg.waitForFunction(() => /· 4/.test(document.getElementById('mFix').textContent), null, { timeout: 60000 }).catch(async (e) => { console.error('dbg:', JSON.stringify(await pg.evaluate(async () => { try { const m = await import('./feedback_send.js'); const r = await m.fetchInbox('rune'); return r ? r.replies.map((x) => x.check) : 'null'; } catch (e) { return 'ERR ' + e.message; } })), 'knapp:', await pg.textContent('#mFix'), 'kall:', JSON.stringify(calls), 'feil:', errs.join('|')); throw e; });
+  assert.equal((await pg.textContent('#mFix')).trim(), 'RETTELSER · 4', 'tallet = ikke avkrysset'); await shot('1_meny');
   await pg.click('#mFix'); await pg.waitForSelector('[data-fx]'); await pg.waitForTimeout(400);
-  const order = await pg.$$eval('[data-fx]', (els) => els.map((e) => e.dataset.fx)); assert.deepEqual(order, ['r-new', 'r-plate', 'r-old', 'r-done'], 'nyeste først');
+  const order = await pg.$$eval('[data-fx]', (els) => els.map((e) => e.dataset.fx)); assert.deepEqual(order, ['r-new', 'r-plate', 'r-old'], 'Å SJEKKE: nyeste først, 60 dager gammel skjult');
+  assert.ok((await pg.textContent('[data-tab="sjekke"]')).includes('(4)') && (await pg.textContent('[data-tab="sjekket"]')).includes('(3)'), 'tall i fanene');
+  assert.ok((await pg.textContent('#fxAll')).includes('VIS ALLE (1 eldre)')); await pg.click('#fxAll'); await pg.waitForTimeout(200);
+  assert.ok(await pg.$('[data-fx="r-ancient"]'), 'VIS ALLE viser den gamle'); await shot('2b_vis_alle'); await pg.click('#fxAll'); await pg.waitForTimeout(200); assert.ok(!(await pg.$('[data-fx="r-ancient"]')));
+  await pg.click('[data-tab="sjekket"]'); await pg.waitForTimeout(200);
+  assert.deepEqual(await pg.$$eval('[data-fx]', (els) => els.map((e) => e.dataset.fx)), ['r-done', 'r-failold'], 'SJEKKET: ✓ eldre enn 7 dager skjult, ✗ aldri'); await shot('2c_sjekket');
+  assert.ok((await pg.textContent('#fxAll')).includes('VIS ALLE (1 eldre)')); await pg.click('#fxAll'); await pg.waitForTimeout(200); assert.ok(await pg.$('[data-fx="r-okold"]'));
+  await pg.click('[data-tab="sjekke"]'); await pg.waitForTimeout(200);
   assert.ok(await pg.$('[data-upd="r-new"]'), 'nyere versjon: OPPDATER'); assert.ok(!(await pg.$('[data-go="r-new"]'))); assert.ok(await pg.$('[data-go="r-plate"]'), 'GÅ DIT på v2.27-rettelsen');
   await shot('2_liste'); await pg.locator('[data-fx="r-plate"]').scrollIntoViewIfNeeded(); await shot('3_rettelse');
   // ✗ med tekst
   await pg.click('[data-no="r-old"]'); await pg.fill('[data-fx="r-old"] [data-note]', 'plata gjør ingenting'); await shot('4_virker_ikke'); await pg.click('[data-send="r-old"]'); await pg.waitForTimeout(300);
   const c1 = calls.filter((c) => c.name === 'tlm_check_reply').pop(); assert.deepEqual(c1.body, { c: 'rune', rid: 'r-old', res: 'fail', note: 'plata gjør ingenting' });
-  assert.ok(await pg.$('[data-fx="r-old"].fail'), 'viser ✗');
+  assert.ok(!(await pg.$('[data-fx="r-old"]')), 'flyttet til SJEKKET med en gang'); await pg.click('[data-tab="sjekket"]'); await pg.waitForTimeout(200);
+  assert.ok(await pg.$('[data-fx="r-old"].fail'), 'viser ✗ i SJEKKET'); await pg.click('[data-tab="sjekke"]'); await pg.waitForTimeout(200);
   // ✓
   await pg.click('[data-ok="r-plate"]'); await pg.waitForTimeout(300);
-  const c2 = calls.filter((c) => c.name === 'tlm_check_reply').pop(); assert.deepEqual(c2.body, { c: 'rune', rid: 'r-plate', res: 'ok', note: '' }); assert.ok(await pg.$('[data-fx="r-plate"].ok'));
+  const c2 = calls.filter((c) => c.name === 'tlm_check_reply').pop(); assert.deepEqual(c2.body, { c: 'rune', rid: 'r-plate', res: 'ok', note: '' }); assert.ok(!(await pg.$('[data-fx="r-plate"]')), 'flyttet');
+  await pg.click('[data-tab="sjekket"]'); await pg.waitForTimeout(200); assert.ok(await pg.$('[data-fx="r-plate"].ok'));
   await shot('5_avkrysset');
   // endre ✗ til ✓ er mulig
   await pg.click('[data-ok="r-old"]'); await pg.waitForTimeout(300); assert.ok(await pg.$('[data-fx="r-old"].ok'), 'kan endres fra ✗ til ✓');
-  // tilbake: tallet går ned (1 igjen: r-new)
-  await pg.click('#fxBack'); await pg.waitForSelector('#mFix'); assert.equal((await pg.textContent('#mFix')).trim(), 'RETTELSER · 1', 'tallet gikk ned');
+  await pg.click('[data-tab="sjekke"]'); await pg.waitForTimeout(200);
+  // tilbake: tallet går ned (2 igjen)
+  await pg.click('#fxBack'); await pg.waitForSelector('#mFix'); assert.equal((await pg.textContent('#mFix')).trim(), 'RETTELSER · 2', 'tallet gikk ned (r-new og r-ancient)');
   // GÅ DIT: sett r-plate tilbake til ikke sjekket først er unødvendig; gå dit
-  await pg.click('#mFix'); await pg.waitForSelector('[data-go="r-plate"]');
+  await pg.click('#mFix'); await pg.waitForSelector('[data-tab]'); await pg.click('[data-tab="sjekket"]'); await pg.waitForSelector('[data-go="r-plate"]');
   await Promise.all([pg.waitForNavigation({ timeout: 60000 }), pg.click('[data-go="r-plate"]')]);
   assert.ok(/level=verksted/.test(pg.url()) && /go=/.test(pg.url()), 'URL: ' + pg.url());
   await pg.waitForFunction(() => window.__game && window.__game.LEVEL && window.__game.evLog.some((e) => e.type === 'rettelser'), null, { timeout: 120000 });

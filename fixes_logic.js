@@ -83,4 +83,29 @@ export function parseGo(search) {
   const p = g.split(',').map(Number); return p.length === 3 ? validSpot({ x: p[0], y: p[1], z: p[2] }) : null;
 }
 // Lokal oppdatering etter avkryssing (før serveren har svart).
-export const withCheck = (list, id, res, note = '') => (list || []).map((r) => (r.id === id ? { ...r, check: res, note: res === 'fail' ? String(note || '').slice(0, 200) : '' } : r));
+export const withCheck = (list, id, res, note = '', now = Date.now()) => (list || []).map((r) => (r.id === id ? { ...r, check: res, checked_at: new Date(now).toISOString(), note: res === 'fail' ? String(note || '').slice(0, 200) : '' } : r));
+
+// ---------- R81: faner og opprydding ----------
+export const OLD_UNCHECKED_DAYS = 14;   // usjekket og eldre enn dette (fra `at`): bak «VIS ALLE» i «Å SJEKKE»
+export const OLD_OK_DAYS = 7;           // ✓ og sjekket for mer enn dette siden (fra `checked_at`): bak «VIS ALLE» i «SJEKKET». ✗ skjules aldri.
+const DAY = 86400000;
+export const TABS = ['sjekke', 'sjekket'];
+export const TAB_LABEL = { sjekke: 'Å SJEKKE', sjekket: 'SJEKKET' };
+export const tabOf = (r) => (stateOf(r) === 'ikke' ? 'sjekke' : 'sjekket');
+const ms = (t) => { const n = Date.parse(t); return Number.isFinite(n) ? n : null; };
+// Skjult som «gammel»? Manglende eller ugyldig tidspunkt regnes som nylig (aldri skjult ved en feil).
+export function isOld(r, now = Date.now()) {
+  const st = stateOf(r);
+  if (st === 'fail') return false;
+  const t = ms(st === 'ok' ? r.checked_at : r.at);
+  return t !== null && now - t > (st === 'ok' ? OLD_OK_DAYS : OLD_UNCHECKED_DAYS) * DAY;
+}
+export const tabCounts = (list) => { const c = { sjekke: 0, sjekket: 0 }; for (const r of list || []) c[tabOf(r)]++; return c; };
+export const defaultTab = (list) => (tabCounts(list).sjekke > 0 ? 'sjekke' : 'sjekket');
+export const tabLabel = (tab, n) => `${TAB_LABEL[tab]} (${n})`;
+// Lista for en fane: sortert nyeste først; gamle skjules med mindre showAll. hidden = antall gamle i fanen.
+export function tabView(list, tab, showAll = false, now = Date.now()) {
+  const all = sortFixes(list).filter((r) => tabOf(r) === tab), hidden = all.filter((r) => isOld(r, now)).length;
+  return { shown: showAll ? all : all.filter((r) => !isOld(r, now)), hidden };
+}
+export const showAllLabel = (showAll, hidden) => (showAll ? 'SKJUL ELDRE' : `VIS ALLE (${hidden} eldre)`);
