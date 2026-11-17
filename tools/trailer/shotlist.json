@@ -125,19 +125,39 @@
       "verifisert": "lastet uten feil, ikke sett"
     },
     {
+      "id": "06a_gap_maal",
+      "manus": "Før «Så bygg.»: verdensbilde med gapet og målflagget («Gapet er for bredt.»)",
+      "brett": "bygglab",
+      "url": "?level=bygglab&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false", "tlm.buildall": "true", "tlm.buildcap": "true", "tlm.labstart": "false" },
+      "startpose": { "x": -14.2, "y": 3, "z": 0, "yaw": 1.5708 },
+      "bilder": 36,
+      "handlinger": "Sted lab4 «Fagverk» i verden: figuren på ped_a4 (x -25..-12.5), gapet 5 bredt, målflagg på ped_b4 (lab.flag [2.4,3,0]). Byggeskjermen lukkes (cine.build.close), figuren settes med setHero, kameraet svinger fra figuren over gapet mot flagget."
+    },
+    {
       "id": "06_bygging",
       "manus": "0:24-0:34 «Så bygg.»",
       "brett": "bygglab",
       "url": "?level=bygglab&start=0",
       "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false", "tlm.buildall": "true", "tlm.buildcap": "true" },
       "startpose": { "x": 70, "y": 3, "z": 0, "yaw": 1.5708 },
-      "bilder": 120,
+      "bilder": 90,
       "handlinger": "Sted lab7 «Tåler» (levels/bygglab.level.json build.sites[6], x 80, y 3, z 0, w 20, h 14, mål cap 10, flagg [92.4, 3, 0]; pedestaler ped_a7 x 65..77.5 og ped_b7 x 82.5..95, topp 3; gapet er 5 bredt). Bygglab åpner byggeskjermen av seg selv ved start (R67 labAutoOpen), ellers bld.open() med figuren nær stedet. Del 1: dra plank_l (id p1) til (u 0, v 0.25): «Tåler ca. 4 klosser» (beregnet med capacity() i node), PRØV: broen bøyer seg og blir rød, holder testfiguren men ikke lasten (4 < 10). Del 2: NULLSTILL, bygg løsningen «to lange planker med tape»: plank_l a (u 0, v 0.25) og plank_l b (u 0, v 0.75) med tape t1 (a la {x 0,y 0.25} til b lb {x 0,y -0.25}): beregnet «Tåler ca. 12 klosser», sim 'won'. Brudd hvis lasten legges på bro med plank_l alene er IKKE sett i nettleser (capacity og runSim kjørt bare i node).",
       "alternativ": "levels/bro.level.json site bro1 (x 3.5, y 8, z -4, gap u -3.5..3.5, plank_l d2 på u 0, v 0.25): VERIFISERT bilde F: «Tåler ca. 2 klosser midt på» ★★★ Kostnad 2 · 1 del, testfiguren går, sim 'run' t = 0.3 s. plank_s alene faller (node: result 'lost', reason 'fell', cap 0). Brudd uten last: plank_s alene i bro1 (figuren faller).",
       "rutesteg": "ingen i rutetype 'ruta' (build.sites[...].ref.route). lab7 ref.route er gulv>ped_a7>@bro>ped_b7.",
       "kamera": { "type": "byggeskjerm", "merknad": "Byggeskjermen er et eget 2D-sidebilde (build_view), ikke 3D-scenen. Filmes med cine.build.step(dt) og zoom (build_zoom.js: +, ⤢, dobbelttrykk). I liggende 960 x 540 er broen liten midt i en mørk flate: zoom 2.5x og beskjær i ffmpeg." },
       "api": "dagens rekker IKKE for bilde-for-bilde (sanntid). Trenger cine.build.open(siteId) og cine.build.step(dt) (R68)",
       "verifisert": "bilde F: byggeskjermen med bro1 (plassering og PRØV virker, men utsnittet er lite); tallene for lab7 beregnet i node (cap 4 og 12), ikke sett i nettleser"
+    },
+    {
+      "id": "06c_over",
+      "manus": "Etter «Ok. Prøv igjen.»: den ferdige broen står i verden og figuren går over til flagget",
+      "brett": "bygglab",
+      "url": "?level=bygglab&start=0",
+      "innstillinger": { "tlm.story": "false", "tlm.introsweep": "false", "tlm.buildall": "true", "tlm.buildcap": "true", "tlm.labstart": "false" },
+      "startpose": { "x": -19, "y": 3, "z": 0, "yaw": 1.5708 },
+      "bilder": 48,
+      "handlinger": "Setup: samme 9-stavs bro som 06_bygging bygges med trykk og prøves med Robot til den er vunnet (R26: bygget settes da inn i verden som kollisjonsflater), byggeskjermen lukkes, figuren går over med stikka (touch.y) fra ped_a4 mot flagget på ped_b4; sidekamera."
     },
     {
       "id": "06b_bro_brister",

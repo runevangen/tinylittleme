@@ -14,6 +14,7 @@ module.exports = {
   ticksPerFrame: 1,
   async setup({ page, cine }) {
     await cine.seed(1);
+    await cine.set('gridstage', false);   // fri rutenett-bygging (uten oppdragskrav og låsing), som da klippet ble laget
     await cine.build.open(SITE);
     await cine.build.step(DT_EDIT);
     const click = async (sel) => { const r = await page.locator(sel).first().boundingBox(); await page.mouse.click(r.x + r.width / 2, r.y + r.height / 2); await cine.build.step(DT_EDIT); };
