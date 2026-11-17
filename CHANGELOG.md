@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.32** – R81: Rettelser-menyen har faner Å SJEKKE og SJEKKET, gamle skjules bak VIS ALLE.
 - **2.31** – R81 lagt i veikartet (Rettelser: faner Å SJEKKE/SJEKKET, skjul gamle, VIS ALLE, fra Rune).
 - **2.30** – Forhistorien: krympingen holder figuren på samme sted (S) og kameraet zoomer ned til henne; 01_bad_oversikt starter på S (kun film-verktøy).
 - **2.29** – R80: «RETTELSER»-meny på hovedmenyen med GÅ DIT (brett og sted) og avkryssing ✓/✗ for tester med kode.
