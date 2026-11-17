@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.29** – R80: «RETTELSER»-meny på hovedmenyen med GÅ DIT (brett og sted) og avkryssing ✓/✗ for tester med kode.
 - **2.28** – R80 lagt i veikartet («Rettelser»-meny med link og avkryssing, fra Rune); CLAUDE.md: svar til testere inneholder level og spot.
 - **2.27** – R79: trykkplata tegnes flush med gulvet (plateGeom i plates_logic.js), så figuren ikke går igjennom en hevet plate i Verkstedet.
 - **2.26** – R79 lagt i veikartet (figuren går igjennom trykkplata i Verkstedet, fra Rune).
