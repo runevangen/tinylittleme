@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.30** – Forhistorien: krympingen holder figuren på samme sted (S) og kameraet zoomer ned til henne; 01_bad_oversikt starter på S (kun film-verktøy).
 - **2.29** – R80: «RETTELSER»-meny på hovedmenyen med GÅ DIT (brett og sted) og avkryssing ✓/✗ for tester med kode.
 - **2.28** – R80 lagt i veikartet («Rettelser»-meny med link og avkryssing, fra Rune); CLAUDE.md: svar til testere inneholder level og spot.
 - **2.27** – R79: trykkplata tegnes flush med gulvet (plateGeom i plates_logic.js), så figuren ikke går igjennom en hevet plate i Verkstedet.
