@@ -8,26 +8,29 @@ const HIDE = '#bld .loads,#bld .share,#bld [data-a=menu],#bld .menu{display:none
 const ST = 1.25, X = [-2.5, -1.25, 0, 1.25, 2.5];
 // trykkrekkefølge (u, v): kjede d0 -> t1 -> t2 -> t3 -> d4, (velg bort), d1 -> t1 -> d2 -> t2, (velg bort), d3 -> t3 -> d2; d = dekkpunkt (v 0), t = toppunkt (v 1 rad opp)
 const TAPS = [[X[0], 0], [X[1], ST], [X[2], ST], [X[3], ST], [X[4], 0], [X[4], 0], [X[1], 0], [X[1], ST], [X[2], 0], [X[2], ST], [X[2], ST], [X[3], 0], [X[3], ST], [X[2], 0]];
-const T = { tap0: 8, perTap: 2, deselect: 38, robot: 42, try: 48 };
+const T = { zoom: 15, tap0: 20, perTap: 2, deselect: 50, robot: 54, try: 60 };   // bilde 0-14: tomt sted i oversikt (flagget til høyre i bildet, «Bygg en bro til flagget»); så zoom inn og bygg
 module.exports = {
   id: '06_bygging',
   ticksPerFrame: 1,   // byggeprøven går bilde for bilde: 1 tikk (1/60 s) pluss dt fra klippet
   async setup({ page, cine }) {
     await cine.seed(1);
+    await cine.set('gridstage', false);   // fri rutenett-bygging (uten oppdragskrav og låsing), som da klippet ble laget
     await cine.build.open(SITE);
     await cine.build.step(DT_EDIT);
     const click = async (sel) => { const r = await page.locator(sel).first().boundingBox(); await page.mouse.click(r.x + r.width / 2, r.y + r.height / 2); await cine.build.step(DT_EDIT); };
     await click('#bld [data-a=mode]');                                          // MODUS: Rutenett (knappen er skjult etterpå)
     await page.addStyleTag({ content: HIDE });
-    for (let k = 0; k < 2; k++) await click('#bld .zoom button[data-z=in]');
-    const sp = await page.evaluate(() => window.__game.bld.screenPos(0, 0));
-    const dy = 300 - sp.y;                                                    // dekket (v 0) ned mot nedre halvdel, trekantene over
-    await page.mouse.move(480, 200); await page.mouse.down(); await page.mouse.move(480, 200 + dy, { steps: 5 }); await page.mouse.up(); await cine.build.step(DT_EDIT);
+    await click('#bld .zoom button[data-z=in]');                               // ett trykk (x1,5): hele stedet med flagget synlig
   },
   async frame({ page, cine }, i, n) {
     const pos = (u, v) => page.evaluate(([u, v]) => window.__game.bld.screenPos(u, v), [u, v]);
     const box = async (sel) => { const r = await page.locator(sel).first().boundingBox(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; };
     let dt = DT_EDIT;
+    if (i === T.zoom) {                                                          // zoom inn til byggehøyde (ett trykk til, x2,3) og dekket ned mot nedre halvdel
+      for (let z = 0; z < 1; z++) { const r = await box('#bld .zoom button[data-z=in]'); await page.mouse.click(r.x, r.y); await cine.build.step(DT_EDIT); }
+      const sp = await pos(0, 0), dy = 300 - sp.y;
+      await page.mouse.move(480, 200); await page.mouse.down(); await page.mouse.move(480, 200 + dy, { steps: 5 }); await page.mouse.up(); await cine.build.step(DT_EDIT);
+    }
     const k = i - T.tap0;
     if (k >= 0 && k % T.perTap === 0 && k / T.perTap < TAPS.length) { const [u, v] = TAPS[k / T.perTap], p = await pos(u, v); await page.mouse.click(p.x, p.y); }
     if (i === T.deselect) { const p = await pos(X[2], 0); await page.mouse.click(p.x, p.y); }   // selve valget av siste knute oppheves
