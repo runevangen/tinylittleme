@@ -1,7 +1,7 @@
 // Tegning av gåteverktøyet (R60): plater som synker og lyser, dører og vindebroer med lamper for hvert krav, og brytere. Logikken ligger i plates_logic.js.
 // Alt deles: én boks-geometri, én sylinder, én kule og en håndfull materialer (ingen nye shadere). Brett uten `gates` lager ingenting.
 import * as THREE from 'three';
-import { doorBox } from './plates_logic.js';
+import { doorBox, plateGeom } from './plates_logic.js';
 
 export function buildGateViews(scene, L) {
   const S = L.gateS; if (!S || !(S.plates.length || S.doors.length || S.switches.length)) return { update() {}, count: 0 };
@@ -17,9 +17,10 @@ export function buildGateViews(scene, L) {
   const plates = S.plates.map((pl) => {
     const w = pl.x1 - pl.x0, d = pl.z1 - pl.z0, cx = (pl.x0 + pl.x1) / 2, cz = (pl.z0 + pl.z1) / 2;
     const frame = mesh(BOX, mFrame), pad = mesh(BOX, mUp), glow = mesh(BOX, mRed, false); count += 3;
-    frame.scale.set(w + 0.3, 0.1, d + 0.3); frame.position.set(cx, pl.y + 0.05, cz);
-    glow.scale.set(w + 0.5, 0.04, d + 0.5); glow.position.set(cx, pl.y + 0.02, cz);
-    pad.scale.set(w, 0.16, d);
+    const g = plateGeom(pl, 0);   // R79: flush med gulvet, ingen kant å gå igjennom
+    frame.scale.set(w + 0.3, 0.02, d + 0.3); frame.position.set(cx, g.frameTop - 0.01, cz);
+    glow.scale.set(w + 0.5, 0.02, d + 0.5); glow.position.set(cx, g.glowTop - 0.01, cz);
+    pad.scale.set(w, g.padH, d);
     return { pl, pad, glow, sink: 0, cx, cz };
   });
   const switches = S.switches.map((sw) => {
@@ -38,7 +39,7 @@ export function buildGateViews(scene, L) {
     for (const v of plates) {
       const on = v.pl.on; v.sink += ((on ? 1 : 0) - v.sink) * 0.25;
       const w = v.pl.x1 - v.pl.x0, d = v.pl.z1 - v.pl.z0;
-      v.pad.position.set(v.cx, v.pl.y + 0.2 - 0.12 * v.sink, v.cz); v.pad.scale.set(w, 0.16, d);
+      const g = plateGeom(v.pl, v.sink); v.pad.position.set(v.cx, g.padTop - g.padH / 2, v.cz); v.pad.scale.set(w, g.padH, d);
       v.pad.material = on ? mDown : mUp; v.glow.material = on ? mGreen : mRed;
       v.glow.visible = on || Math.sin(now * 0.004) > -0.4;                   // blunker rolig til den er trykket ned
     }

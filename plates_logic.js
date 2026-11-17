@@ -65,6 +65,13 @@ export function plateLoad(L, pl, p) {
   return m;
 }
 export const plateNeed = (pl) => pl.need * GATE.needScale;
+// R79: platas tegnede flate er FLUSH med gulvet (ingen kant over y), for ellers ser figuren ut til å gå igjennom en hevet plate uten kollisjon.
+// sink 0..1 = hvor langt ned den er trykket. Toppen ligger aldri høyere enn GATE.flushUp over flata og aldri under flata, slik at foten (som står på gulvet) ikke synker i den.
+export const PLATE_FLUSH = { up: 0.03, down: 0.0, frame: 0.015, glow: 0.01, thick: 0.1 };
+export function plateGeom(pl, sink = 0) {
+  const F = PLATE_FLUSH, w = pl.x1 - pl.x0, d = pl.z1 - pl.z0, top = pl.y + F.up - (F.up - F.down) * sink;
+  return { w, d, cx: (pl.x0 + pl.x1) / 2, cz: (pl.z0 + pl.z1) / 2, padTop: top, padH: F.thick, frameTop: pl.y + F.frame, glowTop: pl.y + F.glow };
+}
 
 // ---- dør og vindebro ---------------------------------------------------------------------------------------------------------------
 // Den faste kroppen ved åpenhet t (0 lukket .. 1 åpen), eller null når den ikke er i veien (åpen dør, lukket bro).

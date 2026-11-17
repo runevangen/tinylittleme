@@ -2,7 +2,7 @@
 // lagre/fortsett, delmål 'gate', Gåterommet (boten løser alle gåtene med ekte fysikk, ruta går bare når gåtene er løst), tegnebudsjett og tekster.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { GATE, initGates, stepGates, plateLoad, plateNeed, massOf, doorBox, nearSwitch, toggleSwitch, gatesSave, restoreGates, resetGates, openAllGates, isActive, doorById, doorOpen, checkGates, gatesBudget, hasGates } from './plates_logic.js';
+import { GATE, PLATE_FLUSH, plateGeom, initGates, stepGates, plateLoad, plateNeed, massOf, doorBox, nearSwitch, toggleSwitch, gatesSave, restoreGates, resetGates, openAllGates, isActive, doorById, doorOpen, checkGates, gatesBudget, hasGates } from './plates_logic.js';
 import { initGoals, stepGoals, goalTarget, checkGoals } from './goals.js';
 import { makeT, DICT_KEYS } from './i18n.js';
 import { walkRoute } from './tools/walk_route.mjs';
@@ -147,6 +147,29 @@ assert.deepEqual(checkGates(LV, { levelId: 'gaate' }), []); assert.deepEqual(che
   for (const f of fs.readdirSync('levels')) { const id = f.replace('.level.json', ''), L = JSON.parse(fs.readFileSync(`levels/${f}`, 'utf8')); if (id !== 'gaate' && id !== 'stue' && id !== 'verksted') { assert.equal(L.gates, undefined, `${id}: ingen gåteverktøy`); assert.deepEqual(gatesBudget(L), { calls: 0, tris: 0 }); assert.ok(!hasGates(L)); } }
   const view = fs.readFileSync('plates_view.js', 'utf8'); assert.equal((view.match(/new THREE\.(Box|Cylinder|Sphere)Geometry/g) || []).length, 3, 'tre delte geometrier, ingen per gjenstand');
   assert.ok(!/ShaderMaterial|onBeforeCompile|RawShaderMaterial/.test(view), 'ingen nye shadere'); assert.ok(/count: 0/.test(view), 'brett uten gåter tegner ingenting');
+}
+// 13) R79: figuren går ikke «igjennom» platene: platas flate er flush med gulvet, og figuren holder høyden fra alle fire sider og over kanten
+{
+  const { P, newPlayer, step, initBodies } = await import('./physics.js');
+  for (const id of ['gaate', 'stue', 'verksted']) {
+    const base = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8'));
+    for (const pl of base.gates.plates) {
+      for (const s of [0, 1]) { const g = plateGeom(pl, s); assert.ok(g.padTop >= pl.y - 1e-9 && g.padTop <= pl.y + GATE.dy / 4, `${id}/${pl.id}: flata (${g.padTop}) ligger ikke høyere enn ${GATE.dy / 4} over gulvet (sink ${s})`); assert.ok(g.frameTop <= pl.y + 0.05 && g.glowTop <= pl.y + 0.05, 'ramme og glød er flate'); }
+      const cx = (pl.x0 + pl.x1) / 2, cz = (pl.z0 + pl.z1) / 2, out = 3;
+      let nIn = 0;
+      for (const [sx, sz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const l = JSON.parse(JSON.stringify(base)); initBodies(l); initGates(l);
+        const hx = sx ? (pl.x1 - pl.x0) / 2 : (pl.z1 - pl.z0) / 2;
+        const p = newPlayer(cx + sx * (((sx ? pl.x1 - pl.x0 : pl.z1 - pl.z0) / 2) + out), pl.y, cz + sz * (((sz ? pl.z1 - pl.z0 : pl.x1 - pl.x0) / 2) + out)); p.fx = -sx; p.fz = -sz;
+        let minY = Infinity, crossed = false;
+        for (let i = 0; i < 60 * 6; i++) { step(p, { mx: -sx, mz: -sz }, 1 / 60, l); if (p.x > pl.x0 && p.x < pl.x1 && p.z > pl.z0 && p.z < pl.z1 && p.y > pl.y - 1) { crossed = true; minY = Math.min(minY, p.y); } }   // høyden måles når figuren er på plata (start utenfor benkekanten kan falle)
+        if (crossed) nIn++;   // noen sider kan være stengt av møbler i brettet
+        assert.ok(minY >= pl.y - 0.02, `${id}/${pl.id} fra (${sx},${sz}): høyden ${minY.toFixed(3)} gikk under flata ${pl.y}`);
+      }
+      assert.ok(nIn >= 1, `${id}/${pl.id}: figuren kom seg inn på plata fra minst én side`);
+    }
+  }
+  const v = fs.readFileSync('plates_view.js', 'utf8'); assert.ok(v.includes('plateGeom') && !/pl\.y \+ 0\.2/.test(v), 'tegningen bruker plateGeom (ingen hevet pad)');
 }
 // 12) tekster, innstillinger, filliste, logg
 {
