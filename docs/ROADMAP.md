@@ -29,6 +29,16 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Åpne punkter
 
+### [ ] R81 · Fra tester: Rune · Rettelser-menyen: faner «Å SJEKKE» og «SJEKKET», skjul gamle, «VIS ALLE»
+Oppfølging av R80 (`fixes_logic.js`, `fixes_view.js`, «RETTELSER» på hovedmenyen). I dag blir alle svar stående, nyeste først, og serveren sender de 30 nyeste (nå økt til 60). Testeren ønsker opprydding. `tlm_my_inbox` gir nå også `checked_at` (tidspunkt for avkryssingen, null om ikke sjekket) per svar. Regler:
+(1) **To faner øverst i menyen:** «Å SJEKKE» (tilstand `ikke`) og «SJEKKET» (tilstand `ok` eller `fail`), med antall i hver fane. Åpner på «Å SJEKKE» om det finnes noe der, ellers «SJEKKET». Tallet på RETTELSER-knappen på hovedmenyen er fortsatt antall usjekkede. Når en rettelse krysses av, flyttes den med en gang til «SJEKKET» (og tellerne oppdateres).
+(2) **Skjul gamle usjekkede:** svar eldre enn 14 dager (fra `at`) som ikke er sjekket, skjules i «Å SJEKKE» og vises bare når testeren trykker «VIS ALLE (n eldre)» nederst i lista; samme knapp skjuler dem igjen.
+(3) **Skjul gamle avkryssede ✓:** svar med `check = ok` skjules i «SJEKKET» etter 7 dager (fra `checked_at`), og vises bare via «VIS ALLE (n eldre)» nederst; svar med `check = fail` skjules aldri (de er ikke ferdige).
+(4) Konstantene (dager) ligger som navngitte verdier i `fixes_logic.js` (ikke i `SETTINGS`), `now` kan sendes inn så det kan testes. Mobil først, store trykkflater, ingen taster, ingen overlapp med ⚑ og ⚙. `logEv('rettelser', …)` for bytte av fane og VIS ALLE.
+(5) **Test:** ren logikk i node (tellere per fane, flytting ved avkryssing, 14- og 7-dagersgrensene med fast `now`, `fail` skjules aldri, manglende `checked_at` håndteres som «nylig sjekket»), falsk server i en DOM-test som bytter fane, trykker «VIS ALLE» og krysser av; Playwright (iPhone 14)-bilde av begge faner. Husk `npm test` og `npm run boot`.
+Ikke med: «SKJUL»-knapp per rettelse og redigering av svar.
+Ferdig når: testeren ser bare rettelser som må sjekkes på «Å SJEKKE», sjekkede på «SJEKKET», gamle ligger bak «VIS ALLE», og alle tester og boot er grønne.
+
 ### [ ] R54 · Fra tester: Rune · Roligere kamera: følging av som standard og bredere synsfelt i høyformat
 Fra spilletest på iPhone (v1.32–v1.56): testerne blir desorientert og sier at skjermen veiver fram og tilbake. Med «Kamerafølging: styrke» på 0 og «Synsfelt» på 70 ble det klart bedre; med følgingen tilbake på 1 (synsfelt fortsatt 70) ble det mye verre. Den automatiske dreiningen bak figuren (`followYaw` i `camera_util.js`, kalt fra `main.js`) er altså hovedårsaken, og synsfeltet nummer to: 52° loddrett gir bare ca. 25° vannrett på stående iPhone, fordi synsfeltet ikke justeres for skjermformatet.
 (1) **Følging av som standard.** «Kameraet følger etter deg automatisk» (`tlm.follow`) er av for alle, også for dem som har den gamle verdien lagret (engangs-migrering, slik PUBG-standarden på PC ble satt i v0.72). Valget og «Kamerafølging: styrke» blir stående i ⚙ → Kamera, så den kan slås på igjen. Sjefkamp-kameraet, ◎ og dobbelttrykk virker som før.
