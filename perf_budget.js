@@ -5,6 +5,25 @@
 
 export const BUDGET = { calls: 220, tris: 60000, lights: 7 };   // 7 lys: hjelmlykta i nivå 4–6 står alltid i scenen (styrke 0) så antall lys aldri endres (ellers kompileres alle materialer på nytt). Anbefalt tak per bilde (inkl. skyggepass); over det logges en advarsel
 
+// R85: tak per rom (nivå 1–9 og byggebrettene), satt ca. 8 % over målingen i docs/ytelse_etter.json (tools/perf_rank.cjs, hovedpasset ved startposisjonen, full kvalitet). Over taket logges en advarsel (logEv 'budsjett') og test_ytelse.mjs feiler. Se docs/YTELSE.md.
+export const ROOM_CAPS = {
+  bad: { calls: 223, tris: 31000, texMB: 74 },
+  barnerom: { calls: 160, tris: 18400, texMB: 53 },
+  kjokken: { calls: 188, tris: 21600, texMB: 57 },
+  bad2: { calls: 279, tris: 56800, texMB: 80 },
+  barnerom2: { calls: 159, tris: 20400, texMB: 71 },
+  kjokken2: { calls: 223, tris: 28600, texMB: 72 },
+  leke: { calls: 141, tris: 30800, texMB: 5 },
+  stue: { calls: 192, tris: 25600, texMB: 64 },
+  verksted: { calls: 153, tris: 20300, texMB: 16 },
+  bro: { calls: 147, tris: 16900, texMB: 51 },
+  trapp: { calls: 153, tris: 16900, texMB: 28 },
+  vippe: { calls: 147, tris: 17000, texMB: 51 },
+  kjokkenbro: { calls: 152, tris: 16600, texMB: 35 },
+  bygglab: { calls: 147, tris: 15400, texMB: 75 },
+};
+export const roomCaps = (id) => ROOM_CAPS[id] || {};
+
 // R21: minnebudsjett (MB) for teksturer og geometrier; iPhone 8-klassen; målt i full kvalitet: 41 MB (bad) og 66 MB (kjokken2), med små teksturer 7 og 10 MB. Over det logges en advarsel.
 export const MEM_BUDGET = { texMB: 80, texMBLow: 24, geoMB: 20 };
 export const LOW_TEX_CUT = 0.4;                         // «Lav profil» skal bruke minst 40 % mindre teksturminne
@@ -79,14 +98,19 @@ export function overBudget(s, b = BUDGET) {
 export const statsLine = (s, merged) => `tegnekall ${s.calls}, trekanter ${s.tris}, lys ${s.lights} (${s.shadowLights} med skygge), meshes ${s.meshes}${merged ? ` (sammenslått ${merged.before} til ${merged.after})` : ''}`;
 
 // nøkkel for «samme materiale»: to materialer med lik nøkkel ser likt ut og kan deles
-export function matSig(m) {
+export function matSig(m, noColor = false) {
   const h = (c) => (c && c.getHex ? c.getHex() : 0);
-  return [m.type, h(m.color), h(m.emissive), m.emissiveIntensity, m.roughness, m.metalness, m.clearcoat, m.clearcoatRoughness, m.opacity, +m.transparent, m.side, m.map?.uuid, m.normalMap?.uuid, m.roughnessMap?.uuid, m.bumpMap?.uuid, m.bumpScale,
+  return [m.type, noColor ? 'vc' : h(m.color), h(m.emissive), m.emissiveIntensity, m.roughness, m.metalness, m.clearcoat, m.clearcoatRoughness, m.opacity, +m.transparent, m.side, m.map?.uuid, m.normalMap?.uuid, m.roughnessMap?.uuid, m.bumpMap?.uuid, m.bumpScale,
     m.transmission, +m.depthWrite, +m.depthTest, +m.polygonOffset, m.polygonOffsetFactor, m.polygonOffsetUnits, +m.flatShading, +m.toneMapped, m.envMapIntensity, m.userData?.detailed ? 1 : 0, m.customProgramCacheKey ? m.customProgramCacheKey() : ''].join('|');
 }
 
 const ATTRS = new Set(['position', 'normal', 'uv']), FLAG_KEYS = new Set(['noDetail', 'merged', 'antId']);   // userData-flagg som ikke hindrer sammenslåing (alt annet = funksjoner/tilstand som main.js bruker)
 const blocked = (o) => !!o.userData && Object.keys(o.userData).some((k) => !FLAG_KEYS.has(k));
+// R85: kan fargen bakes inn i hjørnepunktene (vertexColors), så meshes som bare skiller seg i farge kan bli ett tegnekall? Bare ugjennomsiktige materialer (teksturer går bra: de gangeres med hjørnefargen, og meshes med ulike teksturer havner uansett i hver sin gruppe).
+export function colorBakeable(m) {
+  if (!m || Array.isArray(m) || !m.color || m.transparent || m.vertexColors || m.alphaMap || m.transmission || m.userData?.detailed === false) return false;
+  return !!(m.isMeshStandardMaterial || m.isMeshBasicMaterial);
+}
 // kan geometrien slås sammen? (bare position/normal/uv, ett materiale, ingen morph)
 function mergeable(o) {
   const g = o.geometry, mt = o.material;
@@ -101,7 +125,7 @@ function mergeable(o) {
 // opts.keep: Set med noder som beveger seg eller styres av koden (ledd, ansiktsdeler, deler som skjules): de og alt under en kept gruppe røres ikke her (slås sammen for seg i sin egen gruppe, se mergeRigid).
 // Returnerer { before, after } (antall meshes under roten, kept grupper medregnet ikke).
 export function mergeStatic(THREE, root, opts = {}) {
-  const cell = opts.cell || 0, keep = opts.keep || null;
+  const cell = opts.cell || 0, keep = opts.keep || null, vcolor = !!opts.vcolor, protect = opts.protect || null;   // vcolor (R85): meshes som bare er ulike i farge slås sammen med fargen i hjørnepunktene
   if (blocked(root)) { let n = 0; root.traverse((x) => { if (x.isMesh) n++; }); return { before: n, after: n }; }
   root.updateMatrixWorld(true);
   const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
@@ -113,7 +137,7 @@ export function mergeStatic(THREE, root, opts = {}) {
       if (c.isMesh) {
         before++;
         if (!(keep && keep.has(c)) && mergeable(c)) {
-          const sig = matSig(c.material);
+          const prot = protect && protect.has(c.material), vc = vcolor && !prot && colorBakeable(c.material), sig = prot ? 'P' + c.material.uuid : matSig(c.material, vc);   // protect: materialer som koden endrer fargen på senere (skjerf, sekk) blir egne grupper
           if (!sigMat.has(sig)) sigMat.set(sig, c.material);
           const rel = new THREE.Matrix4().multiplyMatrices(inv, c.matrixWorld);
           let key = `${sig}#${+c.castShadow}${+c.receiveShadow}#${c.renderOrder}`;
@@ -131,6 +155,8 @@ export function mergeStatic(THREE, root, opts = {}) {
   for (const { sig, list } of buckets.values()) {
     if (list.length < 2) continue;
     let nv = 0, ni = 0; for (const { o } of list) { const g = o.geometry; nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
+    const colors = new Set(list.map(({ o }) => o.material.color && o.material.color.getHex())), baked = vcolor && !(protect && protect.has(list[0].o.material)) && colorBakeable(list[0].o.material) && colors.size > 1;
+    const col = baked ? new Float32Array(nv * 3) : null;
     const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
     let vo = 0, io = 0;
     for (const { o, rel } of list) {
@@ -139,6 +165,7 @@ export function mergeStatic(THREE, root, opts = {}) {
         v.fromBufferAttribute(P, i).applyMatrix4(rel); pos.set([v.x, v.y, v.z], (vo + i) * 3);
         n.fromBufferAttribute(N, i).applyMatrix3(nm).normalize(); nor.set([n.x, n.y, n.z], (vo + i) * 3);
         if (U) uv.set([U.getX(i), U.getY(i)], (vo + i) * 2);
+        if (col) { const mc = o.material.color; col[(vo + i) * 3] = mc.r; col[(vo + i) * 3 + 1] = mc.g; col[(vo + i) * 3 + 2] = mc.b; }
       }
       const flip = rel.determinant() < 0, cnt = g.index ? g.index.count : P.count;
       for (let i = 0; i < cnt; i += 3) {
@@ -150,7 +177,13 @@ export function mergeStatic(THREE, root, opts = {}) {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeBoundingSphere(); geo.computeBoundingBox();
-    const first = list[0].o, m = new THREE.Mesh(geo, sigMat.get(sig));
+    let mat = vcolor && !(protect && protect.has(list[0].o.material)) && colorBakeable(list[0].o.material) ? list[0].o.material : sigMat.get(sig);
+    if (col) {   // egen kopi av materialet med vertexColors (de andre meshene bruker fortsatt originalen); fargen ligger nå i hjørnepunktene
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      const o2 = mat; mat = o2.clone(); mat.color.setRGB(1, 1, 1); mat.vertexColors = true;
+      mat.onBeforeCompile = o2.onBeforeCompile; mat.customProgramCacheKey = o2.customProgramCacheKey; mat.userData = { ...o2.userData };
+    }
+    const first = list[0].o, m = new THREE.Mesh(geo, mat);
     m.castShadow = first.castShadow; m.receiveShadow = first.receiveShadow; m.renderOrder = first.renderOrder; m.userData.merged = list.length;
     root.add(m);
     for (const { o } of list) { o.parent.remove(o); o.geometry.dispose(); }
@@ -160,10 +193,10 @@ export function mergeStatic(THREE, root, opts = {}) {
 }
 
 // Alt som beveger seg: slår sammen i roten og i hver kept gruppe (hver for seg). Returnerer samlet { before, after }.
-export function mergeRigid(THREE, root, keep) {
+export function mergeRigid(THREE, root, keep, opts = {}) {
   const tot = { before: 0, after: 0 };
   const groups = [root]; root.traverse((o) => { if (o !== root && !o.isMesh && keep.has(o)) groups.push(o); });
-  for (const g of groups) { const r = mergeStatic(THREE, g, { keep }); tot.before += r.before; tot.after += r.after; }
+  for (const g of groups) { const r = mergeStatic(THREE, g, { ...opts, keep }); tot.before += r.before; tot.after += r.after; }
   return tot;
 }
 

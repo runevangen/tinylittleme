@@ -73,11 +73,11 @@ export function fpsWatch(limit = 30, interval = 3000) {
 
 // Auto-oppløsning (autoq): ren beslutning, uten three.js. Mates med fpsWatch-vinduer (fr) og dagens pikselforhold (pr).
 //  - hopper over de første warmMs ms spilletid (oppstartsrykk teller ikke)
-//  - lav = under `limit` fps (24: en frisk iPhone i strømsparemodus låser til 30 og skal ikke straffes)
-//  - to lave vinduer på rad = ett trinn ned (x0.75, aldri under minPr), så en pause på ett vindu før neste vurdering
+//  - lav = under `limit` fps (R85: 27, så målet 30 fps holdes uten at en frisk iPhone i strømsparemodus, låst til 30, straffes)
+//  - to lave vinduer på rad = ett trinn ned (R85: ×0,85, mykere trinn, aldri under minPr), så en pause på ett vindu før neste vurdering
 //  - god = minst goodFps i upRuns vinduer på rad = ett trinn opp igjen (maks maxPr, høyst maxUps ganger i økta, så den ikke pendler)
 //  - enabled=false gir alltid null
-export function createAutoQ({ limit = 24, warmMs = 8000, minPr = 1, maxPr = 2, factor = 0.75, goodFps = 50, upRuns = 4, maxUps = 3 } = {}) {
+export function createAutoQ({ limit = 27, warmMs = 5000, minPr = 1, maxPr = 2, factor = 0.85, goodFps = 50, upRuns = 4, maxUps = 3 } = {}) {
   let elapsed = 0, low = 0, good = 0, cool = 0, ups = 0, downs = 0;
   const r2 = (v) => Math.round(v * 100) / 100;
   return {
