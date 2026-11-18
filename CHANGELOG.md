@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.39** – docs/PRIORITERT_BACKLOGG.md: utkast til prioritert backlogg før lansering (kun dokument).
 - **2.38** – R83: «NYTT»-meny på hovedmenyen: siste endringer med faner, avkryssing ✓/✗, GÅ DIT og VIS ALLE, som Rettelser.
 - **2.37** – R83 lagt i veikartet («NYTT»-meny: siste endringer med avkryssing, fra Rune).
 - **2.36** – R54: Roligere kamera: følging av som standard (engangs-migrering) og synsfelt etter skjermformat (ca. 70 stående, 52 liggende).
