@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r85-ytelse', version: '2.46', date: '2026-11-18', title: 'Ytelse: færre trekanter i figuren, mykere automatisk oppløsning og rombudsjett (testes på iPhone).',
+    how: 'Spill Verkstedet og se fps i testrapporten (⚙ → Rapport). Kvalitet kan settes Auto/Høy/Lav i ⚙.', level: 'verksted', spot: null },
   { id: 'tastehjelp-skjult', version: '2.45', date: '2026-11-18', title: 'PC: tastehjelp-kortet «testbrett» kommer ikke lenger opp ved start (kan slås på i ⚙).',
     how: 'Start spillet på PC: kortet øverst til høyre skal ikke vises. Trykk H for å hente det fram, eller slå på «PC: vis tastehjelp ved start» i ⚙ → Hjelp.', level: '', spot: null },
   { id: 'r84-standard-medium', version: '2.42', date: '2026-11-18', title: 'Nye spillere starter på Medium i stedet for Nybegynner.',
