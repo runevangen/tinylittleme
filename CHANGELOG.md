@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.49** – R86 lagring og fremdrift: robust lagring, migrering av gamle formater, Fortsett/Nytt spill, eksport/import, docs/LAGRING.md.
 - **2.48** – R86 (lagring) og R87 (personvern) lagt i veikartet (uke 1 i seksukersplanen).
 - **2.47** – F2 sikkerhetsnett: GitHub-sjekk (.github/workflows/ci.yml) kjører npm test og oppstartstesten på hver push og PR; oppstartstesten feiler på under ett sekund ved første sidefeil (kun verktøy).
 - **2.46** – R85 ytelse: figurens oppdeling (-57 % trekanter), fargebakt sammenslåing, mykere Auto-oppløsning, rombudsjett, perf_rank-verktøy og docs/YTELSE.md (selve 30 fps testes på iPhone).
