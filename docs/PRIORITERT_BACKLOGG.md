@@ -1,4 +1,4 @@
-# Prioritert backlogg før lansering (utkast 3)
+# Prioritert backlogg før lansering (utkast 4)
 
 Dette er et **utkast til samtale**, ikke en vedtatt plan. Mål: bestemme hva som skal være med i første lansering, og hva som venter. Alt under er foreslått av Claude ut fra veikartet (`docs/ROADMAP.md`), `BACKLOG.md`, testrapportene og det vi har bygd til nå (v2.38). Rune skal utfordre, flytte og stryke.
 
@@ -22,6 +22,25 @@ Prioriteringen avhenger av disse. Jeg har satt en antakelse i parentes.
 - **Byggeskolen er valgfri, men anbefalt:** tydelig i menyen og første gang spilleren møter bygging. Ingen sperre. Konsekvens: L2 blir en menyoppføring med anbefaling, ikke en sperre; «Rutenett 🔒»-låsen (`gridstage`) i Bygglab må vurderes: den låser rutenett i Bygglab til forrige sted er bestått. Det er en sperre inne i Byggeskolen, ikke foran den, og kan beholdes som progresjon.
 - **Standard vanskelighet = Medium** for nye spillere (i dag er standard Nybegynner). Konsekvens: **ny sak R84** (standardverdi, tester, migrering: de som allerede har valgt beholder sitt valg). **Utfordring til deg:** Medium betyr mindre hjelp. Terskelen under (tre nye spillere gjennom nivå 1 uten hjelp) avgjør om det holder; faller de ut, bytter vi tilbake til Nybegynner for første rom.
 - **Kvalitetsterskler før lansering:** (1) **30 fps i alle rom på iPhone 12 eller nyere**; (2) **tre nye spillere kommer gjennom nivå 1 uten hjelp**. Ikke valgt som krav: ingen krasj på to enhetstyper (Android-Chrome) og tom Rettelser-liste. Konsekvens: F3 (ytelse) er A med målbar terskel, F1 (første fem minutter) er A med brukertest. Android blir en kjent risiko, ikke et krav.
+
+## 0d. Beslutninger runde 3 (Rune, 2026-11-18)
+- **Medium feiler i nivå 1?** Bytt bare første rom til Nybegynner.
+- **Android:** testes på minst én Android-enhet **før** lansering. Ny kravlinje: **F16 Android-test** (A).
+- **De tre nye spillerne:** venner eller familie de neste to ukene (brukertest i uke 5, jul passer). Testplan: `docs/BRUKERTEST.md`.
+- **Ytelse:** egen sak først (R85), før nye funksjoner.
+- **Neste kutt etter engelsk og hjemmeskjerm:** fortelling og forhistorie (L8). Alt annet i kjernen beholdes.
+- **Rytme:** ukentlig kort gjennomgang (planlagt oppgave hver mandag 09:11 norsk tid).
+
+## 0e. Plan for de neste seks ukene (forslag, ikke vedtatt)
+| Uke | Fokus | Jeg og agentene | Rune |
+|---|---|---|---|
+| 1 (23.–29. nov) | Sikkerhetsnett og grunnmur | R84 Medium (ferdig, v2.42), F2 automatisk sjekk av `main`, F5 lagring, F8 personvern, F14 analyse, testplan | Teste kamera (R54), NYTT og RETTELSER; finne tre testere |
+| 2 (30. nov–6. des) | Ytelse og første inntrykk | R85 ytelse (Verkstedet først), F1 første fem minutter, F7 tydelig mål og vei | Teste fps på iPhone; skaffe en Android-enhet |
+| 3 (7.–13. des) | Bygging polert | F6 rutenett, L2 Byggeskole, L3 trekantbrett, F4 kamera og styring | Teste Byggeskole og trekantbrett |
+| 4 (14.–20. des) | Lyd, mestring, polering | F9 lyd, F10 belønning, L8 fortelling (første kutt), F11, F15; **frys innhold** | Lytte, se filmen |
+| 5 (21.–27. des) | Brukertest | Rette det de finner, Android-test (F16), siste ytelsesmåling | De tre spillerne spiller nivå 1 uten hjelp |
+| 6 (28. des–3. jan) | Lansering | Siste kontroll, startside, lanseringsfilm | Godkjenne og lansere |
+Risiko: ytelse i Verkstedet (22 fps, krav 30), at brukertesten avhenger av deg, Android er uprøvd, og jul tar tid. Plan B: lansere uke 7.
 
 ## 1. Slik rangerer vi
 Hvert punkt får **Verdi** (1–5: hvor mye det løfter opplevelsen for en ny spiller), **Innsats** (S dag, M uker, L måneder), **Risiko** (kan det ødelegge noe som virker?), og en **Beslutning**:
@@ -54,6 +73,7 @@ Tester-saker går fortsatt foran alt (se `CLAUDE.md`).
 | F12 | ~~B → C~~ **Engelsk språk og første-gangs språkvalg** (flyttet til C: kutt-kandidat) (finnes delvis i `i18n.js`); alle tekster i begge språk. | 3 | M | Lav | Åpner for flere testere. |
 | F13 | ~~B → C~~ **Installerbar på hjemmeskjerm og offline** (flyttet til C: kutt-kandidat) (egen sak: service worker, ikon, splash). | 3 | M | Middels | Føles som en app. Risiko: hurtigbuffer og versjonsjekk må fungere sammen. |
 | F14 | ~~B → A~~ **Enkel analyse:** anonyme tall på hvor spillere stopper (nivå, tid, antall forsøk), uten personopplysninger. | 3 | S | Middels | Vi gjetter i dag. |
+| F16 | **Android-test før lansering:** test på minst én Android-enhet (Chrome); start, styring, bygging, ytelse. | 4 | S | Middels | Beslutning 2026-11-18 (A). |
 | F15 | **Pause/meny som alltid fungerer:** «Avslutt til meny» finnes; sjekk at ingenting henger. | 3 | S | Lav | Små ting som stjeler tilliten. |
 
 ### C · Etter lansering
@@ -103,3 +123,4 @@ Se spørsmålene i samtalen. De viktigste: hva «lansering» betyr, om bygging e
 - Utkast 1 (v2.39): skrevet av Claude. Ikke vurdert av Rune ennå.
 - Utkast 2 (v2.40): Rune svarte på fire utfordringer (se 0b); F12, F13 og L4 flyttet til C.
 - Utkast 3 (v2.41): fire nye utfordringer besvart (se 0c); F14 flyttet til A; R84 (standard Medium) lagt i veikartet.
+- Utkast 4 (v2.43): runde 3 besvart (0d), seksukersplan (0e), F16 Android-test lagt til, R85 ytelse og testplan lagt inn.
