@@ -32,6 +32,10 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 > **Byggedel-serien (R45–R50):** se `docs/BYGGING_INSPIRASJON.md` for bakgrunn. Mål: blande plattform og byggespill med god, deterministisk fysikk. Felles regler: mobil først, `walk_route` uendret grønn, det finnes alltid en vanskelig vei uten bygging, fysikken (`build_phys.js`) forblir deterministisk (samme bygg gir samme resultat, testet), ingen økning i tegnekall/shadere utover budsjettet, innstillinger i `SETTINGS`, `logEv('bygg', …)`. R49 (live-vekt) og R51 (dynamiske deler) og R52 (verksted) er med vilje IKKE med: de diskuteres først.
 
 
+### [ ] R84 · Standard vanskelighet er Medium for nye spillere
+Beslutning fra Rune (prioritert backlogg, `docs/PRIORITERT_BACKLOGG.md` 0c): nye spillere starter på **Medium** i stedet for Nybegynner. Standardverdien for `difficulty` (R69, `difficulty.js`, `SETTINGS`) endres fra `beginner` til `medium`. Spillere som allerede har lagret et valg (eller har «Egendefinert») beholder det: ingen migrering som overskriver et eksplisitt valg. Sjekk at «velg vanskelighet ved Nytt spill»-flyten (R69) fortsatt tilbyr alle tre nivåene og viser det valgte, at veiledningen (R64/R65/R75) fortsatt kommer der den er hjelp for Medium, og at testrapporten viser vanskelighet. Oppdater `docs/INNSTILLINGER.md`, tester som antar `beginner` som standard (tilpass, ikke slett), og legg raden i `changes_data.js` (R83-regelen). Ikke endre noe annet.
+Ferdig når: en ny spiller (tomt `localStorage`) får Medium; en med lagret Nybegynner/Ekspert beholder sitt valg; alle tester og `npm run boot` er grønne.
+
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.

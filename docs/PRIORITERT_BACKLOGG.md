@@ -1,4 +1,4 @@
-# Prioritert backlogg før lansering (utkast 2)
+# Prioritert backlogg før lansering (utkast 3)
 
 Dette er et **utkast til samtale**, ikke en vedtatt plan. Mål: bestemme hva som skal være med i første lansering, og hva som venter. Alt under er foreslått av Claude ut fra veikartet (`docs/ROADMAP.md`), `BACKLOG.md`, testrapportene og det vi har bygd til nå (v2.38). Rune skal utfordre, flytte og stryke.
 
@@ -16,6 +16,12 @@ Prioriteringen avhenger av disse. Jeg har satt en antakelse i parentes.
 - **Brett ved lansering = nivå 1–9 + Byggeskole.** Konsekvens: L4 (nivå 10–11) flyttes til C; L1 og L2 er A. L3 (nytt byggebrett som krever trekanter) blir B.
 - **Kutt hvis tiden presser:** engelsk språk og hjemmeskjerm/offline. Konsekvens: F12 flyttes til C (norsk først); F13 flyttes til C.
 - Ikke valgt som kutt (altså beholdes): nivå 4–6 og analyse (F14 beholdes som B).
+
+## 0c. Beslutninger runde 2 (Rune, 2026-11-18)
+- **Suksess:** 20–50 venner/kjente spiller, og flertallet fullfører nivå 1–3. Konsekvens: for å vite om vi lykkes må vi måle det. **F14 (anonym analyse: nivå, tid, forsøk, hvor man stopper) flyttes fra B til A.**
+- **Byggeskolen er valgfri, men anbefalt:** tydelig i menyen og første gang spilleren møter bygging. Ingen sperre. Konsekvens: L2 blir en menyoppføring med anbefaling, ikke en sperre; «Rutenett 🔒»-låsen (`gridstage`) i Bygglab må vurderes: den låser rutenett i Bygglab til forrige sted er bestått. Det er en sperre inne i Byggeskolen, ikke foran den, og kan beholdes som progresjon.
+- **Standard vanskelighet = Medium** for nye spillere (i dag er standard Nybegynner). Konsekvens: **ny sak R84** (standardverdi, tester, migrering: de som allerede har valgt beholder sitt valg). **Utfordring til deg:** Medium betyr mindre hjelp. Terskelen under (tre nye spillere gjennom nivå 1 uten hjelp) avgjør om det holder; faller de ut, bytter vi tilbake til Nybegynner for første rom.
+- **Kvalitetsterskler før lansering:** (1) **30 fps i alle rom på iPhone 12 eller nyere**; (2) **tre nye spillere kommer gjennom nivå 1 uten hjelp**. Ikke valgt som krav: ingen krasj på to enhetstyper (Android-Chrome) og tom Rettelser-liste. Konsekvens: F3 (ytelse) er A med målbar terskel, F1 (første fem minutter) er A med brukertest. Android blir en kjent risiko, ikke et krav.
 
 ## 1. Slik rangerer vi
 Hvert punkt får **Verdi** (1–5: hvor mye det løfter opplevelsen for en ny spiller), **Innsats** (S dag, M uker, L måneder), **Risiko** (kan det ødelegge noe som virker?), og en **Beslutning**:
@@ -47,7 +53,7 @@ Tester-saker går fortsatt foran alt (se `CLAUDE.md`).
 | F11 | **Tilgjengelighet:** tekststørrelse, fargesvake-sikre belastningsfarger, redusert bevegelse, venstrehendt oppsett av knapper. | 3 | M | Lav | Bredere publikum og færre klager. |
 | F12 | ~~B → C~~ **Engelsk språk og første-gangs språkvalg** (flyttet til C: kutt-kandidat) (finnes delvis i `i18n.js`); alle tekster i begge språk. | 3 | M | Lav | Åpner for flere testere. |
 | F13 | ~~B → C~~ **Installerbar på hjemmeskjerm og offline** (flyttet til C: kutt-kandidat) (egen sak: service worker, ikon, splash). | 3 | M | Middels | Føles som en app. Risiko: hurtigbuffer og versjonsjekk må fungere sammen. |
-| F14 | **Enkel analyse:** anonyme tall på hvor spillere stopper (nivå, tid, antall forsøk), uten personopplysninger. | 3 | S | Middels | Vi gjetter i dag. |
+| F14 | ~~B → A~~ **Enkel analyse:** anonyme tall på hvor spillere stopper (nivå, tid, antall forsøk), uten personopplysninger. | 3 | S | Middels | Vi gjetter i dag. |
 | F15 | **Pause/meny som alltid fungerer:** «Avslutt til meny» finnes; sjekk at ingenting henger. | 3 | S | Lav | Små ting som stjeler tilliten. |
 
 ### C · Etter lansering
@@ -83,7 +89,7 @@ Dagens innhold: 9 nivåer (3 rom + 3 ommøblerte + lekerom + stue + verksted), 4
 - «Ekstra: Soverom (håndlaget)» hvis det ikke blir nivå 10. Nivå 4–6 hvis spillere synes de er for like 1–3 (må testes).
 
 ## 4. Sammenheng og rekkefølge (forslag, justert etter beslutningene)
-1. **Uke 1:** F2 (sikkerhetsnett), F5 (lagring), F8 (personvern), F4 (kamera godkjent).
+1. **Uke 1:** F2 (sikkerhetsnett), F5 (lagring), F8 (personvern), F4 (kamera godkjent), R84 (standard Medium), F14 (analyse).
 2. **Uke 2:** F3 (ytelse), F1 (første fem minutter) og testing med 3–5 nye spillere.
 3. **Uke 3–4:** F6 (rutenett polert), L2 (Byggeskole), L3 (nytt byggebrett).
 4. **Uke 4–5:** F9 (lyd), F7 (mål og vei), F10 (belønning), L8 (fortelling).
@@ -96,3 +102,4 @@ Se spørsmålene i samtalen. De viktigste: hva «lansering» betyr, om bygging e
 ## 6. Endringslogg for denne lista
 - Utkast 1 (v2.39): skrevet av Claude. Ikke vurdert av Rune ennå.
 - Utkast 2 (v2.40): Rune svarte på fire utfordringer (se 0b); F12, F13 og L4 flyttet til C.
+- Utkast 3 (v2.41): fire nye utfordringer besvart (se 0c); F14 flyttet til A; R84 (standard Medium) lagt i veikartet.
