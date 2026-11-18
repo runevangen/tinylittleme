@@ -5,8 +5,12 @@ import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
 import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT, fetchInbox, markRead, unreadReplies, statsLines, checkReply } from './feedback_send.js';
+import { fetchChangeChecks, checkChange } from './feedback_send.js';
+import { parseChangeChecks, pendingChecks } from './changes_logic.js';
 import { menuVisible, buttonLabel, uncheckedCount, parseGo, safePlacement, goUrl } from './fixes_logic.js';   // R80: Rettelser-menyen (fixes_logic.js, fixes_view.js)
 import { showFixes } from './fixes_view.js';
+import { CHANGES } from './changes_data.js';   // R83: NYTT-menyen (changes_data.js, changes_logic.js; visningen er den samme som Rettelser)
+import * as chg from './changes_logic.js';
 import { setDrawerCue, drawerCue, drawerSummary } from './drawers.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
@@ -3037,6 +3041,33 @@ function openFixes() {
   showFixes(el, { list: fixList, version: VERSION, levels: LEVELS, logEv, refresh: fetchFixes, check: (id, res, note) => checkReply(testerCode(), id, res, note), onChange: (l) => { fixList = l; },
     goTo: (fix) => { saveProgress(); location.href = goUrl(location.href, fix); }, update: async () => { await verView.check({ force: true, why: 'rettelser' }); await verView.update(); }, onBack: () => showStart() });
 }
+// R83: NYTT-menyen. Avkryssinger lagres alltid lokalt (localStorage) og sendes til serveren når tester-kode og nett finnes; aldri feil uten nett.
+let chgServer = {};
+const chgLocal = () => chg.parseLocal(JSON.stringify(store.get(chg.LOCAL_KEY, {})));
+const chgRows = () => chg.buildRows(CHANGES, chg.mergeChecks(chgServer, chgLocal()));
+function chgBtnRefresh() { const b = $('mChg'); if (b) b.textContent = chg.buttonLabel(uncheckedCount(chgRows())); }
+async function fetchChanges() {
+  const code = testerCode(); if (!validCode(code)) return null;
+  const d = await fetchChangeChecks(code); if (!d) return null;
+  chgServer = parseChangeChecks(d);
+  for (const p of pendingChecks(chgServer, chgLocal())) {   // synk det som ble krysset av uten kode eller nett
+    const lv = (CHANGES.find((c) => c.id === p.id) || {}).level || '';
+    if (await checkChange(code, p.id, p.check, p.note, VERSION, lv)) chgServer[p.id] = { check: p.check, note: p.note, checked_at: p.checked_at };
+  }
+  return chgRows();
+}
+function openChanges() {
+  const code = testerCode(), cfg = { title: 'Nytt', tag: 'nytt', word: 'Kom', intro: (n) => (n ? `${n} nye ting å prøve. Trykk GÅ DIT, prøv det, og si om det fungerer.` : 'Ingenting nytt å sjekke akkurat nå.'), emptyA: 'Ingenting nytt å sjekke her.', emptyB: 'Ingenting sjekket å vise.' };
+  showFixes($('start'), { cfg, list: chgRows(), version: VERSION, levels: LEVELS, logEv, refresh: fetchChanges,
+    check: async (id, res, note) => {
+      const at = new Date().toISOString(), cur = chgLocal(), v = { check: res, note: res === 'fail' ? String(note || '').slice(0, 200) : '', checked_at: at };
+      store.set(chg.LOCAL_KEY, { ...cur, [id]: v });   // lokalt først: virker uten kode og uten nett
+      if (validCode(testerCode())) { try { if (await checkChange(testerCode(), id, res, v.note, VERSION, (CHANGES.find((c) => c.id === id) || {}).level || '')) chgServer[id] = v; } catch { /* sendes ved neste henting */ } }
+      return true;
+    },
+    onChange: () => chgBtnRefresh(),
+    goTo: (fix) => { saveProgress(); location.href = goUrl(location.href, fix); }, update: async () => { await verView.check({ force: true, why: 'nytt' }); await verView.update(); }, onBack: () => showStart() });
+}
 function showStart(o = {}) {
   menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; saveProgress();
   if (document.pointerLockElement) document.exitPointerLock();
@@ -3047,7 +3078,7 @@ function showStart(o = {}) {
     <button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
     <button class="mbtn sec" id="mLevels">${dft(lang, 'df.pick')}${bl ? `<small>${bl}</small>` : ''}</button>
     <button class="mbtn sec" id="mToys">🧸 ${rwT(lang, 'rw.closet')}</button>
-    ${menuVisible(testerCode(), validCode) ? `<button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button>` : ''}
+    ${menuVisible(testerCode(), validCode) ? `<div class="mrow"><button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button><button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button></div>` : `<button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button>`}
     <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
     <button class="mbtn sec" id="mQuit">${T('menu.quit')}</button>
     <div class="ver">v${VERSION}</div>`;
@@ -3061,6 +3092,8 @@ function showStart(o = {}) {
   };
   $('mLevels').onclick = () => { unlockAudio(); dv.pickLevel({ levels: LEVELS, st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart }); };
   $('mToys').onclick = () => { logEv('belønning', 'lekerom åpnet'); showCloset($('start'), { st: store, lang, all: rewardsAll, levels: LEVELS, onChange: (e) => { refreshAccessories(); logEv('belønning', `valgt ${Object.values(e).filter(Boolean).join(',') || 'ingen'}`); }, onBack: showStart }); };
+  $('mChg').onclick = () => { logEv('nytt', 'knapp'); openChanges(); };
+  if (validCode(testerCode())) { const tryChg = (left) => fetchChanges().then((l) => { if (l) chgBtnRefresh(); else if (left > 0) setTimeout(() => { if ($('mChg')) tryChg(left - 1); }, 8000); }).catch(() => {}); tryChg(2); }   // stille ved feil, med nytt forsøk som Rettelser
   if ($('mFix')) { $('mFix').onclick = openFixes; const tryFx = (left) => fetchFixes().then((l) => { if (l) fixesBtnRefresh(); else if (left > 0) setTimeout(() => { if ($('mFix')) tryFx(left - 1); }, 8000); }).catch(() => {}); tryFx(2); }   // stille: ingen nett eller treg start gir nytt forsøk, ikke feil
   $('mSet').onclick = () => { buildPanel(); $('help').classList.add('hide'); $('panel').classList.remove('hide'); };
   $('mQuit').onclick = quitGame;

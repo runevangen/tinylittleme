@@ -21,9 +21,9 @@ export function versionStatus(running, fixVersion) {
   const c = compareVersions(String(fixVersion ?? '').replace(/^v/, ''), running);
   return c === null ? 'ukjent' : c <= 0 ? 'ok' : 'eldre';
 }
-export const versionLine = (running, fixVersion) => {
+export const versionLine = (running, fixVersion, word = 'Rettet') => {
   const st = versionStatus(running, fixVersion), v = String(fixVersion ?? '').replace(/^v/, '');
-  return st === 'ukjent' ? `Du kjører v${running}` : st === 'ok' ? `Rettet i v${v} · du kjører v${running}` : `Rettet i v${v} · du kjører v${running}: OPPDATER først`;
+  return st === 'ukjent' ? `Du kjører v${running}` : st === 'ok' ? `${word} i v${v} · du kjører v${running}` : `${word} i v${v} · du kjører v${running}: OPPDATER først`;
 };
 
 export function levelLabel(levels, id) {

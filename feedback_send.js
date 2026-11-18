@@ -107,6 +107,16 @@ export async function checkReply(code, rid, res, note = '', opts) {
   const r = await rpc('tlm_check_reply', { c: cleanCode(code), rid, res, note: String(note || '').trim().slice(0, 200) }, opts);
   return r.ok;
 }
+// R83: «NYTT»-menyen. Serverens avkryssinger av endringer (tlm_my_change_checks) og én avkryssing (tlm_check_change; første 'fail' lager en ny tilbakemelding).
+export async function fetchChangeChecks(code, opts) {
+  const r = await rpc('tlm_my_change_checks', { c: cleanCode(code) }, opts);
+  return r.ok ? r.data : null;
+}
+export async function checkChange(code, cid, res, note = '', ver = '', lvl = '', opts) {
+  if (!cid || (res !== 'ok' && res !== 'fail')) return false;
+  const r = await rpc('tlm_check_change', { c: cleanCode(code), cid: String(cid).slice(0, 40), res, note: String(note || '').trim().slice(0, 200), ver: String(ver || '').slice(0, LIMITS.version), lvl: String(lvl || '').slice(0, LIMITS.level) }, opts);
+  return r.ok;
+}
 export const unreadReplies = (inbox) => (inbox?.replies || []).filter((r) => !r.read);
 
 // Telleren som vises i ⚑-boksen: motiverer ved å vise at meldingene fører til noe. Ingen navn, bare tall.

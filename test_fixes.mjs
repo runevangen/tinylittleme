@@ -87,7 +87,7 @@ assert.equal(await checkReply('rune', 'r1', 'ok', '', { fetchFn: async () => ({ 
 const idx = fs.readFileSync('index.html', 'utf8'), main = fs.readFileSync('main.js', 'utf8'), view = fs.readFileSync('fixes_view.js', 'utf8');
 for (const f of ['fixes_logic', 'fixes_view']) assert.ok(idx.includes(`'${f}'`), `${f} i files i index.html`);
 assert.ok(main.includes('id="mFix"') && main.includes('parseGo(location.search)') && main.includes('showFixes('), 'hekter i main.js');
-assert.ok(view.includes("logEv?.('rettelser'") && main.includes("logEv('rettelser'"), 'logEv(rettelser)');
-assert.ok(view.includes('data-tab') && view.includes('fxAll') && view.includes("'rettelser', `fane"), 'faner og VIS ALLE i fixes_view.js');
+assert.ok(view.includes('logEv?.(C.tag') && view.includes("tag: 'rettelser'") && main.includes("logEv('rettelser'"), 'logEv(rettelser)');
+assert.ok(view.includes('data-tab') && view.includes('fxAll') && view.includes('`fane ${tab}`'), 'faner og VIS ALLE i fixes_view.js');
 assert.ok(!/\b(tast|trykk [A-Z]\b)/i.test(view.replace(/Trykk GÅ DIT/g, '')), 'ingen taster i teksten');
 console.log('fixes: ok');

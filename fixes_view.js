@@ -25,10 +25,13 @@ const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 
 // ctx: { list (rader fra tlm_my_inbox), version, levels, logEv, refresh(): Promise<list|null>, check(id,res,note): Promise<boolean>,
 //        goTo(fix), update(): Promise, onBack(), onChange(list) }
+// R83: samme visning brukes av «NYTT»-menyen (changes_logic.js). ctx.cfg overstyrer tekster; uten cfg er det Rettelser.
+export const FIX_CFG = { title: 'Rettelser', tag: 'rettelser', word: 'Rettet', intro: (n) => (n ? `${n} å sjekke. Trykk GÅ DIT, prøv stedet, og si om det virker.` : 'Ingen rettelser å sjekke akkurat nå.'), emptyA: 'Ingenting å sjekke her.', emptyB: 'Ingen sjekkede rettelser å vise.' };
 export function showFixes(el, ctx, doc = document) {
+  const C = { ...FIX_CFG, ...(ctx.cfg || {}) };
   if (!doc.getElementById('fixcss')) { const s = doc.createElement('style'); s.id = 'fixcss'; s.textContent = CSS; doc.head.appendChild(s); }
   let list = ctx.list || [], open = null, busy = null, err = '', tab = defaultTab(list), all = { sjekke: false, sjekket: false };   // open: id på rettelsen der «virker ikke»-boksen står åpen
-  ctx.logEv?.('rettelser', `åpnet (${list.length} stk, ${uncheckedCount(list)} ikke sjekket)`);
+  ctx.logEv?.(C.tag, `åpnet (${list.length} stk, ${uncheckedCount(list)} ikke sjekket)`);
   const card = (r) => {
     const st = stateOf(r), vs = versionStatus(ctx.version, r.version), here = levelLabel(ctx.levels, r.level);
     const go = vs === 'eldre'
@@ -37,22 +40,23 @@ export function showFixes(el, ctx, doc = document) {
     const noteBox = open === r.id ? `<div class="fxn"><div class="fxq">${QUICK_NOTES.map((q) => `<button type="button" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div><input type="text" maxlength="200" placeholder="Hva er galt? (valgfritt)" data-note autocomplete="off"><button class="fxb no" data-send="${esc(r.id)}">SEND ✗ FUNGERER IKKE</button></div>` : '';
     return `<div class="fxc ${st}" data-fx="${esc(r.id)}"><span class="fxt">${stateText(st)}</span>
       <div class="fxm">${esc(r.message)}</div>
-      <div class="fxs">${here ? esc(here) + ' · ' : ''}${esc(versionLine(ctx.version, r.version))}${st === 'fail' && r.note ? '<br>Du skrev: ' + esc(r.note) : ''}</div>
+      ${r.how ? `<div class="fxs fxhow">Slik tester du: ${esc(r.how)}</div>` : ''}
+      <div class="fxs">${here ? esc(here) + ' · ' : ''}${esc(versionLine(ctx.version, r.version, C.word))}${st === 'fail' && r.note ? '<br>Du skrev: ' + esc(r.note) : ''}</div>
       <div class="fxr">${go}</div>
       <div class="fxr"><button class="fxb yes${st === 'ok' ? ' on' : ''}" data-ok="${esc(r.id)}" ${busy ? 'disabled' : ''}>✓ FUNGERER</button><button class="fxb no${st === 'fail' || open === r.id ? ' on' : ''}" data-no="${esc(r.id)}" ${busy ? 'disabled' : ''}>✗ FUNGERER IKKE</button></div>${noteBox}</div>`;
   };
   const draw = () => {
     const n = uncheckedCount(list), cnt = tabCounts(list), { shown, hidden } = tabView(list, tab, all[tab], ctx.now?.() ?? Date.now());
     el.classList.add('fxl');
-    el.innerHTML = `<h1 class="fxh">Rettelser</h1><p class="tag">${n ? `${n} å sjekke. Trykk GÅ DIT, prøv stedet, og si om det virker.` : 'Ingen rettelser å sjekke akkurat nå.'}</p>
+    el.innerHTML = `<h1 class="fxh">${esc(C.title)}</h1><p class="tag">${esc(C.intro(n))}</p>
       <button class="mbtn sec" id="fxBack">TILBAKE</button>
-      <div class="fxtabs">${TABS.map((t) => `<button type="button" data-tab="${t}" class="${t === tab ? 'on' : ''}">${tabLabel(t, cnt[t])}</button>`).join('')}</div>${err ? `<div class="fxe">${esc(err)}</div>` : ''}${shown.length ? shown.map(card).join('') : `<p class="tag">${tab === 'sjekke' ? 'Ingenting å sjekke her.' : 'Ingen sjekkede rettelser å vise.'}</p>`}${hidden > 0 || all[tab] ? `<button class="mbtn sec" id="fxAll">${showAllLabel(all[tab], hidden)}</button>` : ''}${shown.length > 3 ? '<button class="mbtn sec" id="fxBack2">TILBAKE</button>' : ''}`;
-    for (const b of el.querySelectorAll('[data-tab]')) b.onclick = () => { if (tab === b.dataset.tab) return; tab = b.dataset.tab; open = null; ctx.logEv?.('rettelser', `fane ${tab}`); draw(); };
-    const ab = el.querySelector('#fxAll'); if (ab) ab.onclick = () => { all[tab] = !all[tab]; ctx.logEv?.('rettelser', `${all[tab] ? 'vis alle' : 'skjul eldre'} ${tab} (${hidden})`); draw(); };
+      <div class="fxtabs">${TABS.map((t) => `<button type="button" data-tab="${t}" class="${t === tab ? 'on' : ''}">${tabLabel(t, cnt[t])}</button>`).join('')}</div>${err ? `<div class="fxe">${esc(err)}</div>` : ''}${shown.length ? shown.map(card).join('') : `<p class="tag">${tab === 'sjekke' ? C.emptyA : C.emptyB}</p>`}${hidden > 0 || all[tab] ? `<button class="mbtn sec" id="fxAll">${showAllLabel(all[tab], hidden)}</button>` : ''}${shown.length > 3 ? '<button class="mbtn sec" id="fxBack2">TILBAKE</button>' : ''}`;
+    for (const b of el.querySelectorAll('[data-tab]')) b.onclick = () => { if (tab === b.dataset.tab) return; tab = b.dataset.tab; open = null; ctx.logEv?.(C.tag, `fane ${tab}`); draw(); };
+    const ab = el.querySelector('#fxAll'); if (ab) ab.onclick = () => { all[tab] = !all[tab]; ctx.logEv?.(C.tag, `${all[tab] ? 'vis alle' : 'skjul eldre'} ${tab} (${hidden})`); draw(); };
     for (const b of el.querySelectorAll('#fxBack,#fxBack2')) b.onclick = () => { el.classList.remove('fxl'); ctx.onBack?.(); };
     const find = (id) => list.find((r) => r.id === id);
-    for (const b of el.querySelectorAll('[data-go]')) b.onclick = () => { const r = find(b.dataset.go); if (r) { ctx.logEv?.('rettelser', `gå dit ${r.level}${r.spot ? ' ' + JSON.stringify(r.spot) : ''}`); el.classList.remove('fxl'); ctx.goTo(r); } };
-    for (const b of el.querySelectorAll('[data-upd]')) b.onclick = async () => { b.disabled = true; b.textContent = 'Oppdaterer …'; ctx.logEv?.('rettelser', 'oppdater først'); try { await ctx.update(); } catch { /* stille */ } if (b.isConnected) { b.disabled = false; b.textContent = 'OPPDATER'; err = 'Fikk ikke oppdatert akkurat nå. Prøv igjen senere.'; draw(); } };
+    for (const b of el.querySelectorAll('[data-go]')) b.onclick = () => { const r = find(b.dataset.go); if (r) { ctx.logEv?.(C.tag, `gå dit ${r.level}${r.spot ? ' ' + JSON.stringify(r.spot) : ''}`); el.classList.remove('fxl'); ctx.goTo(r); } };
+    for (const b of el.querySelectorAll('[data-upd]')) b.onclick = async () => { b.disabled = true; b.textContent = 'Oppdaterer …'; ctx.logEv?.(C.tag, 'oppdater først'); try { await ctx.update(); } catch { /* stille */ } if (b.isConnected) { b.disabled = false; b.textContent = 'OPPDATER'; err = 'Fikk ikke oppdatert akkurat nå. Prøv igjen senere.'; draw(); } };
     for (const b of el.querySelectorAll('[data-ok]')) b.onclick = () => submit(b.dataset.ok, 'ok', '');
     for (const b of el.querySelectorAll('[data-no]')) b.onclick = () => { open = open === b.dataset.no ? null : b.dataset.no; draw(); };
     for (const b of el.querySelectorAll('[data-q]')) b.onclick = () => { const i = b.closest('.fxn').querySelector('[data-note]'); i.value = b.dataset.q; i.focus(); };
@@ -66,7 +70,7 @@ export function showFixes(el, ctx, doc = document) {
     busy = null;
     if (!ok) { list = before.map((r) => (r.id === id ? r0 : r)); err = 'Ingen nett akkurat nå. Prøv igjen om litt.'; }
     else ctx.onChange?.(list);
-    ctx.logEv?.('rettelser', `avkryssing ${res}${ok ? '' : ' (ikke sendt)'}`);
+    ctx.logEv?.(C.tag, `avkryssing ${res}${ok ? '' : ' (ikke sendt)'}`);
     if (el.classList.contains('fxl')) draw();
   }
   draw();
