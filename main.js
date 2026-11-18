@@ -273,7 +273,7 @@ const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
 const fpsRooms = (() => { const o = store.get('tlm.fpsrooms', {}); return o && typeof o === 'object' ? o : {}; })();   // R85: { rom: { n, sum } } på tvers av økter
 const fpsRoomsLine = () => { const r = Object.entries(fpsRooms).filter(([, v]) => v && v.n > 60).map(([k, v]) => `${k} ${(1000 * v.n / v.sum).toFixed(0)}`); return r.length ? ` · snitt per rom: ${r.join(', ')}` : ''; };
 // R88: anonym statistikk (bare tilfeldig id, versjon, enhetsklasse og spillhendelser; kan slås av i ⚙ → PERSONVERN). Se docs/STATISTIKK.md.
-let statsOn = store.get(STATS.onKey, true) !== false;
+let statsOn = store.get(STATS.onKey, false) === true;   // standard AV: spilleren slår den på selv (valg fra Rune, 2026-11-18)
 const sts = createStats({ store, on: () => statsOn, blocked: () => sendBlocked({ cinema: CINE.on || document.body.classList.contains('cinema'), search: location.search }), version: () => VERSION });
 const stn = createStatsNet({ stats: sts, logEv });
 const roomAgg = createRoomAgg();
@@ -1888,7 +1888,7 @@ const SETTINGS = [
   rg('floodshake', 'admin', 'Stigende vann: kameraskjelv før du drukner (0 = av)', 1, 0, 2, 0.1, () => floodShakeK, kp('tlm.floodshake', (v) => { floodShakeK = v; }), { digits: 1 }),
   rg('guidestall', 'admin', 'Veiledning: sekunder uten framdrift før neste flate utheves', 45, 15, 120, 1, () => Math.round(GUIDE.stallMs / 1000), kp('tlm.guidestall', (v) => { GUIDE.stallMs = v * 1000; }), { digits: 0 }),
   fl('goalarrow', 'hjelp', 'Pila og kompasset peker mot aktivt delmål', true, () => goalArrowOn, kp('tlm.goalarrow', (v) => { goalArrowOn = v; logEv('delmål', v ? 'pil følger delmål' : 'pil følger ruta'); })),
-  fl('stats', 'test', 'Anonym statistikk (R88): sender hvor langt spillere kommer (tilfeldig id, ingen navn eller posisjon). Se PERSONVERN', true, () => statsOn, kp(STATS.onKey, (v) => { statsOn = v; if (!v) sts.clear(); syncStatsBtn(); logEv('statistikk', v ? 'på' : 'av'); })),
+  fl('stats', 'test', 'Anonym statistikk (R88): sender hvor langt spillere kommer (tilfeldig id, ingen navn eller posisjon). Se PERSONVERN (standard av)', false, () => statsOn, kp(STATS.onKey, (v) => { statsOn = v; if (!v) sts.clear(); syncStatsBtn(); logEv('statistikk', v ? 'på' : 'av'); })),
   fl('privnote', 'admin', 'Personvern (R87): vis linja «Sendes til utvikleren. Ikke skriv navn …» med lenke til PERSONVERN til du har sendt første gang', true, () => privNoteOn, kp('tlm.privnotes', (v) => { privNoteOn = v; syncPrivNotes(); logEv('personvern', v ? 'sendelinje på' : 'sendelinje av'); })),
   fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; logEv('delmål', v ? 'lås på' : 'lås av'); })),
   fl('rewards', 'spill', 'Tilbehør på figuren (hatter, skjerf, sekk du har samlet)', true, () => rewardsOn, kp('tlm.rewards', (v) => { rewardsOn = v; refreshAccessories(); logEv('belønning', v ? 'tilbehør på' : 'tilbehør av'); })),

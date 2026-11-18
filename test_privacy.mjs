@@ -74,6 +74,7 @@ assert.ok(main.includes("fl('privnote', 'admin'"), 'innstilling');
 assert.ok(main.includes("logEv('personvern'") || fs.readFileSync('privacy_view.js', 'utf8').includes("logEv('personvern'"));
 assert.ok(fs.readFileSync('docs/TILBAKEMELDING.md', 'utf8').includes('Slette en testers data'), 'slettrutine i docs');
 // R88: teksten om anonym statistikk stemmer med koden (tillatte hendelser og felt)
+assert.ok(fs.readFileSync('main.js', 'utf8').includes("store.get(STATS.onKey, false) === true"), 'anonym statistikk er av som standard (Rune, 2026-11-18)');
 {
   const { EVENTS, ALLOWED_DATA_FIELDS } = await import('./stats_logic.js');
   const stx = fs.readFileSync('docs/STATISTIKK.md', 'utf8');

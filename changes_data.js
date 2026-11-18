@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'statistikk-av-standard', version: '2.53', date: '2026-11-18', title: 'Anonym statistikk er av som standard: du slår den på selv.',
+    how: 'Åpne ⚙ og trykk PERSONVERN. Nederst skal det stå «ANONYM STATISTIKK: AV». Trykk på knappen for å slå den på, og trykk igjen for å slå den av.', level: '', spot: null },
   { id: 'r88-anonym-statistikk', version: '2.52', date: '2026-11-18', title: 'Anonym statistikk (kan slås av): hvor langt spillerne kommer, uten navn og posisjon.',
     how: 'Åpne ⚙ og trykk PERSONVERN. Les avsnittet Anonym statistikk og prøv knappen nederst for å slå den av og på.', level: '', spot: null },
   { id: 'r87-personvern', version: '2.48', date: '2026-11-18', title: 'PERSONVERN: ærlig tekst om hva som lagres og sendes, og kortere enhetsstreng i rapporten.',

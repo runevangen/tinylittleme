@@ -5,7 +5,7 @@ Mål: vite hvor spillerne stopper (lanseringsmålet: flertallet fullfører nivå
 ## Personvern
 - Bare tilfeldig `cid` (16 tegn, laget første gang den trengs, lagret i `localStorage` som `tlm.statscid`, **ikke koblet til tester-kode**), versjon, enhetsklasse (mobil/PC, skjermklasse liten/mellom/stor) og spillhendelser.
 - Aldri navn, e-post, tester-kode, posisjon, tekst fra spilleren eller bilder. Meldingen i `js_error` kuttes til 120 tegn, uten nettadresser og stack.
-- Kan slås av: ⚙ → «Anonym statistikk» (`tlm.stats`, standard på), eller knappen nederst i PERSONVERN. Av betyr at ingenting settes inn og ingen `cid` lages (kø tømmes).
+- Kan slås av: ⚙ → «Anonym statistikk» (`tlm.stats`, **standard av** fra v2.53: spilleren slår den på selv), eller knappen nederst i PERSONVERN. Av betyr at ingenting settes inn og ingen `cid` lages (kø tømmes).
 - Ikke i kinomodus (`?cinema`) eller med `?nostats=1`.
 - Supabase kan logge IP-adresser på infrastrukturnivå; spillet sender dem ikke og statistikken lagrer dem ikke. PERSONVERN sier det ærlig.
 
