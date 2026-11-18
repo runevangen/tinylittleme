@@ -135,3 +135,6 @@ Fordeling: rekvisitt/brettdel 85 kall / 14594 trekanter; figuren 72 kall / 10822
 
 ## Kollisjonsbokser fra gulvdetaljer (R90)
 Perler, blyanter og viskelær er solide og ligger som statiske bokser i `LEVEL.boxes` mens gulvdetaljene vises. Ved tetthet Vanlig/Mange: Barnerom 64–106 blyantbokser (pluss 14–19 perler), Barnerom ommøblert 102–120, Verksted 270–342 (store rom). Måling i node (best av 5 × 6000 steg): 0,02 → 0,05–0,09 ms/steg i Barnerom, 0,01 → 0,10–0,13 ms/steg i Verksted, altså under 1 % av en ramme. Ingen nye tegnekall eller trekanter (tegningen er uendret); Stue-taket `fdetMax` er satt 118 → 115 så trekantbudsjettet (12000) holder når plasseringen endres. Ekte FPS: testes på iPhone.
+
+## Kollisjonsbokser fra solid dekor (R91)
+Elleve statiske bokser totalt (Kjøkken 3, Kjøkken ommøblert 3, Bad 2, Bad ommøblert 2, Stue 1), lagt i `LEVEL.boxes` av `createDecorSolid` (`solid_decor_logic.js`). Måling i node (`test_solid_decor.mjs`, best av 5 × 6000 steg, Kjøkken): 0,025 → 0,026 ms/steg, altså uendret. Ingen nye tegnekall eller trekanter (tegningen er uendret). Ekte FPS og følelse: testes på iPhone.

@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r91-solid-dekor', version: '2.59', date: '2026-11-18', title: 'Glassene på krydderhylla (og annen dekor som står fritt) er solide: du går ikke lenger igjennom.',
+    how: 'Velg Nivå 3 (Kjøkken), klatre opp på krydderhylla og gå med stikka mot et av glassene: du stoppes. Trykk HOPP for å komme opp på glasset. Kan slås av i ⚙ → Admin.', level: 'kjokken', spot: { x: 24.3, y: 30.4, z: -28.3 } },
   { id: 'r90-solide-blyanter', version: '2.58', date: '2026-11-18', title: 'Blyanter og viskelær på gulvet er solide: du stoppes av dem, men kan hoppe over og stå på dem.',
     how: 'Velg Nivå 2 (Barnerom) og gå med stikka mot en blyant på gulvet: du går ikke lenger igjennom. Trykk HOPP for å komme over eller opp på den. Kan slås av i ⚙ → Admin.', level: 'barnerom', spot: { x: -1.5, y: 0.4, z: 15.4 } },
   { id: 'r89-last-maal-delmaal', version: '2.54', date: '2026-11-18', title: 'Låst mål: du får alltid beskjed («Målet er låst.»), og delmålene teller nå for alle veier opp (hylla, eskene) i Badet.',

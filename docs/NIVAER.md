@@ -187,3 +187,9 @@ Hvert variantrom har en genvei med verktøy (`shortcuts` i brettet, satt opp med
 - Tegning: `build_loads_view.js` (canvas 2D, ~10 til 20 tegnekall per last, ingen nye shadere).
 
 - **Rutenett-modus (R72):** et byggested får `grid: { step, stars? }` (scenen: `grid: { step: <cm>, stars: { three, two } }`, videreført av `scene2level.mjs`) for å tillate modusen «Rutenett» (`grid_logic.js`). Rutenettet følger det første ankeret (u = anker + k·trinn, v = j·trinn), så velg trinnet slik at alle ankre ligger på rutenettet (Bygglab: gapet delt i fire). `grid.stars` er terskler for rutenett-bygg (kostnad = stavenes pris per lengde; knutepunkt er gratis).
+
+## Solid dekor og revisjon (R91)
+`node tools/solid_audit.mjs` går gjennom `LEVEL.decor` i alle brett og dømmer hver ting: **solid** (får boks), **dekket** (kollisjon innenfor 0,3 av midtpunktet, f.eks. skapknotter og veggpaneler), **flat** (tynnere enn 0,2: plater, speil, plakater, fuger, dører, tepper), **liten** og **høyt** (henger mer enn 3 enheter over underlaget). Verktøyet feiler hvis noe stort står igjen uten kollisjon; `test_solid_decor.mjs` kjører det. `walk_route` legger de solide dekorboksene til automatisk (`solidDecor: false` slår dem av).
+- **Gjort solid (11):** krydderglassene `krydder_1..3` i Kjøkken og Kjøkken ommøblert (hylla ved (24,30,-28)), dørkarmene `dor_gerikt_v/h` i Badet og Bad ommøblert, bokhyllas bakplate `bokhylle_bak` i Stuen.
+- **Bevisst ikke solid:** flate ting (dører, speil, plakater, tepper, fuger, komfyrplater, vannflaten, skuffefronter, TV-skjermen); dekket av veggen (skapknotter, håndklestang, veggpaneler); smale staver (flaggstengene i Bygglab, 0,32 brede, ligger midt i løypa); og høyt oppe (dusjhode og dusjstang, rullholder, håndtak på kjøleskap og komfyr, dørhåndtak, `dor_gerikt_o`, hyllekonsoll, TV og bokrygger i Stuen).
+- Gulvdetaljene (perler, blyanter, viskelær) er solide fra før (R37, R90); smuler, flekker og fuger er flate og skal forbli det.
