@@ -15,15 +15,16 @@ const CSS = `#privacy{position:fixed;inset:0;z-index:30;background:#101a2c;color
   .privnote button{background:none;border:0;padding:6px 0;color:#7cc4ff;font:800 12px system-ui;text-decoration:underline;min-height:32px}`;
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-export function createPrivacy({ T, logEv, doc = document }) {
+export function createPrivacy({ T, logEv, doc = document, stats = null }) {
   const st = doc.createElement('style'); st.textContent = CSS; doc.head.appendChild(st);
   const el = doc.createElement('div'); el.id = 'privacy'; el.className = 'hide'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Personvern'); doc.body.appendChild(el);
   const render = () => {
     el.innerHTML = `<div class="pvw"><button class="pvb" data-close="1">${esc(T('priv.back'))}</button><h2>${esc(T('priv.title'))}</h2><div class="pvi">${esc(T('priv.intro'))}</div>`
       + PRIV_SECTIONS.map((id) => `<div class="pvs" data-sec="${id}"><h3>${esc(T(`priv.${id}.h`))}</h3><p>${esc(T(`priv.${id}`))}</p></div>`).join('')
+      + (stats ? `<button class="pvb" data-stats="1" aria-pressed="${stats.get()}">${esc(T(stats.get() ? 'priv.stats.on' : 'priv.stats.off'))}</button>` : '')
       + `<button class="pvb" data-close="1">${esc(T('priv.back'))}</button></div>`;
   };
-  el.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) close(); });
+  el.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) close(); else if (stats && e.target.closest('[data-stats]')) { stats.set(!stats.get()); render(); } });
   function open(from) { render(); el.classList.remove('hide'); el.scrollTop = 0; logEv('personvern', `åpnet fra ${from || '?'}`); }
   function close() { el.classList.add('hide'); }
   // Linja under SEND-knappene: «Sendes til utvikleren …» + PERSONVERN-lenke. Returnerer elementet (skjules/vises av kalleren).
@@ -33,5 +34,6 @@ export function createPrivacy({ T, logEv, doc = document }) {
     n.querySelector('button').addEventListener('click', (e) => { e.stopPropagation(); open(from); });
     parent.appendChild(n); return n;
   }
-  return { open, close, note, el, isOpen: () => !el.classList.contains('hide') };
+  const sync = () => { if (!el.classList.contains('hide')) render(); };
+  return { open, close, note, sync, el, isOpen: () => !el.classList.contains('hide') };
 }

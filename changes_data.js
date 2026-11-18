@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r88-anonym-statistikk', version: '2.51', date: '2026-11-18', title: 'Anonym statistikk (kan slås av): hvor langt spillerne kommer, uten navn og posisjon.',
+    how: 'Åpne ⚙ og trykk PERSONVERN. Les avsnittet Anonym statistikk og prøv knappen nederst for å slå den av og på.', level: '', spot: null },
   { id: 'r87-personvern', version: '2.48', date: '2026-11-18', title: 'PERSONVERN: ærlig tekst om hva som lagres og sendes, og kortere enhetsstreng i rapporten.',
     how: 'Trykk ⚙ og så PERSONVERN øverst. Åpne ⚑: under SEND står «Sendes til utvikleren» med lenke til PERSONVERN.', level: '', spot: null },
   { id: 'r85-ytelse', version: '2.46', date: '2026-11-18', title: 'Ytelse: færre trekanter i figuren, mykere automatisk oppløsning og rombudsjett (testes på iPhone).',

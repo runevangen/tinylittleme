@@ -73,4 +73,17 @@ assert.ok(main.includes("addPrivNote($('qprivhost'), '⚑')"), 'lenke i ⚑');
 assert.ok(main.includes("fl('privnote', 'admin'"), 'innstilling');
 assert.ok(main.includes("logEv('personvern'") || fs.readFileSync('privacy_view.js', 'utf8').includes("logEv('personvern'"));
 assert.ok(fs.readFileSync('docs/TILBAKEMELDING.md', 'utf8').includes('Slette en testers data'), 'slettrutine i docs');
+// R88: teksten om anonym statistikk stemmer med koden (tillatte hendelser og felt)
+{
+  const { EVENTS, ALLOWED_DATA_FIELDS } = await import('./stats_logic.js');
+  const stx = fs.readFileSync('docs/STATISTIKK.md', 'utf8');
+  for (const lang of ['nb', 'en']) { const { T } = makeT(() => lang); assert.ok(T('priv.stats.on') !== 'priv.stats.on' && T('priv.stats.off') !== 'priv.stats.off', `${lang} knapper`); assert.ok(!FORBIDDEN_RE.test(T('priv.stats')), `${lang} ingen forbudte ord i statistikktekst`); }
+  const t = nb('priv.stats');
+  for (const w of ['tilfeldig id', 'versjon', 'skjermstørrelse', 'tid', 'poeng', 'tilbake', 'byggeforsøk', 'bilder per sekund', 'feilmeldinger', 'IP', 'Slå av']) assert.ok(t.includes(w), `statistikktekst nevner ${w}`);
+  assert.ok(!/tester-kode og/.test(t) || /uten tester-kode/.test(t), 'ikke koblet til tester-kode');
+  for (const n of Object.keys(EVENTS)) assert.ok(stx.includes('`' + n + '`'), `docs nevner ${n}`);
+  for (const f of ALLOWED_DATA_FIELDS) assert.ok(stx.includes('`' + f + '`'), `docs nevner feltet ${f}`);
+  assert.ok(!ALLOWED_DATA_FIELDS.some((f) => FORBIDDEN_RE.test(f) || /^(pos|x|y|z|kode|code|tekst|navn)$/.test(f)), 'ingen personfelt');
+  assert.ok(main.includes('createStatsNet') && idx.includes("'stats_logic', 'stats_net'"), 'hekter');
+}
 console.log('personvern-tester grønne');

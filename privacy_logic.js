@@ -1,6 +1,6 @@
 // R87: personvern. Ren logikk (ingen DOM) som testes i node. Teksten ligger i i18n.js (priv.*, nb og en); her ligger rekkefølgen,
 // lista over hva rapporten får inneholde, og enhetsstrengen uten identifiserende detaljer. Se docs/TILBAKEMELDING.md.
-export const PRIV_SECTIONS = ['saved', 'sent', 'contains', 'not', 'who', 'delete'];   // priv.<id>.h (overskrift) og priv.<id> (tekst)
+export const PRIV_SECTIONS = ['saved', 'sent', 'stats', 'contains', 'not', 'who', 'delete'];   // priv.<id>.h (overskrift) og priv.<id> (tekst)
 export const NOTE_KEY = 'tlm.privnote';   // satt når spilleren har sendt én gang (linja «Sendes til utvikleren» vises ikke mer)
 
 // Feltene buildReportInfo() i main.js får lage (og som teksten «hva det inneholder» dekker). Legges det til et felt, må det stå her OG i teksten.

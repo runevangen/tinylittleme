@@ -11,6 +11,8 @@ import { menuVisible, buttonLabel, uncheckedCount, parseGo, safePlacement, goUrl
 import { showFixes } from './fixes_view.js';
 import { shortDevice, noteWanted, NOTE_KEY } from './privacy_logic.js';   // R87: personvern (privacy_logic.js, privacy_view.js)
 import { createPrivacy } from './privacy_view.js';
+import { createStats, createRoomAgg, hasBackData, routeShare, fpsOf, screenClass, deviceClass, sendBlocked, STATS } from './stats_logic.js';   // R88: anonym statistikk (stats_logic.js, stats_net.js)
+import { createStatsNet } from './stats_net.js';
 import { CHANGES } from './changes_data.js';   // R83: NYTT-menyen (changes_data.js, changes_logic.js; visningen er den samme som Rettelser)
 import * as chg from './changes_logic.js';
 import { setDrawerCue, drawerCue, drawerSummary } from './drawers.js';
@@ -248,7 +250,8 @@ const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCen
 
 // ---------- hendelseslogg og FPS: brukes i testrapporten ----------
 const evLog = store.get('tlm.evlog', []);
-const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION, lv: levelLabel }); if (evLog.length > 120) evLog.shift(); };
+let statHook = null;   // R88: settes når statistikken er klar (logEv kan kalles før)
+const logEv = (type, detail = '') => { if (type === 'tilbake' && statHook) statHook.back(detail); evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION, lv: levelLabel }); if (evLog.length > 120) evLog.shift(); };
 // R86: ved feil under lagring (privat modus, full lagring) sies det én gang; spilleren får også en rød linje på hovedmenyen (saveWarn)
 let saveFailNoted = false;
 function noteSaveFail(k, e) { if (saveFailNoted) return; try { logEv('lagring', `FEIL ved skriving av ${k}: ${e}`); setTimeout(() => toast(sv(lang, 'sv.fail')), 300); saveFailNoted = true; } catch { /* clock/toast ikke klar ennå: prøver igjen ved neste feil */ } }
@@ -269,6 +272,29 @@ let autoQ = resQ === 'auto', qSteps = 0, basePr = 1, qToasted = false;
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
 const fpsRooms = (() => { const o = store.get('tlm.fpsrooms', {}); return o && typeof o === 'object' ? o : {}; })();   // R85: { rom: { n, sum } } på tvers av økter
 const fpsRoomsLine = () => { const r = Object.entries(fpsRooms).filter(([, v]) => v && v.n > 60).map(([k, v]) => `${k} ${(1000 * v.n / v.sum).toFixed(0)}`); return r.length ? ` · snitt per rom: ${r.join(', ')}` : ''; };
+// R88: anonym statistikk (bare tilfeldig id, versjon, enhetsklasse og spillhendelser; kan slås av i ⚙ → PERSONVERN). Se docs/STATISTIKK.md.
+let statsOn = store.get(STATS.onKey, true) !== false;
+const sts = createStats({ store, on: () => statsOn, blocked: () => sendBlocked({ cinema: CINE.on || document.body.classList.contains('cinema'), search: location.search }), version: () => VERSION });
+const stn = createStatsNet({ stats: sts, logEv });
+const roomAgg = createRoomAgg();
+const seg = { on: false, t0: 0, broken0: 0, perf0: { n: 0, sum: 0 } };   // pågående brettøkt for statistikken
+statHook = { back: (why) => roomAgg.back(why) };
+const statLv = () => levelId;
+function statsLevelStart() {
+  if (seg.on) return; seg.on = true; seg.t0 = clock; seg.broken0 = stats.broken; seg.perf0 = { n: perf.n, sum: perf.sum };
+  sts.track('level_start', statLv(), { diff: difficulty });
+}
+// Avslutter økten: sammendrag av tilbake/fall/knust og snitt-fps for rommet (ett per økt, ikke per bilde)
+function statsLevelEnd(kind, extra) {
+  if (!seg.on) return; seg.on = false;
+  if (kind === 'quit') { const g = LEVEL.goal, st0 = LEVEL.start; sts.track('level_quit', statLv(), { sek: Math.max(0, clock - seg.t0), andel: routeShare(st0, g, [player.x, player.y, player.z]) }); }
+  else if (kind === 'complete') sts.track('level_complete', statLv(), extra);
+  const bk = roomAgg.take(Math.max(0, stats.broken - seg.broken0)); if (hasBackData(bk)) sts.track('checkpoint_back', statLv(), bk);
+  const fps = fpsOf(perf.n - seg.perf0.n, perf.sum - seg.perf0.sum); if (fps) sts.track('fps_room', statLv(), { fps, res: renderer.getPixelRatio() });
+}
+sts.track('session_start', statLv(), { platform: deviceClass(platform.kind), screen: screenClass(innerWidth, innerHeight), diff: difficulty });
+addEventListener('pagehide', () => { statsLevelEnd('quit'); stn.flush('lukket', { unloading: true }); });
+addEventListener('error', (e) => { sts.track('js_error', statLv(), { msg: e?.message }); });
 addEventListener('pagehide', () => { store.set('tlm.evlog', evLog.slice(-120)); if (perf.n > 30) { const r = fpsRooms[levelId] || { n: 0, sum: 0 }; r.n = Math.min(r.n + perf.n, 20000); r.sum = Math.min(r.sum + perf.sum, 20000 * 40); fpsRooms[levelId] = r; store.set('tlm.fpsrooms', fpsRooms); perf.n = 0; perf.sum = 0; } });
 
 // lydtekst: viser korte tekster for viktige lyder (for hørselshemmede, og når lyden er av). Skritt og pust er utelatt.
@@ -1147,7 +1173,7 @@ const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, h
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 if (hasGates(LEVEL)) { const gb = gatesBudget(LEVEL); logEv('gåte', `${gateViews.count} deler, ${gb.calls} tegnekall, ${gb.tris} trekanter`); }
-const bld = createBuildMode({ onMenu: () => quitToMenu('bygg'), menuLabel: () => dft(lang, 'df.menu'), scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getLabFree: () => labFree, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getGrid: () => buildGrid, getGridHint: () => DIF.gridHint, getGridGuide: () => gridGuide, getGridMax: () => buildGridMax, getGridStress: () => buildGridStress, getGridPeak: () => buildGridPeak, getGridDeck: () => buildGridDeck, getGridGamma: () => buildGridGamma, getGridSlow: () => buildGridSlow, getStage: () => ({ on: gridStage, lock: gridLock, massK: gridMassK, budgetK: gridBudgetK }), getPlayGrid: () => gridPlay, getPlayLock: () => gridPlayLock, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
+const bld = createBuildMode({ onMenu: () => quitToMenu('bygg'), onStat: (name, data) => sts.track(name, levelId, data), menuLabel: () => dft(lang, 'df.menu'), scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getLabFree: () => labFree, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getGrid: () => buildGrid, getGridHint: () => DIF.gridHint, getGridGuide: () => gridGuide, getGridMax: () => buildGridMax, getGridStress: () => buildGridStress, getGridPeak: () => buildGridPeak, getGridDeck: () => buildGridDeck, getGridGamma: () => buildGridGamma, getGridSlow: () => buildGridSlow, getStage: () => ({ on: gridStage, lock: gridLock, massK: gridMassK, budgetK: gridBudgetK }), getPlayGrid: () => gridPlay, getPlayLock: () => gridPlayLock, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
 
 // Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
 const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
@@ -1862,6 +1888,7 @@ const SETTINGS = [
   rg('floodshake', 'admin', 'Stigende vann: kameraskjelv før du drukner (0 = av)', 1, 0, 2, 0.1, () => floodShakeK, kp('tlm.floodshake', (v) => { floodShakeK = v; }), { digits: 1 }),
   rg('guidestall', 'admin', 'Veiledning: sekunder uten framdrift før neste flate utheves', 45, 15, 120, 1, () => Math.round(GUIDE.stallMs / 1000), kp('tlm.guidestall', (v) => { GUIDE.stallMs = v * 1000; }), { digits: 0 }),
   fl('goalarrow', 'hjelp', 'Pila og kompasset peker mot aktivt delmål', true, () => goalArrowOn, kp('tlm.goalarrow', (v) => { goalArrowOn = v; logEv('delmål', v ? 'pil følger delmål' : 'pil følger ruta'); })),
+  fl('stats', 'test', 'Anonym statistikk (R88): sender hvor langt spillere kommer (tilfeldig id, ingen navn eller posisjon). Se PERSONVERN', true, () => statsOn, kp(STATS.onKey, (v) => { statsOn = v; if (!v) sts.clear(); syncStatsBtn(); logEv('statistikk', v ? 'på' : 'av'); })),
   fl('privnote', 'admin', 'Personvern (R87): vis linja «Sendes til utvikleren. Ikke skriv navn …» med lenke til PERSONVERN til du har sendt første gang', true, () => privNoteOn, kp('tlm.privnotes', (v) => { privNoteOn = v; syncPrivNotes(); logEv('personvern', v ? 'sendelinje på' : 'sendelinje av'); })),
   fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; logEv('delmål', v ? 'lås på' : 'lås av'); })),
   fl('rewards', 'spill', 'Tilbehør på figuren (hatter, skjerf, sekk du har samlet)', true, () => rewardsOn, kp('tlm.rewards', (v) => { rewardsOn = v; refreshAccessories(); logEv('belønning', v ? 'tilbehør på' : 'tilbehør av'); })),
@@ -2082,7 +2109,8 @@ const fmtVal = (d, v) => (d.pct ? `${Math.round(v * 100)} %` : typeof v === 'num
 // ---------- testrapport ----------
 // R87: personvern: PERSONVERN-siden og linja «Sendes til utvikleren» (vises til første sending er gjort)
 let privNoteOn = store.get('tlm.privnotes', true);
-const priv = createPrivacy({ T, logEv });
+const priv = createPrivacy({ T, logEv, stats: { get: () => statsOn, set: (v) => { statsOn = v; if (!v) sts.clear(); store.set(STATS.onKey, v); logEv('statistikk', v ? 'på' : 'av'); const c = document.querySelector('[data-s="stats"]'); if (c) c.checked = v; } } });
+const syncStatsBtn = () => priv.sync?.();
 const syncPrivNotes = () => document.querySelectorAll('.privnote').forEach((n) => { n.style.display = noteWanted(store, privNoteOn) ? '' : 'none'; });
 const addPrivNote = (host, from) => { if (host) { priv.note(host, from); syncPrivNotes(); } };
 const marks = [];
@@ -2573,7 +2601,7 @@ function update(dt) {
   if (!won && goalTotal(LEVEL) && goalsOn && goalLockOn && !goalsOpen(LEVEL) && mode === 'play' && !stats.flew && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     if (performance.now() > goalLockMsg) { goalLockMsg = performance.now() + 4000; logEv('mål låst', lockingGoals(LEVEL).map((q) => q.id).join(',')); tip(T('goal.locked', { name: goalLabel(lockingGoals(LEVEL)[0], lang) })); }
   } else if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
-    won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
+    won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); if (!stats.flew) statsLevelEnd('complete', { sek: clock - seg.t0, poeng: points(), merke: DIFFS[runDiffMin] }); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
     let d, rw = null, bdg = null;
     { const cl = store.get('tlm.cleared', {}), prevBest = cl[levelId] || 0, n = levelInfo?.n; if (!stats.flew) { cl[levelId] = Math.max(prevBest, points()); store.set('tlm.cleared', cl); store.set('tlm.done', false); const runs = store.get('tlm.runs', {}); runs[levelId] = { t: clock, ants: stats.squashed || 0, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL) }; store.set('tlm.runs', runs);
         rw = recordRun(store, { levelId, n, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL), t: clock, flew: stats.flew }); logEv('belønning', `beste ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}${rw.unlocked ? ', låste opp ' + rw.unlocked.id : ''}${rw.newBestTime ? ', ny beste tid' : ''}`); if (rw.unlocked) refreshAccessories(); }       // husk hvilke nivåer som er klart (beste poeng)
@@ -3012,7 +3040,7 @@ const hasProgress = () => !gameDone && (resumed || clock > 4 || levelId !== 'bad
 const svView = createStorageView({ $, lang: () => lang, logEv });   // R86: bekreftelse før noe slettes
 const saveWarn = () => (disk.status().failures > 0 || !disk.status().available ? `<p class="tag" id="mSaveWarn" style="color:#ffb4a8">${sv(lang, 'sv.fail')}</p>` : '');
 function clearAllProgress() { disk.keys('tlm.').filter((k) => isNewGameKey(k) && k !== 'tlm.cleared').forEach((k) => disk.remove(k)); }   // R86: «Nytt spill» (tlm.cleared settes tom av kalleren)
-function hideStart() { menuOpen = false; $('start').classList.add('hide'); $('start').classList.remove('dfl'); document.body.classList.remove('instart'); }
+function hideStart() { statsLevelStart(); menuOpen = false; $('start').classList.add('hide'); $('start').classList.remove('dfl'); document.body.classList.remove('instart'); }
 // R69: vanskelighet. Bare hjelpen endres (tabellen i difficulty.js). carry: ta fremgangen med til det nye nivåets nøkkel (endring midt i et brett).
 const dv = createDifficultyView({ $, lang: () => lang, logEv });
 function applyDifficulty(v, { carry = false, why = 'valgt' } = {}) {
@@ -3043,7 +3071,7 @@ function helpVisibleCount() {
 const badgeLine = () => { const t = badgeTotals(store, LEVELS.filter((l) => l.n).map((l) => l.id)); return t.total ? `🥉${t.beginner} 🥈${t.medium} 🥇${t.expert}` : ''; };
 // «Avslutt til meny»: lagrer og går til startskjermen. Virker fra spill, bygg, oversikt, boss-kamp og målskjerm.
 function quitToMenu(from = 'meny') {
-  logEv('avslutt til meny', from);
+  logEv('avslutt til meny', from); statsLevelEnd('quit');
   if (bld.active) bld.close('meny');
   if (ov.active) ov.skip();
   if (showMe.phase !== 'idle') skipShowMe(showMe);
@@ -3153,7 +3181,7 @@ function showStart(o = {}) {
     } else { logEv('rettelser', `ankom ${levelId}: ingen trygg plass ved stedet, vanlig start`); setTimeout(() => toast('Fant ikke stedet, så du starter vanlig'), 1200); }
   }
 }
-if (startWanted) showStart(); else showIntro();
+if (startWanted) showStart(); else { statsLevelStart(); showIntro(); }
 
 applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
