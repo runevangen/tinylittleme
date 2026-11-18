@@ -39,7 +39,7 @@ export const colRow = (site, p) => { const a = gridAnchors(site), st = gridStep(
 
 export function createGridUI(ctx) {
   const { root, T, toast, logEv, buzz, audio, onChange } = ctx;   // ctx.store, ctx.guide (R75)
-  let mat = 'wood', selNode = null, selRod = null, gd = null, cursor = null, tHint = 0;
+  let mat = 'wood', selNode = null, selRod = null, gd = null, cursor = null, tHint = 0, dots = true;
 
   const B = () => ctx.getB(), site = () => ctx.site();
   const enabledHere = () => !!site() && siteHasGrid(site()) && ctx.getOn();
@@ -168,7 +168,7 @@ export function createGridUI(ctx) {
     const S = site(), Gd = G(), sc = scale();
     // rutenettpunkter (små prikker)
     g2.fillStyle = 'rgba(255,255,255,.28)'; g2.beginPath();
-    for (const p of latticePoints(S)) { const q = sx(p.u, p.v); g2.moveTo(q.x + 2.5, q.y); g2.arc(q.x, q.y, 2.5, 0, 7); }
+    if (dots) for (const p of latticePoints(S)) { const q = sx(p.u, p.v); g2.moveTo(q.x + 2.5, q.y); g2.arc(q.x, q.y, 2.5, 0, 7); }
     g2.fill();
     // staver
     const p2 = new Map(Gd.nodes.map((n) => [n.id, posOf(n)]));
@@ -211,9 +211,11 @@ export function createGridUI(ctx) {
   }
   function reset() { clearSel(); gd = null; cursor = null; }
   const cancel = () => { gd = null; };
+  const select = (nodeId = null, rodId = null) => { selNode = nodeId; selRod = rodId; };   // R92: den forenklede byggeskjermen styrer markeringen selv
+  const setDots = (v) => { dots = !!v; };
   const tap = (x, y) => { const n = pickNode(x, y); if (n) tapNode(n.id); else tapPoint(x, y); };   // samme veivalg som en ekte berøring (til tester)
   return {
-    on, enabledHere, down, move, up, release, tapPoint, del, draw, hint, sync, setMat, toggleMode, restoreMode, modeTip, example, simSync, setSpeed, get speed() { return speed; }, reset, clearSel, cancel,
+    on, enabledHere, down, move, up, release, tapPoint, del, draw, hint, sync, setMat, toggleMode, restoreMode, modeTip, example, simSync, setSpeed, get speed() { return speed; }, reset, clearSel, cancel, select, setDots, get dots() { return dots; }, get moving() { return !!gd && gd.moved; },
     get mat() { return mat; }, get selNode() { return selNode; }, get selRod() { return selRod; },
     tapNode: (id) => tapNode(id), pickNode, tap,
   };

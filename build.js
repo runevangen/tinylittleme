@@ -30,6 +30,8 @@ import { createGridUI, gridCss, gridMarkup } from './grid_view.js';   // R72: ru
 import { GRID_PX } from './grid_view.js';
 import { ensurePlayGrid, isPlaySite, playLocked, firstPassed, playStore, codeMode, PLAY } from './grid_play.js';   // R82: rutenett i de vanlige byggebrettene
 import { createGridGuide, guideMarkup } from './grid_guide_view.js';   // R75: «Så slik»-guide for rutenett
+import { createBuildUx, buxCss, buxMarkup, BUX_TOP, BUX_BOT, BUX_TOP_LAND, BUX_BOT_LAND } from './buildux_view.js';   // R92: forenklet byggeskjerm (prototype bak ⚙-valget buildux)
+import { KEY_MODE, KEY_TIP } from './grid_guide_logic.js';
 import { createPeaks, loadsNow, peakSummary, stressCss as gStressCss, colorCss as gColorCss, widthK as gWidthK, isDanger as gDanger, shown as gShown, pct as gPct } from './grid_stress.js';   // R73: farge etter belastning, «største belastning»
 import { stageScaled, stageSite, hasStage, overBudget, stagesOf, stageLocked, stageLockText, stageLines, passRead, passRecord, passClear } from './grid_stage.js';   // R74: rutenett-oppdrag: mål, budsjett, tung last, låsing
 import { gridAnchors, gridStep, isGrid, simDef as gridSimDef, gUndo, gReset, wipe as gridWipe, exportAny, importAny, gApplyImport, gridSave, gridLoad, gridStats } from './grid_logic.js';
@@ -87,13 +89,13 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true }) {
+export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
   if (!isLab(LEVEL)) { const pg = ensurePlayGrid(sites); if (pg.length) logEv('bygg', `rutenett åpent i vanlige brett: ${pg.join(', ')}`); }   // R82: steder med to ankre og dekk får MODUS-knappen (brettfilene er uendret)
   const labSites = isLab(LEVEL) ? labSitesOf(LEVEL) : [], lab = labSites.length ? { reached: new Set(), moved: false, home: null } : null;   // R67: Bygglab (bygglab_logic.js): stedene på rad, ◀ ▶, ubegrenset mengde, målflagg
-  const st = document.createElement('style'); st.textContent = css + gridCss() + (lab ? labCss() : ''); document.head.appendChild(st);
+  const st = document.createElement('style'); st.textContent = css + gridCss() + buxCss() + (lab ? labCss() : ''); document.head.appendChild(st);
   const types = { ...partTypes(LEVEL), ...bonusTypes() };   // R47: ekstradelene (smulebudsjett) har egne id-er og bor i samme tabell
   const mem = new Map(), st0 = store || { get: (k, d) => (mem.has(k) ? mem.get(k) : d), set: (k, v) => mem.set(k, v) };   // uten lagring (tester) holdes alt i minnet
   const bonusOpen = () => (getBonus() ? [...new Set([...unlockedBonus(getCrumbs(), getBonusStep()).map((b) => b.id), ...getBonusUnlocks(st0, levelId, Object.keys(bonusTypes()))])] : []);
@@ -101,7 +103,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
   const builds = new Map();                  // stedets id -> byggetilstand
   const labOpts = () => ({ unlimited: getLabFree() || allParts() });
   const getB = (site) => { let b = builds.get(site.id); if (!b) { b = B0(site); builds.set(site.id, b); if (lab) labFill(b, types, labOpts()); } return b; };
-  const TOPPX = () => (innerHeight <= 520 ? 100 : 130) + (lab ? (innerHeight <= 520 ? LAB_TOP_LAND : LAB_TOP) : 0), BOTPX = () => (grid.on() ? (innerHeight <= 520 ? 96 : 124) : (innerHeight <= 520 ? 110 : 160)) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
+  const TOPPX = () => bux.on() ? (innerHeight <= 520 ? BUX_TOP_LAND : BUX_TOP) : (innerHeight <= 520 ? 100 : 130) + (lab ? (innerHeight <= 520 ? LAB_TOP_LAND : LAB_TOP) : 0), BOTPX = () => bux.on() ? (innerHeight <= 520 ? BUX_BOT_LAND : BUX_BOT) : (grid.on() ? (innerHeight <= 520 ? 96 : 124) : (innerHeight <= 520 ? 110 : 160)) + (active && loadList().length > 1 ? (innerHeight <= 520 ? 40 : 48) : 0) + (active ? (innerHeight <= 520 ? 40 : 46) : 0);   // R50: delingsrad over lastknappene
   let active = null, view = null, sel = null, selLink = null, tool = null, linkFrom = null, drag = null, W = 0, H = 0, hint = '';
   let lastTap = null, zoomMsg = '', zoomMsgT = 0;   // R44: dobbelttrykk og zoom-melding
   let gPeaks = null, gSum = null, gSpeed = 'play';   // R73: topp per stav, «største belastning» etter prøven, tempo (SLOW/PAUSE)
@@ -175,19 +177,34 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
   // ---- DOM ----
   const root = document.createElement('div'); root.id = 'bld';
   root.innerHTML = `<canvas></canvas><div class="bt top"><button data-a="menu"></button><button data-a="back"></button><button data-a="undo"></button><button data-a="reset"></button><button data-a="try" class="go"></button></div>
-  ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-a="mode" class="bmode"></button><button data-a="gguide" class="bguide"></button><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>${gridMarkup()}${guideMarkup()}`;   // R72: modusknapp og materialvalg (rutenett)
+  ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-a="mode" class="bmode"></button><button data-a="gguide" class="bguide"></button><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>${gridMarkup()}${guideMarkup()}${buxMarkup()}`;   // R72: modusknapp og materialvalg (rutenett)
   if (lab) root.classList.add('lab');
   document.body.appendChild(root);
   const cv = root.querySelector('canvas'), g2 = cv.getContext('2d'), tray = root.querySelector('.tray'), loadsEl = root.querySelector('.loads'), hintEl = root.querySelector('.hint'), modal = root.querySelector('.modal'), mTitle = modal.querySelector('.mt'), mText = modal.querySelector('textarea'), mList = modal.querySelector('.list'), sBtn = (k) => root.querySelector(`[data-s="${k}"]`);
   const btn = (a) => root.querySelector(`[data-a="${a}"]`);
   const enterBtn = document.createElement('button'); enterBtn.id = 'btnBuild'; document.body.appendChild(enterBtn);
   const dpr = () => Math.min(2, window.devicePixelRatio || 1);
-  const gguide = createGridGuide({ root, T, store: gstore, logEv, getOn: () => getGridGuide(), getHint: () => getGridHint(), onClose: () => grid.sync() });   // R75
+  const gguide = createGridGuide({ root, T, store: gstore, logEv, getOn: () => getGridGuide() && !bux.wanted(), getHint: () => getGridHint(), onClose: () => grid.sync() });   // R75 (R92: den forenklede skjermen har egen hånd-animasjon)
   const grid = createGridUI({   // R72: rutenett-bygging (grid_view.js, grid_logic.js)
     root, T, toast, logEv, buzz, audio, onChange, store: gstore, guide: gguide, getGuideOn: () => getGridGuide(), getB: () => (active ? getB(active) : null), site: () => active, view: () => view, toWorld: (x, y) => toWorld(view, W, H, x, y), loc: (e) => loc(e), now: () => tNow, botY: () => H - BOTPX(), isSim: () => !!sim, trayRender: () => trayRender(),
     getOn: () => getGrid() && (!playHere() || getPlayGrid()), getHint: () => getGridHint(), getMaxLen: () => getGridMax(), getDeck: () => getGridDeck() && !stageHere() && !playHere(), stageOn: () => stageHere() || playHere(), locked: () => stageLockedFor(active) || playLockedFor(active), lockText: () => (stageLockedFor(active) ? stageLockText(sites, active.id, T) : T('gplay.locked')),
     startPan: (e, x, y) => { sel = null; gest = { kind: 'pan', x, y, cu: view.cu, cv: view.cv, t: e.timeStamp || performance.now(), moved: false }; try { cv.setPointerCapture(e.pointerId); } catch { /* ok */ } },
   });
+  const buxCtx = {   // R92: forenklet byggeskjerm (buildux_view.js, buildux_logic.js): bruker rutenett-koden over, men egne knapper og direkte bygging
+    root, T, toast, logEv, buzz, audio, grid, levelId, store: st0, onChange, getOn: () => getBuildUx(), getHint: () => getGridHint(), getGuideOn: () => getGridGuide(), getDbl: () => getDbl(),
+    site: () => active, getB: () => (active ? getB(active) : null), view: () => view, toWorld: (x, y) => toWorld(view, W, H, x, y), loc: (e) => loc(e), isSim: () => !!sim, width: () => W, topY: () => TOPPX(), trayRender: () => trayRender(),
+    startPan: (e, x, y) => { sel = null; gest = { kind: 'pan', x, y, cu: view.cu, cv: view.cv, t: e.timeStamp || performance.now(), moved: false }; try { cv.setPointerCapture(e.pointerId); } catch { /* ok */ } },
+    fit: () => zoomAct.fit(), speed: (k) => { if (active && sim && grid.on() && !simDone) gSpeed = grid.setSpeed(k); },
+    undo: () => { if (active && gUndo(getB(active))) { grid.clearSel(); trayRender(); onChange?.(); } },
+    act: { back: () => act.back(), undo: () => act.undo(), try: () => act.try(), menu: () => act.menu(), reset: () => act.reset() },
+    info: () => { const b = getB(active), r = starsFor(active, b.placed, b.links), g = stageNow(), best = getBuildStars(st0, levelId)[active.id], li = lab ? labInfo() : null; return { sim: !!sim, done: !!sim && simDone, cost: r.cost, stars: r.stars, on: gridStats(b).rods > 0, best: best ? best.stars : 0, name: lab ? T(labNameKey(active)) : (active.label || active.id), nOf: li ? { n: li.n, of: li.of } : null, lab: !!lab, stageBudget: g ? g.budget : null }; },
+  };
+  const bux = createBuildUx(buxCtx);
+  function buxEnter() {   // R92: stedet får den forenklede skjermen: rutenett er eneste modus der (huskt MODUS-valg og MODUS-hintet røres ikke)
+    if (!active || !bux.wanted() || grid.on() || !grid.enabledHere() || stageLockedFor(active) || playLockedFor(active)) { bux.layout(); return false; }
+    const m0 = gstore.get(KEY_MODE, 'classic'), t0 = gstore.get(KEY_TIP, 0), ok = grid.toggleMode('buildux'); gstore.set(KEY_MODE, m0); gstore.set(KEY_TIP, t0);
+    if (ok) view = fitNow(); labels(); bux.layout(); return ok;
+  }
   function labels() {
     btn('menu').textContent = T('build.menu'); btn('menu').setAttribute?.('aria-label', menuLabel()); btn('back').textContent = T('build.back'); btn('undo').textContent = T('build.undo'); btn('reset').textContent = T('build.reset'); btn('try').textContent = T('build.try');
     btn('snap').textContent = T(getSnap() ? 'build.snapOn' : 'build.snapOff'); btn('snap').classList.toggle('on', getSnap()); btn('del').textContent = T('build.del');
@@ -246,7 +263,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
 
   // ---- tegning ----
   function draw() {
-    if (!active) return; size(); const d = dpr(), B = getB(active), S = active;
+    if (!active) return; size(); const d = dpr(), B = getB(active), S = active; bux.frame();
     g2.setTransform(d, 0, 0, d, 0, 0); g2.clearRect(0, 0, W, H);
     const sx = (u, v) => toScreen(view, W, H, u, v);
     // rutenett
@@ -271,8 +288,8 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
     for (const an of (isGrid(B) ? gridAnchors(S) : siteAnchors(S))) { const p = sx(an.u, an.v); g2.beginPath(); g2.arc(p.x, p.y, 7, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); g2.strokeStyle = '#0b1020'; g2.lineWidth = 2; g2.stroke(); }
     if (sim) { drawSim(S, sx); drawBudget(B); return; }
     if (grid.on()) {   // R72: rutenett-modus: prikker, knuter og staver i stedet for deler fra brettet
-      grid.draw(sx, tNow, g2); drawBudget(B);
-      hintEl.textContent = (zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || grid.hint();
+      grid.draw(sx, tNow, g2); if (bux.on()) bux.draw(sx, tNow, g2); else drawBudget(B);
+      hintEl.textContent = (zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || (bux.on() ? bux.hint() : grid.hint());
       btn('del').disabled = !(grid.selNode || grid.selRod); btn('undo').disabled = !B.history.length; btn('reset').disabled = !gridStats(B).rods; return;
     }
     // deler
@@ -329,6 +346,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
     for (const s of h.slender) { const q = sx(s.u, s.v); g2.font = '800 12px system-ui'; g2.textAlign = 'center'; const t = '⚠ ' + s.blocks; const w = g2.measureText(t).width + 10; g2.fillStyle = 'rgba(14,20,36,.85)'; g2.fillRect(q.x - w / 2, q.y - 22, w, 18); g2.fillStyle = '#ffa940'; g2.fillText(t, q.x, q.y - 9); g2.textAlign = 'start'; }
   }
   function drawBudget(B) {
+    if (bux.on()) return;   // R92: budsjettlinjen ligger i DOM-skjermen
     capUpdate(B); const gstate = stageState(B);
     if (!gstate && !getBudget() && !getBonus() && !capOn() && !getTruss()) return;
     const lines = [];
@@ -440,9 +458,10 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
   }
   const onCanvasDown = (e) => {
     if (!active) return; e.preventDefault(); const { x, y } = loc(e), B = getB(active); ptrs.set(e.pointerId, { x, y });
-    if (ptrs.size === 2) { drag = drag && drag.fromTray ? drag : null; grid.cancel(); startGesture(); return; }
+    if (ptrs.size === 2) { drag = drag && drag.fromTray ? drag : null; grid.cancel(); bux.cancel(); startGesture(); return; }
     const w = toWorld(view, W, H, x, y), hit = topHit(B, w.u, w.v, pickPad(view.scale));
     if (sim) { ptrs.delete(e.pointerId); return; }
+    if (bux.on()) { bux.down(e, x, y); return; }   // R92
     if (grid.on()) { grid.down(e, x, y); return; }   // R72: rutenett-modus tolker trykket selv (knute, stav, flytt eller panorering)
     const cur = { t: e.timeStamp || performance.now(), x, y };
     if (getDbl() && !tool && !drag && isDoubleTap(lastTap, cur)) { lastTap = null; ptrs.delete(e.pointerId); setView(dblTapView(view, fitNow(), W, H, x, y), 'dobbelttrykk'); return; }   // R44
@@ -490,6 +509,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
       if (part && gest.rot != null) { const da = a - gest.a; if (Math.abs(da) > 0.12 || gest.twisted) { if (!gest.twisted) { gest.twisted = true; gest.hist = true; } part.rot = twistRot(gest.rot, gest.a, a); } }
       return;
     }
+    if (bux.on() && bux.move(e)) return;
     if (grid.on() && grid.move(e)) return;
     if (drag && e.pointerId === drag.pid) {
       const r = loc(e), w = toWorld(view, W, H, r.x, r.y); drag.x = r.x; drag.y = r.y; drag.part.u = w.u + drag.ox; drag.part.v = w.v + drag.oy;
@@ -499,6 +519,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
   });
   function up(e) {
     if (!active) return; ptrs.delete(e.pointerId); syncSnap(getB(active));
+    if (bux.on() && bux.up(e)) return;
     if (grid.on() && grid.up(e)) return;
     if (gest?.kind === 'two' && ptrs.size < 2) {
       if (gest.twisted) { const B = getB(active), p = B.placed.find((z) => z.id === sel); if (p) { const r = p.rot; p.rot = gest.rot; place(B, p.id, p.u, p.v, r); logEv('bygg', `vri ${p.id}`); onChange?.(); } }
@@ -516,7 +537,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
       }
       drag = null; trayRender();
     }
-    if (ptrs.size === 0 && gest?.kind === 'pan') { if (grid.on() && !sim) { if (!gest.moved) grid.tapPoint(gest.x, gest.y); grid.release(); } else if (!gest.moved && getDbl()) lastTap = { t: e.timeStamp || performance.now(), x: gest.x, y: gest.y }; gest = null; }
+    if (ptrs.size === 0 && gest?.kind === 'pan') { if (bux.on() && !sim) { if (!gest.moved) bux.tap(gest.x, gest.y, e.timeStamp || performance.now()); grid.release(); } else if (grid.on() && !sim) { if (!gest.moved) grid.tapPoint(gest.x, gest.y); grid.release(); } else if (!gest.moved && getDbl()) lastTap = { t: e.timeStamp || performance.now(), x: gest.x, y: gest.y }; gest = null; }
   }
   addEventListener('pointerup', up); addEventListener('pointercancel', up);
   cv.addEventListener('wheel', (e) => { if (!active) return; e.preventDefault(); const r = loc(e); view = zoomAbout(view, W, H, r.x, r.y, view.scale * (e.deltaY < 0 ? 1.12 : 1 / 1.12)); }, { passive: false });
@@ -536,7 +557,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
     if (committed.has(active.id) && committed.get(active.id) !== sigOf(B)) { uncommitWorld(active, 'endret uten ny prøve'); solved.delete(active.id); }
     closeModal(); tool = null; linkFrom = null; selLink = null; sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; grid.reset();
     active = next; getB(next).snap = getSnap(); size(); view = fitNow(); hint = ''; lab.moved = true;
-    labels(); trayRender(); const i = labInfo(); logEv('bygglab', `sted ${i.n}/${i.of} (${i.key})`); onChange?.(); return true;
+    bux.reset(); buxEnter(); labels(); trayRender(); const i = labInfo(); logEv('bygglab', `sted ${i.n}/${i.of} (${i.key})`); onChange?.(); return true;
   }
   function labReset(s, why) {
     const b = getB(s), had = !!(b.placed.length || b.links.length || committed.has(s.id) || solved.has(s.id) || lab.reached.has(s.id) || passedL.has(s.id) || recs.has(s.id));
@@ -579,7 +600,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
     const B = getB(active); if (!B.placed.length) { toast(T('build.tryEmpty')); return false; }
     sim = createSim(isGrid(B) ? gridSimDef(B) : { site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(stageNow() ? { massK: stageNow().massK } : {}) });
     simLoad = curLoad(); winOver = false; loadMore = null; replaying = false; winSolved = false; { const gc = getGhost() ? ghostChoice(recs.get(active.id), sim.pose()) : { rec: null, why: 'av' }; ghostRec = gc.rec; if (gc.why === 'endret') logEv('bygg', 'spøkelse skjult: delene er endret siden forrige prøve'); } recorder = createRecorder(sim, { load: simLoad }); simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; simHelp = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
-    gPeaks = isGrid(B) ? createPeaks() : null; gSum = null; gSpeed = 'play'; grid.simSync('play', false);
+    gPeaks = isGrid(B) ? createPeaks() : null; gSum = null; gSpeed = 'play'; grid.simSync('play', false); bux.onTry();
     root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}, modus ${isGrid(B) ? 'rutenett' : 'klassisk'}${ghostRec ? ', med spøkelse' : ''}`); return true;
   }
   const loadThe = (id) => T('build.loadThe.' + id);
@@ -634,7 +655,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
         else if (e.type === 'splash') audio?.bsplash?.();
         else if (e.type === 'win') { audio?.win?.(); buzz?.([30, 40, 30]); if (!replaying) { winRes = starsFor(active, getB(active).placed, getB(active).links); const gst = stageNow(); winOver = overBudget(gst, winRes.cost); const r = winOver ? { passed: passedOf(active), solved: false, left: [] } : afterWin(lsite(), passedOf(active), simLoad); if (winOver) logEv('bygg', `oppdrag: holdt, men over budsjett (${winRes.cost} av ${gst.budget}) ${active.id}`); else { passedL.set(active.id, { sig: sigOf(getB(active)), ids: r.passed }); logEv('bygg', `last ${simLoad} bestått (${r.passed.length}/${requiredLoads(lsite()).length || 1})`); } winSolved = !replaying && r.solved; if (!replaying && r.solved) { const rec = recordBuildStars(st0, levelId, active.id, winRes); starsCache = null; logEv('bygg', `stjerner ${winRes.stars} (kostnad ${winRes.cost}, ${winRes.parts} deler, modus ${isGrid(getB(active)) ? 'rutenett' : 'klassisk'}) ${active.id}${rec.first ? ', første gang' : rec.improved ? ', ny rekord' : ''}`); solved.add(active.id); if (gst) stagePass(gst, winRes); commitWorld(active, 'prøve klarte det'); onSolved(active.id); } else if (!replaying && !winOver) loadMore = nextLoad(lsite(), r.passed); } for (let i = 0; i < 46; i++) confetti.push({ u: e.u + (i % 9 - 4) * 0.3, v: e.v + 1 + (i % 5) * 0.2, vx: ((i * 37) % 13 - 6) * 0.4, vy: 5 + (i * 17) % 7, c: ['#ffd23f', '#3df0b0', '#ff6a5a', '#6ab8ff'][i % 4] }); }
       }
-      if (sim.state.state !== 'run') { simDone = true; if (recorder) { recs.set(active.id, recorder.finish(sim.state)); logEv('bygg', `opptak lagret: ${recorder.rec.frames.length} steg`); recorder = null; if (winSolved) submitBest(); } shareSync(); if (!replaying) { const rs = starsFor(active, getB(active).placed, getB(active).links); onStat('build_try', { sted: active.id, modus: isGrid(getB(active)) ? 'rutenett' : 'klassisk', resultat: sim.state.state === 'won' ? 'vant' : 'tapte', kostnad: rs.cost, stjerner: rs.stars, deler: rs.parts }); } simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; simHelp = sim.state.state === 'lost' && getTruss() ? helpOf(getB(active)) : null; if (!simWhy && simHelp?.joints.length) { const j = simHelp.joints[0]; simWhy = { key: 'build.why.floppy', kind: 'floppy', id: j.id, u: j.u, v: j.v, t: sim.t }; } if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); peakFinish(); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(simText()); onChange?.(); }
+      if (sim.state.state !== 'run') { simDone = true; if (!replaying) bux.onResult(sim.state.state === 'won'); if (recorder) { recs.set(active.id, recorder.finish(sim.state)); logEv('bygg', `opptak lagret: ${recorder.rec.frames.length} steg`); recorder = null; if (winSolved) submitBest(); } shareSync(); if (!replaying) { const rs = starsFor(active, getB(active).placed, getB(active).links); onStat('build_try', { sted: active.id, modus: isGrid(getB(active)) ? 'rutenett' : 'klassisk', resultat: sim.state.state === 'won' ? 'vant' : 'tapte', kostnad: rs.cost, stjerner: rs.stars, deler: rs.parts }); } simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; simHelp = sim.state.state === 'lost' && getTruss() ? helpOf(getB(active)) : null; if (!simWhy && simHelp?.joints.length) { const j = simHelp.joints[0]; simWhy = { key: 'build.why.floppy', kind: 'floppy', id: j.id, u: j.u, v: j.v, t: sim.t }; } if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); peakFinish(); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(simText()); onChange?.(); }
     }
     for (const q of confetti) { q.u += q.vx * dt; q.v += q.vy * dt; q.vy -= 14 * dt; }
     confetti = confetti.filter((q) => q.v > -8);
@@ -714,6 +735,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
     sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; grid.reset(); gguide.reset(); size(); view = fitNow(); hint = '';
     document.body.classList.add('building'); labels(); trayRender();
     if (grid.restoreMode()) { view = fitNow(); labels(); }   // R75: sist valgte modus huskes
+    bux.reset(); buxEnter();   // R92
     logEv('bygg', `inn ${s.id}: ${B.have.length} deler, ${B.placed.length} plassert`);
     return true;
   }
@@ -773,6 +795,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'), resetBuild: () => !!active && act.reset(),   // R74: til tester
     stage: { get now() { return stageNow(); }, locked: (id) => stageLockedFor(sites.find((q) => q.id === id)), get passed() { return [...gPass()]; }, get over() { return winOver; }, lines: () => (active && stageState(getB(active)) ? stageLines(stageState(getB(active)), T) : []), get state() { return active ? stageState(getB(active)) : null; } },   // R74
+    bux,   // R92: til tester
     guide: { get open() { return gguide.isOpen(); }, get btn() { return root.classList.contains('gguidebtn'); }, get tip() { return root.classList.contains('gmodetip'); }, tipText: () => grid.modeTip(), show: () => gguide.show('test'), hide: (h) => gguide.hide(h), act: () => act.gguide() },
     grid: { get speed() { return gSpeed; }, setSpeed: (k) => { if (sim && !simDone) gSpeed = grid.setSpeed(k); return gSpeed; }, example: () => grid.example(), get peaks() { return gPeaks ? [...gPeaks.peaks].map(([id, p]) => ({ id, ...p })) : null; }, get summary() { return gSum; }, get on() { return grid.on(); }, get available() { return !!active && grid.enabledHere(); }, toggle: () => grid.toggleMode('kode'), setMat: (m) => grid.setMat(m), tap: (x, y) => grid.tap(x, y), del: () => grid.del(), get mat() { return grid.mat; }, get selNode() { return grid.selNode; }, get selRod() { return grid.selRod; }, info: () => (active && getB(active).rg ? { mode: getB(active).mode || 'classic', ...gridStats(getB(active)), cost: starsFor(active, getB(active).placed, getB(active).links).cost, nodes: getB(active).rg.nodes.map((n) => ({ id: n.id, u: n.u, v: n.v, fixed: !!n.fixed, ...(n.deck ? { deck: true } : {}) })), rods: getB(active).rg.rods.map((r) => ({ ...r })) } : null) },   // R72: til tester (node og Playwright)
     startReplay: () => !!active && startReplay(), get replaying() { return replaying; }, record: (id) => recs.get(id) || null, importText: (t) => !!active && doImport(t), exportText: () => (active ? exportAny(getB(active), exportCode) : null),   // R50: til tester (node og Playwright)
