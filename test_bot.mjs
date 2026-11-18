@@ -29,7 +29,7 @@ for (const id of ids) {
 }
 assert.deepEqual([...kinds].sort(), ['bygg', 'genvei', 'hard', 'ruta'], 'boten går ruta, verktøy-genveier, byggesnarveier og harde veier uten klatring (R42)');
 assert.deepEqual(botSolve(path('bad2')).plans.map((p) => p.id), ['ruta', 'genvei:gele_bad', 'hard:trapp_bad']);
-assert.deepEqual(botSolve(path('bro')).plans.map((p) => p.id), ['ruta', 'bygg:bro1']);
+assert.deepEqual(botSolve(path('bro')).plans.map((p) => p.id), ['ruta', 'bygg:bro1', 'bygg:bro1:rutenett']);
 assert.ok(lv('kontroll').route.length >= 6, 'Kontroll har en ekte rute (trinn og plattformer), ikke bare gulv → mål');
 
 // 3) en ødelagt rute: fjern en flate. Kort rute = FEIL, lang rute = TIL_GJENNOMGANG (og står i review)
