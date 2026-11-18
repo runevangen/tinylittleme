@@ -24,15 +24,15 @@ function ellipsePath(path, rx, rz, n = 40) {
   return path;
 }
 // ekstrudert form stående på y=0 med høyde h og avrundede kanter (bv)
-function extrudeUp(shape, h, bv) {
-  const g = new THREE.ExtrudeGeometry(shape, { depth: Math.max(0.01, h - 2 * bv), bevelEnabled: bv > 0, bevelThickness: bv, bevelSize: bv, bevelSegments: 3, curveSegments: 10 });
+function extrudeUp(shape, h, bv, lo = false) {   // lo (R85): færre segmenter for små deler (figuren)
+  const g = new THREE.ExtrudeGeometry(shape, { depth: Math.max(0.01, h - 2 * bv), bevelEnabled: bv > 0, bevelThickness: bv, bevelSize: bv, bevelSegments: lo ? 2 : 3, curveSegments: lo ? 4 : 10 });
   g.rotateX(-Math.PI / 2); g.translate(0, bv, 0);
   return g;
 }
-export function roundedBoxGeo(w, h, d, rc = 0.4, bv = 0.2) {
+export function roundedBoxGeo(w, h, d, rc = 0.4, bv = 0.2, lo = false) {
   const s = new THREE.Shape(); const r = Math.max(0.01, Math.min(rc, Math.min(w, d) / 2 - bv - 0.01));
   rrPath(s, Math.max(0.02, w - 2 * bv), Math.max(0.02, d - 2 * bv), r);
-  return extrudeUp(s, h, bv);
+  return extrudeUp(s, h, bv, lo);
 }
 const bounds = (boxes) => {
   const mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];

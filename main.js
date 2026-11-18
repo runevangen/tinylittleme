@@ -80,7 +80,7 @@ import { Relay, inCore, CAM_SLOP, yawDelta, pitchDelta, shouldHintDrag } from '.
 import { fovForAspect, effectiveFov, fovChosen, migrateCalm, camLine } from './camcalm_logic.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { programCount, programKeys, warmRender, warmFades, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
-import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
+import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver, roomCaps, BUDGET, MEM_BUDGET } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
@@ -246,10 +246,12 @@ const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCen
 // ---------- hendelseslogg og FPS: brukes i testrapporten ----------
 const evLog = store.get('tlm.evlog', []);
 const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION, lv: levelLabel }); if (evLog.length > 120) evLog.shift(); };
-const fpsW = fpsWatch(24, 3000);   // 24, ikke 30: iPhone i strømsparemodus låser til 30 fps og er frisk
-const autoQC = createAutoQ();      // polish.js: når oppløsningen går ned/opp (testet i test_polish.mjs)
+const qFps = +store.get('tlm.qfps', 27) || 27;   // R85: mål-FPS for Auto-oppløsningen (27: målet er 30, og en iPhone i strømsparemodus låst til 30 er frisk)
+const fpsW = fpsWatch(qFps, 2000);   // R85: vinduer på 2 s (før 3 s) så Auto reagerer tidligere
+const autoQC = createAutoQ({ limit: qFps });      // polish.js: når oppløsningen går ned/opp (testet i test_polish.mjs)
 let resQ = store.get('tlm.resq', 'auto'); if (!['auto', 'full', 'mid', 'low'].includes(resQ)) resQ = 'auto';   // R10: auto = følger FPS (ned ved vedvarende lav, opp igjen når det går fint); ellers fast valg
 let lowMode = store.get('tlm.lowprofile', 'auto'); if (!['off', 'auto', 'on'].includes(lowMode)) lowMode = 'auto';   // R15 Lav profil: av / auto (når FPS er lav) / på
+const heroQ = +store.get('tlm.herodetail', 0.6) || 0.6;   // R85: figurens tessellering (1 = full, 0,6 = standard: ca. 40 % færre trekanter i figuren; laster siden på nytt)
 const fdDens = +store.get('tlm.fdens', 1) || 1;   // R13: gulvdetaljer (floordetail.js): blyanter, perler, flekker, fugeskitt; tetthet etter rom og kvalitet (halvert med Lav profil «På», tom med Enkel grafikk)
 let floorDetailOn = store.get('tlm.floordetail', true);
 let beadSolidOn = store.get('tlm.beadsolid', true);   // R37: perlene i gulvdetaljene er solide små kuler (kan stås på/glis av)
@@ -257,7 +259,9 @@ const legoDens = +store.get('tlm.legodens', 1) || 1; let legoOn = store.get('tlm
 const lowP = createLowProfile(); let lowOn = false;
 let autoQ = resQ === 'auto', qSteps = 0, basePr = 1, qToasted = false;
 const perf = { n: 0, sum: 0, worst: 0, win: 0, winN: 0 };
-addEventListener('pagehide', () => store.set('tlm.evlog', evLog.slice(-120)));
+const fpsRooms = (() => { const o = store.get('tlm.fpsrooms', {}); return o && typeof o === 'object' ? o : {}; })();   // R85: { rom: { n, sum } } på tvers av økter
+const fpsRoomsLine = () => { const r = Object.entries(fpsRooms).filter(([, v]) => v && v.n > 60).map(([k, v]) => `${k} ${(1000 * v.n / v.sum).toFixed(0)}`); return r.length ? ` · snitt per rom: ${r.join(', ')}` : ''; };
+addEventListener('pagehide', () => { store.set('tlm.evlog', evLog.slice(-120)); if (perf.n > 30) { const r = fpsRooms[levelId] || { n: 0, sum: 0 }; r.n = Math.min(r.n + perf.n, 20000); r.sum = Math.min(r.sum + perf.sum, 20000 * 40); fpsRooms[levelId] = r; store.set('tlm.fpsrooms', fpsRooms); perf.n = 0; perf.sum = 0; } });
 
 // lydtekst: viser korte tekster for viktige lyder (for hørselshemmede, og når lyden er av). Skritt og pust er utelatt.
 let cuesOn = store.get('tlm.cues', false);
@@ -632,6 +636,7 @@ const flagV = buildFlag(scene, { low: gfxLow }), goalRing = buildGoalRing(scene,
 
 // ---------- figur ----------
 if (!gfxLow) look.detailize(scene);                                   // fint korn på alle flater i brettet (v0.76)
+look.heroQ = heroQ;   // R85: tessellering av figuren (SETTINGS «herodetail»)
 const hero = buildHero(look);
 scene.add(hero.root);
 const heroArt = (pose) => (rewardsOn ? previewSVG(getEquipped(store, rewardsAll), pose) : heroSVG(pose));   // R16: figuren med valgt tilbehør også på introkort og målskjerm
@@ -1933,6 +1938,8 @@ const SETTINGS = [
     fl('lego', 'spill', 'Legoknotter på gulv og tak i lekerommet, nivå 7 (Detaljert grafikk)', true, () => legoOn, kp('tlm.lego', (v) => { legoOn = v; logEv('legoknotter', v ? 'på' : 'av'); })),
     sl('legodens', 'admin', 'Legoknotter: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(legoDens), (v) => { if (+v === +legoDens) return; store.set('tlm.legodens', +v); logEv('legoknotter', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     sl('cinema', 'admin', 'Kinomodus for trailer-opptak: skjuler all UI, ingen lyd og lagring, fast frø, skript styrer kamera og tid (laster siden på nytt; slå av igjen med ?cinema=0 eller ved å fjerne cinema fra adressen)', 'av', [['av', 'Av'], ['paa', 'På (kinomodus)']], () => (CINE.on ? 'paa' : 'av'), (v) => { if ((v === 'paa') === CINE.on) return; logEv('kino', `valg: ${v}`); setTimeout(() => (v === 'paa' ? window.__game.cine.on() : window.__game.cine.off()), 150); }),
+    sl('qfps', 'admin', 'Auto-oppløsning: senk bildet når FPS er under (laster siden på nytt)', '27', [['24', '24 fps (sjeldnere)'], ['27', '27 fps (standard)'], ['30', '30 fps (tidligere)']], () => String(qFps), (v) => { if (+v === +qFps) return; store.set('tlm.qfps', +v); logEv('ytelse', `kvalitetsgrense ${v} fps`); setTimeout(() => location.reload(), 150); }),
+    sl('herodetail', 'admin', 'Figuren: detaljnivå på formene (laster siden på nytt). Lavere = færre trekanter og jevnere bilde på eldre telefoner', '0.6', [['0.4', 'Lav'], ['0.6', 'Normal'], ['0.8', 'Høy'], ['1', 'Full']], () => String(heroQ), (v) => { if (+v === +heroQ) return; store.set('tlm.herodetail', +v); logEv('ytelse', `figurdetalj ${v}`); setTimeout(() => location.reload(), 150); }),
     sl('fdens', 'admin', 'Gulvdetaljer: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(fdDens), (v) => { if (+v === +fdDens) return; store.set('tlm.fdens', +v); logEv('gulvdetaljer', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     fl('clutter', 'spill', 'Småting på gulv og hyller: smuler, knapper, hår (Detaljert grafikk)', true, () => clutterOn, kp('tlm.clutter', (v) => { clutterOn = v; logEv('smating', v ? 'på' : 'av'); }))]),
   fl('hudtech', 'spill', 'Vis alltid tekniske tall (høyde, tid, poeng). Ellers: trykk på teksten øverst', false, () => hudTech, kp('tlm.hudtech', (v) => { hudTech = v; })),
@@ -2148,7 +2155,7 @@ function buildReportInfo() {
     verCheck: verView ? verView.info() : '',
     where: currentScreen().label, screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
     perf: perfLine + ' · shadere ' + shw.line(),
-    fps: perf.n ? `${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms` : 'fps ukjent',
+    fps: (perf.n ? `${levelId}: ${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms, oppløsning ${renderer.getPixelRatio().toFixed(2)}×` : 'fps ukjent') + fpsRoomsLine(),   // R85: snitt per rom (lagret i nettleseren) så rapporten viser hvilke rom som er trege
     pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), state: player.state, target: t.final ? 'målet' : t.label, stats: { ...stats },
     changed: changedSettings(SETTINGS.filter((d) => d.group !== 'admin' || true).map((d) => ({ id: d.id, label: d.label, def: d.def, get: d.get }))),
     marks: evLog.filter((e) => e.type === 'MARKERT' && !e.sent).slice(-10), backlog: evLog.filter((e) => e.type === 'BACKLOGG' && !e.sent).slice(-10), events: evLog.slice(-30),
@@ -2659,8 +2666,8 @@ const soft = gfxLow ? null : makeSoftLight({ THREE, scene, LEVEL, floorY: Math.m
 const perfMerge = { before: 0, after: 0 };
 {
   const roots = new Set(); for (const e of fadeEntries) for (const o of e.obj) if (!o.isMesh) roots.add(o);   // ting med flere deler: hver for seg (utoning virker fortsatt per ting)
-  for (const r of roots) { const m = mergeStatic(THREE, r); perfMerge.before += m.before; perfMerge.after += m.after; }
-  { const m = mergeRigid(THREE, hero.root, refsIn(hero)); perfMerge.before += m.before; perfMerge.after += m.after; }      // figuren: deler som følger samme ledd slås sammen (ledd og ansiktsdeler som koden styrer røres ikke)
+  for (const r of roots) { const m = mergeStatic(THREE, r, { vcolor: true }); perfMerge.before += m.before; perfMerge.after += m.after; }
+  { const m = mergeRigid(THREE, hero.root, refsIn(hero), { vcolor: true, protect: new Set([hero.M.scarf, hero.M.pack]) }); perfMerge.before += m.before; perfMerge.after += m.after; }      // figuren: deler som følger samme ledd slås sammen (ledd og ansiktsdeler som koden styrer røres ikke)
   for (const am of antMeshes) {                                                                                           // maur: finn hva som beveger seg ved å kjøre animasjonen i noen stillinger
     try {
       const T = [{}, { carry: false, crouchK: 0.8, mode: 'leap' }, { crouchK: 0.3, mode: 'crouch' }, { crouchK: 1, mode: 'roll', y: 3 }, { mode: 'plunge', y: 2, shake: 1 }];   // R19: også rulle- og stup-stilling
@@ -2853,7 +2860,7 @@ function render(now, dt) {
   if (floodSt.shake > 0 && mode === 'play' && !window.__camLock && !CINE.on) { const [sx, sy] = shakeOffset(floodSt.shake, now / 1000); camera.position.x += sx; camera.position.y += sy; }   // R65: lett kameraskjelv før man drukner
   cine.applyCam();   // R68: fritt kamera (setCam) overstyrer følgekameraet per bilde
   renderer.render(scene, camera);
-  if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const ds = drawerSummary(LEVEL); if (ds.total) logEv('skuffer', `${ds.open} åpne, ${ds.closed} lukkede, ${ds.fronts} frontfarger, tydelige ${drawerCue() ? 'på' : 'av'}`); const w = overBudget(st).concat(memOver(st, texLow || lowOn)); logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
+  if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const ds = drawerSummary(LEVEL); if (ds.total) logEv('skuffer', `${ds.open} åpne, ${ds.closed} lukkede, ${ds.fronts} frontfarger, tydelige ${drawerCue() ? 'på' : 'av'}`); const rc = roomCaps(levelId), w = overBudget(st, { ...BUDGET, ...rc }).concat(memOver(st, texLow || lowOn, rc.texMB ? { ...MEM_BUDGET, texMB: Math.min(MEM_BUDGET.texMB, rc.texMB) } : MEM_BUDGET)); /* R85: tak per rom */ logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
   goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
   if (tb.isOn()) tb.update(bandCtx(), now);
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
@@ -3150,7 +3157,7 @@ function frame(now) {
     if (mode === 'play' && !menuOpen) autoQC.feed(raw);
     const dq = fr && mode === 'play' && !menuOpen ? autoQC.decide(fr, renderer.getPixelRatio(), autoQ, basePr) : null;
     { const lp = fr && mode === 'play' && !menuOpen ? lowP.decide(fr, renderer.getPixelRatio(), 1, lowMode, autoQC.warm) : null; if (lp !== null) { applyLowProfile(lp); if (lp && lowMode === 'auto') toast('Lav profil på for jevnere bilde. ⚙ → Test → Lav profil styrer det', true); } }
-    if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); if (dq.dir === 'down' && !qToasted) { qToasted = true; toast('Lavere oppløsning for jevnere bilde. ⚙ → Test → Oppløsning styrer det', true); } } }   // én melding per økt, nede ved kanten så den ikke dekker målpilen; resten logges bare
+    if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); logEv('ytelse', `${levelId}: oppløsning ${dq.dir === 'down' ? 'ned' : 'opp'} ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× · ${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms · ${renderer.info.render.calls} tegnekall, ${renderer.info.render.triangles} trekanter`); if (dq.dir === 'down' && !qToasted) { qToasted = true; toast('Lavere oppløsning for jevnere bilde. ⚙ → Test → Oppløsning styrer det', true); } } }   // én melding per økt, nede ved kanten så den ikke dekker målpilen; resten logges bare
   if (!window.__paused && !menuOpen && !ov.active && !bld.active) update(dt);   // R20: spillet venter mens oversikten vises
   showMeFrame(dt); stepCamAnim(dt); compassFrame(now); floodFrame(now, dt);
   render(now, dt);
