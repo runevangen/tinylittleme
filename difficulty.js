@@ -6,7 +6,8 @@
 // tlm.badges = { <brett>: { beginner: 1, medium: 1, expert: 1 } } (merke per brett og nivå: bronse, sølv, gull).
 
 export const DIFFS = ['beginner', 'medium', 'expert'];
-export const DEFAULT_DIFF = 'beginner';
+export const DEFAULT_DIFF = 'medium';   // R84: nye spillere starter på Medium
+export const LEGACY_KEY_DIFF = 'beginner';   // R84: Nybegynner bruker den gamle fremgangsnøkkelen (uavhengig av standardvalget)
 export const BADGE_GLYPH = { beginner: '🥉', medium: '🥈', expert: '🥇' };
 export const BADGE_NAME = { beginner: 'bronse', medium: 'sølv', expert: 'gull' };
 
@@ -51,7 +52,7 @@ export function markerBudget(d, help, caps = {}) {
 }
 
 // ---------- lagringsnøkler ----------
-export const progressKey = (levelId, rev, d) => `tlm.progress.${levelId}${rev ? '.r' + rev : ''}${normDiff(d) === DEFAULT_DIFF ? '' : '.' + normDiff(d)}`;
+export const progressKey = (levelId, rev, d) => `tlm.progress.${levelId}${rev ? '.r' + rev : ''}${normDiff(d) === LEGACY_KEY_DIFF ? '' : '.' + normDiff(d)}`;
 
 // ---------- merker ----------
 export const getBadges = (st) => { const b = st.get('tlm.badges', {}); return b && typeof b === 'object' && !Array.isArray(b) ? b : {}; };

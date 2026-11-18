@@ -1,13 +1,13 @@
 // node test_difficulty.mjs: R69, vanskelighetsnivå (difficulty.js): profiltabell, markørbudsjett, lagringsnøkler, opplåsing, merker, Egendefinert og at main.js leser hver rad.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { DIFFS, PROFILE, HELP_KEYS, diffProfile, normDiff, offElements, markerBudget, progressKey, getBadges, awardBadge, bestBadge, hasBadge, badgeRow, badgeTotals, unlockedLevels, allowedDiffs, isCustomHelp, HELP_SETTINGS, dt, TEXT_KEYS } from './difficulty.js';
+import { DIFFS, DEFAULT_DIFF, PROFILE, HELP_KEYS, diffProfile, normDiff, offElements, markerBudget, progressKey, getBadges, awardBadge, bestBadge, hasBadge, badgeRow, badgeTotals, unlockedLevels, allowedDiffs, isCustomHelp, HELP_SETTINGS, dt, TEXT_KEYS } from './difficulty.js';
 import { badgeCount } from './rewards.js';
 const mem = () => { const m = new Map(); return { get: (k, d) => (m.has(k) ? m.get(k) : d), set: (k, v) => { if (v === null) m.delete(k); else m.set(k, v); }, m }; };
 
-// ---- tre nivå, ukjent verdi faller tilbake på Nybegynner ----
+// ---- tre nivå, ukjent verdi faller tilbake på standarden (R84: Medium) ----
 assert.deepEqual(DIFFS, ['beginner', 'medium', 'expert']);
-assert.equal(normDiff('x'), 'beginner'); assert.equal(normDiff(undefined), 'beginner'); assert.equal(normDiff('expert'), 'expert');
+assert.equal(DEFAULT_DIFF, 'medium', 'R84: standard er Medium'); assert.equal(normDiff('x'), 'medium'); assert.equal(normDiff(undefined), 'medium'); assert.equal(normDiff('beginner'), 'beginner'); assert.equal(normDiff('expert'), 'expert');
 
 // ---- profiltabellen: alle hjelpeelement per nivå (forventet verdi for hver rad) ----
 const WANT = {
@@ -37,10 +37,10 @@ assert.equal(markerBudget('medium', 'normal'), 2); assert.equal(markerBudget('me
 assert.equal(markerBudget('beginner', 'normal', { normal: 5 }), 5);
 
 // ---- lagringsnøkler per brett og nivå (Nybegynner = gammel nøkkel) ----
-assert.equal(progressKey('bad', 0, 'beginner'), 'tlm.progress.bad'); assert.equal(progressKey('bad', 2, 'beginner'), 'tlm.progress.bad.r2');
+assert.equal(progressKey('bad', 0, 'medium'), 'tlm.progress.bad.medium', 'R84: Medium har egen nøkkel, Nybegynner beholder den gamle'); assert.equal(progressKey('bad', 0, 'beginner'), 'tlm.progress.bad'); assert.equal(progressKey('bad', 2, 'beginner'), 'tlm.progress.bad.r2');
 assert.equal(progressKey('bad', 0, 'medium'), 'tlm.progress.bad.medium'); assert.equal(progressKey('bad', 2, 'expert'), 'tlm.progress.bad.r2.expert');
 assert.equal(new Set(DIFFS.map((d) => progressKey('bad2', 3, d))).size, 3, 'tre ulike nøkler');
-assert.equal(progressKey('bad', 0, 'ukjent'), 'tlm.progress.bad', 'ukjent nivå behandles som Nybegynner');
+assert.equal(progressKey('bad', 0, 'ukjent'), 'tlm.progress.bad.medium', 'ukjent nivå behandles som standarden (Medium)');
 
 // ---- merker per brett og nivå ----
 { const st = mem();
@@ -83,3 +83,5 @@ const idx = fs.readFileSync(new URL('./index.html', import.meta.url), 'utf8');
 assert.ok(idx.includes("'difficulty'") && idx.includes("'difficulty_view'"), 'modulene ligger i files i index.html');
 assert.ok(idx.includes('id="bMenu"') && idx.includes('id="winMenu"'), 'Avslutt til meny i ⋯-menyen og på målskjermen');
 console.log('vanskelighets-tester grønne');
+// R84: tomt lager gir Medium; lagret Nybegynner/Ekspert beholdes
+{ const st = mem(); assert.equal(normDiff(st.get('tlm.difficulty', DEFAULT_DIFF)), 'medium'); st.set('tlm.difficulty', 'beginner'); assert.equal(normDiff(st.get('tlm.difficulty', DEFAULT_DIFF)), 'beginner'); st.set('tlm.difficulty', 'expert'); assert.equal(normDiff(st.get('tlm.difficulty', DEFAULT_DIFF)), 'expert'); }
