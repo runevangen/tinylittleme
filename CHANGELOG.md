@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.51** – R88 (anonym statistikk, F14) lagt i veikartet; Supabase-tabell tlm_events er klar.
 - **2.50** – R87 personvern: PERSONVERN-side i ⚙ og ⚑, ærlig tekst om lagring og sending, rapporten holdt til tillatte felt, sletterutine i docs/TILBAKEMELDING.md.
 - **2.49** – R86 lagring og fremdrift: robust lagring, migrering av gamle formater, Fortsett/Nytt spill, eksport/import, docs/LAGRING.md.
 - **2.48** – R86 (lagring) og R87 (personvern) lagt i veikartet (uke 1 i seksukersplanen).
