@@ -202,6 +202,7 @@ let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true), camRelayOn = store.get('tlm.camrelay', true), camSlop = store.get('tlm.camslop', CAM_SLOP), camHintShown = store.get('tlm.camhint', false);
 let showMapBtn = store.get('tlm.showmapbtn2', false), showCenter = store.get('tlm.showcenter2', false),   // v1.35: ◎ og kartknappen er av som standard (nye nøkler, så alle starter uten dem)
    stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
+let keyHelpOn = store.get('tlm.keyhelp', false);   // tastehjelp-kortet (PC) er skjult som standard: det forvirret ved start (fra tester: Rune)
 let stueHintOn = store.get('tlm.stuehint', true); const stueSeen = new Set();   // R62: Stuen: hint om fjernkontrollen, plata og broen
 let slickHintOn = store.get('tlm.slickhint', true);   // glatte flater (R63): hint første gang du sklir
 P.slickAccel = +store.get('tlm.slickaccel', P.slickAccel) || P.slickAccel;
@@ -1839,6 +1840,7 @@ const SETTINGS = [
   rg('slickaccel', 'admin', 'Glatte flater: hvor raskt du skifter fart på olje og såpe (5 = sklir mye, 34 = som vanlig gulv)', 5, 2, 34, 1, () => P.slickAccel, kp('tlm.slickaccel', (v) => { P.slickAccel = v; logEv('glatt', `grep ${v}`); }), { digits: 0 }),
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
   fl('goals', 'spill', 'Delmål (milepæler: panel øverst, jubel når et delmål er klart)', true, () => goalsOn, kp('tlm.goals', (v) => { goalsOn = v; goalView?.setOn(v && DIF.subgoalText); logEv('delmål', v ? 'på' : 'av'); })),
+  fl('keyhelp', 'hjelp', 'PC: vis tastehjelp-kortet de første 15 sekundene ved start (H henter det fram når som helst)', false, () => keyHelpOn, kp('tlm.keyhelp', (v) => { keyHelpOn = v; logEv('hjelp', v ? 'tastehjelp ved start på' : 'tastehjelp ved start av'); })),
   fl('stuehint', 'hjelp', 'Stuen: hint om fjernkontrollen, den gule plata og broen mellom sofaen og bordet (nivå 8)', true, () => stueHintOn, kp('tlm.stuehint', (v) => { stueHintOn = v; logEv('stue', v ? 'hint på' : 'hint av'); })),
   fl('shortcuthint', 'hjelp', 'Verktøy-genveier: varsel når du klatrer en trapp med hårgelé (nivå 4–6)', true, () => shortcutHintOn, kp('tlm.shortcuthint', (v) => { shortcutHintOn = v; logEv('genvei', v ? 'varsel på' : 'varsel av'); })),
   fl('guide', 'hjelp', 'Veiledning når målet er skjult: handling i teksten, pil ned/opp, kantmerke, ring gjennom hindre, «Vis meg» og glød på neste flate', true, () => guideOn, kp('tlm.guide', (v) => { guideOn = v; if (!v) guideHide(); logEv('veiledning', v ? 'på' : 'av'); })),
@@ -2265,7 +2267,7 @@ function buildPanel() {
 }
 $('bSet').onclick = () => { buildPanel(); $('help').classList.add('hide'); $('panel').classList.toggle('hide'); };
 applyUiFlags();
-setTimeout(() => $('help').classList.add('hide'), 15000);   // H henter den tilbake
+if (keyHelpOn && !TOUCH) { $('help').classList.remove('hide'); setTimeout(() => $('help').classList.add('hide'), 15000); }   // valgfritt ved start; H henter den fram når som helst
 
 // ---------- oppdatering ----------
 const V = new THREE.Vector3();

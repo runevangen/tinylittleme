@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.45** – Fra tester (Rune): tastehjelp-kortet «testbrett» på PC er skjult ved start (valg i ⚙ → Hjelp for å vise det de første 15 s; H henter det fram).
 - **2.44** – docs/HISTORIE.md: «dette har skjedd siden dag 1» (kun dokument).
 - **2.43** – Backlogg utkast 4 (seksukersplan, runde 3 besvart), docs/BRUKERTEST.md (testplan), R85 (ytelse) lagt i veikartet.
 - **2.42** – R84: standard vanskelighet er Medium for nye spillere (lagret valg beholdes).
