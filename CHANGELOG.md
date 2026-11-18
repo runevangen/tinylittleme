@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.59** – docs/BYGGE_UX.md (gjennomgang av byggeskjermen og forslag), R91 (dekor uten kollisjon) og R92 (byggeskjerm-prototype bak ⚙-valg) lagt i veikartet.
 - **2.58** – R90: blyanter og viskelær på gulvet er solide (innstilling `pencilsolid`), kan gås over og stås på.
 - **2.57** – R90 lagt i veikartet (blyanter og viskelær på gulvet er ikke solide, fra Rune).
 - **2.56** – R89: låst mål gir alltid beskjeden «Målet er låst» (også uten hint), og låsende delmål teller for alle veier (Badet, Barnerommet 2, Lekerommet).

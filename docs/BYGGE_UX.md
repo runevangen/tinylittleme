@@ -4,6 +4,11 @@ Tilbakemelding fra Rune (18. nov): byggemodus er veldig vanskelig og lite intuit
 
 Dette er en gjennomgang av hva vi har, hva de gode spillene gjør, og et forslag til ny retning. Det er et utkast: Rune skal utfordre og velge før noe bygges.
 
+## 0. Beslutninger (Rune, 2026-11-18)
+- **Én modell:** Rutenett (knuter og staver) er **eneste** byggemåte i bro-brettene (Hyllebroen og Kjøkkenbroen). MODUS-knappen forsvinner der. Trapp og vippe beholder klassisk til de er tatt om.
+- **Hovedskjerm:** materialvelgeren (tre/stål/tau) skal være synlig. Rune valgte ikke Angre, kostnadslinje og PRØV som egne punkter i avkrysningen. Jeg tolker det slik at de **ikke** er avgjort bort, men at materialvelgeren er det viktigste; PRØV og Angre må uansett være synlige for at skjermen skal kunne brukes. Prototypen viser dem, og Rune sier fra hvis noe skal bort.
+- **Innsats:** rask prototype først (1–2 dager), bak et valg i ⚙ så dagens skjerm beholdes, så bygge ferdig etter testing (R92).
+
 ## 1. Hva vi har i dag
 Fra skjermbildet av byggeskjermen (klassisk modus, v2.06) og Rutenett-modus (v2.5x):
 - **Topprad:** TILBAKE, ANGRE, NULLSTILL, PRØV, ⚑ (5 knapper).
