@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.54** – Veikart: visjonen har fått neste steg: når fysikk, oppdrag og brobygging er gode nok, kobles et AI-API på så spilleren kan lage brett av egne rom, utfordre andre og dele.
 - **2.53** – Anonym statistikk er AV som standard (spilleren slår den på selv i ⚙ → PERSONVERN); tekst, dokumentasjon og test oppdatert.
 - **2.52** – R88 anonym statistikk: valgfri (⚙ Anonym statistikk, standard på), anonym tilfeldig enhets-id, få hendelser sendt i grupper, PERSONVERN oppdatert, docs/STATISTIKK.md.
 - **2.51** – R88 (anonym statistikk, F14) lagt i veikartet; Supabase-tabell tlm_events er klar.
