@@ -11,7 +11,7 @@ const s = {
   name: 'Nivå 8: Stuen', units: 'cm', frame: 'Origo i nordvestre hjørne. x øst, z sør, y opp.', validate: true, rev: 1,
   source: { photos: 0, views: [], interpreted_by: 'Oppdiktet rom (ikke fra bilder), laget for nivå 8 (R62): stue i barneskala.', scale_anchors: ['sofaen 40 cm høy i setet', 'sofabordet 40 cm', 'bokhyllen 96 cm'], uncertainty: 'Ingen: rommet er tegnet for spillet.',
     note: 'Nivå 8 (R62). Vest: teppet, fjernkontrollen og trykkplata foran skyvedøren. Øst: sofa med puter, sofabord, TV-benk og bokhyllen som klatrevei. Den harde veien går langs gulvet og opp bokhylla; byggestedet (bro mellom sofa og sofabord) er snarveien.' },
-  room: { fdetMax: 118, width: 670, depth: 280, height: 260, floor: { material: 'wood', color: '#c99a62', slick: false }, walls: { material: 'plaster', color: '#e9d7b0' }, ceiling: { material: 'plaster', color: '#f6efe0' } },
+  room: { fdetMax: 115, width: 670, depth: 280, height: 260, floor: { material: 'wood', color: '#c99a62', slick: false }, walls: { material: 'plaster', color: '#e9d7b0' }, ceiling: { material: 'plaster', color: '#f6efe0' } },
   start: { x: 90, z: 200 }, goal: { x: 647, y: 96, z: 45, on: 'maal', note: 'Motgift-bit øverst i bokhylla.' },
   windows: [{ wall: 'N', z: 320, y: 150, w: 150, h: 90 }, { wall: 'N', z: 90, y: 150, w: 100, h: 90 }],
   hazards: [{ id: 'kabelfelle', type: 'pit', box: [500, 595, 0, 4, 114, 128], message: 'Kabelfelle! Du floket deg i TV-ledningen' }],

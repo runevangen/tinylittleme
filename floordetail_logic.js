@@ -59,6 +59,36 @@ export function beadBoxes(spots) {
     return { id: `perle_${i}`, kind: 'bead', type: 'plastic', round: true, bead: true, min: [s.x - r, cy - r, s.z - r], max: [s.x + r, cy + r, s.z + r] };
   });
 }
+// R90: blyanter og viskelær er også solide. Blyanten (tegnet i floordetail.js: skaft L lang, radius 0,16·k, spiss ut til L/2+0,46·k) blir en kjede av små kuleformede bokser langs skaftet
+// (samme felt som perlene), viskelæret én akse-justert boks som dekker den roterte formen. Retningen er (cos rot, −sin rot) som i tegningen.
+export const PENCIL = { r: 0.16, step: 1.5, tipR: 0.1, tipAt: 0.17, lenBase: 1.2, lenVar: 0.7, gap: 0.9, eraserH: 0.28, eraserW: 0.75, eraserD: 0.42 };
+export const ringK = (s) => (s.ring ? 1.7 : 1);
+export function pencilBalls(s) {   // [{x, z, r}] langs skaftet og spissen, rotasjon s.rot, ring = større
+  const k = ringK(s), L = (PENCIL.lenBase + s.a * PENCIL.lenVar) * k, r = PENCIL.r * k, dx = Math.cos(s.rot), dz = -Math.sin(s.rot), n = Math.max(1, Math.ceil(L / (r * PENCIL.step))), out = [];
+  for (let i = 0; i <= n; i++) { const t = -L / 2 + L * i / n; out.push({ x: s.x + dx * t, z: s.z + dz * t, r }); }
+  const t = L / 2 + PENCIL.tipAt * k; out.push({ x: s.x + dx * t, z: s.z + dz * t, r: PENCIL.tipR * k });
+  return out;
+}
+export function eraserHalf(s) {   // halve sidene i x og z til den akse-justerte boksen rundt det roterte viskelæret
+  const k = ringK(s), c = Math.abs(Math.cos(s.rot)), sn = Math.abs(Math.sin(s.rot)), a = PENCIL.eraserW / 2 * s.s * k, b = PENCIL.eraserD / 2 * s.s * k;
+  return [a * c + b * sn + 0.03, a * sn + b * c + 0.03];
+}
+// omkrets rundt midtpunktet (til avstandsregler): perle, blyant, viskelær
+export function solidRadius(s) {
+  if (s.kind === 'bead') return beadRadius(s);
+  if (s.kind === 'pencil') return Math.max(...pencilBalls(s).map((b) => Math.hypot(b.x - s.x, b.z - s.z) + b.r));
+  if (s.kind === 'eraser') { const h = eraserHalf(s); return Math.hypot(h[0], h[1]); }
+  return 0;
+}
+export const isSolidKind = (k) => k === 'bead' || k === 'pencil' || k === 'eraser';
+export function pencilBoxes(spots) {
+  const out = [];
+  spots.forEach((s, i) => {
+    if (s.kind === 'pencil') pencilBalls(s).forEach((b, j) => out.push({ id: `blyant_${i}_${j}`, kind: 'pencil', type: 'plastic', round: true, pencil: true, min: [b.x - b.r, s.y, b.z - b.r], max: [b.x + b.r, s.y + 2 * b.r, b.z + b.r] }));
+    else if (s.kind === 'eraser') { const h = eraserHalf(s), k = ringK(s); out.push({ id: `viskelaer_${i}`, kind: 'eraser', type: 'plastic', eraser: true, min: [s.x - h[0], s.y, s.z - h[1]], max: [s.x + h[0], s.y + PENCIL.eraserH * k, s.z + h[1]] }); }
+  });
+  return out;
+}
 // områder (x0,x1,z0,z1) rundt hver flate på ruta som ikke er gulvet: perler holdes unna
 export function routeClear(L) {
   return (L.route || []).filter((n) => n.id !== 'gulv' && n.top > 0.3).map((n) => [n.x0 - BEAD.routeMargin, n.x1 + BEAD.routeMargin, n.z0 - BEAD.routeMargin, n.z1 + BEAD.routeMargin]);
@@ -85,7 +115,16 @@ export function pickDetails(L, floorY, seed, { count = 40, ring = 6, diag = !!L.
   };
   // R37: perlene er solide kuler; de får aldri ligge nær en flate på ruta (fot av klatring, kant, trapp) og aldri tett på hverandre
   const keep = routeClear(L), out = [], free = (x, z, m = 1.5, kind = '') => inRoom(x, z, m) && !covered(x, z) && !matEdge(x, z) && !inAvoid(avoid, x, z)
-    && (kind !== 'bead' || (!keep.some((q) => x > q[0] && x < q[1] && z > q[2] && z < q[3]) && !out.some((o) => o.kind === 'bead' && Math.hypot(o.x - x, o.z - z) < BEAD.gap)));
+    && (kind !== 'bead' || (!keep.some((q) => x > q[0] && x < q[1] && z > q[2] && z < q[3]) && !out.some((o) => o.kind === 'bead' && Math.hypot(o.x - x, o.z - z) < BEAD.gap) && !out.some((o) => (o.kind === 'pencil' || o.kind === 'eraser') && Math.hypot(o.x - x, o.z - z) < o.sr + 0.5 + PENCIL.gap)));
+  // R90: blyanter/viskelær (kjent først når retning og størrelse er trukket): hele formen må ligge i rommet, ikke under møbler, ikke nær ruta, start og mål, og ikke tett på andre solide ting
+  const solidOk = (o) => {
+    if (o.kind !== 'pencil' && o.kind !== 'eraser') return true;
+    o.sr = solidRadius(o);
+    const pts = o.kind === 'pencil' ? pencilBalls(o) : [{ x: o.x, z: o.z, r: o.sr }];
+    if (!pts.every((b) => inRoom(b.x, b.z, 0.6) && !covered(b.x, b.z) && !matEdge(b.x, b.z) && !keep.some((q) => b.x > q[0] - 0.3 && b.x < q[1] + 0.3 && b.z > q[2] - 0.3 && b.z < q[3] + 0.3) && !inAvoid(avoid, b.x, b.z))) return false;
+    if (L.start && Math.hypot(o.x - L.start[0], o.z - L.start[2]) < o.sr + 1.5) return false;
+    return !out.some((q) => isSolidKind(q.kind) && Math.hypot(q.x - o.x, q.z - o.z) < o.sr + (q.sr ?? beadRadius(q)) + PENCIL.gap);
+  };
   // 1) målestokk-ringen foran start: plassert etter hvor de havner på SKJERMEN (start-kameraet, mobil høyformat), i feltene som minikart, målpanel, stikke og knapper ikke dekker
   const sx = L.start?.[0] ?? 0, sz = L.start?.[2] ?? 0, sy = L.start?.[1] ?? floorY;
   const cam = START_CAM;
@@ -95,7 +134,7 @@ export function pickDetails(L, floorY, seed, { count = 40, ring = 6, diag = !!L.
     for (let tries = 0; tries < 160; tries++) {
       const j = tries / 160, p = floorAt(sx, sy + 0.62, sz, yaw, cam, t.u + (r() - 0.5) * (0.06 + j * 0.3), t.v + (r() - 0.5) * (0.06 + j * 0.3), floorY);
       if (!p || !free(p[0], p[1], 0.8, t.kind) || Math.hypot(p[0] - sx, p[1] - sz) < 1.8 || out.some((o) => Math.hypot(o.x - p[0], o.z - p[1]) < 1.1)) continue;
-      out.push(mk(t.kind, p[0], p[1], { ring: true, s: 1 + r() * 0.3 })); break;
+      const o = mk(t.kind, p[0], p[1], { ring: true, s: 1 + r() * 0.3 }); if (!solidOk(o)) continue; out.push(o); break;
     }
   }
   const base = Math.atan2(-Math.cos(yaw), -Math.sin(yaw));
@@ -103,7 +142,7 @@ export function pickDetails(L, floorY, seed, { count = 40, ring = 6, diag = !!L.
     const wide = tries / 600, ang = base + (r() - 0.5) * (0.7 + wide * 0.8), d = 4.5 + r() * (5 + wide * 6), x = sx + Math.cos(ang) * d, z = sz + Math.sin(ang) * d;
     const rk = ['pencil', 'bead', 'crumbs'][i % 3];
     if (!free(x, z, 1.5, rk) || out.some((o) => Math.hypot(o.x - x, o.z - z) < 1.6)) continue;
-    out.push(mk(rk, x, z, { ring: true, s: 1 + r() * 0.3 })); i++;
+    const o = mk(rk, x, z, { ring: true, s: 1 + r() * 0.3 }); if (!solidOk(o)) continue; out.push(o); i++;
   }
   // 2) resten spredt over gulvet, mest langs vegger og i fugene
   for (let tries = 0; out.length < count + ring && tries++ < count * 40;) {
@@ -112,6 +151,7 @@ export function pickDetails(L, floorY, seed, { count = 40, ring = 6, diag = !!L.
     const kind = pickKind(r, diag ? { ...W, grout: 0 } : W);
     if (!free(x, z, 1.5, kind)) continue;
     const o = mk(kind, x, z); if (kind === 'grout' && !free(o.x, o.z)) continue;
+    if (!solidOk(o)) continue;
     if (o.onMat && (kind === 'stain' || kind === 'grout')) continue;      // flate flekker/fuger hører ikke hjemme på en matte
     out.push(o);
   }

@@ -1,14 +1,14 @@
 // Gulvdetaljer (R13): tegner småtingene fra floordetail_logic.js (blyantstumper, viskelær, perler, smulehauger, flekker, skitt i fugene).
 // Bare utseende, ingen kollisjon. Delte materialer, så main.js kan slå meshene sammen til få tegnekall (mergeStatic).
 import * as THREE from 'three';
-import { pickDetails, detailCount, hashStr, beadBoxes, beadRadius } from './floordetail_logic.js';
+import { pickDetails, detailCount, hashStr, beadBoxes, beadRadius, pencilBoxes } from './floordetail_logic.js';
 
 const cv = (w) => { const c = document.createElement('canvas'); c.width = c.height = w; return c; };
 
 export function makeFloorDetail({ scene, LEVEL, floorY, quality = 'high', density = 1, name = 'x' }) {
   const group = new THREE.Group(); group.name = 'floordetail'; scene.add(group);
   const n = detailCount(LEVEL.room, quality, density);
-  if (!n) return { group, count: 0, spots: [], beads: [], setSolid() {}, solid: false, update(on) { group.visible = on; } };
+  if (!n) return { group, count: 0, spots: [], beads: [], pencils: [], setSolid() {}, solid: false, update(on) { group.visible = on; } };
   const spots = pickDetails(LEVEL, floorY, hashStr(name + ':fd'), { count: n, ring: 6 });
   // mykt flekk-bilde (radial, litt ujevn kant), delt av alle flekker
   const blob = (() => { const c = cv(64), g = c.getContext('2d'), rg = g.createRadialGradient(32, 32, 2, 32, 32, 30); rg.addColorStop(0, 'rgba(255,255,255,.95)'); rg.addColorStop(0.6, 'rgba(255,255,255,.55)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
@@ -38,10 +38,12 @@ export function makeFloorDetail({ scene, LEVEL, floorY, quality = 'high', densit
     else if (s.kind === 'eraser') { const m = put(G.eraser, M.eraser, s.x, y + 0.15 * k, s.z, s.s * k, k, s.s * k); m.rotation.y = s.rot; }
   }
   // R37: perlene er solide. Boksene legges i LEVEL.boxes bare mens detaljene vises (setSolid kalles hver ramme, billig når ingenting endres)
-  const beads = beadBoxes(spots); let solidNow = false;
-  const setSolid = (on) => {
-    if (on === solidNow) return; solidNow = on;
-    for (const b of beads) { const i = LEVEL.boxes.indexOf(b); if (on && i < 0) LEVEL.boxes.push(b); else if (!on && i >= 0) LEVEL.boxes.splice(i, 1); }
+  // R90: blyanter og viskelær har egen bryter (pencilsolid): setSolid(perler, blyanter)
+  const beads = beadBoxes(spots), pencils = pencilBoxes(spots); let solidNow = false, pencilNow = false;
+  const sync = (list, on) => { for (const b of list) { const i = LEVEL.boxes.indexOf(b); if (on && i < 0) LEVEL.boxes.push(b); else if (!on && i >= 0) LEVEL.boxes.splice(i, 1); } };
+  const setSolid = (on, penOn = false) => {
+    if (on !== solidNow) { solidNow = on; sync(beads, on); }
+    if (penOn !== pencilNow) { pencilNow = penOn; sync(pencils, penOn); }
   };
-  return { group, count: spots.length, spots, beads, setSolid, get solid() { return solidNow; }, update(on) { group.visible = on; } };
+  return { group, count: spots.length, spots, beads, pencils, setSolid, get pencilSolid() { return pencilNow; }, get solid() { return solidNow; }, update(on) { group.visible = on; } };
 }

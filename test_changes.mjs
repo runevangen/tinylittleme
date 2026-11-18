@@ -60,7 +60,7 @@ assert.equal(uncheckedCount(withCheck(rows, rows[0].id, 'ok')), CHANGES.length -
 // versjon og lenke
 assert.equal(versionStatus('2.36', '2.36'), 'ok'); assert.equal(versionStatus('2.30', '2.36'), 'eldre');
 assert.equal(versionLine('2.30', '2.36', 'Kom'), 'Kom i v2.36 · du kjører v2.30: OPPDATER først'); assert.equal(versionLine('2.36', '2.36'), 'Rettet i v2.36 · du kjører v2.36');
-const plate = CHANGES.find((c) => c.spot); assert.ok(plate, 'minst ett sted'); assert.match(goUrl('https://x.no/spill/?v=1', plate), /level=verksted&go=14%2C11\.2%2C-1/);
+const plate = CHANGES.find((c) => c.spot && c.level === 'verksted'); assert.ok(plate, 'minst ett sted'); assert.match(goUrl('https://x.no/spill/?v=1', plate), /level=verksted&go=14%2C11\.2%2C-1/);
 
 // RPC
 let call = null; const f = (r) => async (url, init) => { call = { url, body: JSON.parse(init.body) }; return { ok: true, status: 200, json: async () => r }; };

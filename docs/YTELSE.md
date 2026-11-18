@@ -132,3 +132,6 @@ Fordeling: rekvisitt/brettdel 80 kall / 15680 trekanter; figuren 72 kall / 10822
 | 10 | rekvisitt/brettdel | 520 | ja | - | MeshPhysical #7c1f14 |
 
 Fordeling: rekvisitt/brettdel 85 kall / 14594 trekanter; figuren 72 kall / 10822 trekanter; gjennomsiktig 32 kall / 671 trekanter; gulvdetaljer/småting 9 kall / 292 trekanter
+
+## Kollisjonsbokser fra gulvdetaljer (R90)
+Perler, blyanter og viskelær er solide og ligger som statiske bokser i `LEVEL.boxes` mens gulvdetaljene vises. Ved tetthet Vanlig/Mange: Barnerom 64–106 blyantbokser (pluss 14–19 perler), Barnerom ommøblert 102–120, Verksted 270–342 (store rom). Måling i node (best av 5 × 6000 steg): 0,02 → 0,05–0,09 ms/steg i Barnerom, 0,01 → 0,10–0,13 ms/steg i Verksted, altså under 1 % av en ramme. Ingen nye tegnekall eller trekanter (tegningen er uendret); Stue-taket `fdetMax` er satt 118 → 115 så trekantbudsjettet (12000) holder når plasseringen endres. Ekte FPS: testes på iPhone.

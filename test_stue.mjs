@@ -48,7 +48,7 @@ const L = lv('stue'), scene = JSON.parse(fs.readFileSync('scenes/stue.scene.json
 // 2b) gulvdetaljer: rommet er stort og fullt av ting, så det har et lavere tak (room.fdetMax) som holder budsjettet
 {
   const { detailCount } = await import('./floordetail_logic.js');
-  assert.equal(L.room.fdetMax, 118); assert.equal(detailCount(L.room, 'high', 1.6), 118); assert.equal(detailCount({ ...L.room, fdetMax: undefined }, 'high', 1.6), 140, 'andre rom: som før');
+  assert.equal(L.room.fdetMax, 115); assert.equal(detailCount(L.room, 'high', 1.6), 115); assert.equal(detailCount({ ...L.room, fdetMax: undefined }, 'high', 1.6), 140, 'andre rom: som før');
   assert.ok(detailCount(L.room, 'high', 1.6) > detailCount(L.room, 'high', 1), 'tetthetsvalget virker fortsatt');
 }
 

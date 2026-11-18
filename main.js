@@ -266,6 +266,7 @@ let lowMode = store.get('tlm.lowprofile', 'auto'); if (!['off', 'auto', 'on'].in
 const heroQ = +store.get('tlm.herodetail', 0.6) || 0.6;   // R85: figurens tessellering (1 = full, 0,6 = standard: ca. 40 % færre trekanter i figuren; laster siden på nytt)
 const fdDens = +store.get('tlm.fdens', 1) || 1;   // R13: gulvdetaljer (floordetail.js): blyanter, perler, flekker, fugeskitt; tetthet etter rom og kvalitet (halvert med Lav profil «På», tom med Enkel grafikk)
 let floorDetailOn = store.get('tlm.floordetail', true);
+let pencilSolidOn = store.get('tlm.pencilsolid', true);   // R90: blyanter og viskelær på gulvet er solide
 let beadSolidOn = store.get('tlm.beadsolid', true);   // R37: perlene i gulvdetaljene er solide små kuler (kan stås på/glis av)
 const legoDens = +store.get('tlm.legodens', 1) || 1; let legoOn = store.get('tlm.lego', true);   // R31: legoknotter på gulv og tak i lekerommet (lekerom_view.js)
 const lowP = createLowProfile(); let lowOn = false;
@@ -1974,6 +1975,7 @@ const SETTINGS = [
     fl('softlight', 'spill', 'Myke skygger og lysflekk: mørke hjørner og under møbler, varm flekk fra vinduet (Detaljert grafikk, ikke Lav profil)', true, () => softOn, kp('tlm.softlight', (v) => { softOn = v; logEv('myke skygger', v ? 'på' : 'av'); })),
     fl('floordetail', 'spill', 'Gulvdetaljer: blyantstumper, perler, flekker og skitt i fugene for målestokk (Detaljert grafikk)', true, () => floorDetailOn, kp('tlm.floordetail', (v) => { floorDetailOn = v; logEv('gulvdetaljer', v ? 'på' : 'av'); })),
     fl('beadsolid', 'spill', 'Perler på gulvet er solide: du stoppes av dem og kan stå på dem (Detaljert grafikk)', true, () => beadSolidOn, kp('tlm.beadsolid', (v) => { beadSolidOn = v; logEv('perler', v ? 'solide' : 'gjennomtrengelige'); })),
+    fl('pencilsolid', 'admin', 'Blyanter og viskelær på gulvet er solide: du stoppes av dem, kan hoppe over og stå på dem (Detaljert grafikk)', true, () => pencilSolidOn, kp('tlm.pencilsolid', (v) => { pencilSolidOn = v; logEv('gulvdetaljer', v ? 'blyanter solide' : 'blyanter gjennomtrengelige'); })),
     fl('lego', 'spill', 'Legoknotter på gulv og tak i lekerommet, nivå 7 (Detaljert grafikk)', true, () => legoOn, kp('tlm.lego', (v) => { legoOn = v; logEv('legoknotter', v ? 'på' : 'av'); })),
     sl('legodens', 'admin', 'Legoknotter: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(legoDens), (v) => { if (+v === +legoDens) return; store.set('tlm.legodens', +v); logEv('legoknotter', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     sl('cinema', 'admin', 'Kinomodus for trailer-opptak: skjuler all UI, ingen lyd og lagring, fast frø, skript styrer kamera og tid (laster siden på nytt; slå av igjen med ?cinema=0 eller ved å fjerne cinema fra adressen)', 'av', [['av', 'Av'], ['paa', 'På (kinomodus)']], () => (CINE.on ? 'paa' : 'av'), (v) => { if ((v === 'paa') === CINE.on) return; logEv('kino', `valg: ${v}`); setTimeout(() => (v === 'paa' ? window.__game.cine.on() : window.__game.cine.off()), 150); }),
@@ -2717,7 +2719,7 @@ floodVar = variant;
 if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
 const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
-if (fdet) logEv('gulvdetaljer', `${fdet.count} stk, ${fdet.beads.length} perler`);
+if (fdet) logEv('gulvdetaljer', `${fdet.count} stk, ${fdet.beads.length} perler, ${fdet.pencils.length} blyant-/viskelærbokser`);
 const leke = gfxLow ? null : makeLekerom({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: legoDens });   // R31: legoknotter (2 tegnekall, ikke slått sammen)
 if (isStue(LEVEL)) { const ss = stueSummary(LEVEL); logEv('stue', `${ss.cushions} puter, ${ss.plates} plate, ${ss.doors} dør, ${ss.goals} delmål, ${ss.crumbs} smuler, ${ss.foes} fiender`); }
 if (leke?.count) logEv('lekerom', `${leke.count} knotter, ${leke.calls} tegnekall, ${leke.tris} trekanter`);
@@ -2907,7 +2909,7 @@ function render(now, dt) {
   if (dust) { dust.points.visible = dustOn && !lowOn && mode !== 'plan'; if (dust.points.visible) dust.update(now / 1000, camera.position.x, camera.position.y, camera.position.z); }
   variant.update(now / 1000, dt, player, mode);
   if (soft) soft.update(softOn, lowOn, gfxLow);
-  if (fdet) { fdet.update(floorDetailOn && !lowOn && mode !== 'plan'); const sol = floorDetailOn && !lowOn && beadSolidOn; if (sol !== fdet.solid) logEv('perler', sol ? `${fdet.beads.length} solide` : 'ikke solide'); fdet.setSolid(sol); }   // R37
+  if (fdet) { fdet.update(floorDetailOn && !lowOn && mode !== 'plan'); const sol = floorDetailOn && !lowOn && beadSolidOn; if (sol !== fdet.solid) logEv('perler', sol ? `${fdet.beads.length} solide` : 'ikke solide'); const psol = floorDetailOn && !lowOn && pencilSolidOn; if (psol !== fdet.pencilSolid) logEv('gulvdetaljer', psol ? `${fdet.pencils.length} blyantbokser solide` : 'blyanter ikke solide'); fdet.setSolid(sol, psol); }   // R37
   if (leke) leke.update(legoOn && !lowOn && mode !== 'plan');
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(CINE.on ? 0 : dt, mode === 'play' && !won && !menuOpen && !ov.active);   // kinomodus: byggetiden går bare i cine.step / cine.build.step
