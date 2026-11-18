@@ -2,7 +2,7 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
-  { id: 'r84-standard-medium', version: '2.41', date: '2026-11-18', title: 'Nye spillere starter på Medium i stedet for Nybegynner.',
+  { id: 'r84-standard-medium', version: '2.42', date: '2026-11-18', title: 'Nye spillere starter på Medium i stedet for Nybegynner.',
     how: 'Trykk NYTT SPILL og se at Medium er valgt. Du kan fortsatt velge Nybegynner eller Ekspert.', level: '', spot: null },
   { id: 'r54-roligere-kamera', version: '2.36', date: '2026-11-18', title: 'Roligere kamera: følger deg rolig og passer synsfeltet til skjermen.',
     how: 'Start Nivå 1 og gå rundt med stikka. Prøv å holde telefonen både stående og liggende.', level: 'bad', spot: null },

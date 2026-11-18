@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.42** – R84: standard vanskelighet er Medium for nye spillere (lagret valg beholdes).
 - **2.41** – Prioritert backlogg utkast 3 (runde 2 besvart); R84 (standard Medium) lagt i veikartet.
 - **2.40** – Prioritert backlogg utkast 2: beslutninger fra Rune (åpen nettleserversjon, mix, nivå 1–9 + Byggeskole; engelsk og hjemmeskjerm kuttes først).
 - **2.39** – docs/PRIORITERT_BACKLOGG.md: utkast til prioritert backlogg før lansering (kun dokument).
