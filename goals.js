@@ -9,6 +9,8 @@
 //         'boss'                              slå sjef-mauren (R9)
 //         'flag'   { flag }                   settes utenfra med setGoalFlag (f.eks. «bygg broen» fra byggeskjermen, R24)
 //   gate:  må være klart før målet åpner (alltid påkrevd). req: påkrevd for «alle delmål klare», men låser ikke målet.
+//   also:  (reach) andre flater som teller like godt (`alt`: liste av { x0, x1, z0, z1, top }, laget av scene2level fra `also: [id, …]` i scenen).
+//          R89: et låsende delmål skal telle for ALLE fysisk mulige veier forbi det (hylle, den harde veien osv.), ikke bare én flate.
 //   after: id på et delmål som må være klart først (ordnet kjede); delmålet teller ikke før det.
 // Uten `gate` er et delmål valgfritt og hindrer aldri at du kommer i mål.
 export const GOAL = {
@@ -52,12 +54,14 @@ export function onSurface(g, p) {
   return p.onGround !== false && dy > -GOAL.below && dy < GOAL.above
     && p.x > g.x0 - GOAL.slackXZ && p.x < g.x1 + GOAL.slackXZ && p.z > g.z0 - GOAL.slackXZ && p.z < g.z1 + GOAL.slackXZ;
 }
+// R89: hovedflata eller en av de likeverdige flatene (`alt`)
+export const onAnySurface = (g, p) => onSurface(g, p) || (g.alt || []).some((a) => onSurface(a, p));
 // fremdrift: { cur, need } (for smuler og knusing flere trinn, ellers 0/1)
 export function goalProgress(L, g, ctx = {}) {
   switch (g.type) {
     case 'crumbs': return { cur: Math.min(ctx.crumbs || 0, g.n), need: g.n };
     case 'stomp': return { cur: Math.min(ctx.stomps || 0, g.n), need: g.n };
-    case 'reach': return { cur: ctx.player && onSurface(g, ctx.player) ? 1 : 0, need: 1 };
+    case 'reach': return { cur: ctx.player && onAnySurface(g, ctx.player) ? 1 : 0, need: 1 };
     case 'puzzle': return { cur: (L.puzzleList || []).find((q) => q.id === g.puzzle)?.open ? 1 : 0, need: 1 };
     case 'gate': return { cur: (L.gateS?.doors || []).find((q) => q.id === g.door)?.t >= 0.999 ? 1 : 0, need: 1 };
     case 'boss': return { cur: L.bossS?.gone ? 1 : 0, need: 1 };
@@ -130,6 +134,7 @@ export function checkGoals(L, { levelId = '' } = {}) {
     if (g.type === 'reach') {
       if (!(g.x1 > g.x0 && g.z1 > g.z0) || typeof g.top !== 'number') errs.push(`${at}: flata er ugyldig`);
       if (g.gate && !routeIds.has(g.on)) errs.push(`${at}: et delmål som låser målet må ligge på ruta (${g.on})`);
+      for (const a of g.alt || []) if (!(a.x1 > a.x0 && a.z1 > a.z0) || typeof a.top !== 'number') errs.push(`${at}: en likeverdig flate (also) er ugyldig`);
     }
     if (g.gate && !['reach', 'crumbs'].includes(g.type)) errs.push(`${at}: bare reach/crumbs kan låse målet`);
   }

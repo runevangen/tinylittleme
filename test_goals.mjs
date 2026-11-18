@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, activeGoal, goalsOpen, lockingGoals, allRequiredDone, goalTarget, goalProgress, onSurface, goalLine, setGoalFlag, checkGoals, GOAL } from './goals.js';
+import { lockMessage, lockLogText } from './goal_lock_logic.js';
+import { shortcutRoute, shortcutsOf } from './shortcut.js';
 import { makeT, DICT_KEYS } from './i18n.js';
 
 const flat = { x0: 0, x1: 4, z0: 0, z1: 4, top: 6 };
@@ -74,6 +76,40 @@ for (const id of ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2',
   for (const w of R) stepGoals(L, { player: P((w.x0 + w.x1) / 2, w.top, (w.z0 + w.z1) / 2), crumbs: 0, stomps: 0 });
   assert.ok(goalsOpen(L), `${id}: ruta alene åpner målet (${lockingGoals(L).map((g) => g.id)})`);
   assert.ok(!allRequiredDone(L) || L.goals.every((g) => !g.req || g.done));
+}
+// R89: ALLE kjente veier åpner målet: hovedruta, den harde veien (alts) og genveiene. Et låsende delmål teller også for andre flater forbi det (`alt`),
+// så en spiller som tar hylla/den harde veien i stedet for rekka ikke står fast ved et låst mål.
+{
+  const walk = (L, nodes) => { initGoals(L); for (const w of nodes.filter((q) => q && !q.grip && !q.via)) stepGoals(L, { player: P((w.x0 + w.x1) / 2, w.top, (w.z0 + w.z1) / 2), crumbs: 0, stomps: 0 }); return L; };
+  let routes = 0;
+  for (const f of fs.readdirSync('levels').filter((x) => x.endsWith('.level.json'))) {
+    const L = JSON.parse(fs.readFileSync(`levels/${f}`, 'utf8')); if (!(L.goals || []).some((g) => g.gate)) continue;
+    const all = [['hovedruta', L.route], ...(L.alts || []).map((a) => [`alt ${a.id}`, a.route]), ...shortcutsOf(L).map((sc) => [`genvei ${sc.id}`, shortcutRoute(L, sc)])];
+    for (const [name, nodes] of all) {
+      assert.ok(nodes && nodes.length > 1, `${f}: ${name} finnes`); routes++;
+      walk(L, nodes); assert.ok(goalsOpen(L), `${f}: ${name} åpner ikke målet (låst: ${lockingGoals(L).map((g) => g.id)})`);
+    }
+  }
+  assert.ok(routes >= 20, `minst 20 ruter prøvd (${routes})`);
+  // bad (nivå 1): hylla (uten å stå på rekka) og de harde eskene åpner målet; en spiller ved gulvet gjør det ikke
+  const bad = JSON.parse(fs.readFileSync('levels/bad.level.json', 'utf8')), at = (id) => bad.boxes.find((b) => b.id === id), top = (id) => { const b = at(id); return P((b.min[0] + b.max[0]) / 2, b.max[1], (b.min[2] + b.max[2]) / 2); };
+  for (const id of ['knagg_hylle', 'trapp_bad_9', 'medisinskap']) { initGoals(bad); stepGoals(bad, { player: top(id) }); assert.ok(goalsOpen(bad), `bad: ${id} åpner målet`); }
+  initGoals(bad); stepGoals(bad, { player: top('trapp_bad_3') }); assert.ok(!goalsOpen(bad), 'bad: midt på eskene er målet fortsatt låst');
+  initGoals(bad); stepGoals(bad, { player: P(0, 0, 0) }); assert.ok(!goalsOpen(bad), 'bad: på gulvet er målet låst (delmålene er ikke fjernet)');
+}
+// R89: beskjeden ved låst mål finnes alltid: uten hint («Ekspert», hintBubbles/contextHints av) bare «Målet er låst.», med hint også navnet
+{
+  const L = JSON.parse(fs.readFileSync('levels/bad.level.json', 'utf8')); initGoals(L);
+  for (const lang of ['nb', 'en']) {
+    const { T } = makeT(() => lang), none = lockMessage(L, { hints: false, lang, T }), hint = lockMessage(L, { hints: true, lang, T });
+    assert.equal(none, lang === 'nb' ? 'Målet er låst.' : 'The goal is locked.'); assert.ok(hint.startsWith(none.replace(/\.$/, '')) && hint.length > none.length && hint.includes(L.goals[0][lang === 'en' ? 'en' : 'label']), `${lang}: med hint også navnet`);
+    assert.ok(!/\{\w+\}/.test(none + hint));
+  }
+  assert.equal(lockLogText(L), 'kurv,knagg');
+  stepGoals(L, { player: P(0, 0, 0) }); assert.ok(lockMessage(L, { hints: false, lang: 'nb', T: makeT(() => 'nb').T }), 'forsøk uten delmålene gir beskjeden');
+  const b = L.boxes.find((x) => x.id === 'medisinskap'); stepGoals(L, { player: P((b.min[0] + b.max[0]) / 2, b.max[1], (b.min[2] + b.max[2]) / 2) });
+  assert.equal(lockMessage(L, { hints: false, lang: 'nb', T: makeT(() => 'nb').T }), null, 'åpent mål: ingen beskjed');
+  const main = fs.readFileSync('main.js', 'utf8'); assert.ok(/lockMessage\(LEVEL, \{ hints: DIF\.contextHints/.test(main) && !/tip\(T\('goal\.locked'/.test(main), 'main.js bruker lockMessage, ikke tip() som skjules uten hint');
 }
 // feil i brettdata fanges
 {

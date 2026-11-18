@@ -34,6 +34,7 @@ import { createGuideView } from './guide_view.js';
 import { MARK, budgetFor, selectMarkers, goalDirection, noteGrab, markerStyle as rankStyle } from './markers_rank.js';   // R66: markørbudsjett og rangering
 import { FG, isWet, pickGoal, refuge, dropIntoWater, drownAlert, shakeOffset, beepDue, levelBadge, floodPct } from './flood_logic.js';   // R65: stigende vann i Nivå 4: mål og varsler tar hensyn til vannstanden
 import { createFloodView } from './flood_view.js';
+import { lockMessage, lockLogText } from './goal_lock_logic.js';   // R89: beskjed ved låst mål også uten hint
 import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalLine, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
 import { createGoalView } from './goals_view.js';
 import { DIFFS, DEFAULT_DIFF, normDiff, diffProfile, offElements, markerBudget as diffBudget, progressKey as diffProgKey, awardBadge, badgeTotals, bestBadge, isCustomHelp, dt as dft, badgeRow } from './difficulty.js';   // R69: vanskelighetsnivå (difficulty.js, difficulty_view.js)
@@ -2599,7 +2600,7 @@ function update(dt) {
 
   const g = LEVEL.goal;
   if (!won && goalTotal(LEVEL) && goalsOn && goalLockOn && !goalsOpen(LEVEL) && mode === 'play' && !stats.flew && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
-    if (performance.now() > goalLockMsg) { goalLockMsg = performance.now() + 4000; logEv('mål låst', lockingGoals(LEVEL).map((q) => q.id).join(',')); tip(T('goal.locked', { name: goalLabel(lockingGoals(LEVEL)[0], lang) })); }
+    if (performance.now() > goalLockMsg) { goalLockMsg = performance.now() + 4000; logEv('mål låst', lockLogText(LEVEL)); bandSay('tip', PRIO.hint, lockMessage(LEVEL, { hints: DIF.contextHints, lang, T }), 6, 'hint'); }   // R89: alltid en beskjed (uten hint bare «Målet er låst.»)
   } else if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); if (!stats.flew) statsLevelEnd('complete', { sek: clock - seg.t0, poeng: points(), merke: DIFFS[runDiffMin] }); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
     let d, rw = null, bdg = null;

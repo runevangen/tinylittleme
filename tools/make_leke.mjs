@@ -41,7 +41,7 @@ const s = {
     { id: 'smuler', type: 'crumbs', n: 6, label: 'Samle 6 smuler', en: 'Collect 6 crumbs' },
     { id: 'soldat', type: 'stomp', n: 1, label: 'Knus en tinnsoldat', en: 'Squash a tin soldier' },
     { id: 'bygg', type: 'flag', flag: 'leke1', label: 'Bygg en bro over gapet (BYGG-knappen)', en: 'Build a bridge over the gap (BUILD button)' },
-    { id: 'tarn', type: 'reach', on: 'r4', gate: true, label: 'Klatre trappa langs veggen', en: 'Climb the stairs along the wall' },
+    { id: 'tarn', type: 'reach', on: 'r4', gate: true, also: ['gele_leke_trinn_3', 'r5'], label: 'Klatre trappa langs veggen', en: 'Climb the stairs along the wall' },
   ],
   shortcuts: [{ id: 'gele_leke', tool: 'gel', item: 'hargele_leke', label: 'Smør hårgelé og klatre trappa opp langs veggen', en: 'Smear hair gel and climb the stairs along the wall', stand: [480.5, 142.5], face: [1, 0],
     steps: ['gele_leke_trinn_1', 'gele_leke_trinn_2', 'gele_leke_trinn_3'], join: 'r5' }],
