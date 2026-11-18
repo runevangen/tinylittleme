@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.58** – R90: blyanter og viskelær på gulvet er solide (innstilling `pencilsolid`), kan gås over og stås på.
 - **2.57** – R90 lagt i veikartet (blyanter og viskelær på gulvet er ikke solide, fra Rune).
 - **2.56** – R89: låst mål gir alltid beskjeden «Målet er låst» (også uten hint), og låsende delmål teller for alle veier (Badet, Barnerommet 2, Lekerommet).
 - **2.55** – R89 lagt i veikartet (låst mål uten forklaring og for strenge delmål i Nivå 1, fra Rune).
