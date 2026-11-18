@@ -34,6 +34,8 @@ import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagLi
 import { createGoalView } from './goals_view.js';
 import { DIFFS, DEFAULT_DIFF, normDiff, diffProfile, offElements, markerBudget as diffBudget, progressKey as diffProgKey, awardBadge, badgeTotals, bestBadge, isCustomHelp, dt as dft, badgeRow } from './difficulty.js';   // R69: vanskelighetsnivå (difficulty.js, difficulty_view.js)
 import { createDifficultyView } from './difficulty_view.js';
+import { createStore, migrateAll, normProgress, normCleared, PROGRESS_VERSION, isNewGameKey, wipePlan, wipe, fmtClock, resumeLine, exportProgress, parseProgress, applyImport, sv, savedSummary } from './storage_logic.js';   // R86: trygg lagring, migrering, eksport/import (storage_logic.js, storage_view.js)
+import { createStorageView } from './storage_view.js';
 import { screenOf, floatOn } from './flag_logic.js';   // R71: ⚑ på alle skjermer
 import { createTopBand } from './topband_view.js';   // R53: dynamisk toppbånd
 import { PRIO } from './topband_logic.js';
@@ -87,29 +89,27 @@ import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlay
 const $ = (id) => document.getElementById(id);
 // mobil (berøring) er hovedplattformen: tekst som nevner taster skal si knappene i stedet
 // sjekk ved oppstart: mobil (berøring som hovedpeker) eller PC (mus/tastatur). Kan overstyres i ⚙ → Test.
+const disk = createStore(() => window.localStorage, { onFail: (k, e) => noteSaveFail(k, e) });   // R86: all lagring går hit; kaster aldri, og en korrupt nøkkel gir standardverdi uten å slette noe
 const platform = (() => {
   const q = (s) => matchMedia(s).matches;
-  let pref = 'auto'; try { pref = JSON.parse(localStorage.getItem('tlm.platform')) || 'auto'; } catch { /* privat modus */ }
+  const pref = disk.get('tlm.platform', 'auto') || 'auto';
   const auto = q('(pointer:coarse)') ? 'mobil' : 'pc';
   return { kind: pref === 'auto' ? auto : pref, pref, auto, coarse: q('(pointer:coarse)'), fine: q('(any-pointer:fine)'), hover: q('(hover:hover)'), touchPoints: navigator.maxTouchPoints || 0 };
 })();
 const TOUCH = platform.kind === 'mobil';
-let pcButtons = true; try { pcButtons = JSON.parse(localStorage.getItem('tlm.pcbtns')) !== false; } catch { /* privat modus */ }
+let pcButtons = disk.get('tlm.pcbtns', true) !== false;
 const applyPlatformUi = () => {
   document.body.classList.toggle('mobile', TOUCH); document.body.classList.toggle('pc', !TOUCH);
   document.body.classList.toggle('showbtns', TOUCH || pcButtons);
   if (!TOUCH) for (const [id, k] of [['btnCarry', 'F'], ['btnJump', 'Mellomrom'], ['btnGrab', 'E / Shift'], ['btnCenter', 'Z']]) { const el = document.getElementById(id); if (el) el.dataset.k = k; }
 };
 applyPlatformUi();
-let lang = (() => { try { return JSON.parse(localStorage.getItem('tlm.lang')) || 'nb'; } catch { return 'nb'; } })();
+let lang = disk.get('tlm.lang', 'nb') || 'nb';
 const { T, name: kindName } = makeT(() => lang);
 let GREP = TOUCH ? T('btn.grab') : 'Shift/E', TA = TOUCH ? T('btn.take') : 'F';          // TA følger knappen: sier den SMØR, heter den SMØR i teksten
 const key = (k) => (TOUCH ? '' : ` (${k})`);
 const CINE = parseCinema(location.search), cineRnd = CINE.on ? installRandom(CINE.seed) : null;   // R68: ?cinema=1 (alt under er av ellers)
-const store = cineStore({
-  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* privat modus e.l. */ } },
-}, CINE.opts, CINE.on);   // kinomodus: leser bare standardene (+ cine_opt) og skriver aldri (ingen fremgang, ingen autolagring)
+const store = cineStore({ get: disk.get, set: disk.set }, CINE.opts, CINE.on);   // kinomodus: leser bare standardene (+ cine_opt) og skriver aldri (ingen fremgang, ingen autolagring)
 
 // Brett: ?level=bad (eller barnerom/kjokken/soverom …). Uten parameter åpnes brettet du sist spilte; første gang nivå 1.
 // De åtte første er nivåene (n = nivånummer, stigende vanskelighetsgrad; 4–6 er de samme rommene ommøblert); resten er ekstra- og prøverom.
@@ -199,6 +199,7 @@ const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(m
 
 // ---------- innstillinger som flagg (selve lista og panelet står lenger ned: SETTINGS) ----------
 let autosaveOn = store.get('tlm.autosave', true), lostReturnOn = store.get('tlm.lostreturn', true), failHintOn = store.get('tlm.failhint', true);
+let confirmNewOn = store.get('tlm.confirmnew', true);   // R86: bekreftelse før «Nytt spill» sletter (admin)
 let confirm2On = store.get('tlm.confirm2', true), aimThrowOn = store.get('tlm.aimthrow', true), dblTapOn = store.get('tlm.dbltap', true), camRelayOn = store.get('tlm.camrelay', true), camSlop = store.get('tlm.camslop', CAM_SLOP), camHintShown = store.get('tlm.camhint', false);
 let showMapBtn = store.get('tlm.showmapbtn2', false), showCenter = store.get('tlm.showcenter2', false),   // v1.35: ◎ og kartknappen er av som standard (nye nøkler, så alle starter uten dem)
    stickDead = store.get('tlm.stickdead', 0.22), btnScale = store.get('tlm.btnscale', 1);
@@ -246,6 +247,11 @@ const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCen
 // ---------- hendelseslogg og FPS: brukes i testrapporten ----------
 const evLog = store.get('tlm.evlog', []);
 const logEv = (type, detail = '') => { evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION, lv: levelLabel }); if (evLog.length > 120) evLog.shift(); };
+// R86: ved feil under lagring (privat modus, full lagring) sies det én gang; spilleren får også en rød linje på hovedmenyen (saveWarn)
+let saveFailNoted = false;
+function noteSaveFail(k, e) { if (saveFailNoted) return; try { logEv('lagring', `FEIL ved skriving av ${k}: ${e}`); setTimeout(() => toast(sv(lang, 'sv.fail')), 300); saveFailNoted = true; } catch { /* clock/toast ikke klar ennå: prøver igjen ved neste feil */ } }
+const storeNotes = [];   // logges når klokka finnes (logEv bruker clock)
+if (!CINE.on) { const mg = migrateAll(store, disk); if (mg.migrated.length || mg.skipped.length) storeNotes.push(`migrert ${mg.migrated.length}${mg.skipped.length ? ', lot stå ' + mg.skipped.length : ''}`); if (!disk.probe()) storeNotes.push('lagring virker ikke på denne enheten'); }
 const qFps = +store.get('tlm.qfps', 27) || 27;   // R85: mål-FPS for Auto-oppløsningen (27: målet er 30, og en iPhone i strømsparemodus låst til 30 er frisk)
 const fpsW = fpsWatch(qFps, 2000);   // R85: vinduer på 2 s (før 3 s) så Auto reagerer tidligere
 const autoQC = createAutoQ({ limit: qFps });      // polish.js: når oppløsningen går ned/opp (testet i test_polish.mjs)
@@ -1190,7 +1196,7 @@ let runDiffMin = DIFFS.indexOf(difficulty);                       // R69: lavest
 if (new URLSearchParams(location.search).get('fresh') === '1') { store.set(progKey, null); try { const u = new URL(location.href); u.searchParams.delete('fresh'); history.replaceState(null, '', u.pathname + u.search); } catch { /* ingen historikk */ } }   // «Velg brett»: spill fra start uten å slette annen fremgang
 let autoPos = null, autoT = 0, resumed = false;
 let noSave = false;       // satt rett før siden lastes på nytt etter «Nytt spill», så pagehide ikke skriver gammel fremgang tilbake
-function saveProgress() { if (won || !autosaveOn || noSave) return; store.set(progKey, { save: save.pos, auto: autoPos, stats, clock, fails: [...failCells], crumbs: collectedIds(LEVEL), puzzles: puzzleOpenIds(LEVEL), gates: gatesSave(LEVEL), goals: goalDoneIds(LEVEL), goalFlags: goalFlagList(LEVEL), build: bld.save(), dmin: runDiffMin }); }
+function saveProgress() { if (won || !autosaveOn || noSave) return; store.set(progKey, { v: PROGRESS_VERSION, save: save.pos, auto: autoPos, stats, clock, fails: [...failCells], crumbs: collectedIds(LEVEL), puzzles: puzzleOpenIds(LEVEL), gates: gatesSave(LEVEL), goals: goalDoneIds(LEVEL), goalFlags: goalFlagList(LEVEL), build: bld.save(), dmin: runDiffMin }); }
 function clearProgress() { autoPos = null; store.set(progKey, null); }
 const failCells = new Map();
 let compassForce = 0;
@@ -1200,7 +1206,7 @@ function failAt(why = 'fall') {
   if (failHintOn && DIF.failTips > 0 && n >= DIF.failTips && n % DIF.failTips === 0) setTimeout(() => { const t = nextTarget(); compassForce = performance.now() + 15000; toast(`Tips: prøv ${t.final ? 'målet' : t.label}${t.act ? ` (${t.act})` : ''}. Pilen viser veien.`); }, 1800);
 }
 {
-  const pr = store.get(progKey, null), okAt = (p) => Array.isArray(p) && p.length === 3 && freeAt(LEVEL, p[0], p[1] + 0.05, p[2]);
+  const pr = normProgress(store.get(progKey, null)), okAt = (p) => Array.isArray(p) && p.length === 3 && freeAt(LEVEL, p[0], p[1] + 0.05, p[2]);
   if (autosaveOn && pr && pr.clock > 4 && okAt(pr.save)) {
     if (Number.isInteger(pr.dmin)) runDiffMin = Math.max(0, Math.min(runDiffMin, pr.dmin));
     save.pos = pr.save; Object.assign(stats, pr.stats || {}); clock = pr.clock; autoPos = okAt(pr.auto) ? pr.auto : null;
@@ -1210,6 +1216,7 @@ function failAt(why = 'fall') {
   }
 }
 addEventListener('pagehide', saveProgress);
+for (const n of storeNotes) logEv('lagring', n);
 if (resumed) logEv('gjenopptatt');
 logEv('grade', gradeMode + (gfxLow ? ' (enkel: ingen kantlys/fyll/filter)' : ''));   // R1: hvilken gradering som kjører (rapporten)
 if (resumed) setTimeout(() => toast('Fortsetter der du var · ⚙ → Start på nytt for å begynne på nytt'), 1500);
@@ -1919,6 +1926,7 @@ const SETTINGS = [
   sl('wasplevel', 'spill', 'Veps: vanskelighet (lett = lengre varsel og saktere stup)', 'normal', [['easy', 'Lett'], ['normal', 'Normal'], ['hard', 'Vanskelig']], () => waspLevel, kp('tlm.wasplevel', (v) => { waspLevel = v; WASP_TUNE.level = v; logEv('fiende', 'veps-vanskelighet ' + v); })),
   fl('boss', 'hjelp', 'Sjef-maur i siste rom (nivå 6): av = ingen sjef', true, () => bossOn, kp('tlm.boss', (v) => { bossOn = v; logEv('sjef', v ? 'på' : 'av'); })),
   fl('lostreturn', 'spill', 'Ting som forsvinner kommer tilbake av seg selv', true, () => lostReturnOn, kp('tlm.lostreturn', (v) => { lostReturnOn = v; })),
+  fl('confirmnew', 'admin', 'Vis bekreftelse med oversikt før NYTT SPILL sletter fremgangen (R86)', true, () => confirmNewOn, kp('tlm.confirmnew', (v) => { confirmNewOn = v; })),
   fl('confirm2', 'spill', 'Lagre / Tilbake / Ting: trykk to ganger', true, () => confirm2On, kp('tlm.confirm2', (v) => { confirm2On = v; })),
   sl('gfx', 'spill', 'Grafikk (laster siden på nytt)', 'high', [['high', 'Detaljert'], ['low', 'Enkel (for eldre telefoner)']], () => (gfxLow ? 'low' : 'high'), (v) => { if ((v === 'low') === gfxLow) return; store.set('tlm.gfx', v); setTimeout(() => location.reload(), 150); }),
   sl('grade', 'spill', 'Fargegradering (Toy Story-lys, laster siden på nytt)', 'film', [['film', 'Varm film'], ['off', 'Av (opprinnelig lys)']], () => gradeMode, (v) => { if (v === gradeMode) return; logEv('grade', v); store.set('tlm.grade', v); setTimeout(() => location.reload(), 150); }),
@@ -2182,7 +2190,7 @@ function buildPanel() {
   const groupHtml = (g, title) => {
     const items = SETTINGS.filter((d) => d.group === g && visible(d));
     let extra = '';
-    if (g === 'spill') extra = `<label>Brett</label><select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`).join('')}</select><div class="row"><button id="pRestart">Start på nytt</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div>`;
+    if (g === 'spill') extra = `<label>Brett</label><select id="levelSel">${LEVELS.map((l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`).join('')}</select><div class="row"><button id="pRestart">Start på nytt</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div><small id="saveNote"></small><div class="row"><button id="bSaveCopy">${sv(lang, 'sv.copy')}</button><button id="bSavePaste">${sv(lang, 'sv.paste')}</button></div>`;
     if (g === 'test') extra = `
       <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
       <div class="row"><button id="bMark">⚑ Marker her</button></div>
@@ -2194,7 +2202,7 @@ function buildPanel() {
       <div class="row"><button id="bResetAll">Alt til standard</button></div>
       <small>Rapporten har versjon, enhet, endrede innstillinger, markeringer og siste hendelser. Send den som melding.</small>`;
     if (g === 'lyd') extra = `<div class="row"><button id="bHearBreath">Hør pust</button><button id="bHearStep">Hør skritt</button><button id="bHearJump">Hør hopp</button></div><small id="voiceNote"></small>`;
-    if (g === 'admin') extra = `<div class="row"><button id="pPlan">Plan</button><button id="pFly">Fly (ugyldig resultat)</button></div>
+    if (g === 'admin') extra = `<div class="row"><button id="bWipeAll">${sv(lang, 'sv.allBtn')}</button></div><div class="row"><button id="pPlan">Plan</button><button id="pFly">Fly (ugyldig resultat)</button></div>
       <details><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary><label>Etterklang (rom) <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">${mixerHtml()}
         <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
       ${helperCount ? `<label class="chk"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
@@ -2261,6 +2269,19 @@ function buildPanel() {
     for (const [k, v] of Object.entries(r.values)) SETTINGS.find((d) => d.id === k)?.set(v);
     logEv('importerte innstillinger', `${Object.keys(r.values).length} verdier`); buildPanel(); toast(`${Object.keys(r.values).length} innstillinger importert`);
   };
+  { // R86: lagringsstatus, KOPIER/LIM INN FREMGANG (⚙ → Spill) og NULLSTILL ALT (⚙ → Admin)
+    const sm = savedSummary(store, disk); if ($('saveNote')) $('saveNote').textContent = (disk.status().failures || !disk.status().available ? '⚠ ' + sv(lang, 'sv.fail') : '✓ ' + sv(lang, 'sv.saved') + ': ' + sv(lang, 'sv.status', sm)) + ' ' + sv(lang, 'sv.note');
+    if ($('bSaveCopy')) $('bSaveCopy').onclick = async () => { saveProgress(); const r = await shareText(exportProgress(store, disk, { version: VERSION }), 'tinylittleme fremgang'); logEv('lagring', `eksport: ${r}`); toast(r === 'vis' ? sv(lang, 'sv.copyFail') : sv(lang, 'sv.copied')); };
+    if ($('bSavePaste')) $('bSavePaste').onclick = async () => {
+      let text = ''; try { text = await navigator.clipboard.readText(); } catch { text = prompt(sv(lang, 'sv.pastePrompt')) || ''; }
+      if (!text) return;
+      const r = parseProgress(text); if (r.error) { logEv('lagring', `import avvist: ${r.error}`); return toast(sv(lang, 'sv.err.' + r.error)); }
+      if (!confirm(sv(lang, 'sv.pasteAsk', { boards: r.boards, cleared: r.cleared }))) return logEv('lagring', 'import avbrutt');
+      const n = applyImport(store, r); logEv('lagring', `import: ${n} av ${Object.keys(r.data).length} nøkler${r.skipped.length ? ', hoppet over ' + r.skipped.length : ''}`);
+      toast(sv(lang, 'sv.pasteDone', { n })); noSave = true; setTimeout(() => location.reload(), 900);   // noSave: pagehide skal ikke skrive gammel fremgang oppå
+    };
+    if ($('bWipeAll')) $('bWipeAll').onclick = () => { $('panel').classList.add('hide'); $('start').classList.remove('hide'); document.body.classList.add('instart'); menuOpen = true; svView.confirmWipe({ kind: 'all', plan: wipePlan('all', disk.keys('tlm.'), store), onCancel: showStart, onOk: () => { logEv('lagring', 'nullstill alt'); noSave = true; const n = wipe('all', disk); toast(sv(lang, 'sv.allDone') + ` (${n})`); setTimeout(() => { location.href = location.pathname + '?start=1'; }, 700); } }); };
+  }
   confirmed($('bResetAll'), 'Alt til standard', 0, () => { resetAllSettings(); logEv('alt til standard'); buildPanel(); applyUiFlags(); toast('Alt er satt til standard'); });
   // lyd
   for (const [id, snd] of [['bHearBreath', 'breath'], ['bHearStep', 'step:wood'], ['bHearJump', 'jump']]) $(id).onclick = () => { unlockAudio(); Promise.resolve(audio?.resume()).then(() => audio?.preview(snd)); };
@@ -2977,8 +2998,10 @@ function showEnding() {
 let startScreenOn = store.get('tlm.startscreen', true), menuOpen = false;
 const startWanted = !CINE.on && startScreenOn && levelParam === null && new URLSearchParams(location.search).get('start') !== '0';
 let gameDone = store.get('tlm.done', false);   // satt etter avslutningen: menyen viser da bare Nytt spill
-const hasProgress = () => !gameDone && (resumed || clock > 4 || levelId !== 'bad' || Object.keys(store.get('tlm.cleared', {})).length > 0);
-function clearAllProgress() { try { Object.keys(localStorage).filter((k) => k.startsWith('tlm.progress.') || k.startsWith('tlm.storySeen.') || k.startsWith('tlm.cardseen.') || k === 'tlm.runs').forEach((k) => localStorage.removeItem(k)); } catch { /* privat modus */ } }
+const hasProgress = () => !gameDone && (resumed || clock > 4 || levelId !== 'bad' || Object.keys(normCleared(store.get('tlm.cleared', {}))).length > 0);
+const svView = createStorageView({ $, lang: () => lang, logEv });   // R86: bekreftelse før noe slettes
+const saveWarn = () => (disk.status().failures > 0 || !disk.status().available ? `<p class="tag" id="mSaveWarn" style="color:#ffb4a8">${sv(lang, 'sv.fail')}</p>` : '');
+function clearAllProgress() { disk.keys('tlm.').filter((k) => isNewGameKey(k) && k !== 'tlm.cleared').forEach((k) => disk.remove(k)); }   // R86: «Nytt spill» (tlm.cleared settes tom av kalleren)
 function hideStart() { menuOpen = false; $('start').classList.add('hide'); $('start').classList.remove('dfl'); document.body.classList.remove('instart'); }
 // R69: vanskelighet. Bare hjelpen endres (tabellen i difficulty.js). carry: ta fremgangen med til det nye nivåets nøkkel (endring midt i et brett).
 const dv = createDifficultyView({ $, lang: () => lang, logEv });
@@ -3082,8 +3105,8 @@ function showStart(o = {}) {
   if (document.pointerLockElement) document.exitPointerLock();
   const has = hasProgress(), bl = badgeLine(), dn = dft(lang, 'df.' + difficulty);
   $('start').classList.remove('dfl', 'fxl');
-  $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${o.saved ? '✓ ' + dft(lang, 'df.saved') : T('menu.tagline')}</p>
-    <button class="mbtn" id="mCont" ${has ? '' : 'disabled'}>${T('menu.continue')}<small>${has ? levelLabel + ' · ' + dn : T('menu.nosave')}</small></button>
+  $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${o.saved ? '✓ ' + dft(lang, 'df.saved') : T('menu.tagline')}</p>${saveWarn()}
+    <button class="mbtn" id="mCont" ${has ? '' : 'disabled'}>${T('menu.continue')}<small>${has ? resumeLine({ label: levelLabel, diff: dn, clock: clock > 4 ? clock : (normProgress(store.get(progKey, null))?.clock || 0) }) : T('menu.nosave')}</small></button>
     <button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
     <button class="mbtn sec" id="mLevels">${dft(lang, 'df.pick')}${bl ? `<small>${bl}</small>` : ''}</button>
     <button class="mbtn sec" id="mToys">🧸 ${rwT(lang, 'rw.closet')}</button>
@@ -3093,11 +3116,11 @@ function showStart(o = {}) {
     <div class="ver">v${VERSION}</div>`;
   $('start').classList.remove('hide'); document.body.classList.add('instart');
   $('mCont').onclick = () => { unlockAudio(); hideStart(); logEv('fortsett'); };
-  let armed = 0;
   $('mNew').onclick = () => {
     unlockAudio();
-    if (has && !armed) { armed = 1; $('mNew').classList.add('warn'); $('mNew').classList.remove('sec'); $('mNew').textContent = T('menu.sure'); setTimeout(() => { armed = 0; if ($('mNew')) { $('mNew').classList.remove('warn'); $('mNew').classList.toggle('sec', has); $('mNew').textContent = T('menu.new'); } }, 4000); return; }
-    dv.pickDifficulty({ current: difficulty, onPick: (d) => newGame(d), onBack: showStart });   // R69: velg vanskelighet først
+    const pick = () => dv.pickDifficulty({ current: difficulty, onPick: (d) => newGame(d), onBack: showStart });   // R69: velg vanskelighet først
+    if (!has || !confirmNewOn) { pick(); return; }
+    svView.confirmWipe({ kind: 'new', plan: wipePlan('new', disk.keys('tlm.'), store), onCancel: showStart, onOk: pick });   // R86: vis hva som slettes FØR noe slettes (selve slettingen skjer i newGame)
   };
   $('mLevels').onclick = () => { unlockAudio(); dv.pickLevel({ levels: LEVELS, st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart }); };
   $('mToys').onclick = () => { logEv('belønning', 'lekerom åpnet'); showCloset($('start'), { st: store, lang, all: rewardsAll, levels: LEVELS, onChange: (e) => { refreshAccessories(); logEv('belønning', `valgt ${Object.values(e).filter(Boolean).join(',') || 'ingen'}`); }, onBack: showStart }); };

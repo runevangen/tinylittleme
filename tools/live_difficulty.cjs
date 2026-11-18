@@ -30,7 +30,7 @@ const { chromium, devices } = require('playwright');
   if (only(2)) { const { ctx, pg } = await mk({ 'tlm.cleared': { bad: 80 }, 'tlm.badges': { bad: { beginner: 1 } } });
     await ready(pg, 'index.html'); await pg.waitForTimeout(1500);
     await pg.screenshot({ path: `${out}/diff_start.png`, timeout: 150000 });
-    await clk(pg, '#mNew'); await clk(pg, '#mNew');   // første trykk: «Slette fremgangen? Trykk igjen», andre: velgeren (trykk via DOM: siden er treg uten GPU, og bekreftelsen går ut etter 4 s)
+    await clk(pg, '#mNew'); await pg.waitForSelector('#svOk'); await clk(pg, '#svOk');   // R86: første trykk viser bekreftelsen (hva som slettes), SLETT OG START NYTT åpner velgeren
     await pg.waitForSelector('button[data-d]');
     res.pickerButtons = await pg.$$eval('button[data-d]', (e) => e.map((x) => x.dataset.d)); await pg.screenshot({ path: `${out}/diff_picker.png`, timeout: 150000 });
     await clk(pg, '#dfBack'); await pg.waitForSelector('#mLevels'); await clk(pg, '#mLevels'); await pg.waitForSelector('button[data-l]');
