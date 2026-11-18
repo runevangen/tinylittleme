@@ -16,6 +16,11 @@ Prøven er **om det bidrar til å komme videre i spillet**, ikke om det skjer p�
 
 Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
+### Neste steg i visjonen: dine egne rom
+Når fysikken, de små oppdragene og brobyggingen er gode nok, kobler vi på et **AI-API** slik at spilleren kan **lage egne brett av sine egne rom**: ta noen bilder av rommet, få et spillbart brett tilbake, og **utfordre andre spillere og dele brettet for moro skyld**. Grunnlaget finnes (foto → scene → brett er prøvd for hånd, se `docs/FOTO_TIL_BRETT.md` og `docs/VISJON_PROMPT.md`), men selve API-koblingen venter.
+
+Rekkefølgen er bevisst: **kjernen først**. Et brett laget av et tilfeldig rom blir bare morsomt hvis hopp, bygging og gåter allerede er morsomme i rommene vi har laget selv. Derfor bygges ikke dette før de tre delene over holder mål. Det som bygges i mellomtiden, bør likevel ikke stenge for det: brett skal fortsatt lages av en scenebeskrivelse (ikke håndkodes), og mål, gåter og byggesteder skal kunne plasseres av regler, ikke bare for hånd.
+
 ## Regler for alle punkter (agentene leser dette)
 - **Tester først:** punkter som kommer fra testernes tilbakemeldinger ligger øverst i køen og merkes «Fra tester: <navn>». Rekkefølge: krasj/stopp, feil flere har meldt, enkeltfeil, ønsker. Se `CLAUDE.md`.
 - Bygg på det eksisterende spillet (`main.js`, `physics.js`, `props.js`, `look.js`, `ants.js`, `levels/`, `scenes/`). Ikke skriv det om.
