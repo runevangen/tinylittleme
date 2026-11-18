@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.37** – R83 lagt i veikartet («NYTT»-meny: siste endringer med avkryssing, fra Rune).
 - **2.36** – R54: Roligere kamera: følging av som standard (engangs-migrering) og synsfelt etter skjermformat (ca. 70 stående, 52 liggende).
 - **2.35** – R82: Rutenett-bygging (MODUS-knappen) også i de vanlige byggebrettene bro, kjøkkenbro, leke og stue; klassisk er fortsatt standard.
 - **2.34** – R82 lagt i veikartet (rutenett-bygging valgfritt i de vanlige byggebrettene).
