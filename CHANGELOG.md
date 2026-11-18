@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.47** – F2 sikkerhetsnett: GitHub-sjekk (.github/workflows/ci.yml) kjører npm test og oppstartstesten på hver push og PR; oppstartstesten feiler på under ett sekund ved første sidefeil (kun verktøy).
 - **2.46** – R85 ytelse: figurens oppdeling (-57 % trekanter), fargebakt sammenslåing, mykere Auto-oppløsning, rombudsjett, perf_rank-verktøy og docs/YTELSE.md (selve 30 fps testes på iPhone).
 - **2.45** – Fra tester (Rune): tastehjelp-kortet «testbrett» på PC er skjult ved start (valg i ⚙ → Hjelp for å vise det de første 15 s; H henter det fram).
 - **2.44** – docs/HISTORIE.md: «dette har skjedd siden dag 1» (kun dokument).

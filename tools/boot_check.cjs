@@ -16,12 +16,12 @@ const srv = http.createServer((q, r) => {
   const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
   const bad = [];
   for (const url of ['/', '/?level=bad&start=0']) {
-    const pg = await (await b.newContext({ ...devices['iPhone 14'] })).newPage(); const errs = [];
-    pg.on('pageerror', (e) => errs.push('pageerror: ' + e.message.slice(0, 250)));
+    const pg = await (await b.newContext({ ...devices['iPhone 14'] })).newPage(); const errs = []; let failNow; const failed = new Promise((r) => { failNow = r; });   // feiler fort: første pageerror eller 4xx avbryter ventingen (i stedet for å vente 120 s)
+    pg.on('pageerror', (e) => { errs.push('pageerror: ' + e.message.slice(0, 250)); failNow(false); });
     pg.on('console', (m) => m.type() === 'error' && errs.push('console: ' + m.text().slice(0, 250)));
-    pg.on('response', (r) => { if (r.status() >= 400) errs.push(r.status() + ' ' + r.url().slice(-80)); });
+    pg.on('response', (r) => { if (r.status() >= 400) { errs.push(r.status() + ' ' + r.url().slice(-80)); failNow(false); } });
     await pg.goto(`http://localhost:${port}${url}`);
-    const ok = await pg.waitForFunction(() => window.__game && window.__game.LEVEL, null, { timeout: 120000 }).then(() => true, () => false);
+    const ok = await Promise.race([pg.waitForFunction(() => window.__game && window.__game.LEVEL, null, { timeout: 120000 }).then(() => true, () => false), failed]);
     const ver = await pg.evaluate(() => (document.getElementById('hud') || {}).textContent || '').catch(() => '');
     console.log(`${url}: ${ok ? 'startet' : 'STARTET IKKE'}${errs.length ? ', ' + errs.length + ' feil' : ''}${ver ? ' · ' + ver.trim().slice(0, 40) : ''}`);
     if (!ok || errs.length) bad.push(`${url}: ${ok ? '' : 'startet ikke; '}${errs.slice(0, 3).join(' | ')}`);
