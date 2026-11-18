@@ -48,6 +48,7 @@ export function formatReport(info) {
   if (info.verCheck) L.push(`Versjonsjekk: ${info.verCheck}`);
   L.push(`Skjerm ${info.screen} · ${info.platform || (info.touch ? 'touch' : 'tastatur/mus')} · ${info.fps}`);
   L.push(`Hoppvalg: ${info.preset} · tid ${info.clock} s · poeng ${info.points}`);
+  if (info.camera) L.push(`Kamera: ${info.camera}`);
   if (info.metrics) L.push(`Kamera og styring: ${info.metrics}`);
   if (info.perf) L.push(`Scene: ${info.perf}`);
   L.push(`Figuren: (${info.pos.join(', ')}) · ${info.state}${info.target ? ` · neste: ${info.target}` : ''}`);

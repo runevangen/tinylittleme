@@ -73,6 +73,7 @@ import { climbFeel, CF } from './climbfeel.js';   // R58: klatring som ser leven
 import { FIN, rollProgress } from './finpuss.js';   // R39: finpuss av Prince (kant-shimmy, rulle, forsiktig gange, tyngre tau)
 import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, approach, landingEvent } from './landing.js';
 import { Relay, inCore, CAM_SLOP, yawDelta, pitchDelta, shouldHintDrag } from './camdrag.js';
+import { fovForAspect, effectiveFov, fovChosen, migrateCalm, camLine } from './camcalm_logic.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
 import { programCount, programKeys, warmRender, warmFades, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
@@ -185,7 +186,8 @@ addEventListener('touchstart', unlockAudio, { passive: true }); addEventListener
 document.addEventListener('visibilitychange', () => { if (!document.hidden) audio?.resume(); });
 addEventListener('pageshow', () => audio?.resume());
 // valgfri kamerafølging: kameraet dreier seg langsomt bak figuren når den går (av etter at du selv har dratt i kameraet)
-let autoCam = store.get('tlm.follow', true), lastDrag = -99;
+migrateCalm((k, d) => store.get(k, d), (k, v) => store.set(k, v));   // R54: følging av som standard (én gang, også for gammel lagret verdi)
+let autoCam = store.get('tlm.follow', false), lastDrag = -99;
 function toggleAutoCam() { autoCam = !autoCam; store.set('tlm.follow', autoCam); toast(autoCam ? 'Kamera følger retning' : 'Kamera følger ikke'); const c = document.getElementById('chkAutoCam'); if (c) c.checked = autoCam; }
 
 let vibOn = store.get('tlm.vib', true);
@@ -1296,7 +1298,7 @@ const held = (...codes) => codes.some((c) => keys.has(c));
 let mouseSens = store.get('tlm.mousesens', 0.45);                              // mus er mye raskere enn en tommel: egen følsomhet (v0.69)
 let camSens = store.get('tlm.camsens', 1), camInvY = store.get('tlm.caminvy', false);   // camInvY: dra opp = se ned (omvendt av standard)
 let blobOn = store.get('tlm.blob', true);
-let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get('tlm.followstr', 1), fovSet = store.get('tlm.fov', 52), pitchBase = store.get('tlm.pitchbase', 0.26);
+let helpLevel = store.get('tlm.helplevel', 'normal'), followStrength = store.get('tlm.followstr', 1), fovSet = store.get('tlm.fov', 52), fovManual = store.get('tlm.fovauto', null) === null ? fovChosen(store.get('tlm.fov', null)) : !store.get('tlm.fovauto', true), fovAutoCur = fovForAspect(innerWidth / innerHeight), fovOrient = null, pitchBase = store.get('tlm.pitchbase', 0.26);
 let stickCurve = store.get('tlm.stickcurve', 1.3), inertia = store.get('tlm.inertia', 1), speedScale = store.get('tlm.speedscale', 1), qbtnOn = store.get('tlm.qbtn', true);
 const metrics = { swipes: 0, dragPx: 0, yawUser: 0, yawAuto: 0, stickT: 0, t: 0 };
 let stepAdapt = store.get('tlm.stepadapt', true), reactAnim = store.get('tlm.reactanim', true);
@@ -1962,9 +1964,10 @@ const SETTINGS = [
   { id: 'autograb', group: 'styring', type: 'bool', label: 'Grip kanten automatisk', get def() { return !!PRESETS[presetName]?.autoGrab; }, get: () => P.autoGrab, set: (v) => { P.autoGrab = v; saveCustom(); } },
   ...(navigator.vibrate ? [fl('vib', 'styring', 'Vibrasjon', true, () => vibOn, kp('tlm.vib', (v) => { vibOn = v; if (v) buzz(30); }))] : []),
   // Kamera
-  fl('autocam', 'kamera', `Kameraet følger etter deg automatisk${key('X')}`, true, () => autoCam, kp('tlm.follow', (v) => { autoCam = v; })),
+  fl('autocam', 'kamera', `Kameraet følger etter deg automatisk${key('X')}`, false, () => autoCam, kp('tlm.follow', (v) => { autoCam = v; })),
   rg('followstr', 'kamera', 'Kamerafølging: styrke (0 = av)', 1, 0, 2.5, 0.1, () => followStrength, kp('tlm.followstr', (v) => { followStrength = v; })),
-  rg('fov', 'kamera', 'Synsfelt (grader)', 52, 38, 80, 1, () => fovSet, kp('tlm.fov', (v) => { fovSet = v; }), { digits: 0 }),
+  fl('fovauto', 'kamera', 'Synsfelt etter skjermformat (ca. 70° stående, 52° liggende)', true, () => !fovManual, kp('tlm.fovauto', (v) => { fovManual = !v; logEv('kamera', `synsfelt ${v ? 'automatisk' : 'valgt'}`); })),
+  rg('fov', 'kamera', 'Synsfelt (grader; å flytte den velger selv og slår av automatikken)', 52, 38, 80, 1, () => (fovManual ? fovSet : Math.round(fovAutoCur)), (v) => { fovSet = v; store.set('tlm.fov', v); if (!fovManual) { fovManual = true; store.set('tlm.fovauto', false); } logEv('kamera', `synsfelt valgt ${v}`); }, { digits: 0 }),
   rg('pitchbase', 'kamera', 'Kameravinkel (høyere = mer ovenfra)', 0.26, 0.05, 0.7, 0.01, () => pitchBase, kp('tlm.pitchbase', (v) => { pitchBase = v; if (viewMode !== 'first') cam.pitch = viewMode === 'shoulder' ? v - 0.08 : v; })),
   fl('lookahead', 'kamera', 'Kameraet ser litt foran deg når du går', true, () => lookAheadOn, kp('tlm.lookahead', (v) => { lookAheadOn = v; })),
   fl('blob', 'kamera', 'Skygge under figuren og landingsmarkør', true, () => blobOn, kp('tlm.blob', (v) => { blobOn = v; })),
@@ -2141,6 +2144,7 @@ function buildReportInfo() {
     changed: changedSettings(SETTINGS.filter((d) => d.group !== 'admin' || true).map((d) => ({ id: d.id, label: d.label, def: d.def, get: d.get }))),
     marks: evLog.filter((e) => e.type === 'MARKERT' && !e.sent).slice(-10), backlog: evLog.filter((e) => e.type === 'BACKLOGG' && !e.sent).slice(-10), events: evLog.slice(-30),
     ratings: evLog.filter((e) => e.type === 'vurdering').slice(-12),
+    camera: camLine({ fov: effectiveFov(fovManual ? fovSet : null, fovAutoCur), auto: !fovManual, aspect: innerWidth / innerHeight, follow: autoCam, strength: followStrength }),
     metrics: (() => { const mn = Math.max(metrics.t / 60, 0.05); return `sveip ${metrics.swipes} (${(metrics.swipes / mn).toFixed(1)}/min), dratt ${Math.round(metrics.dragPx)} px, kamera dreid av deg ${metrics.yawUser.toFixed(1)} rad og automatisk ${metrics.yawAuto.toFixed(1)} rad, stikke i bruk ${Math.round(100 * metrics.stickT / Math.max(metrics.t, 0.1))} % av ${mn.toFixed(1)} min`; })(),
   };
 }
@@ -2817,7 +2821,10 @@ function render(now, dt) {
   }
   { const fs = landWarn && mode === 'play' && !player.onGround && player.state === 'air' && player.vy < 0 ? -player.vy : 0;
     landFovCur = approach(landFovCur, fovTarget(fs, landTh()[0], landFovMax), dt);
-    const fp = viewFirst && mode === 'play', fov = (fp ? 74 : viewMode === 'shoulder' ? fovSet + 8 : fovSet) + landFovCur;
+    const asp = innerWidth / innerHeight, aTgt = fovForAspect(asp); fovAutoCur = approach(fovAutoCur, aTgt, dt, 3, 3); if (Math.abs(fovAutoCur - aTgt) < 0.05) fovAutoCur = aTgt;   // R54: myk overgang når telefonen snus
+    if (fovOrient !== (asp < 1)) { fovOrient = asp < 1; logEv('kamera', `skjerm ${asp < 1 ? 'stående' : 'liggende'}, synsfelt ${fovManual ? fovSet : aTgt}`); }
+    const fovBase = effectiveFov(fovManual ? fovSet : null, fovAutoCur);
+    const fp = viewFirst && mode === 'play', fov = (fp ? 74 : viewMode === 'shoulder' ? fovBase + 8 : fovBase) + landFovCur;
     for (const o of [hero.head, hero.packG, hero.tailA, hero.tailB]) if (o) o.visible = !fp;
     if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   { const xh = $('xhair'); if (xh) xh.style.display = viewMode === 'shoulder' && xhairOn && mode === 'play' ? 'block' : 'none'; }
