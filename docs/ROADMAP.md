@@ -29,15 +29,6 @@ Alt skal holde **Zelda-kvalitet**: ingenting skal føles uferdig.
 
 ## Åpne punkter
 
-### [ ] R82 · Rutenett-bygging i de vanlige byggebrettene (valgfri, MODUS-knappen)
-I dag finnes Rutenett-modus (R72–R75) bare i Bygglab. Spillerne skal kunne bruke den nye byggeteknikken der de faktisk spiller: i byggestedene i de vanlige brettene (`bro` Hyllebroen, `kjokkenbro` Bro til kjøleskapet, og andre steder som har kjøredekk/ankerpunkter, se `deckPoints`/`hasDeck` i `grid_logic.js`). Klassisk modus er fortsatt standard og uendret (eksisterende brett, koder og ruter), og spilleren velger selv med den eksisterende MODUS-knappen.
-(1) **Tilgjengelighet:** MODUS-knappen vises på byggesteder som har kjøredekk og to klippe-ankre (rutenett kan lage en bro mellom dem); steder uten (trapp, vippe osv.) viser den ikke, og skal ikke få en tom Rutenett-flate. Valget huskes per spiller (en innstilling `tlm.gridmode` eller per byggested), og logges med `logEv('bygg', …)`. Rutenett-låsen fra R74 (`gridstage`: «RUTENETT 🔒» til forrige sted er bestått) gjelder bare Bygglab; i de vanlige brettene er Rutenett åpent for dem som har bestått første byggestedet (`bro`) eller alltid åpent der det ikke finnes en forgjenger.
-(2) **Bro i verden:** en bestått rutenett-bro må bære spilleren fram i brettet som en klassisk bro gjør (R26: bygget settes inn i verden som kollisjonsflater, figuren går over). Sjekk begge byggestedene end-to-end: bygg en kjent rutenett-løsning, prøv, kom i mål; «den harde veien» uten bygging skal fortsatt finnes og være uendret. Lag en kjent referanseløsning per sted (staver som kode) og legg den i en test som beviser at stedet kan løses med Rutenett (som `bygg:bro1`-ruter, jf. `node tools/walk_route.mjs` og `docs/NIVAER.md`).
-(3) **Poeng/belønning:** kostnad, stjerner og merker (R69-vanskelighetsprofiler) fungerer som i klassisk modus; hvilken modus som ble brukt logges i testrapporten. Koden (KODE/LIM INN) skiller modusene (finnes) og BESTE viser bare broer i samme modus eller blandet med modusmerke; velg det som er minst forvirrende og forklar valget i commit/CHANGELOG.
-(4) Mobil først (knapper, ingen taster), veiledningen fra R75 vises i vanlige brett første gang Rutenett velges; Nybegynner/Ekspert-hjelp følger R69. Husk `npm test`, `npm run boot`, `walk_route` på de berørte brettene, og et Playwright-bilde (iPhone 14) av byggeskjermen i begge moduser i `bro`.
-Ikke med: å fjerne klassisk modus, å endre eksisterende brett, og rutenett i trapp/vippe.
-Ferdig når: en spiller kan velge Rutenett i Hyllebroen og Kjøkkenbroen, bygge en bro, prøve og komme i mål, med klassisk som uendret standard; alle tester og boot er grønne.
-
 ### [ ] R54 · Fra tester: Rune · Roligere kamera: følging av som standard og bredere synsfelt i høyformat
 Fra spilletest på iPhone (v1.32–v1.56): testerne blir desorientert og sier at skjermen veiver fram og tilbake. Med «Kamerafølging: styrke» på 0 og «Synsfelt» på 70 ble det klart bedre; med følgingen tilbake på 1 (synsfelt fortsatt 70) ble det mye verre. Den automatiske dreiningen bak figuren (`followYaw` i `camera_util.js`, kalt fra `main.js`) er altså hovedårsaken, og synsfeltet nummer to: 52° loddrett gir bare ca. 25° vannrett på stående iPhone, fordi synsfeltet ikke justeres for skjermformatet.
 (1) **Følging av som standard.** «Kameraet følger etter deg automatisk» (`tlm.follow`) er av for alle, også for dem som har den gamle verdien lagret (engangs-migrering, slik PUBG-standarden på PC ble satt i v0.72). Valget og «Kamerafølging: styrke» blir stående i ⚙ → Kamera, så den kan slås på igjen. Sjefkamp-kameraet, ◎ og dobbelttrykk virker som før.
@@ -52,6 +43,8 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+- [x] R82 · Rutenett-bygging i de vanlige byggebrettene (valgfri, MODUS-knappen) (v2.35)
 - [x] Fra tester: Rune · Rettelser-menyen: faner Å SJEKKE/SJEKKET, skjul gamle, VIS ALLE (R81, v2.32)
 - [x] Fra tester: Rune · «Rettelser»-meny på hovedmenyen: GÅ DIT til brett og sted, avkryssing ✓/✗ (fixes_logic.js, fixes_view.js) (R80, v2.29)
 - [x] Fra tester: Rune · Verkstedet: trykkplata er flush med gulvet så figuren ikke går igjennom en hevet plate (plateGeom) (R79, v2.27)

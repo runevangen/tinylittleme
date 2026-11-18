@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.35** – R82: Rutenett-bygging (MODUS-knappen) også i de vanlige byggebrettene bro, kjøkkenbro, leke og stue; klassisk er fortsatt standard.
 - **2.34** – R82 lagt i veikartet (rutenett-bygging valgfritt i de vanlige byggebrettene).
 - **2.33** – Trailer v6: byggedelen forklarer hvorfor man bygger (nye klipp 06a_gap_maal og 06c_over, kort «Bygg en bro til flagget.»); gamle byggeklipp slår av gridstage (kun film-verktøy).
 - **2.32** – R81: Rettelser-menyen har faner Å SJEKKE og SJEKKET, gamle skjules bak VIS ALLE.
