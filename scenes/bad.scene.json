@@ -2041,7 +2041,13 @@
       "label": "Klatre opp på kurven ved knaggene",
       "en": "Climb the basket by the hooks",
       "on": "kurv_knagg",
-      "gate": true
+      "gate": true,
+      "also": [
+        "knaggrekke",
+        "knagg_hylle",
+        "trapp_bad_9",
+        "medisinskap"
+      ]
     },
     {
       "id": "knagg",
@@ -2050,7 +2056,12 @@
       "en": "Reach the hook rail",
       "on": "knaggrekke",
       "gate": true,
-      "after": "kurv"
+      "after": "kurv",
+      "also": [
+        "knagg_hylle",
+        "trapp_bad_9",
+        "medisinskap"
+      ]
     },
     {
       "id": "smuler",

@@ -1142,6 +1142,10 @@
       "type": "reach",
       "on": "lekekasse",
       "gate": true,
+      "also": [
+        "gele_barn_trinn_3",
+        "skrivebord"
+      ],
       "label": "Hopp opp på lekekassen",
       "en": "Jump onto the toy box"
     },

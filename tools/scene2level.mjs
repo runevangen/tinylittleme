@@ -355,6 +355,7 @@ const goals = (scene.goals || []).map((g) => {
   if (g.type === 'reach') {
     const o = scene.objects.find((q) => q.id === g.on); if (!o) throw new Error(`delmål ${g.id}: fant ikke flata ${g.on}`);
     const [a, b, , d, e, f] = o.box; Object.assign(out, { on: g.on, x0: ux(a), x1: ux(b), z0: uz(e), z1: uz(f), top: uy(d) });
+    if (g.also?.length) out.alt = g.also.map((id) => { const q = scene.objects.find((r) => r.id === id); if (!q) throw new Error(`delmål ${g.id}: also ${id} finnes ikke`); const [a2, b2, , d2, e2, f2] = q.box; return { id, x0: ux(a2), x1: ux(b2), z0: uz(e2), z1: uz(f2), top: uy(d2) }; });   // R89: likeverdige flater
   } else if (g.type === 'crumbs' || g.type === 'stomp') out.n = g.n;
   else if (g.type === 'puzzle') out.puzzle = g.puzzle;
   else if (g.type === 'gate') out.door = g.door;

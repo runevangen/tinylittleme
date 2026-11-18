@@ -484,6 +484,10 @@
       "type": "reach",
       "on": "r4",
       "gate": true,
+      "also": [
+        "gele_leke_trinn_3",
+        "r5"
+      ],
       "label": "Klatre trappa langs veggen",
       "en": "Climb the stairs along the wall"
     }

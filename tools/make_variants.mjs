@@ -44,8 +44,8 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
    
     props: [{ type: 'rug', x: 105, z: 195, w: 70, d: 38, color: '#e8574a', stripe: '#ffe2b8' }, { type: 'rug', x: 62, z: 90, w: 40, d: 40, shape: 'round', color: '#7a5cc8', stripe: '#f4d6ff' }, { type: 'duck', x: 150, z: 112, r: 9 }] };
   s.ants.push({ id: 'traad_dusj', type: 'dangler', on: 'gulv', from: [42.5, 80] }, { id: 'traad_vask', type: 'dangler', on: 'gulv', from: [212.5, 75] });   // R19: nivå 4 = edderkopper i tråd fra taket (ingen pillbug)
-  s.goals = [{ id: 'kurv', type: 'reach', on: 'vaskekurv', gate: true, label: 'Klatre opp på vaskekurven', en: 'Climb the laundry basket' },
-    { id: 'hylle', type: 'reach', on: 'ny_hylle', gate: true, after: 'kurv', label: 'Nå den nye hylla', en: 'Reach the new shelf' },
+  s.goals = [{ id: 'kurv', type: 'reach', on: 'vaskekurv', gate: true, also: ['knaggrekke', 'ny_hylle', 'medisinskap', 'hylle'], label: 'Klatre opp på vaskekurven', en: 'Climb the laundry basket' },   // R89: også den harde veien (eskene, medisinskapet) og alt forbi kurven
+    { id: 'hylle', type: 'reach', on: 'ny_hylle', gate: true, after: 'kurv', also: ['hylle'], label: 'Nå den nye hylla', en: 'Reach the new shelf' },
     { id: 'smuler', type: 'crumbs', n: 5, label: 'Samle 5 smuler', en: 'Collect 5 crumbs' },
     { id: 'vokter', type: 'stomp', n: 1, label: 'Knus en vokter', en: 'Squash a guard' }];                                                         // R23: delmål (goals.js)
   // R42: den harde veien uten klatring arves fra nivå 1 (eskene opp til medisinskapet), og fortsetter med et hopp over til den øverste hylla der motgiften ligger.
@@ -80,7 +80,7 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
   s.variant = { mood: 'night', twist: { type: 'train', ant: 'tog' },
     props: [{ type: 'rug', x: 170, z: 200, w: 110, d: 90, shape: 'round', color: '#3b64c4', stripe: '#ffd45a' }, { type: 'track', from: [104, 72], to: [104, 212] }, { type: 'stars', count: 46 }] };
   s.ants.push({ id: 'traad_hylle', type: 'dangler', on: 'gulv', from: [155, 75] }, { id: 'pillbug_gulv', type: 'roller', on: 'gulv', from: [115, 135], to: [145, 135] });   // R19: nivå 5 = en tråd-edderkopp og en pillbug på den trange gulvstripa
-  s.goals = [{ id: 'kasse', type: 'reach', on: 'lekekasse', gate: true, label: 'Hopp opp på lekekassen', en: 'Jump onto the toy box' },
+  s.goals = [{ id: 'kasse', type: 'reach', on: 'lekekasse', gate: true, also: ['gele_barn_trinn_3', 'skrivebord'], label: 'Hopp opp på lekekassen', en: 'Jump onto the toy box' },
     { id: 'smuler', type: 'crumbs', n: 5, label: 'Samle 5 smuler', en: 'Collect 5 crumbs' },
     { id: 'maur', type: 'stomp', n: 2, label: 'Knus to maur', en: 'Squash two ants' },
     { id: 'vegg', type: 'reach', on: 'vegghylle', gate: true, after: 'kasse', label: 'Nå vegghylla', en: 'Reach the wall shelf' }];                                                         // R23: delmål (goals.js)

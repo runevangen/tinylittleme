@@ -2098,6 +2098,12 @@
       "type": "reach",
       "on": "vaskekurv",
       "gate": true,
+      "also": [
+        "knaggrekke",
+        "ny_hylle",
+        "medisinskap",
+        "hylle"
+      ],
       "label": "Klatre opp på vaskekurven",
       "en": "Climb the laundry basket"
     },
@@ -2107,6 +2113,9 @@
       "on": "ny_hylle",
       "gate": true,
       "after": "kurv",
+      "also": [
+        "hylle"
+      ],
       "label": "Nå den nye hylla",
       "en": "Reach the new shelf"
     },
