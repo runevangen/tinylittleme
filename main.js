@@ -9,6 +9,8 @@ import { fetchChangeChecks, checkChange } from './feedback_send.js';
 import { parseChangeChecks, pendingChecks } from './changes_logic.js';
 import { menuVisible, buttonLabel, uncheckedCount, parseGo, safePlacement, goUrl } from './fixes_logic.js';   // R80: Rettelser-menyen (fixes_logic.js, fixes_view.js)
 import { showFixes } from './fixes_view.js';
+import { shortDevice, noteWanted, NOTE_KEY } from './privacy_logic.js';   // R87: personvern (privacy_logic.js, privacy_view.js)
+import { createPrivacy } from './privacy_view.js';
 import { CHANGES } from './changes_data.js';   // R83: NYTT-menyen (changes_data.js, changes_logic.js; visningen er den samme som Rettelser)
 import * as chg from './changes_logic.js';
 import { setDrawerCue, drawerCue, drawerSummary } from './drawers.js';
@@ -1860,6 +1862,7 @@ const SETTINGS = [
   rg('floodshake', 'admin', 'Stigende vann: kameraskjelv før du drukner (0 = av)', 1, 0, 2, 0.1, () => floodShakeK, kp('tlm.floodshake', (v) => { floodShakeK = v; }), { digits: 1 }),
   rg('guidestall', 'admin', 'Veiledning: sekunder uten framdrift før neste flate utheves', 45, 15, 120, 1, () => Math.round(GUIDE.stallMs / 1000), kp('tlm.guidestall', (v) => { GUIDE.stallMs = v * 1000; }), { digits: 0 }),
   fl('goalarrow', 'hjelp', 'Pila og kompasset peker mot aktivt delmål', true, () => goalArrowOn, kp('tlm.goalarrow', (v) => { goalArrowOn = v; logEv('delmål', v ? 'pil følger delmål' : 'pil følger ruta'); })),
+  fl('privnote', 'admin', 'Personvern (R87): vis linja «Sendes til utvikleren. Ikke skriv navn …» med lenke til PERSONVERN til du har sendt første gang', true, () => privNoteOn, kp('tlm.privnotes', (v) => { privNoteOn = v; syncPrivNotes(); logEv('personvern', v ? 'sendelinje på' : 'sendelinje av'); })),
   fl('goallock', 'admin', 'Delmål som låser målet (målet åpner først når de er klare)', true, () => goalLockOn, kp('tlm.goallock', (v) => { goalLockOn = v; logEv('delmål', v ? 'lås på' : 'lås av'); })),
   fl('rewards', 'spill', 'Tilbehør på figuren (hatter, skjerf, sekk du har samlet)', true, () => rewardsOn, kp('tlm.rewards', (v) => { rewardsOn = v; refreshAccessories(); logEv('belønning', v ? 'tilbehør på' : 'tilbehør av'); })),
   fl('rewardsall', 'admin', 'Alt tilbehør åpent (test av lekerommet)', false, () => rewardsAll, kp('tlm.rewardsall', (v) => { rewardsAll = v; refreshAccessories(); })),
@@ -2077,12 +2080,18 @@ function resetAllSettings() {
 const fmtVal = (d, v) => (d.pct ? `${Math.round(v * 100)} %` : typeof v === 'number' ? (+v).toFixed(d.digits ?? (d.step < 0.1 ? 2 : 1)) : v);
 
 // ---------- testrapport ----------
+// R87: personvern: PERSONVERN-siden og linja «Sendes til utvikleren» (vises til første sending er gjort)
+let privNoteOn = store.get('tlm.privnotes', true);
+const priv = createPrivacy({ T, logEv });
+const syncPrivNotes = () => document.querySelectorAll('.privnote').forEach((n) => { n.style.display = noteWanted(store, privNoteOn) ? '' : 'none'; });
+const addPrivNote = (host, from) => { if (host) { priv.note(host, from); syncPrivNotes(); } };
 const marks = [];
 // rask vurdering mens du spiller: ⚑ → velg tema → 👍 / 😐 / 😫 (havner i testrapporten med posisjon og innstillinger)
 {
   let tag = store.get('tlm.qtag', 'Styring'); const pop = $('qpop'), tags = ['Styring', 'Kamera', 'Hopp', 'Gange', 'Annet'];
-  const draw = () => { const qc = $('qcode'); if (qc) qc.style.display = validCode(store.get('tlm.tcode', '')) ? 'none' : 'block'; const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
-  pop.innerHTML = `<div id="qinbox"></div><input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang)" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button>`;
+  const draw = () => { syncPrivNotes(); const qc = $('qcode'); if (qc) qc.style.display = validCode(store.get('tlm.tcode', '')) ? 'none' : 'block'; const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
+  pop.innerHTML = `<div id="qinbox"></div><input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang)" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button><div id="qprivhost"></div>`;
+  addPrivNote($('qprivhost'), '⚑');
   const qtext = () => { const el = $('qtext'), v = el.value.trim(); el.value = ''; return v; };
   pop.addEventListener('click', (e) => {
     e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
@@ -2145,12 +2154,12 @@ async function sendToClaude(body) {
   if (sending) return 'opptatt';
   const code = store.get('tlm.tcode', '');
   if (!validCode(code)) { toast('Skriv tester-koden din først (feltet i ⚑-boksen, eller ⚙ → Test)'); return 'kode'; }
-  const built = buildPayload({ code, version: VERSION, level: levelLabel, kind: 'rapport', body, report: reportText(), ua: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '') });
+  const built = buildPayload({ code, version: VERSION, level: levelLabel, kind: 'rapport', body, report: reportText(), ua: shortDevice(navigator.userAgent) });
   if (built.error) { toast(REASON_TEXT[built.error] || REASON_TEXT.feil); return built.error; }
   sending = true; sendState = T('tb.sending'); bandSay('send', PRIO.reply, T('tb.sending'), 0, 'reply');
   const res = await sendFeedback(built.row);
   sending = false; tb.clear('send');
-  if (res.ok) { markSent(); logEv('sendt', `til Claude (${built.row.report.length} tegn)`); sendState = T('tb.sent'); bandSay('send', PRIO.reply, 'Sendt! Takk, Claude ser den.', 5, 'reply'); refreshInbox(true); return 'ok'; }
+  if (res.ok) { markSent(); if (!store.get(NOTE_KEY, false)) { store.set(NOTE_KEY, true); syncPrivNotes(); } logEv('sendt', `til Claude (${built.row.report.length} tegn)`); sendState = T('tb.sent'); bandSay('send', PRIO.reply, 'Sendt! Takk, Claude ser den.', 5, 'reply'); refreshInbox(true); return 'ok'; }
   logEv('sendfeil', `${res.reason} ${res.status ?? ''}`);
   sendState = REASON_TEXT[res.reason] || REASON_TEXT.feil; bandSay('send', PRIO.reply, sendState, 6, 'reply'); return res.reason;
 }
@@ -2159,7 +2168,7 @@ updateMarkBadge();
 function buildReportInfo() {
   const t = nextTarget();
   return {
-    version: VERSION, level: levelLabel, difficulty: `${difficulty}${isCustomHelp(store) ? ' (egendefinert hjelp)' : ''} · hjelp av: ${offElements(difficulty).join(', ') || 'ingen'} · merker ${badgeLine() || 'ingen'}`, when: new Date().toLocaleString('nb-NO'), device: navigator.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 90),
+    version: VERSION, level: levelLabel, difficulty: `${difficulty}${isCustomHelp(store) ? ' (egendefinert hjelp)' : ''} · hjelp av: ${offElements(difficulty).join(', ') || 'ingen'} · merker ${badgeLine() || 'ingen'}`, when: new Date().toLocaleString('nb-NO'), device: shortDevice(navigator.userAgent),
     verCheck: verView ? verView.info() : '',
     where: currentScreen().label, screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
     perf: perfLine + ' · shadere ' + shw.line(),
@@ -2195,7 +2204,7 @@ function buildPanel() {
       <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
       <div class="row"><button id="bMark">⚑ Marker her</button></div>
       <label>Tester-kode (får du av Rune)</label><input type="text" id="testerCode" placeholder="tlm-…" autocomplete="off" autocapitalize="off" spellcheck="false">
-      <div class="row"><button id="bSend">📤 Send til Claude</button></div>
+      <div class="row"><button id="bSend">📤 Send til Claude</button></div><div id="privHost"></div>
       <div class="row"><button id="bReport">Del tilbakemeldinger</button><button id="bCopyRep">Kopier tilbakemeldinger</button></div>
       <details><summary>Vis tilbakemeldingene (rapporten)</summary><textarea id="reportBox" readonly rows="9"></textarea></details>
       <small>Bare innstillingene (ikke tilbakemeldinger):</small><div class="row"><button id="bExport">Kopier innstillinger</button><button id="bImport">Lim inn innstillinger</button></div>
@@ -2213,7 +2222,7 @@ function buildPanel() {
   };
   p.innerHTML = `<div class="phead"><button id="pCloseTop" class="pclose" aria-label="Lukk">✕ Lukk</button><button id="pFlag" aria-label="Meld og vurder">⚑</button><h3 id="pTitle">Innstillinger</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
     <div id="repHead" class="rhead">${repHeadHtml()}</div>
-    <div class="row"><button id="bVerCheck"></button></div><small id="verNote"></small>
+    <div class="row"><button id="bVerCheck"></button><button id="bPriv">${T('priv.btn')}</button></div><small id="verNote"></small>
     <input type="search" id="pSearch" placeholder="Søk i innstillinger" autocomplete="off" enterkeyhint="search">
     ${nChanged ? `<div class="pchg">${nChanged} innstilling${nChanged > 1 ? 'er' : ''} endret fra standard</div>` : ''}
     ${GROUPS.filter(([g]) => g !== 'admin' || adminOn).map(([g, t]) => groupHtml(g, t)).join('')}
@@ -2253,6 +2262,7 @@ function buildPanel() {
   $('pTitle').onclick = () => { const n = performance.now(); taps = n - tapT < 900 ? taps + 1 : 1; tapT = n; if (taps >= 7) { taps = 0; adminOn = !adminOn; store.set('tlm.admin', adminOn); toast(adminOn ? 'Admin på' : 'Admin av'); buildPanel(); } };
   if ($('lockAdmin')) $('lockAdmin').onclick = () => { adminOn = false; store.set('tlm.admin', false); buildPanel(); toast('Admin låst'); };
   // test
+  $('bPriv').onclick = () => priv.open('⚙'); addPrivNote($('privHost'), '⚙');   // R87
   $('testerCode').value = store.get('tlm.tcode', '');
   $('testerCode').onchange = () => { const v = cleanCode($('testerCode').value); store.set('tlm.tcode', v); if (v && !validCode(v)) toast('Koden ser feil ut (4–24 tegn: bokstaver, tall, - og _)'); };
   $('bSend').onclick = () => { $('testerCode').onchange(); const tx = $('markText').value.trim(); sendToClaude(tx).then((r) => { if (r === 'ok') { $('markText').value = ''; $('reportBox').value = reportText(); } }); };
