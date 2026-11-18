@@ -1,4 +1,4 @@
-# Prioritert backlogg før lansering (utkast 1)
+# Prioritert backlogg før lansering (utkast 2)
 
 Dette er et **utkast til samtale**, ikke en vedtatt plan. Mål: bestemme hva som skal være med i første lansering, og hva som venter. Alt under er foreslått av Claude ut fra veikartet (`docs/ROADMAP.md`), `BACKLOG.md`, testrapportene og det vi har bygd til nå (v2.38). Rune skal utfordre, flytte og stryke.
 
@@ -9,6 +9,13 @@ Prioriteringen avhenger av disse. Jeg har satt en antakelse i parentes.
 3. **Hva er spillet i én setning?** (Forslag: «Du er 3 cm høy i et rom som er bygd for en annen. Hopp, klatre og bygg deg gjennom.»)
 4. **Hva må være sant for at du er stolt av lanseringen?** (Antakelse: ingenting er uferdig, første fem minutter er knallbra, og byggingen føles unik.)
 5. **Hvor lenge skal første lansering ta?** (Antakelse: noen uker, ikke måneder.)
+
+## 0b. Beslutninger tatt (Rune, 2026-11-18)
+- **Lansering = åpen nettleserversjon** (GitHub Pages), ikke app-butikk, og hjemmeskjerm/offline er et kutt-kandidat. Konsekvens: F13 (hjemmeskjerm/offline) flyttes til C.
+- **Hovedsak = mix:** bygging og plattform er like viktige. Konsekvens: både F4 (kamera og styring) og F6 (rutenett polert) er A; ingen av dem kan skyves.
+- **Brett ved lansering = nivå 1–9 + Byggeskole.** Konsekvens: L4 (nivå 10–11) flyttes til C; L1 og L2 er A. L3 (nytt byggebrett som krever trekanter) blir B.
+- **Kutt hvis tiden presser:** engelsk språk og hjemmeskjerm/offline. Konsekvens: F12 flyttes til C (norsk først); F13 flyttes til C.
+- Ikke valgt som kutt (altså beholdes): nivå 4–6 og analyse (F14 beholdes som B).
 
 ## 1. Slik rangerer vi
 Hvert punkt får **Verdi** (1–5: hvor mye det løfter opplevelsen for en ny spiller), **Innsats** (S dag, M uker, L måneder), **Risiko** (kan det ødelegge noe som virker?), og en **Beslutning**:
@@ -38,8 +45,8 @@ Tester-saker går fortsatt foran alt (se `CLAUDE.md`).
 | F9 | **Lyd og musikk som sitter:** ekte foley (skritt, hopp, bygg, brudd) og ambiens i alle rom. | 4 | M | Lav | Lyd er halvparten av «Zelda-kvalitet». |
 | F10 | **Belønning og mestring:** merker per brett og nivå (finnes), delmål, «beste bro»-lister (KODE/BESTE), tydelig «hva nå?» etter mål. | 4 | M | Lav | Gir en grunn til å spille igjen. |
 | F11 | **Tilgjengelighet:** tekststørrelse, fargesvake-sikre belastningsfarger, redusert bevegelse, venstrehendt oppsett av knapper. | 3 | M | Lav | Bredere publikum og færre klager. |
-| F12 | **Engelsk språk og første-gangs språkvalg** (finnes delvis i `i18n.js`); alle tekster i begge språk. | 3 | M | Lav | Åpner for flere testere. |
-| F13 | **Installerbar på hjemmeskjerm og offline** (egen sak: service worker, ikon, splash). | 3 | M | Middels | Føles som en app. Risiko: hurtigbuffer og versjonsjekk må fungere sammen. |
+| F12 | ~~B → C~~ **Engelsk språk og første-gangs språkvalg** (flyttet til C: kutt-kandidat) (finnes delvis i `i18n.js`); alle tekster i begge språk. | 3 | M | Lav | Åpner for flere testere. |
+| F13 | ~~B → C~~ **Installerbar på hjemmeskjerm og offline** (flyttet til C: kutt-kandidat) (egen sak: service worker, ikon, splash). | 3 | M | Middels | Føles som en app. Risiko: hurtigbuffer og versjonsjekk må fungere sammen. |
 | F14 | **Enkel analyse:** anonyme tall på hvor spillere stopper (nivå, tid, antall forsøk), uten personopplysninger. | 3 | S | Middels | Vi gjetter i dag. |
 | F15 | **Pause/meny som alltid fungerer:** «Avslutt til meny» finnes; sjekk at ingenting henger. | 3 | S | Lav | Små ting som stjeler tilliten. |
 
@@ -66,7 +73,7 @@ Dagens innhold: 9 nivåer (3 rom + 3 ommøblerte + lekerom + stue + verksted), 4
 | L1 | **Nivå 1–9 ferdig polert** (ytelse, lesbarhet, lyd, ruter bevist) | A | Det er kjernen. |
 | L2 | **Bygglab som tydelig «Byggeskole»** i hovedmenyen: 8 steder som lærer fagverk, materialer og last, med stjerner | A | Gjør rutenett-bygging forståelig før spilleren møter det i et brett. |
 | L3 | **Rutenett som valg i bro-brettene** (R82, ferdig) + **minst ett nytt byggebrett som bare lar seg løse med trekanter** (f.eks. «Broen over badekaret» eller «Kjøkkenbenken») | B | Viser at ny teknikk gir nytt spill, ikke bare en annen knapp. |
-| L4 | **Nivå 10 (Soverom som ekte nivå) og Nivå 11 (Loft eller garasje):** to nye rom som bruker alt spilleren har lært, med sjefmaur til slutt | B | Gir et fullt eventyr på ca. 11 brett. |
+| L4 | ~~B → C~~ **Nivå 10 (Soverom som ekte nivå) og Nivå 11 (Loft eller garasje)** (flyttet til C: lanseringen er nivå 1–9): to nye rom som bruker alt spilleren har lært, med sjefmaur til slutt | C | Gir et fullt eventyr på ca. 11 brett. |
 | L5 | **Prøveromene (gåter, flytte ting, klatring) som «Treningsrom»** i en egen meny, ikke blandet med nivåene | B | Rydder i hovedmenyen. |
 | L6 | **Mer variasjon i fiender og farer:** edderkopp, støvsuger, vann, varme plater | C | Etter første lansering. |
 | L7 | **Brett fra testerne:** la testere sende inn byggekoder og brettidéer (kode finnes) | C | Fellesskapsinnhold. |
@@ -75,16 +82,17 @@ Dagens innhold: 9 nivåer (3 rom + 3 ommøblerte + lekerom + stue + verksted), 4
 ### Brett vi kan kutte
 - «Ekstra: Soverom (håndlaget)» hvis det ikke blir nivå 10. Nivå 4–6 hvis spillere synes de er for like 1–3 (må testes).
 
-## 4. Sammenheng og rekkefølge (forslag)
+## 4. Sammenheng og rekkefølge (forslag, justert etter beslutningene)
 1. **Uke 1:** F2 (sikkerhetsnett), F5 (lagring), F8 (personvern), F4 (kamera godkjent).
 2. **Uke 2:** F3 (ytelse), F1 (første fem minutter) og testing med 3–5 nye spillere.
 3. **Uke 3–4:** F6 (rutenett polert), L2 (Byggeskole), L3 (nytt byggebrett).
 4. **Uke 4–5:** F9 (lyd), F7 (mål og vei), F10 (belønning), L8 (fortelling).
-5. **Uke 5–6:** L4 (nye rom), F11–F14 (tilgjengelighet, språk, hjemmeskjerm, analyse).
-6. **Lansering:** liten og ærlig. Resten fra C etter hvert.
+5. **Uke 5:** F11 (tilgjengelighet), F14 (analyse), F15 (meny), og en ny runde med nye spillere.
+6. **Lansering ca. uke 6:** åpen nettleserversjon, nivå 1–9 + Byggeskole. Resten (C) etter hvert: engelsk, hjemmeskjerm, nivå 10–11.
 
 ## 5. Hva jeg utfordrer deg på
 Se spørsmålene i samtalen. De viktigste: hva «lansering» betyr, om bygging eller plattform er hovedsaken, hvor mange brett som er nok, og hva vi tør å kutte.
 
 ## 6. Endringslogg for denne lista
 - Utkast 1 (v2.39): skrevet av Claude. Ikke vurdert av Rune ennå.
+- Utkast 2 (v2.40): Rune svarte på fire utfordringer (se 0b); F12, F13 og L4 flyttet til C.
