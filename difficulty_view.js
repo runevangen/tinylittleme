@@ -28,12 +28,14 @@ export function createDifficultyView({ $, lang, logEv }) {
   }
 
   // «Velg brett»: opplåste brett med ✓ og merker. Trykk på et brett: velg vanskelighet (samme eller vanskeligere), så onPlay(levelId, diff).
-  function pickLevel({ levels, st, cleared, current, onPlay, onBack }) {
+  function pickLevel({ levels, st, cleared, current, onPlay, onBack, school = null }) {
     const el = root(), open = unlockedLevels(levels, cleared, getBadges(st));
     el.classList.add('dfl');
     el.innerHTML = `<h1>${esc(dt(L(), 'df.pick'))}</h1><p class="tag">${esc(dt(L(), open.length ? 'df.pickSub' : 'df.pickNone'))}</p>`
       + open.map((l) => `<button class="mbtn sec lvrow" data-l="${l.id}"><span>${esc(l.label)}${cleared && cleared[l.id] ? ' ✓' : ''}<small>${esc(dt(L(), 'df.fresh'))}</small></span><span>${badgeRow(st, l.id)}</span></button>`).join('')
+      + (school ? `<button class="mbtn sec" id="dfSchool">🏗 ${esc(school.label)}<small>${esc(school.sub)}</small></button>` : '')   // R95: Byggeskole (valgfri, anbefalt)
       + `<button class="mbtn sec" id="dfBack">${esc(dt(L(), 'df.back'))}</button>`;
+    if (school && $('dfSchool')) $('dfSchool').onclick = () => school.onOpen();
     el.querySelectorAll('button[data-l]').forEach((b) => {
       b.onclick = () => {
         const id = b.dataset.l, lv = levels.find((x) => x.id === id);

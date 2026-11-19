@@ -72,6 +72,18 @@ Siste rom, 700 × 260 cm (`tools/make_verksted.mjs` → `scenes/verksted.scene.j
 - **Glatt** (`slick: true` på en boks i scenen): gli uten grep (`slickAccel`, admin-innstilling), rød ✕ og glansstriper (`readable_view.js`); gripbare flater (fillen) virker fra glatt underlag. Sykkeldekket (`tire`) er rundt og ruller når du dytter det.
 - Ikke bevist her: ekte FPS og følelsen av å gli på iPhone (testes på iPhone).
 
+### Byggeskole (R95, Bygglab i menyen)
+Bygglab heter i menyen **BYGGESKOLE**: valgfri, men anbefalt (ingen sperre foran byggebrettene). Knapp på hovedmenyen (og en rad i «Velg brett») åpner `?level=bygglab&skole=1` direkte i byggeskjermen; `skole=1` gjør at skolen ikke blir «sist spilte brett». Merkelappen er ANBEFALT til ett sted er bestått, så «✓ n/8». Første gang byggeskjermen åpnes i `bro`, `trapp`, `vippe`, `kjokkenbro`, `leke` eller `stue` (ikke Ekspert, ikke etter at skolen er åpnet, bare én gang per enhet) kommer kortet «Ny til bygging?» med PRØV SKOLEN / HOPP OVER. Alle åtte bestått gir kortet «Byggeskolen er klar» og byggehjelmen i Lekerommet. Logikk i `byggeskole_logic.js`, visning i `byggeskole_view.js`, lagring `tlm.skole`, fremdrift fra `tlm.gstage` (bestått-lista).
+Hvert sted har én oppgave som lærer ett poeng (oppgavetekst `lab.task.<nøkkel>` i `i18n.js`; kjent løsning, budsjett og stjerner testes i `test_gridstage.mjs` og `test_bygglab.mjs`):
+- `bro` (1): første bro over et gap av staver/planker; billigere bro gir flere stjerner.
+- `trapp` (2): bygg oppover: trapp av klosser eller en skråstilt rampe.
+- `vippe` (3): vinkel og balanse: vri vippa så den når den høye siden.
+- `fagverk` (4): trekanter gir stivhet, en firkant gir etter; stål tåler mer enn tre (tung bil).
+- `tau` (5): tau og gummi bærer bare strekk; heng broen opp.
+- `last` (6): én bro må bære flere laster (ball, bil, robot): kombinasjon.
+- `taaler` (7): kapasitet: «Tåler»-måleren viser hvor mye bygget klarer.
+- `materialer` (8): velg materiale etter lasten og hold budsjettet: kombinasjon.
+
 ### Prøverom: Bygglab (R67)
 `?level=bygglab` (også i nivålista i ⚙ som «Prøverom: Bygglab»). Et prøverom for å teste alle byggefunksjonene og spillbarheten uten å lete etter deler. Ikke et nummerert nivå; berører ingen andre brett.
 - **Start:** byggeskjermen åpner seg med en gang (⚙ → Innhold → Byggeskjerm: «Bygglab: åpne byggeskjermen med en gang», `tlm.labstart`, på som standard). TILBAKE går ut til rommet; BYGG-knappen kommer tilbake når figuren står ved et sted.

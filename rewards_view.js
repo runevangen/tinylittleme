@@ -4,8 +4,8 @@ import { ACCESSORIES, SLOTS, accById, getUnlocks, getEquipped, getBest, toggleEq
 import { heroSVG, fmtTime } from './story.js';
 
 const DEF_COLORS = { scarf: 0x1f9a94, pack: 0x66713a };
-const HAT_SCALE = { propeller: 2.1, crown: 1.7, party: 1.6, cowboy: 1.25 };    // større, så hattene leses på spillkameraets avstand
-const HAT_Y = { propeller: 0.097, crown: 0.09, party: 0.092, cowboy: 0.062 };
+const HAT_SCALE = { propeller: 2.1, crown: 1.7, party: 1.6, cowboy: 1.25, hardhat: 1.6 };    // større, så hattene leses på spillkameraets avstand
+const HAT_Y = { propeller: 0.097, crown: 0.09, party: 0.092, cowboy: 0.062, hardhat: 0.075 };
 
 function buildHat(id) {
   const g = new THREE.Group(), mats = [];
@@ -35,6 +35,11 @@ function buildHat(id) {
     add(new THREE.CylinderGeometry(0.05, 0.062, 0.066, 18), felt, 0, 0.035, 0);
     add(new THREE.CylinderGeometry(0.0635, 0.0635, 0.014, 18), band, 0, 0.014, 0);
     add(new THREE.SphereGeometry(0.009, 6, 5), star, 0, 0.014, 0.064);
+  } else if (id === 'hardhat') {   // R95: byggehjelm (gul kuppel med kant og list)
+    const yel = mat(0xf2c230, 0.45), dark = mat(0xc99a10, 0.5);
+    add(new THREE.SphereGeometry(0.05, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), yel, 0, 0, 0);
+    add(new THREE.CylinderGeometry(0.062, 0.062, 0.008, 16), yel, 0, 0.0, 0.01);
+    add(new THREE.BoxGeometry(0.014, 0.012, 0.1), dark, 0, 0.048, 0);
   }
   g.userData.mats = mats;
   return g;
@@ -86,7 +91,7 @@ function buildPack(hero, color) {
 export function updateAccessories(hero, dt) { const s = hero?.accHat?.userData.spin; if (s) s.rotation.y += dt * 14; }
 
 // ---------- lekerom-skapet (startskjermen) ----------
-const ICON = { propeller: '🚁', redscarf: '🧣', bluepack: '🎒', crown: '👑', party: '🎉', cowboy: '🤠' };
+const ICON = { propeller: '🚁', redscarf: '🧣', bluepack: '🎒', crown: '👑', party: '🎉', cowboy: '🤠', hardhat: '⛑️' };
 // Figuren i SVG med tilbehøret tegnet oppå (forhåndsvisning i skapet).
 export function previewSVG(equipped = {}, pose = 'hi') {
   let extra = '';
@@ -95,6 +100,7 @@ export function previewSVG(equipped = {}, pose = 'hi') {
   else if (hat === 'crown') extra += '<path d="M24 14 L24 -2 L32 6 L40 -4 L48 6 L56 -2 L56 14Z" fill="#f2c230" stroke="#c98f1c" stroke-width="1.5"/><circle cx="40" cy="8" r="2.4" fill="#d8304a"/>';
   else if (hat === 'party') extra += '<path d="M28 14 L40 -14 L52 14Z" fill="#e8504a"/><path d="M30 8 L50 8" stroke="#fff" stroke-width="3"/><circle cx="40" cy="-14" r="3.5" fill="#fff"/>';
   else if (hat === 'cowboy') extra += '<ellipse cx="40" cy="12" rx="30" ry="5" fill="#9a6a3a"/><path d="M28 11 Q28 -6 40 -4 Q52 -6 52 11Z" fill="#9a6a3a"/><rect x="28" y="7" width="24" height="4" fill="#4a2f1c"/>';
+  else if (hat === 'hardhat') extra += '<path d="M22 14 Q22 -6 40 -6 Q58 -6 58 14Z" fill="#f2c230"/><rect x="18" y="11" width="44" height="5" rx="2.5" fill="#f2c230"/><rect x="37" y="-6" width="6" height="14" fill="#c99a10"/>';
   if (equipped.scarf) { const c = '#' + accById(equipped.scarf).color.toString(16).padStart(6, '0'); extra += `<rect x="23" y="45" width="34" height="10" rx="5" fill="${c}"/><circle cx="50" cy="54" r="6" fill="${c}"/><rect x="45" y="54" width="10" height="24" rx="3" fill="${c}"/>`; }
   if (equipped.pack) { const c = '#' + accById(equipped.pack).color.toString(16).padStart(6, '0'); extra = `<rect x="50" y="46" width="22" height="34" rx="8" fill="${c}"/><rect x="53" y="62" width="16" height="12" rx="4" fill="#0003"/>` + extra; }
   return heroSVG(pose).replace('viewBox="0 0 80 96"', 'viewBox="0 -18 80 114"').replace('</svg>', `${extra}</svg>`);
@@ -116,7 +122,7 @@ export function showCloset(el, ctx) {
   const draw = () => {
     const unl = new Set(all ? ACCESSORIES.map((a) => a.id) : getUnlocks(st)), eq = getEquipped(st, all), best = getBest(st);
     const cards = ACCESSORIES.map((a) => { const open = unl.has(a.id), on = eq[a.slot] === a.id;
-      return `<button class="acc ${open ? '' : 'lock'} ${on ? 'on' : ''}" data-acc="${a.id}" ${open ? '' : 'aria-disabled="true"'}><b>${open ? ICON[a.id] : '🔒'}</b>${L('acc.' + a.id)}<small>${open ? (on ? L('rw.on') : L('rw.slot.' + a.slot)) : L('rw.locked', { n: a.n })}</small></button>`; }).join('');
+      return `<button class="acc ${open ? '' : 'lock'} ${on ? 'on' : ''}" data-acc="${a.id}" ${open ? '' : 'aria-disabled="true"'}><b>${open ? ICON[a.id] : '🔒'}</b>${L('acc.' + a.id)}<small>${open ? (on ? L('rw.on') : L('rw.slot.' + a.slot)) : (a.school ? L('rw.lockedSchool') : L('rw.locked', { n: a.n }))}</small></button>`; }).join('');
     const recs = levels.filter((l) => l.n).map((l) => { const b = best[l.id]; return `<span>${l.short}</span><span>${b ? L('rw.best', { crumbs: b.crumbs, total: b.total, time: b.t ? fmtTime(b.t) : '-' }) : L('rw.none')}</span>`; }).join('');
     el.innerHTML = `<div class="closet"><h2>${L('rw.title')}</h2><p class="tag">${L('rw.sub')}</p>${previewSVG(eq).replace('<svg ', '<svg class="prev" ')}
       <small style="opacity:.75">${L('rw.count', { n: unl.size, total: ACCESSORIES.length })}${(() => { const b = badgeCount(st); return b.total ? ` · 🥉${b.beginner} 🥈${b.medium} 🥇${b.expert}` : ''; })()}</small><div class="cgrid">${cards}</div>

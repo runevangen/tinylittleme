@@ -11,23 +11,29 @@ export const ACCESSORIES = [
   { id: 'crown', n: 4, slot: 'hat' },
   { id: 'party', n: 5, slot: 'hat' },
   { id: 'cowboy', n: 6, slot: 'hat' },
+  { id: 'hardhat', n: 0, slot: 'hat', school: true },   // R95: gis av Byggeskolen (alle åtte steder bestått), ikke av et nivå
 ];
 export const accById = (id) => ACCESSORIES.find((a) => a.id === id) || null;
-export const accForLevel = (n) => ACCESSORIES.find((a) => a.n === n) || null;
+export const accForLevel = (n) => (n > 0 ? ACCESSORIES.find((a) => a.n === n) : null) || null;
+// R95: byggehjelmen når Byggeskolen er klar. Returnerer tilbehøret første gang (og tar det på), ellers null.
+export function unlockSchool(st) {
+  const acc = ACCESSORIES.find((a) => a.school); if (!acc || getUnlocks(st).includes(acc.id)) return null;
+  st.set('tlm.unlocks', [...getUnlocks(st), acc.id]); const e = getEquipped(st); e[acc.slot] = acc.id; st.set('tlm.equip', e); return acc;
+}
 
 const TXT = {
   nb: {
     'rw.closet': 'Lekerom', 'rw.title': 'Lekerommet', 'rw.sub': 'Alt du har samlet. Trykk på noe for å ta det på eller av.', 'rw.back': 'Tilbake',
     'rw.locked': 'Ta alle smulene i nivå {n}', 'rw.on': 'PÅ', 'rw.records': 'Rekorder', 'rw.none': 'ikke spilt', 'rw.new': 'Nytt tilbehør: {name}! Det er på figuren.',
     'rw.best': '{crumbs}/{total} smuler, {time}', 'rw.newbest': 'Ny beste tid!',
-    'acc.propeller': 'Propelllue', 'acc.redscarf': 'Rødt skjerf', 'acc.bluepack': 'Blå sekk', 'acc.crown': 'Gullkrone', 'acc.party': 'Festhatt', 'acc.cowboy': 'Cowboyhatt',
+    'acc.propeller': 'Propelllue', 'acc.redscarf': 'Rødt skjerf', 'acc.bluepack': 'Blå sekk', 'acc.crown': 'Gullkrone', 'acc.party': 'Festhatt', 'acc.cowboy': 'Cowboyhatt', 'acc.hardhat': 'Byggehjelm', 'rw.lockedSchool': 'Bestå alle åtte steder i BYGGESKOLE',
     'rw.slot.hat': 'Hatt', 'rw.slot.scarf': 'Skjerf', 'rw.slot.pack': 'Sekk', 'rw.count': '{n} av {total} samlet',
   },
   en: {
     'rw.closet': 'Toy room', 'rw.title': 'The toy room', 'rw.sub': 'Everything you have collected. Tap something to put it on or take it off.', 'rw.back': 'Back',
     'rw.locked': 'Collect all crumbs in level {n}', 'rw.on': 'ON', 'rw.records': 'Records', 'rw.none': 'not played', 'rw.new': 'New accessory: {name}! It is on your hero.',
     'rw.best': '{crumbs}/{total} crumbs, {time}', 'rw.newbest': 'New best time!',
-    'acc.propeller': 'Propeller cap', 'acc.redscarf': 'Red scarf', 'acc.bluepack': 'Blue backpack', 'acc.crown': 'Gold crown', 'acc.party': 'Party hat', 'acc.cowboy': 'Cowboy hat',
+    'acc.propeller': 'Propeller cap', 'acc.redscarf': 'Red scarf', 'acc.bluepack': 'Blue backpack', 'acc.crown': 'Gold crown', 'acc.party': 'Party hat', 'acc.cowboy': 'Cowboy hat', 'acc.hardhat': 'Hard hat', 'rw.lockedSchool': 'Pass all eight sites in BUILDING SCHOOL',
     'rw.slot.hat': 'Hat', 'rw.slot.scarf': 'Scarf', 'rw.slot.pack': 'Pack', 'rw.count': '{n} of {total} collected',
   },
 };

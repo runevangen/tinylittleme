@@ -26,6 +26,9 @@ import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, 
 import { buildPuzzleViews } from './puzzle_view.js';
 import { GATE, initGates, resetGates, restoreGates, gatesSave, stepGates, nearSwitch, toggleSwitch, doorById, hasGates, gatesBudget } from './plates_logic.js';   // R60: trykkplate, dør, vindebro og bryter
 import { buildGateViews } from './plates_view.js';
+import { SCHOOL, schoolProgress, schoolRead, schoolMark, schoolCardShould, schoolDoneShould, schoolUrl } from './byggeskole_logic.js';   // R95: Byggeskolen i menyen
+import { createSchoolView, schoolMenuHtml } from './byggeskole_view.js';
+import { passRead } from './grid_stage.js';
 import { isLab, labAutoOpen } from './bygglab_logic.js';   // R67: Bygglab: byggeskjermen åpnes av seg selv ved start (build.js har resten)
 import { stueHint, isStue, stueSummary } from './stue_logic.js';   // R62: Stuen (nivå 8): hint om fjernkontrollen, plata og broen
 import { buildFlag, buildGoalRing } from './markers.js';
@@ -65,7 +68,7 @@ import { makeSoftLight } from './softlight.js';
 import { applyGrade } from './grade_apply.js';
 import { gradeTint } from './grade.js';
 import { buildHero, RIG_S } from './hero.js';
-import { recordRun, getEquipped, rt as rwT, accById, getBest, getBuildStars } from './rewards.js';
+import { unlockSchool, recordRun, getEquipped, rt as rwT, accById, getBest, getBuildStars } from './rewards.js';
 import { starText } from './build_budget.js';   // R47
 import { applyAccessories, updateAccessories, showCloset, previewSVG } from './rewards_view.js';
 import { makeVariant, buildTrain } from './variant_view.js';   // R12: nivå 4–6 som egne rom (stemning, hjelmlykt, vri)
@@ -137,7 +140,7 @@ const LEVELS = [
   { id: 'gaate', label: 'Prøverom: gåter (plate, dør, bryter og vindebro)', short: 'Gåter' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
   { id: 'klatring', label: 'Prøverom: klatrehjelp (stav, svamp, fall)', short: 'Klatring' },
-  { id: 'bygglab', label: 'Prøverom: Bygglab · NY BYGGETEKNIKK (rutenett: trykk punkter og bygg staver av tre, stål og tau, åtte byggesteder)', short: 'Bygglab · ny byggeteknikk' },   // R67
+  { id: 'bygglab', label: 'Byggeskole (Bygglab): lær å bygge, åtte byggesteder med rutenett, tre, stål og tau. Valgfri, men anbefalt', short: 'Byggeskole' },   // R67
   { id: 'kontroll', label: 'Kontrollbanen (test av styring og kamera)', short: 'Kontroll' },
 ];
 const levelParam = new URLSearchParams(location.search).get('level');
@@ -151,7 +154,9 @@ if (levelId && levelId !== 'soverom') {
   } catch { LEVEL = null; }
 }
 if (!LEVEL) { LEVEL = (await import('./level.js')).LEVEL; levelId = 'soverom'; }
-store.set('tlm.level', levelId);
+const schoolVisit = levelParam === SCHOOL.levelId && new URLSearchParams(location.search).get('skole') === '1';   // R95: åpnet fra BYGGESKOLE: «sist spilte brett» beholdes
+if (!schoolVisit) store.set('tlm.level', levelId);
+if (schoolVisit) { try { const u = new URL(location.href); u.searchParams.delete('skole'); history.replaceState(null, '', u.pathname + u.search); } catch { /* ingen historikk */ } }
 const levelInfo = LEVELS.find((l) => l.id === levelId), levelLabel = levelInfo?.short || levelId;
 const nextLevel = levelInfo?.n ? nextLevelOf(LEVELS, levelInfo.n) : null;   // R63: lavest n over dette nivået (et hull i nummereringen stopper ikke spillet)
 const goLevel = (id) => { store.set('tlm.level', id); location.search = `?level=${id}`; };
@@ -219,6 +224,7 @@ let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('t
 let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let shaderWarm = store.get('tlm.shaderwarm', true);   // R35: full tegning av alt under forvarmingen (admin)
+let schoolCardOn = store.get('tlm.schoolcard', true);   // R95
 let labStart = store.get('tlm.labstart', true), labFree = store.get('tlm.labfree', true), labAuto = { done: false };   // R67: Bygglab: åpne byggeskjermen ved start, ubegrenset mengde av alle deler
 let buildSnap = store.get('tlm.buildsnap', true), buildAll = store.get('tlm.buildall', false), buildSlow = store.get('tlm.buildslow', false), buildStrength = store.get('tlm.buildstrength', 1), buildWorld = store.get('tlm.buildworld', true), buildSeeHint = store.get('tlm.buildsee', true), buildDbl = store.get('tlm.builddbl', true), buildFine = store.get('tlm.buildfine', true), buildStress = store.get('tlm.buildstress', true), buildBreakFx = store.get('tlm.buildbreakfx', true), buildLego = store.get('tlm.buildlego', true), buildBudget = store.get('tlm.buildbudget', true), buildBonus = store.get('tlm.buildbonus', true), buildBonusStep = +store.get('tlm.buildbonusstep', 1) || 1, buildLoads = store.get('tlm.buildloads', true), buildShare = store.get('tlm.buildshare', true), buildGhost = store.get('tlm.buildghost', true), buildCap = store.get('tlm.buildcap', true), buildTruss = store.get('tlm.buildtruss', true), buildAxial = store.get('tlm.buildaxial', 1), buildGrid = store.get('tlm.buildgrid', true), buildUx = store.get('tlm.buildux', false), buildUxLand = store.get('tlm.buildux.land', true), gridGuide = store.get('tlm.gridguideon', true), buildGridMax = +store.get('tlm.buildgridmax', 6.5) || 6.5, buildGridStress = store.get('tlm.buildgridstress', true), buildGridPeak = store.get('tlm.buildgridpeak', true), buildGridDeck = store.get('tlm.buildgriddeck', true), buildGridGamma = +store.get('tlm.buildgridgamma', 0.5) || 0.5, buildGridSlow = +store.get('tlm.buildgridslow', 0.3), gridStage = store.get('tlm.gridstage', true), gridLock = store.get('tlm.gridlock', true), gridMassK = +store.get('tlm.gridmassk', 1) || 1, gridBudgetK = +store.get('tlm.gridbudgetk', 1) || 1   /* R74: rutenett-oppdrag */ || 0.3;   // R73: farge etter belastning, største belastning, kjøredekk, SLOW   // R72: rutenett-bygging   // R49a2: hjelp for fagverk, knekk-/strekkgrense   // R49a1: «Tåler»-måler;   // R50: deling, beste bygg og spøkelse;   // R47: kostnad/stjerner, smule-ekstradeler; R24: byggeskjermen
 let gridPlay = store.get('tlm.gridplay', true), gridPlayLock = store.get('tlm.gridplaylock', true);   // R82: rutenett (MODUS-knappen) i de vanlige byggebrettene, og låsen til første byggested er bestått
@@ -1177,7 +1183,7 @@ const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, h
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 if (hasGates(LEVEL)) { const gb = gatesBudget(LEVEL); logEv('gåte', `${gateViews.count} deler, ${gb.calls} tegnekall, ${gb.tris} trekanter`); }
-const bld = createBuildMode({ onMenu: () => quitToMenu('bygg'), onStat: (name, data) => sts.track(name, levelId, data), menuLabel: () => dft(lang, 'df.menu'), scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getLabFree: () => labFree, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getGrid: () => buildGrid, getGridHint: () => DIF.gridHint, getGridGuide: () => gridGuide, getGridMax: () => buildGridMax, getGridStress: () => buildGridStress, getGridPeak: () => buildGridPeak, getGridDeck: () => buildGridDeck, getGridGamma: () => buildGridGamma, getGridSlow: () => buildGridSlow, getStage: () => ({ on: gridStage, lock: gridLock, massK: gridMassK, budgetK: gridBudgetK }), getPlayGrid: () => gridPlay, getBuildUx: () => buildUx, getBuxHelp: () => ({ labels: DIF.gridHint && buildUxLand, suggest: difficulty === 'beginner' && buildUxLand }), getPlayLock: () => gridPlayLock, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
+const bld = createBuildMode({ onOpen: (id) => schoolOnBuildOpen(id), onClose: () => schoolV.hide(), onStagePass: (id, r) => schoolOnPass(id, r), onMenu: () => quitToMenu('bygg'), onStat: (name, data) => sts.track(name, levelId, data), menuLabel: () => dft(lang, 'df.menu'), scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getLabFree: () => labFree, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getGrid: () => buildGrid, getGridHint: () => DIF.gridHint, getGridGuide: () => gridGuide, getGridMax: () => buildGridMax, getGridStress: () => buildGridStress, getGridPeak: () => buildGridPeak, getGridDeck: () => buildGridDeck, getGridGamma: () => buildGridGamma, getGridSlow: () => buildGridSlow, getStage: () => ({ on: gridStage, lock: gridLock, massK: gridMassK, budgetK: gridBudgetK }), getPlayGrid: () => gridPlay, getBuildUx: () => buildUx, getBuxHelp: () => ({ labels: DIF.gridHint && buildUxLand, suggest: difficulty === 'beginner' && buildUxLand }), getPlayLock: () => gridPlayLock, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
 
 // Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
 const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
@@ -1919,6 +1925,7 @@ const SETTINGS = [
   fl('buildgriddeck', 'admin', 'Byggeskjerm (rutenett, R73): nytt bygg i rutenett-modus starter med kjøredekk mellom de to ankrene (rett kjede som ikke kan slettes). Av = tomt rutenett som før', true, () => buildGridDeck, kp('tlm.buildgriddeck', (v) => { buildGridDeck = v; })),
   rg('buildgridgamma', 'admin', 'Byggeskjerm (rutenett, R73): fargekurve for belastning (visning = belastning ^ dette; 0,5 gjør små laster synlige, 1 = rett fram)', 0.5, 0.25, 1, 0.05, () => buildGridGamma, kp('tlm.buildgridgamma', (v) => { buildGridGamma = v; }), { digits: 2 }),
   rg('buildgridslow', 'admin', 'Byggeskjerm (rutenett, R73): tempo i SLOW under prøven (1 = vanlig fart)', 0.3, 0.1, 0.8, 0.05, () => buildGridSlow, kp('tlm.buildgridslow', (v) => { buildGridSlow = v; }), { digits: 2 }),
+  fl('schoolcard', 'spill', 'Byggeskole (R95): vis et lite kort første gang du åpner byggeskjermen i et vanlig byggebrett («Ny til bygging? Prøv BYGGESKOLE først»). Vises bare én gang, aldri på Ekspert', true, () => schoolCardOn, kp('tlm.schoolcard', (v) => { schoolCardOn = v; logEv('byggeskole', v ? 'første-møte-kort på' : 'første-møte-kort av'); })),
   fl('gridstage', 'spill', 'Bygglab, rutenett (R74): hvert sted har et mål (last som må over), et budsjett og stjerner etter pris; tyngre last enn i klassisk modus. Av = fri rutenett-bygging uten krav', true, () => gridStage, kp('tlm.gridstage', (v) => { gridStage = v; logEv('bygg', v ? 'rutenett-oppdrag på' : 'rutenett-oppdrag av'); })),
   fl('gridlock', 'spill', 'Bygglab, rutenett (R74): neste sted åpnes i rutenett først når forrige er bestått. Av = alle steder åpne', true, () => gridLock, kp('tlm.gridlock', (v) => { gridLock = v; logEv('bygg', v ? 'rutenett-låsing på' : 'rutenett-låsing av'); })),
   fl('gridplay', 'spill', 'Byggeskjerm (rutenett, R82): MODUS-knappen finnes også i de vanlige brettene (Hyllebroen, Kjøkkenbroen og andre steder med to klipper og kjøredekk). Klassisk er alltid standard. Av = bare klassisk bygging i de vanlige brettene', true, () => gridPlay, kp('tlm.gridplay', (v) => { gridPlay = v; logEv('bygg', v ? 'rutenett i vanlige brett på' : 'rutenett i vanlige brett av'); })),
@@ -3148,6 +3155,31 @@ function openChanges() {
     onChange: () => chgBtnRefresh(),
     goTo: (fix) => { saveProgress(); location.href = goUrl(location.href, fix); }, update: async () => { await verView.check({ force: true, why: 'nytt' }); await verView.update(); }, onBack: () => showStart() });
 }
+// R95: Byggeskolen i menyen (byggeskole_logic.js, byggeskole_view.js): valgfri, men anbefalt. Ingen sperre foran byggebrettene.
+const schoolV = createSchoolView({ T, logEv });
+const schoolProg = () => schoolProgress(passRead(store, SCHOOL.levelId));
+function openSchool(from) {
+  logEv('byggeskole', `åpnet fra ${from}`); schoolMark(store, { opened: true }); saveProgress();
+  try { location.href = schoolUrl(location.pathname); } catch { location.search = `?level=${SCHOOL.levelId}&skole=1`; }
+}
+function schoolOnBuildOpen(id) {
+  if (CINE.on) return;
+  if (levelId === SCHOOL.levelId) { if (!schoolRead(store).opened) { schoolMark(store, { opened: true }); logEv('byggeskole', 'byggeskjermen åpnet i skolen'); } return; }
+  const state = schoolRead(store);
+  if (!schoolCardShould({ level: levelId, difficulty, on: schoolCardOn, cinema: CINE.on, state, prog: schoolProg() })) return;
+  schoolMark(store, { card: 'skipped' });   // vises bare én gang, uansett hva spilleren gjør
+  logEv('byggeskole', `første-møte-kort vist (${levelId})`);
+  schoolV.showCard({ onTry: () => { schoolMark(store, { card: 'tried' }); logEv('byggeskole', 'første-møte-kort: prøv skolen'); openSchool('kort'); }, onSkip: () => logEv('byggeskole', 'første-møte-kort: hoppet over') });
+}
+function schoolOnPass(id, r) {
+  const prog = schoolProg(); if (levelId !== SCHOOL.levelId) return;
+  if (r?.first) logEv('byggeskole', `sted bestått ${id} (${prog.n}/${prog.total})`);
+  if (schoolDoneShould({ prog, state: schoolRead(store) })) {
+    schoolMark(store, { done: true }); const acc = unlockSchool(store); if (acc) refreshAccessories?.();
+    logEv('byggeskole', `klar: alle ${prog.total} steder bestått${acc ? `, ${acc.id} låst opp` : ''}`);
+    schoolV.showDone({ onOk: () => {} });
+  }
+}
 function showStart(o = {}) {
   menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; saveProgress();
   if (document.pointerLockElement) document.exitPointerLock();
@@ -3157,6 +3189,7 @@ function showStart(o = {}) {
     <button class="mbtn" id="mCont" ${has ? '' : 'disabled'}>${T('menu.continue')}<small>${has ? resumeLine({ label: levelLabel, diff: dn, clock: clock > 4 ? clock : (normProgress(store.get(progKey, null))?.clock || 0) }) : T('menu.nosave')}</small></button>
     <button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
     <button class="mbtn sec" id="mLevels">${dft(lang, 'df.pick')}${bl ? `<small>${bl}</small>` : ''}</button>
+    ${CINE.on ? '' : schoolMenuHtml(T, schoolProg())}
     <button class="mbtn sec" id="mToys">🧸 ${rwT(lang, 'rw.closet')}</button>
     ${menuVisible(testerCode(), validCode) ? `<div class="mrow"><button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button><button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button></div>` : `<button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button>`}
     <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
@@ -3170,7 +3203,8 @@ function showStart(o = {}) {
     if (!has || !confirmNewOn) { pick(); return; }
     svView.confirmWipe({ kind: 'new', plan: wipePlan('new', disk.keys('tlm.'), store), onCancel: showStart, onOk: pick });   // R86: vis hva som slettes FØR noe slettes (selve slettingen skjer i newGame)
   };
-  $('mLevels').onclick = () => { unlockAudio(); dv.pickLevel({ levels: LEVELS, st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart }); };
+  $('mLevels').onclick = () => { unlockAudio(); dv.pickLevel({ levels: LEVELS, st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, ...(CINE.on ? {} : { school: { label: T('school.label'), sub: T('school.sub', { n: schoolProg().n, total: schoolProg().total }), onOpen: () => openSchool('velg brett') } }) }); };
+  if ($('mSchool')) $('mSchool').onclick = () => { unlockAudio(); openSchool('meny'); };
   $('mToys').onclick = () => { logEv('belønning', 'lekerom åpnet'); showCloset($('start'), { st: store, lang, all: rewardsAll, levels: LEVELS, onChange: (e) => { refreshAccessories(); logEv('belønning', `valgt ${Object.values(e).filter(Boolean).join(',') || 'ingen'}`); }, onBack: showStart }); };
   $('mChg').onclick = () => { logEv('nytt', 'knapp'); openChanges(); };
   if (validCode(testerCode())) { const tryChg = (left) => fetchChanges().then((l) => { if (l) chgBtnRefresh(); else if (left > 0) setTimeout(() => { if ($('mChg')) tryChg(left - 1); }, 8000); }).catch(() => {}); tryChg(2); }   // stille ved feil, med nytt forsøk som Rettelser

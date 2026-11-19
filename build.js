@@ -89,7 +89,7 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getBuxHelp = () => ({ labels: true, suggest: false }) }) {
+export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getBuxHelp = () => ({ labels: true, suggest: false }) }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -627,6 +627,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
   function stagePass(gst, res) {
     const r = passRecord(st0, levelId, active.id); gPassCache = null; const nx = stagesOf(sites).find((q) => (q.lab?.n || 0) > (active.lab?.n || 0));
     logEv('bygg', `oppdrag bestått ${active.id}: ${res.stars} stjerner, kostnad ${res.cost} av ${gst.budget}, ${res.parts} staver, last ${gst.loads.join('+')}${gst.massK > 1 ? ' x' + gst.massK : ''}${r.first ? ', første gang' : ''}`);
+    try { onStagePass(active.id, { first: r.first, stars: res.stars }); } catch { /* R95 */ }
     grid.sync(); if (r.first) toast(nx ? T('gstage.unlocked', { n: nx.lab?.n || 0 }) : T('gstage.allDone'));
   }
   function stageState(B) {   // tallene til infokortet (grid_stage.js: stageLines)
@@ -738,6 +739,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
     if (grid.restoreMode()) { view = fitNow(); labels(); }   // R75: sist valgte modus huskes
     bux.reset(); buxEnter();   // R92
     logEv('bygg', `inn ${s.id}: ${B.have.length} deler, ${B.placed.length} plassert`);
+    try { onOpen(s.id); } catch { /* R95: hekt for Byggeskolen */ }
     return true;
   }
   function close(why) {
@@ -748,6 +750,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, menuLabel = () => '
     if (lab && (lab.moved || labFar(active, player))) { const h = labHome(active); Object.assign(player, { x: h.x, y: h.y, z: h.z, vx: 0, vy: 0, vz: 0, onGround: true }); logEv('bygglab', `figuren flyttet til sted ${labInfo().n}`); }   // R67: ut fra et annet sted enn der du sto: på sokkelen før gapet
     if (lab) lab.moved = false;
     active = null; drag = null; gest = null; ptrs.clear(); document.body.classList.remove('building'); onChange?.();
+    try { onClose(); } catch { /* R95 */ }
   }
 
   // ---- hver ramme ----

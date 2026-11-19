@@ -5,7 +5,7 @@ import { ACCESSORIES, SLOTS, accForLevel, recordRun, getBest, getUnlocks, getEqu
 const mem = () => { const m = new Map(); return { get: (k, d) => (m.has(k) ? JSON.parse(m.get(k)) : d), set: (k, v) => m.set(k, JSON.stringify(v)), raw: m }; };
 
 // ett tilbehør per nivå 1-6, gyldige plasser, tekster i begge språk
-assert.equal(ACCESSORIES.length, 6);
+assert.equal(ACCESSORIES.length, 7);
 for (let n = 1; n <= 6; n++) assert.ok(accForLevel(n), `nivå ${n}`);
 for (const a of ACCESSORIES) { assert.ok(SLOTS.includes(a.slot)); for (const l of ['nb', 'en']) assert.notEqual(rt(l, 'acc.' + a.id), 'acc.' + a.id); if (a.slot !== 'hat') assert.ok(a.color > 0); }
 assert.deepEqual(TEXT_KEYS.nb.slice().sort(), TEXT_KEYS.en.slice().sort(), 'nb og en har samme nøkler');
