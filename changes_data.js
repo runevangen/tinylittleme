@@ -2,7 +2,7 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
-  { id: 'r93-byggeskjerm-liggende', version: '2.62', date: '2026-11-19', title: 'Byggeskjermen (med «Byggeskjerm» i ⚙ → Spill på) har en liggende utgave: sidepaneler, full høyde til broen, ikoner for materialene og store PRØV. Stående får et lite «Snu telefonen»-banner.',
+  { id: 'r93-byggeskjerm-liggende', version: '2.63', date: '2026-11-19', title: 'Byggeskjermen (med «Byggeskjerm» i ⚙ → Spill på) har en liggende utgave: sidepaneler, full høyde til broen, ikoner for materialene og store PRØV. Stående får et lite «Snu telefonen»-banner.',
     how: 'Slå på «Byggeskjerm (R92)» i ⚙ → Spill, velg Hyllebroen og trykk BYGG. Snu telefonen til liggende: ←, ⋯ og ↶ ligger til venstre, TRE/STÅL/TAU og PRØV til høyre. Bygg to staver, snu fram og tilbake: ingenting forsvinner. Trykk og hold et ikon for en kort forklaring.', level: 'bro', spot: null },
   { id: 'r91-solid-dekor', version: '2.60', date: '2026-11-18', title: 'Glassene på krydderhylla (og annen dekor som står fritt) er solide: du går ikke lenger igjennom.',
     how: 'Velg Nivå 3 (Kjøkken), klatre opp på krydderhylla og gå med stikka mot et av glassene: du stoppes. Trykk HOPP for å komme opp på glasset. Kan slås av i ⚙ → Admin.', level: 'kjokken', spot: { x: 24.3, y: 30.4, z: -28.3 } },
