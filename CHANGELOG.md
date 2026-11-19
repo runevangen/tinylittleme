@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.67** – R94: Ytelse del 2: teksturtak og delte kilder, skyggeutvalg og -tempo, maurdetalj, forvarming i små steg (Kjøkken, Bad, Bygglab).
 - **2.66** – R95: Byggeskole i menyen (valgfri, men anbefalt): BYGGESKOLE-knapp med ANBEFALT/n av 8, første-møte-kort i byggebrett, byggehjelm.
 - **2.65** – R94 (ytelse del 2) og R95 (Byggeskole i menyen) lagt i veikartet.
 - **2.64** – Backlogg: «Roller for byggedeler (gulv/bjelke/tau)» lagt i BACKLOG.md og som F23 i prioritert backlogg (utsatt: «vi starter med nei», fra Rune).

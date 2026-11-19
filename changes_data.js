@@ -4,6 +4,8 @@
 export const CHANGES = [
   { id: 'r95-byggeskole', version: '2.66', date: '2026-11-19', title: 'BYGGESKOLE på hovedmenyen: valgfri, men anbefalt. Åtte små steder lærer deg å bygge; første gang du bygger i et vanlig byggebrett får du et lite kort om skolen.',
     how: 'Trykk BYGGESKOLE på hovedmenyen (merkelapp ANBEFALT, så ✓ n/8 når du har bestått et sted). Eller åpne Hyllebroen på Nybegynner, trykk BYGG og se kortet: PRØV SKOLEN eller HOPP OVER. Bestå alle åtte steder for byggehjelmen i Lekerommet.', level: 'bygglab', spot: null },
+  { id: 'r94-ytelse-del-2', version: '2.67', date: '2026-11-19', title: 'Kjøkken, Bad og Bygglab skal gå jevnere: mindre teksturminne, færre skyggekastere og en oppstart uten lange stopp.',
+    how: 'Start Nivå 3 (Kjøkken), Nivå 1 (Bad) og Bygglab fra menyen, og spill et par minutter. Trykk ⚑ og se snitt-fps per rom i rapporten. Skyggen under figuren skal se lik ut som før.', level: 'kjokken', spot: null },
   { id: 'r93-byggeskjerm-liggende', version: '2.63', date: '2026-11-19', title: 'Byggeskjermen (med «Byggeskjerm» i ⚙ → Spill på) har en liggende utgave: sidepaneler, full høyde til broen, ikoner for materialene og store PRØV. Stående får et lite «Snu telefonen»-banner.',
     how: 'Slå på «Byggeskjerm (R92)» i ⚙ → Spill, velg Hyllebroen og trykk BYGG. Snu telefonen til liggende: ←, ⋯ og ↶ ligger til venstre, TRE/STÅL/TAU og PRØV til høyre. Bygg to staver, snu fram og tilbake: ingenting forsvinner. Trykk og hold et ikon for en kort forklaring.', level: 'bro', spot: null },
   { id: 'r91-solid-dekor', version: '2.60', date: '2026-11-18', title: 'Glassene på krydderhylla (og annen dekor som står fritt) er solide: du går ikke lenger igjennom.',

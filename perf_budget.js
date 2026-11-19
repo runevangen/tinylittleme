@@ -5,22 +5,22 @@
 
 export const BUDGET = { calls: 220, tris: 60000, lights: 7 };   // 7 lys: hjelmlykta i nivå 4–6 står alltid i scenen (styrke 0) så antall lys aldri endres (ellers kompileres alle materialer på nytt). Anbefalt tak per bilde (inkl. skyggepass); over det logges en advarsel
 
-// R85: tak per rom (nivå 1–9 og byggebrettene), satt ca. 8 % over målingen i docs/ytelse_etter.json (tools/perf_rank.cjs, hovedpasset ved startposisjonen, full kvalitet). Over taket logges en advarsel (logEv 'budsjett') og test_ytelse.mjs feiler. Se docs/YTELSE.md.
+// R85 → R94: tak per rom (nivå 1–9 og byggebrettene), satt 8 % over målingen i docs/ytelse_etter.json (tools/perf_rank.cjs, hovedpasset ved startposisjonen, full kvalitet, standardinnstillinger). Over taket logges en advarsel (logEv 'budsjett') og test_ytelse.mjs/test_perf2.mjs feiler. texMB teller hvert bilde én gang (delte kilder, se memStats): det er det som ligger på GPU-en. R94 satte teksturtaket for gulvet til 512 (se TEX_MAX i perf2_logic.js); R85-tallene (74 MB osv.) telte klonede teksturer flere ganger. Se docs/YTELSE.md.
 export const ROOM_CAPS = {
-  bad: { calls: 223, tris: 31000, texMB: 74 },
-  barnerom: { calls: 160, tris: 18400, texMB: 53 },
-  kjokken: { calls: 188, tris: 21600, texMB: 57 },
-  bad2: { calls: 279, tris: 56800, texMB: 80 },
-  barnerom2: { calls: 159, tris: 20400, texMB: 71 },
-  kjokken2: { calls: 223, tris: 28600, texMB: 72 },
-  leke: { calls: 141, tris: 30800, texMB: 5 },
-  stue: { calls: 192, tris: 25600, texMB: 64 },
-  verksted: { calls: 153, tris: 20300, texMB: 16 },
-  bro: { calls: 147, tris: 16900, texMB: 51 },
-  trapp: { calls: 153, tris: 16900, texMB: 28 },
-  vippe: { calls: 147, tris: 17000, texMB: 51 },
-  kjokkenbro: { calls: 152, tris: 16600, texMB: 35 },
-  bygglab: { calls: 147, tris: 15400, texMB: 75 },
+  bad: { calls: 220, tris: 29400, texMB: 10 },
+  barnerom: { calls: 150, tris: 20100, texMB: 11 },
+  kjokken: { calls: 188, tris: 21700, texMB: 7 },
+  bad2: { calls: 275, tris: 40300, texMB: 10 },
+  barnerom2: { calls: 155, tris: 19900, texMB: 11 },
+  kjokken2: { calls: 225, tris: 23500, texMB: 8 },
+  leke: { calls: 142, tris: 31000, texMB: 3 },
+  stue: { calls: 191, tris: 25300, texMB: 11 },
+  verksted: { calls: 153, tris: 20800, texMB: 6 },
+  bro: { calls: 145, tris: 17600, texMB: 10 },
+  trapp: { calls: 151, tris: 16100, texMB: 10 },
+  vippe: { calls: 150, tris: 17400, texMB: 10 },
+  kjokkenbro: { calls: 151, tris: 16400, texMB: 6 },
+  bygglab: { calls: 147, tris: 14700, texMB: 11 },
 };
 export const roomCaps = (id) => ROOM_CAPS[id] || {};
 
@@ -43,8 +43,10 @@ export function memStats(root) {
     if (o.geometry) geo.add(o.geometry);
     for (const m of [].concat(o.material || [])) { mat.add(m); for (const k of TEXKEYS) if (m[k]) tex.add(m[k]); if (m.uniforms) for (const u of Object.values(m.uniforms)) if (u && u.value && u.value.isTexture) tex.add(u.value); }
   });
-  let tb = 0, gb = 0; for (const t of tex) tb += texBytes(t); for (const g of geo) gb += geoBytes(g);
-  return { textures: tex.size, geometries: geo.size, materials: mat.size, texMB: tb / 1048576, geoMB: gb / 1048576 };
+  // R94: klonede teksturer (repeat/offset per flate) deler samme bilde (`source`), og three laster det bare opp én gang til GPU: tell hver kilde én gang (ekte teksturminne). `textures` = Texture-objekter, `sources` = ulike bilder.
+  const src = new Map(); for (const t of tex) { const k = t.source || t; if (!src.has(k) || texBytes(t) > texBytes(src.get(k))) src.set(k, t); }
+  let tb = 0, gb = 0; for (const t of src.values()) tb += texBytes(t); for (const g of geo) gb += geoBytes(g);
+  return { textures: tex.size, sources: src.size, geometries: geo.size, materials: mat.size, texMB: tb / 1048576, geoMB: gb / 1048576 };
 }
 export function memOver(s, low = false, b = MEM_BUDGET) {
   const w = []; const lim = low ? b.texMBLow : b.texMB;
@@ -52,7 +54,7 @@ export function memOver(s, low = false, b = MEM_BUDGET) {
   if (s.geoMB > b.geoMB) w.push(`geometriminne ${s.geoMB.toFixed(1)} MB > ${b.geoMB} MB`);
   return w;
 }
-export const memLine = (s) => `teksturer ${s.textures} (${s.texMB.toFixed(1)} MB), geometrier ${s.geometries} (${s.geoMB.toFixed(1)} MB), materialer ${s.materials}`;
+export const memLine = (s) => `teksturer ${s.textures} (${s.sources !== undefined && s.sources !== s.textures ? s.sources + ' bilder, ' : ''}${s.texMB.toFixed(1)} MB), geometrier ${s.geometries} (${s.geoMB.toFixed(1)} MB), materialer ${s.materials}`;
 // Frigjør alt under en node (geometrier, materialer, teksturer) og fjerner den fra scenen: brukes ved nivåbytte i samme side
 export function disposeTree(root) {
   const seen = new Set();

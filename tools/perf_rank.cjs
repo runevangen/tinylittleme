@@ -23,6 +23,7 @@ async function measure() {
   const T = await import('/lib/three.module.min.js'), g = window.__game, r = g.renderer;
   window.__paused = true; await new Promise((x) => setTimeout(x, 400));
   const st = g.perfStats();
+  g.shCull.setOn(false); const shOff = g.perfStats().shadow; g.shCull.setOn(true); g.shCull.update({ x: g.player.x, y: g.player.y, z: g.player.z }); const shOn = g.perfStats().shadow;   // R94: skyggepasset uten og med utvalg
   const med = (a) => a.sort((x, y) => x - y)[a.length >> 1];
   const rt = []; for (let i = 0; i < 5; i++) { const t0 = performance.now(); r.render(g.scene, g.camera); r.getContext().finish(); rt.push(performance.now() - t0); }
   const tt = []; window.__paused = false; for (let i = 0; i < 5; i++) { const t0 = performance.now(); g.tick(20); tt.push((performance.now() - t0) / 20); } window.__paused = true;
@@ -41,7 +42,7 @@ async function measure() {
   });
   items.sort((a, b) => b.tris - a.tris);
   const byPart = {}; for (const i of items) { const k = i.part; byPart[k] = byPart[k] || { calls: 0, tris: 0 }; byPart[k].calls++; byPart[k].tris += i.tris; }
-  return { calls: st.calls, tris: st.tris, meshes: st.meshes, lights: st.lights, shadowLights: st.shadowLights, textures: st.textures, texMB: +st.texMB.toFixed(1), geoMB: +st.geoMB.toFixed(1), materials: st.materials,
+  return { calls: st.calls, tris: st.tris, meshes: st.meshes, lights: st.lights, shadowLights: st.shadowLights, textures: st.textures, texMB: +st.texMB.toFixed(1), geoMB: +st.geoMB.toFixed(1), materials: st.materials, sources: st.sources, shadowOff: { casters: shOff.casters, calls: shOff.calls, tris: shOff.tris }, shadowOn: { casters: shOn.casters, calls: shOn.calls, tris: shOn.tris }, warm: st.warm,
     renderMs: +med(rt).toFixed(1), tickMs: +med(tt).toFixed(2), visibleItems: items.length, byPart, top: items.slice(0, 10) };
 }
 
@@ -51,13 +52,15 @@ async function measure() {
   const res = {};
   for (const lv of levels) {
     const pg = await (await b.newContext({ ...devices['iPhone 14'] })).newPage(); const errs = [];
+    const ls = arg('ls', ''); if (ls) await pg.addInitScript((kv) => { for (const p of kv.split(',')) { const [k, v] = p.split('='); localStorage.setItem(k, v); } }, ls);   // R94: --ls tlm.texmax=1024,tlm.shcull=false: sammenlign innstillinger
     pg.on('pageerror', (e) => errs.push(e.message.slice(0, 200)));
     await pg.goto(`http://localhost:${port}/?level=${lv}&start=0`);
     const ok = await pg.waitForFunction(() => window.__game && window.__game.LEVEL && window.__game.perfStats().calls > 0, null, { timeout: 120000 }).then(() => true, () => false);
     if (!ok) { console.log(lv, 'STARTET IKKE'); res[lv] = { error: 'startet ikke' }; await pg.context().close(); continue; }
-    await pg.waitForTimeout(4500);
+    if (!process.argv.includes('--nowarm')) await pg.waitForFunction(() => window.__game.perfStats().warm, null, { timeout: 200000 }).catch(() => {});   // R94: forvarmingen går i små steg (ett per bilde), vent til den er ferdig
+    await pg.waitForTimeout(2500);
     res[lv] = await pg.evaluate(measure); if (errs.length) res[lv].errors = errs;
-    const m = res[lv]; console.log(`${lv.padEnd(10)} tegnekall ${m.calls}, trekanter ${m.tris}, teksturer ${m.textures} (${m.texMB} MB), lys ${m.lights}/${m.shadowLights}, tegning ${m.renderMs} ms, tick ${m.tickMs} ms`);
+    const m = res[lv]; console.log(`${lv.padEnd(10)} tegnekall ${m.calls}, trekanter ${m.tris}, teksturer ${m.textures} (${m.texMB} MB), lys ${m.lights}/${m.shadowLights}, tegning ${m.renderMs} ms, tick ${m.tickMs} ms, skyggekall ${m.shadowOff.calls} til ${m.shadowOn.calls} (${m.shadowOff.tris} til ${m.shadowOn.tris} trekanter), oppstart verste steg ${m.warm ? Math.round(m.warm.worst) + ' ms ' + m.warm.worstKind : '?'}`);
     await pg.context().close();
   }
   await b.close(); srv.close();
