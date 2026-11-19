@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.69** – R96: Trapp, Vippe og andre klassiske byggesteder får samme nye byggeskall som broene (delebrett, festeverktøy, spøkelseslinje) bak ⚙-valget «Byggeskjerm».
 - **2.68** – R96 lagt i veikartet (Trapp og Vippe får samme nye byggeskall som broene, fra Rune).
 - **2.67** – R94: Ytelse del 2: teksturtak og delte kilder, skyggeutvalg og -tempo, maurdetalj, forvarming i små steg (Kjøkken, Bad, Bygglab).
 - **2.66** – R95: Byggeskole i menyen (valgfri, men anbefalt): BYGGESKOLE-knapp med ANBEFALT/n av 8, første-møte-kort i byggebrett, byggehjelm.
