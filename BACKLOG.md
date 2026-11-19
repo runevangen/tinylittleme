@@ -32,6 +32,28 @@ Gjenstår / til sparring:
 6. **Tipping og rotasjon** (ikke bare bokser).
 7. Bedre skår/effekter.
 
+### [ ] Roller for byggedeler: gulv, bjelke og tau (forslag, utsatt av Rune 2026-11-19: «vi starter med nei»)
+Rune bestemte å **ikke** bygge dette nå (dagens oppførsel beholdes), men å legge forslaget i backloggen. Nedenfor er forslaget slik det ble lagt fram, med mine merknader.
+
+**Problemet i dag.** Byggeren har deler (planker, klosser, leker) og koblinger (tape, ledd, tau, gummistrikk), men ingen del har en rolle. Følger: (1) *i verden*: `buildSolids` i `build_world.js` gjør alle plasserte deler om til faste bokser, så en skrå støttebjelke blir en trapp av små trinn figuren kan gå opp; (2) *i PRØV*: testfiguren går mot høyre og hopper når den støter mot noe, så den klatrer på bjelker og blir stående fast i fagverket. Tau som kobling blir aldri gulv; tau som del (materiale med `rope`) blir derimot bokser i verden som alt annet.
+
+**Hovedvalg: hvordan bestemmes rollen?** A) spilleren merker selv (full kontroll, ett valg til per del); B) spillet gjetter ut fra vinkel (ingen ekstra trykk, men gjetter feil på ramper og skrå bruer); **C) gjett først, spilleren kan overstyre (anbefalt)**.
+
+**Spesifikasjon (C).**
+1. **Tre roller.** *Gulv*: kan gås på, bærer last, stopper figuren sideveis. *Bjelke*: kan ikke gås på, bærer last, stopper ikke figuren (den går forbi). *Tau*: kan ikke gås på, bærer bare i strekk, stopper ikke. Bjelker og tau tegnes litt bak veibanen, som i et fagverk der veibanen ligger foran.
+2. **Standardrolle ved plassering.** Planke flatere enn ca. 30° = gulv; brattere = bjelke. Kloss og leke-materialer (bok, svamp) = gulv. Tau-materialer er alltid tau. Vippeplanken er alltid gulv. Rollen følger vinkelen ved rotering helt til spilleren selv har valgt rolle; da står valget fast.
+3. **Bytte rolle.** Trykk en del; en knapp GULV/BJELKE vises ved siden av roter og slett (ikke på tau). Angre og nullstill gjelder også rollebytte.
+4. **Utseende.** Gulv: full farge og en tydelig lys kant på oversiden. Bjelke: mørkere og litt smalere, uten kant. Tau: tynn linje. Skillet må synes uten farge alene (kant og tykkelse), av hensyn til fargeblinde.
+5. **I PRØV.** Testfigur og testlaster (ball, bil, robot) hviler bare på gulv. Bjelker og tau er med i fysikken fullt ut (bærer, bøyer, knekker, ryker); spenningsfarge og «hvorfor brakk det» virker på alle roller.
+6. **Ute i rommet.** Bare gulv blir faste bokser. Bjelker og tau tegnes uten kollisjon og kan ikke gripes eller klatres.
+7. **Regler mot rot.** Ingen gulv = ingen vei: PRØV sier fra med en gang («Du trenger noe å gå på. Velg en del og trykk GULV.»). Hull i veibanen lengre enn hopplengden markeres før prøven. Rollen endrer ikke kostnad eller stjerner.
+8. **Gamle bygg og koder.** Bygg uten rolle får standardrollen. Delekoden `TLM1.` får et nytt felt per del; gamle koder leses fortsatt, nye får nytt prefiks. Referansebygg og beste bygg på nett må prøves på nytt.
+9. **Ferdig når.** En skrå støttebjelke under en bro kan ikke gås på, verken i PRØV eller i rommet; samme bro holder like mye last som før; rollen byttes med ett trykk på iPhone; gamle bygg og koder åpnes uten feil; rollebytte logges (`logEv`) og rollefordelingen står i testrapporten.
+
+**Åpne spørsmål (forslag til svar i parentes).** Skal bjelker kunne klatres? (nei.) Skal bjelker stoppe løse ting? (nei, bare gulv stopper ting.) Er 30° riktig grense? (start der; spilleren overstyrer.) Skal klosser aldri kunne være bjelker? (ja, klosser er alltid gulv, så trappebrettene virker som før.)
+
+**Merknad fra Claude (etter at Rutenett kom).** I Rutenett-modus finnes rollen allerede i dataene: `deck: true` på staver i `grid_logic.js` (kjøredekk) mot vanlige staver. Der kan rollen bestemmes **automatisk uten gjetting og uten ekstra knapp**: dekket er gulv, alle andre staver er bjelke. Dermed gjelder «Rutenett først, klassisk etterpå»: Rutenett får rollene gratis (liten sak: `build_world.js` bygger bare faste bokser av dekket, og PRØV-figuren hviler bare på dekket), mens klassisk (trapp, vippe) trenger vinkelgjetting og GULV/BJELKE-knappen. Sjekk også om dagens oppførsel er et reelt problem i Rutenett (staver blir faste bokser i verden, se trailerklippet 06c «Nå holder den» der broen ser ut som boksede treskiver) før arbeidet startes. Beslutning: **utsatt**, hent fram etter lansering eller hvis testere melder at de klatrer på bjelker.
+
 ## Bevegelse og spillfølelse
 - [~] **Stabilisering i lufta (v0.65):** demping av stikken, sikte-hjelp mot grep/kant/tau og hold GREP er på plass (`docs/STYRING.md`). Trenger spilletest: merkes sikte-hjelpen for mye eller for lite (bredde 0,7, fart 2)? Ikke bygd, kan prøves hvis det ikke holder: «hold kursen» (slipp stikken = fortsett), svev på toppen av hoppet, mild sakte film det siste øyeblikket før et grep, og at grepet du kommer til å ta lyser opp.
 - [~] **Kanthjelp (v0.62):** forsiktig stikke stopper ved kanten, løp hopper selv over gap med landingsflate (`docs/STYRING.md`). Trenger spilletest: er 80 % riktig grense, hopper han når du ikke vil, og blir Kontrollbanen for lett? Gjenstår: styrehjelp i lufta mot landingsflaten, og at boten bruker det samme.

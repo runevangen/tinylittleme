@@ -86,6 +86,7 @@ Tester-saker går fortsatt foran alt (se `CLAUDE.md`).
 | F20 | **Foto → brett:** egne rom fra bilder (`docs/FOTO_TIL_BRETT.md`). | 4 | L | Høy |
 | F21 | **Flere figurer og tilbehør å samle.** | 2 | M | Lav |
 | F22 | **Kombineringsmotor utvidet** (egenskapstabell, flere regler). | 3 | L | Middels |
+| F23 | **Roller for byggedeler (gulv/bjelke/tau):** en skrå bjelke skal ikke kunne gås på i PRØV eller i rommet. Rutenett kan få det automatisk (dekk = gulv, resten = bjelke); klassisk trenger gjetting + knapp. Se `BACKLOG.md`. | 3 | M | Middels |
 
 ### D · Parkert
 - Flerspiller. Portering til Unity/Godot. Egen app-butikk-pakke (inntil «lansering» er avklart).
