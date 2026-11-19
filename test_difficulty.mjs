@@ -14,13 +14,13 @@ const WANT = {
   markerBudget: [6, 2, 0], infoMarks: [true, false, false], worldArrow: [true, true, false], compass: [true, true, false], nextLine: ['full', 'plain', 'none'],
   guideText: [true, false, false], showMe: [true, true, false], routeGlow: [true, false, false], introSweep: [true, true, false], introMark: [true, false, false],
   introHint: [true, false, false], helpCards: ['always', 'first', 'off'], contextHints: [true, true, false], failTips: [3, 5, 0], landingMarker: [true, true, false],
-  waterWarn: [true, true, false], minimap: [true, true, false], subgoalText: [true, true, false], hintBubbles: [true, true, false], gridHint: [true, true, false],
+  waterWarn: [true, true, false], questLine: [true, true, false], minimap: [true, true, false], subgoalText: [true, true, false], hintBubbles: [true, true, false], gridHint: [true, true, false],
 };
 assert.deepEqual([...HELP_KEYS].sort(), Object.keys(WANT).sort(), 'tabellen har akkurat de forventede radene');
 for (const [k, vals] of Object.entries(WANT)) DIFFS.forEach((d, i) => assert.equal(PROFILE[d][k], vals[i], `${k} på ${d}`));
 // Ekspert: ingen piler, kompass, hint, markører, NESTE, Vis meg, ruteutheving, kart, kort, tips
 const E = diffProfile('expert');
-for (const k of ['worldArrow', 'compass', 'guideText', 'showMe', 'routeGlow', 'introMark', 'introHint', 'contextHints', 'landingMarker', 'waterWarn', 'minimap', 'subgoalText', 'infoMarks', 'hintBubbles', 'introSweep']) assert.equal(E[k], false, `Ekspert: ${k} av`);
+for (const k of ['worldArrow', 'compass', 'guideText', 'showMe', 'routeGlow', 'introMark', 'introHint', 'contextHints', 'landingMarker', 'waterWarn', 'minimap', 'subgoalText', 'questLine', 'infoMarks', 'hintBubbles', 'introSweep']) assert.equal(E[k], false, `Ekspert: ${k} av`);
 assert.equal(E.markerBudget, 0); assert.equal(E.nextLine, 'none'); assert.equal(E.helpCards, 'off'); assert.equal(E.failTips, 0);
 assert.equal(offElements('expert').length, HELP_KEYS.length, 'Ekspert har alle hjelpeelement av');
 assert.equal(offElements('beginner').length, 0, 'Nybegynner har alt på');

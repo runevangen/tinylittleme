@@ -30,6 +30,7 @@ const ROWS = {
   landingMarker: [true, true, false],                // landingsmarkør (ring) i fall (R28)
   waterWarn:     [true, true, false],                // vannvarsel og vannstand (R65)
   minimap:       [true, true, false],                // minikart og oversikt-knapp
+  questLine:     [true, true, false],                // R98: oppdragslinje («ikon + neste mål») under toppbåndet (⚙ → Spill → Oppdragslinje kan overstyre; Ekspert får den ved trykk på ⋯ eller mål-ikonet)
   subgoalText:   [true, true, false],                // delmåltekst i toppbåndet og delmål-panelet
   gridHint:      [true, true, false],                // R72: rutenett-bygging: lang hjelpetekst («trykk to punkter for en stav»); ellers kort tekst
   hintBubbles:   [true, true, false],                // løse hint-bobler (tastaturhjelpen H, «trykk for å gå videre»)
