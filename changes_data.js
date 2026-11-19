@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r97-byggeskjerm-standard', version: '2.71', date: '2026-11-19', title: 'All bygging bruker nå den nyeste byggeskjermen som standard (broer, Trapp, Vippe, Lekerom, Stue, Verksted og Bygglab). Den gamle ligger bak ⚙ → Spill → Byggeskjerm av.',
+    how: 'Start Hyllebroen eller Trapp og trykk BYGG: du skal få topplinje, ⋯ og stor PRØV uten å ha slått noe på. Vil du tilbake, slå av «Byggeskjerm» i ⚙ → Spill.', level: 'bro', spot: null },
   { id: 'r96-klassisk-skall', version: '2.69', date: '2026-11-19', title: 'Trapp og Vippe (og andre klassiske byggesteder) får samme nye byggeskjerm som broene, med klassiske deler: delebrett, TAPE/LEDD/TAU/GUMMI som store ikoner, én PRØV og ⋯-meny. Festing viser en grønn eller rød linje.',
     how: 'Slå på «Byggeskjerm» i ⚙ → Spill, velg Trapp og trykk BYGG. Dra klosser fra raden nederst, trykk TAPE, trykk første del og så neste: linjen er grønn når festet går. Trykk en del for ↺ ↻ ✕. Snu telefonen: ingenting forsvinner. Trykk PRØV.', level: 'trapp', spot: null },
   { id: 'r95-byggeskole', version: '2.66', date: '2026-11-19', title: 'BYGGESKOLE på hovedmenyen: valgfri, men anbefalt. Åtte små steder lærer deg å bygge; første gang du bygger i et vanlig byggebrett får du et lite kort om skolen.',

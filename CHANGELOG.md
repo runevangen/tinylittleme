@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.71** – Nyeste byggeskjerm (R92/R93/R96) er standard for all bygging; den gamle ligger bak ⚙ → Spill → Byggeskjerm av (fra Rune).
 - **2.70** – Tillatelsesregel i `.claude/settings.json` så den planlagte feedback-sjekken (Supabase `execute_sql`) kjører uten godkjenning.
 - **2.69** – R96: Trapp, Vippe og andre klassiske byggesteder får samme nye byggeskall som broene (delebrett, festeverktøy, spøkelseslinje) bak ⚙-valget «Byggeskjerm».
 - **2.68** – R96 lagt i veikartet (Trapp og Vippe får samme nye byggeskall som broene, fra Rune).

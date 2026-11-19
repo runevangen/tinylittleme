@@ -79,7 +79,7 @@ const mk = (n, sid) => { const L = lvl(n); P.ensurePlayGrid(L.build.sites); cons
   assert.ok(keys.length >= 15); for (const k of keys) { assert.ok(!/\bklikk\b|\btast\b|\bpress\b/i.test(T(k, { name: 'x', n: 1, of: 2, c: 1, budget: 2 }) + En(k, { name: 'x', n: 1, of: 2, c: 1, budget: 2 })), 'ingen taster i ' + k); }
   assert.match(T('bux.hint.start'), /Dra fra/); assert.match(T('bux.hint.node'), /✕/);
   const html = fs.readFileSync(new URL('./index.html', import.meta.url), 'utf8'); assert.ok(/'buildux_logic'/.test(html) && /'buildux_view'/.test(html), 'modulene ligger i files i index.html');
-  const main = fs.readFileSync(new URL('./main.js', import.meta.url), 'utf8'); assert.match(main, /fl\('buildux', 'spill'/, 'SETTINGS: buildux i gruppen spill'); assert.match(main, /tlm\.buildux', false/, 'standard av'); assert.match(main, /logEv\('byggux'/, 'logEv byggux');
+  const main = fs.readFileSync(new URL('./main.js', import.meta.url), 'utf8'); assert.match(main, /fl\('buildux', 'spill'/, 'SETTINGS: buildux i gruppen spill'); assert.match(main, /tlm\.buildux', true/, 'standard på'); assert.match(main, /logEv\('byggux'/, 'logEv byggux');
   const bj = fs.readFileSync(new URL('./build.js', import.meta.url), 'utf8'); assert.match(bj, /getBuildUx = \(\) => false/, 'valget er av som standard i byggeskjermen');
   const ch = fs.readFileSync(new URL('./changes_data.js', import.meta.url), 'utf8'); assert.match(ch, /r92-/, 'NYTT-rad finnes');
   const css = (await import('./buildux_view.js')).buxCss(); for (const k of ['.bux .bxgo button{height:56px', 'bxmat button{flex:0 0 auto;width:60px;height:60px', '.bxdel{position:absolute;display:none;width:52px;height:52px']) assert.ok(css.includes(k), 'trykkflater: ' + k);
