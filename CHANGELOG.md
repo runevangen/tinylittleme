@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.62** – R93 lagt i veikartet (byggeskjerm i liggende format med sidepaneler, fra Rune).
 - **2.61** – R92: prototype av enklere byggeskjerm for rutenett (valg i ⚙, av som standard), `buildux_logic`/`buildux_view`, test og NYTT-rad.
 - **2.60** – R91: dekor uten kollisjon (glass på krydderhylla m.fl.) er solid, `tools/solid_audit.mjs`, innstilling `decorsolid`, tester og NYTT-rad.
 - **2.59** – docs/BYGGE_UX.md (gjennomgang av byggeskjermen og forslag), R91 (dekor uten kollisjon) og R92 (byggeskjerm-prototype bak ⚙-valg) lagt i veikartet.
