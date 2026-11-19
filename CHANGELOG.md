@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.61** – R92: prototype av enklere byggeskjerm for rutenett (valg i ⚙, av som standard), `buildux_logic`/`buildux_view`, test og NYTT-rad.
 - **2.60** – R91: dekor uten kollisjon (glass på krydderhylla m.fl.) er solid, `tools/solid_audit.mjs`, innstilling `decorsolid`, tester og NYTT-rad.
 - **2.59** – docs/BYGGE_UX.md (gjennomgang av byggeskjermen og forslag), R91 (dekor uten kollisjon) og R92 (byggeskjerm-prototype bak ⚙-valg) lagt i veikartet.
 - **2.58** – R90: blyanter og viskelær på gulvet er solide (innstilling `pencilsolid`), kan gås over og stås på.

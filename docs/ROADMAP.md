@@ -38,7 +38,13 @@ Rekkefølgen er bevisst: **kjernen først**. Et brett laget av et tilfeldig rom 
 
 
 
-### [ ] R92 · Fra tester: Rune · Byggeskjerm for rutenett: enklere å forstå og styre (PROTOTYPE bak ⚙-valg)
+### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
+Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
+Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
+
+## Ferdige punkter
+
+### [x] R92 · Fra tester: Rune · Byggeskjerm for rutenett: enklere å forstå og styre (PROTOTYPE bak ⚙-valg) (v2.61)
 Se `docs/BYGGE_UX.md` (gjennomgang av dagens skjerm, hva Poly Bridge og andre gjør, forslag) og beslutningene i seksjon 0. Mål: byggingen skal være lett å forstå og styre med en finger. Dette er en **rask prototype** som testeren kan slå på og sammenligne, ikke en omskriving av alt: bak `SETTINGS`-valget `buildux` (⚙ → Spill, standard **av**) vises en forenklet byggeskjerm i Rutenett-modus i bro-brettene (`bro`, `kjokkenbro`) og i Bygglab-stedene «bro» og «fagverk». Dagens skjerm er uendret når valget er av (og i klassisk modus).
 Krav (prototypen): (1) **Layout:** topplinje med ← (tilbake), stedsnavn med n/N og stjerner, og ⋯ (meny). Byggeområdet fyller ca. 70 % av høyden. Nederst: tre store runde materialvalg (TRE, STÅL, TAU) med pris per enhet og et lite styrkeikon, en angre-knapp (↶) og én stor PRØV-knapp (blir STOPP under prøven, SLOW og PAUSE vises bare da). Kostnads- og stjernelinje (budsjett) rett over materialene. Alt annet (last: Figur/Ball/Bil/Robot, KODE/LIM INN/BESTE, NULLSTILL STED/ALLE, zoom-tilpass, rutenett av/på) flyttes til ⋯-menyen (et lite ark som åpnes nedenfra, store knapper). Ingen MODUS-knapp i prototypen (Rutenett er eneste modus der). (2) **Direkte bygging:** trykk et tomt rutenettpunkt = knute; **dra fra en knute** = trekk en stav med en **spøkelsesstav** som følger fingeren (snapper til nære knuter og rutenettpunkter, viser lengde og pris, grønn når den er lovlig, rød og dempet når den ikke er det, f.eks. for lang); slipp på et punkt/en knute = fest. Dra en knute = flytt den (stavene følger). Trykk en stav eller knute = liten «✕»-boble ved den som sletter den (ingen FJERN-knapp nederst). To fingre = zoom/panorer (som i dag). Dobbelttrykk på tomt = tilpass. (3) **Tilbakemelding:** lett vibrasjon og klikk-lyd når noe festes, og rød glød på stav under belastning (finnes). (4) **Første gang:** en liten hånd-animasjon (to–tre sekunder) viser «dra fra punktet» (kan hoppes over; vises én gang per enhet; følger R75-veiledningen og Nybegynner/Ekspert, bort på Ekspert). (5) **Mål og logg:** `logEv('byggux', …)` for bygging, flytting, sletting, spøkelsesstav-avbrudd og tid til første bro, slik at testrapporten kan sammenligne. Mobil først: alt med knapper/fingre, trykkflater ≥ 48 px, ingen overlapp med ⚑ og ⚙. NYTT-rad i `changes_data.js` med trinn for å teste.
 Gjenbruk så mye som mulig av dagens rutenett-kode (`grid_logic.js`, `grid_view.js`, `grid_stage.js`, `grid_guide_*`); lag den nye visningen som egen modul (`buildux_view.js` + ren logikk `buildux_logic.js` for spøkelsesstav, snapping, slette-boble og lovlighet) og legg filene i `files` i `index.html`.
@@ -46,11 +52,6 @@ Test: ren logikk i node (snapping til nærmeste knute/punkt, lovlig/ulovlig stav
 Ikke med: klassisk modus (røres ikke), nytt fysikkgrunnlag, nye materialer, og å fjerne dagens skjerm (det besluttes etter testing).
 Ferdig når: testeren kan slå på `buildux`, bygge en bro fra klippe til klippe ved å dra, prøve den, og se at skjermen har ca. 8 synlige kontroller i stedet for ca. 25–30; alle tester og boot er grønne.
 
-### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
-Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
-Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
-
-## Ferdige punkter
 
 ### [x] R91 · Fra tester: Rune · Dekor uten kollisjon: figuren går igjennom glass og andre småting på hyller
 Fra testrapport (iPhone, v2.56, Ekspert, Nivå 3 Kjøkken): «Går igjennom glassene på hylla» ved (24.3, 30.4, -28.3), oppe på krydderhylla. Samme type feil som blyantene (R90, ferdig v2.58). Årsak (hypotese, må bekreftes): glass/krukker/småting på hyller er tegnet som dekor (`props.js`, scenefilene i `scenes/*.scene.json`) uten kollisjonsboks i `LEVEL.boxes`.
