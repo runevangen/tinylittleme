@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.65** – R94 (ytelse del 2) og R95 (Byggeskole i menyen) lagt i veikartet.
 - **2.64** – Backlogg: «Roller for byggedeler (gulv/bjelke/tau)» lagt i BACKLOG.md og som F23 i prioritert backlogg (utsatt: «vi starter med nei», fra Rune).
 - **2.63** – R93: liggende byggeskjerm med sidepaneler (bak «Byggeskjerm» i ⚙), banner i stående, låste materialer, veiledning, logg.
 - **2.62** – R93 lagt i veikartet (byggeskjerm i liggende format med sidepaneler, fra Rune).
