@@ -7,10 +7,11 @@ import { nearestPoint, nodeOf, nodeAt, gAddNode, gAddRod, gAddRodTo, gridStep, m
 import { starText } from './build_budget.js';
 import { isDoubleTap } from './build_zoom.js';
 import { GRID_MAT, rodPrice } from './build_materials.js';
+import { landCss, landMarkup, createLand } from './buildux_land_view.js';   // R93: liggende utgave (sidepaneler)
 
 const SAFE_T = 'max(8px,env(safe-area-inset-top))', SAFE_B = 'max(8px,env(safe-area-inset-bottom))';
 export const BUX_TOP = 62, BUX_BOT = 188, BUX_TOP_LAND = 54, BUX_BOT_LAND = 84;   // px som topp- og bunnfeltet tar av byggeområdet (build.js: TOPPX/BOTPX)
-export const buxCss = () => `
+export const buxCss = () => landCss() + `
 #bld .bux,#bld .bxsheet{display:none}
 #bld.bux .bux{display:block}
 #bld.bux .bt.top,#bld.bux .zoom,#bld.bux .tools,#bld.bux .tray,#bld.bux .bt.bot,#bld.bux .gtools,#bld.bux .gsim,#bld.bux:not(.bxopen) .lab,#bld.bux:not(.bxopen) .loads,#bld.bux:not(.bxopen) .share,#bld.bux .gg{display:none!important}
@@ -74,7 +75,7 @@ export const buxCss = () => `
 #bld .bxsheet .card{max-height:96%}
 }
 `;
-export const buxMarkup = () => `<div class="bux"><div class="bxtop"><button data-bx="back" class="bxback"></button><div class="bxname"><b></b><i></i></div><button data-bx="more" class="bxmore">⋯</button></div><button data-bx="del" class="bxdel">✕</button><div class="bxbot"><div class="bxcost"><span class="bxct"></span><span class="bxbar"><i></i></span></div><div class="bxrow mats">${BUX.mats.map((m) => `<div class="bxmat"><button data-bx="${m.id}"><span>${m.icon}</span><b></b></button><em></em></div>`).join('')}<button data-bx="undo" class="bxundo" aria-label="↶">↶</button></div><div class="bxgo"><button data-bx="slow" class="bxsp"></button><button data-bx="pause" class="bxsp"></button><button data-bx="try" class="try"></button></div></div></div><div class="bxsheet"><div class="card"><h3 class="bxst"></h3><div class="bxsec bxloads"><small></small></div><div class="bxsec bxshare"><small></small></div><div class="bxsec bxlab"><small></small></div><div class="bxsec"><div class="bxgrid"><button data-bx="fit"></button><button data-bx="dots"></button><button data-bx="reset" class="bxreset"></button><button data-bx="menu"></button></div></div><button data-bx="close" class="bxclose"></button></div></div>`;
+export const buxMarkup = () => `<div class="bux"><div class="bxtop"><button data-bx="back" class="bxback"></button><div class="bxname"><b></b><i></i></div><button data-bx="more" class="bxmore">⋯</button></div><button data-bx="del" class="bxdel">✕</button><div class="bxbot"><div class="bxcost"><span class="bxct"></span><span class="bxbar"><i></i></span></div><div class="bxrow mats">${BUX.mats.map((m) => `<div class="bxmat"><button data-bx="${m.id}"><span>${m.icon}</span><b></b><u class="bxlock">🔒</u></button><em></em></div>`).join('')}<button data-bx="undo" class="bxundo" aria-label="↶">↶</button></div><div class="bxgo"><button data-bx="slow" class="bxsp"></button><button data-bx="pause" class="bxsp"></button><button data-bx="try" class="try"></button></div></div></div><div class="bxsheet"><div class="card"><h3 class="bxst"></h3><div class="bxsec bxloads"><small></small></div><div class="bxsec bxshare"><small></small></div><div class="bxsec bxlab"><small></small></div><div class="bxsec"><div class="bxgrid"><button data-bx="fit"></button><button data-bx="dots"></button><button data-bx="reset" class="bxreset"></button><button data-bx="menu"></button><button data-bx="sugg"></button></div></div><button data-bx="close" class="bxclose"></button></div></div>${landMarkup()}`;
 
 export function createBuildUx(ctx) {
   const { root, T, toast, logEv, buzz, audio, grid } = ctx;
@@ -86,6 +87,8 @@ export function createBuildUx(ctx) {
   const wanted = () => !!ctx.getOn() && !!site() && buxSite({ levelId: ctx.levelId, site: site() });
   const on = () => wanted() && grid.on();
   const moved = new Map();
+  const land = createLand({ root, T, logEv, store: ctx.store, site: () => site(), getB: () => B(), view: () => ctx.view(), isSim: () => ctx.isSim(), toast, buzz, getHelp: () => (ctx.getHelp ? ctx.getHelp() : { labels: true, suggest: false }), getGuideOn: () => ctx.getGuideOn?.(), getHint: () => ctx.getHint(), getCrumbs: () => ctx.getCrumbs?.() || 0, budgetNow: () => ctx.budgetNow?.(), getMat: () => grid.mat, setMat: (m) => grid.setMat(m), rodCount: () => G()?.rods.filter((r) => !r.deck).length || 0, fit: () => ctx.fit(), cancelDrag: () => cancel() });
+  let tipsBound = false;
   const mat = () => grid.mat;
   const handDone = () => { try { return !!ctx.store?.get(BUX.handKey, 0); } catch { return false; } };
 
@@ -103,9 +106,9 @@ export function createBuildUx(ctx) {
   }
   let attached = false;
   function layout() {
-    const want = on(); root.classList.toggle('bux', want);
+    const want = on(); root.classList.toggle('bux', want); land.sync(want); if (want && !tipsBound) { tipsBound = true; land.bindTips(); }
     if (want && !attached) { attach(); attached = true; } else if (!want && attached) { detach(); attached = false; root.classList.remove('bxopen'); }
-    if (want && !opened) { opened = true; timerOpen(timer, wall()); timerSite = site()?.id; logEv('byggux', `skjerm på ${site()?.id}`); }
+    if (want && !opened) { opened = true; timerOpen(timer, wall()); timerSite = site()?.id; logEv('byggux', `skjerm på ${site()?.id} (${land.isLand() ? 'liggende' : 'stående'})`); }
     if (!want) opened = false;
     if (want && !handSeen && !handDone() && !hand && !ctx.isSim()) maybeHand();
     return want;
@@ -113,7 +116,7 @@ export function createBuildUx(ctx) {
 
   // ---- tekster og knapper (bare når noe er endret) ----
   function labelsNow(info) {
-    const sig = [info.sim, info.done, info.speed, info.cost, info.budget, info.stars, info.on, mat(), info.canUndo, info.name, info.nOf, ctx.lang?.()].join('|');
+    const sig = [info.sim, info.done, info.speed, info.cost, info.budget, info.stars, info.on, mat(), info.canUndo, info.name, info.nOf, ctx.lang?.(), land.isLand() ? 'L' : 'P'].join('|');
     if (sig === lastSig) return; lastSig = sig;
     q('.bxback').setAttribute('aria-label', T('build.back')); q('.bxback').textContent = '←'; q('.bxmore').setAttribute('aria-label', T('bux.more'));
     const nm = q('.bxname b'), stars = q('.bxname i'); nm.textContent = info.nOf ? T('bux.site', { name: info.name, n: info.nOf.n, of: info.nOf.of }) : info.name; stars.textContent = starText(info.on ? info.stars : info.best || 0);
@@ -121,15 +124,16 @@ export function createBuildUx(ctx) {
     for (const m of BUX.mats) {
       const b = q(`[data-bx="${m.id}"]`), mi = matInfo(m.id), em = b.parentNode.querySelector('em');
       b.querySelector('b').textContent = T('grid.mat.' + m.id); b.style.setProperty('--mc', mi.color); b.classList.toggle('on', mat() === m.id); b.setAttribute('aria-pressed', mat() === m.id ? 'true' : 'false'); b.setAttribute('aria-label', T('grid.mat.' + m.id));
-      em.textContent = `${COMMA(mi.price)} ${T('bux.perUnit')} ${strengthBars(mi.strength)}`;
+      em.textContent = land.isLand() ? `${COMMA(mi.price)} ${strengthBars(mi.strength)}` : `${COMMA(mi.price)} ${T('bux.perUnit')} ${strengthBars(mi.strength)}`;
+      b.setAttribute('aria-label', T('grid.mat.' + m.id) + ' ' + COMMA(mi.price) + ' ' + T('bux.perUnit'));
     }
     q('.bxundo').disabled = !info.canUndo; q('.bxundo').setAttribute('aria-label', T('build.undo'));
-    q('.bxgo .try').textContent = info.sim ? '■ ' + T('build.stop') : '▶ ' + T('build.try');
+    q('.bxgo .try').innerHTML = `<span class="bxi">${info.sim ? '■' : '▶'}</span> <span class="bxt">${T(info.sim ? 'build.stop' : 'build.try')}</span>`; q('.bxgo .try').setAttribute('aria-label', T(info.sim ? 'build.stop' : 'build.try'));
     for (const k of ['slow', 'pause']) { const b = q(`.bxgo [data-bx="${k}"]`); b.textContent = k === 'pause' ? T(info.speed === 'pause' ? 'grid.resume' : 'grid.pause') : T('grid.slow'); b.classList.toggle('on', info.speed === k); b.disabled = !!info.done; b.setAttribute('aria-pressed', info.speed === k ? 'true' : 'false'); }
     q('.bxst').textContent = T('bux.sheet');
     q('.bxloads small').textContent = T('bux.sec.load'); q('.bxshare small').textContent = T('bux.sec.share'); q('.bxlab small').textContent = T('bux.sec.lab');
     q('[data-bx="fit"]').textContent = '⤢ ' + T('bux.fit'); q('[data-bx="dots"]').textContent = T(grid.dots ? 'bux.dotsOn' : 'bux.dotsOff'); q('.bxreset').textContent = T('build.reset'); q('[data-bx="menu"]').textContent = T('build.menu'); q('[data-bx="close"]').textContent = T('bux.close');
-    q('.bxreset').style.display = info.lab ? 'none' : '';
+    q('.bxreset').style.display = info.lab ? 'none' : ''; q('[data-bx="sugg"]').textContent = T(land.skipped ? 'buxl.suggOff' : 'buxl.suggOn');
     q('.bxdel').setAttribute('aria-label', T('bux.del'));
     q('.bxloads').style.display = root.querySelector('.bxloads .loads')?.children.length ? '' : 'none'; q('.bxlab').style.display = info.lab ? '' : 'none';
   }
@@ -156,7 +160,7 @@ export function createBuildUx(ctx) {
   }
   function draw(sx, tNow, g2) {
     if (!on()) return;
-    updateBubble(sx);
+    updateBubble(sx); land.draw(sx, tNow, g2);
     if (ghost && ghost.show) {
       const pa = sx(ghost.a.u, ghost.a.v), pb = sx(ghost.b.u, ghost.b.v), m = GRID_MAT[ghost.mat], w = Math.max(5, m.h * scale()), ok = ghost.ok, col = ok ? '#3df0b0' : '#ff6a5a';
       g2.save(); g2.lineCap = 'round'; g2.globalAlpha = ok ? 0.85 : 0.5;
@@ -184,7 +188,7 @@ export function createBuildUx(ctx) {
   function doDelete() {
     const d = deletable(G(), grid.selNode, grid.selRod); if (!d) return false;
     const n = d.kind === 'node' ? G().rods.filter((r) => r.a === d.id || r.b === d.id).length : 0;
-    const ok = grid.del(); if (ok) { armed = null; logEv('byggux', `slett ${d.kind === 'node' ? 'knute' : 'stav'} ${d.id}${n ? ` (${n} staver fulgte med)` : ''}`); buzz?.(12); bubbleEl().classList.remove('show'); bubbleSig = ''; }
+    const ok = grid.del(); if (ok) { land.act(); armed = null; logEv('byggux', `slett ${d.kind === 'node' ? 'knute' : 'stav'} ${d.id}${n ? ` (${n} staver fulgte med)` : ''}`); buzz?.(12); bubbleEl().classList.remove('show'); bubbleSig = ''; }
     return ok;
   }
 
@@ -214,7 +218,7 @@ export function createBuildUx(ctx) {
     const s = st; st = null;
     if (s.kind === 'move') {
       const n = nodeOf(G(), s.id); const had = s.was; grid.up(e);
-      const n2 = nodeOf(G(), s.id); if (n && n2 && (Math.abs(n2.u - had.u) > 1e-6 || Math.abs(n2.v - had.v) > 1e-6)) logEv('byggux', `flytt knute ${s.id}`);
+      const n2 = nodeOf(G(), s.id); if (n && n2 && (Math.abs(n2.u - had.u) > 1e-6 || Math.abs(n2.v - had.v) > 1e-6)) { land.act(); logEv('byggux', `flytt knute ${s.id}`); }
       return true;
     }
     const g = ghost, t = tgt; ghost = null; tgt = null;
@@ -235,7 +239,7 @@ export function createBuildUx(ctx) {
   function commit(fromId, t) {
     const b = B(), m = mat(), r = t.kind === 'node' ? gAddRod(b, fromId, t.node.id, m) : gAddRodTo(b, fromId, t.u, t.v, m);
     if (!r.ok) { toast(T('grid.err.' + (r.why || 'same'), { n: COMMA(maxLenOf(b)) })); buzz?.(12); return false; }
-    buzz?.(14); audio?.bhop?.(); logEv('byggux', `stav ${m} lengde ${COMMA(r.len)} kost ${r.cost}${r.newNode ? ', ny knute' : ''}`);
+    land.act(); buzz?.(14); audio?.bhop?.(); logEv('byggux', `stav ${m} lengde ${COMMA(r.len)} kost ${r.cost}${r.newNode ? ', ny knute' : ''}`);
     const f = timerRod(timer, wall()); if (f.first) logEv('byggux', `første stav etter ${f.secs.toFixed(1)} s`);
     armed = null; grid.select(null, null); ctx.trayRender?.(); ctx.onChange?.(); return true;   // ingenting valgt: neste dra fra sluttknuten fortsetter kjeden
   }
@@ -253,7 +257,7 @@ export function createBuildUx(ctx) {
     const ex = nodeAt(G(), near.u, near.v); if (ex) { grid.select(ex.id, null); armed = ex.id; lastTap = { ...cur, added: false }; return; }
     const r = gAddNode(B(), near.u, near.v);
     if (!r.ok) { toast(T('grid.err.' + (r.why || 'out'), { n: COMMA(maxLenOf(B())) })); lastTap = null; return; }
-    buzz?.(10); audio?.bhop?.(); armed = null; grid.select(r.node.id, null); logEv('byggux', `knute ${r.node.id}`); lastTap = { ...cur, added: true }; ctx.trayRender?.(); ctx.onChange?.();
+    land.act(); buzz?.(10); audio?.bhop?.(); armed = null; grid.select(r.node.id, null); logEv('byggux', `knute ${r.node.id}`); lastTap = { ...cur, added: true }; ctx.trayRender?.(); ctx.onChange?.();
   }
 
   // ---- knapper ----
@@ -263,10 +267,11 @@ export function createBuildUx(ctx) {
     undo: () => ctx.act.undo(), try: () => ctx.act.try(), menu: () => { sheet(false); ctx.act.menu(); }, reset: () => { sheet(false); ctx.act.reset(); },
     fit: () => { ctx.fit(); sheet(false); }, dots: () => { grid.setDots(!grid.dots); invalidate(); logEv('byggux', `rutenett ${grid.dots ? 'på' : 'av'}`); },
     slow: () => ctx.speed('slow'), pause: () => ctx.speed('pause'), del: () => { doDelete(); },
-    wood: () => grid.setMat('wood'), steel: () => grid.setMat('steel'), rope: () => grid.setMat('rope'),
+    wood: () => land.tryMat('wood') && grid.setMat('wood'), steel: () => land.tryMat('steel') && grid.setMat('steel'), rope: () => land.tryMat('rope') && grid.setMat('rope'),
+    banner: () => land.dismissBanner(), sugg: () => land.toggleSugg(),
   };
   root.addEventListener('click', (e) => {
-    const b = e.target.closest?.('[data-bx]'), k = b?.dataset?.bx; if (!k || !Object.hasOwn(act, k)) return; e.stopPropagation(); act[k](); invalidate();
+    const b = e.target.closest?.('[data-bx]'), k = b?.dataset?.bx; if (!k || !Object.hasOwn(act, k)) return; e.stopPropagation(); if (land.tipJustShown()) { land.hideTip(); return; } act[k](); invalidate();
   }, true);
   const sh = q('.bxsheet');
   if (sh) {
@@ -276,13 +281,14 @@ export function createBuildUx(ctx) {
       const b = e.target.closest?.('button'); if (b && (b.dataset.s === 'copy' || b.dataset.s === 'paste' || b.dataset.s === 'best' || b.dataset.s === 'replay' || b.dataset.lb === 'site' || b.dataset.lb === 'all')) setTimeout(() => sheet(false), 0);
     });
   }
-  for (const el of root.querySelectorAll('.bux button')) el.addEventListener('pointerdown', (e) => e.stopPropagation());   // knappene skal ikke starte panorering/berøring på brettet
+  for (const el of root.querySelectorAll('.bux button, .bxrail, .bxbanner')) el.addEventListener('pointerdown', (e) => e.stopPropagation());   // knappene skal ikke starte panorering/berøring på brettet
 
   // ---- tilstand fra build.js hver tegning ----
   function frame() {
     if (!layout()) return;
     const b = B(), info = ctx.info(), bd = budgetOf({ site: site(), cost: info.cost, stageBudget: info.stageBudget });
-    labelsNow({ ...info, ...bd, budgetShown: true, canUndo: !!b.history.length, speed: grid.speed });
+    const full = { ...info, ...bd, budgetShown: true, canUndo: !!b.history.length, speed: grid.speed };
+    labelsNow(full); land.plate({ ...full, starsText: starText(info.on ? info.stars : info.best || 0) }, bd.over); land.applyLocks(); land.fixMat();
   }
   function hint() {
     if (!on() || ctx.isSim()) return '';
@@ -292,13 +298,15 @@ export function createBuildUx(ctx) {
     return '';
   }
   // PRØV og resultat: tid til første bro (logg)
-  function onTry() { if (!on()) return; const n = timerTry(timer); logEv('byggux', `prøv nr. ${n}`); }
+  function onTry() { if (!on()) return; const n = timerTry(timer); land.tryNo(); logEv('byggux', `prøv nr. ${n}${land.isLand() ? ' (liggende)' : ' (stående)'}`); }
   function onResult(won, secs) {
     if (!on() && !opened) return; if (!won) { logEv('byggux', 'prøve feilet'); return; }
-    const w = timerWin(timer, wall()); if (w.first) logEv('byggux', `første bro klarte det etter ${w.secs.toFixed(0)} s (${w.tries} prøver, ${w.rods} staver)`); else logEv('byggux', 'prøve klarte det');
+    land.win(); const w = timerWin(timer, wall()); if (w.first) logEv('byggux', `første bro klarte det etter ${w.secs.toFixed(0)} s (${w.tries} prøver, ${w.rods} staver)`); else logEv('byggux', 'prøve klarte det');
   }
   const reset = () => { armed = null; st = null; ghost = null; tgt = null; lastTap = null; sheet(false); bubbleSig = ''; invalidate(); };
   return {
+    land, topPx: () => land.topPx() ?? (innerHeight <= 520 ? BUX_TOP_LAND : BUX_TOP), botPx: () => land.botPx() ?? (innerHeight <= 520 ? BUX_BOT_LAND : BUX_BOT), insets: () => land.insets(),
+    get site() { return site(); },
     on, wanted, layout, frame, draw, down, move, up, cancel, tap, hint, onTry, onResult, reset, invalidate, sheet,
     get ghost() { return ghost; }, get dragging() { return !!st; }, get handOn() { return !!hand; }, get timer() { return timer; }, get timerSite() { return timerSite; }, skipHand: () => endHand('hoppet over'), showHand: maybeHand, bubbleEl,
   };
