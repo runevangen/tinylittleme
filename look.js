@@ -2,11 +2,12 @@
 // kontaktskygger der ting står på noe, støv i lufta og himmel i vinduet. Bare utseende: ingen kollisjon her.
 import * as THREE from 'three';
 import { shrinkCanvas } from './perf_budget.js';
+import { capSide } from './perf2_logic.js';   // R94: tak på kantlengden til store teksturer
 
 export function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 const cv = (w, h = w) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
 
-export function makeLook({ aniso = 4, low = false } = {}) {
+export function makeLook({ aniso = 4, low = false, texMax = 512 } = {}) {
   const tex = (c, srgb = true, rep = true, keep = false) => {        // R21: på Lav profil lages GPU-teksturen i halv størrelse (keep = allerede liten nok)
     const t = new THREE.CanvasTexture(keep ? c : shrinkCanvas(c, low, cv));
     if (rep) t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -35,7 +36,7 @@ export function makeLook({ aniso = 4, low = false } = {}) {
 
   // ---------- tregulv: planker med egen tone, årringer, kvister, riper og fuger (med relieff og ruhet) ----------
   const floor = (() => {
-    const S = low ? 512 : 1024, k = S / 1024, c = cv(S), h = cv(S), ro = cv(S), g = c.getContext('2d'), gh = h.getContext('2d'), gr = ro.getContext('2d');
+    const S = low ? 512 : capSide(1024, texMax), k = S / 1024, c = cv(S), h = cv(S), ro = cv(S), g = c.getContext('2d'), gh = h.getContext('2d'), gr = ro.getContext('2d');
     const r = rng(21), n = 6, ph = S / n;
     gh.fillStyle = '#9a9a9a'; gh.fillRect(0, 0, S, S); gr.fillStyle = '#6c6c6c'; gr.fillRect(0, 0, S, S);
     for (let i = 0; i < n; i++) {

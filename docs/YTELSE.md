@@ -138,3 +138,46 @@ Perler, blyanter og viskelær er solide og ligger som statiske bokser i `LEVEL.b
 
 ## Kollisjonsbokser fra solid dekor (R91)
 Elleve statiske bokser totalt (Kjøkken 3, Kjøkken ommøblert 3, Bad 2, Bad ommøblert 2, Stue 1), lagt i `LEVEL.boxes` av `createDecorSolid` (`solid_decor_logic.js`). Måling i node (`test_solid_decor.mjs`, best av 5 × 6000 steg, Kjøkken): 0,025 → 0,026 ms/steg, altså uendret. Ingen nye tegnekall eller trekanter (tegningen er uendret). Ekte FPS og følelse: testes på iPhone.
+
+## R94: teksturer, skygger, maur og oppstart (ytelse del 2)
+Oppfølging av R85. Alt under er **statiske mål** fra `tools/perf_rank.cjs` (Playwright, iPhone 14, SwiftShader uten GPU, hovedpass ved startposisjonen). **Ekte fps og følelse på iPhone er ikke målt her: testes på iPhone** (kravet er 30 fps i alle rom på iPhone 12 eller nyere; rapporten viser fortsatt snitt-fps per rom og oppløsning). Før-tallene er samme kode med de gamle valgene (`--ls tlm.texmax=1024,tlm.shcull=false,tlm.shevery=1,tlm.antdetail=1,tlm.warmspread=false`), lagret i `docs/ytelse_r94_for.json`; etter-tallene i `docs/ytelse_etter.json` (R85-målingen ligger i `docs/ytelse_r85.json`).
+
+### 1. Teksturer: delte kilder og tak på kantlengden
+- **Målingen var for høy (delte kilder).** `texMB` i R85-tallene (52 MB i Kjøkken, 68 MB i Bad) telte hver *klonede* tekstur for seg. `texMat` i `main.js` kloner tregulv, flis, panel og vegg per flate (for `repeat`), men klonene deler samme bilde (`texture.source`), og three laster det bare opp én gang til GPU. Kontroll i Kjøkken: 91 Texture-objekter, 42 ulike bilder, `renderer.info.memory.textures` = 43. `memStats` (`perf_budget.js`) teller nå hvert bilde én gang (`sources`), så `texMB` er det som faktisk ligger på GPU-en. Kjøkken og Bad var altså aldri på 50–70 MB på GPU-en; de er 6,4 og 9,1 MB.
+- **Ekte kutt: gulvet på 512.** Tregulvet (`look.js`) var 1024 × 1024 i tre kart (farge, normal, ruhet) = 16 MB; nå `capSide(1024, texMax)` = 512 (4 MB). Gulvet gjentas mange ganger over rommet, og på mobil er 512 nok. Det gir −55 til −58 % i Barnerom, Stue, Bro/Trapp/Vippe og Bygglab (se tabellen). Valget `texmax` i ⚙ → Admin (512 standard, 1024 = tidligere; laster siden på nytt). «Små teksturer» og Lav profil er som før.
+- Resultat for de tre dyreste (Kjøkken, Bad, Bygglab): **6,4, 9,1 og 9,5 MB** (kravet: ≥ 30 % ned eller under ca. 30 MB). Bare Bygglab og de andre rommene med 1024-gulv ble ekte mindre; Kjøkken og Bad var allerede små på GPU-en, og det er målingen som er rettet.
+- Ikke gjort: bytte ut korn/relieff med vertex-farge, og mindre fargedybde/ingen alpha. Teksturene er nå 2–10 MB per rom, så gevinsten er liten; det tas bare hvis iPhone-målingen peker på teksturer.
+
+### 2. Skygger: færre kastere og sjeldnere tegning
+- **Utvalg** (`createShadowCull`, `perf2_logic.js`): meshes som kaster skygge får `castShadow` av hvis de ligger utenfor `shradius` (17 enheter fra figuren, kanten av avgrensningskulen teller) eller er mindre enn 0,12 enheter. Figuren, maurene, sjefen og alt som er en del av dem er alltid med. `castShadow` er ikke en del av shaderens nøkkel, så ingenting kompileres på nytt. Oppdateres hvert 160. ms.
+- **Tempo** (`createShadowPacer`): `renderer.shadowMap.autoUpdate = false`; skyggekartet tegnes hvert bilde når figuren, kameraet, maur/sjef, leker (`LEVEL.bodies`) eller noe bæres beveger seg (og i 8 bilder etter), ellers hvert 3. bilde (valget `shevery`, 1–4). Kasterutvalg som endres, Lav profil av/på og slutten av forvarmingen gir en tegning i neste bilde. Lav profil bruker som før et 16 × 16-kart uten kastere (ingen skyggetegning), så den kan ikke bli mindre.
+- **Slik telles skyggepasset** (`renderer.info` teller det ikke): `shadowStats()` i `main.js` (`__game.perfStats().shadow`): *kastere* = synlige meshes med `castShadow`; *skyggekall* = de som også ligger i lysets skyggekamera (det three tegner i skyggepasset, ett kall per mesh); *skyggetrekanter* = summen av trekantene deres. `perf_rank.cjs` måler med utvalget av og på (`shadowOff`/`shadowOn`). Tempoet telles i `shadow.pace` (tegnet / hoppet over).
+- Resultat (tabellen under): i de møblerte rommene (Bad, Barnerom, Kjøkken, Stue) skyggekall −7 til −32 % og skyggetrekanter −8 til −37 % (Bad 126 → 88 kall og 25 426 → 16 130 trekanter). Bygg-rommene og Verkstedet har få kastere utenfor området og endres lite. I tillegg tegnes kartet hvert 3. bilde når alt står stille (testet i `test_perf2.mjs`; på iPhone: testes på iPhone).
+
+### 3. Maur (Nivå 4–6) og edderkopper
+`buildAnt`, `buildSpider` og `buildCarrier` (`props.js`) bruker nå samme oppdelingsprinsipp som figuren: `setAntDetail(q)` (valget `antdetail`, standard 0,6; 1 = før). 7 208 → 2 520 trekanter per maur (−65 %) og 10 624 → 3 712 per edderkopp, samme antall deler og samme størrelse (testet i `test_perf2.mjs`). I Nivå 4 Bad (ommøblert) gikk maurene fra 21 524 til 7 700 trekanter, og hele bildet fra 51 304 til 37 308 (−27 %). Kjøkken (Nivå 6) −18 %. Andre skapninger (soldat, rulle, veps) er ikke rørt.
+
+### 4. Oppstartshakk: forvarming i små steg
+`warmUpSpread` (`main.js`, `planWarm`/`chunkByKey`/`runSteps` i `perf2_logic.js`) erstatter den ene lange forvarmingen: teksturopplasting i biter på 12, prøvetegning av meshes gruppert etter shaderprogram (høyst 3 programmer og 80 meshes per bit; første tegning med et program kompilerer det, og det er det dyre), og utoningskopiene seks om gangen. Hvert steg kjøres i sitt eget bilde bak intro/lastebildet (`requestAnimationFrame` + `setTimeout`), og verste steg logges (`logEv('ytelse', 'oppstart: verste steg …')`, `__game.perfStats().warm`). Valget `warmspread` (admin) slår tilbake til den gamle.
+- SwiftShader (programvare, mye tregere enn iPhone på shaderkompilering): Bad gikk fra **ett steg på 5 915 ms** til verste steg **1 406 ms** (de fleste steg under 100 ms); de andre rommene har verste steg 71–525 ms (Bad 1 406, Bad ommøblert 525, Kjøkken 382, Kjøkken ommøblert 524, Barnerom 325, Verksted 211, Bygg-rommene 222–393, Stue 87). Ekte bildetid på iPhone er ikke målt: **testes på iPhone** (kravet er ingen bilder over ca. 300 ms; ⚑-rapportens «hakk»-linjer viser det).
+
+### 5. Målinger for alle rom (etter R94) og tak
+| Rom | Teksturminne MB: R85-måling → samme rom med riktig telling → nå | Trekanter før → nå | Skyggekall (utvalg av → på) | Skyggetrekanter (av → på) |
+|---|---|---|---|---|
+| Nivå 1 Bad (`bad`) | 68 → 9.1 → **9.1** (0 %) | 27858 → 27170 (-2 %) | 126 → 88 | 25426 → 16130 |
+| Nivå 2 Barnerom (`barnerom`) | 48.8 → 21.8 → **9.8** (-55 %) | 18660 → 18588 (0 %) | 84 → 70 | 19986 → 16130 |
+| Nivå 3 Kjøkken (`kjokken`) | 52 → 6.4 → **6.4** (0 %) | 20220 → 20048 (-1 %) | 72 → 65 | 15898 → 13610 |
+| Nivå 4 Bad (ommøblert) (`bad2`) | 73.4 → 9.2 → **9.2** (0 %) | 51304 → 37308 (-27 %) | 139 → 95 | 26838 → 17902 |
+| Nivå 5 Barnerom (ommøblert) (`barnerom2`) | 65 → 22 → **10** (-55 %) | 18336 → 18336 (0 %) | 95 → 74 | 20438 → 16458 |
+| Nivå 6 Kjøkken (ryddet om) (`kjokken2`) | 65.8 → 6.6 → **6.6** (0 %) | 26596 → 21736 (-18 %) | 79 → 72 | 19914 → 17626 |
+| Nivå 7 Lekerom (`leke`) | 4.6 → 2.2 → **2.2** (0 %) | 28674 → 28674 (0 %) | 60 → 59 | 18826 → 15886 |
+| Nivå 8 Stue (`stue`) | 58.4 → 21.3 → **9.3** (-56 %) | 23584 → 23412 (-1 %) | 86 → 80 | 14366 → 13266 |
+| Nivå 9 Verksted (`verksted`) | 14 → 5.5 → **5.5** (0 %) | 19174 → 19174 (0 %) | 59 → 59 | 10578 → 10578 |
+| Bygg 1 Bro (`bro`) | 47 → 20.6 → **8.6** (-58 %) | 16204 → 16204 (0 %) | 61 → 59 | 10062 → 10030 |
+| Bygg 2 Trapp (`trapp`) | 25.7 → 20.6 → **8.6** (-58 %) | 14834 → 14834 (0 %) | 58 → 57 | 10026 → 10006 |
+| Bygg 3 Vippe (`vippe`) | 47 → 20.6 → **8.6** (-58 %) | 16024 → 16024 (0 %) | 61 → 59 | 10062 → 10030 |
+| Bygg 4 Kjøkkenbro (`kjokkenbro`) | 31.8 → 5.4 → **5.4** (0 %) | 15112 → 15112 (0 %) | 61 → 59 | 10062 → 10030 |
+| Prøverom Bygglab (`bygglab`) | 69.3 → 21.5 → **9.5** (-56 %) | 13310 → 13582 (2 %) | 60 → 59 | 10050 → 10030 |
+
+Tegnekall er uendret (±1) i alle rom. `ROOM_CAPS` i `perf_budget.js` er skjerpet til de nye tallene + 8 % (teksturminne 3–11 MB mot 5–80 MB før), og `test_perf2.mjs` (og `test_ytelse.mjs`) krever dem; `test_perf2.mjs` krever også ≥ 30 % mindre teksturminne i Bygglab, Bro og Stue, ≥ 50 % færre maur-trekanter i Nivå 4, billigere skyggepass med utvalg, og at taket er målingen + 8 %.
+Slik gjenskaper du tallene: `NODE_PATH=$(npm root -g) node tools/perf_rank.cjs --out docs/ytelse_etter.json` (legg til `--ls tlm.texmax=1024,tlm.shcull=false,tlm.shevery=1,tlm.antdetail=1,tlm.warmspread=false` for «før», `--nowarm` for å ikke vente på forvarmingen).

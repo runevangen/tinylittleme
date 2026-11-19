@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r94-ytelse-del-2', version: '2.65', date: '2026-11-19', title: 'Kjøkken, Bad og Bygglab skal gå jevnere: mindre teksturminne, færre skyggekastere og en oppstart uten lange stopp.',
+    how: 'Start Nivå 3 (Kjøkken), Nivå 1 (Bad) og Bygglab fra menyen, og spill et par minutter. Trykk ⚑ og se snitt-fps per rom i rapporten. Skyggen under figuren skal se lik ut som før.', level: 'kjokken', spot: null },
   { id: 'r93-byggeskjerm-liggende', version: '2.63', date: '2026-11-19', title: 'Byggeskjermen (med «Byggeskjerm» i ⚙ → Spill på) har en liggende utgave: sidepaneler, full høyde til broen, ikoner for materialene og store PRØV. Stående får et lite «Snu telefonen»-banner.',
     how: 'Slå på «Byggeskjerm (R92)» i ⚙ → Spill, velg Hyllebroen og trykk BYGG. Snu telefonen til liggende: ←, ⋯ og ↶ ligger til venstre, TRE/STÅL/TAU og PRØV til høyre. Bygg to staver, snu fram og tilbake: ingenting forsvinner. Trykk og hold et ikon for en kort forklaring.', level: 'bro', spot: null },
   { id: 'r91-solid-dekor', version: '2.60', date: '2026-11-18', title: 'Glassene på krydderhylla (og annen dekor som står fritt) er solide: du går ikke lenger igjennom.',

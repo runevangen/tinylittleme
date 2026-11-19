@@ -1,135 +1,91 @@
 {
  "bad": {
-  "calls": 206,
-  "tris": 28636,
-  "meshes": 390,
+  "calls": 203,
+  "tris": 27170,
+  "meshes": 386,
   "lights": 6,
   "shadowLights": 1,
   "textures": 115,
-  "texMB": 68,
-  "geoMB": 4.1,
+  "texMB": 9.1,
+  "geoMB": 3.9,
   "materials": 322,
-  "renderMs": 3.3,
-  "tickMs": 0.16,
-  "visibleItems": 197,
+  "sources": 47,
+  "shadowOff": {
+   "casters": 188,
+   "calls": 126,
+   "tris": 25426
+  },
+  "shadowOn": {
+   "casters": 93,
+   "calls": 88,
+   "tris": 16130
+  },
+  "warm": {
+   "total": 1817,
+   "worst": 1406,
+   "worstKind": "draw",
+   "steps": 17,
+   "ms": 114933,
+   "shaders": 50
+  },
+  "renderMs": 5,
+  "tickMs": 0.81,
+  "visibleItems": 194,
   "byPart": {
    "rekvisitt/brettdel": {
-    "calls": 80,
-    "tris": 15680
+    "calls": 77,
+    "tris": 14900
    },
    "figuren": {
     "calls": 72,
     "tris": 10822
    },
-   "gjennomsiktig": {
-    "calls": 34,
-    "tris": 1575
-   },
    "gulvdetaljer/småting": {
     "calls": 11,
     "tris": 508
+   },
+   "gjennomsiktig": {
+    "calls": 34,
+    "tris": 889
    }
-  },
-  "top": [
-   {
-    "tris": 2304,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshPhysical",
-    "color": "ebe8df"
-   },
-   {
-    "tris": 1932,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshPhysical",
-    "color": "f7f3e8"
-   },
-   {
-    "tris": 1584,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 44,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 1400,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshPhysical",
-    "color": "f1eee6"
-   },
-   {
-    "tris": 1400,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "a9794a"
-   },
-   {
-    "tris": 864,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshPhysical",
-    "color": "f1eee6"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "8d8a80"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "7b7c7a"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 504,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 14,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   }
-  ]
+  }
  },
  "barnerom": {
-  "calls": 148,
-  "tris": 16966,
+  "calls": 138,
+  "tris": 18588,
   "meshes": 390,
   "lights": 6,
   "shadowLights": 1,
   "textures": 79,
-  "texMB": 48.8,
-  "geoMB": 3.4,
+  "texMB": 9.8,
+  "geoMB": 3,
   "materials": 279,
-  "renderMs": 2.5,
-  "tickMs": 0.15,
-  "visibleItems": 140,
+  "sources": 43,
+  "shadowOff": {
+   "casters": 175,
+   "calls": 84,
+   "tris": 19986
+  },
+  "shadowOn": {
+   "casters": 88,
+   "calls": 70,
+   "tris": 16130
+  },
+  "warm": {
+   "total": 463,
+   "worst": 325,
+   "worstKind": "draw",
+   "steps": 17,
+   "ms": 53984,
+   "shaders": 47
+  },
+  "renderMs": 2.4,
+  "tickMs": 0.25,
+  "visibleItems": 130,
   "byPart": {
    "rekvisitt/brettdel": {
-    "calls": 36,
-    "tris": 5372
+    "calls": 27,
+    "tris": 7000
    },
    "figuren": {
     "calls": 72,
@@ -140,110 +96,102 @@
     "tris": 422
    },
    "gjennomsiktig": {
-    "calls": 25,
-    "tris": 339
+    "calls": 24,
+    "tris": 333
    }
-  },
-  "top": [
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "f8cbcb"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "5d8fc9"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "e9b7a0"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 560,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "e0443a"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   }
-  ]
+  }
  },
  "kjokken": {
   "calls": 174,
-  "tris": 19912,
-  "meshes": 456,
+  "tris": 20048,
+  "meshes": 455,
   "lights": 6,
   "shadowLights": 1,
   "textures": 91,
-  "texMB": 52,
-  "geoMB": 3.2,
+  "texMB": 6.4,
+  "geoMB": 2.8,
   "materials": 322,
-  "renderMs": 4.2,
-  "tickMs": 0.15,
+  "sources": 42,
+  "shadowOff": {
+   "casters": 227,
+   "calls": 72,
+   "tris": 15898
+  },
+  "shadowOn": {
+   "casters": 110,
+   "calls": 65,
+   "tris": 13610
+  },
+  "warm": {
+   "total": 777,
+   "worst": 382,
+   "worstKind": "draw",
+   "steps": 17,
+   "ms": 79618,
+   "shaders": 47
+  },
+  "renderMs": 3.5,
+  "tickMs": 0.14,
   "visibleItems": 162,
   "byPart": {
    "rekvisitt/brettdel": {
     "calls": 50,
-    "tris": 8118
+    "tris": 8422
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gulvdetaljer/småting": {
+    "calls": 9,
+    "tris": 274
+   },
+   "gjennomsiktig": {
+    "calls": 31,
+    "tris": 479
+   }
+  }
+ },
+ "bad2": {
+  "calls": 254,
+  "tris": 37308,
+  "meshes": 500,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 120,
+  "texMB": 9.2,
+  "geoMB": 4.3,
+  "materials": 371,
+  "sources": 49,
+  "shadowOff": {
+   "casters": 283,
+   "calls": 139,
+   "tris": 26838
+  },
+  "shadowOn": {
+   "casters": 181,
+   "calls": 95,
+   "tris": 17902
+  },
+  "warm": {
+   "total": 818,
+   "worst": 525,
+   "worstKind": "draw",
+   "steps": 20,
+   "ms": 81590,
+   "shaders": 53
+  },
+  "renderMs": 3.9,
+  "tickMs": 0.39,
+  "visibleItems": 246,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 87,
+    "tris": 17340
+   },
+   "maur/skapninger": {
+    "calls": 45,
+    "tris": 7700
    },
    "figuren": {
     "calls": 72,
@@ -251,459 +199,152 @@
    },
    "gjennomsiktig": {
     "calls": 31,
-    "tris": 647
-   },
-   "gulvdetaljer/småting": {
-    "calls": 9,
-    "tris": 274
-   }
-  },
-  "top": [
-   {
-    "tris": 936,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 26,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 924,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 5,
-    "mat": "MeshStandard",
-    "color": "e0483e"
-   },
-   {
-    "tris": 924,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 5,
-    "mat": "MeshStandard",
-    "color": "f2c230"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "d9534f"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "cde5f9"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 504,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "ffffff"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   }
-  ]
- },
- "bad2": {
-  "calls": 258,
-  "tris": 52568,
-  "meshes": 508,
-  "lights": 6,
-  "shadowLights": 1,
-  "textures": 120,
-  "texMB": 73.4,
-  "geoMB": 5.1,
-  "materials": 371,
-  "renderMs": 10.6,
-  "tickMs": 0.15,
-  "visibleItems": 250,
-  "byPart": {
-   "maur/skapninger": {
-    "calls": 45,
-    "tris": 21524
-   },
-   "rekvisitt/brettdel": {
-    "calls": 92,
-    "tris": 18624
-   },
-   "figuren": {
-    "calls": 72,
-    "tris": 10822
-   },
-   "gjennomsiktig": {
-    "calls": 30,
-    "tris": 1039
+    "tris": 887
    },
    "gulvdetaljer/småting": {
     "calls": 11,
     "tris": 508
    }
-  },
-  "top": [
-   {
-    "tris": 3152,
-    "part": "maur/skapninger",
-    "shadow": true,
-    "merged": 8,
-    "mat": "MeshStandard",
-    "color": "ffffff"
-   },
-   {
-    "tris": 3120,
-    "part": "maur/skapninger",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "ffffff"
-   },
-   {
-    "tris": 2304,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshPhysical",
-    "color": "ebe8df"
-   },
-   {
-    "tris": 2272,
-    "part": "maur/skapninger",
-    "shadow": true,
-    "merged": 32,
-    "mat": "MeshStandard",
-    "color": "48265c"
-   },
-   {
-    "tris": 2080,
-    "part": "maur/skapninger",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "f2c64a"
-   },
-   {
-    "tris": 2080,
-    "part": "maur/skapninger",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "111111"
-   },
-   {
-    "tris": 2080,
-    "part": "maur/skapninger",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "f2c64a"
-   },
-   {
-    "tris": 2080,
-    "part": "maur/skapninger",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "111111"
-   },
-   {
-    "tris": 1932,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshPhysical",
-    "color": "f7f3e8"
-   },
-   {
-    "tris": 1908,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 53,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   }
-  ]
+  }
  },
  "barnerom2": {
-  "calls": 147,
-  "tris": 18824,
-  "meshes": 478,
+  "calls": 143,
+  "tris": 18336,
+  "meshes": 483,
   "lights": 7,
   "shadowLights": 1,
   "textures": 95,
-  "texMB": 65,
-  "geoMB": 4.1,
+  "texMB": 10,
+  "geoMB": 3.4,
   "materials": 325,
-  "renderMs": 2,
-  "tickMs": 0.07,
-  "visibleItems": 142,
+  "sources": 47,
+  "shadowOff": {
+   "casters": 255,
+   "calls": 95,
+   "tris": 20438
+  },
+  "shadowOn": {
+   "casters": 162,
+   "calls": 74,
+   "tris": 16458
+  },
+  "warm": {
+   "total": 229,
+   "worst": 71,
+   "worstKind": "draw",
+   "steps": 19,
+   "ms": 34131,
+   "shaders": 51
+  },
+  "renderMs": 2.3,
+  "tickMs": 0.19,
+  "visibleItems": 138,
   "byPart": {
    "rekvisitt/brettdel": {
     "calls": 39,
-    "tris": 6472
+    "tris": 6004
    },
    "figuren": {
     "calls": 72,
     "tris": 10822
    },
    "gjennomsiktig": {
-    "calls": 25,
-    "tris": 710
+    "calls": 21,
+    "tris": 690
    },
    "gulvdetaljer/småting": {
     "calls": 6,
     "tris": 386
    }
-  },
-  "top": [
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "f8cbcb"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "5d8fc9"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "e9b7a0"
-   },
-   {
-    "tris": 612,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 17,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 504,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "ffffff"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 468,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 13,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   }
-  ]
+  }
  },
  "kjokken2": {
-  "calls": 206,
-  "tris": 26430,
-  "meshes": 576,
+  "calls": 208,
+  "tris": 21736,
+  "meshes": 574,
   "lights": 7,
   "shadowLights": 1,
   "textures": 105,
-  "texMB": 65.8,
-  "geoMB": 4.3,
+  "texMB": 6.6,
+  "geoMB": 3.4,
   "materials": 369,
-  "renderMs": 3.8,
-  "tickMs": 0.55,
-  "visibleItems": 198,
+  "sources": 45,
+  "shadowOff": {
+   "casters": 326,
+   "calls": 79,
+   "tris": 19914
+  },
+  "shadowOn": {
+   "casters": 202,
+   "calls": 72,
+   "tris": 17626
+  },
+  "warm": {
+   "total": 941,
+   "worst": 524,
+   "worstKind": "draw",
+   "steps": 20,
+   "ms": 33981,
+   "shaders": 52
+  },
+  "renderMs": 2.3,
+  "tickMs": 0.36,
+  "visibleItems": 200,
   "byPart": {
    "rekvisitt/brettdel": {
-    "calls": 85,
-    "tris": 14594
+    "calls": 87,
+    "tris": 10066
    },
    "figuren": {
     "calls": 72,
     "tris": 10822
    },
-   "gjennomsiktig": {
-    "calls": 32,
-    "tris": 671
-   },
    "gulvdetaljer/småting": {
     "calls": 9,
     "tris": 292
+   },
+   "gjennomsiktig": {
+    "calls": 32,
+    "tris": 505
    }
-  },
-  "top": [
-   {
-    "tris": 924,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 5,
-    "mat": "MeshStandard",
-    "color": "e0483e"
-   },
-   {
-    "tris": 924,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 5,
-    "mat": "MeshStandard",
-    "color": "f2c230"
-   },
-   {
-    "tris": 864,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 24,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "d9534f"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "cde5f9"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 5,
-    "mat": "MeshStandard",
-    "color": "e0443a"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 520,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshPhysical",
-    "color": "7c1f14"
-   },
-   {
-    "tris": 520,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshPhysical",
-    "color": "7c1f14"
-   },
-   {
-    "tris": 520,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshPhysical",
-    "color": "7c1f14"
-   }
-  ]
+  }
  },
  "leke": {
-  "calls": 130,
-  "tris": 28492,
+  "calls": 131,
+  "tris": 28674,
   "meshes": 318,
   "lights": 6,
   "shadowLights": 1,
   "textures": 42,
-  "texMB": 4.6,
-  "geoMB": 5,
+  "texMB": 2.2,
+  "geoMB": 4.9,
   "materials": 226,
-  "renderMs": 2.5,
-  "tickMs": 0.02,
-  "visibleItems": 123,
+  "sources": 28,
+  "shadowOff": {
+   "casters": 114,
+   "calls": 60,
+   "tris": 18826
+  },
+  "shadowOn": {
+   "casters": 71,
+   "calls": 59,
+   "tris": 15886
+  },
+  "warm": {
+   "total": 580,
+   "worst": 232,
+   "worstKind": "draw",
+   "steps": 14,
+   "ms": 16157,
+   "shaders": 41
+  },
+  "renderMs": 1.2,
+  "tickMs": 0.09,
+  "visibleItems": 124,
   "byPart": {
    "rekvisitt/brettdel": {
-    "calls": 29,
-    "tris": 4678
+    "calls": 30,
+    "tris": 4858
    },
    "figuren": {
     "calls": 72,
@@ -711,113 +352,50 @@
    },
    "gjennomsiktig": {
     "calls": 15,
-    "tris": 169
+    "tris": 171
    },
    "gulvdetaljer/småting": {
     "calls": 7,
     "tris": 32
    }
-  },
-  "top": [
-   {
-    "tris": 1224,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 34,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 560,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "e0443a"
-   },
-   {
-    "tris": 560,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "e0443a"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 424,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "86663f"
-   }
-  ]
+  }
  },
  "stue": {
-  "calls": 177,
-  "tris": 23648,
-  "meshes": 386,
+  "calls": 176,
+  "tris": 23412,
+  "meshes": 387,
   "lights": 6,
   "shadowLights": 1,
   "textures": 76,
-  "texMB": 58.4,
-  "geoMB": 2.5,
+  "texMB": 9.3,
+  "geoMB": 2.3,
   "materials": 273,
-  "renderMs": 8.9,
-  "tickMs": 0.11,
-  "visibleItems": 164,
+  "sources": 36,
+  "shadowOff": {
+   "casters": 151,
+   "calls": 86,
+   "tris": 14366
+  },
+  "shadowOn": {
+   "casters": 92,
+   "calls": 80,
+   "tris": 13266
+  },
+  "warm": {
+   "total": 325,
+   "worst": 87,
+   "worstKind": "draw",
+   "steps": 15,
+   "ms": 113527,
+   "shaders": 41
+  },
+  "renderMs": 2.4,
+  "tickMs": 0.23,
+  "visibleItems": 163,
   "byPart": {
    "rekvisitt/brettdel": {
-    "calls": 53,
-    "tris": 10200
+    "calls": 52,
+    "tris": 10144
    },
    "maur/skapninger": {
     "calls": 6,
@@ -829,113 +407,50 @@
    },
    "gjennomsiktig": {
     "calls": 25,
-    "tris": 473
+    "tris": 293
    },
    "gulvdetaljer/småting": {
     "calls": 8,
     "tris": 36
    }
-  },
-  "top": [
-   {
-    "tris": 1692,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 47,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 1584,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 44,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 1260,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 9,
-    "mat": "MeshStandard",
-    "color": "3a7bd5"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": true,
-    "merged": 0,
-    "mat": "MeshStandard",
-    "color": "e8453c"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 5,
-    "mat": "MeshStandard",
-    "color": "e0443a"
-   },
-   {
-    "tris": 680,
-    "part": "maur/skapninger",
-    "shadow": true,
-    "merged": 12,
-    "mat": "MeshPhysical",
-    "color": "1b1b1f"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 504,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "ffffff"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   }
-  ]
+  }
  },
  "verksted": {
   "calls": 141,
-  "tris": 18712,
-  "meshes": 326,
+  "tris": 19174,
+  "meshes": 325,
   "lights": 6,
   "shadowLights": 1,
   "textures": 58,
-  "texMB": 14,
-  "geoMB": 2,
+  "texMB": 5.5,
+  "geoMB": 1.8,
   "materials": 250,
-  "renderMs": 1.3,
-  "tickMs": 0.08,
+  "sources": 37,
+  "shadowOff": {
+   "casters": 117,
+   "calls": 59,
+   "tris": 10578
+  },
+  "shadowOn": {
+   "casters": 71,
+   "calls": 59,
+   "tris": 10578
+  },
+  "warm": {
+   "total": 571,
+   "worst": 211,
+   "worstKind": "draw",
+   "steps": 16,
+   "ms": 35448,
+   "shaders": 44
+  },
+  "renderMs": 2.5,
+  "tickMs": 0.44,
   "visibleItems": 134,
   "byPart": {
    "rekvisitt/brettdel": {
     "calls": 37,
-    "tris": 7650
+    "tris": 8106
    },
    "figuren": {
     "calls": 72,
@@ -943,113 +458,50 @@
    },
    "gjennomsiktig": {
     "calls": 18,
-    "tris": 197
+    "tris": 203
    },
    "gulvdetaljer/småting": {
     "calls": 7,
     "tris": 32
    }
-  },
-  "top": [
-   {
-    "tris": 1692,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 47,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 1116,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 31,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 700,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 5,
-    "mat": "MeshStandard",
-    "color": "3a7bd5"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 560,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "3a7bd5"
-   },
-   {
-    "tris": 560,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "e0443a"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   }
-  ]
+  }
  },
  "bro": {
-  "calls": 136,
-  "tris": 15592,
-  "meshes": 253,
+  "calls": 134,
+  "tris": 16204,
+  "meshes": 252,
   "lights": 6,
   "shadowLights": 1,
   "textures": 61,
-  "texMB": 47,
+  "texMB": 8.6,
   "geoMB": 1.2,
   "materials": 179,
-  "renderMs": 3.3,
-  "tickMs": 0.02,
-  "visibleItems": 129,
+  "sources": 29,
+  "shadowOff": {
+   "casters": 75,
+   "calls": 61,
+   "tris": 10062
+  },
+  "shadowOn": {
+   "casters": 63,
+   "calls": 59,
+   "tris": 10030
+  },
+  "warm": {
+   "total": 547,
+   "worst": 263,
+   "worstKind": "draw",
+   "steps": 13,
+   "ms": 23159,
+   "shaders": 39
+  },
+  "renderMs": 2.4,
+  "tickMs": 0.04,
+  "visibleItems": 127,
   "byPart": {
    "rekvisitt/brettdel": {
-    "calls": 31,
-    "tris": 4446
+    "calls": 29,
+    "tris": 5050
    },
    "figuren": {
     "calls": 72,
@@ -1057,113 +509,50 @@
    },
    "gjennomsiktig": {
     "calls": 18,
-    "tris": 223
+    "tris": 231
    },
    "gulvdetaljer/småting": {
     "calls": 8,
     "tris": 90
    }
-  },
-  "top": [
-   {
-    "tris": 1080,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 30,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 980,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 7,
-    "mat": "MeshStandard",
-    "color": "e0443a"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 424,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "86663f"
-   },
-   {
-    "tris": 420,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 3,
-    "mat": "MeshStandard",
-    "color": "3a7bd5"
-   }
-  ]
+  }
  },
  "trapp": {
-  "calls": 141,
-  "tris": 15588,
-  "meshes": 238,
+  "calls": 139,
+  "tris": 14834,
+  "meshes": 241,
   "lights": 6,
   "shadowLights": 1,
   "textures": 46,
-  "texMB": 25.7,
-  "geoMB": 1.3,
+  "texMB": 8.6,
+  "geoMB": 1.1,
   "materials": 166,
-  "renderMs": 1.4,
-  "tickMs": 0.01,
-  "visibleItems": 134,
+  "sources": 30,
+  "shadowOff": {
+   "casters": 67,
+   "calls": 58,
+   "tris": 10026
+  },
+  "shadowOn": {
+   "casters": 61,
+   "calls": 57,
+   "tris": 10006
+  },
+  "warm": {
+   "total": 513,
+   "worst": 242,
+   "worstKind": "draw",
+   "steps": 13,
+   "ms": 23132,
+   "shaders": 39
+  },
+  "renderMs": 1.8,
+  "tickMs": 0.06,
+  "visibleItems": 132,
   "byPart": {
    "rekvisitt/brettdel": {
-    "calls": 37,
-    "tris": 4550
+    "calls": 35,
+    "tris": 3798
    },
    "figuren": {
     "calls": 72,
@@ -1171,113 +560,50 @@
    },
    "gjennomsiktig": {
     "calls": 18,
-    "tris": 187
+    "tris": 185
    },
    "gulvdetaljer/småting": {
     "calls": 7,
     "tris": 18
    }
-  },
-  "top": [
-   {
-    "tris": 1476,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 41,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 828,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 23,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 424,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "86663f"
-   },
-   {
-    "tris": 372,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 7,
-    "mat": "MeshStandard",
-    "color": "4a2f1c"
-   }
-  ]
+  }
  },
  "vippe": {
-  "calls": 136,
-  "tris": 15680,
+  "calls": 138,
+  "tris": 16024,
   "meshes": 247,
   "lights": 6,
   "shadowLights": 1,
   "textures": 61,
-  "texMB": 47,
-  "geoMB": 1.3,
+  "texMB": 8.6,
+  "geoMB": 1.2,
   "materials": 170,
-  "renderMs": 1.5,
-  "tickMs": 0.01,
-  "visibleItems": 129,
+  "sources": 29,
+  "shadowOff": {
+   "casters": 75,
+   "calls": 61,
+   "tris": 10062
+  },
+  "shadowOn": {
+   "casters": 63,
+   "calls": 59,
+   "tris": 10030
+  },
+  "warm": {
+   "total": 696,
+   "worst": 393,
+   "worstKind": "draw",
+   "steps": 13,
+   "ms": 25137,
+   "shaders": 39
+  },
+  "renderMs": 2.9,
+  "tickMs": 0.07,
+  "visibleItems": 131,
   "byPart": {
    "rekvisitt/brettdel": {
-    "calls": 32,
-    "tris": 4526
+    "calls": 34,
+    "tris": 4878
    },
    "figuren": {
     "calls": 72,
@@ -1285,227 +611,101 @@
    },
    "gjennomsiktig": {
     "calls": 17,
-    "tris": 231
+    "tris": 223
    },
    "gulvdetaljer/småting": {
     "calls": 8,
     "tris": 90
    }
-  },
-  "top": [
-   {
-    "tris": 1224,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 34,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 424,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "86663f"
-   },
-   {
-    "tris": 420,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 3,
-    "mat": "MeshStandard",
-    "color": "e0443a"
-   },
-   {
-    "tris": 420,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 3,
-    "mat": "MeshStandard",
-    "color": "3a7bd5"
-   }
-  ]
+  }
  },
  "kjokkenbro": {
-  "calls": 140,
-  "tris": 15366,
-  "meshes": 251,
+  "calls": 139,
+  "tris": 15112,
+  "meshes": 249,
   "lights": 6,
   "shadowLights": 1,
   "textures": 61,
-  "texMB": 31.8,
-  "geoMB": 1.2,
+  "texMB": 5.4,
+  "geoMB": 1.1,
   "materials": 182,
-  "renderMs": 1.7,
-  "tickMs": 0.01,
-  "visibleItems": 133,
+  "sources": 29,
+  "shadowOff": {
+   "casters": 75,
+   "calls": 61,
+   "tris": 10062
+  },
+  "shadowOn": {
+   "casters": 63,
+   "calls": 59,
+   "tris": 10030
+  },
+  "warm": {
+   "total": 521,
+   "worst": 222,
+   "worstKind": "draw",
+   "steps": 13,
+   "ms": 15878,
+   "shaders": 38
+  },
+  "renderMs": 1.5,
+  "tickMs": 0.03,
+  "visibleItems": 132,
   "byPart": {
    "rekvisitt/brettdel": {
     "calls": 32,
-    "tris": 4186
+    "tris": 3930
    },
    "figuren": {
     "calls": 72,
     "tris": 10822
    },
    "gjennomsiktig": {
-    "calls": 21,
-    "tris": 257
+    "calls": 20,
+    "tris": 259
    },
    "gulvdetaljer/småting": {
     "calls": 8,
     "tris": 90
    }
-  },
-  "top": [
-   {
-    "tris": 1296,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 36,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 540,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 15,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 424,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "86663f"
-   },
-   {
-    "tris": 372,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 7,
-    "mat": "MeshStandard",
-    "color": "4a2f1c"
-   }
-  ]
+  }
  },
  "bygglab": {
   "calls": 136,
-  "tris": 14178,
+  "tris": 13582,
   "meshes": 307,
   "lights": 6,
   "shadowLights": 1,
   "textures": 89,
-  "texMB": 69.3,
+  "texMB": 9.5,
   "geoMB": 1.1,
   "materials": 215,
-  "renderMs": 2.9,
-  "tickMs": 0.01,
+  "sources": 41,
+  "shadowOff": {
+   "casters": 99,
+   "calls": 60,
+   "tris": 10050
+  },
+  "shadowOn": {
+   "casters": 59,
+   "calls": 59,
+   "tris": 10030
+  },
+  "warm": {
+   "total": 467,
+   "worst": 222,
+   "worstKind": "draw",
+   "steps": 15,
+   "ms": 19442,
+   "shaders": 40
+  },
+  "renderMs": 5.8,
+  "tickMs": 0.04,
   "visibleItems": 123,
   "byPart": {
    "rekvisitt/brettdel": {
     "calls": 21,
-    "tris": 3090
+    "tris": 2494
    },
    "figuren": {
     "calls": 72,
@@ -1519,88 +719,6 @@
     "calls": 7,
     "tris": 50
    }
-  },
-  "top": [
-   {
-    "tris": 864,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 24,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 864,
-    "part": "rekvisitt/brettdel",
-    "shadow": false,
-    "merged": 24,
-    "mat": "MeshStandard",
-    "color": "d2a05a"
-   },
-   {
-    "tris": 580,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 6,
-    "mat": "MeshStandard",
-    "color": "e8b796"
-   },
-   {
-    "tris": 472,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "66713a"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 432,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 4,
-    "mat": "MeshStandard",
-    "color": "5a3d28"
-   },
-   {
-    "tris": 424,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 2,
-    "mat": "MeshStandard",
-    "color": "86663f"
-   },
-   {
-    "tris": 372,
-    "part": "figuren",
-    "shadow": true,
-    "merged": 7,
-    "mat": "MeshStandard",
-    "color": "4a2f1c"
-   }
-  ]
+  }
  }
 }

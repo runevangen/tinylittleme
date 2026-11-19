@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { letterStack, letterTopY, studLayout, STUD_H, carWheel } from './toys.js';
 import { TOY_BUILDERS } from './toys_view.js';          // R18: levende leker (tennisball, vippehest, wind-up, sprettboks)
 import { shrinkCanvas } from './perf_budget.js';
+import { antQ, antSeg } from './perf2_logic.js';   // R94
 import { drawerParts, drawerSpec, partsBuffers, drawerCue } from './drawers.js';   // R55
 
 const porcelain = (color = 0xf1eee6) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.06 });
@@ -136,8 +137,10 @@ function sink(members) {
 
 // ---------- teksturer (tegnes i nettleseren, ingen bildefiler) ----------
 function rng(seed) { let a = seed; return () => { a = (a * 1664525 + 1013904223) % 4294967296; return a / 4294967296; }; }
-let ANISO = 4, TEXLOW = false;
-export const setTexLow = (v) => { TEXLOW = !!v; };      // R21: små teksturer (halv størrelse) på Lav profil / Enkel grafikk
+let ANISO = 4, TEXLOW = false, ANTQ = 1;
+export const setTexLow = (v) => { TEXLOW = !!v; };
+export const setAntDetail = (q) => { ANTQ = antQ(q); };      // R94: maurenes tessellering (1 = full, lavere = færre trekanter; samme prinsipp som figuren)
+const asg = (n, lo) => antSeg(n, lo, ANTQ);      // R21: små teksturer (halv størrelse) på Lav profil / Enkel grafikk
 export const setAniso = (n) => { ANISO = n; };      // settes fra main.js etter at maskinvaren er spurt (skarpere teksturer på skrå flater)
 function canvasTex(size, draw, { repeat = [1, 1], srgb = true } = {}) {
   const c = document.createElement('canvas'); c.width = c.height = size;
@@ -575,7 +578,7 @@ export function buildAnt({ color = 0x9a3a1e, crumb = false } = {}) {
   const shell = new THREE.MeshPhysicalMaterial({ color, roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.12 });
   const dark = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).multiplyScalar(0.42), roughness: 0.4 });
   const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 }), black = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
-  const S = (r, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = mesh(new THREE.SphereGeometry(r, 20, 14), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); body.add(m); return m; };
+  const S = (r, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = mesh(new THREE.SphereGeometry(r, asg(20, 6), asg(14, 4)), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); body.add(m); return m; };
   S(0.44, shell, -0.66, 0.56, 0, 1.25, 1, 1);                           // bakkropp
   S(0.3, shell, -0.02, 0.58, 0, 1.15, 0.95, 0.9);                       // bryst
   const head = S(0.37, shell, 0.62, 0.62, 0, 1, 1, 1.05);               // hode
@@ -583,16 +586,16 @@ export function buildAnt({ color = 0x9a3a1e, crumb = false } = {}) {
     S(0.17, white, 0.84, 0.74, z * 0.2, 1, 1.15, 1);
     S(0.085, black, 0.97, 0.75, z * 0.2); S(0.03, white, 1.0, 0.8, z * 0.17);
   }
-  const mouth = mesh(new THREE.TorusGeometry(0.1, 0.022, 6, 14, Math.PI), dark); mouth.position.set(0.97, 0.52, 0); mouth.rotation.set(0, Math.PI / 2, Math.PI); body.add(mouth);
+  const mouth = mesh(new THREE.TorusGeometry(0.1, 0.022, asg(6, 4), asg(14, 8), Math.PI), dark); mouth.position.set(0.97, 0.52, 0); mouth.rotation.set(0, Math.PI / 2, Math.PI); body.add(mouth);
   const ant = [];                                                       // følehorn: to ledd + kule i tuppen
   for (const z of [-1, 1]) {
-    const a = mesh(new THREE.CylinderGeometry(0.03, 0.04, 1, 6), dark), b = mesh(new THREE.CylinderGeometry(0.025, 0.03, 1, 6), dark), tip = S(0.06, shell, 0, 0, 0);
+    const a = mesh(new THREE.CylinderGeometry(0.03, 0.04, 1, asg(6, 5)), dark), b = mesh(new THREE.CylinderGeometry(0.025, 0.03, 1, asg(6, 5)), dark), tip = S(0.06, shell, 0, 0, 0);
     body.add(a, b); ant.push({ a, b, tip, z });
   }
   // bein: hofte på brystet, kne opp og ut, fot i bakken. Tre par, hvert bein går i fase etter trebeinsgangen
   const legMat = dark, legs = [];
   for (const [i, hx] of [0.18, 0, -0.18].entries()) for (const z of [-1, 1]) {
-    const up = mesh(new THREE.CylinderGeometry(0.055, 0.07, 1, 8), legMat), lo = mesh(new THREE.CylinderGeometry(0.04, 0.055, 1, 8), legMat), knee = mesh(new THREE.SphereGeometry(0.085, 10, 8), legMat);
+    const up = mesh(new THREE.CylinderGeometry(0.055, 0.07, 1, asg(8, 5)), legMat), lo = mesh(new THREE.CylinderGeometry(0.04, 0.055, 1, asg(8, 5)), legMat), knee = mesh(new THREE.SphereGeometry(0.085, asg(10, 6), asg(8, 4)), legMat);
     body.add(up, lo, knee); legs.push({ up, lo, knee, hx, z, ph: (i + (z > 0 ? 1 : 0)) % 2 ? Math.PI : 0 });
   }
   let crumbMesh = null;
@@ -629,7 +632,7 @@ export function buildCrumb() {
   const gold = new THREE.MeshStandardMaterial({ color: 0xffc83a, roughness: 0.25, metalness: 0.55, emissive: 0xc77a10, emissiveIntensity: 0.55, flatShading: true });
   const core = mesh(new THREE.OctahedronGeometry(0.42, 0), gold); core.scale.set(1, 1.15, 1); body.add(core);
   const cap = mesh(new THREE.DodecahedronGeometry(0.22, 0), gold); cap.position.set(0.12, 0.34, 0.05); body.add(cap);
-  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.72, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.16, depthWrite: false })); body.add(glow);
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.72, asg(14, 6), asg(10, 4)), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.16, depthWrite: false })); body.add(glow);
   function update(t, got = false) {
     body.rotation.y = t * 2.2; body.position.y = Math.sin(t * 2.6) * 0.12; body.rotation.z = Math.sin(t * 1.7) * 0.12;
     root.visible = !got;
@@ -647,7 +650,7 @@ export function buildSpider({ color = 0x6a3a86 } = {}) {
   const dark = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).multiplyScalar(0.45), roughness: 0.45 });
   const spot = new THREE.MeshStandardMaterial({ color: 0xf2c64a, roughness: 0.4 });
   const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 }), black = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
-  const S = (r, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = mesh(new THREE.SphereGeometry(r, 20, 14), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); body.add(m); return m; };
+  const S = (r, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = mesh(new THREE.SphereGeometry(r, asg(20, 6), asg(14, 4)), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); body.add(m); return m; };
   S(0.46, shell, -0.4, 0.62, 0, 1.1, 0.95, 1);                           // bakkropp
   for (const [x, z, r] of [[-0.5, 0.2, 0.09], [-0.5, -0.2, 0.09], [-0.78, 0, 0.1], [-0.28, 0, 0.08]]) S(r, spot, x, 1.02 - Math.abs(x + 0.5) * 0.1, z);   // gule flekker
   S(0.32, shell, 0.3, 0.58, 0, 1, 0.95, 1.1);                            // hode
@@ -659,7 +662,7 @@ export function buildSpider({ color = 0x6a3a86 } = {}) {
   const legs = [];
   // fire par bein i et tydelig fan: første par peker framover, siste bakover, midtparene rett ut til siden (ang = vinkel fra framretning mot siden, len = rekkevidde)
   for (const [i, [hx, ang, len]] of [[0.38, 0.62, 1.2], [0.18, 1.2, 1.4], [-0.04, 1.85, 1.4], [-0.26, 2.5, 1.2]].entries()) for (const z of [-1, 1]) {
-    const up = mesh(new THREE.CylinderGeometry(0.03, 0.045, 1, 8), dark), lo = mesh(new THREE.CylinderGeometry(0.02, 0.032, 1, 8), dark), knee = mesh(new THREE.SphereGeometry(0.05, 10, 8), dark), foot = mesh(new THREE.SphereGeometry(0.035, 8, 6), dark);
+    const up = mesh(new THREE.CylinderGeometry(0.03, 0.045, 1, asg(8, 5)), dark), lo = mesh(new THREE.CylinderGeometry(0.02, 0.032, 1, asg(8, 5)), dark), knee = mesh(new THREE.SphereGeometry(0.05, asg(10, 6), asg(8, 4)), dark), foot = mesh(new THREE.SphereGeometry(0.035, asg(8, 6), asg(6, 4)), dark);
     body.add(up, lo, knee, foot); legs.push({ up, lo, knee, foot, hx, z, ang, len, ph: (i + (z > 0 ? 1 : 0)) % 2 ? Math.PI : 0 });
   }
   const seg = (m, a, b) => { const d = new THREE.Vector3().subVectors(b, a), l = d.length() || 1e-3; m.position.copy(a).addScaledVector(d, 0.5); m.scale.set(1, l, 1); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.divideScalar(l)); };

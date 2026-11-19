@@ -16,7 +16,7 @@ import { createStatsNet } from './stats_net.js';
 import { CHANGES } from './changes_data.js';   // R83: NYTT-menyen (changes_data.js, changes_logic.js; visningen er den samme som Rettelser)
 import * as chg from './changes_logic.js';
 import { setDrawerCue, drawerCue, drawerSummary } from './drawers.js';
-import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
+import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, setAntDetail, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
 import { buildRoller, buildDangler, ROLLER_COL, DANGLER_COL } from './creatures_view.js';
@@ -87,6 +87,7 @@ import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, app
 import { Relay, inCore, CAM_SLOP, yawDelta, pitchDelta, shouldHintDrag } from './camdrag.js';
 import { fovForAspect, effectiveFov, fovChosen, migrateCalm, camLine } from './camcalm_logic.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
+import { createShadowCull, createShadowPacer, movedBy, planWarm, chunkByKey, runSteps, SHADOW, TEX_MAX, ANT_Q, antQ } from './perf2_logic.js';   // R94: teksturtak, skyggeutvalg og -tempo, maurdetalj, oppstart i små steg
 import { programCount, programKeys, warmRender, warmFades, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver, roomCaps, BUDGET, MEM_BUDGET } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
@@ -264,6 +265,10 @@ const fpsW = fpsWatch(qFps, 2000);   // R85: vinduer på 2 s (før 3 s) så Auto
 const autoQC = createAutoQ({ limit: qFps });      // polish.js: når oppløsningen går ned/opp (testet i test_polish.mjs)
 let resQ = store.get('tlm.resq', 'auto'); if (!['auto', 'full', 'mid', 'low'].includes(resQ)) resQ = 'auto';   // R10: auto = følger FPS (ned ved vedvarende lav, opp igjen når det går fint); ellers fast valg
 let lowMode = store.get('tlm.lowprofile', 'auto'); if (!['off', 'auto', 'on'].includes(lowMode)) lowMode = 'auto';   // R15 Lav profil: av / auto (når FPS er lav) / på
+const texMax = [512, 1024].includes(+store.get('tlm.texmax', TEX_MAX.def)) ? +store.get('tlm.texmax', TEX_MAX.def) : TEX_MAX.def;   // R94: tak på kantlengden til store teksturer (gulv): 512 (standard) eller 1024; laster siden på nytt
+const antQv = antQ(store.get('tlm.antdetail', ANT_Q.def));   // R94: maurenes tessellering (som figuren); laster siden på nytt
+let shCullOn = store.get('tlm.shcull', true), shRadius = +store.get('tlm.shradius', SHADOW.radius) || SHADOW.radius, shEvery = Math.max(1, Math.min(4, +store.get('tlm.shevery', SHADOW.every) || SHADOW.every));   // R94: skyggekasterne begrenses til nærhet og størrelse; kartet tegnes sjeldnere når alt står stille
+let warmSpread = store.get('tlm.warmspread', true);   // R94: forvarmingen i små steg (ett per bilde)
 const heroQ = +store.get('tlm.herodetail', 0.6) || 0.6;   // R85: figurens tessellering (1 = full, 0,6 = standard: ca. 40 % færre trekanter i figuren; laster siden på nytt)
 const fdDens = +store.get('tlm.fdens', 1) || 1;   // R13: gulvdetaljer (floordetail.js): blyanter, perler, flekker, fugeskitt; tetthet etter rom og kvalitet (halvert med Lav profil «På», tom med Enkel grafikk)
 let floorDetailOn = store.get('tlm.floordetail', true);
@@ -361,7 +366,8 @@ setAniso(maxAniso);
 const texLow = gfxLow || lowMode === 'on' || store.get('tlm.texsmall', false) === true;   // R21: små (halve) prosedyreteksturer: Enkel grafikk, Lav profil «På» eller eget valg i ⚙ (kan ikke byttes midt i spillet, så siden lastes på nytt)
 setTexLow(texLow);
 setDrawerCue(store.get('tlm.drawercue', true) !== false);   // R55: tydelige skuffer (drawers.js), leses før brettet bygges
-const look = makeLook({ aniso: maxAniso, low: texLow });
+setAntDetail(antQv);
+const look = makeLook({ aniso: maxAniso, low: texLow, texMax });
 const gradeMode = store.get('tlm.grade', 'film');   // R1: Toy Story-lys (film) eller opprinnelig lys (off); lys i grade.js
 const grade = applyGrade({ renderer, scene, sun, canvas, look: LEVEL.look, mode: gradeMode, low: gfxLow, filterOn: store.get('tlm.gradefilter', true) !== false });
 const bigBox = (b, lim = 120) => Array.isArray(b.min) && Array.isArray(b.max) && Math.max(b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]) > lim;   // store flater: dempet clearcoat, ellers hvite glansflekker
@@ -1985,6 +1991,12 @@ const SETTINGS = [
     sl('legodens', 'admin', 'Legoknotter: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(legoDens), (v) => { if (+v === +legoDens) return; store.set('tlm.legodens', +v); logEv('legoknotter', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     sl('cinema', 'admin', 'Kinomodus for trailer-opptak: skjuler all UI, ingen lyd og lagring, fast frø, skript styrer kamera og tid (laster siden på nytt; slå av igjen med ?cinema=0 eller ved å fjerne cinema fra adressen)', 'av', [['av', 'Av'], ['paa', 'På (kinomodus)']], () => (CINE.on ? 'paa' : 'av'), (v) => { if ((v === 'paa') === CINE.on) return; logEv('kino', `valg: ${v}`); setTimeout(() => (v === 'paa' ? window.__game.cine.on() : window.__game.cine.off()), 150); }),
     sl('qfps', 'admin', 'Auto-oppløsning: senk bildet når FPS er under (laster siden på nytt)', '27', [['24', '24 fps (sjeldnere)'], ['27', '27 fps (standard)'], ['30', '30 fps (tidligere)']], () => String(qFps), (v) => { if (+v === +qFps) return; store.set('tlm.qfps', +v); logEv('ytelse', `kvalitetsgrense ${v} fps`); setTimeout(() => location.reload(), 150); }),
+    sl('texmax', 'admin', 'Teksturer: største kantlengde på store flater, f.eks. gulvet (laster siden på nytt). 512 gir ca. 70 % mindre teksturminne enn 1024 uten synlig tap på mobil', String(TEX_MAX.def), [['512', '512 (standard)'], ['1024', '1024 (tidligere)']], () => String(texMax), (v) => { if (+v === +texMax) return; store.set('tlm.texmax', +v); logEv('ytelse', `teksturtak ${v}`); setTimeout(() => location.reload(), 150); }),
+    sl('antdetail', 'admin', 'Maur og edderkopper: detaljnivå på formene (laster siden på nytt). Lavere = færre trekanter i Nivå 4–6', String(ANT_Q.def), [['0.4', 'Lav'], ['0.6', 'Normal'], ['0.8', 'Høy'], ['1', 'Full']], () => String(antQv), (v) => { if (+v === +antQv) return; store.set('tlm.antdetail', +v); logEv('ytelse', `maurdetalj ${v}`); setTimeout(() => location.reload(), 150); }),
+    fl('shcull', 'admin', 'Skygger: tegn bare kastere som er nær figuren og store nok til å synes', true, () => shCullOn, (v) => { shCullOn = v; store.set('tlm.shcull', v); logEv('ytelse', v ? 'skyggeutvalg på' : 'skyggeutvalg av'); shPacer.force(); }),
+    sl('shradius', 'admin', 'Skygger: kasterne tegnes innenfor denne avstanden fra figuren (enheter)', String(SHADOW.radius), [['12', '12 (nærmest)'], ['17', '17 (standard)'], ['26', '26 (alt i kartet)']], () => String(shRadius), (v) => { shRadius = +v; store.set('tlm.shradius', +v); logEv('ytelse', `skyggeradius ${v}`); shPacer.force(); }),
+    sl('shevery', 'admin', 'Skygger: skyggekartet tegnes på nytt hvert n-te bilde når alt står stille (1 = hvert bilde)', String(SHADOW.every), [['1', 'Hvert bilde'], ['2', 'Hvert 2.'], ['3', 'Hvert 3. (standard)'], ['4', 'Hvert 4.']], () => String(shEvery), (v) => { shEvery = +v; store.set('tlm.shevery', +v); logEv('ytelse', `skyggetempo 1/${v}`); shPacer.force(); }),
+    fl('warmspread', 'admin', 'Forvarming i små steg (ett per bilde) i stedet for ett langt stopp under oppstart', true, () => warmSpread, (v) => { warmSpread = v; store.set('tlm.warmspread', v); }),
     sl('herodetail', 'admin', 'Figuren: detaljnivå på formene (laster siden på nytt). Lavere = færre trekanter og jevnere bilde på eldre telefoner', '0.6', [['0.4', 'Lav'], ['0.6', 'Normal'], ['0.8', 'Høy'], ['1', 'Full']], () => String(heroQ), (v) => { if (+v === +heroQ) return; store.set('tlm.herodetail', +v); logEv('ytelse', `figurdetalj ${v}`); setTimeout(() => location.reload(), 150); }),
     sl('fdens', 'admin', 'Gulvdetaljer: tetthet (laster siden på nytt)', '1', [['0.5', 'Få'], ['1', 'Vanlig'], ['1.6', 'Mange']], () => String(fdDens), (v) => { if (+v === +fdDens) return; store.set('tlm.fdens', +v); logEv('gulvdetaljer', `tetthet ${v}`); setTimeout(() => location.reload(), 150); }),
     fl('clutter', 'spill', 'Småting på gulv og hyller: smuler, knapper, hår (Detaljert grafikk)', true, () => clutterOn, kp('tlm.clutter', (v) => { clutterOn = v; logEv('smating', v ? 'på' : 'av'); }))]),
@@ -2746,10 +2758,38 @@ const perfMerge = { before: 0, after: 0 };
   }
   for (const r of [csHolder, atmos?.groups.ao, atmos?.groups.clutter, fdet?.group, soft?.group]) if (r) { const m = mergeStatic(THREE, r, { cell: r === soft?.group || r === fdet?.group ? 80 : 40 }); perfMerge.before += m.before; perfMerge.after += m.after; }
 }
+// ---------- R94: skyggekastere og skyggetempo (perf2_logic.js) ----------
+const shCull = createShadowCull({ radius: shRadius }), shPacer = createShadowPacer({ every: shEvery });
+{
+  const dyn = new Set([hero.root, ...antMeshes.map((a) => a.a.root)]); if (bossMesh) dyn.add(bossMesh.root);
+  const n = shCull.collect(scene, (o) => { for (let q = o; q; q = q.parent) if (dyn.has(q)) return true; return false; });
+  renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;   // skyggekartet tegnes bare når shPacer sier det
+  logEv('ytelse', `skyggekastere: ${n} (radius ${shRadius}, tempo 1/${shEvery} når stille, ${shCullOn ? 'utvalg på' : 'utvalg av'})`);
+}
+const bodySum = () => { let s = 0; for (const b of LEVEL.bodies || []) s += b.min[0] + b.min[1] * 1.3 + b.min[2] * 1.7; return s; };   // leker som flytter seg (dytt, kast, fall) holder skyggen i full takt
+let shLast = null, shCullAt = -99, shFocus = { x: 0, y: 0, z: 0 };
+function stepShadows(now) {
+  if (lowOn) { renderer.shadowMap.needsUpdate = false; return; }
+  const key = [player.x, player.y, player.z, camera.position.x, camera.position.y, camera.position.z, sun.intensity, ...antMeshes.map((a) => a.a.root.position.x + a.a.root.position.z * 1.7 + a.a.root.position.y), bossMesh ? bossMesh.root.position.x + bossMesh.root.position.z : 0, bodySum()];
+  const mv = movedBy(key, shLast, 1e-3) || !!player.carry; shLast = key;
+  shFocus.x = player.x; shFocus.y = player.y; shFocus.z = player.z;
+  shCull.on !== shCullOn && shCull.setOn(shCullOn);
+  if (shCullOn && (now - shCullAt > 160)) { shCullAt = now; shCull.radius = shRadius; if (shCull.update(shFocus)) shPacer.force(); }
+  shPacer.every = shEvery;
+  renderer.shadowMap.needsUpdate = shPacer.step(mv);
+}
+// Skyggepasset telles slik: «kastere» = synlige meshes med castShadow; «skyggekall» = de som også ligger i lysets skyggekamera (det three tegner i skyggepasset). renderer.info teller ikke skyggepasset.
+function shadowStats() {
+  sun.target.updateMatrixWorld(); sun.updateMatrixWorld(); sun.shadow.updateMatrices(sun);
+  const cam = sun.shadow.camera, fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse));
+  let casters = 0, calls = 0, tris = 0;
+  scene.traverse((o) => { if (!o.isMesh || !o.castShadow) return; for (let q = o; q; q = q.parent) if (!q.visible) return; casters++; if (!o.frustumCulled || fr.intersectsObject(o)) { calls++; const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } });
+  return { casters, calls, tris: Math.round(tris), cull: { ...shCull.stats, on: shCull.on }, pace: { drawn: shPacer.drawn, skipped: shPacer.skipped } };
+}
 let perfFrames = 0, perfPending = true, perfLine = '';
 function applyLowProfile(on) {                       // slår av skygge-kart, støv, korn, lysstråler og ekstra lys; kommer tilbake når den slås av
   if (on && !texLow) { const r = shrinkSceneTextures(scene, (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }); logEv('teksturer', `krympet ${r.n} teksturer midt i spillet (−${r.savedMB.toFixed(1)} MB)`); }
-  lowOn = on; setSunShadowLow(sun, on, SHADOW_NORMAL); grade.setLow(on); look.setDetail(!on); glow.intensity = on ? 0 : 30;        // lysets antall, skygge-på/av og skyggetype endres ikke (ville tvunget alle shadere til å kompileres på nytt midt i spillet, R35)
+  lowOn = on; setSunShadowLow(sun, on, SHADOW_NORMAL); shPacer.force(); grade.setLow(on); look.setDetail(!on); glow.intensity = on ? 0 : 30;        // lysets antall, skygge-på/av og skyggetype endres ikke (ville tvunget alle shadere til å kompileres på nytt midt i spillet, R35)
   perfPending = true; perfFrames = 0; logEv('lav profil', on ? 'på (ingen skygge-kart, støv, korn, lysstråler eller ekstra lys)' : 'av');
 }
 if (lowMode === 'on') { lowP.decide(null, 9, 1, 'on'); applyLowProfile(true); }
@@ -2927,6 +2967,7 @@ function render(now, dt) {
   sun.position.set(player.x + SUN[0], player.y + SUN[1], player.z + SUN[2]);
   grade.follow(player, camera);
   if (floodSt.shake > 0 && mode === 'play' && !window.__camLock && !CINE.on) { const [sx, sy] = shakeOffset(floodSt.shake, now / 1000); camera.position.x += sx; camera.position.y += sy; }   // R65: lett kameraskjelv før man drukner
+  stepShadows(now);   // R94: skyggekartet tegnes bare når tempoet sier det
   cine.applyCam();   // R68: fritt kamera (setCam) overstyrer følgekameraet per bilde
   renderer.render(scene, camera);
   if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const ds = drawerSummary(LEVEL); if (ds.total) logEv('skuffer', `${ds.open} åpne, ${ds.closed} lukkede, ${ds.fronts} frontfarger, tydelige ${drawerCue() ? 'på' : 'av'}`); const rc = roomCaps(levelId), w = overBudget(st, { ...BUDGET, ...rc }).concat(memOver(st, texLow || lowOn, rc.texMB ? { ...MEM_BUDGET, texMB: Math.min(MEM_BUDGET.texMB, rc.texMB) } : MEM_BUDGET)); /* R85: tak per rom */ logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
@@ -3212,7 +3253,45 @@ function warmUp() {
   shw.mark();
   logEv('forvarming', `${Math.round(performance.now() - t0)} ms (shadere og teksturer klargjort) · ${shw.base} shadere`);
 }
-requestAnimationFrame(() => setTimeout(warmUp, 50));
+// R94: forvarming i små steg. Hvert steg (noen teksturer, en bit av scenen, noen utoningskopier) kjøres i sitt eget bilde, så ingen bilder blir lange (før: ett langt stopp, verste bilde 832 ms i Kjøkken).
+function warmUpSpread() {
+  const t0 = performance.now(); const hiddenAll = [];
+  scene.traverse((o) => { if (!o.visible && !o.isLight) hiddenAll.push(o); });
+  const texs = [], seen = new Set(), items = [];
+  scene.traverse((o) => { if (o.isMesh || o.isPoints) items.push(o); for (const m of [].concat(o.material || [])) for (const k of ['map', 'emissiveMap', 'roughnessMap', 'normalMap', 'bumpMap', 'alphaMap', 'aoMap']) { const t = m[k]; if (t && !seen.has(t.source || t)) { seen.add(t.source || t); texs.push(t); } } });
+  const progKey = (o) => [].concat(o.material || []).map((mt) => [mt.type, !!mt.map, !!mt.normalMap, !!mt.roughnessMap, !!mt.bumpMap, !!mt.alphaMap, mt.vertexColors, mt.transparent, mt.side, mt.flatShading, o.receiveShadow, o.isPoints, mt.customProgramCacheKey ? mt.customProgramCacheKey() : ''].join(',')).join('|');   // omtrent shadernøkkelen
+  const plan = planWarm({ textures: texs.length, per: 12, chunks: chunkByKey(items.map(progKey), { maxKeys: 3, maxItems: 80 }), fades: shaderWarm && fadeEntries.length > 0 });
+  const FSLICE = 6; warmProg.i = 0; warmProg.n = plan.length - 1;
+  const withVisible = (only, fn) => {             // vis bare `only` (og lys): tegn: gjenopprett
+    const was = new Map(); const hidden = hiddenAll.filter((o) => !o.visible);
+    for (const o of hidden) o.visible = true;
+    if (only) for (const o of items) { was.set(o, o.visible); if (!only.has(o)) o.visible = false; }
+    const fc = []; scene.traverse((o) => { if (o.frustumCulled) { fc.push(o); o.frustumCulled = false; } });
+    try { fn(); } finally { for (const o of fc) o.frustumCulled = true; for (const [o, v] of was) o.visible = v; for (const o of hidden) o.visible = false; }
+  };
+  const run = (s) => {
+    warmProg.i++;
+    if (s.kind === 'tex') { for (const t of texs.slice(s.from, s.to)) { try { renderer.initTexture(t); } catch { /* ikke støttet */ } } }
+    else if (s.kind === 'draw') { const only = new Set(s.idx.map((i) => items[i])); withVisible(only, () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); }); }
+    else if (s.kind === 'fades') {
+      const es = fadeEntries.slice(); const done = []; let fi = 0;
+      try { while (fi < es.length) { const part = es.slice(fi, fi + FSLICE); fi += FSLICE; const only = new Set(); for (const e of part) { for (const o of e.clone.keys()) only.add(o); }
+        for (const e of part) { setFadeMats(e, true); done.push(e); for (const c of e.clone.values()) for (const mt of [].concat(c)) { mt.opacity = fadeOp; mt.depthWrite = false; } }
+        withVisible(only, () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); });
+        for (const e of part) { setFadeMats(e, false); } }
+      } finally { for (const e of done) { setFadeMats(e, false); if (e.clone && e.clone.clear) e.clone.clear(); if (e.orig && e.orig.clear) e.orig.clear(); } }
+      logEv('forvarming', `utoning: ${done.length} ting`);
+    }
+  };
+  runSteps(plan.filter((s) => s.kind !== 'done'), run, (fn) => requestAnimationFrame(() => setTimeout(fn, 0)), (r) => {
+    renderer.shadowMap.needsUpdate = true; shPacer.force(); shw.mark();
+    warmInfo = { ...r, ms: Math.round(performance.now() - t0), shaders: shw.base };
+    logEv('forvarming', `${warmInfo.ms} ms i ${r.steps} steg, verste steg ${Math.round(r.worst)} ms (${r.worstKind}) · ${shw.base} shadere${r.error ? ' · FEIL ' + r.error : ''}`);
+    logEv('ytelse', `oppstart: verste steg ${Math.round(r.worst)} ms (${r.worstKind}), ${r.steps} steg`);
+  });
+}
+let warmInfo = null; const warmProg = { i: 0, n: 0 };
+requestAnimationFrame(() => setTimeout(warmSpread ? warmUpSpread : warmUp, 50));
 let lastHitch = -99, shwN = 0;
 let last = performance.now();
 function frame(now) {
@@ -3242,5 +3321,5 @@ window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
 const cine = createCinema({ state: CINE, rng: cineRnd || { reseed() {} }, camera, canvas: renderer.domElement, cam, player, update, render, bld, settings: () => SETTINGS, logEv, onFollow: (h) => { cineH = h; }, snapCam: () => { camFocusY = null; }, isPlay: () => mode === 'play' && !won && !menuOpen && !ov.active, levelId: () => levelId, version: VERSION, THREE, scene, hero, onHeroScale: (k) => { cineHS = k; } });   // R68: kinomodus (cinema_view.js)
 if (CINE.on) bld.showMarks(false);   // de gule rammene rundt byggesteder skjules (gripMarks skjules i render())
-window.__game = { cine, diff: { get: () => difficulty, set: (v) => applyDifficulty(v, { carry: true, why: 'test' }), profile: () => DIF, count: helpVisibleCount, quit: quitToMenu, start: showStart, key: () => progKey, tb }, markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge }), setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { cine, diff: { get: () => difficulty, set: (v) => applyDifficulty(v, { carry: true, why: 'test' }), profile: () => DIF, count: helpVisibleCount, quit: quitToMenu, start: showStart, key: () => progKey, tb }, markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge, shadow: shadowStats(), warm: warmInfo, warmProg }), shCull, shPacer, sun, setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
 window.__game.verView = verView;   // R77: test-hekte

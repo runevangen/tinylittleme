@@ -1,0 +1,626 @@
+{
+ "bad": {
+  "calls": 203,
+  "tris": 27858,
+  "meshes": 386,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 115,
+  "texMB": 9.1,
+  "geoMB": 4,
+  "materials": 322,
+  "sources": 47,
+  "shadowOff": {
+   "casters": 188,
+   "calls": 126,
+   "tris": 25426
+  },
+  "shadowOn": {
+   "casters": 93,
+   "calls": 88,
+   "tris": 16130
+  },
+  "warm": null,
+  "renderMs": 6.3,
+  "tickMs": 0.17,
+  "visibleItems": 194,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 77,
+    "tris": 14900
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 34,
+    "tris": 1577
+   },
+   "gulvdetaljer/småting": {
+    "calls": 11,
+    "tris": 508
+   }
+  }
+ },
+ "barnerom": {
+  "calls": 139,
+  "tris": 18660,
+  "meshes": 390,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 79,
+  "texMB": 21.8,
+  "geoMB": 3.6,
+  "materials": 279,
+  "sources": 43,
+  "shadowOff": {
+   "casters": 175,
+   "calls": 84,
+   "tris": 19986
+  },
+  "shadowOn": {
+   "casters": 88,
+   "calls": 70,
+   "tris": 16130
+  },
+  "warm": null,
+  "renderMs": 1.7,
+  "tickMs": 0.26,
+  "visibleItems": 131,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 27,
+    "tris": 7000
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gulvdetaljer/småting": {
+    "calls": 7,
+    "tris": 422
+   },
+   "gjennomsiktig": {
+    "calls": 25,
+    "tris": 405
+   }
+  }
+ },
+ "kjokken": {
+  "calls": 174,
+  "tris": 20220,
+  "meshes": 455,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 91,
+  "texMB": 6.4,
+  "geoMB": 3.2,
+  "materials": 322,
+  "sources": 42,
+  "shadowOff": {
+   "casters": 227,
+   "calls": 72,
+   "tris": 15898
+  },
+  "shadowOn": {
+   "casters": 110,
+   "calls": 65,
+   "tris": 13610
+  },
+  "warm": null,
+  "renderMs": 4.2,
+  "tickMs": 0.34,
+  "visibleItems": 162,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 50,
+    "tris": 8422
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 31,
+    "tris": 651
+   },
+   "gulvdetaljer/småting": {
+    "calls": 9,
+    "tris": 274
+   }
+  }
+ },
+ "bad2": {
+  "calls": 254,
+  "tris": 51304,
+  "meshes": 500,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 120,
+  "texMB": 9.2,
+  "geoMB": 5,
+  "materials": 371,
+  "sources": 49,
+  "shadowOff": {
+   "casters": 283,
+   "calls": 139,
+   "tris": 26838
+  },
+  "shadowOn": {
+   "casters": 181,
+   "calls": 95,
+   "tris": 17902
+  },
+  "warm": null,
+  "renderMs": 4.6,
+  "tickMs": 0.26,
+  "visibleItems": 246,
+  "byPart": {
+   "maur/skapninger": {
+    "calls": 45,
+    "tris": 21524
+   },
+   "rekvisitt/brettdel": {
+    "calls": 87,
+    "tris": 17340
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 31,
+    "tris": 1059
+   },
+   "gulvdetaljer/småting": {
+    "calls": 11,
+    "tris": 508
+   }
+  }
+ },
+ "barnerom2": {
+  "calls": 143,
+  "tris": 18336,
+  "meshes": 483,
+  "lights": 7,
+  "shadowLights": 1,
+  "textures": 95,
+  "texMB": 22,
+  "geoMB": 4.1,
+  "materials": 325,
+  "sources": 47,
+  "shadowOff": {
+   "casters": 255,
+   "calls": 95,
+   "tris": 20438
+  },
+  "shadowOn": {
+   "casters": 162,
+   "calls": 74,
+   "tris": 16458
+  },
+  "warm": null,
+  "renderMs": 3.6,
+  "tickMs": 0.45,
+  "visibleItems": 138,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 39,
+    "tris": 6004
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 21,
+    "tris": 690
+   },
+   "gulvdetaljer/småting": {
+    "calls": 6,
+    "tris": 386
+   }
+  }
+ },
+ "kjokken2": {
+  "calls": 208,
+  "tris": 26596,
+  "meshes": 574,
+  "lights": 7,
+  "shadowLights": 1,
+  "textures": 105,
+  "texMB": 6.6,
+  "geoMB": 4.2,
+  "materials": 369,
+  "sources": 45,
+  "shadowOff": {
+   "casters": 326,
+   "calls": 79,
+   "tris": 26826
+  },
+  "shadowOn": {
+   "casters": 202,
+   "calls": 72,
+   "tris": 24538
+  },
+  "warm": null,
+  "renderMs": 2.5,
+  "tickMs": 0.38,
+  "visibleItems": 200,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 87,
+    "tris": 14754
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 32,
+    "tris": 677
+   },
+   "gulvdetaljer/småting": {
+    "calls": 9,
+    "tris": 292
+   }
+  }
+ },
+ "leke": {
+  "calls": 131,
+  "tris": 28674,
+  "meshes": 318,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 42,
+  "texMB": 2.2,
+  "geoMB": 5,
+  "materials": 226,
+  "sources": 28,
+  "shadowOff": {
+   "casters": 114,
+   "calls": 60,
+   "tris": 18826
+  },
+  "shadowOn": {
+   "casters": 71,
+   "calls": 59,
+   "tris": 15886
+  },
+  "warm": null,
+  "renderMs": 1.6,
+  "tickMs": 0.08,
+  "visibleItems": 124,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 30,
+    "tris": 4858
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 15,
+    "tris": 171
+   },
+   "gulvdetaljer/småting": {
+    "calls": 7,
+    "tris": 32
+   }
+  }
+ },
+ "stue": {
+  "calls": 176,
+  "tris": 23584,
+  "meshes": 387,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 76,
+  "texMB": 21.3,
+  "geoMB": 2.6,
+  "materials": 273,
+  "sources": 36,
+  "shadowOff": {
+   "casters": 151,
+   "calls": 86,
+   "tris": 14366
+  },
+  "shadowOn": {
+   "casters": 92,
+   "calls": 80,
+   "tris": 13266
+  },
+  "warm": null,
+  "renderMs": 3.4,
+  "tickMs": 0.3,
+  "visibleItems": 163,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 52,
+    "tris": 10144
+   },
+   "maur/skapninger": {
+    "calls": 6,
+    "tris": 1908
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 25,
+    "tris": 465
+   },
+   "gulvdetaljer/småting": {
+    "calls": 8,
+    "tris": 36
+   }
+  }
+ },
+ "verksted": {
+  "calls": 141,
+  "tris": 19174,
+  "meshes": 325,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 58,
+  "texMB": 5.5,
+  "geoMB": 2.1,
+  "materials": 250,
+  "sources": 37,
+  "shadowOff": {
+   "casters": 117,
+   "calls": 59,
+   "tris": 10578
+  },
+  "shadowOn": {
+   "casters": 71,
+   "calls": 59,
+   "tris": 10578
+  },
+  "warm": null,
+  "renderMs": 2.7,
+  "tickMs": 0.74,
+  "visibleItems": 134,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 37,
+    "tris": 8106
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 18,
+    "tris": 203
+   },
+   "gulvdetaljer/småting": {
+    "calls": 7,
+    "tris": 32
+   }
+  }
+ },
+ "bro": {
+  "calls": 134,
+  "tris": 16204,
+  "meshes": 252,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 61,
+  "texMB": 20.6,
+  "geoMB": 1.3,
+  "materials": 179,
+  "sources": 29,
+  "shadowOff": {
+   "casters": 75,
+   "calls": 61,
+   "tris": 10062
+  },
+  "shadowOn": {
+   "casters": 63,
+   "calls": 59,
+   "tris": 10030
+  },
+  "warm": null,
+  "renderMs": 2.3,
+  "tickMs": 0.06,
+  "visibleItems": 127,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 29,
+    "tris": 5050
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 18,
+    "tris": 231
+   },
+   "gulvdetaljer/småting": {
+    "calls": 8,
+    "tris": 90
+   }
+  }
+ },
+ "trapp": {
+  "calls": 139,
+  "tris": 14834,
+  "meshes": 241,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 46,
+  "texMB": 20.6,
+  "geoMB": 1.3,
+  "materials": 166,
+  "sources": 30,
+  "shadowOff": {
+   "casters": 67,
+   "calls": 58,
+   "tris": 10026
+  },
+  "shadowOn": {
+   "casters": 61,
+   "calls": 57,
+   "tris": 10006
+  },
+  "warm": null,
+  "renderMs": 1.4,
+  "tickMs": 0.05,
+  "visibleItems": 132,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 35,
+    "tris": 3798
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 18,
+    "tris": 185
+   },
+   "gulvdetaljer/småting": {
+    "calls": 7,
+    "tris": 18
+   }
+  }
+ },
+ "vippe": {
+  "calls": 138,
+  "tris": 16024,
+  "meshes": 247,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 61,
+  "texMB": 20.6,
+  "geoMB": 1.3,
+  "materials": 170,
+  "sources": 29,
+  "shadowOff": {
+   "casters": 75,
+   "calls": 61,
+   "tris": 10062
+  },
+  "shadowOn": {
+   "casters": 63,
+   "calls": 59,
+   "tris": 10030
+  },
+  "warm": null,
+  "renderMs": 1.2,
+  "tickMs": 0.05,
+  "visibleItems": 131,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 34,
+    "tris": 4878
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 17,
+    "tris": 223
+   },
+   "gulvdetaljer/småting": {
+    "calls": 8,
+    "tris": 90
+   }
+  }
+ },
+ "kjokkenbro": {
+  "calls": 139,
+  "tris": 15112,
+  "meshes": 249,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 61,
+  "texMB": 5.4,
+  "geoMB": 1.3,
+  "materials": 182,
+  "sources": 29,
+  "shadowOff": {
+   "casters": 75,
+   "calls": 61,
+   "tris": 10062
+  },
+  "shadowOn": {
+   "casters": 63,
+   "calls": 59,
+   "tris": 10030
+  },
+  "warm": null,
+  "renderMs": 3.6,
+  "tickMs": 0.05,
+  "visibleItems": 132,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 32,
+    "tris": 3930
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 20,
+    "tris": 259
+   },
+   "gulvdetaljer/småting": {
+    "calls": 8,
+    "tris": 90
+   }
+  }
+ },
+ "bygglab": {
+  "calls": 130,
+  "tris": 13310,
+  "meshes": 307,
+  "lights": 6,
+  "shadowLights": 1,
+  "textures": 89,
+  "texMB": 21.5,
+  "geoMB": 1.1,
+  "materials": 215,
+  "sources": 41,
+  "shadowOff": {
+   "casters": 99,
+   "calls": 60,
+   "tris": 10050
+  },
+  "shadowOn": {
+   "casters": 59,
+   "calls": 59,
+   "tris": 10030
+  },
+  "warm": null,
+  "renderMs": 5.3,
+  "tickMs": 0.15,
+  "visibleItems": 118,
+  "byPart": {
+   "rekvisitt/brettdel": {
+    "calls": 19,
+    "tris": 2230
+   },
+   "figuren": {
+    "calls": 72,
+    "tris": 10822
+   },
+   "gjennomsiktig": {
+    "calls": 21,
+    "tris": 201
+   },
+   "gulvdetaljer/småting": {
+    "calls": 6,
+    "tris": 48
+   }
+  }
+ }
+}
