@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r107-neste-sted', version: '2.86', date: '2026-11-20', title: 'Etter en bestått prøve i byggeren står det nå en stor knapp NESTE STED ▶ med navn og nummer (f.eks. «Trapp · 2/8»), og topplinjen har en ▶-knapp til neste sted (🔒 når det er låst).',
+    how: 'Åpne BYGGESKOLE → Bro, trykk SÅ SLIK i ⋯ og så PRØV. Les resultatkortet og trykk NESTE STED ▶: du kommer til Trapp 2/8. Trykk ▶ i topplinjen for å gå videre, og tilbake via ⋯ ◀: Bro-bygget står der.', level: 'bygglab', spot: null },
   { id: 'glass-25-storre', version: '2.85', date: '2026-11-20', title: 'Hjørneglasset i byggeskjermen er 25 % større (samme forstørrelse, men du ser mer rundt fingeren).',
     how: 'Åpne Byggeskole → Bro, trykk BYGG og dra en stav fra en grønn prikk. Glasset i hjørnet skal være større enn før.', level: 'bygglab', spot: null },
   { id: 'r106-hjorneglass', version: '2.84', date: '2026-11-20', title: 'Forstørrelsesglass i byggeskjermen: når du drar en stav, flytter en knute eller en del, eller holder fingeren på et tomt punkt, vises et rundt glass i hjørnet med forstørret utsnitt, kryss og ring der det lander.',
