@@ -39,6 +39,8 @@ import { createGoalWayView } from './goalway_view.js';
 import { MARK, budgetFor, selectMarkers, goalDirection, noteGrab, markerStyle as rankStyle } from './markers_rank.js';   // R66: markørbudsjett og rangering
 import { FG, isWet, pickGoal, refuge, dropIntoWater, drownAlert, shakeOffset, beepDue, levelBadge, floodPct } from './flood_logic.js';   // R65: stigende vann i Nivå 4: mål og varsler tar hensyn til vannstanden
 import { createFloodView } from './flood_view.js';
+import { FR, firstRunActive, isFirstRun, menuPlan, createHints, hintsSave, noteUse, stepHints, progressInfo, braText, createBlind, stepBlind, noteWrongTa, ft } from './firstrun_logic.js';   // R97: første fem minutter
+import { createFirstRunView } from './firstrun_view.js';
 import { lockMessage, lockLogText } from './goal_lock_logic.js';   // R89: beskjed ved låst mål også uten hint
 import { initGoals, resetGoals, restoreGoals, stepGoals, goalDoneIds, goalFlagList, goalTotal, goalDone, goalById, activeGoal, goalTarget, goalLabel, goalLine, goalsOpen, lockingGoals, setGoalFlag } from './goals.js';   // R23: delmål
 import { createGoalView } from './goals_view.js';
@@ -1491,7 +1493,7 @@ const compState = { text: null, hint: '', ang: 0, action: '' };    // R53: det N
 // R64: veiledning når målet er under, bak eller ikke i bildet (guide_logic.js, guide_view.js)
 let guideOn = store.get('tlm.guide', true); GUIDE.stallMs = store.get('tlm.guidestall', 45) * 1000;
 const stall = createStall(), showMe = createShowMe();
-let guideKey = '', guideMsgAt = 0, guideRouteLogged = '';
+let guideKey = '', guideMsgAt = 0, guideRouteLogged = '', frGlowUntil = 0;
 const guideV = createGuideView({ scene, T, logEv, onShow: () => startShowMeNow() });
 // R98: oppdragslinje («ikon + neste mål») og peiling uten piler (Ekspert): goalway_logic.js / goalway_view.js
 let questMode = normQuestMode(store.get('tlm.questline', 'auto')), wayPeekOn = store.get('tlm.waypeek', true), questTapUntil = 0; WAY.idleMs = (+store.get('tlm.waypeekms', 8) || 8) * 1000;
@@ -1567,7 +1569,7 @@ function guideFrame(now, t, a, show) {
   stepStall(stall, now, { goalKey: (t.final ? '!' : '') + t.label, routeIdx: idx, done: goalDone(LEVEL), dist: a.hdist });
   const w = innerWidth, h = innerHeight, sc = mv?.toScreen(t.x, t.y, t.z) ?? null, markRaw = edgeMark({ s: sc, a, w, h }), hidden = !!markRaw || a.vertDom;
   const mark = markPlan.on && helpLevel === 'none' ? null : markRaw;   // R66: Ingen hjelp = ingen verdensmarkører (båndet viser retningen)
-  const surf = nextSurface(R, idx), routeOn = DIF.routeGlow && stalled(stall, now) && !!surf;
+  const surf = nextSurface(R, idx), routeOn = (now < frGlowUntil || (DIF.routeGlow && stalled(stall, now))) && !!surf;   // R97: hjelp til en som står fast tvinger lysglød en stund
   let ledge = null;
   if (showMe.phase === 'hold') { const cur = R?.[idx]; const lp = cur && !cur.grip ? ledgePoint(cur, t) : null; if (lp && Math.hypot(lp.x - player.x, lp.z - player.z) > 0.5 && (a.vert !== 'up' || a.vertDom)) ledge = lp; }
   guideV.update({ ...(hidden && a.hdist + Math.abs(a.dy) > 1.5 && !(markPlan.on && helpLevel === 'none') ? { ghost: t, pulseGhost: !markPlan.on || !markCalm || (markPlan.primary === 'goal:goal' && !routeOn) } : markPlan.on && goalDir.ring ? ringSpec(t, a) : { ghost: null }), pulseFrame: !markPlan.on || !markCalm || routeOn, ledge, mark, markText: mark ? (floodSt.drop ? `💧 ${T('water.edge')}` : `${glyph(a)} ${a.vertDom ? T(a.vert === 'down' ? 'guide.edge.down' : 'guide.edge.up') : T('guide.show')}`.trim()) : '', route: surf, routeOn }, now);
@@ -1802,7 +1804,7 @@ for (const id of ['bLevel', 'bPlan', 'bFly', 'bSound']) $(id).addEventListener('
 $('hud').addEventListener('pointerdown', (e) => { e.stopPropagation(); hudOpen = !hudOpen; logEv('hud', hudOpen ? 'utvidet' : 'kort'); });
 $('bPlan').onclick = () => setMode('plan'); $('bFly').onclick = () => setMode('fly');
 $('again').onclick = playAgain;   // R69: «Spill igjen» spør om vanskelighet først
-$('winMenu').onclick = () => quitToMenu('målskjerm'); $('winMenu').textContent = dft(lang, 'df.menu');
+$('winMenu').onclick = () => quitToMenu('målskjerm'); $('winMenu').textContent = ft(lang, 'fr.backMenu');
 $('bMenu').onclick = () => { closeMore(); quitToMenu('⋯'); }; $('bMenu').textContent = dft(lang, 'df.menu');
 
 // ---------- innstillingspanel (hoppfølelse) ----------
@@ -1915,6 +1917,8 @@ const SETTINGS = [
   fl('slickhint', 'hjelp', 'Glatte flater: hint første gang du sklir på olje eller såpe (rød ✕ og glansstriper viser dem alltid)', true, () => slickHintOn, kp('tlm.slickhint', (v) => { slickHintOn = v; logEv('glatt', v ? 'hint på' : 'hint av'); })),
   rg('slickaccel', 'admin', 'Glatte flater: hvor raskt du skifter fart på olje og såpe (5 = sklir mye, 34 = som vanlig gulv)', 5, 2, 34, 1, () => P.slickAccel, kp('tlm.slickaccel', (v) => { P.slickAccel = v; logEv('glatt', `grep ${v}`); }), { digits: 0 }),
   fl('puzcam', 'hjelp', 'Gåter: kort kamerasveip mot broen når den åpnes', true, () => puzCamOn, kp('tlm.puzcam', (v) => { puzCamOn = v; })),
+  fl('firstrun', 'spill', 'Første møte (nivå 1): én START på menyen, rolige knappe-hint ett og ett (stikke, HOPP, TA, GREP), «Bra!» ved delmål og hjelp hvis du står fast i 10 s. Av gir den gamle menyen og ingen slike hint', true, () => firstRunOn, kp('tlm.firstrun', (v) => { firstRunOn = v; if (!v) frV.hideHint(); logEv('forstekjoring', v ? 'på' : 'av'); })),
+  rg('frhelpms', 'admin', 'Første møte: sekunder stille før hjelp (R64-veiledning) kommer', 10, 4, 12, 1, () => Math.round(FR.helpMs / 1000), kp('tlm.frhelpms', (v) => { FR.helpMs = v * 1000; }), { digits: 0 }),
   fl('goals', 'spill', 'Delmål (milepæler: panel øverst, jubel når et delmål er klart)', true, () => goalsOn, kp('tlm.goals', (v) => { goalsOn = v; goalView?.setOn(v && DIF.subgoalText); logEv('delmål', v ? 'på' : 'av'); })),
   fl('keyhelp', 'hjelp', 'PC: vis tastehjelp-kortet de første 15 sekundene ved start (H henter det fram når som helst)', false, () => keyHelpOn, kp('tlm.keyhelp', (v) => { keyHelpOn = v; logEv('hjelp', v ? 'tastehjelp ved start på' : 'tastehjelp ved start av'); })),
   fl('stuehint', 'hjelp', 'Stuen: hint om fjernkontrollen, den gule plata og broen mellom sofaen og bordet (nivå 8)', true, () => stueHintOn, kp('tlm.stuehint', (v) => { stueHintOn = v; logEv('stue', v ? 'hint på' : 'hint av'); })),
@@ -2518,9 +2522,54 @@ function goalEvent(ev) {
   const g = goalById(LEVEL, ev.id), name = g ? goalLabel(g, lang) : ev.id;
   logEv('delmål', `${ev.id} ${ev.n}/${ev.total}${ev.last ? ' (alle)' : ''}`);
   if (ev.last) { audio?.fanfare(); music?.duck(0.3, 2); buzz([30, 50, 30, 50, 90]); setMood('happy', 4); cue('alle delmål!'); toast(T('goal.cheer')); }
-  else { audio?.crumb(ev.n, ev.total); audio?.checkpoint(); buzz(25); setMood('happy', 1.6); cue('delmål!'); toast(T('goal.done', { name })); }
+  else { audio?.crumb(ev.n, ev.total); audio?.checkpoint(); buzz(25); setMood('happy', 1.6); cue('delmål!'); const bra = firstRunOn && levelInfo?.n === FR.level ? braText(ev) : null; toast(bra ? `${ft(lang, bra.key, bra.params)} · ${name}` : T('goal.done', { name })); if (bra) { frEv(`bra ${ev.n}/${ev.total} ${frStat.t.toFixed(1)} s`); frV.pop(); } }
   for (let i = 0; i < 3; i++) spawnShards([player.x + (i - 1) * 0.6, player.y + 1.6, player.z], [0xffd23f, 0xffffff, 0xff9a1f][i]);
   goalView?.cheer(); saveProgress();
+}
+// R97: første fem minutter (firstrun_logic.js, firstrun_view.js). Tiden her er spilletid (ikke veggklokke), så testboten kan kjøre raskt.
+let firstRunOn = store.get('tlm.firstrun', true), frHelpMs = +store.get('tlm.frhelpms', FR.helpMs / 1000) * 1000 || FR.helpMs; FR.helpMs = frHelpMs;
+const frV = createFirstRunView({ $, hudEl }), frHints = createHints(store.get('tlm.fr.hints', null)), frBlind = createBlind(), frLog = [];
+const frStat = { t: 0, acc: 0, moved: false, jumped: false, took: false, grabbed: false, hintN: 0, helpN: 0, idle8: 0 };
+const frAct = () => firstRunActive({ on: firstRunOn, n: levelInfo?.n, diff: difficulty }) && DIF.contextHints;
+const frEv = (detail) => { logEv('forstekjoring', detail); frLog.push({ t: +frStat.t.toFixed(1), detail }); };
+const frSave = () => store.set('tlm.fr.hints', hintsSave(frHints));
+function frUse(id, label) {
+  if (noteUse(frHints, id)) { frSave(); }
+  const k = { stick: 'moved', jump: 'jumped', take: 'took', grab: 'grabbed' }[id];
+  if (!frStat[k]) { frStat[k] = true; frEv(`første ${label} ${frStat.t.toFixed(1)} s`); }
+}
+function frHelp(why) {
+  const t = nextTarget(), now = performance.now(); frStat.helpN++;
+  frGlowUntil = now + 9000; compassForce = now + 15000; startShowMeNow();
+  tip(ft(lang, 'fr.help', { name: t.label }));
+  frEv(`blindgate ${why}: hjelp (R64) mot ${t.label} etter ${frStat.t.toFixed(1)} s`);
+}
+function frInput(inp) {                              // kalles med knappene som ble trykt denne rammen
+  if (levelInfo?.n !== FR.level || mode !== 'play' || won || menuOpen) return;
+  if (inp.jumpPressed) frUse('jump', 'hopp');
+  if (inp.grabPressed) frUse('grab', 'GREP');
+  if (inp.carryPressed) {
+    if (player.carry || findCarryTarget(player, LEVEL)) frUse('take', 'TA');
+    else if (frAct()) { const r = noteWrongTa(frBlind, frStat.t * 1000); frEv('TA på feil sted'); if (r) frHelp(r.why); }
+  }
+}
+function frTick(dt) {
+  const play = mode === 'play' && !won && !menuOpen && !introSweep && !ov.active && !bld.active && !bossFighting();
+  if (!play || levelInfo?.n !== FR.level) { frV.hideHint(); frV.progress({ show: false }, false); return; }
+  frStat.t += dt; frStat.acc += dt; if (frStat.acc < 0.2) return; frStat.acc = 0;
+  if (Math.hypot(player.vx, player.vz) > 0.4) frUse('stick', 'bevegelse');
+  const act = frAct(), gt = frStat.t * 1000, t = nextTarget(), a = guideAimOf(t);
+  for (const e of stepBlind(frBlind, gt, { x: player.x, y: player.y, z: player.z, dist: a.hdist, key: (t.final ? '!' : '') + t.label }, { act: firstRunOn && levelInfo?.n === FR.level })) {
+    if (e.kind === 'still8') { frStat.idle8++; frEv(`sto stille ${Math.round(e.ms / 1000)} s`); }
+    else if (e.kind === 'help' && act) frHelp(e.why);
+  }
+  const near = { take: !player.carry && !!findCarryTarget(player, LEVEL), grab: !!t.grip && a.hdist < 4, jump: !t.grip && a.hdist < 6 && t.y - player.y > 0.5 };
+  const r = stepHints(frHints, gt, { diff: difficulty, play: act && TOUCH, t: frStat.t, near });
+  if (r.hide) { frV.hideHint(); frEv(`hint borte: ${r.hide} (${r.why})`); }
+  if (r.show) { frStat.hintN++; frSave(); frV.showHint(r.show, ft(lang, 'fr.hint.' + r.show, { jump: T('btn.jump'), take: TA, grab: GREP })); frEv(`hint vist: ${r.show}`); }
+  else if (frV.hintId()) frV.refresh();
+  const total = goalTotal(LEVEL), panel = goalsOn && DIF.subgoalText;
+  frV.progress(progressInfo({ done: goalDone(LEVEL), total, diff: difficulty }), firstRunOn && !panel, ft(lang, 'fr.prog', { text: '' }).trim());
 }
 function update(dt) {
   if (P.faceCam && mode === 'play') {                                  // PC: piltastene ser deg rundt (WASD går)
@@ -2572,7 +2621,7 @@ function update(dt) {
     walk: held('KeyC', 'AltLeft', 'AltRight') || (P.faceCam && TOUCH && touch.x * touch.x + touch.y * touch.y < 0.3 && touch.x * touch.x + touch.y * touch.y > 0.01),
     face: P.faceCam && mode === 'play' ? { dx: fx, dz: fz } : undefined,
   };
-  jumpEdge = grabEdge = carryEdge = false;
+  frInput(inp); frTick(dt); jumpEdge = grabEdge = carryEdge = false;
   const pre = { onGround: player.onGround, vy: player.vy, state: player.state, windup: player.windup, carry: !!player.carry, hard: player.hardLands, reach: player.reach > 0, bodies: (LEVEL.bodies || []).map((b) => b.min[0] + b.min[2]) };
   variant.beforeStep(player, dt, mode === 'play' && !won);
   step(player, inp, dt, LEVEL);
@@ -2651,7 +2700,7 @@ function update(dt) {
   if (!won && goalTotal(LEVEL) && goalsOn && goalLockOn && !goalsOpen(LEVEL) && mode === 'play' && !stats.flew && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
     if (performance.now() > goalLockMsg) { goalLockMsg = performance.now() + 4000; logEv('mål låst', lockLogText(LEVEL)); bandSay('tip', PRIO.hint, lockMessage(LEVEL, { hints: DIF.contextHints, lang, T }), 6, 'hint'); }   // R89: alltid en beskjed (uten hint bare «Målet er låst.»)
   } else if (!won && Math.hypot(player.x - g[0], player.z - g[2]) < 2 && Math.abs(player.y - g[1]) < 2.5) {
-    won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); if (!stats.flew) statsLevelEnd('complete', { sek: clock - seg.t0, poeng: points(), merke: DIFFS[runDiffMin] }); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
+    won = true; logEv('MÅL NÅDD', `${clock.toFixed(1)} s`); if (levelInfo?.n === FR.level) frEv(`mål nådd ${frStat.t.toFixed(1)} s spilletid, ${frStat.hintN} hint, ${frStat.helpN} hjelp, ${frStat.idle8} stillstand`); frV.hideHint(); frV.progress({ show: false }, false); if (!stats.flew) statsLevelEnd('complete', { sek: clock - seg.t0, poeng: points(), merke: DIFFS[runDiffMin] }); audio?.win(); music?.duck(0.3, 1.6); setMood('happy', 6); say('goal', true);
     let d, rw = null, bdg = null;
     { const cl = store.get('tlm.cleared', {}), prevBest = cl[levelId] || 0, n = levelInfo?.n; if (!stats.flew) { cl[levelId] = Math.max(prevBest, points()); store.set('tlm.cleared', cl); store.set('tlm.done', false); const runs = store.get('tlm.runs', {}); runs[levelId] = { t: clock, ants: stats.squashed || 0, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL) }; store.set('tlm.runs', runs);
         rw = recordRun(store, { levelId, n, crumbs: crumbCount(LEVEL), total: crumbTotal(LEVEL), t: clock, flew: stats.flew }); logEv('belønning', `beste ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}${rw.unlocked ? ', låste opp ' + rw.unlocked.id : ''}${rw.newBestTime ? ', ny beste tid' : ''}`); if (rw.unlocked) refreshAccessories(); }       // husk hvilke nivåer som er klart (beste poeng)
@@ -3249,18 +3298,24 @@ function showStart(o = {}) {
   if (document.pointerLockElement) document.exitPointerLock();
   const has = hasProgress(), bl = badgeLine(), dn = dft(lang, 'df.' + difficulty);
   $('start').classList.remove('dfl', 'fxl');
-  $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${o.saved ? '✓ ' + dft(lang, 'df.saved') : T('menu.tagline')}</p>${saveWarn()}
-    <button class="mbtn" id="mCont" ${has ? '' : 'disabled'}>${T('menu.continue')}<small>${has ? resumeLine({ label: levelLabel, diff: dn, clock: clock > 4 ? clock : (normProgress(store.get(progKey, null))?.clock || 0) }) : T('menu.nosave')}</small></button>
-    <button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
+  const plan = menuPlan({ has, firstRun: isFirstRun(normCleared(store.get('tlm.cleared', {}))), on: firstRunOn }), coll = plan.collapse;   // R97: første gang: én tydelig START, resten under «mer»
+  const resume = has ? resumeLine({ label: levelLabel, diff: dn, clock: clock > 4 ? clock : (normProgress(store.get(progKey, null))?.clock || 0) }) : T('menu.nosave');
+  const bContinue = `<button class="mbtn ${coll ? 'big' : ''}" id="mCont" ${has ? '' : 'disabled'}>${coll ? ft(lang, 'fr.continue') : T('menu.continue')}<small>${resume}</small></button>`;
+  const bStart = `<button class="mbtn big" id="mStart">${ft(lang, 'fr.start')}</button>`;
+  const rest = `<button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
     <button class="mbtn sec" id="mLevels">${dft(lang, 'df.pick')}${bl ? `<small>${bl}</small>` : ''}</button>
     ${CINE.on ? '' : schoolMenuHtml(T, schoolProg())}
     <button class="mbtn sec" id="mToys">🧸 ${rwT(lang, 'rw.closet')}</button>
     ${menuVisible(testerCode(), validCode) ? `<div class="mrow"><button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button><button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button></div>` : `<button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button>`}
     <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
-    <button class="mbtn sec" id="mQuit">${T('menu.quit')}</button>
+    <button class="mbtn sec" id="mQuit">${T('menu.quit')}</button>`;
+  $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${o.saved ? '✓ ' + dft(lang, 'df.saved') : T('menu.tagline')}</p>${saveWarn()}
+    ${coll ? `${has ? bContinue : bStart}<button class="mmore" id="mMore">${ft(lang, 'fr.more')} ▾</button><div class="mfold" id="mFold">${rest}</div>` : `${bContinue}${rest}`}
     <div class="ver">v${VERSION}</div>`;
   $('start').classList.remove('hide'); document.body.classList.add('instart');
-  $('mCont').onclick = () => { unlockAudio(); hideStart(); logEv('fortsett'); };
+  if ($('mCont')) $('mCont').onclick = () => { unlockAudio(); hideStart(); logEv('fortsett'); };
+  if ($('mStart')) $('mStart').onclick = () => { unlockAudio(); logEv('forstekjoring', 'START valgt (ny spiller, ' + DEFAULT_DIFF + ')'); newGame(DEFAULT_DIFF); };   // R97: ingen vanskelighetsvalg første gang (⚙ → Spill → Vanskelighet)
+  if ($('mMore')) $('mMore').onclick = () => { const open = $('mFold').classList.toggle('open'); $('mMore').textContent = `${ft(lang, open ? 'fr.less' : 'fr.more')} ${open ? '▴' : '▾'}`; };
   $('mNew').onclick = () => {
     unlockAudio();
     const pick = () => dv.pickDifficulty({ current: difficulty, onPick: (d) => newGame(d), onBack: showStart });   // R69: velg vanskelighet først
@@ -3378,5 +3433,5 @@ window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
 const cine = createCinema({ state: CINE, rng: cineRnd || { reseed() {} }, camera, canvas: renderer.domElement, cam, player, update, render, bld, settings: () => SETTINGS, logEv, onFollow: (h) => { cineH = h; }, snapCam: () => { camFocusY = null; }, isPlay: () => mode === 'play' && !won && !menuOpen && !ov.active, levelId: () => levelId, version: VERSION, THREE, scene, hero, onHeroScale: (k) => { cineHS = k; } });   // R68: kinomodus (cinema_view.js)
 if (CINE.on) bld.showMarks(false);   // de gule rammene rundt byggesteder skjules (gripMarks skjules i render())
-window.__game = { cine, diff: { get: () => difficulty, set: (v) => applyDifficulty(v, { carry: true, why: 'test' }), profile: () => DIF, count: helpVisibleCount, quit: quitToMenu, start: showStart, key: () => progKey, tb }, markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, way: { v: wayV, s: wayS, quest: () => questNow(nextTarget()), tap: (src = 'linje') => { questTapUntil = performance.now() + WAY.tapMs; logEv('maalvei', src === 'ikon' ? 'trykk på mål-ikonet' : 'trykk på oppdragslinjen'); } }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge, shadow: shadowStats(), warm: warmInfo, warmProg }), shCull, shPacer, sun, setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { fr: { log: frLog, stat: frStat, hints: frHints, blind: frBlind, view: frV, active: frAct }, cine, diff: { get: () => difficulty, set: (v) => applyDifficulty(v, { carry: true, why: 'test' }), profile: () => DIF, count: helpVisibleCount, quit: quitToMenu, start: showStart, key: () => progKey, tb }, markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, way: { v: wayV, s: wayS, quest: () => questNow(nextTarget()), tap: (src = 'linje') => { questTapUntil = performance.now() + WAY.tapMs; logEv('maalvei', src === 'ikon' ? 'trykk på mål-ikonet' : 'trykk på oppdragslinjen'); } }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge, shadow: shadowStats(), warm: warmInfo, warmProg }), shCull, shPacer, sun, setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
 window.__game.verView = verView;   // R77: test-hekte

@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.74** – R97: første møte (én START, kontroll-hint som animasjon, «Bra!», prikkrad, hjelp ved blindgate), `tools/first_run.cjs`.
 - **2.73** – R98: oppdragslinje med neste mål i alle brett, peiling uten piler på Ekspert, `goal_check`.
 - **2.72** – R97 (første fem minutter, F1) og R98 (tydelig mål og vei, F7) lagt i veikartet.
 - **2.71** – Nyeste byggeskjerm (R92/R93/R96) er standard for all bygging; den gamle ligger bak ⚙ → Spill → Byggeskjerm av (fra Rune).
