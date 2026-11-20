@@ -6,8 +6,8 @@ const L = await import('./build_loupe_logic.js'), V = await import('./build_loup
 
 // zoom og størrelse
 assert.deepEqual(L.LOUPE.zooms, [2, 3, 4]); assert.equal(L.normZoom(2), 2); assert.equal(L.normZoom('4'), 4); assert.equal(L.normZoom(5), 3); assert.equal(L.normZoom(NaN), 3); assert.equal(L.normZoom(undefined), 3);
-assert.equal(L.glassSize(390, 844), 112); assert.equal(L.glassSize(844, 390), 96); assert.ok(L.glassSize(100, 100) <= 84);
-assert.ok(L.LOUPE.size >= 96 && L.LOUPE.size <= 120 && L.LOUPE.sizeLand >= 96 - 1);
+assert.equal(L.glassSize(390, 844), 140); assert.equal(L.glassSize(844, 390), 120); assert.ok(L.glassSize(100, 100) <= 84);
+assert.ok(L.LOUPE.size >= 120 && L.LOUPE.size <= 150 && L.LOUPE.sizeLand >= 96 - 1);
 
 // utsnitt: 2×/3×/4× gir side size/zoom, midtstilt og holdt inne i canvaset
 for (const z of [2, 3, 4]) { const r = L.sourceRect(200, 300, 112, z, 390, 844); assert.ok(Math.abs(r.sw - 112 / z) < 1e-9 && r.sw === r.sh); assert.ok(Math.abs(r.sx + r.sw / 2 - 200) < 1e-9 && Math.abs(r.fx - 0.5) < 1e-9 && Math.abs(r.fy - 0.5) < 1e-9); }
@@ -62,9 +62,9 @@ assert.equal(L.wantsLoupe({ placing: true }), true); assert.equal(L.wantsLoupe({
   const lay = { W: 390, H: 844, top: 130, bottom: 700, insetL: 0, insetR: 0, sim: false, avoid: [] };
   const info = { placing: true, fingers: 1, x: 100, y: 400, tx: 110, ty: 405, ok: true, text: 'Rute 3, 4', kind: 'test' };
   assert.equal(lp.frame(info, lay), true); assert.equal(el.style.display, 'block'); assert.equal(lp.visible, true); assert.equal(lp.shown, 1);
-  assert.equal(el.className, 'bloupe r', 'finger til venstre: glass til høyre'); assert.equal(el.style.left, '270px'); assert.equal(tx.textContent, 'Rute 3, 4');
-  const d = calls.find((c) => c[0] === 'draw'); assert.ok(d, 'kopierer fra byggecanvaset'); assert.equal(d[1], cv); assert.ok(Math.abs(d[4] - (112 / 3) * 2) < 1e-6, '3×: kilde = glass/3 (i enhetspiksler)'); assert.equal(calls.filter((c) => c[0] === 'arc').length, 1, 'ring ved snappunktet');
-  zoom = 4; calls.length = 0; lp.frame(info, lay); assert.ok(Math.abs(calls.find((c) => c[0] === 'draw')[4] - (112 / 4) * 2) < 1e-6, '4×');
+  assert.equal(el.className, 'bloupe r', 'finger til venstre: glass til høyre'); assert.equal(el.style.left, '242px'); assert.equal(tx.textContent, 'Rute 3, 4');
+  const d = calls.find((c) => c[0] === 'draw'); assert.ok(d, 'kopierer fra byggecanvaset'); assert.equal(d[1], cv); assert.ok(Math.abs(d[4] - (140 / 3) * 2) < 1e-6, '3×: kilde = glass/3 (i enhetspiksler)'); assert.equal(calls.filter((c) => c[0] === 'arc').length, 1, 'ring ved snappunktet');
+  zoom = 4; calls.length = 0; lp.frame(info, lay); assert.ok(Math.abs(calls.find((c) => c[0] === 'draw')[4] - (140 / 4) * 2) < 1e-6, '4×');
   assert.equal(lp.frame({ ...info, placing: false }, lay), true, 'rett etter slipp: fortsatt synlig'); assert.equal(logs.length, 1); assert.match(logs[0][1], /^glass vist/);
   assert.equal(lp.takeShown(), 1); assert.equal(lp.takeShown(), 0);
   lp.frame({ ...info, placing: true, fingers: 2 }, lay); // to fingre

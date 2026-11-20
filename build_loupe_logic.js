@@ -4,8 +4,8 @@
 // Glasset er en kopi av byggecanvaset (drawImage), ingen ny scene. Visningen ligger i build_loupe_view.js.
 
 export const LOUPE = {
-  size: 112,         // diameter (px), stående
-  sizeLand: 96,      // diameter (px), liggende
+  size: 140,         // diameter (px), stående (112 + 25 %, ønske fra Rune)
+  sizeLand: 120,     // diameter (px), liggende (96 + 25 %)
   textH: 20,         // linjen under glasset (px)
   holdMs: 300,       // finger holdt stille på et tomt punkt (rutenett) før glasset vises
   hideMs: 150,       // glasset forsvinner så lenge etter at fingeren slippes
