@@ -38,8 +38,8 @@ Rekkefølgen er bevisst: **kjernen først**. Et brett laget av et tilfeldig rom 
 
 
 
-### [ ] R104 · Fra tester: kula stopper («stuck») i Byggeskole · Bro når det står støttestaver ved veien
-Rapport fra iPhone (v2.78, Byggeskole `lab1`, Tennisball, 7 staver, 11 koblinger, prøven feilet med «stuck etter 6,4 s», testeren markerte at kula ikke kommer forbi støttestavene). Bygget fulgte ikke med, og en gjenskaping fra staverlengdene (3,5 og 3,91) ga seier, så årsaken er ikke funnet. Et forsøk der steile staver ikke stopper lasten ble rullet tilbake: det fikk kula til å stoppe i eksempelbroen i Byggeskole · Fagverk. Krav: (1) når rapport med byggekode (R103, v2.79) kommer inn: LIM INN koden, gjenskap og finn hva som stopper kula (kjør `BP.runSim` med `load: 'ball'`, se hvilke staver den berører). (2) Rett så eksempelbroene (alle åtte steder) og testerens bygg alle vinner med kula, og legg bygget inn som test. Behandles når byggekoden finnes; testeren får ikke svar før det er rettet.
+### [x] R104 · Fra tester: kula stopper i Byggeskole · Bro når staver står opp ved veien (v2.80)
+Årsaken (gjenskapt fra byggekoden i en ny rapport): to høye trekanter som møter veien i midten danner en vegg som kula, bilen og roboten ikke kommer forbi. Rettelse: står lasten fast, prøver PRØV på nytt med at staver steilere enn 38° ikke stopper lasten, og bruker det bare hvis den da kommer i mål (alt som vant før virker som før; ⚙ → Admin kan slå det av). Test: `test_gridpass.mjs`.
 
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.

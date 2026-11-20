@@ -126,7 +126,18 @@ export function noCollide(B) {
   return out;
 }
 // definisjonen fysikken (createSim) vil ha
+// R102: stavene som står opp (steilere enn PASS_DEG) er støtte, ikke vei. Står lasten (kula, bilen, roboten) fast mot dem, prøver PRØV på nytt med at lasten går forbi støttene (de flate stavene er fortsatt vei).
+// Bare hvis det nye forsøket vinner brukes det: alt som vant før, virker som før. GRIDOPT.pass = ⚙-valget (admin).
+export const PASS_DEG = 38, GRIDOPT = { pass: true };
+export const isSteepRod = (G, r) => { const a = nodeOf(G, r.a), b = nodeOf(G, r.b); if (!a || !b || r.deck) return false; const du = Math.abs(a.u - b.u), dv = Math.abs(a.v - b.v); return dv > Math.tan(PASS_DEG * Math.PI / 180) * du; };
+export const loadPass = (B) => (B.rg ? B.rg.rods.filter((r) => isSteepRod(B.rg, r)).map((r) => r.id) : []);
 export const simDef = (B) => ({ site: B.site, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links, noCollide: noCollide(B) });
+// run = runSim fra build_phys.js (sendt inn så grid_logic ikke trenger fysikken). Returnerer { def, passed }: passed = true når støttene slapp lasten forbi og prøven da vinner
+export function simDefAuto(B, opts, run) {
+  const def = simDef(B), steep = GRIDOPT.pass ? loadPass(B) : []; if (!steep.length || typeof run !== 'function') return { def, passed: false };
+  const d2 = { ...def, loadPass: steep }; let r; try { r = run(d2, { ...opts }); } catch { return { def, passed: false }; }
+  return r && r.result === 'won' ? { def: d2, passed: true } : { def, passed: false };
+}
 
 export function setMode(B, mode) {
   const cur = B.mode === 'grid' ? 'grid' : 'classic', to = mode === 'grid' && siteHasGrid(B.site) ? 'grid' : 'classic';

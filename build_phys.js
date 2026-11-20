@@ -173,6 +173,7 @@ export function createSim(def, opts = {}) {
     let lift = 0; for (const i of B.idx) for (const bx of boxes) { const p = P[i]; if (p.x > bx.x0 - p.r && p.x < bx.x1 + p.r && p.y < bx.y1 + p.r && p.y > bx.y0) lift = Math.max(lift, bx.y1 + p.r - p.y); }
     if (lift > 0 && lift < 1) for (const i of B.idx) { P[i].y += lift; P[i].py = P[i].y; }
   }
+  for (const id of def.loadPass || []) { const y = bodyOf.get(id); if (y !== undefined && y !== fig) noCol.add(fig < y ? `${fig},${y}` : `${y},${fig}`); }   // R102: støttestaver (steile) stopper ikke lasten
   for (const q of def.noCollide || []) { const x = bodyOf.get(q[0]), y = bodyOf.get(q[1]); if (x !== undefined && y !== undefined && x !== y) noCol.add(x < y ? `${x},${y}` : `${y},${x}`); }   // R72: staver som møtes i samme knutepunkt skal ikke støte mot hverandre
   const nb = bodies.length, cl = new Float64Array(nb);   // cl: kontaktimpuls per del i dette delsteget (til knusing av klosser)
   const bbox = bodies.map(() => ({ x0: 0, y0: 0, x1: 0, y1: 0 }));

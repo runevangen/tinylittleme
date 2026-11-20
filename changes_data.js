@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r104-stotter-slipper-lasten', version: '2.80', date: '2026-11-20', title: 'Kula, bilen og roboten stopper ikke lenger mot støttestaver som står opp fra veien: står lasten fast, prøver PRØV på nytt med at støttene slipper den forbi.',
+    how: 'Åpne BYGGESKOLE → Bro og trykk BYGG. Bygg en flat vei mellom prikkene og to høye trekanter som møter veien i midten. Velg Tennisball i ⋯ og trykk PRØV: kula skal rulle forbi og komme i mål.', level: 'bygglab', spot: null },
   { id: 'r100-vei-og-konstruksjon', version: '2.77', date: '2026-11-20', title: 'Byggeskjermen viser nå hvor veien går: en grå vei med gul stripe og «VEI: lasten skal over her» mellom de to grønne prikkene. Stavene du legger langs den blir veibane; resten er konstruksjonen som bærer broen.',
     how: 'Åpne Hyllebroen eller Byggeskolen (bro) og trykk BYGG. Les hintet øverst og se den grå veien. Dra en stav langs veien, og så staver over og under den som bærer den. Trykk PRØV.', level: 'bro', spot: null },
   { id: 'r99-lyd-som-sitter', version: '2.76', date: '2026-11-20', title: 'Lyd i byggeskjermen: egne lyder for å sette ut deler (tre, stål, tau, kloss), feste, knute og stav, angre, PRØV, last over og stjerner. Alle rom har nå en svak romtone (kjøleskap og klokke på kjøkkenet, spilledåse i barnerommet …), og skritt og landing varierer litt.',

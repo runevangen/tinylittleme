@@ -9,7 +9,7 @@ import {
 import { ZOOM_STEP, gridForScale, anchorRadius, zoomAbout, zoomStep, freeCenter, isDoubleTap, dblTapView, zoomLabel } from './build_zoom.js';   // R44
 import { capacity } from './build_capacity.js';   // R49a1: «Tåler X»-måler
 import { trussHelp, helpKey } from './build_truss.js';   // R49a2: ledd som kan svinge og slanke deler
-import { createSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
+import { createSim, runSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
 import { stressCss, tint, loadMap, whyBroke, breakTempo, ringAt } from './build_stress.js';   // R45: lesbar svikt
 import { drawToyDetail, drawToyChain } from './build_toys_view.js';   // R46: leker som materialer
 import { isToy } from './build_toys.js';
@@ -35,7 +35,7 @@ import { KEY_MODE, KEY_TIP } from './grid_guide_logic.js';
 import { createClassicUx, cbxCss, cbxMarkup } from './buildux_classic_view.js';   // R96: samme nye skall for klassiske steder (Trapp, Vippe, ...)
 import { createPeaks, loadsNow, peakSummary, stressCss as gStressCss, colorCss as gColorCss, widthK as gWidthK, isDanger as gDanger, shown as gShown, pct as gPct } from './grid_stress.js';   // R73: farge etter belastning, «største belastning»
 import { stageScaled, stageSite, hasStage, overBudget, stagesOf, stageLocked, stageLockText, stageLines, passRead, passRecord, passClear } from './grid_stage.js';   // R74: rutenett-oppdrag: mål, budsjett, tung last, låsing
-import { gridAnchors, gridStep, isGrid, simDef as gridSimDef, gUndo, gReset, wipe as gridWipe, exportAny, importAny, gApplyImport, gridSave, gridLoad, gridStats } from './grid_logic.js';
+import { gridAnchors, gridStep, isGrid, simDef as gridSimDef, simDefAuto as gridSimDefAuto, gUndo, gReset, wipe as gridWipe, exportAny, importAny, gApplyImport, gridSave, gridLoad, gridStats } from './grid_logic.js';
 
 const css = `
 #bld{position:fixed;inset:0;z-index:7;display:none;background:linear-gradient(#26324bfa,#141a2cff);touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font:600 14px system-ui}
@@ -614,7 +614,9 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
   function starsNow() { try { return starsFor(active, getB(active).placed, getB(active).links).stars; } catch { return 1; } }   // R99: melodien følger antall stjerner
   function startSim() {
     const B = getB(active); if (!B.placed.length) { toast(T('build.tryEmpty')); return false; }
-    sim = createSim(isGrid(B) ? gridSimDef(B) : { site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(stageNow() ? { massK: stageNow().massK } : {}) });
+    const so = { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(stageNow() ? { massK: stageNow().massK } : {}) };
+    let gdef = null; if (isGrid(B)) { const a = gridSimDefAuto(B, so, runSim); gdef = a.def; if (a.passed) logEv('bygg', 'støttestaver slapp lasten forbi (ellers stoppet den)'); }
+    sim = createSim(isGrid(B) ? gdef : { site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(stageNow() ? { massK: stageNow().massK } : {}) });
     simLoad = curLoad(); winOver = false; loadMore = null; replaying = false; winSolved = false; { const gc = getGhost() ? ghostChoice(recs.get(active.id), sim.pose()) : { rec: null, why: 'av' }; ghostRec = gc.rec; if (gc.why === 'endret') logEv('bygg', 'spøkelse skjult: delene er endret siden forrige prøve'); } recorder = createRecorder(sim, { load: simLoad }); simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; simHelp = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
     gPeaks = isGrid(B) ? createPeaks() : null; gSum = null; gSpeed = 'play'; grid.simSync('play', false); bux.onTry(); cbx.onTry();
     audio?.bstart?.(); root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}, modus ${isGrid(B) ? 'rutenett' : 'klassisk'}${ghostRec ? ', med spøkelse' : ''}`); return true;
