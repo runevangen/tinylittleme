@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.89** – R108 (fra Rune): lasten kjører bare på veien (stavene på veilinjen); støttestaver og tak stopper den ikke og den kan ikke klatre opp på dem. Erstatter R104-forsøket (ekstra prøve). ⚙ → Admin kan slå det av.
 - **2.88** – Integrerte R107 (NESTE STED ▶ i byggeren) oppå 2.87; 2.86 var nummeret på veikartpunktet.
 - **2.87** – Glasset forstørrer 25 % mer (3,75×) og forstørrelse (1,5–6×) og størrelse (70–200 %) er variabler i ⚙ → Spill (fra Rune).
 - **2.86** – R107 (fra Rune): «neste sted» skal være tydelig i byggeren, lagt i veikartet.

@@ -38,6 +38,8 @@ Rekkefølgen er bevisst: **kjernen først**. Et brett laget av et tilfeldig rom 
 
 
 
+### [x] R108 · Fra tester: Rune · lasten kjører bare på veien (v2.89; erstatter R104-forsøket): stavene på veilinjen er vei, alle andre staver stopper ikke lasten. Test: `test_gridpass.mjs`.
+
 ### [x] R104 · Fra tester: kula stopper i Byggeskole · Bro når staver står opp ved veien (v2.80)
 Årsaken (gjenskapt fra byggekoden i en ny rapport): to høye trekanter som møter veien i midten danner en vegg som kula, bilen og roboten ikke kommer forbi. Rettelse: står lasten fast, prøver PRØV på nytt med at staver steilere enn 38° ikke stopper lasten, og bruker det bare hvis den da kommer i mål (alt som vant før virker som før; ⚙ → Admin kan slå det av). Test: `test_gridpass.mjs`.
 

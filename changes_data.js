@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r108-last-bare-paa-veien', version: '2.89', date: '2026-11-20', title: 'Kula, bilen og roboten kjører bare på veien: støttestaver og tak stopper dem ikke, og de kan ikke klatre opp på trekanter eller tak.',
+    how: 'Åpne BYGGESKOLE → Bro og trykk BYGG. Legg et tak (to skrå staver opp til et topppunkt) over veien og trykk PRØV med Tennisball. Kula skal holde seg på veien og ikke rulle over taket.', level: 'bygglab', spot: null },
   { id: 'glass-zoom-variabel', version: '2.87', date: '2026-11-20', title: 'Glasset forstørrer 25 % mer (3,75×), og forstørrelse og størrelse kan justeres i ⚙.',
     how: 'Åpne ⚙ → Spill og finn «Glass i byggeskjermen: forstørrelse» og «størrelse». Dra en stav i Byggeskole → Bro og se glasset i hjørnet.', level: 'bygglab', spot: null },
   { id: 'r107-neste-sted', version: '2.88', date: '2026-11-20', title: 'Etter en bestått prøve i byggeren står det nå en stor knapp NESTE STED ▶ med navn og nummer (f.eks. «Trapp · 2/8»), og topplinjen har en ▶-knapp til neste sted (🔒 når det er låst).',
