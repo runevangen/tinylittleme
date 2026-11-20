@@ -4,6 +4,7 @@
 // rotér og FJERN vises som en liten verktøylinje (↺ ↻ ✕) ved den valgte delen. Festing: instruksjon i byggeområdet, første del markert og en spøkelseslinje (grønn/rød) fra første del mot fingeren.
 // De gamle knappene og delebrettet gjenbrukes (CSS flytter dem): mekanikken i build.js er uendret, og dagens skjerm er uendret når valget er av. Logikken ligger i buildux_classic_logic.js.
 import { CBX, classicSite, classicMetrics, classicControls, selKindOf, barPlace, toolStep, stepKey, linkGhost, ghostKey, handPair, shouldShowCHand, tapHandAt, createCStats, statsAct, statsTurn, statsTry, statsWin, orientOf, orientName, actLine, winLine, turnLine } from './buildux_classic_logic.js';
+import { selRowKind, selRowPlace } from './build_touch_logic.js';
 import { corners, linkEnds } from './build_logic.js';
 import { starText, starThresholds } from './build_budget.js';
 
@@ -14,7 +15,8 @@ export const cbxCss = () => `
 #bld .cxprobe{display:block;position:absolute;left:0;top:0;width:0;height:0;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);pointer-events:none}
 #bld.cbx .cbx{display:block}
 #bld.cbx .bt.top,#bld.cbx .bt.bot,#bld.cbx .zoom,#bld.cbx .tools,#bld.cbx:not(.cxopen) .lab,#bld.cbx:not(.cxopen) .loads,#bld.cbx:not(.cxopen) .share{display:none!important}
-#bld.cbx .hint{top:calc(${SAFE_T} + 56px);font-size:12.5px;line-height:1.25;color:#ffe9a8;z-index:2}
+#bld.cbx .hint{top:calc(${SAFE_T} + 56px);font-size:12.5px;line-height:1.25;color:#ffe9a8;z-index:2;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}   /* R109: høyst to linjer */
+body.building #qbtn{z-index:30!important;pointer-events:auto!important}   /* R109: ⚑ ligger over alt i byggeskjermen */
 #bld .cbx button{pointer-events:auto;font-family:system-ui}
 #bld .cbx .cxtop{position:absolute;left:0;right:0;top:${SAFE_T};height:48px;display:flex;gap:8px;padding:0 8px;padding-right:max(52px,calc(env(safe-area-inset-right) + 52px));align-items:stretch;pointer-events:none;z-index:3}
 #bld .cbx .cxback,#bld .cbx .cxmore{flex:0 0 52px;height:48px;border-radius:14px;border:2px solid #6ab8ff;background:#121a2ce6;color:#cfe8ff;font:800 24px/1 system-ui;padding:0}
@@ -46,7 +48,7 @@ export const cbxCss = () => `
 #bld.sim .cbx .cxgo button.cxsp{display:block}
 #bld.sim .cbx .cxgo button.try{background:#8a3a2a;border-color:#ff9a8a}
 /* lita verktøylinje ved valgt del */
-#bld .cbx .cxsel{position:absolute;display:none;gap:6px;z-index:4;pointer-events:none}
+#bld .cbx .cxsel{position:absolute;display:none;gap:6px;z-index:6;pointer-events:none;justify-content:center;padding:0;border-radius:26px}   /* R109: fast rad over delebrettet, ikke flytende ved delen */
 #bld .cbx .cxsel.show{display:flex}
 #bld .cbx .cxsel button{width:48px;height:48px;border-radius:50%;padding:0;border:3px solid #fff;background:#2b3552;color:#fff;font:800 22px/1 system-ui;box-shadow:0 3px 10px #0008;pointer-events:auto}
 #bld .cbx .cxsel button[data-cx="del"]{background:#d6422f}
@@ -192,18 +194,13 @@ export function createClassicUx(ctx) {
   }
   const invalidate = () => { lastSig = ''; barSig = ''; };
 
-  // ---- verktøylinjen ved valgt del ----
-  function updateBar(sx) {
+  // ---- verktøylinjen ved valgt del (R109: fast rad rett over delebrettet, vises så snart noe er valgt) ----
+  function updateBar() {
     const el = q('.cxsel'); if (!el) return;
-    const kind = ctx.getTool() || root.classList.contains('cxopen') ? null : selKindOf({ sel: ctx.getSel(), selLink: ctx.getSelLink(), sim: ctx.isSim(), dragging: ctx.isDragging() }), b = B();
-    let pts = null;
-    if (kind === 'part') { const p = b.placed.find((z) => z.id === ctx.getSel()); if (p) pts = corners(p).map((c) => sx(c.u, c.v)); }
-    else if (kind === 'link') { const l = b.links.find((z) => z.id === ctx.getSelLink()), e = l && linkEnds(b, l); if (e) pts = [sx((e[0].u + e[1].u) / 2, (e[0].v + e[1].v) / 2)]; }
-    if (!pts) { if (barSig !== 'x') { barSig = 'x'; el.classList.remove('show'); } return; }
-    const m = cur || metrics(), area = { x0: m.area.x0, x1: m.area.x1, y0: m.topPx, y1: ctx.height() - m.botPx }, w = kind === 'link' ? CBX.barW / 3 : CBX.barW;
-    const bar = barPlace({ pts, w, h: CBX.barH, area }); if (!bar) return;
-    const s = `${kind}|${Math.round(bar.left)}|${Math.round(bar.y)}`; if (s === barSig) return; barSig = s;
-    el.classList.add('show'); el.classList.toggle('link', kind === 'link'); el.style.left = bar.left + 'px'; el.style.top = bar.y + 'px'; el.style.width = bar.w + 'px';
+    const kind = selRowKind({ sel: ctx.getSel(), selLink: ctx.getSelLink(), sim: ctx.isSim(), dragging: ctx.isDragging(), sheet: root.classList.contains('cxopen') });
+    if (!kind) { if (barSig !== 'x') { barSig = 'x'; el.classList.remove('show'); } return; }
+    const m = cur || metrics(), pl = selRowPlace({ m, H: ctx.height(), kind }), s = `${kind}|${Math.round(pl.left)}|${Math.round(pl.y)}`; if (s === barSig) return; barSig = s;
+    el.classList.add('show'); el.classList.toggle('link', kind === 'link'); el.style.left = pl.left + 'px'; el.style.top = pl.y + 'px'; el.style.width = pl.w + 'px';
   }
 
   // ---- tegning: spøkelseslinje, første del markert, hånd ----
@@ -214,7 +211,7 @@ export function createClassicUx(ctx) {
   };
   function draw(sx, tNow, g2) {
     if (!on()) return;
-    updateBar(sx);
+    updateBar();
     const b = B(), tool = ctx.getTool(), from = ctx.getLinkFrom(), step = toolStep({ tool, linkFrom: from });
     ghost = null;
     if (step === 'pick2' && b) {
@@ -280,8 +277,19 @@ export function createClassicUx(ctx) {
     rotl: () => ctx.act.rotl(), rotr: () => ctx.act.rotr(), del: () => ctx.act.del(), srotl: () => { ctx.act.rotl(); sheet(false); }, srotr: () => { ctx.act.rotr(); sheet(false); },
   };
   for (const t of CBX.tools) actions[t.id] = () => { ctx.setTool(t.id); logEv('byggux', `modus klassisk: verktøy ${ctx.getTool() || 'av'}`); buzz?.(5); };
+  // R109: ↺ ↻ ✕ virker på slipp (ikke bare klikk): iOS kan svelge klikket rett etter et dra. Klikket som følger svelges så handlingen ikke gjøres to ganger.
+  let fired = { k: '', t: 0 }, downK = '';
   root.addEventListener('click', (e) => {
-    const b = e.target.closest?.('[data-cx]'), k = b?.dataset?.cx; if (!k || !Object.hasOwn(actions, k)) return; e.stopPropagation(); actions[k](); invalidate();
+    const b = e.target.closest?.('[data-cx]'), k = b?.dataset?.cx; if (!k || !Object.hasOwn(actions, k)) return; e.stopPropagation();
+    if (k === fired.k && wall() - fired.t < 0.6) { fired = { k: '', t: 0 }; return; }
+    actions[k](); invalidate();
+  }, true);
+  const NEAR = ['rotl', 'rotr', 'del'];
+  root.addEventListener('pointerdown', (e) => { const k = e.target.closest?.('.cxsel [data-cx]')?.dataset?.cx; downK = k && NEAR.includes(k) ? k : ''; }, true);
+  root.addEventListener('pointercancel', () => { downK = ''; }, true);
+  root.addEventListener('pointerup', (e) => {
+    const k = e.target.closest?.('.cxsel [data-cx]')?.dataset?.cx; if (!downK || k !== downK) { downK = ''; return; } downK = '';
+    if (ctx.isSim()) return; fired = { k, t: wall() }; actions[k](); invalidate(); logEv('byggux', `modus klassisk: ${k} på slipp`);
   }, true);
   function bindStops() {   // knappene skal ikke starte panorering/berøring på brettet
     try { for (const el of root.querySelectorAll('.cbx button, .cxrail')) el.addEventListener('pointerdown', (e) => { e.stopPropagation(); touch(); }); } catch { /* ok */ }

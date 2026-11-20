@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r109-vri-flagg-tekst', version: '2.90', date: '2026-11-20', title: 'Byggeskjermen (Trapp, Vippe m.fl.): ↺ ↻ ✕ står i en fast rad rett over delebrettet og virker rett etter at du har satt ut en del; ⚑ virker alltid; tekstene ligger ikke lenger over hverandre i liggende; og skjermen går lettere.',
+    how: 'Åpne BYGGESKOLE → Vippe (3/8) eller Trapp. Dra en planke ut og trykk ↻ med en gang: delen vris. Trykk ⚑ rett etterpå: boksen åpnes. Snu telefonen til liggende: teksten øverst ligger ryddig, ikke over hverandre.', level: 'bygglab', spot: null },
   { id: 'r108-last-bare-paa-veien', version: '2.89', date: '2026-11-20', title: 'Kula, bilen og roboten kjører bare på veien: støttestaver og tak stopper dem ikke, og de kan ikke klatre opp på trekanter eller tak.',
     how: 'Åpne BYGGESKOLE → Bro og trykk BYGG. Legg et tak (to skrå staver opp til et topppunkt) over veien og trykk PRØV med Tennisball. Kula skal holde seg på veien og ikke rulle over taket.', level: 'bygglab', spot: null },
   { id: 'glass-zoom-variabel', version: '2.87', date: '2026-11-20', title: 'Glasset forstørrer 25 % mer (3,75×), og forstørrelse og størrelse kan justeres i ⚙.',
