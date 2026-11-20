@@ -1345,8 +1345,9 @@
   "audio": {
     "reverb": 0.26,
     "ambience": [
-      "drip",
-      "fan"
+      "fridge",
+      "clock",
+      "drip"
     ]
   },
   "ants": [

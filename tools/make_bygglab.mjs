@@ -118,7 +118,7 @@ const s = {
   windows: [{ wall: 'N', z: 330, y: 150, w: 150, h: 80 }, { wall: 'N', z: 930, y: 150, w: 150, h: 80 }],
   hazards: [],
   objects,
-  look: { exposure: 1.0, sun: 2 }, audio: { reverb: 0.15 },
+  look: { exposure: 1.0, sun: 2 }, audio: { reverb: 0.15, ambience: ['room:lab', 'knock'] },
   ants: [],
   build: { sites, parts: [] },
   lab: { start: true },   // R67: merker brettet som Bygglab (bygglab_logic.js): byggeskjermen åpnes ved start, steder kan velges og nullstilles

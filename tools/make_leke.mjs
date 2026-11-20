@@ -30,7 +30,7 @@ const s = {
     lego('gele_leke_trinn_1', YEL, [485, 505, 0, 27, 125, 160], { shortcut: true, help: 'Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), klatre opp og gå trappa langs veggen. Den lange veien går fortsatt.' }),
     lego('gele_leke_trinn_2', ORA, [505, 525, 0, 45, 125, 160], { shortcut: true }), lego('gele_leke_trinn_3', RED, [525, 545, 0, 63, 125, 160], { shortcut: true, cp: true }),
   ],
-  look: { exposure: 1.0, sun: 2.6 }, audio: { reverb: 0.2, theme: 'leke' },
+  look: { exposure: 1.0, sun: 2.6 }, audio: { reverb: 0.2, theme: 'leke', ambience: ['room:play', 'plink'] },
   // legoknotter på gulv og tak (lekerom_view.js). plates: [x0, x1, z0, z1, farge] i cm: fargede legoplater i gulvet som peiler deg.
   lego: { floor: true, ceiling: true, color: '#46bb6c', ceilColor: '#e8f2fb', plates: [[0, 130, 60, 160, '#e8453c'], [420, 600, 160, 230, '#f6c52b'], [180, 300, 0, 40, '#3a78d8']] },
   ants: [

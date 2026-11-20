@@ -42,7 +42,7 @@ const s = {
     deco('bokhylle_bak', 'chest', 'wood', '#5a3b26', [662, 670, 96, 200, 20, 245]), deco('bokrygger', 'toyblock', 'book', '#3a78d8', [654, 662, 96, 140, 110, 245]),
     deco('bokrygger_2', 'toyblock', 'book', '#e8453c', [654, 662, 140, 175, 110, 245]),
   ],
-  look: { exposure: 1.0, sun: 2.4 }, audio: { reverb: 0.25, theme: 'stue' },
+  look: { exposure: 1.0, sun: 2.4 }, audio: { reverb: 0.25, theme: 'stue', ambience: ['room:stue', 'clock', 'gust'] },
   ants: [
     { id: 'maur_stue_1', type: 'ant', on: 'gulv', from: [260, 235], to: [500, 235] },
     { id: 'maur_stue_2', type: 'ant', on: 'gulv', from: [520, 190], to: [600, 190] },

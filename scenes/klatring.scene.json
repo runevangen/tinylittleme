@@ -372,6 +372,9 @@
     "sun": 2.0
   },
   "audio": {
-    "reverb": 0.15
+    "reverb": 0.15,
+    "ambience": [
+      "room:lab"
+    ]
   }
 }

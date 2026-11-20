@@ -846,7 +846,12 @@
  },
  "audio": {
   "reverb": 0.25,
-  "theme": "stue"
+  "theme": "stue",
+  "ambience": [
+   "room:stue",
+   "clock",
+   "gust"
+  ]
  },
  "ants": [
   {

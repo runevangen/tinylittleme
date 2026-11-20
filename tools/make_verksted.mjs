@@ -36,7 +36,7 @@ const s = {
     o('vegg_o', 'towel_hang', 'metal', '#5f7ea8', [640, 700, 56, 106, 60, 64], { grip: true, onto: 'hylle_o2', grip_drain: -0.2, help: 'Verktøyvegg\nHold GREP mot hullbrettet og klatre opp på hylla. Gå så tilbake langs hylla: målet er verktøykassa øverst.' }),
     o('maal', 'toolbox', 'metal', '#2f8f55', [525, 560, 106, 122, 10, 50], { cp: true }),
   ],
-  look: { exposure: 1.0, sun: 2.4 }, audio: { reverb: 0.25, theme: 'verksted' },
+  look: { exposure: 1.0, sun: 2.4 }, audio: { reverb: 0.25, theme: 'verksted', ambience: ['room:shop', 'knock'] },
   ants: [
     { id: 'maur_1', type: 'ant', on: 'gulv', from: [110, 232], to: [300, 232] },
     { id: 'maur_2', type: 'ant', on: 'benk_o', from: [540, 130], to: [690, 130] },

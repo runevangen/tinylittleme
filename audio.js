@@ -4,6 +4,8 @@
 // Lydene: skritt per underlag, landing, pust som følger anstrengelse, innpust ved «tar sats»,
 // avspark, fallvind, skrens, dytting, og hendelser (knuse, klemt, ta/slipp ting, skylles ned).
 
+import { makeVariation, shouldVary, varyKey, buildMaterial, attachKind } from './audio_fx.js';
+
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rnd = (a, b) => a + Math.random() * (b - a);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -53,15 +55,27 @@ export const SOUND_LIST = [
   { id: 'boing', label: 'Leker: sprettboks', group: 'Leker' },
   { id: 'tick', label: 'Leker: wind-up tikker', group: 'Leker' },
   { id: 'crumb', label: 'Smule plukket', group: 'Hendelser' },
-  { id: 'bcreak', label: 'Bygg: planke knirker', group: 'Bygg' },
-  { id: 'bbreak', label: 'Bygg: brudd (planke, tape, tau)', group: 'Bygg' },
-  { id: 'bsplash', label: 'Bygg: testfiguren faller ned', group: 'Bygg' },
-  { id: 'bhop', label: 'Bygg: testfiguren hopper', group: 'Bygg' },
+  { id: 'bcreak', label: 'Bygg: planke knirker', group: 'Bygging' },
+  { id: 'bbreak', label: 'Bygg: brudd (planke, tape, tau)', group: 'Bygging' },
+  { id: 'bsplash', label: 'Bygg: testfiguren faller ned', group: 'Bygging' },
+  { id: 'bhop', label: 'Bygg: testfiguren hopper', group: 'Bygging' },
+  { id: 'bplace', label: 'Bygging: sette ut en del (tre, stål, tau, kloss)', group: 'Bygging' },
+  { id: 'battach', label: 'Bygging: feste (tape, ledd, tau, gummi)', group: 'Bygging' },
+  { id: 'bknot', label: 'Bygging: knute (rutenett)', group: 'Bygging' },
+  { id: 'brod', label: 'Bygging: stav (tre dunk, stål ping)', group: 'Bygging' },
+  { id: 'bpop', label: 'Bygging: angre / slett (pop)', group: 'Bygging' },
+  { id: 'bstart', label: 'Bygging: PRØV starter', group: 'Bygging' },
+  { id: 'barrive', label: 'Bygging: lasten kommer over', group: 'Bygging' },
+  { id: 'bstars', label: 'Bygging: mål og stjerner (melodi)', group: 'Bygging' },
   { id: 'floodwarn', label: 'Stigende vann: varsel før du drukner', group: 'Hendelser' },
   { id: 'checkpoint', label: 'Sjekkpunkt', group: 'Hendelser' },
   { id: 'win', label: 'Mål', group: 'Hendelser' },
   { id: 'drip', label: 'Dryppende kran', group: 'Rom' },
   { id: 'fan', label: 'Vifte / romtone', group: 'Rom' },
+  { id: 'fridge', label: 'Kjøleskap (brum)', group: 'Rom' },
+  { id: 'clock', label: 'Klokke (tikk-takk)', group: 'Rom' },
+  { id: 'room', label: 'Romtone (barnerom, stue, verksted …)', group: 'Rom' },
+  { id: 'amb', label: 'Rom: spilledåse, bank og vindpust', group: 'Rom' },
   { id: 'step:wood', label: 'Skritt: tre', group: 'Skritt per underlag' },
   { id: 'step:tile', label: 'Skritt: flis/porselen', group: 'Skritt per underlag' },
   { id: 'step:soft', label: 'Skritt: matte/tekstil', group: 'Skritt per underlag' },
@@ -92,7 +106,14 @@ export function createAudio(ctx, opts = {}) {
   for (const { id } of SOUND_LIST) chan[id].connect(id.startsWith('step:') ? chan.step : bus);
   for (const k in opts.levels || {}) if (chan[k]) { levels[k] = clamp(opts.levels[k], 0, 2); chan[k].gain.value = levels[k]; }   // lagrede nivåer fra forrige økt
   let cur = bus;                                              // gjeldende utgang for lyden som lages akkurat nå
-  const use = (name, fn) => { const prev = cur; cur = chan[name] || bus; try { return fn(); } finally { cur = prev; } };
+  const vary = makeVariation(opts.rng || Math.random), lastVar = {};
+  let vr = { pitch: 1, gain: 1 };                             // R99: variasjon for lyden som lages nå (tonehøyde og styrke ±3–6 %, aldri samme variant to ganger)
+  const use = (name, fn) => {
+    const prev = cur, pv = vr; cur = chan[name] || bus;
+    vr = shouldVary(name) ? vary.pick(varyKey(name)) : { pitch: 1, gain: 1 };
+    if (shouldVary(name)) lastVar[varyKey(name)] = vr;
+    try { if (opts.samples && opts.samples.play(name, cur, { gain: vr.gain, rate: vr.pitch })) return undefined; return fn(); } finally { cur = prev; vr = pv; }   // R99: ekte lyd i stedet for syntese når den finnes
+  };
 
   const noiseLen = ctx.sampleRate * 2, noiseBuf = ctx.createBuffer(1, noiseLen, ctx.sampleRate), nd = noiseBuf.getChannelData(0);
   for (let i = 0; i < noiseLen; i++) nd[i] = Math.random() * 2 - 1;
@@ -108,6 +129,7 @@ export function createAudio(ctx, opts = {}) {
   // kort støystøt gjennom et filter
   function burst({ type = 'bandpass', freq = 1000, freq2, q = 1, gain = 0.2, attack = 0.002, decay = 0.05, delay = 0, pan = 0 }) {
     const t = now() + delay, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    freq *= vr.pitch; if (freq2) freq2 *= vr.pitch; gain *= vr.gain;
     s.buffer = noiseBuf; f.type = type; f.frequency.setValueAtTime(freq, t); f.Q.value = q;
     if (freq2) f.frequency.exponentialRampToValueAtTime(freq2, t + attack + decay);
     envelope(g, t, gain, attack, decay);
@@ -117,6 +139,7 @@ export function createAudio(ctx, opts = {}) {
   // kort tone (tupp, ring, dunk)
   function tone({ freq = 200, freq2, type = 'sine', gain = 0.2, attack = 0.002, decay = 0.1, delay = 0, pan = 0 }) {
     const t = now() + delay, o = ctx.createOscillator(), g = ctx.createGain();
+    freq *= vr.pitch; if (freq2) freq2 *= vr.pitch; gain *= vr.gain;
     o.type = type; o.frequency.setValueAtTime(freq, t);
     if (freq2) o.frequency.exponentialRampToValueAtTime(freq2, t + attack + decay);
     envelope(g, t, gain, attack, decay);
@@ -251,6 +274,28 @@ export function createAudio(ctx, opts = {}) {
   const toyTick = () => use('tick', () => { tone({ freq: rnd(1750, 2000), type: 'square', gain: 0.045, attack: 0.001, decay: 0.025 }); burst({ type: 'highpass', freq: 3500, gain: 0.07, decay: 0.015 }); });
   const win = () => use('win', () => [523, 659, 784, 1047].forEach((f, k) => tone({ freq: f, type: 'triangle', gain: 0.12, decay: 0.5, delay: k * 0.11 })));
 
+  // ---- bygging (R99): sette ut, feste, knute/stav, angre, prøv, last over, stjerner ----------------------------
+  const PLACE = {
+    wood: () => { tone({ freq: 150, freq2: 72, gain: 0.26, decay: 0.09 }); burst({ freq: 950, q: 1.1, gain: 0.12, decay: 0.04 }); },                                            // tre: dump
+    steel: () => { tone({ freq: 1250, gain: 0.14, decay: 0.22 }); tone({ freq: 2700, gain: 0.1, decay: 0.14 }); burst({ type: 'highpass', freq: 4000, gain: 0.08, decay: 0.015 }); tone({ freq: 120, freq2: 80, gain: 0.05, decay: 0.07 }); },    // stål: ping
+    rope: () => { burst({ type: 'lowpass', freq: 520, gain: 0.16, attack: 0.015, decay: 0.1 }); tone({ freq: 95, gain: 0.1, decay: 0.07 }); },                              // tau: mykt dask
+    block: () => { tone({ freq: 190, freq2: 95, gain: 0.24, decay: 0.06 }); burst({ type: 'highpass', freq: 2400, gain: 0.08, decay: 0.025 }); tone({ freq: 760, type: 'triangle', gain: 0.04, decay: 0.05 }); },   // kloss: klakk
+  };
+  const bplace = (type) => use('bplace', () => PLACE[buildMaterial(type)]());
+  const brod = (mat = 'wood') => use('brod', () => PLACE[buildMaterial('rod:' + mat)]());
+  const ATTACH = {
+    tape: () => { burst({ type: 'highpass', freq: 1800, freq2: 4200, gain: 0.2, attack: 0.004, decay: 0.07 }); tone({ freq: 500, gain: 0.08, decay: 0.03 }); },                                 // tape: kort riv
+    hinge: () => { tone({ freq: 1500, type: 'square', gain: 0.07, attack: 0.001, decay: 0.025 }); tone({ freq: 980, type: 'square', gain: 0.07, attack: 0.001, decay: 0.03, delay: 0.045 }); burst({ type: 'highpass', freq: 3000, gain: 0.09, decay: 0.012, delay: 0.045 }); },   // ledd: klikk-knepp
+    rope: () => { burst({ type: 'lowpass', freq: 800, gain: 0.14, attack: 0.01, decay: 0.08 }); tone({ freq: 220, freq2: 150, gain: 0.1, decay: 0.08 }); burst({ type: 'bandpass', freq: 1800, q: 2, gain: 0.05, decay: 0.03, delay: 0.07 }); },   // tau: knute
+    band: () => { tone({ freq: 280, freq2: 720, type: 'triangle', gain: 0.12, decay: 0.07 }); tone({ freq: 720, freq2: 340, type: 'triangle', gain: 0.09, decay: 0.12, delay: 0.07 }); },       // gummi: tvang
+  };
+  const battach = (kind) => use('battach', () => ATTACH[attachKind(kind)]());
+  const bknot = () => use('bknot', () => { tone({ freq: 130, freq2: 70, gain: 0.2, decay: 0.07 }); burst({ type: 'highpass', freq: 2800, gain: 0.07, decay: 0.015 }); });
+  const bpop = () => use('bpop', () => { tone({ freq: 700, freq2: 210, gain: 0.13, attack: 0.001, decay: 0.07 }); burst({ type: 'highpass', freq: 3500, gain: 0.05, decay: 0.012 }); });
+  const bstart = () => use('bstart', () => { tone({ freq: 220, freq2: 440, type: 'triangle', gain: 0.1, decay: 0.16 }); burst({ freq: 1400, q: 1, gain: 0.06, decay: 0.05, delay: 0.1 }); });
+  const barrive = () => use('barrive', () => { tone({ freq: 110, freq2: 70, gain: 0.3, decay: 0.12 }); burst({ type: 'lowpass', freq: 500, gain: 0.18, decay: 0.12 }); tone({ freq: 880, type: 'triangle', gain: 0.05, decay: 0.3, delay: 0.05 }); });
+  const bstars = (n = 1) => use('bstars', () => { const k = clamp(Math.round(n) || 1, 1, 3); [523, 659, 784, 1047, 1319].slice(0, 2 + k).forEach((f, i) => tone({ freq: f, type: 'triangle', gain: 0.1, decay: 0.4, delay: 0.12 + i * 0.1 })); if (k === 3) burst({ type: 'highpass', freq: 5000, gain: 0.04, decay: 0.4, delay: 0.5 }); });
+
   // ---- romlyd (kommer fra brettets audio.ambience) -------------------------------------
   const drip = (pan = 0) => use('drip', () => {                // én dråpe: kort «plink» med litt tunk og klikk
     tone({ freq: rnd(1900, 2500), freq2: rnd(850, 1150), gain: 0.14, attack: 0.001, decay: 0.07, pan });
@@ -258,6 +303,19 @@ export function createAudio(ctx, opts = {}) {
     burst({ type: 'highpass', freq: 3600, gain: 0.05, decay: 0.02, pan });
   });
   const hum = (level = 0.05) => setLoop('fan', () => loopNoise(210, 0.9, 'lowpass'), clamp(level, 0, 1), 210);   // vifte / lav romtone
+  const clockTick = (alt = false, delay = 0) => use('clock', () => { burst({ type: 'highpass', freq: alt ? 3000 : 3800, gain: 0.05, attack: 0.001, decay: 0.012, delay }); tone({ freq: alt ? 1250 : 1650, gain: 0.025, attack: 0.001, decay: 0.03, delay }); });
+  const plink = () => use('amb', () => { const f = [1568, 1319, 1760, 1175][Math.floor(rnd(0, 4))]; tone({ freq: f, type: 'triangle', gain: 0.045, decay: 0.7 }); tone({ freq: f * 1.5, gain: 0.015, decay: 0.5 }); });
+  const knock = () => use('amb', () => { tone({ freq: 140, freq2: 90, gain: 0.07, decay: 0.08 }); burst({ type: 'lowpass', freq: 600, gain: 0.04, decay: 0.06 }); });
+  const gust = () => use('amb', () => burst({ type: 'bandpass', freq: 380, freq2: 650, q: 0.7, gain: 0.03, attack: 0.9, decay: 1.5 }));
+  const ambEvent = (kind, pan = 0) => { if (kind === 'drip') drip(pan); else if (kind === 'clock') clockTick(false); else if (kind === 'plink') plink(); else if (kind === 'knock') knock(); else if (kind === 'gust') gust(); };
+  // romtoner (R99): loop-lag fra createAmbience().loops, av (nivå 0) i meny, under vann og i bygging
+  const ROOM_LAYER_SPEC = { fan: { freq: 210, q: 0.9 } };
+  function amb(loopLayers, on) {
+    for (const l of loopLayers || []) {
+      const ch = l.loop, sp = ROOM_LAYER_SPEC[ch] || l;
+      setLoop(ch, () => loopNoise(sp.freq, sp.q ?? 0.8, 'lowpass'), on ? Math.min(l.level ?? 0.04, 0.06) : 0, sp.freq);
+    }
+  }
   function quietLoops() { for (const k in loops) if (k !== 'fan' && now() >= (hold[k] || 0)) loops[k].g.gain.setTargetAtTime(0, now(), 0.08); }
 
   // ---- mikser ---------------------------------------------------------------
@@ -308,6 +366,18 @@ export function createAudio(ctx, opts = {}) {
       case 'checkpoint': checkpoint(); break;
       case 'win': win(); break;
       case 'drip': drip(-0.3); drip(0.3); break;
+      case 'bplace': bplace('plank_s'); bplace('rod:steel'); bplace('rod:rope'); bplace('block'); break;
+      case 'battach': battach('tape'); battach('hinge'); battach('rope'); battach('band'); break;
+      case 'bknot': bknot(); break;
+      case 'brod': brod('wood'); brod('steel'); break;
+      case 'bpop': bpop(); break;
+      case 'bstart': bstart(); break;
+      case 'barrive': barrive(); break;
+      case 'bstars': bstars(3); break;
+      case 'clock': clockTick(false); clockTick(true, 0.5); break;
+      case 'amb': plink(); knock(); break;
+      case 'fridge': hold.fridge = now() + 1.4; setLoop2('fridge', 'fridge', () => loopNoise(160, 1.2, 'lowpass'), 0.06, 160); break;
+      case 'room': hold.room = now() + 1.4; setLoop2('room', 'room', () => loopNoise(300, 0.7, 'lowpass'), 0.06, 300); break;
       case 'fan': hold.fan = now() + 1.4; setLoop2('fan', 'fan', () => loopNoise(210, 0.9, 'lowpass'), 0.06, 210); break;
       case 'fall': hold.wind = now() + 1.4; setLoop2('wind', 'fall', () => loopNoise(500, 0.7, 'bandpass'), 0.22, 1300); break;
       case 'skid': hold.skid = now() + 1.0; setLoop2('skid', 'skid', () => loopNoise(2400, 8, 'bandpass'), 0.1, 2700); break;
@@ -324,9 +394,12 @@ export function createAudio(ctx, opts = {}) {
   const apply = () => master.gain.setTargetAtTime(muted ? 0 : volume, now(), 0.03);
   return {
     ctx, out: bus, step, land, roll, breath, tick, bump, windup, jump, grab, mantle, reach, fall, skid, scrape, quietLoops,
+    bplace, brod, battach, bknot, bpop, bstart, barrive, bstars, clockTick, plink, knock, gust, ambEvent, amb,
     pickup, drop, shatter, crush, splash, squash, anthit, spiderhiss, spiderleap, waspbuzz, waspdive, bossroar, bossbump, fanfare, crumb, bcreak, bbreak, bsplash, bhop, floodwarn, checkpoint, win, drip, hum, squeak, honk, creak, boing, toyTick,
     setLevel, setLevels, preview, getLevels: () => ({ ...levels }), sounds: SOUND_LIST,
-    resume: () => (ctx.state !== 'running' && ctx.resume ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),   // også 'interrupted' (iPhone)
+    resume: () => (ctx.state !== 'running' && ctx.resume && !(opts.hidden && opts.hidden()) ? Promise.resolve(ctx.resume()).catch(() => {}) : Promise.resolve()),
+    suspend: () => (ctx.state === 'running' && ctx.suspend ? Promise.resolve(ctx.suspend()).catch(() => {}) : Promise.resolve()),   // R99: stille i bakgrunnen
+    get lastVar() { return lastVar; },   // også 'interrupted' (iPhone)
     setBreath: (on) => { breathOn = !!on; }, isBreath: () => breathOn,
     setVolume: (v) => { volume = clamp(v, 0, 1); apply(); },
     setMuted: (m) => { muted = !!m; apply(); },

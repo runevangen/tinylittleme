@@ -397,7 +397,11 @@
   },
   "audio": {
     "reverb": 0.25,
-    "theme": "verksted"
+    "theme": "verksted",
+    "ambience": [
+      "room:shop",
+      "knock"
+    ]
   },
   "ants": [
     {

@@ -66,3 +66,58 @@ Prosedyrebasert musikk, helt syntetisert, uten filer. Den starter etter første 
 - **Avbrudd:** iPhone setter lyden i `suspended`/`interrupted` ved lås eller fanebytte. Pumpen planlegger ingenting mens lyden ikke går, stopper i skjult fane, og lyden tas opp igjen på `visibilitychange`, `pageshow`, `statechange` og neste trykk.
 - **Innstillinger** (⚙, gruppe Lyd): «Musikk» (av/på) og «Musikk: volum».
 - **Tester:** `test_music.mjs` (logikk, ducking, resume/skjult fane mot falsk AudioContext) og `tools/music_balance.cjs` (balansemåling) og `tools/music_game_check.cjs` (kjører spillet i Playwright og sjekker at stemningen faktisk bytter til tense og win og logges).
+
+## Dekning (R99)
+Revisjon av hendelser og rom. «Før» er stillingen før R99, «nå» er etter. Alt er fortsatt syntetisert; ingen lydfiler er lagt inn.
+
+### Hendelser
+| Hendelse | Før | Nå (lyd-id i mikseren) |
+|---|---|---|
+| Skritt, landing, hopp, grep, pust, fall | lyd | uendret, men med variasjon (se under) |
+| Ta og slippe ting, dytte, knuse, klemt, kar/do | lyd | uendret (`pickup`, `drop` varierer nå) |
+| Mål, sjekkpunkt, smuler, sjef, maur, edderkopp, veps, leker | lyd | uendret |
+| **Byggeskjerm: sette ut del** | nesten stille (`bhop`) | `bplace`: tre dump, stål ping, tau mykt dask, kloss klakk (valgt av delen: `buildMaterial`) |
+| **Feste (TAPE/LEDD/TAU/GUMMI)** | `bhop` | `battach`: tape kort riv, ledd klikk-knepp, tau knute, gummi tvang |
+| **Knute og stav i Rutenett** | `bhop` | `bknot` (dunk) og `brod` (tre dunk, stål ping, tau dask) |
+| **Angre, slett, nullstill** | stille | `bpop` (liten pop) |
+| **PRØV start** | stille | `bstart` (kort stigende tone) |
+| **Brudd** | `bcreak` + `bbreak` | uendret: knirk vokser med belastning (`bcreak(stress)`), så smell (`bbreak`); testfigurens fall: `bsplash` |
+| **Lasten kommer over** | bare mål-melodi | `barrive` (dump + lys tone) rett før melodien |
+| **Mål og stjerner** | `win` (fast melodi) | `bstars(n)`: 3–5 toner etter antall stjerner, glitter ved tre |
+| Menyknapper, toasts | stille | uendret (bevisst: ingen UI-lyder ennå) |
+
+### Rom (romtone, `audio.ambience` i brettet; tabellen `AMB_BY_ID` i `audio_fx.js` brukes hvis brettet mangler listen)
+| Rom | Før | Nå |
+|---|---|---|
+| Bad (1, 4) | drypp + vifte | uendret |
+| Barnerom (2, 5) | ingen | svak romtone `room:toy` + spilledåse (`plink`) |
+| Kjøkken (3, 6, Bygg 4) | drypp + vifte | kjøleskap-brum (`fridge`) + tikkende klokke (`clock`) + drypp |
+| Lekerom (7) | ingen | `room:play` + `plink` |
+| Stue (8) | ingen | `room:stue` + klokke + svakt vindpust (`gust`) |
+| Verksted (9) | ingen | `room:shop` + fjern bank (`knock`) |
+| Soverom | ingen | `room:night` + `gust` |
+| Bygglab og prøverom | ingen | `room:lab` (+ `knock` i Bygglab) |
+
+Romtonene er laget slik: jevn bakgrunn er filtrert støy (`hum`/`amb`) med nivå høyst 0,06 (under skritt, målt i `audio_check`); enkelthendelser kommer med minst 1,2 s mellomrom, og i rom med klokke midt mellom to tikk, så to romlyder aldri ligger oppå hverandre (`createAmbience`). De er av i hovedmenyen, under vann (stigende vann), i bygging, i planvisning og når fanen er skjult. Av/på: ⚙ → Lyd → «Romtone». Volum: mikseren, gruppe «Rom» (`fan`, `fridge`, `clock`, `room`, `amb`, `drip`).
+
+## Variasjon (R99)
+Alle gjentatte lyder (skritt, landing, slippe/ta ting, grep og alle bygglyder) får per gang en variant fra `makeVariation` (`audio_fx.js`): tonehøyde og styrke varierer ±4,5 % (klemt til 3–6 %), seks varianter, og samme variant velges aldri to ganger på rad. Det gjelder også ved ekte lydfiler (avspillingshastighet og volum). Eksisterende volumstandarder er uendret. `tools/audio_check.cjs` spiller 14 skritt og 10 landinger etter hverandre og sjekker at ingen to naboer er like, at variasjonen er innenfor ±6 %, og at ingen variant klipper eller blir for svak (mot medianen).
+
+## Ekte lyd (valgfritt, ingenting lagt inn ennå)
+`audio_samples.js` lar ekte opptak erstatte syntesen lyd for lyd. Mekanismen:
+- Legg filen i `sounds/<id>.<ext>` (`ogg`, `mp3` eller `m4a`; kolon i id-en blir understrek: `step:wood` → `sounds/step_wood.m4a`) og føy `'<id>': '<ext>'` til `SAMPLE_IDS` i `audio_samples.js`. Uten oppføring i `SAMPLE_IDS` skjer det ingenting (ingen 404-forespørsler).
+- Filen lastes først når lyden skal spilles første gang (lazy), aldri ved oppstart. Den første gangen brukes syntesen; neste gang filen. Mangler eller feiler filen, brukes syntesen for alltid i den økten.
+- URL-en får `?v=<versjon>` (cache-bust), som resten av spillet.
+- Mikser, variasjon og «Bruk ekte lydfiler» (⚙, admin) gjelder like for ekte lyd. Lyd-id er kanal-id i `SOUND_LIST` (mikseren viser dem).
+
+**Slik tar Rune opp foley på mobilen:** talememo-appen (m4a), rolig rom, telefonen 10–20 cm fra lydkilden, ett opptak per lyd med 3–6 varianter etter hverandre (klipp dem opp i egne filer ved behov). Lengde: skritt og klikk 0,1–0,3 s, dunk og dask 0,2–0,5 s, brudd 0,6–1 s, melodi/mål 1–2 s. Mono, 44,1 kHz, m4a (iPhone) eller ogg; trim stillhet i starten (maks 20 ms før lyden). Normaliser toppen til ca. −3 dBFS; spillet regner med at filen er omtrent like sterk som syntesen på 100 % i mikseren, og resten justeres der. Bruk én fil per id; variasjonen (tonehøyde og styrke) legges på av spillet.
+
+**Best å bytte først** (der syntesen låter mest kunstig, og som høres oftest): 1) `step:wood`, `step:tile`, `step:soft` (skritt), 2) `bplace` og `battach` (bygging), 3) `bbreak`/`bcreak` (brudd), 4) `land`, 5) `pickup`/`drop`, 6) `fridge` (kjøleskapsbrum, kan være en lang løkke senere), `clock`.
+
+## iPhone og bakgrunn (R99)
+- Lydmotoren lages først ved første trykk (`unlockAudio` i `main.js`); ingen lyd og ingen romtone starter før det. Når den er låst opp logges `logEv('lyd', 'låst opp …')`, og første bygglyd logges som `logEv('lyd', 'første bygglyd: …')`.
+- `lifecycle()` (`audio_fx.js`) avgjør: skjult fane og kjørende lyd gir `suspend` (ingenting spilles eller planlegges i bakgrunnen); synlig fane med stoppet lyd gir `resume`. `audio.resume()` gjør ingenting mens fanen er skjult.
+- Ikke testet på telefon: hvordan romtonene og bygglydene låter, og om iPhone-høyttaleren gjengir kjøleskapsbrummet (lavt, 160 Hz). Testes på iPhone.
+
+## Tester (R99)
+`test_audiofx.mjs` (variasjon, romtoner per brett og at brettfilene stemmer med tabellen, planlegger uten overlapp, livssyklus, ekte lyd med falsk fetch), og `tools/audio_check.cjs` (offline-rendring: ingen NaN, ingen klipping, rimelig styrke per bygglyd, romtoner og enkelthendelser under skritt, variasjon).

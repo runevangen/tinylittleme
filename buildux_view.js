@@ -239,7 +239,7 @@ export function createBuildUx(ctx) {
   function commit(fromId, t) {
     const b = B(), m = mat(), r = t.kind === 'node' ? gAddRod(b, fromId, t.node.id, m) : gAddRodTo(b, fromId, t.u, t.v, m);
     if (!r.ok) { toast(T('grid.err.' + (r.why || 'same'), { n: COMMA(maxLenOf(b)) })); buzz?.(12); return false; }
-    land.act(); buzz?.(14); audio?.bhop?.(); logEv('byggux', `stav ${m} lengde ${COMMA(r.len)} kost ${r.cost}${r.newNode ? ', ny knute' : ''}`);
+    land.act(); buzz?.(14); audio?.brod?.(m); logEv('byggux', `stav ${m} lengde ${COMMA(r.len)} kost ${r.cost}${r.newNode ? ', ny knute' : ''}`);
     const f = timerRod(timer, wall()); if (f.first) logEv('byggux', `første stav etter ${f.secs.toFixed(1)} s`);
     armed = null; grid.select(null, null); ctx.trayRender?.(); ctx.onChange?.(); return true;   // ingenting valgt: neste dra fra sluttknuten fortsetter kjeden
   }
@@ -257,7 +257,7 @@ export function createBuildUx(ctx) {
     const ex = nodeAt(G(), near.u, near.v); if (ex) { grid.select(ex.id, null); armed = ex.id; lastTap = { ...cur, added: false }; return; }
     const r = gAddNode(B(), near.u, near.v);
     if (!r.ok) { toast(T('grid.err.' + (r.why || 'out'), { n: COMMA(maxLenOf(B())) })); lastTap = null; return; }
-    land.act(); buzz?.(10); audio?.bhop?.(); armed = null; grid.select(r.node.id, null); logEv('byggux', `knute ${r.node.id}`); lastTap = { ...cur, added: true }; ctx.trayRender?.(); ctx.onChange?.();
+    land.act(); buzz?.(10); audio?.bknot?.(); armed = null; grid.select(r.node.id, null); logEv('byggux', `knute ${r.node.id}`); lastTap = { ...cur, added: true }; ctx.trayRender?.(); ctx.onChange?.();
   }
 
   // ---- knapper ----

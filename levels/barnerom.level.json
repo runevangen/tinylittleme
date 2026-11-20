@@ -1008,7 +1008,11 @@
   "sun": 2.6
  },
  "audio": {
-  "reverb": 0.14
+  "reverb": 0.14,
+  "ambience": [
+   "room:toy",
+   "plink"
+  ]
  },
  "ants": [
   {

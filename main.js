@@ -2,6 +2,8 @@ import { parseCinema, installRandom, cineStore } from './cinema_logic.js';   // 
 import * as THREE from 'three';
 import { RoomEnvironment } from './lib/RoomEnvironment.js';
 import { createAudio, surfaceOf, SOUND_LIST } from './audio.js';
+import { ambienceFor, createAmbience, ambientOn, lifecycle } from './audio_fx.js';   // R99: romtoner, variasjon, livssyklus
+import { createSampleBank } from './audio_samples.js';   // R99: valgfrie ekte lydfiler (sounds/)
 import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
 import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT, fetchInbox, markRead, unreadReplies, statsLines, checkReply } from './feedback_send.js';
@@ -178,8 +180,9 @@ function unlockAudio(e) {
   if (!audio) {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
-      audio = createAudio(new Ctx(), { volume: store.get('tlm.vol', 0.7), reverb: store.get('tlm.reverb', null) ?? LEVEL.audio?.reverb ?? 0.12, levels: store.get('tlm.mix2', {}), breath: breathSound });
-      audio.setMuted(soundMuted);
+      const actx = new Ctx();
+      audio = createAudio(actx, { samples: createSampleBank(actx, { version: VERSION, enabled: () => realSounds }), hidden: () => document.hidden, volume: store.get('tlm.vol', 0.7), reverb: store.get('tlm.reverb', null) ?? LEVEL.audio?.reverb ?? 0.12, levels: store.get('tlm.mix2', {}), breath: breathSound });
+      audio.setMuted(soundMuted); logEv('lyd', `låst opp (${actx.state})`);
       music = createMusic(audio.ctx, audio.out, { theme: themeFor(LEVEL), volume: store.get('tlm.musicvol', 0.2), on: store.get('tlm.music', true) });   // R5: musikk starter etter første trykk
       music.setMood(musicMood); music.start();
     } catch { audio = null; music = null; }
@@ -203,7 +206,7 @@ addEventListener('touchstart', unlockAudio, { passive: true }); addEventListener
   }, 400);
 }
 // iPhone stopper lyden (suspended/interrupted) ved lås eller fanebytte: ta den opp igjen når fanen er synlig, og ved neste trykk (unlockAudio)
-document.addEventListener('visibilitychange', () => { if (!document.hidden) audio?.resume(); });
+document.addEventListener('visibilitychange', () => { if (!audio) return; const a = lifecycle({ unlocked: true, hidden: document.hidden, state: audio.ctx.state }); if (a === 'suspend') audio.suspend(); else if (a === 'resume') audio.resume(); });   // R99: stille i bakgrunnen
 addEventListener('pageshow', () => audio?.resume());
 // valgfri kamerafølging: kameraet dreier seg langsomt bak figuren når den går (av etter at du selv har dratt i kameraet)
 migrateCalm((k, d) => store.get(k, d), (k, v) => store.set(k, v));   // R54: følging av som standard (én gang, også for gammel lagret verdi)
@@ -1193,7 +1196,10 @@ const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, h
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
 if (hasGates(LEVEL)) { const gb = gatesBudget(LEVEL); logEv('gåte', `${gateViews.count} deler, ${gb.calls} tegnekall, ${gb.tris} trekanter`); }
-const bld = createBuildMode({ onOpen: (id) => schoolOnBuildOpen(id), onClose: () => schoolV.hide(), onStagePass: (id, r) => schoolOnPass(id, r), onMenu: () => quitToMenu('bygg'), onStat: (name, data) => sts.track(name, levelId, data), menuLabel: () => dft(lang, 'df.menu'), scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: { crumb: (...a) => audio?.crumb(...a), bcreak: (...a) => audio?.bcreak(...a), bbreak: (...a) => audio?.bbreak(...a), bsplash: (...a) => audio?.bsplash(...a), bhop: (...a) => audio?.bhop(...a), win: (...a) => audio?.win(...a) }, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getLabFree: () => labFree, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getGrid: () => buildGrid, getGridHint: () => DIF.gridHint, getGridGuide: () => gridGuide, getGridMax: () => buildGridMax, getGridStress: () => buildGridStress, getGridPeak: () => buildGridPeak, getGridDeck: () => buildGridDeck, getGridGamma: () => buildGridGamma, getGridSlow: () => buildGridSlow, getStage: () => ({ on: gridStage, lock: gridLock, massK: gridMassK, budgetK: gridBudgetK }), getPlayGrid: () => gridPlay, getBuildUx: () => buildUx, getBuxHelp: () => ({ labels: DIF.gridHint && buildUxLand, suggest: difficulty === 'beginner' && buildUxLand }), getPlayLock: () => gridPlayLock, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
+let buildSndLogged = false;   // R99: logg første bygglyd
+const buildSnd = (n) => (...a) => { if (!buildSndLogged && audio) { buildSndLogged = true; logEv('lyd', `første bygglyd: ${n}`); } return audio?.[n]?.(...a); };
+const buildAudio = Object.fromEntries(['crumb', 'bcreak', 'bbreak', 'bsplash', 'bhop', 'win', 'bplace', 'brod', 'battach', 'bknot', 'bpop', 'bstart', 'barrive', 'bstars'].map((n) => [n, buildSnd(n)]));
+const bld = createBuildMode({ onOpen: (id) => schoolOnBuildOpen(id), onClose: () => schoolV.hide(), onStagePass: (id, r) => schoolOnPass(id, r), onMenu: () => quitToMenu('bygg'), onStat: (name, data) => sts.track(name, levelId, data), menuLabel: () => dft(lang, 'df.menu'), scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: buildAudio, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getLabFree: () => labFree, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getGrid: () => buildGrid, getGridHint: () => DIF.gridHint, getGridGuide: () => gridGuide, getGridMax: () => buildGridMax, getGridStress: () => buildGridStress, getGridPeak: () => buildGridPeak, getGridDeck: () => buildGridDeck, getGridGamma: () => buildGridGamma, getGridSlow: () => buildGridSlow, getStage: () => ({ on: gridStage, lock: gridLock, massK: gridMassK, budgetK: gridBudgetK }), getPlayGrid: () => gridPlay, getBuildUx: () => buildUx, getBuxHelp: () => ({ labels: DIF.gridHint && buildUxLand, suggest: difficulty === 'beginner' && buildUxLand }), getPlayLock: () => gridPlayLock, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
 
 // Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
 const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
@@ -1369,6 +1375,7 @@ let stickCurve = store.get('tlm.stickcurve', 1.3), inertia = store.get('tlm.iner
 const metrics = { swipes: 0, dragPx: 0, yawUser: 0, yawAuto: 0, stickT: 0, t: 0 };
 let stepAdapt = store.get('tlm.stepadapt', true), reactAnim = store.get('tlm.reactanim', true);
 let turnStepsOn = store.get('tlm.turnsteps', true), stepOverOn = store.get('tlm.stepover', true), gripPosesOn = store.get('tlm.gripposes', true), climbFeelStr = store.get('tlm.climbfeel', 1);
+let roomTone = store.get('tlm.roomtone', true), realSounds = store.get('tlm.realsounds', true);   // R99
 let breathSound = store.get('tlm.breathsound', false);                        // R38: pustelyd av som standard (egen lagringsnøkkel)
 let idleWink = store.get('tlm.idlewink', true), restBreath = store.get('tlm.restbreath', false);
 const mixSet = (ids, v) => { const mix = store.get('tlm.mix2', {}); for (const id of ids) { mix[id] = v; audio?.setLevel(id, v); } store.set('tlm.mix2', mix); };
@@ -2133,6 +2140,9 @@ const SETTINGS = [
   ] : []),
   // Lydvalg som er lette å finne (hele lydmikseren med alle lydene ligger bak admin)
   fl('breathsound', 'lyd', 'Pustelyd (pust ved anstrengelse)', false, () => breathSound, kp('tlm.breathsound', (v) => { breathSound = v; audio?.setBreath(v); logEv('pustelyd', v ? 'på' : 'av'); })),
+  fl('roomtone', 'lyd', 'Romtone (svak lyd i rommet: kjøleskap, klokke, drypp)', true, () => roomTone, kp('tlm.roomtone', (v) => { roomTone = v; logEv('lyd', 'romtone ' + (v ? 'på' : 'av')); })),
+  rg('mix_build', 'lyd', 'Bygging: volum (sette ut, feste, brudd, mål)', 1, 0, 2, 0.05, () => mixGet('bplace'), (v) => mixSet(['bplace', 'battach', 'bknot', 'brod', 'bpop', 'bstart', 'barrive', 'bstars', 'bcreak', 'bbreak', 'bsplash', 'bhop'], v), { pct: true }),
+  fl('realsounds', 'admin', 'Bruk ekte lydfiler (sounds/) når de finnes, ellers syntese', true, () => realSounds, kp('tlm.realsounds', (v) => { realSounds = v; logEv('lyd', 'ekte lydfiler ' + (v ? 'på' : 'av')); })),
   rg('mix_breath', 'lyd', 'Pust: volum (0 = av)', 1, 0, 2, 0.05, () => mixGet('breath'), (v) => mixSet(['breath', 'windup'], v), { pct: true }),
   fl('restbreath', 'lyd', 'Rolig pust også når du står stille', false, () => restBreath, kp('tlm.restbreath', (v) => { restBreath = v; })),
   rg('mix_steps', 'lyd', 'Skritt: volum', 1, 0, 2, 0.05, () => mixGet('step'), (v) => mixSet(['step'], v), { pct: true }),
@@ -2717,23 +2727,21 @@ function update(dt) {
 }
 
 // romlyd: dryppende kran m.m. fra brettets audio.ambience, planlagt her slik at lydtekst virker uten lyd
-const AMB = LEVEL.audio?.ambience || [];
+const AMB = ambienceFor(levelId, LEVEL), ambience = createAmbience(AMB);   // R99: egen romtone i hvert brett (audio_fx.js)
 const dripSrc = LEVEL.boxes.find((b) => b.kind === 'faucet');
-let dripT = 1 + Math.random() * 2;
 function panOf(x, z) {                                       // -1 venstre … +1 høyre sett fra kameraet
   const rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   return Math.max(-1, Math.min(1, ((x - player.x) * rx + (z - player.z) * rz) / 14));
 }
 function ambientTick(dt) {
-  if (mode === 'plan') return;
-  if (AMB.includes('fan')) audio?.hum(0.05);
-  if (AMB.includes('drip')) {
-    dripT -= dt;
-    if (dripT <= 0) {
-      dripT = 2.4 + Math.random() * 3.6;
-      const pan = dripSrc ? panOf((dripSrc.min[0] + dripSrc.max[0]) / 2, (dripSrc.min[2] + dripSrc.max[2]) / 2) : 0;
-      audio?.drip(pan); cue('drypp', pan);
-    }
+  if (!audio) return;
+  let inMenu = false; try { inMenu = menuOpen; } catch { /* startskjermen er ikke satt opp ennå */ }
+  const on = roomTone && ambientOn({ menu: inMenu, underwater: floodSt.under > 0, hidden: document.hidden, build: !!bld?.active, plan: mode === 'plan' });
+  audio.amb(ambience.loops, on);                              // av (nivå 0) i meny, under vann og i bygging
+  for (const ev of ambience.step(dt, on)) {
+    if (ev.kind === 'drip') { const pan = dripSrc ? panOf((dripSrc.min[0] + dripSrc.max[0]) / 2, (dripSrc.min[2] + dripSrc.max[2]) / 2) : 0; audio.drip(pan); cue('drypp', pan); }
+    else if (ev.kind === 'clock') audio.clockTick(ev.alt);
+    else audio.ambEvent(ev.kind, ev.pan);
   }
 }
 // lydtekst for det som skjer (uavhengig av om lyden er på)

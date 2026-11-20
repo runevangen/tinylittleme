@@ -310,7 +310,10 @@
   "sun": 2.4
  },
  "audio": {
-  "reverb": 0.15
+  "reverb": 0.15,
+  "ambience": [
+   "room:stue"
+  ]
  },
  "ants": [],
  "collectibles": [

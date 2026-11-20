@@ -526,7 +526,11 @@
  },
  "audio": {
   "reverb": 0.2,
-  "theme": "leke"
+  "theme": "leke",
+  "ambience": [
+   "room:play",
+   "plink"
+  ]
  },
  "ants": [
   {

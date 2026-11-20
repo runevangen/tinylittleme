@@ -831,7 +831,11 @@
   "sun": 2
  },
  "audio": {
-  "reverb": 0.15
+  "reverb": 0.15,
+  "ambience": [
+   "room:lab",
+   "knock"
+  ]
  },
  "ants": [],
  "collectibles": [],

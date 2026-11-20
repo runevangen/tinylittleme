@@ -26,7 +26,7 @@ const base = process.argv[2] || 'http://localhost:8766';
     };
     const render = async (secs, fn) => {
       const ctx = new OfflineAudioContext(1, Math.floor(SR * secs), SR);
-      const a = createAudio(ctx, { volume: 1, reverb: 0.1 });
+      const a = createAudio(ctx, { volume: 1, reverb: 0.1, breath: true });   // pust er av som standard (R38), så den slås på her
       fn(a);
       const buf = await ctx.startRendering();
       return buf.getChannelData(0);
@@ -59,12 +59,54 @@ const base = process.argv[2] || 'http://localhost:8766';
     out.scrape = stats(await render(1.5, (a) => a.scrape(1)), SR * 0.8, SR * 1.5);
     // pustemodell: i ro vs. etter løping – teller åndedrag og måler styrke
     const breathRun = async (speed01, secs) => {
-      const ctx = new OfflineAudioContext(1, Math.floor(SR * (secs + 1)), SR); const a = createAudio(ctx, { volume: 1 });
+      const ctx = new OfflineAudioContext(1, Math.floor(SR * (secs + 1)), SR); const a = createAudio(ctx, { volume: 1, breath: true });
       for (let t = 0; t < secs; t += 1 / 60) a.tick(1 / 60, { active: true, speed01, climbing: false });
       const d = (await ctx.startRendering()).getChannelData(0); return { ...stats(d, 0, d.length), effort: +a.effort.toFixed(2) };
     };
     out.breathing_rest_8s = await breathRun(0, 8);
     out.breathing_run_8s = await breathRun(1, 8);
+    // R99: bygglyder, romtoner og variasjon
+    const FX = await import('./audio_fx.js');
+    out.b_place_wood = stats(await render(0.6, (a) => a.bplace('plank_s')), 0, SR * 0.3);
+    out.b_place_steel = stats(await render(0.8, (a) => a.bplace('rod:steel')), 0, SR * 0.5);
+    out.b_place_rope = stats(await render(0.6, (a) => a.bplace('rod:rope')), 0, SR * 0.3);
+    out.b_place_block = stats(await render(0.6, (a) => a.bplace('block')), 0, SR * 0.3);
+    for (const k of ['tape', 'hinge', 'rope', 'band']) out['b_attach_' + k] = stats(await render(0.6, (a) => a.battach(k)), 0, SR * 0.3);
+    out.b_knot = stats(await render(0.6, (a) => a.bknot()), 0, SR * 0.3);
+    out.b_rod_wood = stats(await render(0.6, (a) => a.brod('wood')), 0, SR * 0.3);
+    out.b_rod_steel = stats(await render(0.8, (a) => a.brod('steel')), 0, SR * 0.5);
+    out.b_pop = stats(await render(0.5, (a) => a.bpop()), 0, SR * 0.25);
+    out.b_start = stats(await render(0.7, (a) => a.bstart()), 0, SR * 0.4);
+    out.b_arrive = stats(await render(0.8, (a) => a.barrive()), 0, SR * 0.5);
+    out.b_stars1 = stats(await render(1.5, (a) => a.bstars(1)), 0, SR * 1.2);
+    out.b_stars3 = stats(await render(1.8, (a) => a.bstars(3)), 0, SR * 1.5);
+    out.b_creak_low = stats(await render(0.8, (a) => a.bcreak(0.2)), 0, SR * 0.5);
+    out.b_creak_high = stats(await render(0.8, (a) => a.bcreak(1.3)), 0, SR * 0.5);
+    out.b_break = stats(await render(0.8, (a) => a.bbreak()), 0, SR * 0.5);
+    out.ev_clock = stats(await render(0.4, (a) => a.clockTick(false)), 0, SR * 0.2);
+    out.ev_plink = stats(await render(1.2, (a) => a.plink()), 0, SR * 0.9);
+    out.ev_knock = stats(await render(0.5, (a) => a.knock()), 0, SR * 0.3);
+    out.ev_gust = stats(await render(3, (a) => a.gust()), 0, SR * 2.5);
+    out.ev_drip = stats(await render(0.5, (a) => a.drip(0)), 0, SR * 0.3);
+    out.room = {};
+    for (const id of ['bad', 'kjokken', 'barnerom', 'stue', 'verksted', 'leke', 'soverom', 'bygglab']) {
+      const loops = FX.createAmbience(FX.ambienceFor(id, null)).loops;
+      out.room[id] = stats(await render(2.5, (a) => a.amb(loops, true)), SR * 1.2, SR * 2.5);
+    }
+    out.room_off = stats(await render(1.5, (a) => a.amb(FX.createAmbience(FX.ambienceFor('stue', null)).loops, false)), SR * 0.5, SR * 1.5);
+    // variasjon: skritt etter hverandre i én lyd-kontekst (nye varianter hver gang, aldri to like på rad)
+    const seq = async (n, gap, fn, fnVar) => {
+      const ctx = new OfflineAudioContext(1, Math.floor(SR * (n + 1) * gap + SR * 0.3), SR);   // første gap er oppvarming: en frisk offline-kontekst gir første lyd ved t=0 ca. 3x svakere enn senere
+      const a = createAudio(ctx, { volume: 1, reverb: 0 }); const vars = [];   // uten etterklang, ellers bygger halen seg opp mellom skrittene
+      for (let i = 0; i < n; i++) ctx.suspend((i + 1) * gap + 0.001).then(() => { fn(a, i); vars.push(fnVar(a)); ctx.resume(); });
+      const d = (await ctx.startRendering()).getChannelData(0);
+      const segs = []; for (let i = 0; i < n; i++) segs.push(stats(d, Math.floor(SR * ((i + 1) * gap)), Math.floor(SR * ((i + 1) * gap + gap * 0.9))));
+      return { segs, vars };
+    };
+    const sq = await seq(14, 0.3, (a, i) => a.step('wood', 0.8, i % 2 ? 1 : -1), (a) => { const v = a.lastVar.step; return { idx: v.idx, pitch: v.pitch, gain: v.gain }; });
+    out.var_steps = { vars: sq.vars, segs: sq.segs };
+    const sl = await seq(10, 0.5, (a) => a.land('wood', 14), (a) => { const v = a.lastVar.land; return { idx: v.idx, pitch: v.pitch, gain: v.gain }; });
+    out.var_lands = { vars: sl.vars, segs: sl.segs };
     // mikser: hver lyd kan forhåndsspilles, er stille ved 0 og tydelig sterkere ved 2
     const { SOUND_LIST } = await import('./audio.js');
     out.mixer = {};
@@ -80,9 +122,9 @@ const base = process.argv[2] || 'http://localhost:8766';
   });
   let fail = 0;
   const ok = (cond, msg) => { if (!cond) { fail++; console.log('  FEIL:', msg); } };
-  for (const [k, v] of Object.entries(res)) if (k !== 'mixer') console.log(k.padEnd(20), JSON.stringify(v));
-  const mx = res.mixer; delete res.mixer;
-  for (const [k, v] of Object.entries(res)) { ok(!v.nan, k + ' har NaN'); ok(v.peak <= 1.0001, k + ' klipper'); ok(v.peak > 0.001 || k === 'fall_slow', k + ' er stille'); }
+  for (const [k, v] of Object.entries(res)) if (!['mixer', 'room', 'var_steps', 'var_lands'].includes(k)) console.log(k.padEnd(20), JSON.stringify(v));
+  const mx = res.mixer; delete res.mixer; const room = res.room; delete res.room; const vs = res.var_steps, vl = res.var_lands; delete res.var_steps; delete res.var_lands;
+  for (const [k, v] of Object.entries(res)) { ok(!v.nan, k + ' har NaN'); ok(v.peak <= 1.0001, k + ' klipper'); ok(v.peak > 0.001 || ['fall_slow', 'room_off', 'breathing_rest_8s'].includes(k), k + ' er stille'); }
   ok(res.step_tile.centroid > res.step_wood.centroid, 'flis skal låte lysere enn tre');
   ok(res.step_wood.centroid > res.step_soft.centroid, 'tre skal låte lysere enn tekstil');
   ok(res.land_hard.rms > res.land_soft.rms * 1.5, 'hard landing skal være tydelig sterkere');
@@ -90,6 +132,31 @@ const base = process.argv[2] || 'http://localhost:8766';
   ok(res.fall_fast.rms > 0.02 && res.fall_slow.rms < 0.001, 'fallvind: stille ved lav fart, tydelig ved høy');
   ok(res.breathing_run_8s.rms > res.breathing_rest_8s.rms * 2, 'pust etter løping skal høres mer enn i ro');
   ok(res.breathing_run_8s.effort > 0.5 && res.breathing_rest_8s.effort < 0.05, 'anstrengelsesmodellen');
+  // R99: bygglyder: hørbare, ikke klipp, ikke tyngre enn hard landing; stål lysere enn tre; knirk vokser med belastning
+  for (const k of Object.keys(res).filter((x) => x.startsWith('b_'))) { ok(res[k].rms > (k === 'b_creak_low' ? 0.002 : 0.004), `${k} er for svak (${res[k].rms})`); ok(res[k].peak < 0.95, `${k} nærmer seg klipping (${res[k].peak})`); ok(res[k].rms < res.land_hard.rms * 1.5, `${k} er for sterk mot hard landing`); }
+  ok(res.b_place_steel.centroid > res.b_place_wood.centroid * 1.5, 'stål skal låte lysere enn tre');
+  ok(res.b_rod_steel.centroid > res.b_rod_wood.centroid * 1.5, 'stav i stål (ping) skal være lysere enn tre (dunk)');
+  ok(res.b_creak_high.rms > res.b_creak_low.rms * 1.2, 'knirk skal vokse med belastning');
+  ok(res.b_stars3.rms > res.b_stars1.rms * 0.8, 'tre stjerner skal ikke låte svakere enn én');
+  // R99: romtoner og enkelthendelser skal ligge under skritt (rms og topp), og være av når de skrus av
+  const stepRms = res.step_wood.rms, stepPeak = res.step_wood.peak;
+  for (const [id, r] of Object.entries(room)) { console.log('romtone ' + id, JSON.stringify(r)); ok(!r.nan && r.peak <= 1, `romtone ${id}: NaN/klipp`); ok(r.rms > 0.0003, `romtone ${id} er stille (${r.rms})`); ok(r.rms < stepRms * 0.3, `romtone ${id} er ikke tydelig under skritt (${r.rms} mot ${stepRms})`); }
+  ok(new Set(Object.values(room).map((r) => r.centroid)).size >= 5, 'romtonene skal ha ulik klang');
+  ok(res.room_off.rms < 0.0003, 'romtone skal være av når den skrus av');
+  for (const k of ['ev_clock', 'ev_plink', 'ev_knock', 'ev_gust', 'ev_drip']) { ok(res[k].peak < stepPeak * 0.6, `${k} skal ligge under skritt (${res[k].peak} mot ${stepPeak})`); ok(res[k].peak > 0.003, `${k} er for svak`); }
+  // R99: variasjon: aldri samme variant to ganger på rad, ingen klipp, ingen for svake
+  for (const [name, v] of [['skritt', vs], ['landing', vl]]) {
+    let same = 0; for (let i = 1; i < v.vars.length; i++) if (v.vars[i].idx === v.vars[i - 1].idx) same++;
+    ok(same === 0, `${name}: samme variant to ganger på rad (${same})`);
+    ok(new Set(v.vars.map((x) => x.pitch.toFixed(3))).size >= 4, `${name}: for lite variasjon`);
+    ok(v.vars.every((x) => Math.abs(x.pitch - 1) <= 0.0601 && Math.abs(x.gain - 1) <= 0.0601), `${name}: variasjon utenfor ±6 %`);
+    const rs = v.segs.map((x) => x.rms), med = rs.slice().sort((a, b) => a - b)[rs.length >> 1];
+    ok(v.segs.every((x) => !x.nan && x.peak <= 1.0001), `${name}: NaN/klipp`);
+    ok(rs.every((x) => x > med * 0.4 && x < med * 2.5), `${name}: en variant er for svak/sterk (${rs.map((x) => x.toFixed(3)).join(' ')})`);
+    let identical = 0; for (let i = 1; i < v.segs.length; i++) if (v.segs[i].rms === v.segs[i - 1].rms && v.segs[i].centroid === v.segs[i - 1].centroid) identical++;
+    ok(identical === 0, `${name}: to påfølgende er identiske`);
+  }
+  console.log('variasjon: skritt-pitch ' + vs.vars.map((x) => x.pitch.toFixed(3)).join(' '));
   for (const [id, m] of Object.entries(mx)) {
     ok(!m.nan && m.peak <= 1.0001, `mikser ${id}: NaN/klipping`);
     ok(m.base > 0.0003, `mikser ${id}: forhåndsvisning er stille (${m.base})`);
