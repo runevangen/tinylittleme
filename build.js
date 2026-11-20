@@ -34,6 +34,8 @@ import { createBuildUx, buxCss, buxMarkup, BUX_TOP, BUX_BOT, BUX_TOP_LAND, BUX_B
 import { KEY_MODE, KEY_TIP } from './grid_guide_logic.js';
 import { createLoupe, loupeCss, loupeMarkup } from './build_loupe_view.js';   // R106: hjørneglass (build_loupe_logic.js)
 import { holdReached, partLine } from './build_loupe_logic.js';
+import { createBuildNext, bnCss, bnMarkup } from './buildnext_view.js';   // R107: resultatkort og NESTE STED
+import { seriesOf, phaseOf, topNext } from './buildnext_logic.js';
 import { createClassicUx, cbxCss, cbxMarkup } from './buildux_classic_view.js';   // R96: samme nye skall for klassiske steder (Trapp, Vippe, ...)
 import { createPeaks, loadsNow, peakSummary, stressCss as gStressCss, colorCss as gColorCss, widthK as gWidthK, isDanger as gDanger, shown as gShown, pct as gPct } from './grid_stress.js';   // R73: farge etter belastning, «største belastning»
 import { stageScaled, stageSite, hasStage, overBudget, stagesOf, stageLocked, stageLockText, stageLines, passRead, passRecord, passClear } from './grid_stage.js';   // R74: rutenett-oppdrag: mål, budsjett, tung last, låsing
@@ -92,13 +94,13 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuxHelp = () => ({ labels: true, suggest: false }) }) {
+export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }) }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
   if (!isLab(LEVEL)) { const pg = ensurePlayGrid(sites); if (pg.length) logEv('bygg', `rutenett åpent i vanlige brett: ${pg.join(', ')}`); }   // R82: steder med to ankre og dekk får MODUS-knappen (brettfilene er uendret)
   const labSites = isLab(LEVEL) ? labSitesOf(LEVEL) : [], lab = labSites.length ? { reached: new Set(), moved: false, home: null } : null;   // R67: Bygglab (bygglab_logic.js): stedene på rad, ◀ ▶, ubegrenset mengde, målflagg
-  const st = document.createElement('style'); st.textContent = css + gridCss() + buxCss() + cbxCss() + loupeCss() + (lab ? labCss() : ''); document.head.appendChild(st);
+  const st = document.createElement('style'); st.textContent = css + gridCss() + buxCss() + cbxCss() + loupeCss() + bnCss() + (lab ? labCss() : ''); document.head.appendChild(st);
   const types = { ...partTypes(LEVEL), ...bonusTypes() };   // R47: ekstradelene (smulebudsjett) har egne id-er og bor i samme tabell
   const mem = new Map(), st0 = store || { get: (k, d) => (mem.has(k) ? mem.get(k) : d), set: (k, v) => mem.set(k, v) };   // uten lagring (tester) holdes alt i minnet
   const bonusOpen = () => (getBonus() ? [...new Set([...unlockedBonus(getCrumbs(), getBonusStep()).map((b) => b.id), ...getBonusUnlocks(st0, levelId, Object.keys(bonusTypes()))])] : []);
@@ -180,7 +182,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
   // ---- DOM ----
   const root = document.createElement('div'); root.id = 'bld';
   root.innerHTML = `<canvas></canvas><div class="bt top"><button data-a="menu"></button><button data-a="back"></button><button data-a="undo"></button><button data-a="reset"></button><button data-a="try" class="go"></button></div>
-  ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-a="mode" class="bmode"></button><button data-a="gguide" class="bguide"></button><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>${gridMarkup()}${guideMarkup()}${buxMarkup()}${cbxMarkup()}${loupeMarkup()}`;   // R72: modusknapp og materialvalg (rutenett)
+  ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-a="mode" class="bmode"></button><button data-a="gguide" class="bguide"></button><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>${gridMarkup()}${guideMarkup()}${buxMarkup()}${cbxMarkup()}${loupeMarkup()}${bnMarkup()}`;   // R72: modusknapp og materialvalg (rutenett)
   if (lab) root.classList.add('lab');
   document.body.appendChild(root);
   const cv = root.querySelector('canvas'), g2 = cv.getContext('2d'), tray = root.querySelector('.tray'), loadsEl = root.querySelector('.loads'), hintEl = root.querySelector('.hint'), modal = root.querySelector('.modal'), mTitle = modal.querySelector('.mt'), mText = modal.querySelector('textarea'), mList = modal.querySelector('.list'), sBtn = (k) => root.querySelector(`[data-s="${k}"]`);
@@ -215,6 +217,18 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
     info: () => { const b = getB(active), r = starsFor(active, b.placed, b.links), best = getBuildStars(st0, levelId)[active.id], li = lab ? labInfo() : null; return { sim: !!sim, done: !!sim && simDone, cost: r.cost, parts: r.parts, stars: r.stars, on: b.placed.length > 0, best: best ? best.stars : 0, name: lab ? T(labNameKey(active)) : (active.label || active.id), nOf: li ? { n: li.n, of: li.of } : sites.length > 1 ? { n: sites.indexOf(active) + 1, of: sites.length } : null, lab: !!lab, budgetShown: !!getBudget() }; },
   };
   const cbx = createClassicUx(cbxCtx);
+  // R107: resultatkort og NESTE STED (buildnext_view.js, buildnext_logic.js): felles for begge skall (broer/Byggeskolen og klassiske steder)
+  const bnList = () => (lab ? labSites : sites), bnName = (s) => (lab ? T(labNameKey(s)) : (s.label || s.id));
+  function bnState() {
+    if (!active || !getBuildNext()) return null;
+    const skin = cbx.on() || bux.on() ? 'on' : null; if (!skin) return null;
+    const series = seriesOf(bnList(), active.id), nx = series && series.next, nextLocked = !!nx && stageLockedFor(nx), tn = topNext({ series, nextLocked });
+    const phase = phaseOf({ sim: !!sim, done: !!sim && simDone, replaying });
+    const r = phase === 'resultat' ? { won: sim.state.state === 'won', solved: winSolved, over: winOver, loadMore: !!loadMore, stars: winRes ? winRes.stars : 0, nextStar: winRes ? winRes.next : null } : {};
+    const prev = series && series.idx > 0 ? bnList()[series.idx - 1] : null;
+    return { skin, series, nextLocked, topState: tn ? tn.state : null, nextName: nx ? bnName(nx) : '', curName: bnName(active), prevName: prev ? bnName(prev) : '', phase, ...r, allDone: !!lab && stagesOf(sites).every((q) => gPass().has(q.id)) };
+  }
+  const bn = createBuildNext({ root, T, logEv, toast, state: bnState, goNext: (how) => { const s = bnState(), nx = s && s.series && s.series.next; return !!nx && !s.nextLocked && siteGoTo(nx); }, again: () => { if (sim) stopSim('resultatknapp'); }, back: () => { if (sim) stopSim('resultatknapp'); close('tilbake'); } });
   function buxEnter() {   // R92: stedet får den forenklede skjermen: rutenett er eneste modus der (huskt MODUS-valg og MODUS-hintet røres ikke)
     if (!active || !bux.wanted() || grid.on() || !grid.enabledHere() || stageLockedFor(active) || playLockedFor(active)) { bux.layout(); return false; }
     const m0 = gstore.get(KEY_MODE, 'classic'), t0 = gstore.get(KEY_TIP, 0), ok = grid.toggleMode('buildux'); gstore.set(KEY_MODE, m0); gstore.set(KEY_TIP, t0);
@@ -281,7 +295,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
   // ---- tegning ----
   function draw() { drawBoard(); loupeStep(); }   // R106: glasset kopierer det ferdige bildet, så det tegnes sist
   function drawBoard() {
-    if (!active) return; size(); const d = dpr(), B = getB(active), S = active; bux.frame(); cbx.frame();
+    if (!active) return; size(); const d = dpr(), B = getB(active), S = active; bux.frame(); cbx.frame(); bn.frame();
     g2.setTransform(d, 0, 0, d, 0, 0); g2.clearRect(0, 0, W, H);
     const sx = (u, v) => toScreen(view, W, H, u, v);
     // rutenett
@@ -607,12 +621,18 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
   function labGo(dir) {
     if (!lab || !active) return false;
     const next = labStepSite(labSites, active.id, dir); if (!next || next === active) return false;
+    return siteGoTo(next);
+  }
+  function siteGoTo(next) {   // R107: felles for ◀ ▶ i ⋯-arket, ▶ i topplinjen og NESTE STED i resultatkortet; bygget på stedet du forlater beholdes
+    if (!active || !next || next === active) return false;
     if (sim) stopSim('sted');
     const B = getB(active);
     if (committed.has(active.id) && committed.get(active.id) !== sigOf(B)) { uncommitWorld(active, 'endret uten ny prøve'); solved.delete(active.id); }
     closeModal(); tool = null; linkFrom = null; selLink = null; sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; grid.reset();
-    active = next; getB(next).snap = getSnap(); size(); view = fitNow(); hint = ''; lab.moved = true;
-    bux.reset(); cbx.reset(); buxEnter(); labels(); trayRender(); const i = labInfo(); logEv('bygglab', `sted ${i.n}/${i.of} (${i.key})`); onChange?.(); return true;
+    active = next; getB(next).snap = getSnap(); size(); view = fitNow(); hint = ''; if (lab) lab.moved = true;
+    bux.reset(); cbx.reset(); bn.reset(); buxEnter(); labels(); trayRender();
+    if (lab) { const i = labInfo(); logEv('bygglab', `sted ${i.n}/${i.of} (${i.key})`); } else logEv('bygg', `sted ${next.id}`);
+    onChange?.(); return true;
   }
   function labReset(s, why) {
     const b = getB(s), had = !!(b.placed.length || b.links.length || committed.has(s.id) || solved.has(s.id) || lab.reached.has(s.id) || passedL.has(s.id) || recs.has(s.id));
@@ -659,7 +679,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
     sim = createSim(isGrid(B) ? gdef : { site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(stageNow() ? { massK: stageNow().massK } : {}) });
     simLoad = curLoad(); winOver = false; loadMore = null; replaying = false; winSolved = false; { const gc = getGhost() ? ghostChoice(recs.get(active.id), sim.pose()) : { rec: null, why: 'av' }; ghostRec = gc.rec; if (gc.why === 'endret') logEv('bygg', 'spøkelse skjult: delene er endret siden forrige prøve'); } recorder = createRecorder(sim, { load: simLoad }); simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; simHelp = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
     gPeaks = isGrid(B) ? createPeaks() : null; gSum = null; gSpeed = 'play'; grid.simSync('play', false); bux.onTry(); cbx.onTry();
-    audio?.bstart?.(); root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}, modus ${isGrid(B) ? 'rutenett' : 'klassisk'}${ghostRec ? ', med spøkelse' : ''}, glass ${loupe.takeShown()} visninger`); return true;
+    audio?.bstart?.(); root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}, modus ${isGrid(B) ? 'rutenett' : 'klassisk'}${ghostRec ? ', med spøkelse' : ''}, glass ${loupe.takeShown()} visninger, resultatknapper ${bn.takeUsed()} trykk`); return true;
   }
   const loadThe = (id) => T('build.loadThe.' + id);
   function simText() {   // R48: teksten nevner lasten som prøves (testfiguren har egne, eldre tekster)
@@ -794,7 +814,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
     sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; grid.reset(); gguide.reset(); size(); view = fitNow(); hint = '';
     document.body.classList.add('building'); labels(); trayRender();
     if (grid.restoreMode()) { view = fitNow(); labels(); }   // R75: sist valgte modus huskes
-    bux.reset(); cbx.reset(); buxEnter();   // R92 (R96: cbx)
+    bux.reset(); cbx.reset(); bn.reset(); buxEnter();   // R92 (R96: cbx)
     logEv('bygg', `inn ${s.id}: ${B.have.length} deler, ${B.placed.length} plassert`);
     try { onOpen(s.id); } catch { /* R95: hekt for Byggeskolen */ }
     return true;
@@ -806,7 +826,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
     sim = null; recorder = null; replaying = false; closeModal(); gguide.reset(); root.classList.remove('sim'); tool = null; linkFrom = null;
     if (lab && (lab.moved || labFar(active, player))) { const h = labHome(active); Object.assign(player, { x: h.x, y: h.y, z: h.z, vx: 0, vy: 0, vz: 0, onGround: true }); logEv('bygglab', `figuren flyttet til sted ${labInfo().n}`); }   // R67: ut fra et annet sted enn der du sto: på sokkelen før gapet
     if (lab) lab.moved = false;
-    cbx.reset(); loupe.reset(); active = null; drag = null; gest = null; ptrs.clear(); document.body.classList.remove('building'); onChange?.();
+    cbx.reset(); bn.reset(); loupe.reset(); active = null; drag = null; gest = null; ptrs.clear(); document.body.classList.remove('building'); onChange?.();
     try { onClose(); } catch { /* R95 */ }
   }
 
@@ -856,7 +876,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'), resetBuild: () => !!active && act.reset(),   // R74: til tester
     stage: { get now() { return stageNow(); }, locked: (id) => stageLockedFor(sites.find((q) => q.id === id)), get passed() { return [...gPass()]; }, get over() { return winOver; }, lines: () => (active && stageState(getB(active)) ? stageLines(stageState(getB(active)), T) : []), get state() { return active ? stageState(getB(active)) : null; } },   // R74
-    bux,   // R92: til tester
+    bux, bn,   // R92: til tester (R107: bn)
     cbx,   // R96: til tester
     guide: { get open() { return gguide.isOpen(); }, get btn() { return root.classList.contains('gguidebtn'); }, get tip() { return root.classList.contains('gmodetip'); }, tipText: () => grid.modeTip(), show: () => gguide.show('test'), hide: (h) => gguide.hide(h), act: () => act.gguide() },
     grid: { get speed() { return gSpeed; }, setSpeed: (k) => { if (sim && !simDone) gSpeed = grid.setSpeed(k); return gSpeed; }, example: () => grid.example(), get peaks() { return gPeaks ? [...gPeaks.peaks].map(([id, p]) => ({ id, ...p })) : null; }, get summary() { return gSum; }, get on() { return grid.on(); }, get available() { return !!active && grid.enabledHere(); }, toggle: () => grid.toggleMode('kode'), setMat: (m) => grid.setMat(m), tap: (x, y) => grid.tap(x, y), del: () => grid.del(), get mat() { return grid.mat; }, get selNode() { return grid.selNode; }, get selRod() { return grid.selRod; }, info: () => (active && getB(active).rg ? { mode: getB(active).mode || 'classic', ...gridStats(getB(active)), cost: starsFor(active, getB(active).placed, getB(active).links).cost, nodes: getB(active).rg.nodes.map((n) => ({ id: n.id, u: n.u, v: n.v, fixed: !!n.fixed, ...(n.deck ? { deck: true } : {}) })), rods: getB(active).rg.rods.map((r) => ({ ...r })) } : null) },   // R72: til tester (node og Playwright)

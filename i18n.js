@@ -122,6 +122,8 @@ const DICT = {
     'gstage.done': '✓ Dette stedet er bestått', 'gstage.locked': 'Låst: bestå sted {n} ({name}) med rutenett først.', 'gstage.unlocked': 'Bestått! Sted {n} er åpnet i rutenett.', 'gstage.allDone': 'Alle rutenett-stedene er bestått!', 'grid.modeLocked': 'RUTENETT 🔒',
     // R67: Bygglab (bygglab_logic.js, bygglab_view.js): stedene, nullstilling, målflagg og oppgave per sted (tekstene nevner knappene)
     'lab.bar': '{n}/{of} · {name}', 'lab.line': 'Sted {n}/{of}: {name} — {task}', 'lab.resetSite': 'NULLSTILL STED', 'lab.resetAll': 'NULLSTILL ALLE', 'lab.prev': 'Forrige sted', 'lab.next': 'Neste sted',
+    'bn.next': 'NESTE STED ▶', 'bn.nextSub': '{name} · {n}/{of}', 'bn.again': 'PRØV IGJEN', 'bn.back': 'TILBAKE TIL SPILLET', 'bn.finish': 'FERDIG, TILBAKE TIL SPILLET', 'bn.passed': 'Bestått', 'bn.failed': 'Ikke bestått', 'bn.over': 'Holdt, men for dyrt', 'bn.more': 'Bra! Flere laster må over', 'bn.allDone': 'Byggeskolen ferdig ✓', 'bn.starHint': 'Neste stjerne: kostnad høyst {cost}, {parts} deler eller færre', 'bn.topAria': 'Neste sted: {name}', 'bn.topLocked': 'Neste sted {name} er låst', 'bn.lockedMsg': 'Bestå {name} for å åpne {next}',
+
     'lab.siteReset': 'Sted {n} nullstilt', 'lab.allReset': 'Alle steder nullstilt', 'lab.flag': 'Målflagg {n}/{of} nådd ({total} flagg)', 'lab.flagAll': 'Alle målflaggene er nådd!',
     // R95: Byggeskolen i menyen (byggeskole_logic.js, byggeskole_view.js): knapp med merkelapp, første-møte-kort og «klar»-kort (tekstene nevner knappene)
     'school.btn': 'BYGGESKOLE', 'school.rec': 'ANBEFALT', 'school.sub': 'Lær å bygge: {n} av {total} steder klare', 'school.label': 'Byggeskole · Bygglab',
@@ -268,6 +270,8 @@ const DICT = {
     'gstage.done': '✓ This site is passed', 'gstage.locked': 'Locked: pass site {n} ({name}) with the grid first.', 'gstage.unlocked': 'Passed! Site {n} is open in grid mode.', 'gstage.allDone': 'All grid sites are passed!', 'grid.modeLocked': 'GRID 🔒',
     // R67: Bygglab (bygglab_logic.js, bygglab_view.js): the sites, reset, goal flags and a task per site (texts name the buttons)
     'lab.bar': '{n}/{of} · {name}', 'lab.line': 'Site {n}/{of}: {name} — {task}', 'lab.resetSite': 'RESET SITE', 'lab.resetAll': 'RESET ALL', 'lab.prev': 'Previous site', 'lab.next': 'Next site',
+    'bn.next': 'NEXT SITE ▶', 'bn.nextSub': '{name} · {n}/{of}', 'bn.again': 'TRY AGAIN', 'bn.back': 'BACK TO THE GAME', 'bn.finish': 'DONE, BACK TO THE GAME', 'bn.passed': 'Passed', 'bn.failed': 'Not passed', 'bn.over': 'It held, but too expensive', 'bn.more': 'Nice! More loads must cross', 'bn.allDone': 'Building school done ✓', 'bn.starHint': 'Next star: cost at most {cost}, {parts} parts or fewer', 'bn.topAria': 'Next site: {name}', 'bn.topLocked': 'Next site {name} is locked', 'bn.lockedMsg': 'Pass {name} to open {next}',
+
     'lab.siteReset': 'Site {n} reset', 'lab.allReset': 'All sites reset', 'lab.flag': 'Goal flag {n}/{of} reached ({total} flags)', 'lab.flagAll': 'All goal flags reached!',
     // R95: Building school in the menu (byggeskole_logic.js, byggeskole_view.js): button with tag, first-meeting card and «done» card
     'school.btn': 'BUILDING SCHOOL', 'school.rec': 'RECOMMENDED', 'school.sub': 'Learn to build: {n} of {total} sites done', 'school.label': 'Building school · Bygglab',

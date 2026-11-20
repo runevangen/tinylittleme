@@ -4,6 +4,8 @@
 export const CHANGES = [
   { id: 'glass-zoom-variabel', version: '2.87', date: '2026-11-20', title: 'Glasset forstørrer 25 % mer (3,75×), og forstørrelse og størrelse kan justeres i ⚙.',
     how: 'Åpne ⚙ → Spill og finn «Glass i byggeskjermen: forstørrelse» og «størrelse». Dra en stav i Byggeskole → Bro og se glasset i hjørnet.', level: 'bygglab', spot: null },
+  { id: 'r107-neste-sted', version: '2.88', date: '2026-11-20', title: 'Etter en bestått prøve i byggeren står det nå en stor knapp NESTE STED ▶ med navn og nummer (f.eks. «Trapp · 2/8»), og topplinjen har en ▶-knapp til neste sted (🔒 når det er låst).',
+    how: 'Åpne BYGGESKOLE → Bro, trykk SÅ SLIK i ⋯ og så PRØV. Les resultatkortet og trykk NESTE STED ▶: du kommer til Trapp 2/8. Trykk ▶ i topplinjen for å gå videre, og tilbake via ⋯ ◀: Bro-bygget står der.', level: 'bygglab', spot: null },
   { id: 'glass-25-storre', version: '2.85', date: '2026-11-20', title: 'Hjørneglasset i byggeskjermen er 25 % større (samme forstørrelse, men du ser mer rundt fingeren).',
     how: 'Åpne Byggeskole → Bro, trykk BYGG og dra en stav fra en grønn prikk. Glasset i hjørnet skal være større enn før.', level: 'bygglab', spot: null },
   { id: 'r106-hjorneglass', version: '2.84', date: '2026-11-20', title: 'Forstørrelsesglass i byggeskjermen: når du drar en stav, flytter en knute eller en del, eller holder fingeren på et tomt punkt, vises et rundt glass i hjørnet med forstørret utsnitt, kryss og ring der det lander.',
