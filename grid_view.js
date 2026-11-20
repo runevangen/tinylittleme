@@ -211,14 +211,29 @@ export function createGridUI(ctx) {
     // koordinater ved berøring (hjørnet nede til venstre) og ved punktet
     if (cursor && (cursor.down || ctx.now() - cursor.t0 < 1.6)) {
       const q = sx(cursor.u, cursor.v), c = colRow(S, cursor); g2.beginPath(); g2.arc(q.x, q.y, 11, 0, 7); g2.strokeStyle = '#ffffffcc'; g2.lineWidth = 2; g2.stroke();
-      let t = T('grid.coord', { c: c.c, r: c.r });
-      if (selNode && nodeOf(Gd, selNode) && !nodeAt(Gd, cursor.u, cursor.v)) { const a = nodeOf(Gd, selNode), L = Math.hypot(a.u - cursor.u, a.v - cursor.v); t += ' · ' + T('grid.rodInfo', { mat: T('grid.mat.' + mat), len: COMMA(L), cost: rodPrice(mat, L) }); }
-      tag(g2, t, 12 + 4, ctx.botY() - 18, 'left');
+      tag(g2, pointText(cursor), 12 + 4, ctx.botY() - 18, 'left');
     }
   }
   function tag(g2, text, x, y, align = 'center') {
     g2.font = '800 12px system-ui'; g2.textAlign = align; const w = g2.measureText(text).width + 12, x0 = align === 'left' ? x - 6 : x - w / 2;
     g2.fillStyle = 'rgba(14,20,36,.88)'; g2.beginPath(); g2.roundRect ? g2.roundRect(x0, y - 13, w, 20, 7) : g2.rect(x0, y - 13, w, 20); g2.fill(); g2.fillStyle = '#ffe9a8'; g2.fillText(text, x, y + 2); g2.textAlign = 'start';
+  }
+  // teksten for et punkt: koordinater, og lengde/pris når en knute er valgt (brukes av koordinatlinja og av hjørneglasset, R106)
+  function pointText(p) {
+    const Gd = G(), c = colRow(site(), p); let t = T('grid.coord', { c: c.c, r: c.r });
+    if (selNode && nodeOf(Gd, selNode) && !nodeAt(Gd, p.u, p.v)) { const a = nodeOf(Gd, selNode), L = Math.hypot(a.u - p.u, a.v - p.v); t += ' · ' + T('grid.rodInfo', { mat: T('grid.mat.' + mat), len: COMMA(L), cost: rodPrice(mat, L) }); }
+    return t;
+  }
+  // R106: hjørneglasset: fyller `out` når fingeren flytter en knute ({x, y} = fingeren, {tu, tv} = punktet knuten lander på) eller holder på et tomt punkt (holdAt)
+  function touchInto(out) {
+    if (!on() || !gd || !gd.moved) return false;
+    const w = ctx.toWorld(gd.x, gd.y), p = canMoveTo(B(), gd.id, w.u, w.v);
+    out.x = gd.x; out.y = gd.y; out.tu = p ? p.u : w.u; out.tv = p ? p.v : w.v; out.ok = !!p; out.text = p ? pointText(p) : ''; out.kind = 'flytt knute'; return true;
+  }
+  function holdInto(out, x, y) {
+    if (!on()) return false;
+    const w = ctx.toWorld(x, y), p = nearestPoint(site(), w.u, w.v); if (!p) return false;
+    out.x = x; out.y = y; out.tu = p.u; out.tv = p.v; out.ok = true; out.text = pointText(p); out.kind = 'hold punkt'; return true;
   }
   // teksten øverst: hjelp for nybegynner (R69) og ellers kort beskjed
   function hint() {
@@ -233,7 +248,7 @@ export function createGridUI(ctx) {
   const setDots = (v) => { dots = !!v; };
   const tap = (x, y) => { const n = pickNode(x, y); if (n) tapNode(n.id); else tapPoint(x, y); };   // samme veivalg som en ekte berøring (til tester)
   return {
-    on, enabledHere, down, move, up, release, tapPoint, del, draw, hint, sync, setMat, toggleMode, restoreMode, modeTip, example, simSync, setSpeed, get speed() { return speed; }, reset, clearSel, cancel, select, setDots, get dots() { return dots; }, get moving() { return !!gd && gd.moved; },
+    on, enabledHere, down, move, up, release, tapPoint, del, draw, hint, sync, setMat, toggleMode, restoreMode, modeTip, example, simSync, setSpeed, get speed() { return speed; }, reset, clearSel, cancel, select, setDots, get dots() { return dots; }, get moving() { return !!gd && gd.moved; }, touchInto, holdInto,
     get mat() { return mat; }, get selNode() { return selNode; }, get selRod() { return selRod; },
     tapNode: (id) => tapNode(id), pickNode, tap,
   };

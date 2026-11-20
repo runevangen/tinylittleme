@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r106-hjorneglass', version: '2.83', date: '2026-11-20', title: 'Forstørrelsesglass i byggeskjermen: når du drar en stav, flytter en knute eller en del, eller holder fingeren på et tomt punkt, vises et rundt glass i hjørnet med forstørret utsnitt, kryss og ring der det lander.',
+    how: 'Åpne Hyllebroen eller Byggeskolen (bro) og trykk BYGG. Dra en stav ut fra en knute og se glasset i hjørnet motsatt fingeren. Prøv også å flytte en del i Trapp. Slå av/på i ⚙ → Spill → Forstørrelsesglass.', level: 'bro', spot: null },
   { id: 'r105-nullstill-beholder-skjerm', version: '2.81', date: '2026-11-20', title: 'NULLSTILL STED og NULLSTILL ALLE i Byggeskolen beholder den nye byggeskjermen (før kom den gamle med MODUS: Klassisk tilbake).',
     how: 'Åpne BYGGESKOLE → Bro, trykk ⋯ → NULLSTILL STED (og så NULLSTILL ALLE). Skjermen skal fortsatt ha topplinje, tre materialvalg og stor PRØV, uten MODUS-knapp.', level: 'bygglab', spot: null },
   { id: 'r104-stotter-slipper-lasten', version: '2.80', date: '2026-11-20', title: 'Kula, bilen og roboten stopper ikke lenger mot støttestaver som står opp fra veien: står lasten fast, prøver PRØV på nytt med at støttene slipper den forbi.',

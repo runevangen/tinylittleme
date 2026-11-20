@@ -177,6 +177,13 @@ export function createBuildUx(ctx) {
       if (h.done) endHand('ferdig');
     }
   }
+  // R106: hjørneglasset: fingeren drar en spøkelsesstav ut fra en knute; målet er sluttpunktet (grønn/rød ring) og teksten er den samme som ved staven
+  function touchInto(out) {
+    if (!on() || !st || st.kind !== 'node' || !st.moved) return false;
+    out.x = st.x; out.y = st.y; out.kind = 'spøkelsesstav';
+    if (ghost && ghost.show) { out.tu = ghost.b.u; out.tv = ghost.b.v; out.ok = ghost.ok; out.text = ghostText(ghost); } else { out.tu = null; out.tv = null; out.ok = true; out.text = ''; }
+    return true;
+  }
   const bubbleEl = () => q('.bxdel');
   let bubbleSig = '';
   function updateBubble(sx) {
@@ -307,7 +314,7 @@ export function createBuildUx(ctx) {
   return {
     land, topPx: () => land.topPx() ?? (innerHeight <= 520 ? BUX_TOP_LAND : BUX_TOP), botPx: () => land.botPx() ?? (innerHeight <= 520 ? BUX_BOT_LAND : BUX_BOT), insets: () => land.insets(),
     get site() { return site(); },
-    on, wanted, layout, frame, draw, down, move, up, cancel, tap, hint, onTry, onResult, reset, invalidate, sheet,
+    on, wanted, layout, frame, draw, touchInto, down, move, up, cancel, tap, hint, onTry, onResult, reset, invalidate, sheet,
     get ghost() { return ghost; }, get dragging() { return !!st; }, get handOn() { return !!hand; }, get timer() { return timer; }, get timerSite() { return timerSite; }, skipHand: () => endHand('hoppet over'), showHand: maybeHand, bubbleEl,
   };
 }
