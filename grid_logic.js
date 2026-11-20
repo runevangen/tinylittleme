@@ -44,6 +44,8 @@ export function nearestPoint(site, u, v, maxD = Infinity) {
 // stedet har to ankre på samme høyde: dekket er en rett kjede av tre-staver langs rutenettets rad mellom dem. Knutene på dekket (id d1, d2 ...) og stavene (dk1 ...) kan ikke slettes eller flyttes,
 // men kan få staver over og under. Dekket er gratis og teller ikke som deler (build_budget.js), så terskler og stjerner gjelder det du bygger oppå.
 export const isDeckRod = (r) => !!r && !!r.deck;
+// R101: høyden (v) veien går på når stedet har to ankre på samme høyde (ellers null). Brukes av tegningen (vei vs konstruksjon) for ALLE rutenett-steder: broene og Byggeskolen deler samme kode
+export function roadLevel(site) { if (!siteHasGrid(site)) return null; const an = gridAnchors(site).slice().sort((a, b) => a.u - b.u); return an.length === 2 && Math.abs(an[0].v - an[1].v) < 1e-6 ? an[0].v : null; }
 export function deckPoints(site) {
   if (!siteHasGrid(site)) return null; const an = gridAnchors(site).slice().sort((a, b) => a.u - b.u);
   if (an.length !== 2 || !same(an[0].v, an[1].v) || an[1].u - an[0].u < MIN_LEN) return null;

@@ -5,7 +5,7 @@ import { GRID_MATS, GRID_MAT, rodPrice } from './build_materials.js';
 import { guideCss } from './grid_guide_view.js';   // R75
 import { shouldTipMode, showHelpBtn, shouldRestoreMode, getMode, setModeMem, KEY_TIP } from './grid_guide_logic.js';
 import { applyExample, hasExample } from './grid_example.js';   // R73
-import { gridAnchors, isGrid, setMode, isDeckRod, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
+import { gridAnchors, roadLevel, isGrid, setMode, isDeckRod, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
 
 export const GRID_PX = 44;   // minste avstand (px) mellom rutenettpunkter i standardvisningen
 export const gridCss = () => `
@@ -173,7 +173,7 @@ export function createGridUI(ctx) {
     // staver
     const p2 = new Map(Gd.nodes.map((n) => [n.id, posOf(n)]));
     // R100: veien går mellom de to ankrene (samme høyde). Uten fast dekk tegnes en blass «vei» her som peker ut hvor lasten skal over; staver du legger langs den blir veibane, resten er konstruksjonen som bærer
-    const an2 = gridAnchors(S).slice().sort((a, b) => a.u - b.u), roadV = an2.length === 2 && Math.abs(an2[0].v - an2[1].v) < 1e-6 ? an2[0].v : null;
+    const an2 = gridAnchors(S).slice().sort((a, b) => a.u - b.u), roadV = roadLevel(S);
     if (roadV != null && !ctx.isSim()) {
       const pa = sx(an2[0].u, roadV), pb = sx(an2[1].u, roadV), dw = 16;
       g2.lineCap = 'butt'; g2.globalAlpha = 0.8; g2.strokeStyle = '#59606d'; g2.lineWidth = dw; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
