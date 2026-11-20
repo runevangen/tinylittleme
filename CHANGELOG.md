@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.91** – R109 (fra Rune): berøringsrettelser i byggeskjermen: fast ↺ ↻ ✕-rad, avbrutt berøring, ⚑ øverst, tekst uten overlapp, pause i 3D bak byggeskjermen.
 - **2.90** – R109 (fra Rune): Vippe og klassiske steder (vri, ⚑, tekst i liggende, tregt) lagt i veikartet.
 - **2.89** – R108 (fra Rune): lasten kjører bare på veien (stavene på veilinjen); støttestaver og tak stopper den ikke og den kan ikke klatre opp på dem. Erstatter R104-forsøket (ekstra prøve). ⚙ → Admin kan slå det av.
 - **2.88** – Integrerte R107 (NESTE STED ▶ i byggeren) oppå 2.87; 2.86 var nummeret på veikartpunktet.
