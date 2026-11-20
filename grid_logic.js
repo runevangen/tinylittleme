@@ -136,7 +136,7 @@ export const simDef = (B) => ({ site: B.site, placed: B.placed.map((p) => ({ id:
 export function simDefAuto(B, opts, run) {
   const def = simDef(B), steep = GRIDOPT.pass ? loadPass(B) : []; if (!steep.length || typeof run !== 'function') return { def, passed: false };
   const d2 = { ...def, loadPass: steep }; let r; try { r = run(d2, { ...opts }); } catch { return { def, passed: false }; }
-  return r && r.result === 'won' ? { def: d2, passed: true } : { def, passed: false };
+  return r && r.result === 'won' ? { def: d2, passed: true, tried: true } : { def, passed: false, tried: true, why: r ? `${r.result} ${r.reason || ''} ${r.t}s, ${(r.breaks || []).length} brudd`.trim() : 'ingen' };
 }
 
 export function setMode(B, mode) {
