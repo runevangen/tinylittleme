@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.81** – R105 (fra Rune): NULLSTILL STED/ALLE i Byggeskolen setter ikke lenger stedet tilbake til den gamle byggeskjermen (MODUS: Klassisk).
 - **2.80** – R104 (fra tester): kula, bilen og roboten stopper ikke lenger mot støttestaver som står opp fra veien (ekstra usynlig prøve der støttene slipper lasten forbi; brukes bare hvis den vinner). ⚙ → Admin kan slå det av.
 - **2.79** – R103: ⚑-rapporten tar med byggekoden (kan limes inn med LIM INN) når byggeskjermen er oppe, så et bygg som feiler kan gjenskapes. (Fra tester: kula stoppet i Byggeskole, trenger bygget for å gjenskape.)
 - **2.78** – R101 (fra Rune): brobygger og Byggeskolen er ett: felles veiregel (`roadLevel`), ny `test_paritet.mjs` i `npm test` og regel i CLAUDE.md om at alle bygge-endringer også gjelder Byggeskolen.

@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r105-nullstill-beholder-skjerm', version: '2.81', date: '2026-11-20', title: 'NULLSTILL STED og NULLSTILL ALLE i Byggeskolen beholder den nye byggeskjermen (før kom den gamle med MODUS: Klassisk tilbake).',
+    how: 'Åpne BYGGESKOLE → Bro, trykk ⋯ → NULLSTILL STED (og så NULLSTILL ALLE). Skjermen skal fortsatt ha topplinje, tre materialvalg og stor PRØV, uten MODUS-knapp.', level: 'bygglab', spot: null },
   { id: 'r104-stotter-slipper-lasten', version: '2.80', date: '2026-11-20', title: 'Kula, bilen og roboten stopper ikke lenger mot støttestaver som står opp fra veien: står lasten fast, prøver PRØV på nytt med at støttene slipper den forbi.',
     how: 'Åpne BYGGESKOLE → Bro og trykk BYGG. Bygg en flat vei mellom prikkene og to høye trekanter som møter veien i midten. Velg Tennisball i ⋯ og trykk PRØV: kula skal rulle forbi og komme i mål.', level: 'bygglab', spot: null },
   { id: 'r100-vei-og-konstruksjon', version: '2.77', date: '2026-11-20', title: 'Byggeskjermen viser nå hvor veien går: en grå vei med gul stripe og «VEI: lasten skal over her» mellom de to grønne prikkene. Stavene du legger langs den blir veibane; resten er konstruksjonen som bærer broen.',

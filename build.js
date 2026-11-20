@@ -578,7 +578,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
     const b = getB(s), had = !!(b.placed.length || b.links.length || committed.has(s.id) || solved.has(s.id) || lab.reached.has(s.id) || passedL.has(s.id) || recs.has(s.id));
     if (active === s && sim) stopSim('nullstill');
     uncommitWorld(s, 'nullstilt'); gridWipe(b); if (active === s) grid.reset(); solved.delete(s.id); passedL.delete(s.id); recs.delete(s.id); lab.reached.delete(s.id); loadSel.delete(s.id);
-    if (active === s) { sel = null; selLink = null; linkFrom = null; drag = null; trayRender(); labUI(); }
+    if (active === s) { sel = null; selLink = null; linkFrom = null; drag = null; bux.reset(); cbx.reset(); buxEnter(); labels(); trayRender(); labUI(); }   // R105: nullstilling setter stedet tilbake til klassisk modus (gridWipe): gå inn i den nye byggeskjermen igjen
     logEv('bygglab', `nullstilt ${s.id} (${why})`); onChange?.(); return had;
   }
   function labResetAll() { if (!lab) return false; for (const s of labSites) labReset(s, 'alle'); logEv('bygglab', 'alle steder nullstilt'); toast(T('lab.allReset')); return true; }
