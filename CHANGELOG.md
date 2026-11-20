@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.83** – R106 (fra Rune): hjørneglass i byggeskjermen lagt i veikartet.
 - **2.82** – R104: loggen forteller når støttestaver ble prøvd uten at prøven vant (til feilsøking).
 - **2.81** – R105 (fra Rune): NULLSTILL STED/ALLE i Byggeskolen setter ikke lenger stedet tilbake til den gamle byggeskjermen (MODUS: Klassisk).
 - **2.80** – R104 (fra tester): kula, bilen og roboten stopper ikke lenger mot støttestaver som står opp fra veien (ekstra usynlig prøve der støttene slipper lasten forbi; brukes bare hvis den vinner). ⚙ → Admin kan slå det av.
