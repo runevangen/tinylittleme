@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.76** – R99: lyd som sitter (bygglyd, romtone i alle rom, variasjon, plass til ekte opptak).
 - **2.75** – R99 (lyd som sitter, F9) lagt i veikartet.
 - **2.74** – R97: første møte (én START, kontroll-hint som animasjon, «Bra!», prikkrad, hjelp ved blindgate), `tools/first_run.cjs`.
 - **2.73** – R98: oppdragslinje med neste mål i alle brett, peiling uten piler på Ekspert, `goal_check`.
