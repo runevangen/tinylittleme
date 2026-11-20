@@ -6,7 +6,7 @@ export const NOTE_KEY = 'tlm.privnote';   // satt når spilleren har sendt én g
 // Feltene buildReportInfo() i main.js får lage (og som teksten «hva det inneholder» dekker). Legges det til et felt, må det stå her OG i teksten.
 export const ALLOWED_REPORT_FIELDS = [
   'version', 'level', 'difficulty', 'when', 'device', 'verCheck', 'where', 'screen', 'touch', 'platform', 'preset', 'clock', 'points', 'perf', 'fps',
-  'pos', 'state', 'target', 'stats', 'changed', 'marks', 'backlog', 'events', 'ratings', 'camera', 'metrics',
+  'pos', 'state', 'target', 'stats', 'changed', 'marks', 'backlog', 'events', 'ratings', 'camera', 'metrics', 'buildCode',
 ];
 // Det rapporten og nettkallene ALDRI skal ha: navn, e-post, posisjon på kloden, bilder, full nettleserstreng.
 export const FORBIDDEN_RE = /(e-?post|email|mail|telefon|phone|geoloc|latitude|longitude|\bgps\b|fullt navn|password|passord|screenshot|image|userAgent|Mozilla\/)/i;

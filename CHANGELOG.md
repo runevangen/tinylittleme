@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.79** – R103: ⚑-rapporten tar med byggekoden (kan limes inn med LIM INN) når byggeskjermen er oppe, så et bygg som feiler kan gjenskapes. (Fra tester: kula stoppet i Byggeskole, trenger bygget for å gjenskape.)
 - **2.78** – R101 (fra Rune): brobygger og Byggeskolen er ett: felles veiregel (`roadLevel`), ny `test_paritet.mjs` i `npm test` og regel i CLAUDE.md om at alle bygge-endringer også gjelder Byggeskolen.
 - **2.77** – R100 (fra tester: Rune): byggeskjermen viser hvor veien går (grå vei, gul stripe, «VEI: lasten skal over her»), staver langs veien tegnes som vei, og hintet forklarer vei mot konstruksjon.
 - **2.76** – R99: lyd som sitter (bygglyd, romtone i alle rom, variasjon, plass til ekte opptak).

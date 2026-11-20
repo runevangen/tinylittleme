@@ -45,6 +45,7 @@ export function formatReport(info) {
   L.push(`${info.when} · ${info.device}`);
   if (info.difficulty) L.push(`Vanskelighet: ${info.difficulty}`);
   if (info.where) L.push(`Skjerm oppe: ${info.where}`);
+  if (info.buildCode) L.push(`Bygg (kode, kan limes inn med LIM INN): ${info.buildCode}`);
   if (info.verCheck) L.push(`Versjonsjekk: ${info.verCheck}`);
   L.push(`Skjerm ${info.screen} · ${info.platform || (info.touch ? 'touch' : 'tastatur/mus')} · ${info.fps}`);
   L.push(`Hoppvalg: ${info.preset} · tid ${info.clock} s · poeng ${info.points}`);

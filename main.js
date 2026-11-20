@@ -2262,6 +2262,7 @@ function buildReportInfo() {
   return {
     version: VERSION, level: levelLabel, difficulty: `${difficulty}${isCustomHelp(store) ? ' (egendefinert hjelp)' : ''} · hjelp av: ${offElements(difficulty).join(', ') || 'ingen'} · merker ${badgeLine() || 'ingen'}`, when: new Date().toLocaleString('nb-NO'), device: shortDevice(navigator.userAgent),
     verCheck: verView ? verView.info() : '',
+    buildCode: (() => { try { const c = bld.exportText?.(); return c && c.length <= 1500 ? c : ''; } catch (e) { return ''; } })(),   // R103: byggekoden følger rapporten når byggeskjermen er oppe, så bygget kan gjenskapes
     where: currentScreen().label, screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
     perf: perfLine + ' · shadere ' + shw.line(),
     fps: (perf.n ? `${levelId}: ${(1000 * perf.n / perf.sum).toFixed(0)} fps snitt, verste bilde ${Math.round(perf.worst)} ms, oppløsning ${renderer.getPixelRatio().toFixed(2)}×` : 'fps ukjent') + fpsRoomsLine(),   // R85: snitt per rom (lagret i nettleseren) så rapporten viser hvilke rom som er trege
