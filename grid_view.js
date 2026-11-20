@@ -172,14 +172,32 @@ export function createGridUI(ctx) {
     g2.fill();
     // staver
     const p2 = new Map(Gd.nodes.map((n) => [n.id, posOf(n)]));
+    // R100: veien går mellom de to ankrene (samme høyde). Uten fast dekk tegnes en blass «vei» her som peker ut hvor lasten skal over; staver du legger langs den blir veibane, resten er konstruksjonen som bærer
+    const an2 = gridAnchors(S).slice().sort((a, b) => a.u - b.u), roadV = an2.length === 2 && Math.abs(an2[0].v - an2[1].v) < 1e-6 ? an2[0].v : null;
+    if (roadV != null && !ctx.isSim()) {
+      const pa = sx(an2[0].u, roadV), pb = sx(an2[1].u, roadV), dw = 16;
+      g2.lineCap = 'butt'; g2.globalAlpha = 0.8; g2.strokeStyle = '#59606d'; g2.lineWidth = dw; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
+      g2.setLineDash([7, 6]); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.setLineDash([]); g2.globalAlpha = 1; g2.lineCap = 'round';
+      if (!Gd.deck) tag(g2, T('grid.roadGhost'), (pa.x + pb.x) / 2, pa.y + 26);
+    }
+    const onRoad = (r) => { if (r.deck) return true; if (roadV == null || r.mat === 'rope') return false; const a = p2.get(r.a), b = p2.get(r.b); return !!a && !!b && Math.abs(a.v - roadV) < 1e-6 && Math.abs(b.v - roadV) < 1e-6; };
     for (const r of Gd.rods) {
       const a = p2.get(r.a), b = p2.get(r.b); if (!a || !b) continue; const m = GRID_MAT[r.mat], pa = sx(a.u, a.v), pb = sx(b.u, b.v), w = Math.max(r.mat === 'rope' ? 3 : 5, m.h * sc), isSel = selRod === r.id;
       g2.lineCap = 'round';
+      if (onRoad(r)) {   // R100: veibanen ser ut som en vei (grå asfalt, lys kant, gul midtstripe) så den ikke blandes med konstruksjonen som bærer den
+        const dw = Math.max(w + 6, 13);
+        g2.lineCap = 'butt'; g2.strokeStyle = isSel ? '#ffffff' : '#e9eef7'; g2.lineWidth = dw + 4; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
+        g2.strokeStyle = '#4a505c'; g2.lineWidth = dw; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
+        g2.setLineDash([7, 6]); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.setLineDash([]);
+        g2.lineCap = 'round'; continue;
+      }
       g2.strokeStyle = isSel ? '#ffffff' : '#1a1208'; g2.lineWidth = w + (isSel ? 6 : 4); g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
       g2.strokeStyle = m.color; g2.lineWidth = w; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
       if (r.mat === 'steel') { g2.strokeStyle = 'rgba(255,255,255,.55)'; g2.lineWidth = Math.max(1.5, w * 0.25); g2.beginPath(); g2.moveTo(pa.x, pa.y - w * 0.18); g2.lineTo(pb.x, pb.y - w * 0.18); g2.stroke(); }
       if (r.mat === 'rope') { g2.setLineDash([4, 4]); g2.strokeStyle = '#6b4a1a'; g2.lineWidth = Math.max(1.5, w * 0.5); g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.setLineDash([]); }
     }
+    // R100: «VEI»-merke midt på veibanen
+    { const dr = Gd.rods.filter((r) => r.deck); if (dr.length) { const m = dr[Math.floor(dr.length / 2)], a = p2.get(m.a), b = p2.get(m.b); if (a && b) { const q = sx((a.u + b.u) / 2, (a.v + b.v) / 2); tag(g2, T('grid.deckLabel'), q.x, q.y + 20); } } }
     // knuter
     for (const n of Gd.nodes) {
       const p = p2.get(n.id), q = sx(p.u, p.v), isSel = selNode === n.id, rr = n.fixed ? 8 : 7;

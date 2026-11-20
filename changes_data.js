@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r100-vei-og-konstruksjon', version: '2.77', date: '2026-11-20', title: 'Byggeskjermen viser nå hvor veien går: en grå vei med gul stripe og «VEI: lasten skal over her» mellom de to grønne prikkene. Stavene du legger langs den blir veibane; resten er konstruksjonen som bærer broen.',
+    how: 'Åpne Hyllebroen eller Byggeskolen (bro) og trykk BYGG. Les hintet øverst og se den grå veien. Dra en stav langs veien, og så staver over og under den som bærer den. Trykk PRØV.', level: 'bro', spot: null },
   { id: 'r99-lyd-som-sitter', version: '2.76', date: '2026-11-20', title: 'Lyd i byggeskjermen: egne lyder for å sette ut deler (tre, stål, tau, kloss), feste, knute og stav, angre, PRØV, last over og stjerner. Alle rom har nå en svak romtone (kjøleskap og klokke på kjøkkenet, spilledåse i barnerommet …), og skritt og landing varierer litt.',
     how: 'Åpne byggeskjermen (Bygg · Bro), slå på lyden, sett ut en del, fest den og trykk PRØV. Gå rolig i Kjøkkenet og lytt etter brum og tikking. ⚙ → Lyd har «Bygging: volum» og «Romtone».', level: 'bro', spot: null },
   { id: 'r97-forste-mote', version: '2.74', date: '2026-11-20', title: 'Første gang du åpner spillet er det bare én stor START; resten ligger under «mer». I Badet vises kontroll-hint som liten animasjon over knappene, «Bra!» ved hvert delmål og en rolig prikkrad. Står du stille eller går feil, får du hjelp.',

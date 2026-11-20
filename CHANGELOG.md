@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.77** – R100 (fra tester: Rune): byggeskjermen viser hvor veien går (grå vei, gul stripe, «VEI: lasten skal over her»), staver langs veien tegnes som vei, og hintet forklarer vei mot konstruksjon.
 - **2.76** – R99: lyd som sitter (bygglyd, romtone i alle rom, variasjon, plass til ekte opptak).
 - **2.75** – R99 (lyd som sitter, F9) lagt i veikartet.
 - **2.74** – R97: første møte (én START, kontroll-hint som animasjon, «Bra!», prikkrad, hjelp ved blindgate), `tools/first_run.cjs`.
