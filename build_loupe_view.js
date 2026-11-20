@@ -39,7 +39,7 @@ export function createLoupe(ctx) {
     const t = now(), on = !!ctx.getOn() && !L.sim, wasVis = vis.visible;
     const v = vis.update(t, on && info.placing && info.fingers === 1, on);
     if (!v) { hide(); if (wasVis) { side = null; P.pl = null; } return false; }
-    const d = Math.min(2, ctx.dpr() || 1), size = glassSize(L.W, L.H), z = normZoom(ctx.getZoom());
+    const d = Math.min(2, ctx.dpr() || 1), size = glassSize(L.W, L.H, ctx.getSizePct?.()), z = normZoom(ctx.getZoom());
     if (!wasVis) { shown++; if (!firstLogged) { firstLogged = true; try { logEv('bygg', `glass vist (${z}×, ${size} px, ${L.W > L.H ? 'liggende' : 'stående'}, ${info.kind || 'finger'})`); } catch { /* ok */ } } }
     const pl = place(L, size, t, info.x);
     if (!open || size !== sizeNow) { sizeNow = size; gc.style.width = gc.style.height = el.style.width = el.style.height = size + 'px'; const px = Math.round(size * d); if (gc.width !== px) { gc.width = px; gc.height = px; } }

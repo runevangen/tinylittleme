@@ -11,12 +11,14 @@ export const LOUPE = {
   hideMs: 150,       // glasset forsvinner så lenge etter at fingeren slippes
   hystMs: 400,       // glasset bytter ikke hjørne oftere enn dette
   margin: 8,         // avstand til skjermkant og mellom glass og annet
-  zooms: [2, 3, 4],
-  defZoom: 3,
+  zoomMin: 1.5, zoomMax: 6, zoomStep: 0.25,
+  defZoom: 3.75,     // 3 + 25 % (ønske fra Rune); ⚙ → Spill «Glass: forstørrelse»
+  sizeMinPct: 70, sizeMaxPct: 200, defSizePct: 100,   // ⚙ → Spill «Glass: størrelse» (% av 140 px stående / 120 px liggende)
 };
 
-export const normZoom = (v) => { const n = Math.round(+v); return LOUPE.zooms.includes(n) ? n : LOUPE.defZoom; };
-export const glassSize = (W, H) => Math.max(64, Math.min(H <= 520 ? LOUPE.sizeLand : LOUPE.size, W - 2 * LOUPE.margin, H - 2 * LOUPE.margin));
+export const normZoom = (v) => { const n = +v; if (!Number.isFinite(n)) return LOUPE.defZoom; return Math.min(LOUPE.zoomMax, Math.max(LOUPE.zoomMin, Math.round(n / LOUPE.zoomStep) * LOUPE.zoomStep)); };
+export const normSizePct = (v) => { const n = +v; if (!Number.isFinite(n)) return LOUPE.defSizePct; return Math.min(LOUPE.sizeMaxPct, Math.max(LOUPE.sizeMinPct, Math.round(n))); };
+export const glassSize = (W, H, pct = LOUPE.defSizePct) => Math.max(64, Math.min((H <= 520 ? LOUPE.sizeLand : LOUPE.size) * normSizePct(pct) / 100, W - 2 * LOUPE.margin, H - 2 * LOUPE.margin));
 
 // utsnittet av canvaset (CSS-px) rundt (px, py): kvadrat med side size/zoom, holdt inne i [0,W]×[0,H].
 // fx, fy: hvor fingerpunktet ligger i glasset (0..1; 0,5 midt i glasset, ellers forskjøvet når utsnittet er skjøvet inn mot kanten)

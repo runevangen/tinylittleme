@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.87** – Glasset forstørrer 25 % mer (3,75×) og forstørrelse (1,5–6×) og størrelse (70–200 %) er variabler i ⚙ → Spill (fra Rune).
 - **2.86** – R107 (fra Rune): «neste sted» skal være tydelig i byggeren, lagt i veikartet.
 - **2.85** – Hjørneglasset er 25 % større (140 px stående, 120 px liggende), samme forstørrelse (fra Rune).
 - **2.84** – R106: hjørneglass (forstørrelsesglass) i byggeskjermen, i alle byggesteder; ⚙ → Spill.

@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 const L = await import('./build_loupe_logic.js'), V = await import('./build_loupe_view.js');
 
 // zoom og størrelse
-assert.deepEqual(L.LOUPE.zooms, [2, 3, 4]); assert.equal(L.normZoom(2), 2); assert.equal(L.normZoom('4'), 4); assert.equal(L.normZoom(5), 3); assert.equal(L.normZoom(NaN), 3); assert.equal(L.normZoom(undefined), 3);
+assert.equal(L.LOUPE.defZoom, 3.75); assert.equal(L.normZoom(2), 2); assert.equal(L.normZoom('4'), 4); assert.equal(L.normZoom(3.8), 3.75, 'rundes til 0,25'); assert.equal(L.normZoom(9), 6); assert.equal(L.normZoom(0.2), 1.5); assert.equal(L.normZoom(NaN), 3.75); assert.equal(L.normZoom(undefined), 3.75);
+assert.equal(L.normSizePct(500), 200); assert.equal(L.normSizePct(10), 70); assert.equal(L.normSizePct('abc'), 100); assert.equal(L.glassSize(390, 844, 150), 210); assert.equal(L.glassSize(390, 844, 200), 280 > 390 - 16 ? 374 : 280, 'holdes inne i skjermen'); assert.equal(L.glassSize(390, 844), 140);
 assert.equal(L.glassSize(390, 844), 140); assert.equal(L.glassSize(844, 390), 120); assert.ok(L.glassSize(100, 100) <= 84);
 assert.ok(L.LOUPE.size >= 120 && L.LOUPE.size <= 150 && L.LOUPE.sizeLand >= 96 - 1);
 
@@ -81,7 +82,7 @@ assert.equal(L.wantsLoupe({ placing: true }), true); assert.equal(L.wantsLoupe({
 // ---------- filer, valg, tekster, hekter ----------
 const html = fs.readFileSync('index.html', 'utf8'), main = fs.readFileSync('main.js', 'utf8'), bld = fs.readFileSync('build.js', 'utf8'), i18 = fs.readFileSync('i18n.js', 'utf8'), docs = fs.readFileSync('docs/INNSTILLINGER.md', 'utf8');
 for (const m of ['build_loupe_logic', 'build_loupe_view']) assert.ok(html.includes(`'${m}'`), `${m} mangler i files`);
-assert.match(main, /fl\('buildloupe', 'spill'/); assert.match(main, /rg\('buildloupezoom', 'admin'/); assert.ok(main.includes('getLoupe: () => buildLoupe') && main.includes('getLoupeZoom: () => buildLoupeZoom'));
+assert.match(main, /fl\('buildloupe', 'spill'/); assert.match(main, /rg\('buildloupezoom', 'spill'/); assert.ok(main.includes('getLoupe: () => buildLoupe') && main.includes('getLoupeZoom: () => buildLoupeZoom'));
 assert.ok(bld.includes('loupeStep()') && bld.includes('createLoupe(') && bld.includes('loupeMarkup()') && bld.includes('loupe.takeShown()'), 'build.js hekter');
 assert.ok(i18.includes("'loupe.anchor'") && i18.includes("'loupe.pos'"));
 assert.ok(docs.includes('buildloupe') && docs.includes('buildloupezoom'), 'docs/INNSTILLINGER.md');
