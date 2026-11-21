@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r115-vippe-aapner-fagverk', version: '2.100', date: '2026-11-21', title: 'Å bestå Vippe (og andre klassiske steder) åpner nå neste sted i Byggeskolen. Før sto Fagverk låst selv om du hadde bestått Vippe.',
+    how: 'Åpne BYGGESKOLE → Vippe, bygg en planke over og trykk PRØV til du består. Gå så til sted 4 (Fagverk): det skal være åpent, ikke låst.', level: 'bygglab', spot: null },
   { id: 'r114-ghost-av', version: '2.99', date: '2026-11-21', title: 'Skyggen av forrige runde vises ikke lenger under en ny prøve (spøkelset er slått av som standard; kan slås på i ⚙ → Spill).',
     how: 'Åpne Byggeskole · Lasttest, la en prøve feile og trykk PRØV IGJEN. Det skal ikke ligge en skygge av forrige prøve over den nye.', level: 'bygglab', spot: null },
   { id: 'r113-vis-feste-maal', version: '2.98', date: '2026-11-21', title: 'Byggeskjermen: når du har valgt TAPE, LEDD, TAU eller GUMMI og trykket på den første delen, vises delene den kan festes til med grønn stiplet ring, og hjelpeteksten sier fra om det ikke finnes noen.',
