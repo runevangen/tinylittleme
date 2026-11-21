@@ -62,6 +62,8 @@ export const buxCss = () => landCss() + `
 #bld .bxsheet .share button.bmode,#bld .bxsheet .share button.bguide{display:none!important}
 #bld .bxsheet .loads:empty{display:none}
 #bld .bxsheet .bxclose{height:54px;border-radius:14px;border:2px solid #3df0b0;background:#1f7a52;color:#fff;font:800 16px system-ui}
+#bld .bxsheet .bxtrh{display:none}
+#bld.bux.gtrok .bxsheet .bxtrh{display:block}
 #bld .bxsheet .bxgrid button{border:2px solid #6ab8ff;background:#121a2ce6;color:#cfe8ff;pointer-events:auto}
 @media (orientation:landscape) and (max-height:520px){
 #bld .bux .bxtop{height:42px}
@@ -75,7 +77,7 @@ export const buxCss = () => landCss() + `
 #bld .bxsheet .card{max-height:96%}
 }
 `;
-export const buxMarkup = () => `<div class="bux"><div class="bxtop"><button data-bx="back" class="bxback"></button><div class="bxname"><b></b><i></i></div><button data-bx="more" class="bxmore">⋯</button></div><button data-bx="del" class="bxdel">✕</button><div class="bxbot"><div class="bxcost"><span class="bxct"></span><span class="bxbar"><i></i></span></div><div class="bxrow mats">${BUX.mats.map((m) => `<div class="bxmat"><button data-bx="${m.id}"><span>${m.icon}</span><b></b><u class="bxlock">🔒</u></button><em></em></div>`).join('')}<button data-bx="undo" class="bxundo" aria-label="↶">↶</button></div><div class="bxgo"><button data-bx="slow" class="bxsp"></button><button data-bx="pause" class="bxsp"></button><button data-bx="try" class="try"></button></div></div></div><div class="bxsheet"><div class="card"><h3 class="bxst"></h3><div class="bxsec bxloads"><small></small></div><div class="bxsec bxshare"><small></small></div><div class="bxsec bxlab"><small></small></div><div class="bxsec"><div class="bxgrid"><button data-bx="fit"></button><button data-bx="dots"></button><button data-bx="reset" class="bxreset"></button><button data-bx="menu"></button><button data-bx="sugg"></button></div></div><button data-bx="close" class="bxclose"></button></div></div>${landMarkup()}`;
+export const buxMarkup = () => `<div class="bux"><div class="bxtop"><button data-bx="back" class="bxback"></button><div class="bxname"><b></b><i></i></div><button data-bx="more" class="bxmore">⋯</button></div><button data-bx="del" class="bxdel">✕</button><div class="bxbot"><div class="bxcost"><span class="bxct"></span><span class="bxbar"><i></i></span></div><div class="bxrow mats">${BUX.mats.map((m) => `<div class="bxmat"><button data-bx="${m.id}"><span>${m.icon}</span><b></b><u class="bxlock">🔒</u></button><em></em></div>`).join('')}<button data-bx="undo" class="bxundo" aria-label="↶">↶</button></div><div class="bxgo"><button data-bx="slow" class="bxsp"></button><button data-bx="pause" class="bxsp"></button><button data-bx="try" class="try"></button></div></div></div><div class="bxsheet"><div class="card"><h3 class="bxst"></h3><div class="bxsec bxloads"><small></small></div><div class="bxsec bxshare"><small></small></div><div class="bxsec bxlab"><small></small></div><div class="bxsec"><div class="bxgrid"><button data-bx="fit"></button><button data-bx="dots"></button><button data-bx="reset" class="bxreset"></button><button data-bx="menu"></button><button data-bx="sugg"></button><button data-th="toggle" class="bxtrh"></button></div></div><button data-bx="close" class="bxclose"></button></div></div>${landMarkup()}`;
 
 export function createBuildUx(ctx) {
   const { root, T, toast, logEv, buzz, audio, grid } = ctx;
