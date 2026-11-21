@@ -18,7 +18,8 @@ export function stageOf(site) {
   const loads = uniq((Array.isArray(s.loads) ? s.loads : []).filter(isLoad)), massK = Number.isFinite(s.massK) ? Math.min(STAGE.massMax, Math.max(0.1, s.massK)) : 1;
   const budget = Number.isFinite(s.budget) && s.budget > 0 ? Math.min(STAGE.budgetMax, s.budget) : null; if (budget === null) return null;
   const wind = Number.isFinite(s.wind) && s.wind > 0 ? Math.min(3, s.wind) : 0;   // R123: sidekraft (vind) i prøven: bare to-lags bygg (dobbel bro) tåler den
-  return { loads: loads.length ? loads : [DEFAULT_LOAD], massK, budget, key: site.lab?.key || site.id, ...(wind ? { wind } : {}) };
+  const mats = Array.isArray(site.grid.mats) ? site.grid.mats.filter((m) => typeof m === 'string') : [];   // R127: stedet snevrer inn materialene (Hengebro: tre og kabel)
+  return { loads: loads.length ? loads : [DEFAULT_LOAD], massK, budget, key: site.lab?.key || site.id, ...(wind ? { wind } : {}), ...(mats.length ? { mats } : {}) };
 }
 export const hasStage = (site) => !!stageOf(site);
 // innstillingene (admin) justerer: massK og budsjett gjøres om med en faktor, avrundet
@@ -78,7 +79,7 @@ export function stageLines(s, T) {
   else if (s.ran) out.push({ t: T('gstage.failed'), c: '#ff9a8a', b: true });
   const left = s.st.budget - s.cost;
   if (s.on) { if (!(s.ran && s.passed)) out.push({ t: T('gstage.cost', { stars: starText(s.over ? 0 : s.stars), cost: s.cost, budget: s.st.budget, parts: s.parts }), c: s.over ? '#ff9a8a' : '#ffe9a8', b: !s.ran }); }
-  else out.push({ t: T('gstage.empty', { budget: s.st.budget }), c: '#ffd9a0' });
+  else out.push({ t: s.st.mats ? T('gstage.emptyMats', { budget: s.st.budget, list: s.st.mats.map((m) => T('grid.mat.' + m).toLowerCase()).join(' ' + T('gstage.and') + ' ') }) : T('gstage.empty', { budget: s.st.budget }), c: '#ffd9a0' });
   if (s.on && !s.ran) out.push({ t: s.over ? T('gstage.overNow', { n: -left }) : s.next ? T('gstage.nextStar', { n: s.next.cost }) : T('gstage.threeStars'), c: s.over ? '#ff9a8a' : '#ffd9a0' });
   if (s.tip && !(s.ran && s.passed)) out.push({ t: T('gstage.squareTip'), c: '#ffd9a0', b: true });   // R119: firkant uten diagonal
   if (!s.ran && s.done) out.push({ t: T('gstage.done'), c: '#7dffb0', b: true });

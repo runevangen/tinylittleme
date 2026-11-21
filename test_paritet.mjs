@@ -14,8 +14,9 @@ for (const name of ['bro', 'kjokkenbro', 'badebro', 'bygglab']) {
   for (const site of L.build.sites) {
     if (!G.siteHasGrid(site)) continue;
     const rv = G.roadLevel(site), an = G.gridAnchors(site);
-    if (an.length === 2 && Math.abs(an[0].v - an[1].v) < 1e-6) { assert.notEqual(rv, null, `${name}/${site.id}: bro-lignende sted skal ha en vei`); n++; }
-    else assert.equal(rv, null, `${name}/${site.id}: bare steder med to like høye ankre har vei`);
+    const vmin = Math.min(...an.map((a) => a.v)), low = an.filter((a) => Math.abs(a.v - vmin) < 1e-6);   // R127: tårnene i Hengebro (ankre høyt oppe) teller ikke: veien går mellom de to laveste ankrene
+    if (low.length === 2) { assert.notEqual(rv, null, `${name}/${site.id}: bro-lignende sted skal ha en vei`); n++; }
+    else assert.equal(rv, null, `${name}/${site.id}: bare steder med to like lave ankre har vei`);
     if (name === 'bygglab' && site.lab && ['bro', 'fagverk'].includes(site.lab.key)) assert.ok(X.buxSite({ levelId: 'bygglab', site }), `Byggeskole ${site.lab.key} skal ha nyeste byggeskjerm`);
     if (name !== 'bygglab' && X.BUX.levels[name]?.includes(site.id)) assert.ok(X.buxSite({ levelId: name, site }), `${name}/${site.id} skal ha nyeste byggeskjerm`);
   }

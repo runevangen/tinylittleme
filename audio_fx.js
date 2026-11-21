@@ -29,7 +29,7 @@ export const shouldVary = (ch) => VARY_IDS.has(varyKey(ch));
 // ---- byggelyd: hvilken lyd passer til hvilken del/feste ----------------------------------------------
 export function buildMaterial(type) {
   const t = String(type || '');
-  if (/^rod:/.test(t) || /^grid:/.test(t)) { const m = t.split(':')[1]; return m === 'steel' ? 'steel' : m === 'rope' ? 'rope' : 'wood'; }
+  if (/^rod:/.test(t) || /^grid:/.test(t)) { const m = t.split(':')[1]; return m === 'steel' || m === 'cable' ? 'steel' : m === 'rope' ? 'rope' : 'wood'; }
   if (/steel|metal|ruler|weight/.test(t)) return /ruler/.test(t) ? 'wood' : 'steel';
   if (/rope|tau/.test(t)) return 'rope';
   if (/block|lego|book|sponge|pencil/.test(t)) return 'block';

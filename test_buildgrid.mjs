@@ -12,7 +12,7 @@ const wide = { id: 'w', w: 30, h: 14, anchors: [{ u: -8, v: 0 }, { u: 8, v: 0 }]
 
 // ---------- 1) materialer, typer og priser ----------
 {
-  assert.deepEqual(BM.GRID_MATS, ['wood', 'steel', 'rope']);
+  assert.deepEqual(BM.GRID_MATS, ['wood', 'steel', 'rope', 'cable']);   // R127: kabel sist
   for (const m of BM.GRID_MATS) for (const k of ['name', 'en', 'color', 'h', 'price', 'm', 'E', 'st', 'sc', 'mcap', 'brittle', 'joint']) assert.ok(BM.GRID_MAT[m][k] !== undefined, `${m}.${k}`);
   const t = BM.rodType('steel', 1.75); assert.equal(t, 'rod_steel_175'); assert.deepEqual(BM.parseRod(t), { mat: 'steel', len: 1.75 }); assert.equal(BM.parseRod('plank_s'), null); assert.equal(BM.parseRod('rod_gold_100'), null);
   const pt = BL.partType(t); assert.equal(pt.w, 1.75); assert.equal(pt.h, 0.5); assert.equal(BL.partType(t), pt, 'samme objekt hver gang (cache)'); assert.equal(BL.partType('finnes_ikke'), BL.PART_TYPES.block, 'ukjent type er fortsatt kloss');
@@ -144,7 +144,7 @@ const bridge = (site, mat = 'wood', order = null) => {   // flatt dekke fra anke
 // ---------- 7) Bygglab: stedene med rutenett ----------
 {
   const gs = lab.build.sites.filter((s) => s.grid); assert.ok(gs.length >= 1 && gs.some((s) => s.lab.key === 'bro'), 'Bygglab har minst ett sted i rutenett-modus: ' + gs.map((s) => s.lab.key));
-  assert.equal(gs.length, 9, 'R74: alle ni steder har rutenett');
+  assert.equal(gs.length, 10, 'R74: alle ti steder har rutenett');
   for (const s of gs.filter((q) => !q.grid.anchors)) {   // R74: trapp og vippe har egne ankre i rutenett-modus (grid.anchors, testes i test_gridstage.mjs)
     const pts = G.latticePoints(s); for (const an of s.anchors) assert.ok(pts.some((p) => Math.abs(p.u - an.u) < 1e-6 && Math.abs(p.v - an.v) < 1e-6), `${s.id}: ankrene ligger på rutenettet`);
     assert.ok(G.gridStep(s) > 0.5 && G.gridStep(s) <= 3 && s.grid.stars?.three && s.grid.stars?.two, `${s.id}: trinn og terskler`);

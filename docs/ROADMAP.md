@@ -69,11 +69,6 @@ Fra Rune: «Vi trenger 3D-bygging» (valgt vei C, `docs/BYGGING_RUNDE2.md` §4).
 Krav: (1) **Modell** (`grid3d_logic.js`): knuter {x,y,z} på et 3D-rutenett, staver mellom knuter (materialer som i `grid_logic.js`: tre, stål, tau, ev. kabel), ankre (faste knuter), dekk/vei-staver, budsjett og stjerner; lovlighetsregler (lengde, overlapp, ikke gjennom ankre); serialisering (lagring og KODE; **ny** kodeprefiks, ikke bland med `TLM1.`); (2) **Fysikk** (`build_phys3.js`): en liten, **deterministisk** 3D-solver for stavverk (for eksempel verlet/posisjonsbasert med avstandsbånd per stav, brudd ved strekk/trykk-grense etter materiale, tau/kabel bare i strekk) med last (kule/bil) som kjører over dekkstavene og gir kraft på knutene; (3) **Belastning** per stav for visning (gjenbruk logikk fra `grid_stress.js` der det går); (4) **Ytelse:** en prøve skal ta under 2 s på iPhone-klasse (SwiftShader-måling i test, tak på antall knuter/staver, f.eks. 40/120); (5) **Tester** (`test_grid3d.mjs`, i `npm test`): en tetraeder består, en rektangulær boks uten diagonaler faller sammen, et fritt tårn på én stav velter, deterministisk resultat (samme bygg gir samme utfall), brudd ved overlast; (6) dokumenter antakelsene i `docs/BYGGING_RUNDE2.md` (som §4A i drift).
 Ferdig når: 3D-modell og 3D-fysikk er bevist i tester (stiv tetraeder holder, boks uten diagonaler faller, tårn med én stav velter), prøven er rask nok, og `npm test` og `npm run boot` er grønne.
 
-### [ ] R127 · Ny del: kabel som bærer i strekk (hengebro) + Byggeskole-oppdrag
-Fra `docs/BYGGING_RUNDE2.md` §3.3 (Runes valg). Kabel er en stav som bare bærer i strekk (som tau, men med bue/slakk og høy styrke) og som lar spilleren bygge en hengebro mellom høye tårn. Additivt, bak valg `buildcable`; dagens materialer uendret.
-Krav: (1) `grid_logic.js`/`build_phys.js`: kabel som tau med høy strekkstyrke, null trykkstyrke, vist med lett nedbøyning; (2) delen i delebrettet og i materialvalg i Rutenett; (3) et nytt Byggeskole-sted «Hengebro» (lås via `grid_stage.js`, egen start/mål, sjekk med `tools/` bot/walk) som introduserer bare kabel (én ny ting om gangen); (4) test, NYTT-rad, `logEv`.
-Ferdig når: en hengebro med kabel og to tårn består og en uten kabelstrekk feiler, stedet kan spilles i Byggeskolen, og tester og boot er grønne.
-
 ### [ ] R126 · Runde 2 av Badebroen og Byggeskolen: ekstra stjerner (billigst, lettest) og beste-liste
 Fra `docs/BYGGING_RUNDE2.md` §2 (kreativitet). Badebroen (R119) og Byggeskolens steder får runde 2-stjerner: «bygg billigst» og «bygg lettest» som egne stjerner, bonusmål (samle en smule midt på spennet som valgfri omvei) og beste-liste per brett (KODE/BESTE finnes). Delte moduler (R101), bak valg `buildround2`.
 Krav: (1) ekstra stjerner i resultatkortet og i Byggeskolens stedsliste; (2) valgfritt bonusmål ved midtpunktet; (3) beste-liste vises og lagres; (4) test + NYTT-rad.
@@ -92,6 +87,11 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R127 · Ny del: kabel som bærer i strekk (hengebro) + Byggeskole-oppdrag (v2.116)
+Fra `docs/BYGGING_RUNDE2.md` §3.3 (Runes valg). Kabel er en stav som bare bærer i strekk (som tau, men med bue/slakk og høy styrke) og som lar spilleren bygge en hengebro mellom høye tårn. Additivt, bak valg `buildcable`; dagens materialer uendret.
+Krav: (1) `grid_logic.js`/`build_phys.js`: kabel som tau med høy strekkstyrke, null trykkstyrke, vist med lett nedbøyning; (2) delen i delebrettet og i materialvalg i Rutenett; (3) et nytt Byggeskole-sted «Hengebro» (lås via `grid_stage.js`, egen start/mål, sjekk med `tools/` bot/walk) som introduserer bare kabel (én ny ting om gangen); (4) test, NYTT-rad, `logEv`.
+Ferdig når: en hengebro med kabel og to tårn består og en uten kabelstrekk feiler, stedet kan spilles i Byggeskolen, og tester og boot er grønne.
 
 ### [x] R128 · Belastningsvisning som verktøy: ett trykk «bytt til stål» (Rutenett) (v2.115)
 Fra `docs/BYGGING_RUNDE2.md` §3.4 (Runes valg: alle fire mekanismer). Etter en PRØV som feilet (eller i SLOW/PAUSE) vises hvilken stav som tar mest; trykk den og så **BYTT TIL STÅL** (ett trykk) i stedet for å slette og tegne på nytt. Tillegg i det delte Rutenett-laget (`grid_view.js`, `grid_logic.js`, `buildux_*`), dagens knapper uendret, bak valg `buildswapsteel` i ⚙ → Spill.

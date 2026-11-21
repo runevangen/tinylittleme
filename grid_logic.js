@@ -47,9 +47,11 @@ export function nearestPoint(site, u, v, maxD = Infinity) {
 // men kan få staver over og under. Dekket er gratis og teller ikke som deler (build_budget.js), så terskler og stjerner gjelder det du bygger oppå.
 export const isDeckRod = (r) => !!r && !!r.deck;
 // R101: høyden (v) veien går på når stedet har to ankre på samme høyde (ellers null). Brukes av tegningen (vei vs konstruksjon) for ALLE rutenett-steder: broene og Byggeskolen deler samme kode
-export function roadLevel(site) { if (!siteHasGrid(site)) return null; const an = gridAnchors(site).slice().sort((a, b) => a.u - b.u); return an.length === 2 && Math.abs(an[0].v - an[1].v) < 1e-6 ? an[0].v : null; }
+// R127: har stedet flere ankre (tårnene i Hengebro), er det de to laveste (samme høyde) som bærer veien
+const roadAnchors = (site) => { const all = gridAnchors(site), vmin = Math.min(...all.map((a) => a.v)); return all.length > 2 ? all.filter((a) => same(a.v, vmin)) : all; };
+export function roadLevel(site) { if (!siteHasGrid(site)) return null; const an = roadAnchors(site).slice().sort((a, b) => a.u - b.u); return an.length === 2 && Math.abs(an[0].v - an[1].v) < 1e-6 ? an[0].v : null; }
 export function deckPoints(site) {
-  if (!siteHasGrid(site)) return null; const an = gridAnchors(site).slice().sort((a, b) => a.u - b.u);
+  if (!siteHasGrid(site)) return null; const an = roadAnchors(site).slice().sort((a, b) => a.u - b.u);
   if (an.length !== 2 || !same(an[0].v, an[1].v) || an[1].u - an[0].u < MIN_LEN) return null;
   const mid = latticePoints(site).filter((p) => same(p.v, an[0].v) && p.u > an[0].u + 0.3 && p.u < an[1].u - 0.3).sort((a, b) => a.u - b.u);
   return { left: an[0], right: an[1], mid };
@@ -103,6 +105,8 @@ export function rodCheck(G, aId, bId, maxLen = MAX_LEN, skipRod = null) {
 }
 
 // ---------- tilstand: modus, historikk, speiling til B.placed / B.links ----------
+// R127: leddstyrken i en knute: det svakeste materialet, men en kabel har egne endefester (kabelsko) som ikke svikter før staven den hører til: der holder det sterkeste
+const jointK = (G, r1, r2, jk) => (GRID_MAT[r1.mat].rope && GRID_MAT[r1.mat].joint >= 3 || GRID_MAT[r2.mat].rope && GRID_MAT[r2.mat].joint >= 3 ? Math.max(jk(r1), jk(r2)) : Math.min(jk(r1), jk(r2)));
 export function derive(B) {
   const G = B.rg, placed = [], links = []; if (!G) { B.placed = []; B.links = []; return B; }
   const order = new Map(G.rods.map((r, i) => [r.id, i]));
@@ -117,7 +121,7 @@ export function derive(B) {
   for (const n of G.nodes) {
     const rs = rodsAt(G, n.id).sort((x, y) => order.get(x.id) - order.get(y.id)); if (!rs.length) continue;
     if (n.fixed) { const kf = Math.max(...rs.map(jk)); for (const r of rs) links.push({ id: 'h' + k++, kind: 'hinge', a: r.id, la: local(r, n.id), b: null, lb: null, g: { u: n.u, v: n.v }, free: true, k: kf }); }   // R74: ved ankeret holder det sterkeste materialet (stål) på ankerleddene
-    else for (let i = 1; i < rs.length; i++) links.push({ id: 'h' + k++, kind: 'hinge', a: rs[0].id, la: local(rs[0], n.id), b: rs[i].id, lb: local(rs[i], n.id), g: null, free: true, k: Math.min(jk(rs[0]), jk(rs[i])) });
+    else for (let i = 1; i < rs.length; i++) links.push({ id: 'h' + k++, kind: 'hinge', a: rs[0].id, la: local(rs[0], n.id), b: rs[i].id, lb: local(rs[i], n.id), g: null, free: true, k: jointK(G, rs[0], rs[i], jk) });
   }
   B.placed = placed.map(({ _a, _b, ...p }) => p); B.links = links; return B;
 }
@@ -165,14 +169,20 @@ export function gAddNode(B, u, v) {
   if (G.nodes.length >= MAX_NODES) return { ok: false, why: 'max' };
   pushHist(B); const n = { id: 'kn' + G.n++, u: p.u, v: p.v }; G.nodes.push(n); derive(B); return { ok: true, node: n, existed: false };
 }
+// R127: hvilke materialer stedet tillater. `site.grid.mats` (liste) hvis satt, ellers tre, stål og tau. Kabel kommer bare der stedet sier det (`site.grid.cable`, Hengebro) og bare når valget `buildcable` er på (B.gridCable !== false).
+export function allowedMats(site, cableOn = true) {
+  const g = site?.grid || {}, list = Array.isArray(g.mats) ? g.mats.filter((m) => GRID_MATS.includes(m)) : ['wood', 'steel', 'rope'];
+  const out = list.filter((m) => m !== 'cable'); if (g.cable && cableOn) out.push('cable'); return out;
+}
+export const matAllowed = (B, mat) => !!B?.site && allowedMats(B.site, B.gridCable !== false).includes(mat);
 export function gAddRod(B, aId, bId, mat) {
-  const G = B.rg; if (!G || !GRID_MATS.includes(mat)) return { ok: false, why: 'mat' };
+  const G = B.rg; if (!G || !GRID_MATS.includes(mat) || !matAllowed(B, mat)) return { ok: false, why: 'mat' };
   const c = rodCheck(G, aId, bId, maxLenOf(B)); if (!c.ok) return c;
   pushHist(B); const r = { id: 'st' + G.r++, a: aId, b: bId, mat }; G.rods.push(r); derive(B); return { ok: true, rod: r, len: c.len, cost: rodPrice(mat, c.len) };
 }
 // stav fra en knute til et rutenettpunkt (lager knuten om den mangler), alt i ett steg for ANGRE
 export function gAddRodTo(B, aId, u, v, mat) {
-  const G = B.rg, p = G && nearestPoint(B.site, u, v); if (!p) return { ok: false, why: 'out' };
+  const G = B.rg, p = G && nearestPoint(B.site, u, v); if (!p) return { ok: false, why: 'out' }; if (!matAllowed(B, mat)) return { ok: false, why: 'mat' };
   const ex = nodeAt(G, p.u, p.v), a = nodeOf(G, aId); if (!a) return { ok: false, why: 'same' };
   if (ex) return gAddRod(B, aId, ex.id, mat);
   const tmp = { id: '_t', u: p.u, v: p.v }; G.nodes.push(tmp); const c = rodCheck(G, aId, '_t', maxLenOf(B)); G.nodes.pop(); if (!c.ok) return c;

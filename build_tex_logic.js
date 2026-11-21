@@ -11,7 +11,7 @@ export const SURF = { wood: { rough: 0.7, metal: 0 }, steel: { rough: 0.4, metal
 export const TONE = 0.06;   // ±6 % tone per del
 
 export function texKind(type) {
-  const r = parseRod(type); if (r) return r.mat;      // staver: tre, stål, tau
+  const r = parseRod(type); if (r) return r.mat === 'cable' ? 'steel' : r.mat;      // staver: tre, stål, tau (R127: kabel er en stålwire)
   switch (type) {
     case 'block': case 'lego': return 'plastic';
     case 'weight': return 'steel';

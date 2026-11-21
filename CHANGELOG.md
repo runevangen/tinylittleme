@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.116** – R127: KABEL (bærer bare i strekk, henger ned) og Byggeskole-sted 10, Hengebro.
 - **2.115** – R128: BYTT TIL STÅL i Rutenett (pulserende svakeste stav etter feilet prøve, ett trykk, budsjett, ANGRE).
 - **2.114** – R129–R131 (3D-bygging i egen 3D-lab: kjerne, bygging, oppdrag) lagt i veikartet, fra Rune.
 - **2.113** – R124–R128 (runde 2: brett, kabel, bytt til stål) lagt i veikartet.

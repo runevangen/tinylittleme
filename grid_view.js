@@ -1,11 +1,11 @@
 // R72: rutenett-bygging, visning og berøring (DOM + canvas 2D). Logikken ligger i grid_logic.js; byggeskjermen (build.js) kobler inn med createGridUI().
 // Alt går med trykk: trykk et punkt = knute, trykk en knute og så et punkt (eller en annen knute) = stav i valgt materiale, dra en knute = flytt, FJERN = slett valgt knute/stav.
 // Målene er skjermbaserte (minst ca. 44 px: nærmeste rutenettpunkt innen en halv rute treffes), så en finger treffer også når brettet er zoomet ut (R70).
-import { GRID_MATS, GRID_MAT, rodPrice } from './build_materials.js';
+import { GRID_MATS, GRID_MAT, CABLE_SAG, rodPrice } from './build_materials.js';
 import { guideCss } from './grid_guide_view.js';   // R75
 import { shouldTipMode, showHelpBtn, shouldRestoreMode, getMode, setModeMem, KEY_TIP } from './grid_guide_logic.js';
 import { applyExample, hasExample } from './grid_example.js';   // R73
-import { gridAnchors, roadLevel, isGrid, setMode, isDeckRod, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
+import { allowedMats, gridAnchors, roadLevel, isGrid, setMode, isDeckRod, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
 
 export const GRID_PX = 44;   // minste avstand (px) mellom rutenettpunkter i standardvisningen
 export const gridCss = () => `
@@ -32,7 +32,7 @@ export const gridCss = () => `
 ${guideCss()}
 @media (orientation:landscape) and (max-height:520px){#bld .gtools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .gtools button{height:40px}#bld.gridmode:not(.sim) .share,#bld.gridmode:not(.sim) .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 44px)}#bld.gridmode.hasloads:not(.sim) .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 44px + 44px)}}
 `;
-export const gridMarkup = () => `<div class="gtools"><button data-g="wood"></button><button data-g="steel"></button><button data-g="rope"></button><button data-g="example" class="ex"></button></div><div class="gsim"><button data-gs="slow"></button><button data-gs="pause"></button></div>`;
+export const gridMarkup = () => `<div class="gtools"><button data-g="wood"></button><button data-g="steel"></button><button data-g="rope"></button><button data-g="cable"></button><button data-g="example" class="ex"></button></div><div class="gsim"><button data-gs="slow"></button><button data-gs="pause"></button></div>`;
 
 const COMMA = (x) => String(+x.toFixed(2)).replace('.', ',');
 export const colRow = (site, p) => { const a = gridAnchors(site), st = gridStep(site); return { c: Math.round((p.u - (a[0]?.u ?? 0)) / st), r: Math.round(p.v / st) }; };
@@ -57,9 +57,11 @@ export function createGridUI(ctx) {
     root.classList.toggle('gguidebtn', showHelpBtn({ enabled: enabledHere(), hint: !!ctx.getHint() }));   // R75: ?-knapp og MODUS-hint følger hjelpenivået
     root.classList.toggle('gmodetip', tipOn());
     const gb = root.querySelector('[data-a="gguide"]'); if (gb) gb.textContent = T('gguide.btn');
-    if (s && B()) B().gridMaxLen = ctx.getMaxLen();
+    if (s && B()) { B().gridMaxLen = ctx.getMaxLen(); B().gridCable = ctx.getCable ? ctx.getCable() !== false : true; }
     const mb = root.querySelector('[data-a="mode"]'); if (mb) mb.textContent = !on() && enabledHere() && ctx.locked?.() ? T('grid.modeLocked') : T('grid.modeBtn', { m: T(on() ? 'grid.mode.grid' : 'grid.mode.classic') });
-    for (const m of GRID_MATS) { const b = root.querySelector(`[data-g="${m}"]`); if (!b) continue; b.textContent = T('grid.mat.' + m); b.style?.setProperty?.('--mc', GRID_MAT[m].color); b.classList.toggle('on', mat === m); b.setAttribute?.('aria-pressed', mat === m ? 'true' : 'false'); }
+    const okMats = s ? allowedMats(s, ctx.getCable ? ctx.getCable() !== false : true) : GRID_MATS;   // R127: kabel bare på steder som har den (og når valget er på); site.grid.mats kan snevre inn
+    if (on() && !okMats.includes(mat)) mat = okMats[0] || 'wood';
+    for (const m of GRID_MATS) { const b = root.querySelector(`[data-g="${m}"]`); if (!b) continue; if (b.style) b.style.display = okMats.includes(m) ? '' : 'none'; b.textContent = T('grid.mat.' + m); b.style?.setProperty?.('--mc', GRID_MAT[m].color); b.classList.toggle('on', mat === m); b.setAttribute?.('aria-pressed', mat === m ? 'true' : 'false'); }
   }
   const tipOn = () => !!site() && ctx.store && shouldTipMode({ enabled: enabledHere(), inGrid: on(), hint: !!ctx.getHint() && ctx.getGuideOn?.() !== false, tipped: !!ctx.store.get(KEY_TIP, 0), locked: !!ctx.locked?.() });
   function toggleMode(why = 'knapp') {
@@ -97,7 +99,7 @@ export function createGridUI(ctx) {
     if (to !== speed) { simSync(to, simDone); logEv('bygg', `tempo ${to === 'play' ? 'vanlig' : to === 'slow' ? 'sakte' : 'pause'}`); }
     return speed;
   }
-  function setMat(m) { if (m === 'example') { example(); return; } if (!GRID_MATS.includes(m)) return; mat = m; sync(); logEv('bygg', `materiale ${m}`); }
+  function setMat(m) { if (m === 'example') { example(); return; } if (!GRID_MATS.includes(m) || (site() && !allowedMats(site(), ctx.getCable ? ctx.getCable() !== false : true).includes(m))) return; mat = m; sync(); logEv('bygg', `materiale ${m}`); }
   const fail = (r) => toast(T('grid.err.' + (r.why || 'same'), { n: COMMA(maxLenOf(B())) }));
 
   // ---- trykk ----
@@ -134,6 +136,7 @@ export function createGridUI(ctx) {
     if (r.ok) { added(r); selNode = id; } else { fail(r); if (r.why === 'dup') selNode = id; }
   }
   function added(r) {
+    if (r.rod.mat === 'cable') logEv('bygg', `kabel ${r.rod.id} lengde ${COMMA(r.len)} sted ${site()?.id}`);   // R127
     logEv('bygg', `stav ${r.rod.id} ${r.rod.mat} lengde ${COMMA(r.len)} kost ${r.cost}${r.newNode ? ' (ny knute ' + logPt(r.node) + ')' : ''}`);
     buzz?.(10); audio?.brod?.(r.rod.mat); selRod = null; ctx.trayRender(); onChange?.();
   }
@@ -180,7 +183,10 @@ export function createGridUI(ctx) {
       g2.setLineDash([7, 6]); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.setLineDash([]); g2.globalAlpha = 1; g2.lineCap = 'round';
       if (!Gd.deck) tag(g2, T('grid.roadGhost'), (pa.x + pb.x) / 2, pa.y + 26);
     }
-    const onRoad = (r) => { if (r.deck) return true; if (roadV == null || r.mat === 'rope') return false; const a = p2.get(r.a), b = p2.get(r.b); return !!a && !!b && Math.abs(a.v - roadV) < 1e-6 && Math.abs(b.v - roadV) < 1e-6; };
+    for (const lo of an2) for (const hi of an2) if (hi !== lo && Math.abs(hi.u - lo.u) < 1e-6 && hi.v > lo.v + 1e-6) {   // R127: tårn (ankre rett over hverandre) tegnes som en stolpe, så Hengebro leses som to tårn
+      const pa = sx(lo.u, lo.v), pb = sx(hi.u, hi.v); g2.lineCap = 'butt'; g2.strokeStyle = '#1a1208'; g2.lineWidth = 12; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.strokeStyle = '#7a6a58'; g2.lineWidth = 8; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.lineCap = 'round';
+    }
+    const onRoad = (r) => { if (r.deck) return true; if (roadV == null || r.mat === 'rope' || r.mat === 'cable') return false; const a = p2.get(r.a), b = p2.get(r.b); return !!a && !!b && Math.abs(a.v - roadV) < 1e-6 && Math.abs(b.v - roadV) < 1e-6; };
     for (const r of Gd.rods) {
       const a = p2.get(r.a), b = p2.get(r.b); if (!a || !b) continue; const m = GRID_MAT[r.mat], pa = sx(a.u, a.v), pb = sx(b.u, b.v), w = Math.max(r.mat === 'rope' ? 3 : 5, m.h * sc), isSel = selRod === r.id;
       g2.lineCap = 'round';
@@ -191,8 +197,11 @@ export function createGridUI(ctx) {
         g2.setLineDash([7, 6]); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.setLineDash([]);
         g2.lineCap = 'round'; continue;
       }
-      g2.strokeStyle = isSel ? '#ffffff' : '#1a1208'; g2.lineWidth = w + (isSel ? 6 : 4); g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
-      g2.strokeStyle = m.color; g2.lineWidth = w; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
+      const cab = r.mat === 'cable', cx = (pa.x + pb.x) / 2, cy = (pa.y + pb.y) / 2 + (cab ? CABLE_SAG * 2 * Math.hypot(pb.x - pa.x, pb.y - pa.y) : 0);   // R127: kabel henger litt ned (kvadratisk kurve; bare tegning, fysikken er en rett strekkbinding)
+      const seg = () => { g2.beginPath(); g2.moveTo(pa.x, pa.y); if (cab) g2.quadraticCurveTo(cx, cy, pb.x, pb.y); else g2.lineTo(pb.x, pb.y); };
+      g2.strokeStyle = isSel ? '#ffffff' : '#1a1208'; g2.lineWidth = w + (isSel ? 6 : 4); seg(); g2.stroke();
+      g2.strokeStyle = m.color; g2.lineWidth = w; seg(); g2.stroke();
+      if (cab) { g2.setLineDash([2, 5]); g2.strokeStyle = '#5b6672'; g2.lineWidth = Math.max(1, w * 0.4); seg(); g2.stroke(); g2.setLineDash([]); }
       if (r.mat === 'steel') { g2.strokeStyle = 'rgba(255,255,255,.55)'; g2.lineWidth = Math.max(1.5, w * 0.25); g2.beginPath(); g2.moveTo(pa.x, pa.y - w * 0.18); g2.lineTo(pb.x, pb.y - w * 0.18); g2.stroke(); }
       if (r.mat === 'rope') { g2.setLineDash([4, 4]); g2.strokeStyle = '#6b4a1a'; g2.lineWidth = Math.max(1.5, w * 0.5); g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.setLineDash([]); }
     }
