@@ -30,6 +30,10 @@ import { GATE, initGates, resetGates, restoreGates, gatesSave, stepGates, nearSw
 import { buildGateViews } from './plates_view.js';
 import { SCHOOL, schoolProgress, schoolRead, schoolMark, schoolCardShould, schoolDoneShould, schoolUrl } from './byggeskole_logic.js';   // R95: Byggeskolen i menyen
 import { createSchoolView, schoolMenuHtml } from './byggeskole_view.js';
+import { createLab3dView } from './grid3d_view.js';   // R130: 3D-laben (egen skjerm: bygg fritt i tre dimensjoner)
+import { LAB3D, WORLD3 } from './grid3d_site.js';
+import { showWorld3, worldOrigin } from './grid3d_world.js';
+import { createBuildTex } from './build_tex.js';
 import { summaryOf as r2SummaryOf } from './stars2_logic.js';   // R126
 import { fagverkCardShould } from './badebro_logic.js';   // R119
 import { visibleLevels, splitLevels, isRound2 } from './round2_logic.js';   // R125: runde 2 av Klossetrappa og Vippa
@@ -174,9 +178,10 @@ if (levelId && levelId !== 'soverom') {
   } catch { LEVEL = null; }
 }
 if (!LEVEL) { LEVEL = (await import('./level.js')).LEVEL; levelId = 'soverom'; }
-const schoolVisit = levelParam === SCHOOL.levelId && new URLSearchParams(location.search).get('skole') === '1';   // R95: åpnet fra BYGGESKOLE: «sist spilte brett» beholdes
+const lab3dVisit = levelParam === SCHOOL.levelId && new URLSearchParams(location.search).get('lab3d') === '1';   // R130: åpnet fra 3D-LAB i menyen
+const schoolVisit = levelParam === SCHOOL.levelId && (lab3dVisit || new URLSearchParams(location.search).get('skole') === '1');   // R95: åpnet fra BYGGESKOLE: «sist spilte brett» beholdes
 if (!schoolVisit) store.set('tlm.level', levelId);
-if (schoolVisit) { try { const u = new URL(location.href); u.searchParams.delete('skole'); history.replaceState(null, '', u.pathname + u.search); } catch { /* ingen historikk */ } }
+if (schoolVisit) { try { const u = new URL(location.href); u.searchParams.delete('skole'); u.searchParams.delete('lab3d'); history.replaceState(null, '', u.pathname + u.search); } catch { /* ingen historikk */ } }
 const levelInfo = LEVELS.find((l) => l.id === levelId), levelLabel = levelInfo?.short || levelId;
 const nextLevel = levelInfo?.n ? nextLevelOf(LEVELS, levelInfo.n) : null;   // R63: lavest n over dette nivået (et hull i nummereringen stopper ikke spillet)
 const goLevel = (id) => { store.set('tlm.level', id); location.search = `?level=${id}`; };
@@ -258,6 +263,7 @@ let buildMirror = store.get('tlm.buildmirror', true);   // R121: speiling og kop
 let buildTruss2 = normTrussMode(store.get('tlm.buildtruss2', 'auto'));   // R122: trekant- og diagonalhjelp i rutenett-bygging (auto: ikke på Ekspert)
 let buildCable = store.get('tlm.buildcable', true);   // R127: kabel (hengebro) som materiale i Rutenett (Byggeskolen: Hengebro)
 let buildStars2 = store.get('tlm.buildstars2', true);   // R126: ekstra stjerner (billigst, lettest, smule) og beste-liste i Badebroen og Byggeskolen
+let build3d = store.get('tlm.build3d', true), build3dSlow = +store.get('tlm.build3dslow', 0.3) || 0.3, build3dPick = +store.get('tlm.build3dpick', 26) || 26;   // R130: 3D-lab (egen skjerm i Byggeskolen); SLOW-tempo og trykkradius (admin)
 let build25d = store.get('tlm.build25d', true);   // R123: DOBBEL BRO (2,5D) i Rutenett: ⋯ → DOBBEL BRO
 let buildSpan = store.get('tlm.buildfromto', true);   // R118: FRA og TIL ved byggestedet (markører i verden, tekst på BYGG-knappen, etiketter i byggeskjermen)
 let partsStart = store.get('tlm.partsfromstart', true);   // R120: delene er der fra start; samling er bonus
@@ -1229,6 +1235,22 @@ const buildSnd = (n) => (...a) => { if (!buildSndLogged && audio) { buildSndLogg
 const buildAudio = Object.fromEntries(['crumb', 'bcreak', 'bbreak', 'bsplash', 'bhop', 'win', 'bplace', 'brod', 'battach', 'bknot', 'bpop', 'bstart', 'barrive', 'bstars'].map((n) => [n, buildSnd(n)]));
 const bld = createBuildMode({ getStars2: () => buildStars2, getDouble: () => build25d, getCable: () => buildCable, onGoLevel: (id) => goLevel(id), onOpen: (id) => schoolOnBuildOpen(id), onClose: () => schoolV.hide(), onStagePass: (id, r) => schoolOnPass(id, r), onMenu: () => quitToMenu('bygg'), onStat: (name, data) => sts.track(name, levelId, data), menuLabel: () => dft(lang, 'df.menu'), scene, LEVEL, player, $, T, logEv, toast, TOUCH, buzz, audio: buildAudio, getSlow: () => buildSlow, getStrength: () => buildStrength, getWorld: () => buildWorld, getBuildTex: () => buildTex, getTexLow: () => texLow, getSeeHint: () => buildSeeHint, getDbl: () => buildDbl, getFine: () => buildFine, getStress: () => buildStress, getBreakFx: () => buildBreakFx, getLego: () => buildLego, store, levelId, getBudget: () => buildBudget, getBonus: () => buildBonus, getBonusStep: () => buildBonusStep, getLoads: () => buildLoads, getLabFree: () => labFree, getShare: () => buildShare, getGhost: () => buildGhost, getCap: () => buildCap, getTruss: () => buildTruss, getAxial: () => buildAxial, getGrid: () => buildGrid, getGridHint: () => DIF.gridHint, getSquareTip: () => squareTipOn, getGridGuide: () => gridGuide, getGridMax: () => buildGridMax, getGridStress: () => buildGridStress, getGridPeak: () => buildGridPeak, getGridDeck: () => buildGridDeck, getGridGamma: () => buildGridGamma, getGridSlow: () => buildGridSlow, getStage: () => ({ on: gridStage, lock: gridLock, massK: gridMassK, budgetK: gridBudgetK }), getPlayGrid: () => gridPlay, getBuildUx: () => buildUx, getLoupe: () => buildLoupe, getLoupeZoom: () => buildLoupeZoom, getLoupeSize: () => buildLoupeSize, getBuildNext: () => buildNext, getPartsStart: () => partsStart, getMirror: () => buildMirror, getSwapSteel: () => buildSwapSteel, getSpan: () => ({ on: buildSpan, expert: difficulty === 'expert', help: helpLevel }), getTruss2: () => ({ mode: buildTruss2, expert: difficulty === 'expert' }), getBuxHelp: () => ({ labels: DIF.gridHint && buildUxLand, suggest: difficulty === 'beginner' && buildUxLand }), getPlayLock: () => gridPlayLock, getVersion: () => VERSION, getCode: () => store.get('tlm.tcode', ''), getCrumbs: () => (crumbsOn ? Math.max(crumbCount(LEVEL), getBest(store)[levelId]?.crumbs || 0) : 0), onSolved: (id) => { if (setGoalFlag(LEVEL, id)) logEv('delmål', `bygget ${id} klart`); }, isPlay: () => mode === 'play', isMenu: () => menuOpen, isBoss: () => bossFighting(), isWon: () => won, isOv: () => ov.active, getSnap: () => buildSnap, setSnap: (v) => { buildSnap = v; store.set('tlm.buildsnap', v); }, allParts: () => buildAll, onChange: () => saveProgress() });   // R24: byggeskjermen (build.js, build_logic.js)
 
+// R130: 3D-laben (grid3d_view.js, grid3d_ctl.js, grid3d_cam.js, grid3d_world.js). Egen skjerm som dekker spillet (3D-verdenen pauses som under byggeskjermen); bestått bygg står i rommet (bare tegnet, ingen kollisjon).
+let lab3dTex = null, lab3dWorld = null;
+const lab3dHide = () => { if (lab3dWorld) { lab3dWorld.dispose(); lab3dWorld = null; logEv('bygg3d', 'bygget fjernet fra rommet'); } };
+const lab3dShow = (ctl) => {
+  lab3dHide(); if (!ctl?.last?.passed) return null;
+  try {
+    if (buildTex && !lab3dTex) lab3dTex = createBuildTex(THREE, { make: (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }, low: !!texLow });
+    lab3dWorld = showWorld3(THREE, buildTex ? lab3dTex : null, scene, ctl.B.rg, LAB3D, worldOrigin({ x: player.x, y: player.y, z: player.z }, { x: -Math.sin(cam.yaw), z: -Math.cos(cam.yaw) }, WORLD3));
+    logEv('bygg3d', `bygget står i rommet: ${lab3dWorld.stats.rods} staver, ${lab3dWorld.stats.draws} tegnekall, ingen kollisjon`); toast(T('lab3d.world'));
+  } catch (e) { logEv('bygg3d', 'feil i verden: ' + (e?.message || e)); }
+  return lab3dWorld;
+};
+const lab3dV = createLab3dView({ T, logEv, toast, buzz, store, site: LAB3D, getSlow: () => build3dSlow, getPick: () => build3dPick, onPass: (ctl) => lab3dShow(ctl), onClose: (ctl) => { if (ctl?.last?.passed && !lab3dWorld) lab3dShow(ctl); } });
+lab3dV.setWorld({ hide: lab3dHide });
+let lab3dAuto = !lab3dVisit;   // åpnes av seg selv én gang når 3D-LAB er valgt i menyen
+
 // Sjefkamp (R9): er figuren skjult bak sjefen sett fra kameraet, tegnes den over (uten dybdetest) så spilleren alltid ser hvor figuren er (Pixar-regi: helten alltid i bildet)
 const _ray = new THREE.Raycaster(), _hv = new THREE.Vector3(), _hd = new THREE.Vector3();
 let heroXray = false;
@@ -1993,6 +2015,9 @@ const SETTINGS = [
   sl('buildtruss2', 'spill', 'Trekant- og diagonalhjelp (R122): i rutenett-bygging (Hyllebroen, Kjøkkenbroen, Byggeskolen) foreslår TREKANT et tredje punkt når du har valgt to knuter eller en stav (trykk forslaget for å bytte, TREKANT for å legge det til), og en firkant uten diagonal får en «gir etter»-prikk og knappen DIAGONAL (billigste lovlige skråstav). Hjelpen legger aldri til noe av seg selv og bruker valgt materiale. Etter vanskelighet: på for Nybegynner og Medium, av for Ekspert; «På» slår den på også der. Kan skjules i ⋯', 'auto', [['auto', 'Etter vanskelighet'], ['on', 'På'], ['off', 'Av']], () => buildTruss2, kp('tlm.buildtruss2', (v) => { buildTruss2 = normTrussMode(v); logEv('bygg', `trekant- og diagonalhjelp: ${buildTruss2}`); })),
   fl('buildcable', 'spill', 'Kabel (R127): i Rutenett får Byggeskole-stedet Hengebro en ny del, KABEL, som bare bærer i strekk (som tau, men mye sterkere) og henger litt ned. Bygg et dekk av tre, hengt opp i kabelen mellom tårnene. Av = ingen kabelknapp, og dagens materialer er uendret', true, () => buildCable, kp('tlm.buildcable', (v) => { buildCable = v; logEv('bygg', `kabel ${v ? 'på' : 'av'}`); })),
   fl('buildstars2', 'spill', 'Ekstra stjerner (R126): Badebroen og Byggeskolens steder gir ekstra stjerner på resultatkortet: BILLIGST (bygg under en kostnad), LETTEST (bygg under en vekt) og SMULE (en knute midt på spennet), og en beste-liste per sted (de tre beste byggene). Dagens stjerner er uendret. Av = ingen ekstra stjerner og ingen liste', true, () => buildStars2, kp('tlm.buildstars2', (v) => { buildStars2 = v; logEv('bygg', `runde 2 (ekstra stjerner og beste-liste) ${v ? 'på' : 'av'}`); })),
+  fl('build3d', 'spill', '3D-lab (R130): hovedmenyen får en knapp «3D-LAB» med en egen byggeskjerm i tre dimensjoner: roter med én finger, klyp for å zoome, to fingre flytter; FORAN, SIDE, TOPP og 3D som hurtigvisninger; LAG ◀ ▶ bytter dybde; trykk et punkt for en knute og to knuter for en stav. PRØV kjører en bil over broen; grønt er lite belastet, rødt mye. Bestått bro står i rommet. Av = ingen knapp; dagens bygging er uendret', true, () => build3d, kp('tlm.build3d', (v) => { build3d = v; logEv('bygg3d', `3D-lab ${v ? 'på' : 'av'}`); })),
+  rg('build3dslow', 'admin', '3D-lab (R130): tempo i SLOW under prøven (1 = vanlig fart)', 0.3, 0.1, 0.8, 0.05, () => build3dSlow, kp('tlm.build3dslow', (v) => { build3dSlow = v; }), { digits: 2 }),
+  rg('build3dpick', 'admin', '3D-lab (R130): trykkradius for knuter (piksler; større = lettere å treffe med tykk finger)', 26, 14, 48, 2, () => build3dPick, kp('tlm.build3dpick', (v) => { build3dPick = v; })),
   fl('build25d', 'spill', 'Dobbel bro (2,5D, R123): i Rutenett kan du trykke ⋯ → DOBBEL BRO for å kopiere bygget til et parallelt plan med tverrstag (smal, middels eller bred; X-form eller rett). Broen blir bred og står som to fagverk med dekk mellom i rommet, og tåler vind fra siden (Byggeskolen: Bred bro; Kjøkkenbroen: valgfritt delmål). Kostnaden teller mot budsjettet. Av = ingen knapp og alle bygg er som før', true, () => build25d, kp('tlm.build25d', (v) => { build25d = v; logEv('bygg', `dobbel bro (2,5D) ${v ? 'på' : 'av'}`); })),
   fl('buildfromto', 'spill', 'Vis fra og til ved byggestedet (R118): nær et byggested står grønn FRA og gul TIL i rommet med en stiplet bue mellom, BYGG-knappen sier hvilket sted det gjelder med gap og høydeforskjell, FRA og TIL står også i byggeskjermen, og første gang per sted kommer en kort veiledning (ikke på Ekspert). Skjules på Ekspert uten hjelp. Minikartet viser stedet som et spenn', true, () => buildSpan, kp('tlm.buildfromto', (v) => { buildSpan = v; logEv('bygg', v ? 'fra/til på' : 'fra/til av'); })),
   fl('partsfromstart', 'spill', 'Delene er der fra start (R120): i byggebrettene ligger alle delene stedet trenger i delebrettet første gang du åpner det, uten at du må samle dem i rommet. Delene i rommet er en bonus: hver du finner gir +1 på budsjettet i byggeoppdraget (opptil +3) og teller i delmålet «Finn tre rare deler». Av = som før (du må finne delene selv)', true, () => partsStart, kp('tlm.partsfromstart', (v) => { partsStart = v; logEv('bygg', v ? 'deler fra start på' : 'deler fra start av'); })),
@@ -2612,7 +2637,7 @@ function frInput(inp) {                              // kalles med knappene som 
   }
 }
 function frTick(dt) {
-  const play = mode === 'play' && !won && !menuOpen && !introSweep && !ov.active && !bld.active && !bossFighting();
+  const play = mode === 'play' && !won && !menuOpen && !introSweep && !ov.active && !bld.active && !lab3dV.active && !bossFighting();
   if (!play || levelInfo?.n !== FR.level) { frV.hideHint(); frV.progress({ show: false }, false); return; }
   frStat.t += dt; frStat.acc += dt; if (frStat.acc < 0.2) return; frStat.acc = 0;
   if (Math.hypot(player.vx, player.vz) > 0.4) frUse('stick', 'bevegelse');
@@ -2930,6 +2955,7 @@ function applyLowProfile(on) {                       // slår av skygge-kart, st
 }
 if (lowMode === 'on') { lowP.decide(null, 9, 1, 'on'); applyLowProfile(true); }
 function render(now, dt) {
+  if (lab3dV.active && buildPause3d && !window.__noPause3d) { lab3dV.redraw(); return; }   // R130: 3D-laben dekker hele skjermen: 3D-verdenen tegnes ikke bak den
   if (bld.active && buildPause3d && !CINE.on && !window.__noPause3d) { if (!pause3dLogged) { pause3dLogged = true; logEv('bygg', '3D-verdenen pauset mens byggeskjermen er åpen'); } bld.update(dt, false); return; }   // R109: byggeskjermen dekker alt; ingen 3D-tegning bak den
   updateCarryButton();
   hero.gripNear = mode === 'play' && !player.carry && player.reach <= 0 && !!findReachTarget(player, LEVEL, 0.35);      // hånden løftes litt når noe kan gripes
@@ -3097,7 +3123,8 @@ function render(now, dt) {
   if (leke) leke.update(legoOn && !lowOn && mode !== 'plan');
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(CINE.on ? 0 : dt, mode === 'play' && !won && !menuOpen && !ov.active);   // kinomodus: byggetiden går bare i cine.step / cine.build.step
-  if (labAutoOpen({ lab: isLab(LEVEL), on: labStart, done: labAuto.done, playing: mode === 'play' && !won && !menuOpen && !ov.active && !bossFighting(), onGround: player.onGround || player.state === 'ground' }) && bld.open()) { labAuto.done = true; logEv('bygglab', 'byggeskjermen åpnet ved start'); }   // R67
+  if (!lab3dAuto && mode === 'play' && !won && !menuOpen && !ov.active && !bld.active && !bossFighting() && (player.onGround || player.state === 'ground')) { lab3dAuto = true; labAuto.done = true; if (lab3dV.open()) { logEv('bygg3d', 'åpnet fra menyen'); const sv = store.get('tlm.lab3d', null); if (sv && sv.passed && lab3dV.ctl && !lab3dWorld) lab3dShow(lab3dV.ctl); } }   // R130
+  if (labAutoOpen({ lab: isLab(LEVEL), on: labStart, done: labAuto.done || lab3dVisit, playing: mode === 'play' && !won && !menuOpen && !ov.active && !bossFighting(), onGround: player.onGround || player.state === 'ground' }) && bld.open()) { labAuto.done = true; logEv('bygglab', 'byggeskjermen åpnet ved start'); }   // R67
   updateFades(dt); updateOffscreen();
   heroSeen(bossMesh && bossOn && !LEVEL.bossS.gone && camBossK > 0.05 && mode === 'play' && !viewFirst);
   sun.target.position.set(player.x, player.y, player.z);
@@ -3261,6 +3288,7 @@ const badgeLine = () => { const t = badgeTotals(store, LEVELS.filter((l) => l.n)
 function quitToMenu(from = 'meny') {
   logEv('avslutt til meny', from); statsLevelEnd('quit');
   if (bld.active) bld.close('meny');
+  if (lab3dV.active) lab3dV.close('meny');
   if (ov.active) ov.skip();
   if (showMe.phase !== 'idle') skipShowMe(showMe);
   $('panel').classList.add('hide'); closeMore(); if (infoOpen) closeInfo();
@@ -3371,6 +3399,7 @@ function showStart(o = {}) {
   const rest = `<button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
     <button class="mbtn sec" id="mLevels">${dft(lang, 'df.pick')}${bl ? `<small>${bl}</small>` : ''}</button>
     ${CINE.on ? '' : schoolMenuHtml(T, schoolProg(), r2Summary())}
+    ${CINE.on || !build3d ? '' : `<button class="mbtn sec" id="mLab3d">🧊 ${T('lab3d.menu')}<small>${T('lab3d.menu.sub')}</small></button>`}
     <button class="mbtn sec" id="mToys">🧸 ${rwT(lang, 'rw.closet')}</button>
     ${menuVisible(testerCode(), validCode) ? `<div class="mrow"><button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button><button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button></div>` : `<button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button>`}
     <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
@@ -3390,6 +3419,7 @@ function showStart(o = {}) {
   };
   $('mLevels').onclick = () => { unlockAudio(); dv.pickLevel({ levels: levelsShown(), st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, ...(CINE.on ? {} : { school: { label: T('school.label'), sub: T('school.sub', { n: schoolProg().n, total: schoolProg().total }), onOpen: () => openSchool('velg brett') } }) }); };
   if ($('mSchool')) $('mSchool').onclick = () => { unlockAudio(); openSchool('meny'); };
+  if ($('mLab3d')) $('mLab3d').onclick = () => { unlockAudio(); logEv('bygg3d', 'åpnet fra menyen (knapp)'); saveProgress(); try { location.href = `${location.pathname}?level=${SCHOOL.levelId}&lab3d=1`; } catch { location.search = `?level=${SCHOOL.levelId}&lab3d=1`; } };   // R130
   $('mToys').onclick = () => { logEv('belønning', 'lekerom åpnet'); showCloset($('start'), { st: store, lang, all: rewardsAll, levels: LEVELS, onChange: (e) => { refreshAccessories(); logEv('belønning', `valgt ${Object.values(e).filter(Boolean).join(',') || 'ingen'}`); }, onBack: showStart }); };
   $('mChg').onclick = () => { logEv('nytt', 'knapp'); openChanges(); };
   if (validCode(testerCode())) { const tryChg = (left) => fetchChanges().then((l) => { if (l) chgBtnRefresh(); else if (left > 0) setTimeout(() => { if ($('mChg')) tryChg(left - 1); }, 8000); }).catch(() => {}); tryChg(2); }   // stille ved feil, med nytt forsøk som Rettelser
@@ -3486,7 +3516,7 @@ function frame(now) {
     const dq = fr && mode === 'play' && !menuOpen ? autoQC.decide(fr, renderer.getPixelRatio(), autoQ, basePr) : null;
     { const lp = fr && mode === 'play' && !menuOpen ? lowP.decide(fr, renderer.getPixelRatio(), 1, lowMode, autoQC.warm) : null; if (lp !== null) { applyLowProfile(lp); if (lp && lowMode === 'auto') toast('Lav profil på for jevnere bilde. ⚙ → Test → Lav profil styrer det', true); } }
     if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); logEv('ytelse', `${levelId}: oppløsning ${dq.dir === 'down' ? 'ned' : 'opp'} ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× · ${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms · ${renderer.info.render.calls} tegnekall, ${renderer.info.render.triangles} trekanter`); if (dq.dir === 'down' && !qToasted) { qToasted = true; toast('Lavere oppløsning for jevnere bilde. ⚙ → Test → Oppløsning styrer det', true); } } }   // én melding per økt, nede ved kanten så den ikke dekker målpilen; resten logges bare
-  if (!window.__paused && !menuOpen && !ov.active && !bld.active) update(dt);   // R20: spillet venter mens oversikten vises
+  if (!window.__paused && !menuOpen && !ov.active && !bld.active && !lab3dV.active) update(dt);   // R20: spillet venter mens oversikten vises
   showMeFrame(dt); stepCamAnim(dt); compassFrame(now); floodFrame(now, dt);
   render(now, dt);
   requestAnimationFrame(frame);
@@ -3499,5 +3529,5 @@ window.__fadeCount = () => fadeEntries.filter((e) => e.t > 0.5).length;
 window.__fadeIds = () => fadeEntries.filter((e) => e.t > 0.01).map((e) => e.boxes.map((b) => b.id).join('+') + ':' + e.t.toFixed(2));
 const cine = createCinema({ state: CINE, rng: cineRnd || { reseed() {} }, camera, canvas: renderer.domElement, cam, player, update, render, bld, settings: () => SETTINGS, logEv, onFollow: (h) => { cineH = h; }, snapCam: () => { camFocusY = null; }, isPlay: () => mode === 'play' && !won && !menuOpen && !ov.active, levelId: () => levelId, version: VERSION, THREE, scene, hero, onHeroScale: (k) => { cineHS = k; } });   // R68: kinomodus (cinema_view.js)
 if (CINE.on) bld.showMarks(false);   // de gule rammene rundt byggesteder skjules (gripMarks skjules i render())
-window.__game = { fr: { log: frLog, stat: frStat, hints: frHints, blind: frBlind, view: frV, active: frAct }, cine, diff: { get: () => difficulty, set: (v) => applyDifficulty(v, { carry: true, why: 'test' }), profile: () => DIF, count: helpVisibleCount, quit: quitToMenu, start: showStart, key: () => progKey, tb }, markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, way: { v: wayV, s: wayS, quest: () => questNow(nextTarget()), tap: (src = 'linje') => { questTapUntil = performance.now() + WAY.tapMs; logEv('maalvei', src === 'ikon' ? 'trykk på mål-ikonet' : 'trykk på oppdragslinjen'); } }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge, shadow: shadowStats(), warm: warmInfo, warmProg }), shCull, shPacer, sun, setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
+window.__game = { lab3d: lab3dV, fr: { log: frLog, stat: frStat, hints: frHints, blind: frBlind, view: frV, active: frAct }, cine, diff: { get: () => difficulty, set: (v) => applyDifficulty(v, { carry: true, why: 'test' }), profile: () => DIF, count: helpVisibleCount, quit: quitToMenu, start: showStart, key: () => progKey, tb }, markPlan: () => markPlan, mv, markers: { goalInfo: () => goalInfo, goalDir: () => goalDir }, way: { v: wayV, s: wayS, quest: () => questNow(nextTarget()), tap: (src = 'linje') => { questTapUntil = performance.now() + WAY.tapMs; logEv('maalvei', src === 'ikon' ? 'trykk på mål-ikonet' : 'trykk på oppdragslinjen'); } }, guide: { v: guideV, showMe, stall, aimOf: guideAimOf, nextTarget, tick: (dt) => { showMeFrame(dt); stepCamAnim(dt); } }, shw, fadeAll: (on) => { for (const e of fadeEntries) { setFadeMats(e, on); if (on) for (const c of e.clone.values()) for (const mt of [].concat(c)) mt.opacity = fadeOp; } return fadeEntries.length; }, programCount: () => programCount(renderer), setGoalFlag: (f) => setGoalFlag(LEVEL, f), mv, ov, bld, doSave, variant, renderer, scene, perfStats: () => ({ ...sceneStats(renderer, scene), low: lowOn, merged: perfMerge, shadow: shadowStats(), warm: warmInfo, warmProg }), shCull, shPacer, sun, setLow: (v) => { lowMode = v; lowP.decide(null, 9, 1, v); if ((v === 'on') !== lowOn) applyLowProfile(v === 'on'); }, react, footSm, antMeshes, camera, goalArrow, goalArrowG, say, setMood, touch, get audio() { return audio; }, get music() { return music; }, get evLog() { return evLog; }, unlockAudio, player, LEVEL, P, save, stats, setMode, cam, planCam, restartAll, update, poseHero, animateHero, hero, tick: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); } };   // tick: kjør spillogikk raskt (testing)
 window.__game.verView = verView;   // R77: test-hekte
