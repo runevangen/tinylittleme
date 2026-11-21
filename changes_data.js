@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r121-speil-kopi', version: '2.107', date: '2026-11-21', title: 'Rutenett-byggeren (broene og Byggeskolen) kan speile bygget og kopiere et felt: bygg halve broen og speil resten, eller kopier en trekant til neste felt.',
+    how: 'Åpne Hyllebroen, trykk BYGG, tegn en trekant ved venstre anker, trykk ⋯ → SPEIL OG LEGG TIL. Trykk så en stav og KOPIER, dra kopien og trykk SETT INN. ↶ tar bort det siste. Skru av/på under ⚙ → Spill.', level: 'bro', spot: null },
   { id: 'r118-fra-til-bygg', version: '2.106', date: '2026-11-21', title: 'Ved byggestedet ser du nå tydelig FRA og TIL: markører i verden, og BYGG-knappen viser stedet og gapet. Byggeskjermen har FRA/TIL-etiketter, minikart og pil.',
     how: 'Gå mot et byggested (Hyllebroen eller et Bygglab-sted) og se FRA- og TIL-markørene og BYGG-knappen. Trykk BYGG og se etikettene. Skru av/på under ⚙ → Spill.', level: 'bygglab', spot: null },
   { id: 'r117-teksturer-bygde-deler', version: '2.105', date: '2026-11-21', title: 'Bygde deler i rommet ser nå ut som tre (med trekorn og kvister), stål (børstet), tau (flettet), plast med knotter og leker, i stedet for ensfargede kasser.',
