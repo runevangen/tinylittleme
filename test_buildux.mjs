@@ -63,7 +63,7 @@ const mk = (n, sid) => { const L = lvl(n); P.ensurePlayGrid(L.build.sites); cons
   const { site } = mk('bro', 'bro1');
   const b = X.budgetOf({ site, cost: 3 }); assert.equal(b.budget, 6, 'to-stjerners-grensen'); assert.ok(!b.over && b.ratio === 0.5); assert.ok(X.budgetOf({ site, cost: 9 }).over && X.budgetOf({ site, cost: 9 }).ratio === 1);
   assert.equal(X.budgetOf({ site, cost: 2, stageBudget: 8 }).budget, 8, 'oppdragets budsjett går foran');
-  assert.deepEqual(X.BUX.mats.map((m) => m.id), BM.GRID_MATS, 'tre materialer'); for (const m of BM.GRID_MATS) { const i = X.matInfo(m); assert.equal(i.price, BM.GRID_MAT[m].price); assert.ok(i.strength >= 1 && i.strength <= 3 && i.icon); }
+  assert.deepEqual(X.BUX.mats.map((m) => m.id), BM.GRID_MATS.filter((m) => m !== 'cable'), 'tre materialer (kabel, R127, finnes bare i Hengebro og har ikke plass på den forenklede skjermen)'); for (const m of X.BUX.mats.map((q) => q.id)) { const i = X.matInfo(m); assert.equal(i.price, BM.GRID_MAT[m].price); assert.ok(i.strength >= 1 && i.strength <= 3 && i.icon); }
   assert.ok(X.matInfo('steel').strength > X.matInfo('wood').strength && X.matInfo('wood').strength > X.matInfo('rope').strength); assert.equal(X.strengthBars(2), '▮▮▯'); assert.equal(X.COMMA(1.5), '1,5');
   const T = X.createTimer(); X.timerOpen(T, 10); X.timerOpen(T, 99); assert.equal(T.t0, 10, 'starter én gang'); assert.deepEqual(X.timerRod(T, 14), { first: true, secs: 4 }); assert.equal(X.timerRod(T, 20).first, false); assert.equal(X.timerTry(T), 1);
   const w = X.timerWin(T, 70); assert.ok(w.first && w.secs === 60 && w.tries === 1 && w.rods === 2); assert.equal(X.timerWin(T, 99).first, false, 'første bro måles bare én gang');

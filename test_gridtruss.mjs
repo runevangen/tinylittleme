@@ -9,7 +9,7 @@ const lab = JSON.parse(fs.readFileSync(new URL('./levels/bygglab.level.json', im
 const gridSites = lab.build.sites.filter((s) => s.grid && !s.grid.anchors),   // R74: de to med egne ankre (trapp, vippe) har ikke kjøredekk
   allGrid = lab.build.sites.filter((s) => s.grid), site = (k) => lab.build.sites.find((s) => s.lab.key === k);
 const mk = (s, deck = true) => { const B = BL.createBuild(s, {}, []); B.gridDeck = deck; G.setMode(B, 'grid'); return B; };
-assert.equal(allGrid.length, 9, 'R74: ni rutenettsteder i Bygglab'); assert.equal(gridSites.length, 7, 'sju av dem har to ankre på lik høyde');
+assert.equal(allGrid.length, 10, 'R74: ti rutenettsteder i Bygglab'); assert.equal(gridSites.length, 7, 'sju av dem har to ankre på lik høyde');
 
 // ---------- 1) farge-skala ----------
 {

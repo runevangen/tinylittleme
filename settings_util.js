@@ -92,7 +92,7 @@ export const GROUPS = [
 ];
 export const LAYOUT = {
   spill: ['lang', 'autosave', 'startscreen', 'confirm2', 'lostreturn'],
-  innhold: ['puzzles', 'gates', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'wasp', 'wasplevel', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['build25d', 'buildsnap', 'buildslow', 'buildbudget', 'buildbonus', 'labstart'] }],
+  innhold: ['puzzles', 'gates', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'wasp', 'wasplevel', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['build25d', 'buildcable', 'buildsnap', 'buildslow', 'buildbudget', 'buildbonus', 'labstart'] }],
   styring: ['preset', 'help', 'stickfloat', 'stickcurve', 'stickdead', 'btnscale', 'speedscale', 'inertia', 'autograb', 'magnet', 'aimthrow', 'dbltap', 'showcenter', 'showmapbtn', 'vib',
     { sub: 'Mus og tastatur (PC)', ids: ['pcbtns', 'mousesens', 'mouselook'] }],
   figur: ['stepadapt', 'reactanim', 'idlewink', 'shimmy', 'roll', 'careful', 'ropeheavy'],

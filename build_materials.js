@@ -59,14 +59,17 @@ export const buckleRatio = (n, pcr) => (pcr > 0 ? Math.max(0, n) / pcr : 0);
 // pris: kostnad per enhet lengde (avrundet opp til hele poeng, minst 1). Tau bærer bare strekk (rope: true): ingen knekking, og i fysikken en ensidig avstandsbinding.
 // R74: tre i rutenett er svakt (egne verdier, planke/klassisk modus bruker `wood` over og er uendret): staver ×0,30 (strekk, trykk, knekk, bøy) og ledd 0,43 (var 1). Målt på trailer-broen (9 tre-staver, Pratt, sted «fagverk», last Leke-bil): største belastning 0,22 -> 0,72 og leddene i den brister; stål er uendret (ledd 3, tåler ca. 3,3× mer i stav).
 export const GRID_WOOD_K = 0.3, GRID_WOOD_JOINT = 0.43;
-export const GRID_MATS = ['wood', 'steel', 'rope'];
+export const GRID_MATS = ['wood', 'steel', 'rope', 'cable'];   // R127: kabel sist (koder og lagring teller etter denne rekkefølgen)
 export const GRID_MAT = {
   wood:  { joint: GRID_WOOD_JOINT, name: 'Tre', en: 'Wood', color: '#c98a45', h: 0.5, price: 0.5, m: 0.5, alpha: 0.12, mcap: 2200 * GRID_WOOD_K, E: 1000 * GRID_WOOD_K, st: 12000 * GRID_WOOD_K, sc: 14000 * GRID_WOOD_K, brittle: 1, duct: 0, fric: FRIC_DEFAULT, axial: 1 },
   steel: { joint: 3, name: 'Stål', en: 'Steel', color: '#8fa3b8', h: 0.5, price: 1.5, m: 0.9, alpha: 0.12, mcap: 7000, E: 3000, st: 36000, sc: 40000, brittle: 0, duct: 0.6, fric: 0.5, axial: 1 },
   rope:  { joint: 1, name: 'Tau', en: 'Rope', color: '#d8b46a', h: 0.3, price: 0.4, m: 0.15, alpha: 0.02, mcap: 200, E: 5, st: 16000, sc: 50, brittle: 1, duct: 0, fric: 0.8, axial: 1, rope: true },
+  // R127: kabel = tau med høy strekkstyrke (sterkere enn stål i strekk), null trykkstyrke (ingen knekking, ensidig avstandsbinding), tynn og lett; vises med lett nedbøyning (sag, tegnes bare). Bak valget `buildcable`.
+  cable: { joint: 3, name: 'Kabel', en: 'Cable', color: '#b9c4cf', h: 0.25, price: 0.8, m: 0.2, alpha: 0.02, mcap: 6000, E: 5, st: 120000, sc: 50, brittle: 1, duct: 0, fric: 0.5, axial: 1, rope: true, sag: 0.06 },
 };
+export const CABLE_SAG = GRID_MAT.cable.sag;   // nedbøyning som andel av lengden (kun tegning)
 export const rodType = (mat, len) => `rod_${mat}_${Math.round(len * 100)}`;   // lengde i hundredeler (1,75 -> 175)
-const ROD_RE = /^rod_(wood|steel|rope)_(\d{1,5})$/;
+const ROD_RE = /^rod_(wood|steel|rope|cable)_(\d{1,5})$/;
 export function parseRod(t) { const m = typeof t === 'string' && ROD_RE.exec(t); return m ? { mat: m[1], len: +m[2] / 100 } : null; }
 export const isRod = (t) => !!parseRod(t);
 export const rodPrice = (mat, len) => Math.max(1, Math.ceil(GRID_MAT[mat].price * len - 1e-9));

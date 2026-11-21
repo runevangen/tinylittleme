@@ -13,10 +13,10 @@
       "gap 25–35 cm"
     ],
     "uncertainty": "Ingen: rommet er tegnet for testing.",
-    "note": "Bygglab (R67). Ni byggesteder i én bane; spillet åpner byggeskjermen ved start (valg i ⚙). Vanskelig vei uten bygging: gå på gulvet og hopp opp på sokkelen."
+    "note": "Bygglab (R67). Ti byggesteder i én bane; spillet åpner byggeskjermen ved start (valg i ⚙). Vanskelig vei uten bygging: gå på gulvet og hopp opp på sokkelen."
   },
   "room": {
-    "width": 1450,
+    "width": 1600,
     "depth": 200,
     "height": 240,
     "floor": {
@@ -39,10 +39,10 @@
     "z": 55
   },
   "goal": {
-    "x": 1416,
+    "x": 1566,
     "y": 15,
     "z": 100,
-    "on": "ped_b9",
+    "on": "ped_b10",
     "note": "Flagget etter siste sted."
   },
   "windows": [
@@ -78,7 +78,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Sted 1/9\nTrykk BYGG for å bygge her."
+      "help": "Sted 1/10\nTrykk BYGG for å bygge her."
     },
     {
       "id": "ped_b1",
@@ -145,7 +145,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Sted 2/9\nTrykk BYGG for å bygge her."
+      "help": "Sted 2/10\nTrykk BYGG for å bygge her."
     },
     {
       "id": "ped_b2",
@@ -212,7 +212,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Sted 3/9\nTrykk BYGG for å bygge her."
+      "help": "Sted 3/10\nTrykk BYGG for å bygge her."
     },
     {
       "id": "ped_b3",
@@ -279,7 +279,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Sted 4/9\nTrykk BYGG for å bygge her."
+      "help": "Sted 4/10\nTrykk BYGG for å bygge her."
     },
     {
       "id": "ped_b4",
@@ -346,7 +346,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Sted 5/9\nTrykk BYGG for å bygge her."
+      "help": "Sted 5/10\nTrykk BYGG for å bygge her."
     },
     {
       "id": "ped_b5",
@@ -413,7 +413,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Sted 6/9\nTrykk BYGG for å bygge her."
+      "help": "Sted 6/10\nTrykk BYGG for å bygge her."
     },
     {
       "id": "ped_b6",
@@ -480,7 +480,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Sted 7/9\nTrykk BYGG for å bygge her."
+      "help": "Sted 7/10\nTrykk BYGG for å bygge her."
     },
     {
       "id": "ped_b7",
@@ -547,7 +547,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Sted 8/9\nTrykk BYGG for å bygge her."
+      "help": "Sted 8/10\nTrykk BYGG for å bygge her."
     },
     {
       "id": "ped_b8",
@@ -614,7 +614,7 @@
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Sted 9/9\nTrykk BYGG for å bygge her."
+      "help": "Sted 9/10\nTrykk BYGG for å bygge her."
     },
     {
       "id": "ped_b9",
@@ -626,8 +626,8 @@
         1425,
         0,
         15,
-        0,
-        200
+        60,
+        140
       ],
       "confidence": 1,
       "photos": []
@@ -657,6 +657,73 @@
       "box": [
         1412.8,
         1424,
+        35,
+        45,
+        99.5,
+        100.5
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "ped_a10",
+      "kind": "box",
+      "material": "wood",
+      "color": "#a98050",
+      "box": [
+        1425,
+        1482.5,
+        0,
+        15,
+        60,
+        140
+      ],
+      "confidence": 1,
+      "photos": [],
+      "help": "Sted 10/10\nTrykk BYGG for å bygge her."
+    },
+    {
+      "id": "ped_b10",
+      "kind": "box",
+      "material": "wood",
+      "color": "#b98a55",
+      "box": [
+        1517.5,
+        1575,
+        0,
+        15,
+        0,
+        200
+      ],
+      "confidence": 1,
+      "photos": []
+    },
+    {
+      "id": "flagg_stang_10",
+      "kind": "box",
+      "material": "plastic",
+      "color": "#f5f1e8",
+      "box": [
+        1561.2,
+        1562.8,
+        15,
+        45,
+        99.2,
+        100.8
+      ],
+      "confidence": 1,
+      "photos": [],
+      "decor": true
+    },
+    {
+      "id": "flagg_duk_10",
+      "kind": "box",
+      "material": "fabric",
+      "color": "#e0453a",
+      "box": [
+        1562.8,
+        1574,
         35,
         45,
         99.5,
@@ -717,7 +784,7 @@
     "sites": [
       {
         "id": "lab1",
-        "label": "Sted 1/9",
+        "label": "Sted 1/10",
         "at": [
           150,
           100
@@ -777,7 +844,7 @@
         "lab": {
           "key": "bro",
           "n": 1,
-          "of": 9,
+          "of": 10,
           "flag": [
             212,
             15,
@@ -897,7 +964,7 @@
       },
       {
         "id": "lab2",
-        "label": "Sted 2/9",
+        "label": "Sted 2/10",
         "at": [
           300,
           100
@@ -996,7 +1063,7 @@
         "lab": {
           "key": "trapp",
           "n": 2,
-          "of": 9,
+          "of": 10,
           "flag": [
             362,
             40,
@@ -1154,7 +1221,7 @@
       },
       {
         "id": "lab3",
-        "label": "Sted 3/9",
+        "label": "Sted 3/10",
         "at": [
           450,
           100
@@ -1205,7 +1272,7 @@
         "lab": {
           "key": "vippe",
           "n": 3,
-          "of": 9,
+          "of": 10,
           "flag": [
             512,
             32.5,
@@ -1286,7 +1353,7 @@
       },
       {
         "id": "lab4",
-        "label": "Sted 4/9",
+        "label": "Sted 4/10",
         "at": [
           600,
           100
@@ -1403,7 +1470,7 @@
         "lab": {
           "key": "fagverk",
           "n": 4,
-          "of": 9,
+          "of": 10,
           "flag": [
             662,
             15,
@@ -1603,7 +1670,7 @@
       },
       {
         "id": "lab5",
-        "label": "Sted 5/9",
+        "label": "Sted 5/10",
         "at": [
           750,
           100
@@ -1700,7 +1767,7 @@
         "lab": {
           "key": "tau",
           "n": 5,
-          "of": 9,
+          "of": 10,
           "flag": [
             812,
             15,
@@ -1933,7 +2000,7 @@
       },
       {
         "id": "lab6",
-        "label": "Sted 6/9",
+        "label": "Sted 6/10",
         "at": [
           900,
           100
@@ -1998,7 +2065,7 @@
         "lab": {
           "key": "last",
           "n": 6,
-          "of": 9,
+          "of": 10,
           "flag": [
             962,
             15,
@@ -2086,7 +2153,7 @@
       },
       {
         "id": "lab7",
-        "label": "Sted 7/9",
+        "label": "Sted 7/10",
         "at": [
           1050,
           100
@@ -2203,7 +2270,7 @@
         "lab": {
           "key": "taaler",
           "n": 7,
-          "of": 9,
+          "of": 10,
           "flag": [
             1112,
             15,
@@ -2396,7 +2463,7 @@
       },
       {
         "id": "lab8",
-        "label": "Sted 8/9",
+        "label": "Sted 8/10",
         "at": [
           1200,
           100
@@ -2456,7 +2523,7 @@
         "lab": {
           "key": "materialer",
           "n": 8,
-          "of": 9,
+          "of": 10,
           "flag": [
             1262,
             15,
@@ -2598,7 +2665,7 @@
       },
       {
         "id": "lab9",
-        "label": "Sted 9/9",
+        "label": "Sted 9/10",
         "at": [
           1350,
           100
@@ -2658,7 +2725,7 @@
         "lab": {
           "key": "bred",
           "n": 9,
-          "of": 9,
+          "of": 10,
           "flag": [
             1412,
             15,
@@ -2741,6 +2808,175 @@
             "budget": 20,
             "wind": 1.6
           }
+        }
+      },
+      {
+        "id": "lab10",
+        "label": "Sted 10/10",
+        "at": [
+          1500,
+          100
+        ],
+        "y": 15,
+        "w": 100,
+        "h": 45,
+        "d": 20,
+        "anchors": [
+          [
+            -17.5,
+            0
+          ],
+          [
+            17.5,
+            0
+          ]
+        ],
+        "deck": [
+          [
+            -47.5,
+            -17.5
+          ],
+          [
+            17.5,
+            47.5
+          ]
+        ],
+        "start": [
+          -40,
+          0
+        ],
+        "goal": [
+          40,
+          0
+        ],
+        "ref": {
+          "placed": [
+            {
+              "id": "p1",
+              "type": "plank_l",
+              "u": 0,
+              "v": 0.25,
+              "rot": 0
+            }
+          ],
+          "links": [],
+          "surfaces": [
+            {
+              "id": "@bro",
+              "u0": -4,
+              "u1": 4,
+              "top": 0.5
+            }
+          ]
+        },
+        "lab": {
+          "key": "henge",
+          "n": 10,
+          "of": 10,
+          "flag": [
+            1562,
+            15,
+            100
+          ],
+          "solutions": [
+            {
+              "name": "lang planke",
+              "placed": [
+                {
+                  "id": "p1",
+                  "type": "plank_l",
+                  "u": 0,
+                  "v": 0.25,
+                  "rot": 0
+                }
+              ],
+              "links": [],
+              "surfaces": [
+                {
+                  "id": "@bro",
+                  "u0": -4,
+                  "u1": 4,
+                  "top": 0.5
+                }
+              ],
+              "route": [
+                "gulv",
+                "ped_a10",
+                "@bro",
+                "ped_b10"
+              ]
+            },
+            {
+              "name": "linjal",
+              "placed": [
+                {
+                  "id": "p1",
+                  "type": "ruler",
+                  "u": 0,
+                  "v": 0.2,
+                  "rot": 0
+                }
+              ],
+              "links": [],
+              "surfaces": [
+                {
+                  "id": "@bro",
+                  "u0": -5,
+                  "u1": 5,
+                  "top": 0.4
+                }
+              ],
+              "route": [
+                "gulv",
+                "ped_a10",
+                "@bro",
+                "ped_b10"
+              ]
+            }
+          ]
+        },
+        "grid": {
+          "step": 8.75,
+          "anchors": [
+            [
+              -17.5,
+              0
+            ],
+            [
+              17.5,
+              0
+            ],
+            [
+              -17.5,
+              35
+            ],
+            [
+              17.5,
+              35
+            ]
+          ],
+          "stars": {
+            "three": {
+              "cost": 24,
+              "parts": 8
+            },
+            "two": {
+              "cost": 29,
+              "parts": 11
+            }
+          },
+          "stage": {
+            "loads": [
+              "car"
+            ],
+            "massK": 5,
+            "budget": 32
+          },
+          "cable": true,
+          "mats": [
+            "wood",
+            "cable"
+          ]
         }
       }
     ],
