@@ -24,6 +24,7 @@ import { ghostChoice } from './build_ghost.js';   // R78
 import { submitBridge, bestBridges, bridgeLevel, netReady, standing } from './build_net.js';   // R50: beste bygg på nett
 import { createBuildTex } from './build_tex.js';   // R117: teksturer på bygde deler i verdenen
 import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum, worldMeshDepth } from './build_world.js';   // R26: bygget flyttes ut i verdenen
+import { trayIds, foundCount, withBonus, goalReached, dropIds, logLine, PB } from './partsbonus_logic.js';   // R120: delene er der fra start
 import { isLab, labSitesOf, labFill, labRegister, labTrayItems, labStepSite, labInfoOf, labNameKey, labTaskKey, labFlagStep, labReachedSave, labReachedLoad, labHome, labFar } from './bygglab_logic.js';   // R67: Bygglab
 import { labCss, labMarkup, labSync, LAB_TOP, LAB_TOP_LAND } from './bygglab_view.js';
 import { parseRod } from './build_materials.js';
@@ -104,7 +105,7 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#btnBuildSpan{top:max(56px,calc(env(safe-area-inset-top) + 48px));right:250px;max-width:220px}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }) }) {
+export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }), getPartsStart = () => true }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -141,7 +142,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
   // R74: oppdraget i rutenett-modus (grid_stage.js): egne laster (tyngre), budsjett og låsing; bare når byggingen står i rutenett-modus og innstillingen er på
   const stageCfg = () => getStage() || {};
   const stageHere = () => !!active && !!stageCfg().on && hasStage(active);
-  const stageNow = () => (stageHere() && isGrid(getB(active)) ? stageScaled(active, { massK: stageCfg().massK, budgetK: stageCfg().budgetK }) : null);
+  const stageNow = () => (stageHere() && isGrid(getB(active)) ? withBonus(stageScaled(active, { massK: stageCfg().massK, budgetK: stageCfg().budgetK }), foundCount(parts), getPartsStart() && !lab) : null);   // R120: funnet del = +1 på budsjettet (bonus)
   const lsite = () => stageSite(active, stageNow());
   let gPassCache = null; const gPass = () => gPassCache || (gPassCache = passRead(st0, levelId));
   const playHere = () => !!active && isPlaySite(active);
@@ -908,6 +909,12 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     const m = e.target.closest?.('button')?.dataset.m; if (m === 'close') closeModal(); else if (m === 'use') { if (doImport(mText.value)) closeModal(); }
   });
 
+  // R120: delmålet «Finn tre rare deler» (valgfritt flagg); sjekkes når en del plukkes og etter innlasting (gamle lagringer med funnede deler)
+  function partsGoalCheck() {
+    if (lab || !goalReached(foundCount(parts), parts.length) || !onSolved) return;
+    if (LEVEL.goalFlags?.has(PB.goalId)) return;
+    logEv('bygg', `bonus: ${foundCount(parts)} rare deler funnet`); onSolved(PB.goalId);
+  }
   // ---- inn og ut ----
   let near = null;
   function open(siteId, { force = false } = {}) {   // R68: open('<sted>', { force: true }) åpner et bestemt sted uten nærhets- og tilstandssjekk (kinomodus)
@@ -915,7 +922,12 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     const s = typeof siteId === 'string' ? sites.find((q) => q.id === siteId) : near || nearestSite(sites, player);
     if (!s || !(force && typeof siteId === 'string') && !canEnterBuild({ play: isPlay(), won: isWon(), menu: isMenu(), boss: isBoss(), ov: isOv(), onGround: player.onGround || player.state === 'ground' })) return false;
     active = s; const B = getB(s); B.snap = getSnap();
-    for (const q of parts) if (q.got) addPart(B, q.id);
+    if (!lab) {   // R120: delene er der fra første gang stedet åpnes; funnede deler er bonus (budsjett +1, delmålet «Finn tre rare deler»)
+      const fromStart = getPartsStart();
+      for (const id of trayIds(parts, fromStart)) addPart(B, id);
+      if (!fromStart) { const drop = new Set(dropIds(parts, B.placed.map((p) => p.id))); if (drop.size) B.have = B.have.filter((id) => !drop.has(id)); }   // av = som før: bare det du har funnet
+      if (!B.partsLogged) { B.partsLogged = true; logEv('bygg', `${logLine(fromStart, foundCount(parts), parts.length)} (${s.id})`); }
+    } else for (const q of parts) if (q.got) addPart(B, q.id);
     if (allParts()) for (const q of parts) addPart(B, q.id);
     loupe.reset(); resetRunState('inn'); closeModal(); root.classList.remove('sim'); tool = null; linkFrom = null; selLink = null;
     sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; grid.reset(); gguide.reset(); size(); view = fitNow(); hint = '';
@@ -962,7 +974,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     }
     if (playing && !active) for (const ev of stepParts(LEVEL, player, dt, true)) {
       logEv('bygg', `plukket ${ev.id} ${ev.n}/${ev.total}`); audio?.crumb?.(ev.n, ev.total); buzz?.(15);
-      toast(T('build.got', { name: T('build.p.' + ev.kind), n: ev.n, total: ev.total })); for (const b of builds.values()) addPart(b, ev.id); onChange?.();
+      toast(T(getPartsStart() ? 'build.got2' : 'build.got', { name: T('build.p.' + ev.kind), n: ev.n, total: ev.total })); for (const b of builds.values()) addPart(b, ev.id); partsGoalCheck(); onChange?.();
     }
     if (active) { stepSim(dt); draw(); }
   }
@@ -979,7 +991,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     
     save: () => (enabled ? { ...(lab ? { lab: { flags: labReachedSave(lab.reached) } } : {}), got: gotPartIds(LEVEL), solved: [...solved], loads: Object.fromEntries([...passedL].map(([k, e]) => [k, cleanPassed(e.ids)])), sites: Object.fromEntries([...builds].map(([k, b]) => [k, { ...serialize(b), ...gridSave(b, serialize) }])) } : undefined),
     load(data) {
-      if (!enabled || !data) return; restoreParts(LEVEL, data.got); solved.clear(); for (const id of Array.isArray(data.solved) ? data.solved : []) solved.add(id);
+      if (!enabled || !data) return; restoreParts(LEVEL, data.got); partsGoalCheck(); solved.clear(); for (const id of Array.isArray(data.solved) ? data.solved : []) solved.add(id);
       if (lab) lab.reached = labReachedLoad(data.lab?.flags, labSites);
       for (const s of sites) { const d = data.sites?.[s.id]; if (!d) continue; const b = getB(s); if (lab) labRegister(types, d.have); restore(b, { have: d.have, placed: d.placed, links: d.links }); gridLoad(b, d, (B2, c) => restore(B2, { have: d.have, placed: c.placed, links: c.links })); for (const id of data.got || []) addPart(b, id); }
       lastBonusKey = ''; syncBonus(false);
