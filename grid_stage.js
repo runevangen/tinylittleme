@@ -71,6 +71,7 @@ export function stageLines(s, T) {
   if (!s || !s.st) return [];
   const loads = s.st.loads.map((i) => T('build.load.' + i)).join(' + '), heavy = s.st.massK > 1.001 ? T('gstage.heavy', { k: String(+s.st.massK.toFixed(1)).replace('.', ',') }) : '';
   const out = [{ t: T('gstage.goal', { loads, heavy, budget: s.st.budget }), c: '#9fe3ff', b: true }];
+  if (s.r2 && !(s.ran && s.passed)) out.push({ t: T(s.r2.bonus ? 'r2.goalLine3' : 'r2.goalLine', { cost: s.r2.cheap, k: String(+s.r2.light.toFixed(1)).replace('.', ',') }), c: '#ffe9a8' });   // R126: runde 2-mål (billigst, lettest, smule)
   if (s.st.wind) out.push({ t: T('d25.windGoal'), c: '#ffe9a8', b: true });   // R123
   if (s.ran && s.passed) out.push({ t: T('gstage.passed', { stars: starText(s.stars), cost: s.cost, budget: s.st.budget }), c: '#7dffb0', b: true });
   else if (s.ran && s.won && s.over) out.push({ t: T('gstage.over', { cost: s.cost, budget: s.st.budget }), c: '#ff9a8a', b: true });

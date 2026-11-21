@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r126-runde2-stjerner', version: '2.113', date: '2026-11-21', title: 'Runde 2: ekstra stjerner (BILLIGST, LETTEST, SMULE) og beste-liste i Badebroen og Byggeskolen.',
+    how: '1) Åpne BYGGESKOLE og bygg Fagverk (sted 4). 2) Trykk PRØV: når oppdraget er bestått viser kortet BILLIGST, LETTEST og SMULE og BESTE-lista. 3) Prøv å bygge billigere eller lettere.', level: 'bygglab', spot: null },
   { id: 'r123-dobbel-bro', version: '2.112', date: '2026-11-21', title: 'DOBBEL BRO (2,5D): bygg ett fagverk, trykk ⋯ → DOBBEL BRO og få to parallelle plan med tverrstag. Se den i 3D, prøv den mot vind fra siden og se den stå i rommet. Nytt Byggeskole-sted 9, Bred bro.',
     how: 'Åpne BYGGESKOLE → sted 9 (Bred bro) eller Hyllebroen, bygg en bro med minst to staver, trykk ⋯ → DOBBEL BRO, dra i bildet for å snu, velg BRED og RETT eller X-FORM og trykk BRUK. Trykk PRØV, og gå ut for å se den stå i rommet.', level: 'bygglab', spot: null },
   { id: 'r122-trekant-diagonal', version: '2.111', date: '2026-11-21', title: 'Fagverk-hjelp i rutenett-bygging (broene og Byggeskolen): TREKANT foreslår et tredje punkt når du har valgt to knuter, og en firkant uten diagonal får en DIAGONAL-forslag. Hjelpen legger aldri til noe av seg selv.',

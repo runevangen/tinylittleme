@@ -2,12 +2,13 @@
 //  1) resultatkortet etter en prøve: «Bestått ★★☆», stor primærknapp (NESTE STED ▶ med navn og nummer, eller TILBAKE TIL SPILLET / FERDIG) og en mindre PRØV IGJEN. Kortet erstatter PRØV-raden mens resultatet vises.
 //  2) en ▶-knapp med navnet på neste sted i topplinjen (🔒 når det er låst; trykk viser hvorfor).
 // Stående: kortet ligger nederst over PRØV-raden. Liggende: kortet står i høyre panel der PRØV står. Logikken ligger i buildnext_logic.js. Ingen taster nevnes.
+import { r2Css, r2CardHtml, r2Sig } from './round2_view.js';   // R126
 import { BN, cardOf, titleKey, primaryKey, starLine, createUse } from './buildnext_logic.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SAFE_B = 'max(8px,env(safe-area-inset-bottom))';
 
-export const bnCss = () => `
+export const bnCss = () => r2Css() + `
 #bld .bnres,#bld .bnnext{display:none;font-family:system-ui}
 #bld.bnshow .bnres{display:flex}
 #bld.bnser .bnnext{display:flex}
@@ -73,7 +74,7 @@ export function createBuildNext(ctx) {
     const sub = c.primary === 'next' ? `<small>${esc(T('bn.nextSub', { name: s.nextName, n: s.series.nextN, of: s.series.of }))}</small>` : '';
     const label = c.primary === 'next' ? T('bn.next') : T(primaryKey(c.primary));
     res.className = `bnres${c.kind === 'passed' ? '' : ' bad'}`;
-    res.innerHTML = `<div class="bnt">${t}${stTag}</div>${sl ? `<div class="bnh">${esc(T('bn.starHint', { cost: sl.cost, parts: sl.parts ?? '' }))}</div>` : ''}`
+    res.innerHTML = `<div class="bnt">${t}${stTag}</div>${c.kind === 'passed' ? r2CardHtml(T, s.round2) : ''}${sl ? `<div class="bnh">${esc(T('bn.starHint', { cost: sl.cost, parts: sl.parts ?? '' }))}</div>` : ''}`
       + `<button type="button" class="bnp" data-bn="${c.primary}"><span>${esc(label)}</span>${sub}</button>`
       + (c.secondary ? `<button type="button" class="bnq" data-bn="${c.secondary}">${esc(T('bn.again'))}</button>` : '');
   }
@@ -81,7 +82,7 @@ export function createBuildNext(ctx) {
   // hver tegning: oppdaterer bare når noe er endret
   function frame() {
     const s = ctx.state(), skin = s && s.skin, tn = skin ? (s.topState ? { state: s.topState } : null) : null, c = skin ? cardOf(s) : null;
-    const sg = [skin, tn && tn.state, s && s.nextName, s && s.series && s.series.n, c && c.kind, c && c.primary, c && c.secondary, c && c.final, s && s.stars, s && s.nextStar && s.nextStar.cost, s && s.loadMore, T('bn.again')].join('|');
+    const sg = [skin, tn && tn.state, s && s.nextName, s && s.series && s.series.n, c && c.kind, c && c.primary, c && c.secondary, c && c.final, s && s.stars, s && s.nextStar && s.nextStar.cost, s && s.loadMore, T('bn.again'), r2Sig(s && s.round2)].join('|');
     if (sg === sig) return; sig = sg;
     root.classList.toggle('bnser', !!tn); root.classList.toggle('bnshow', !!c);
     if (tn) paintTop(s, tn);
