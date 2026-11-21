@@ -54,16 +54,16 @@ Rapport (⚑ fra spillet, v2.99, Byggeskole, 174,9 s): «Stopper av usynlig vegg
 Ferdig når: ingen usynlige vegger rundt bygde deler, figuren kommer forbi og over dem som den ser ut til, og tester og boot er grønne.
 
 
-### [ ] R131 · 3D-lab, oppdrag: tre små 3D-oppgaver (tårn, tripod, bred bro med sidevind) (deler R129, R130)
-Fra Rune: «Vi har 3D-spill. Trenger 3D-bygging.» Når kjernen (R129) og 3D-laben (R130) er inne, fylles laben med tre korte oppdrag som bare går an i 3D, ett nytt poeng per oppdrag: (1) **Tårnet:** bygg et tårn 8 enheter opp som bærer en last på toppen (lærer at en stav alene ikke holder; tre staver i tripod gjør); (2) **Tripoden:** en last hengt i tau mellom tre staver, tripod må stå uten å velte; (3) **Bred bro med sidevind:** en bro i 3D som tåler vind fra siden (sammenlign med R123 dobbel bro). Hvert oppdrag har start/mål, budsjett, stjerner og en Byggeskole-lenke; lås via `grid_stage.js` (som sted 9 og 10).
-Krav: tre oppdrag i 3D-laben med stjerner, hint («SÅ SLIK»), bot-bevis som viser at enkleste bygg feiler og en gyldig løsning består, NYTT-rader, test og `logEv`.
-Ferdig når: de tre oppdragene kan spilles og vinnes, og tester og boot er grønne.
-
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R131 · 3D-lab, oppdrag: tre små 3D-oppgaver (tårn, tripod, bred bro med sidevind) (v2.122)
+Fra Rune: «Vi har 3D-spill. Trenger 3D-bygging.» Når kjernen (R129) og 3D-laben (R130) er inne, fylles laben med tre korte oppdrag som bare går an i 3D, ett nytt poeng per oppdrag: (1) **Tårnet:** bygg et tårn 8 enheter opp som bærer en last på toppen (lærer at en stav alene ikke holder; tre staver i tripod gjør); (2) **Tripoden:** en last hengt i tau mellom tre staver, tripod må stå uten å velte; (3) **Bred bro med sidevind:** en bro i 3D som tåler vind fra siden (sammenlign med R123 dobbel bro). Hvert oppdrag har start/mål, budsjett, stjerner og en Byggeskole-lenke; lås via `grid_stage.js` (som sted 9 og 10).
+Krav: tre oppdrag i 3D-laben med stjerner, hint («SÅ SLIK»), bot-bevis som viser at enkleste bygg feiler og en gyldig løsning består, NYTT-rader, test og `logEv`.
+Ferdig når: de tre oppdragene kan spilles og vinnes, og tester og boot er grønne.
 
 ### [x] R126 · Runde 2 av Badebroen og Byggeskolen: ekstra stjerner (billigst, lettest) og beste-liste (v2.119)
 Fra `docs/BYGGING_RUNDE2.md` §2 (kreativitet). Badebroen (R119) og Byggeskolens steder får runde 2-stjerner: «bygg billigst» og «bygg lettest» som egne stjerner, bonusmål (samle en smule midt på spennet som valgfri omvei) og beste-liste per brett (KODE/BESTE finnes). Delte moduler (R101), bak valg `buildround2`.
