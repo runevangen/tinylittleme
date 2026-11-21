@@ -76,3 +76,21 @@ for (const id of ['bro', 'trapp', 'vippe', 'kjokkenbro', 'leke', 'stue', 'verkst
   assert.equal(BW.fulcrum({ id: 's', x: 0, y: 0, z: 0, w: 10, h: 5 }, { id: 'p', u: 0, v: 0.2 }), null, 'ingen støtte om planken ligger rett på underlaget');
 }
 console.log('bygg-i-verden-tester grønne');
+
+// R116: ingen usynlig vegg: kollisjonsskivene ligger tett inntil den tegnede delen, antallet er begrenset, og fjerning tar alle boksene
+{
+  let worst = 0, most = 0;
+  for (const type of Object.keys(BL.PART_TYPES)) for (let d = 0; d <= 90; d += 5) for (const sgn of [1, -1]) {
+    const p = { id: 'a', type, u: 0, v: 5, rot: sgn * d * Math.PI / 180 }, sl = BW.partSlabs(p), mb = BW.meshBounds(p);
+    worst = Math.max(worst, BW.slabOverhang(p, sl)); most = Math.max(most, sl.length);
+    for (const q of sl) assert.ok(q.u0 >= mb.u0 - 0.05 && q.u1 <= mb.u1 + 0.05 && q.v0 >= mb.v0 - 0.05 && q.v1 <= mb.v1 + 0.05, `${type} ${d}: skiva ligger innenfor meshens boks`);
+  }
+  assert.ok(worst <= BW.SLAB + 0.01, `skivene stikker høyst ${BW.SLAB} utenfor delen (fant ${worst.toFixed(3)})`); assert.ok(most <= BW.MAX_SLABS, 'tak på antall skiver per del');
+  const site = { id: 's', x: 0, y: 0, z: 0, w: 20, h: 12, d: 4 }, hd = BW.siteDepth(site) / 2, placed = [{ id: 'a', type: 'plank_l', u: 0, v: 3, rot: 0.5 }, { id: 'b', type: 'plank_s', u: -5, v: 2, rot: -0.7 }, { id: 'c', type: 'block', u: 5, v: 1, rot: 0.3 }, { id: 'd', type: 'seesaw', u: 0, v: 5, rot: 0.26 }];
+  const bx = BW.buildSolids(site, placed); assert.ok(bx.length > 4);
+  for (const q of bx) { assert.ok(q.min[2] >= -hd - 1e-9 && q.max[2] <= hd + 1e-9 && Math.abs(hd - BW.worldMeshDepth(site) / 2) < 0.05, 'dybden følger meshen (± 0,05)'); assert.ok(q.max[0] > q.min[0] && q.max[1] > q.min[1]); }
+  const L = { boxes: [{ id: 'x', min: [0, 0, 0], max: [1, 1, 1] }] }; BW.applyBuilt(L, site, placed); assert.equal(BW.builtCount(L, 's'), bx.length);
+  BW.applyBuilt(L, site, placed.slice(0, 1)); assert.ok(BW.builtCount(L, 's') < bx.length, 'færre deler gir færre bokser (ingen rester)');
+  BW.clearBuilt(L, 's'); assert.equal(L.boxes.length, 1); assert.equal(BW.builtCount(L, 's'), 0, 'fjerning tar alle boksene');
+}
+console.log('R116 ok');

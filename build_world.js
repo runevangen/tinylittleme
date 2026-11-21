@@ -5,7 +5,8 @@
 import { partType, corners } from './build_logic.js';
 
 export const DEPTH = 4;           // dybden på bygget i verden (enheter, 20 cm): bred nok til at figuren kan gå på det
-export const SLAB = 0.25;         // bredden på en skive i en rampe
+export const SLAB = 0.12;         // bredden på en skive i en rampe (R116: smalere, så trinnene langs en skrå planke er under 0,12 og ikke blir en usynlig vegg)
+export const MAX_SLABS = 90;      // R116: tak på antall skiver per del (fysikken går gjennom alle boksene hver ramme)
 const TILT_EPS = 0.02;            // under dette (rad) regnes delen som rett
 
 export const siteDepth = (site) => site.d ?? DEPTH;
@@ -35,7 +36,7 @@ export function partSlabs(part) {
   const cs = corners(part), us = cs.map((c) => c.u), vs = cs.map((c) => c.v);
   const u0 = Math.min(...us), u1 = Math.max(...us), r = Math.abs(((part.rot || 0) % (Math.PI / 2) + Math.PI / 2) % (Math.PI / 2));
   if (r < TILT_EPS || Math.PI / 2 - r < TILT_EPS) return [{ u0, u1, v0: Math.min(...vs), v1: Math.max(...vs) }];
-  const out = [], n = Math.max(1, Math.ceil((u1 - u0) / SLAB));
+  const out = [], n = Math.min(MAX_SLABS, Math.max(1, Math.ceil((u1 - u0) / SLAB)));
   for (let i = 0; i < n; i++) {
     const a = u0 + (u1 - u0) * i / n, b = u0 + (u1 - u0) * (i + 1) / n;
     const s0 = spanAt(cs, a + 1e-6), s1 = spanAt(cs, b - 1e-6), sm = spanAt(cs, (a + b) / 2); if (!sm) continue;
@@ -105,3 +106,14 @@ export function worstSolids(site) {
   const hd = siteDepth(site) / 2;
   return [{ type: 'wood', built: site.id, id: `bygg_${site.id}_verst`, min: [site.x - site.w / 2, site.y, site.z - hd], max: [site.x + site.w / 2, site.y + site.h, site.z + hd] }];
 }
+
+// R116: bevis/diagnose. Største avstand fra en kollisjonsskive til den tegnede delens omriss (0 = skiva ligger helt inne i delen).
+export function slabOverhang(part, slabs = partSlabs(part)) {
+  const cs = corners(part); let worst = 0;
+  const dist = (u, v) => { let best = Infinity; for (let i = 0; i < 4; i++) { const a = cs[i], b = cs[(i + 1) % 4], dx = b.u - a.u, dy = b.v - a.v; const t = Math.max(0, Math.min(1, ((u - a.u) * dx + (v - a.v) * dy) / (dx * dx + dy * dy))); best = Math.min(best, Math.hypot(u - a.u - t * dx, v - a.v - t * dy)); } return best; };
+  const inside = (u, v) => { let sg = null; for (let i = 0; i < 4; i++) { const a = cs[i], b = cs[(i + 1) % 4], c = (b.u - a.u) * (v - a.v) - (b.v - a.v) * (u - a.u); if (Math.abs(c) < 1e-9) continue; if (sg === null) sg = c > 0; else if (sg !== (c > 0)) return false; } return true; };
+  for (const q of slabs) for (let k = 0; k <= 6; k++) for (let m = 0; m <= 6; m++) { const u = q.u0 + (q.u1 - q.u0) * k / 6, v = q.v0 + (q.v1 - q.v0) * m / 6; if (!inside(u, v)) worst = Math.max(worst, dist(u, v)); }
+  return worst;
+}
+// den tegnede delens omskrevne boks i byggestedets koordinater (rotert BoxGeometry)
+export function meshBounds(part) { const cs = corners(part), us = cs.map((c) => c.u), vs = cs.map((c) => c.v); return { u0: Math.min(...us), u1: Math.max(...us), v0: Math.min(...vs), v1: Math.max(...vs) }; }

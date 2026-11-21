@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r116-ingen-usynlig-vegg', version: '2.101', date: '2026-11-21', title: 'Bygde deler (Byggeskole, Vippe og andre steder) har ikke lenger en usynlig vegg: kollisjonen følger nå de skrå plankene tett, så du kommer forbi og over dem som det ser ut.',
+    how: 'Åpne BYGGESKOLE → Vippe, bygg med planker i skrå vinkler og trykk PRØV til du består. Gå ut i rommet og gå langs og opp på delene: ingenting skal stoppe deg i lufta ved siden av dem.', level: 'bygglab', spot: null },
   { id: 'r115-vippe-aapner-fagverk', version: '2.100', date: '2026-11-21', title: 'Å bestå Vippe (og andre klassiske steder) åpner nå neste sted i Byggeskolen. Før sto Fagverk låst selv om du hadde bestått Vippe.',
     how: 'Åpne BYGGESKOLE → Vippe, bygg en planke over og trykk PRØV til du består. Gå så til sted 4 (Fagverk): det skal være åpent, ikke låst.', level: 'bygglab', spot: null },
   { id: 'r114-ghost-av', version: '2.99', date: '2026-11-21', title: 'Skyggen av forrige runde vises ikke lenger under en ny prøve (spøkelset er slått av som standard; kan slås på i ⚙ → Spill).',
