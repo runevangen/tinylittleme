@@ -3,11 +3,11 @@
 // merkelappen på menyknappen (ANBEFALT til ett sted er bestått, så ✓ n/8), når det lille «Ny til bygging?»-kortet skal vises (én gang per enhet, aldri på Ekspert), og lagringen (`tlm.skole`).
 export const SCHOOL = {
   levelId: 'bygglab',                      // teknisk id er uendret
-  total: 8,                                // antall steder (test_byggeskole.mjs sjekker mot brettet)
+  total: 9,                                // antall steder (test_byggeskole.mjs sjekker mot brettet)
   key: 'tlm.skole',                        // { opened, card: ''|'tried'|'skipped', done }
   from: 'tlm.skole.from',                  // brettet spilleren kom fra (så skolen ikke blir «sist spilte brett»)
   cardLevels: ['bro', 'trapp', 'vippe', 'kjokkenbro', 'leke', 'stue'],   // vanlige byggebrett der kortet kan vises
-  hat: 'hardhat',                          // belønning når alle åtte er klare (rewards.js)
+  hat: 'hardhat',                          // belønning når alle er klare (rewards.js)
 };
 export const schoolSiteIds = (total = SCHOOL.total) => Array.from({ length: total }, (_, i) => `lab${i + 1}`);
 

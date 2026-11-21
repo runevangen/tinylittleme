@@ -196,6 +196,11 @@ export function createGridUI(ctx) {
       if (r.mat === 'steel') { g2.strokeStyle = 'rgba(255,255,255,.55)'; g2.lineWidth = Math.max(1.5, w * 0.25); g2.beginPath(); g2.moveTo(pa.x, pa.y - w * 0.18); g2.lineTo(pb.x, pb.y - w * 0.18); g2.stroke(); }
       if (r.mat === 'rope') { g2.setLineDash([4, 4]); g2.strokeStyle = '#6b4a1a'; g2.lineWidth = Math.max(1.5, w * 0.5); g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.setLineDash([]); }
     }
+    if (Gd.dbl && (ctx.getDouble ? ctx.getDouble() : true)) {   // R123: dobbel bro: planet bak vises svakt, litt forskjøvet, med stiplede tverrstag fra hver knute
+      const off = Math.max(14, Math.min(24, sc * 0.5)); g2.save(); g2.lineCap = 'round'; g2.globalAlpha = 0.55; g2.strokeStyle = '#9fd0ff'; g2.lineWidth = 4;
+      for (const r of Gd.rods) { if (r.deck) continue; const a = p2.get(r.a), b = p2.get(r.b); if (!a || !b) continue; const pa = sx(a.u, a.v), pb = sx(b.u, b.v); g2.beginPath(); g2.moveTo(pa.x + off, pa.y - off); g2.lineTo(pb.x + off, pb.y - off); g2.stroke(); }
+      g2.setLineDash([3, 4]); g2.lineWidth = 2; for (const n of Gd.nodes) { if (n.fixed) continue; const q = sx(n.u, n.v); g2.beginPath(); g2.moveTo(q.x, q.y); g2.lineTo(q.x + off, q.y - off); g2.stroke(); } g2.setLineDash([]); g2.restore(); { const an = Gd.nodes.filter((n) => n.fixed).sort((x, y) => y.u - x.u)[0], q = an && sx(an.u, an.v); if (q) tag(g2, T('d25.back'), q.x + off, q.y - off - 16); }
+    }
     // R100: «VEI»-merke midt på veibanen
     { const dr = Gd.rods.filter((r) => r.deck); if (dr.length) { const m = dr[Math.floor(dr.length / 2)], a = p2.get(m.a), b = p2.get(m.b); if (a && b) { const q = sx((a.u + b.u) / 2, (a.v + b.v) / 2); tag(g2, T('grid.deckLabel'), q.x, q.y + 20); } } }
     // knuter

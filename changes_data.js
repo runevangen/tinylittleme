@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r123-dobbel-bro', version: '2.112', date: '2026-11-21', title: 'DOBBEL BRO (2,5D): bygg ett fagverk, trykk ⋯ → DOBBEL BRO og få to parallelle plan med tverrstag. Se den i 3D, prøv den mot vind fra siden og se den stå i rommet. Nytt Byggeskole-sted 9, Bred bro.',
+    how: 'Åpne BYGGESKOLE → sted 9 (Bred bro) eller Hyllebroen, bygg en bro med minst to staver, trykk ⋯ → DOBBEL BRO, dra i bildet for å snu, velg BRED og RETT eller X-FORM og trykk BRUK. Trykk PRØV, og gå ut for å se den stå i rommet.', level: 'bygglab', spot: null },
   { id: 'r122-trekant-diagonal', version: '2.111', date: '2026-11-21', title: 'Fagverk-hjelp i rutenett-bygging (broene og Byggeskolen): TREKANT foreslår et tredje punkt når du har valgt to knuter, og en firkant uten diagonal får en DIAGONAL-forslag. Hjelpen legger aldri til noe av seg selv.',
     how: 'Åpne Hyllebroen, trykk BYGG, trykk to knuter og så TREKANT; trykk forslaget for å bytte og TREKANT igjen for å legge det til. Tegn en firkant og trykk DIAGONAL. Skru av/på under ⚙ → Spill.', level: 'bro', spot: null },
   { id: 'r119-broen-over-badekaret', version: '2.110', date: '2026-11-21', title: 'Nytt byggebrett «Bygg 5: Broen over badekaret»: gapet er så bredt og lasten så tung at bare en bro av trekanter holder. En rett rad av staver og en firkant uten diagonal gir etter. Nytt hint: «En firkant gir etter. Legg inn en diagonal.»',

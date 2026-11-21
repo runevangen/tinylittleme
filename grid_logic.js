@@ -13,6 +13,8 @@ export const GRID_STEP = 2;            // standard trinn (enheter) når stedet i
 export const MIN_LEN = 1.2;            // kortere staver gir ingen mening (og kan ikke brekke)
 export const MAX_LEN = 6.5;            // standard lengste stav (enheter); settes i ⚙ (admin)
 export const MAX_NODES = 60, MAX_RODS = 120;
+export const DBL_WIDTHS = ['smal', 'middels', 'bred'], DBL_BRACES = ['x', 'rett'];   // R123: dobbel bro (grid_25d.js): bredde og tverrstag-form; lagres som G.dbl = { w, brace }
+const cleanDbl = (d) => (d && DBL_WIDTHS.includes(d.w) && DBL_BRACES.includes(d.brace) ? { w: d.w, brace: d.brace } : null);
 export const CODE_GRID = 2;            // kodeversjon (TLM1.<base64 av [2, sted, knuter, staver]>.<sum>): gamle koder (versjon 1) virker som før
 export const CODE_GRID_DECK = 3;       // R73: samme, men bygget har kjøredekk (dekket er ikke med i koden, bare det du la til)
 
@@ -226,7 +228,7 @@ export function hitRod(G, u, v, scale, px = ROD_HIT_PX) {
 
 // ---------- lagring ----------
 const cleanMat = (m) => (GRID_MATS.includes(m) ? m : null);
-export function gridSnapshot(G) { return { ...(G.deck ? { deck: true } : {}), nodes: userNodes(G).map((n) => [n.id, r3(n.u), r3(n.v)]), rods: userRods(G).map((r) => [r.id, r.a, r.b, r.mat]) }; }
+export function gridSnapshot(G) { return { ...(G.deck ? { deck: true } : {}), ...(G.dbl ? { dbl: { w: G.dbl.w, brace: G.dbl.brace } } : {}), nodes: userNodes(G).map((n) => [n.id, r3(n.u), r3(n.v)]), rods: userRods(G).map((r) => [r.id, r.a, r.b, r.mat]) }; }
 // tilbake fra lagring: ukjente eller ulovlige staver kastes. Returnerer et nytt rutenett.
 export function gridFromSnapshot(site, d, maxLen = MAX_LEN) {
   const G = createGrid(site, !!d?.deck), ok = (x) => Number.isFinite(x), pts = latticePoints(site);
@@ -240,6 +242,7 @@ export function gridFromSnapshot(site, d, maxLen = MAX_LEN) {
     if (!rodCheck(G, q[1], q[2], maxLen).ok) continue; G.rods.push({ id: q[0], a: q[1], b: q[2], mat: q[3] });
   }
   G.n = 1 + G.nodes.reduce((m, n) => Math.max(m, +n.id.slice(2) || 0), 0); G.r = 1 + G.rods.reduce((m, r) => Math.max(m, +r.id.slice(2) || 0), 0);
+  const dbl = cleanDbl(d?.dbl); if (dbl) G.dbl = dbl;   // R123: dobbel bro huskes i lagringen
   return G;
 }
 export const gridClone = clone;

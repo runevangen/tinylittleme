@@ -78,7 +78,7 @@ export const buxCss = () => landCss() + mirrorCss() + `
 #bld .bxsheet .card{max-height:96%}
 }
 `;
-export const buxMarkup = () => `<div class="bux"><div class="bxtop"><button data-bx="back" class="bxback"></button><div class="bxname"><b></b><i></i></div><button data-bx="more" class="bxmore">⋯</button></div><button data-bx="del" class="bxdel">✕</button>${mirrorBubbleMarkup()}<div class="bxbot"><div class="bxcost"><span class="bxct"></span><span class="bxbar"><i></i></span></div><div class="bxrow mats">${BUX.mats.map((m) => `<div class="bxmat"><button data-bx="${m.id}"><span>${m.icon}</span><b></b><u class="bxlock">🔒</u></button><em></em></div>`).join('')}<button data-bx="undo" class="bxundo" aria-label="↶">↶</button></div><div class="bxgo"><button data-bx="slow" class="bxsp"></button><button data-bx="pause" class="bxsp"></button><button data-bx="try" class="try"></button></div></div></div><div class="bxsheet"><div class="card"><h3 class="bxst"></h3>${mirrorSheetMarkup()}<div class="bxsec bxloads"><small></small></div><div class="bxsec bxshare"><small></small></div><div class="bxsec bxlab"><small></small></div><div class="bxsec"><div class="bxgrid"><button data-bx="fit"></button><button data-bx="dots"></button><button data-bx="reset" class="bxreset"></button><button data-bx="menu"></button><button data-bx="sugg"></button><button data-th="toggle" class="bxtrh"></button></div></div><button data-bx="close" class="bxclose"></button></div></div>${landMarkup()}`;
+export const buxMarkup = () => `<div class="bux"><div class="bxtop"><button data-bx="back" class="bxback"></button><div class="bxname"><b></b><i></i></div><button data-bx="more" class="bxmore">⋯</button></div><button data-bx="del" class="bxdel">✕</button>${mirrorBubbleMarkup()}<div class="bxbot"><div class="bxcost"><span class="bxct"></span><span class="bxbar"><i></i></span></div><div class="bxrow mats">${BUX.mats.map((m) => `<div class="bxmat"><button data-bx="${m.id}"><span>${m.icon}</span><b></b><u class="bxlock">🔒</u></button><em></em></div>`).join('')}<button data-bx="undo" class="bxundo" aria-label="↶">↶</button></div><div class="bxgo"><button data-bx="slow" class="bxsp"></button><button data-bx="pause" class="bxsp"></button><button data-bx="try" class="try"></button></div></div></div><div class="bxsheet"><div class="card"><h3 class="bxst"></h3>${mirrorSheetMarkup()}<div class="bxsec bxd25"><div class="bxgrid"><button data-bx="dbl" class="bxdbl"></button></div></div><div class="bxsec bxloads"><small></small></div><div class="bxsec bxshare"><small></small></div><div class="bxsec bxlab"><small></small></div><div class="bxsec"><div class="bxgrid"><button data-bx="fit"></button><button data-bx="dots"></button><button data-bx="reset" class="bxreset"></button><button data-bx="menu"></button><button data-bx="sugg"></button><button data-th="toggle" class="bxtrh"></button></div></div><button data-bx="close" class="bxclose"></button></div></div>${landMarkup()}`;
 
 export function createBuildUx(ctx) {
   const { root, T, toast, logEv, buzz, audio, grid } = ctx;
@@ -120,7 +120,7 @@ export function createBuildUx(ctx) {
 
   // ---- tekster og knapper (bare når noe er endret) ----
   function labelsNow(info) {
-    const sig = [info.sim, info.done, info.speed, info.cost, info.budget, info.stars, info.on, mat(), info.canUndo, info.name, info.nOf, ctx.lang?.(), land.isLand() ? 'L' : 'P'].join('|');
+    const sig = [info.sim, info.done, info.speed, info.cost, info.budget, info.stars, info.on, mat(), info.canUndo, info.name, info.nOf, ctx.lang?.(), land.isLand() ? 'L' : 'P', ctx.hasDouble?.() ? 'D' : '', ctx.getDouble?.() === false ? 'x' : ''].join('|');
     if (sig === lastSig) return; lastSig = sig;
     q('.bxback').setAttribute('aria-label', T('build.back')); q('.bxback').textContent = '←'; q('.bxmore').setAttribute('aria-label', T('bux.more'));
     const nm = q('.bxname b'), stars = q('.bxname i'); nm.textContent = info.nOf ? T('bux.site', { name: info.name, n: info.nOf.n, of: info.nOf.of }) : info.name; stars.textContent = starText(info.on ? info.stars : info.best || 0);
@@ -136,7 +136,7 @@ export function createBuildUx(ctx) {
     for (const k of ['slow', 'pause']) { const b = q(`.bxgo [data-bx="${k}"]`); b.textContent = k === 'pause' ? T(info.speed === 'pause' ? 'grid.resume' : 'grid.pause') : T('grid.slow'); b.classList.toggle('on', info.speed === k); b.disabled = !!info.done; b.setAttribute('aria-pressed', info.speed === k ? 'true' : 'false'); }
     q('.bxst').textContent = T('bux.sheet');
     q('.bxloads small').textContent = T('bux.sec.load'); q('.bxshare small').textContent = T('bux.sec.share'); q('.bxlab small').textContent = T('bux.sec.lab');
-    q('[data-bx="fit"]').textContent = '⤢ ' + T('bux.fit'); q('[data-bx="dots"]').textContent = T(grid.dots ? 'bux.dotsOn' : 'bux.dotsOff'); q('.bxreset').textContent = T('build.reset'); q('[data-bx="menu"]').textContent = T('build.menu'); q('[data-bx="close"]').textContent = T('bux.close');
+    q('[data-bx="fit"]').textContent = '⤢ ' + T('bux.fit'); q('[data-bx="dots"]').textContent = T(grid.dots ? 'bux.dotsOn' : 'bux.dotsOff'); { const bd = q('[data-bx="dbl"]'); if (bd) { bd.textContent = T(ctx.hasDouble?.() ? 'd25.btnOn' : 'd25.btn'); bd.style.display = ctx.getDouble?.() === false ? 'none' : ''; } } q('.bxreset').textContent = T('build.reset'); q('[data-bx="menu"]').textContent = T('build.menu'); q('[data-bx="close"]').textContent = T('bux.close');
     q('.bxreset').style.display = info.lab ? 'none' : ''; q('[data-bx="sugg"]').textContent = T(land.skipped ? 'buxl.suggOff' : 'buxl.suggOn');
     q('.bxdel').setAttribute('aria-label', T('bux.del'));
     q('.bxloads').style.display = root.querySelector('.bxloads .loads')?.children.length ? '' : 'none'; q('.bxlab').style.display = info.lab ? '' : 'none';
@@ -281,7 +281,7 @@ export function createBuildUx(ctx) {
     back: () => ctx.act.back(), more: () => sheet(!root.classList.contains('bxopen')), close: () => sheet(false),
     undo: () => ctx.act.undo(), try: () => ctx.act.try(), menu: () => { sheet(false); ctx.act.menu(); }, reset: () => { sheet(false); ctx.act.reset(); },
     fit: () => { ctx.fit(); sheet(false); }, dots: () => { grid.setDots(!grid.dots); invalidate(); logEv('byggux', `rutenett ${grid.dots ? 'på' : 'av'}`); },
-    slow: () => ctx.speed('slow'), pause: () => ctx.speed('pause'), del: () => { doDelete(); },
+    dbl: () => { sheet(false); ctx.openDouble?.(); }, slow: () => ctx.speed('slow'), pause: () => ctx.speed('pause'), del: () => { doDelete(); },
     wood: () => land.tryMat('wood') && grid.setMat('wood'), steel: () => land.tryMat('steel') && grid.setMat('steel'), rope: () => land.tryMat('rope') && grid.setMat('rope'),
     mirrorAdd: () => { if (mir.mirror('add')) sheet(false); }, mirrorFlip: () => { if (mir.mirror('flip')) sheet(false); }, copy: () => { if (mir.pasting()) mir.commit(); else mir.copyStart(); }, copyx: () => { mir.cancel(); },
     banner: () => land.dismissBanner(), sugg: () => land.toggleSugg(),

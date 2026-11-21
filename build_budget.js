@@ -25,9 +25,9 @@ export const partCost = (type) => { const r = parseRod(type); return r ? rodPric
 export const linkCost = (kind) => LINK_COST[kind] ?? 1;
 
 // placed: [{ type }] (plasserte deler), links: [{ kind }]. Kun det som ligger på brettet teller.
-export function buildCost(placed, links) {
-  const ps = placed || [], ls = links || [];
-  return { parts: ps.length, cost: ps.reduce((s, p) => s + partCost(p.type), 0) + ls.reduce((s, l) => s + (l.free ? 0 : linkCost(l.kind)), 0) };   // R72: knutepunkt (free) er gratis
+export function buildCost(placed, links, extra) {   // R123: extra = { cost, parts } fra dobbel bro (grid_25d.extraOf): planenes kopi og tverrstagene
+  const ps = placed || [], ls = links || [], xc = Number.isFinite(extra?.cost) ? extra.cost : 0, xp = Number.isFinite(extra?.parts) ? extra.parts : 0;
+  return { parts: ps.length + xp, cost: xc + ps.reduce((s, p) => s + partCost(p.type), 0) + ls.reduce((s, l) => s + (l.free ? 0 : linkCost(l.kind)), 0) };   // R72: knutepunkt (free) er gratis
 }
 const num = (x) => (Number.isFinite(x) && x >= 0 ? x : null);
 // terskler for et sted: { three: { cost, parts }, two: { cost, parts } }. Ugyldig eller manglende data faller tilbake på standard.
@@ -40,8 +40,8 @@ export function starThresholds(site, grid = false) {
   return { three, two: { cost: Math.max(two.cost, three.cost), parts: Math.max(two.parts, three.parts) } };   // to stjerner er aldri strengere enn tre
 }
 // stjerner (1-3) for et vellykket bygg + hva som skal til for neste stjerne (null ved tre)
-export function starsFor(site, placed, links) {
-  const { cost, parts } = buildCost(placed, links), T = starThresholds(site, (placed || []).length > 0 && placed.every((p) => parseRod(p.type)));   // R72: rutenett-bygg har egne terskler (site.grid.stars)
+export function starsFor(site, placed, links, extra) {
+  const { cost, parts } = buildCost(placed, links, extra), T = starThresholds(site, (placed || []).length > 0 && placed.every((p) => parseRod(p.type)));   // R72: rutenett-bygg har egne terskler (site.grid.stars)
   const stars = cost <= T.three.cost && parts <= T.three.parts ? 3 : cost <= T.two.cost && parts <= T.two.parts ? 2 : 1;
   const next = stars === 3 ? null : stars === 2 ? { stars: 3, ...T.three } : { stars: 2, ...T.two };
   return { cost, parts, stars, next };

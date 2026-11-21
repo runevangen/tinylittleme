@@ -20,13 +20,13 @@ const judge = (k, B) => { const st = GS.stageOf(site(k)); return GS.judge(B.site
 
 // ---------- 1) oppdragene som data ----------
 {
-  assert.equal(sites.length, 8); assert.equal(GS.stagesOf(sites).length, 8, 'alle åtte steder har oppdrag');
+  assert.equal(sites.length, 9); assert.equal(GS.stagesOf(sites).length, 9, 'alle ni steder har oppdrag');
   for (const s of GS.stagesOf(sites)) {
     const st = GS.stageOf(s); assert.ok(st && st.budget > 0 && st.massK >= 1 && st.loads.length >= 1 && st.loads.every(LD.isLoad), `${s.id}: gyldig oppdrag`);
     assert.ok(s.grid.stars?.three && s.grid.stars?.two && s.grid.stars.three.cost <= s.grid.stars.two.cost && s.grid.stars.two.cost <= st.budget, `${s.id}: stjerner ligger innenfor budsjettet`);
   }
   assert.equal(GS.stageOf(site('bro')).loads.join(), 'ball', 'lett last først'); assert.ok(GS.stageOf(site('materialer')).massK >= 8 && GS.stageOf(site('materialer')).loads.includes('car'), 'tung bil til slutt');
-  const ks = GS.stagesOf(sites).map((s) => GS.stageOf(s).massK); assert.ok(ks[ks.length - 1] > ks[0] && Math.max(...ks) >= 12, 'lasten blir tyngre: ' + ks);
+  const ks = GS.stagesOf(sites).filter((s) => s.lab.key !== 'bred').map((s) => GS.stageOf(s).massK); assert.ok(ks[ks.length - 1] > ks[0] && Math.max(...ks) >= 12, 'lasten blir tyngre: ' + ks);
   // ugyldig data: ukjente laster forkastes, uten budsjett finnes ingen oppdrag, massK begrenses
   assert.equal(GS.stageOf({ grid: { stage: { loads: ['car'], budget: 0 } } }), null); assert.equal(GS.stageOf({ grid: {} }), null); assert.equal(GS.stageOf(null), null);
   assert.deepEqual(GS.stageOf({ id: 'x', grid: { stage: { loads: ['kanon', 'car', 'car'], massK: 999, budget: 5 } } }), { loads: ['car'], massK: GS.STAGE.massMax, budget: 5, key: 'x' });
@@ -51,7 +51,7 @@ const CASES = {
 };
 {
   for (const s of sites) {
-    const k = s.lab.key, c = CASES[k]; assert.ok(c, k + ' har kjente bygg');
+    const k = s.lab.key, c = CASES[k]; if (k === 'bred') continue; /* R123: Bred bro (vind, dobbel bro) testes i test_grid25d.mjs */ assert.ok(c, k + ' har kjente bygg');
     for (const g of c.good) {
       const B = build(k, g), j = judge(k, B); assert.ok(wins(k, B), `${k}: kjent løsning kommer over med alle lastene (${run(k, B)})`); assert.ok(j.cost <= j.budget && j.passed, `${k}: innenfor budsjettet (${j.cost} av ${j.budget})`);
       assert.ok(B.rg.rods.some((r) => r.mat) && B.rg.rods.every((r) => !r.deck), 'ingen kjøredekk');
@@ -80,7 +80,7 @@ const CASES = {
   const mem = new Map(), st = { get: (k, d) => (mem.has(k) ? mem.get(k) : d), set: (k, v) => mem.set(k, v) };
   assert.equal(GS.passRead(st, 'bygglab').size, 0); const sl = (id, passed, on = true) => GS.stageLocked(sites, new Set(passed), id, on);
   assert.equal(sl('lab1', []), false, 'første sted er åpent'); assert.equal(sl('lab2', []), true, 'andre sted er låst til første er bestått'); assert.equal(sl('lab2', ['lab1']), false); assert.equal(sl('lab3', ['lab1']), true); assert.equal(sl('lab8', ['lab1', 'lab2', 'lab3', 'lab4', 'lab5', 'lab6', 'lab7']), false);
-  assert.equal(sl('lab5', [], false), false, 'låsing av: alt åpent'); assert.equal(GS.stagePrev(sites, 'lab1'), null); assert.equal(GS.stagePrev(sites, 'lab4').id, 'lab3'); assert.equal(GS.stageNext(sites, 'lab8'), null); assert.equal(GS.stageNext(sites, 'lab3').id, 'lab4');
+  assert.equal(sl('lab5', [], false), false, 'låsing av: alt åpent'); assert.equal(GS.stagePrev(sites, 'lab1'), null); assert.equal(GS.stagePrev(sites, 'lab4').id, 'lab3'); assert.equal(GS.stageNext(sites, 'lab8').id, 'lab9'); assert.equal(GS.stageNext(sites, 'lab9'), null); assert.equal(GS.stageNext(sites, 'lab3').id, 'lab4');
   assert.equal(GS.stageLocked([{ id: 'x' }, { id: 'y' }], new Set(), 'y', true), false, 'steder uten oppdrag låses aldri');
   assert.deepEqual(GS.passRecord(st, 'bygglab', 'lab1'), { first: true }); assert.deepEqual(GS.passRecord(st, 'bygglab', 'lab1'), { first: false }); GS.passRecord(st, 'bygglab', 'lab2'); assert.deepEqual([...GS.passRead(st, 'bygglab')], ['lab1', 'lab2']); assert.equal(GS.passRead(st, 'annet').size, 0, 'per brett');
   mem.set(GS.STAGE.key, 'rot'); assert.equal(GS.passRead(st, 'bygglab').size, 0, 'ødelagt lagring ignoreres'); mem.set(GS.STAGE.key, { bygglab: [1, 'lab3', null] }); assert.deepEqual([...GS.passRead(st, 'bygglab')], ['lab3']);

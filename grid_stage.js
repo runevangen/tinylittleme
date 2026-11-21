@@ -17,7 +17,8 @@ export function stageOf(site) {
   const s = site?.grid?.stage; if (!s || typeof s !== 'object') return null;
   const loads = uniq((Array.isArray(s.loads) ? s.loads : []).filter(isLoad)), massK = Number.isFinite(s.massK) ? Math.min(STAGE.massMax, Math.max(0.1, s.massK)) : 1;
   const budget = Number.isFinite(s.budget) && s.budget > 0 ? Math.min(STAGE.budgetMax, s.budget) : null; if (budget === null) return null;
-  return { loads: loads.length ? loads : [DEFAULT_LOAD], massK, budget, key: site.lab?.key || site.id };
+  const wind = Number.isFinite(s.wind) && s.wind > 0 ? Math.min(3, s.wind) : 0;   // R123: sidekraft (vind) i prøven: bare to-lags bygg (dobbel bro) tåler den
+  return { loads: loads.length ? loads : [DEFAULT_LOAD], massK, budget, key: site.lab?.key || site.id, ...(wind ? { wind } : {}) };
 }
 export const hasStage = (site) => !!stageOf(site);
 // innstillingene (admin) justerer: massK og budsjett gjøres om med en faktor, avrundet
@@ -32,8 +33,8 @@ export const stageSite = (site, st) => (st ? { ...site, loads: st.loads } : site
 // ---------- vurdering etter prøve ----------
 // res: { cost, parts, stars } fra starsFor. Over budsjett = holdt, men for dyrt (teller ikke som bestått).
 export const overBudget = (st, cost) => !!st && cost > st.budget;
-export function judge(site, st, placed, links, { loadsDone = false } = {}) {
-  const r = starsFor(site, placed, links), over = overBudget(st, r.cost);
+export function judge(site, st, placed, links, { loadsDone = false, extra } = {}) {
+  const r = starsFor(site, placed, links, extra), over = overBudget(st, r.cost);
   return { ...r, budget: st ? st.budget : null, over, passed: !!st && loadsDone && !over };
 }
 // hva som mangler for neste stjerne, som tekst-nøkkel + tall (null ved tre stjerner)
@@ -70,6 +71,7 @@ export function stageLines(s, T) {
   if (!s || !s.st) return [];
   const loads = s.st.loads.map((i) => T('build.load.' + i)).join(' + '), heavy = s.st.massK > 1.001 ? T('gstage.heavy', { k: String(+s.st.massK.toFixed(1)).replace('.', ',') }) : '';
   const out = [{ t: T('gstage.goal', { loads, heavy, budget: s.st.budget }), c: '#9fe3ff', b: true }];
+  if (s.st.wind) out.push({ t: T('d25.windGoal'), c: '#ffe9a8', b: true });   // R123
   if (s.ran && s.passed) out.push({ t: T('gstage.passed', { stars: starText(s.stars), cost: s.cost, budget: s.st.budget }), c: '#7dffb0', b: true });
   else if (s.ran && s.won && s.over) out.push({ t: T('gstage.over', { cost: s.cost, budget: s.st.budget }), c: '#ff9a8a', b: true });
   else if (s.ran && s.won) out.push({ t: T('gstage.moreLoads', { list: (s.loadsLeft || []).map((i) => T('build.load.' + i)).join(', ') }), c: '#ffe9a8', b: true });

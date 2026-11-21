@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.112** – R123: DOBBEL BRO (2,5D) i Rutenett: to plan med tverrstag, sidekraft i fysikken, 3D-forhåndsvisning, Byggeskole sted 9 Bred bro; slått sammen med R119–R122.
 - **2.111** – R122: fagverk-hjelp i rutenett-bygging: TREKANT, DIAGONAL og ? (valg `buildtruss2`); slått sammen med R119–R121.
 - **2.110** – R119: nytt byggebrett «Bygg 5: Broen over badekaret» (bare trekanter holder), firkant-hint, Fagverk-kort; slått sammen med R120/R121.
 - **2.109** – R121: speiling og kopi i Rutenett-byggeren (SPEIL BYGGET, KOPIER med spøkelse), valg `buildmirror`; slått sammen med R120.
