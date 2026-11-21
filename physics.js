@@ -893,7 +893,7 @@ function sub(p, inp, dt, L) {
 function stepOver(p, b, L) {
   if (!p.stepOk || b.dyn || P.stepUp <= 0) return false;
   const top = b.max[1], dy = top - p.y;
-  if (dy <= 0.02 || dy > P.stepUp) return false;
+  if (dy <= 0.002 || dy > P.stepUp) return false;   // R119: bare nær-null trinn (≤ 0,002) hoppes over; trinn på 0,005–0,02 (skrå stav i en rutenett-bro) er ellers en usynlig vegg
   for (const c of L.boxes) if (c !== b && c !== p.carry && !c.carried && overlaps(c, p.x, top + 0.002, p.z)) return false;
   p.y = top; p.stepDy = (p.stepDy || 0) + dy; return true;
 }

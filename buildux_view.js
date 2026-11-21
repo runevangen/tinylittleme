@@ -301,6 +301,7 @@ export function createBuildUx(ctx) {
     if (!on() || ctx.isSim()) return '';
     if (st && st.moved) return '';
     if (grid.selRod) return T('bux.hint.rod'); if (grid.selNode && deletable(G(), grid.selNode, null)) return armed === grid.selNode ? T('bux.hint.node') : T('bux.hint.new');
+    if (ctx.squareTip?.()) return T('bux.hint.square');   // R119: firkant uten diagonal
     if (!G().rods.some((r) => !r.deck) && ctx.getHint()) return T('bux.hint.start');
     return '';
   }

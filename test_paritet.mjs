@@ -9,7 +9,7 @@ register('data:text/javascript,' + encodeURIComponent(`export async function res
 const G = await import('./grid_logic.js'), X = await import('./buildux_logic.js'), P = await import('./grid_play.js');
 const lvl = (n) => JSON.parse(fs.readFileSync(new URL(`./levels/${n}.level.json`, import.meta.url), 'utf8'));
 let n = 0;
-for (const name of ['bro', 'kjokkenbro', 'bygglab']) {
+for (const name of ['bro', 'kjokkenbro', 'badebro', 'bygglab']) {
   const L = lvl(name); P.ensurePlayGrid?.(L.build.sites);
   for (const site of L.build.sites) {
     if (!G.siteHasGrid(site)) continue;

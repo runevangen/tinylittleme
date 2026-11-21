@@ -129,6 +129,8 @@ const DICT = {
     'lab.siteReset': 'Sted {n} nullstilt', 'lab.allReset': 'Alle steder nullstilt', 'lab.flag': 'Målflagg {n}/{of} nådd ({total} flagg)', 'lab.flagAll': 'Alle målflaggene er nådd!',
     // R95: Byggeskolen i menyen (byggeskole_logic.js, byggeskole_view.js): knapp med merkelapp, første-møte-kort og «klar»-kort (tekstene nevner knappene)
     'school.btn': 'BYGGESKOLE', 'school.rec': 'ANBEFALT', 'school.sub': 'Lær å bygge: {n} av {total} steder klare', 'school.label': 'Byggeskole · Bygglab',
+    'badebro.fagverk.title': 'Prøv Byggeskolen · Fagverk først', 'badebro.fagverk.text': 'Trekanter er stive. Her bærer bare en bro av trekanter lasten. Øv deg på Fagverk i Byggeskolen, eller hopp over og prøv selv.', 'badebro.fagverk.go': 'TIL BYGGESKOLEN', 'badebro.fagverk.skip': 'HOPP OVER',   // R119
+    'gstage.squareTip': 'En firkant gir etter. Legg inn en diagonal, så blir den stiv.', 'bux.hint.square': 'En firkant gir etter. Legg inn en diagonal, så blir den stiv.',   // R119
     'school.card.title': 'Ny til bygging?', 'school.card.text': 'Prøv BYGGESKOLE først: åtte små steder som lærer deg å bygge. Du kan alltid hoppe over.', 'school.card.try': 'PRØV SKOLEN', 'school.card.skip': 'HOPP OVER',
     'school.done.title': 'Byggeskolen er klar!', 'school.done.text': 'Alle åtte steder er bestått. Du har fått en byggehjelm: ta den på i Lekerommet.', 'school.done.ok': 'FINT',
     'lab.name.bro': 'Bro', 'lab.name.trapp': 'Trapp', 'lab.name.vippe': 'Vippe', 'lab.name.fagverk': 'Fagverk', 'lab.name.tau': 'Tau og gummi', 'lab.name.last': 'Lasttest', 'lab.name.taaler': 'Tåler X', 'lab.name.materialer': 'Materialer',
@@ -279,6 +281,8 @@ const DICT = {
     'lab.siteReset': 'Site {n} reset', 'lab.allReset': 'All sites reset', 'lab.flag': 'Goal flag {n}/{of} reached ({total} flags)', 'lab.flagAll': 'All goal flags reached!',
     // R95: Building school in the menu (byggeskole_logic.js, byggeskole_view.js): button with tag, first-meeting card and «done» card
     'school.btn': 'BUILDING SCHOOL', 'school.rec': 'RECOMMENDED', 'school.sub': 'Learn to build: {n} of {total} sites done', 'school.label': 'Building school · Bygglab',
+    'badebro.fagverk.title': 'Try Building School · Trusses first', 'badebro.fagverk.text': 'Triangles are stiff. Only a bridge of triangles carries the load here. Practise Trusses in Building School, or skip and try it yourself.', 'badebro.fagverk.go': 'TO BUILDING SCHOOL', 'badebro.fagverk.skip': 'SKIP',   // R119
+    'gstage.squareTip': 'A square gives way. Add a diagonal and it turns stiff.', 'bux.hint.square': 'A square gives way. Add a diagonal and it turns stiff.',   // R119
     'school.card.title': 'New to building?', 'school.card.text': 'Try BUILDING SCHOOL first: eight small sites that teach you to build. You can always skip it.', 'school.card.try': 'TRY THE SCHOOL', 'school.card.skip': 'SKIP',
     'school.done.title': 'Building school complete!', 'school.done.text': 'All eight sites passed. You earned a hard hat: put it on in the Toy room.', 'school.done.ok': 'NICE',
     'lab.name.bro': 'Bridge', 'lab.name.trapp': 'Stairs', 'lab.name.vippe': 'Seesaw', 'lab.name.fagverk': 'Truss', 'lab.name.tau': 'Rope and band', 'lab.name.last': 'Load test', 'lab.name.taaler': 'Holds X', 'lab.name.materialer': 'Materials',

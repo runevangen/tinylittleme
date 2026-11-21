@@ -17,7 +17,9 @@ import * as BW from '../build_world.js';
 import * as BP from '../build_phys.js';
 import { createBuild } from '../build_logic.js';
 import { playGridOf, rowSpec, applySpec, gridRefRoute } from '../grid_play.js';
-import { simDef as gridSimDef } from '../grid_logic.js';
+import { simDef as gridSimDef, simDefAuto as gridSimDefAuto, loadPass as gridLoadPass, setMode as gridSetMode } from '../grid_logic.js';
+import { stageOf } from '../grid_stage.js';
+import { MOVE } from '../hero_move.js';
 
 export const MODES = {
   streng: { helpers: false, only: ['autoJump', 'holdGrab'], wallJump: false },     // autoJump/holdGrab = knappene HOPP og GREP holdt riktig
@@ -29,7 +31,7 @@ export const isLong = (r) => r.steps >= LONG.steps || (r.len || 0) >= LONG.len;
 
 // Én vei i ett nivå av evner. Returnerer { id, kind, ok, why, secs, steps, trace, nodes }.
 export function runPlan(L, levelPath, plan, mode, extra = {}) {   // extra: f.eks. { traceEvery: 1 } (R68: bane per tikk)
-  const trace = [], base = { ...MODES[mode], trace, level: L, ...extra };
+  const trace = [], base = { ...MODES[mode], trace, level: L, ...(plan.stepUp && mode === 'løs' ? { stepUp: plan.stepUp } : {}), ...extra };   // plan.stepUp (R119): spillets lille tråkkegrense (MOVE.stepOverMax), bare i løs modus
   let r;
   if (plan.kind === 'ruta') r = walkRoute(levelPath, { ...base });
   else if (plan.kind === 'genvei') {
@@ -53,6 +55,14 @@ export function plansOf(L) {
     if (!site.ref?.placed?.length || !site.ref.route) continue;
     const route = BW.refRoute(L, site), sim = BP.runSim({ site, placed: site.ref.placed, links: site.ref.links });
     plans.push({ id: `bygg:${site.id}`, kind: 'bygg', route, site, solids: sim.result === 'won' ? BW.buildSolids(site, BP.settledPlaced({ site, placed: site.ref.placed, links: site.ref.links })) : [], simFail: sim.result === 'won' ? '' : `referansebygget består ikke PRØV (${sim.reason})` });
+  }
+  for (const site0 of L.build?.sites || []) {   // R119: rutenett-referanse som fagverk (site.ref.grid, uten klassisk ref.placed): bygges, prøves med oppdragets laster og tunge vekt, så over i verden
+    const spec = site0.ref?.grid, stg = stageOf(site0); if (!spec || !stg || !site0.ref.route) continue;
+    const site = JSON.parse(JSON.stringify(site0)), B = createBuild(site, {}, []); B.gridDeck = false; gridSetMode(B, 'grid');
+    const ok = applySpec(B, spec).ok, def = ok && gridSimDefAuto(B).def, bad = !ok ? 'fagverk-referansen kan ikke legges' : stg.loads.map((l) => BP.runSim(def, { load: l, massK: stg.massK }).result).find((r) => r !== 'won');
+    const solids = bad ? [] : BW.buildSolids(site, BP.settledPlaced(gridSimDef(B)), { skip: new Set(gridLoadPass(B)) }), gr = bad ? null : gridRefRoute(site, solids), route = gr && BW.refRoute(L, { ...site, ref: { ...site.ref, ...gr } });   // R119: fagverket ligger nesten flatt: færre, bredere flater
+    if (route) route.forEach((n, i) => { if (n.id.startsWith('@rutenett') && n.top > route[i - 1].top + 0.01) n.hop = true; });
+    plans.push({ id: `bygg:${site.id}:fagverk`, kind: 'bygg', stepUp: MOVE.stepOverMax, route: route || site.ref.route.map(() => null), site, solids, simFail: bad ? `fagverk-referansen består ikke PRØV (${bad})` : route ? '' : 'finner ikke ruta over fagverket' });
   }
   for (const site0 of L.build?.sites || []) {   // R82: rutenett-bro (en rett rad av tre) i de vanlige byggebrettene; klassisk referanse og «den harde veien» er uendret
     const g = site0.ref?.route && playGridOf(site0); if (!g) continue;

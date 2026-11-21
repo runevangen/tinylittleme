@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r119-broen-over-badekaret', version: '2.107', date: '2026-11-21', title: 'Nytt byggebrett «Bygg 5: Broen over badekaret»: gapet er så bredt og lasten så tung at bare en bro av trekanter holder. En rett rad av staver og en firkant uten diagonal gir etter. Nytt hint: «En firkant gir etter. Legg inn en diagonal.»',
+    how: 'Velg «Bygg 5: Broen over badekaret» under ⚙ → Spill → Brett. Gå til karkanten, trykk BYGG, og bygg en bro av trekanter (stål nederst, tre og tau over). Trykk PRØV. Eller ta den harde veien rundt.', level: 'badebro', spot: { x: 4, y: 9, z: -4 } },
   { id: 'r118-fra-til-bygg', version: '2.106', date: '2026-11-21', title: 'Ved byggestedet ser du nå tydelig FRA og TIL: markører i verden, og BYGG-knappen viser stedet og gapet. Byggeskjermen har FRA/TIL-etiketter, minikart og pil.',
     how: 'Gå mot et byggested (Hyllebroen eller et Bygglab-sted) og se FRA- og TIL-markørene og BYGG-knappen. Trykk BYGG og se etikettene. Skru av/på under ⚙ → Spill.', level: 'bygglab', spot: null },
   { id: 'r117-teksturer-bygde-deler', version: '2.105', date: '2026-11-21', title: 'Bygde deler i rommet ser nå ut som tre (med trekorn og kvister), stål (børstet), tau (flettet), plast med knotter og leker, i stedet for ensfargede kasser.',

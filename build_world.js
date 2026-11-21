@@ -55,9 +55,11 @@ export function fulcrum(site, part, w = 1) {
 }
 
 // alle kollisjonsflater et bygg gir, i verdenskoordinater (samme format som `box()` i physics.js)
-export function buildSolids(site, placed) {
-  const hd = siteDepth(site) / 2, out = [];
+// opts.skip (R119): id-er som ikke blir faste flater i verdenen (rutenett-bygg: stavene som bare bærer veien, loadPass i grid_logic.js; de tegnes, men figuren går på veien og gjennom fagverket)
+export function buildSolids(site, placed, opts = {}) {
+  const hd = siteDepth(site) / 2, out = [], skip = opts && opts.skip;
   for (const p of placed || []) {
+    if (skip && skip.has(p.id)) continue;
     const t = partType(p.type);
     for (const s of partSlabs(p)) {
       out.push({ type: t.solid || 'wood', id: `bygg_${site.id}_${p.id}`, built: site.id, material: 'wood', color: parseInt(String(t.color).slice(1), 16) || 0xc98a45,
@@ -69,9 +71,9 @@ export function buildSolids(site, placed) {
 }
 
 // legg bygget inn i brettets bokser (erstatter det som lå der fra før for stedet). Returnerer antall bokser.
-export function applyBuilt(L, site, placed) {
+export function applyBuilt(L, site, placed, opts = {}) {
   clearBuilt(L, site.id);
-  const bx = buildSolids(site, placed); L.boxes ||= []; for (const b of bx) L.boxes.push(b); return bx.length;
+  const bx = buildSolids(site, placed, opts); L.boxes ||= []; for (const b of bx) L.boxes.push(b); return bx.length;
 }
 export function clearBuilt(L, siteId) {
   if (!L.boxes) return 0; let n = 0;

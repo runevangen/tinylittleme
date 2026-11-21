@@ -78,6 +78,7 @@ export function stageLines(s, T) {
   if (s.on) { if (!(s.ran && s.passed)) out.push({ t: T('gstage.cost', { stars: starText(s.over ? 0 : s.stars), cost: s.cost, budget: s.st.budget, parts: s.parts }), c: s.over ? '#ff9a8a' : '#ffe9a8', b: !s.ran }); }
   else out.push({ t: T('gstage.empty', { budget: s.st.budget }), c: '#ffd9a0' });
   if (s.on && !s.ran) out.push({ t: s.over ? T('gstage.overNow', { n: -left }) : s.next ? T('gstage.nextStar', { n: s.next.cost }) : T('gstage.threeStars'), c: s.over ? '#ff9a8a' : '#ffd9a0' });
+  if (s.tip && !(s.ran && s.passed)) out.push({ t: T('gstage.squareTip'), c: '#ffd9a0', b: true });   // R119: firkant uten diagonal
   if (!s.ran && s.done) out.push({ t: T('gstage.done'), c: '#7dffb0', b: true });
   if (s.ran && s.peak && !s.passed) out.push({ t: s.peak, c: '#ffd9a0' });
   return out;
