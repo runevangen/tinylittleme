@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.101** – R116 (fra Rune): ingen usynlig vegg rundt bygde deler (Byggeskole, Vippe m.fl.): kollisjonen følger skrå planker tett, tak på antall bokser, test og NYTT-rad.
 - **2.100** – R115 (fra Rune): å bestå Vippe (klassisk modus) åpner nå Fagverk i Byggeskolen. R116 (usynlig vegg rundt bygde deler) lagt i veikartet.
 - **2.99** – R114 (fra Rune): spøkelset (skygge av forrige runde) er av som standard i byggeren.
 - **2.98** – R113 (fra Rune): etter første trykk med TAPE/LEDD/TAU/GUMMI merkes delene som kan festes til med grønn stiplet ring, og hjelpeteksten sier fra når det ikke finnes noen (linkTargets i build_logic.js, gjelder Byggeskolen og Brobygger).
