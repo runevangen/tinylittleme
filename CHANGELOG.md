@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.104** – `docs/BYGGING_RUNDE2.md`: utkast til runde 2 av byggebrettene, mindre samling, nye byggemekanismer og 3D (kilder fra søk).
 - **2.103** – R119 (L3: Bygg 5, broen over badekaret, bare trekanter holder) lagt i veikartet.
 - **2.102** – R117 (teksturer på bygde deler) og R118 (fra og til ved BYGG-knappen), fra Rune, lagt i veikartet.
 - **2.101** – R116 (fra Rune): ingen usynlig vegg rundt bygde deler (Byggeskole, Vippe m.fl.): kollisjonen følger skrå planker tett, tak på antall bokser, test og NYTT-rad.
