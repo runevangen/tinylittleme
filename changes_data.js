@@ -4,6 +4,8 @@
 export const CHANGES = [
   { id: 'r120-deler-fra-start', version: '2.108', date: '2026-11-21', title: 'Delene er der fra start: i byggebrettene ligger alle delene i delebrettet første gang du åpner byggestedet. Å finne delene i rommet er nå en bonus (+1 på budsjettet per del, og delmålet «Finn tre rare deler»).',
     how: 'Start Hyllebroen fra ny lagring og trykk BYGG ved byggestedet: delene ligger klare nederst. Finn en del i rommet og se bonusmeldingen. Skru av/på under ⚙ → Spill → «Delene er der fra start».', level: 'bro', spot: null },
+  { id: 'r121-speil-kopi', version: '2.109', date: '2026-11-21', title: 'Rutenett-byggeren (broene og Byggeskolen) kan speile bygget og kopiere et felt: bygg halve broen og speil resten, eller kopier en trekant til neste felt.',
+    how: 'Åpne Hyllebroen, trykk BYGG, tegn en trekant ved venstre anker, trykk ⋯ → SPEIL OG LEGG TIL. Trykk så en stav og KOPIER, dra kopien og trykk SETT INN. ↶ tar bort det siste. Skru av/på under ⚙ → Spill.', level: 'bro', spot: null },
   { id: 'r118-fra-til-bygg', version: '2.106', date: '2026-11-21', title: 'Ved byggestedet ser du nå tydelig FRA og TIL: markører i verden, og BYGG-knappen viser stedet og gapet. Byggeskjermen har FRA/TIL-etiketter, minikart og pil.',
     how: 'Gå mot et byggested (Hyllebroen eller et Bygglab-sted) og se FRA- og TIL-markørene og BYGG-knappen. Trykk BYGG og se etikettene. Skru av/på under ⚙ → Spill.', level: 'bygglab', spot: null },
   { id: 'r117-teksturer-bygde-deler', version: '2.105', date: '2026-11-21', title: 'Bygde deler i rommet ser nå ut som tre (med trekorn og kvister), stål (børstet), tau (flettet), plast med knotter og leker, i stedet for ensfargede kasser.',

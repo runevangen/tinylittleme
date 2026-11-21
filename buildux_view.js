@@ -7,11 +7,12 @@ import { nearestPoint, nodeOf, nodeAt, gAddNode, gAddRod, gAddRodTo, gridStep, m
 import { starText } from './build_budget.js';
 import { isDoubleTap } from './build_zoom.js';
 import { GRID_MAT, rodPrice } from './build_materials.js';
+import { mirrorCss, mirrorBubbleMarkup, mirrorSheetMarkup, createMirrorUI } from './grid_mirror_view.js';   // R121: speiling og kopi
 import { landCss, landMarkup, createLand } from './buildux_land_view.js';   // R93: liggende utgave (sidepaneler)
 
 const SAFE_T = 'max(8px,env(safe-area-inset-top))', SAFE_B = 'max(8px,env(safe-area-inset-bottom))';
 export const BUX_TOP = 62, BUX_BOT = 188, BUX_TOP_LAND = 54, BUX_BOT_LAND = 84;   // px som topp- og bunnfeltet tar av byggeområdet (build.js: TOPPX/BOTPX)
-export const buxCss = () => landCss() + `
+export const buxCss = () => landCss() + mirrorCss() + `
 #bld .bux,#bld .bxsheet{display:none}
 #bld.bux .bux{display:block}
 #bld.bux .bt.top,#bld.bux .zoom,#bld.bux .tools,#bld.bux .tray,#bld.bux .bt.bot,#bld.bux .gtools,#bld.bux .gsim,#bld.bux:not(.bxopen) .lab,#bld.bux:not(.bxopen) .loads,#bld.bux:not(.bxopen) .share,#bld.bux .gg{display:none!important}
@@ -75,7 +76,7 @@ export const buxCss = () => landCss() + `
 #bld .bxsheet .card{max-height:96%}
 }
 `;
-export const buxMarkup = () => `<div class="bux"><div class="bxtop"><button data-bx="back" class="bxback"></button><div class="bxname"><b></b><i></i></div><button data-bx="more" class="bxmore">⋯</button></div><button data-bx="del" class="bxdel">✕</button><div class="bxbot"><div class="bxcost"><span class="bxct"></span><span class="bxbar"><i></i></span></div><div class="bxrow mats">${BUX.mats.map((m) => `<div class="bxmat"><button data-bx="${m.id}"><span>${m.icon}</span><b></b><u class="bxlock">🔒</u></button><em></em></div>`).join('')}<button data-bx="undo" class="bxundo" aria-label="↶">↶</button></div><div class="bxgo"><button data-bx="slow" class="bxsp"></button><button data-bx="pause" class="bxsp"></button><button data-bx="try" class="try"></button></div></div></div><div class="bxsheet"><div class="card"><h3 class="bxst"></h3><div class="bxsec bxloads"><small></small></div><div class="bxsec bxshare"><small></small></div><div class="bxsec bxlab"><small></small></div><div class="bxsec"><div class="bxgrid"><button data-bx="fit"></button><button data-bx="dots"></button><button data-bx="reset" class="bxreset"></button><button data-bx="menu"></button><button data-bx="sugg"></button></div></div><button data-bx="close" class="bxclose"></button></div></div>${landMarkup()}`;
+export const buxMarkup = () => `<div class="bux"><div class="bxtop"><button data-bx="back" class="bxback"></button><div class="bxname"><b></b><i></i></div><button data-bx="more" class="bxmore">⋯</button></div><button data-bx="del" class="bxdel">✕</button>${mirrorBubbleMarkup()}<div class="bxbot"><div class="bxcost"><span class="bxct"></span><span class="bxbar"><i></i></span></div><div class="bxrow mats">${BUX.mats.map((m) => `<div class="bxmat"><button data-bx="${m.id}"><span>${m.icon}</span><b></b><u class="bxlock">🔒</u></button><em></em></div>`).join('')}<button data-bx="undo" class="bxundo" aria-label="↶">↶</button></div><div class="bxgo"><button data-bx="slow" class="bxsp"></button><button data-bx="pause" class="bxsp"></button><button data-bx="try" class="try"></button></div></div></div><div class="bxsheet"><div class="card"><h3 class="bxst"></h3>${mirrorSheetMarkup()}<div class="bxsec bxloads"><small></small></div><div class="bxsec bxshare"><small></small></div><div class="bxsec bxlab"><small></small></div><div class="bxsec"><div class="bxgrid"><button data-bx="fit"></button><button data-bx="dots"></button><button data-bx="reset" class="bxreset"></button><button data-bx="menu"></button><button data-bx="sugg"></button></div></div><button data-bx="close" class="bxclose"></button></div></div>${landMarkup()}`;
 
 export function createBuildUx(ctx) {
   const { root, T, toast, logEv, buzz, audio, grid } = ctx;
@@ -89,6 +90,7 @@ export function createBuildUx(ctx) {
   const moved = new Map();
   const land = createLand({ root, T, logEv, store: ctx.store, site: () => site(), getB: () => B(), view: () => ctx.view(), isSim: () => ctx.isSim(), toast, buzz, getHelp: () => (ctx.getHelp ? ctx.getHelp() : { labels: true, suggest: false }), getGuideOn: () => ctx.getGuideOn?.(), getHint: () => ctx.getHint(), getCrumbs: () => ctx.getCrumbs?.() || 0, budgetNow: () => ctx.budgetNow?.(), getMat: () => grid.mat, setMat: (m) => grid.setMat(m), rodCount: () => G()?.rods.filter((r) => !r.deck).length || 0, fit: () => ctx.fit(), cancelDrag: () => cancel() });
   let tipsBound = false;
+  const mir = createMirrorUI({ root, T, toast, logEv, buzz, audio, grid, getOn: () => (ctx.getMirror ? ctx.getMirror() : true), site: () => ctx.site(), getB: () => ctx.getB(), toWorld: (x, y) => ctx.toWorld(x, y), scale: () => ctx.view().scale, loc: (e) => ctx.loc(e), isSim: () => ctx.isSim(), budget: () => budgetOf({ site: ctx.site(), cost: 0, stageBudget: ctx.budgetNow ? ctx.budgetNow() : null }).budget, width: () => ctx.width(), topY: () => ctx.topY(), act: () => land.act(), trayRender: () => ctx.trayRender?.(), onChange: () => ctx.onChange?.(), lang: () => ctx.lang?.() });   // R121
   const mat = () => grid.mat;
   const handDone = () => { try { return !!ctx.store?.get(BUX.handKey, 0); } catch { return false; } };
 
@@ -160,7 +162,7 @@ export function createBuildUx(ctx) {
   }
   function draw(sx, tNow, g2) {
     if (!on()) return;
-    updateBubble(sx); land.draw(sx, tNow, g2);
+    updateBubble(sx); land.draw(sx, tNow, g2); mir.draw(sx, tNow, g2); mir.place(sx);
     if (ghost && ghost.show) {
       const pa = sx(ghost.a.u, ghost.a.v), pb = sx(ghost.b.u, ghost.b.v), m = GRID_MAT[ghost.mat], w = Math.max(5, m.h * scale()), ok = ghost.ok, col = ok ? '#3df0b0' : '#ff6a5a';
       g2.save(); g2.lineCap = 'round'; g2.globalAlpha = ok ? 0.85 : 0.5;
@@ -187,7 +189,7 @@ export function createBuildUx(ctx) {
   const bubbleEl = () => q('.bxdel');
   let bubbleSig = '';
   function updateBubble(sx) {
-    const el = bubbleEl(); if (!el) return; const d = ctx.isSim() || root.classList.contains('bxopen') ? null : deletable(G(), grid.selNode, grid.selRod), a = d && bubbleAnchor(G(), d);
+    const el = bubbleEl(); if (!el) return; const d = ctx.isSim() || root.classList.contains('bxopen') || mir.pasting() ? null : deletable(G(), grid.selNode, grid.selRod), a = d && bubbleAnchor(G(), d);
     if (!a) { el.classList.remove('show'); bubbleSig = ''; return; }
     const p = sx(a.u, a.v), x = Math.min(Math.max(p.x, 34), ctx.width() - 34), y = Math.max(ctx.topY() + 36, p.y - (d.kind === 'rod' ? 66 : 44)), sig = `${d.kind}${d.id}${Math.round(x)}${Math.round(y)}`;
     el.classList.add('show'); if (sig !== bubbleSig) { bubbleSig = sig; el.style.left = x + 'px'; el.style.top = y + 'px'; }
@@ -202,7 +204,8 @@ export function createBuildUx(ctx) {
   // ---- berøring ----
   const W = (x, y) => ctx.toWorld(x, y);
   function down(e, x, y) {
-    endHand('avbrutt av berøring'); const w = W(x, y), p = pickAt(G(), w.u, w.v, scale());
+    endHand('avbrutt av berøring'); if (mir.pasting()) { if (mir.down(e, x, y)) { st = { kind: 'paste', pid: e.pointerId }; return true; } }
+    const w = W(x, y), p = pickAt(G(), w.u, w.v, scale());
     if (p.kind === 'node') {
       const n = p.node;
       if (dragMeaning(n, armed && armed === grid.selNode ? armed : null) === 'move') { const was = { u: n.u, v: n.v }; st = { kind: 'move', id: n.id, pid: e.pointerId, was }; grid.down(e, x, y); return true; }
@@ -215,6 +218,7 @@ export function createBuildUx(ctx) {
   function move(e) {
     if (!st || e.pointerId !== st.pid) return false;
     if (st.kind === 'move') return grid.move(e);
+    if (st.kind === 'paste') return mir.move(e);
     const r = ctx.loc(e); st.x = r.x; st.y = r.y;
     if (!st.moved && Math.hypot(r.x - st.x0, r.y - st.y0) > BUX.dragPx) { st.moved = true; armed = null; grid.select(st.id, null); }
     if (st.moved) { const w = W(r.x, r.y); tgt = resolveTarget(site(), G(), w.u, w.v, scale(), st.id); ghost = ghostOf(B(), st.id, tgt, mat()); }
@@ -223,6 +227,7 @@ export function createBuildUx(ctx) {
   function up(e) {
     if (!st || e.pointerId !== st.pid) return false;
     const s = st; st = null;
+    if (s.kind === 'paste') return mir.up(e);
     if (s.kind === 'move') {
       const n = nodeOf(G(), s.id); const had = s.was; grid.up(e);
       const n2 = nodeOf(G(), s.id); if (n && n2 && (Math.abs(n2.u - had.u) > 1e-6 || Math.abs(n2.v - had.v) > 1e-6)) { land.act(); logEv('byggux', `flytt knute ${s.id}`); }
@@ -241,6 +246,7 @@ export function createBuildUx(ctx) {
   }
   function cancel() {
     if (st && st.kind === 'node' && st.moved) logEv('byggux', 'spøkelsesstav avbrutt (to fingre)');
+    if (st && st.kind === 'paste') mir.cancelDrag();
     if (st && st.kind === 'move') grid.cancel(); st = null; ghost = null; tgt = null;
   }
   function commit(fromId, t) {
@@ -275,6 +281,7 @@ export function createBuildUx(ctx) {
     fit: () => { ctx.fit(); sheet(false); }, dots: () => { grid.setDots(!grid.dots); invalidate(); logEv('byggux', `rutenett ${grid.dots ? 'på' : 'av'}`); },
     slow: () => ctx.speed('slow'), pause: () => ctx.speed('pause'), del: () => { doDelete(); },
     wood: () => land.tryMat('wood') && grid.setMat('wood'), steel: () => land.tryMat('steel') && grid.setMat('steel'), rope: () => land.tryMat('rope') && grid.setMat('rope'),
+    mirrorAdd: () => { if (mir.mirror('add')) sheet(false); }, mirrorFlip: () => { if (mir.mirror('flip')) sheet(false); }, copy: () => { if (mir.pasting()) mir.commit(); else mir.copyStart(); }, copyx: () => { mir.cancel(); },
     banner: () => land.dismissBanner(), sugg: () => land.toggleSugg(),
   };
   root.addEventListener('click', (e) => {
@@ -293,6 +300,7 @@ export function createBuildUx(ctx) {
   // ---- tilstand fra build.js hver tegning ----
   function frame() {
     if (!layout()) return;
+    if (!mir.avail() && mir.state) mir.cancel('avbrutt (prøve eller av)'); mir.sync();
     const b = B(), info = ctx.info(), bd = budgetOf({ site: site(), cost: info.cost, stageBudget: info.stageBudget });
     const full = { ...info, ...bd, budgetShown: true, canUndo: !!b.history.length, speed: grid.speed };
     labelsNow(full); land.plate({ ...full, starsText: starText(info.on ? info.stars : info.best || 0) }, bd.over); land.applyLocks(); land.fixMat();
@@ -300,6 +308,7 @@ export function createBuildUx(ctx) {
   function hint() {
     if (!on() || ctx.isSim()) return '';
     if (st && st.moved) return '';
+    if (mir.pasting()) return mir.hint();
     if (grid.selRod) return T('bux.hint.rod'); if (grid.selNode && deletable(G(), grid.selNode, null)) return armed === grid.selNode ? T('bux.hint.node') : T('bux.hint.new');
     if (!G().rods.some((r) => !r.deck) && ctx.getHint()) return T('bux.hint.start');
     return '';
@@ -310,11 +319,11 @@ export function createBuildUx(ctx) {
     if (!on() && !opened) return; if (!won) { logEv('byggux', 'prøve feilet'); return; }
     land.win(); const w = timerWin(timer, wall()); if (w.first) logEv('byggux', `første bro klarte det etter ${w.secs.toFixed(0)} s (${w.tries} prøver, ${w.rods} staver)`); else logEv('byggux', 'prøve klarte det');
   }
-  const reset = () => { armed = null; st = null; ghost = null; tgt = null; lastTap = null; sheet(false); bubbleSig = ''; invalidate(); };
+  const reset = () => { mir.cancel('avbrutt (nullstilt)'); armed = null; st = null; ghost = null; tgt = null; lastTap = null; sheet(false); bubbleSig = ''; invalidate(); };
   return {
     land, topPx: () => land.topPx() ?? (innerHeight <= 520 ? BUX_TOP_LAND : BUX_TOP), botPx: () => land.botPx() ?? (innerHeight <= 520 ? BUX_BOT_LAND : BUX_BOT), insets: () => land.insets(),
     get site() { return site(); },
-    on, wanted, layout, frame, draw, touchInto, down, move, up, cancel, tap, hint, onTry, onResult, reset, invalidate, sheet,
+    mir, on, wanted, layout, frame, draw, touchInto, down, move, up, cancel, tap, hint, onTry, onResult, reset, invalidate, sheet,
     get ghost() { return ghost; }, get dragging() { return !!st; }, get handOn() { return !!hand; }, get timer() { return timer; }, get timerSite() { return timerSite; }, skipHand: () => endHand('hoppet over'), showHand: maybeHand, bubbleEl,
   };
 }
