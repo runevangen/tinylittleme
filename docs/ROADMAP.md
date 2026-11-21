@@ -49,6 +49,8 @@ Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backl
 
 ## Ferdige punkter
 
+### [x] R113 · Fra tester: Rune · vis hva en del kan festes til etter første trykk (v2.98): grønn stiplet ring på gyldige mål, egen hjelpetekst når ingen finnes. Test: `test_build.mjs` (`linkTargets`).
+
 ### [x] R112 · Fra tester: Rune · rester fra forrige prøve (spøkelse, ringer, dobbel tekst), tynne streker i verdenen og dobbel rotering rettet (v2.97): `resetRunState` nullstiller all prøvetilstand, ett trykk = én rotasjon. Tester: `test_buildrun.mjs`, `tools/live_runstate.cjs`.
 
 ### [x] R111 · Fra tester: Rune · Byggeskole sted 4 (Fagverk) og andre låste steder viser den gamle layouten (v2.95): låste byggesteder får det nye skallet (kort + GÅ TIL) i stedet for den gamle skjermen. Tester: `test_buildlock.mjs`.

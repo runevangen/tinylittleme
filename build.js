@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import {
   PART_TYPES, partType, createBuild, inTray, addPart, place, rotate, remove, undo, reset, topHit, pickPad, raise, corners, serialize, restore,
-  addLink, removeLink, topLink, linkEnds, LINK_KINDS, twistRot, fitView, clampScale, toScreen, toWorld, canEnterBuild, nearestSite, initParts, partTypes, gotPartIds, stepParts, restoreParts, snapPoint, siteAnchors, ROT_STEP,
+  addLink, linkTargets, removeLink, topLink, linkEnds, LINK_KINDS, twistRot, fitView, clampScale, toScreen, toWorld, canEnterBuild, nearestSite, initParts, partTypes, gotPartIds, stepParts, restoreParts, snapPoint, siteAnchors, ROT_STEP,
 } from './build_logic.js';
 import { ZOOM_STEP, gridForScale, anchorRadius, zoomAbout, zoomStep, freeCenter, isDoubleTap, dblTapView, zoomLabel } from './build_zoom.js';   // R44
 import { capacity } from './build_capacity.js';   // R49a1: «Tåler X»-måler
@@ -363,6 +363,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     }
     // deler
     const all = B.placed.filter((p) => !(drag && drag.id === p.id)).concat(drag && drag.part ? [drag.part] : []);
+    const linkOk = linkFrom && tool ? new Set(linkTargets(B, tool, linkFrom).parts) : null;   // R113
     for (const p of all) {
       const t = partType(p.type), pts = corners(p).map((c) => sx(c.u, c.v));
       g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath();
@@ -370,6 +371,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
       drawToyDetail(g2, p, sx, view.scale);
       if (t.pivot) drawPivot(p, sx);
       if (p.anchored) { const c = sx(p.u, p.v); g2.beginPath(); g2.arc(c.x, c.y, 4, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); }
+      if (linkOk && linkOk.has(p.id)) { g2.save(); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath(); g2.globalAlpha = 0.55 + 0.4 * Math.sin(tNow * 6); g2.lineWidth = 5; g2.strokeStyle = '#3df0b0'; g2.setLineDash([9, 6]); g2.stroke(); g2.restore(); }   // R113: delene første del kan festes til
     }
     if (bounce) { const q = (tNow - bounce.t) / TAP.bounceSecs, p0 = B.placed.find((z) => z.id === bounce.id); if (q >= 1 || q < 0 || !p0) bounce = null; else { const c = sx(p0.u, p0.v); g2.beginPath(); g2.arc(c.x, c.y, 16 + 36 * q, 0, 7); g2.strokeStyle = `rgba(255,233,168,${(1 - q).toFixed(2)})`; g2.lineWidth = 4; g2.stroke(); } }   // R110: sprett etter trykk-ut
     drawLinks(B, sx);
@@ -381,7 +383,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     if (drag && drag.part) { const r = tray.getBoundingClientRect(); if (drag.y > r.top) { g2.fillStyle = 'rgba(255,80,80,.18)'; g2.fillRect(0, r.top, W, r.height); } }
     drawBudget(B);
     const left = inTray(B).length;
-    setHint((zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || hint || cbx.hint() || (cbx.on() ? '' : grid.modeTip()) || (requiredLoads(lsite()).length && B.placed.length ? T('build.loadNeed', { list: requiredLoads(lsite()).filter((i) => !passedOf(active).includes(i)).map((i) => T('build.load.' + i)).join(', ') || T('build.loadAllDone') }) : '') || (linkFrom ? T('build.hint.link2') : tool ? T('build.hint.link1') : cbx.on() && sel ? T('cbx.sel') : cbx.on() && selLink ? T('cbx.selLink') : lab ? labLine() : B.placed.length ? T(cbx.on() ? 'cbx.hintPlaced' : 'build.hintPlaced') : left ? T(cbx.on() ? 'cbx.hintEmpty' : 'build.hintEmpty') : B.have.length ? T('build.allUsed') : ''));
+    setHint((zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || hint || cbx.hint() || (cbx.on() ? '' : grid.modeTip()) || (requiredLoads(lsite()).length && B.placed.length ? T('build.loadNeed', { list: requiredLoads(lsite()).filter((i) => !passedOf(active).includes(i)).map((i) => T('build.load.' + i)).join(', ') || T('build.loadAllDone') }) : '') || (linkFrom ? T(tool && linkTargets(B, tool, linkFrom).parts.length ? 'build.hint.link2' : 'build.hint.link2none') : tool ? T('build.hint.link1') : cbx.on() && sel ? T('cbx.sel') : cbx.on() && selLink ? T('cbx.selLink') : lab ? labLine() : B.placed.length ? T(cbx.on() ? 'cbx.hintPlaced' : 'build.hintPlaced') : left ? T(cbx.on() ? 'cbx.hintEmpty' : 'build.hintEmpty') : B.have.length ? T('build.allUsed') : ''));
     setDis(btn('del'), !sel && !selLink); setDis(btn('rotl'), !sel); setDis(btn('rotr'), !sel); setDis(btn('undo'), !B.history.length); setDis(btn('reset'), !B.placed.length);
   }
 

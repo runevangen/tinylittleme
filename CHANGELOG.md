@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.98** – R113 (fra Rune): etter første trykk med TAPE/LEDD/TAU/GUMMI merkes delene som kan festes til med grønn stiplet ring, og hjelpeteksten sier fra når det ikke finnes noen (linkTargets i build_logic.js, gjelder Byggeskolen og Brobygger).
 - **2.97** – R112 (fra Rune) rettet: all prøvetilstand nullstilles samlet (resetRunState), spøkelset vises bare under en ny prøve, ingen z-fighting av bygde deler i verdenen, og ett trykk på ↺ ↻ gir én rotasjon.
 - **2.96** – R112 (fra Rune): replay/spøkelse som henger igjen, «to tynne streker» i verdenen og mulig dobbel rotering, lagt i veikartet.
 - **2.95** – R111 integrert (fra Rune): låste steder i Byggeskolen og brobrettene viser nytt skall med kort og GÅ TIL i stedet for den gamle skjermen.

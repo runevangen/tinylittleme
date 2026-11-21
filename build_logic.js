@@ -113,6 +113,17 @@ export function reset(B) { if (!B.placed.length && !B.links.length) return false
 
 // ---------- R25: koblinger (tape, ledd, tau) ----------
 // { id, kind, a, la:{x,y}, b|null, lb:{x,y}|null, g:{u,v}|null }: a og b er del-id-er (lokale punkt følger delen), b = null: festet i underlaget i g.
+// R113: hva kan delen festes til med dette festet? Samme regler som addLink, uten å endre noe (brukes til å merke gyldige deler etter første trykk).
+export function linkTargets(B, kind, aId) {
+  const a = placedOf(B, aId); if (!a || !LINK_KINDS.includes(kind)) return { parts: [], ground: false };
+  const pa = partPoints(a), parts = [];
+  for (const b of B.placed) {
+    if (b.id === aId || B.links.some((l) => l.b && ((l.a === aId && l.b === b.id) || (l.a === b.id && l.b === aId)) && l.kind === kind)) continue;
+    if (!ROPELIKE(kind) && Math.min(...pa.flatMap((x) => partPoints(b).map((y) => Math.hypot(x.u - y.u, x.v - y.v)))) > LINK_MAX) continue;
+    parts.push(b.id);
+  }
+  return { parts, ground: true };   // underlag: tomt sted (tape/ledd må ligge nær delen, tau og gummi hvor som helst)
+}
 export function addLink(B, kind, aId, bId, groundPt) {
   if (!LINK_KINDS.includes(kind)) return { ok: false, why: 'kind' };
   const a = placedOf(B, aId), b = bId ? placedOf(B, bId) : null;

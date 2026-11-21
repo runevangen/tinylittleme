@@ -45,6 +45,8 @@ assert.ok(BL.PART_TYPES.weight && BL.LINK_KINDS.join() === 'tape,hinge,rope,band
 assert.ok(!BL.addLink(BK, 'tape', 'a', 'b').ok, 'delene må være plassert');
 BL.place(BK, 'a', 0, 0.25, 0); BL.place(BK, 'b', 0, 1.25, 0); BL.place(BK, 'w', 8, 3, 0);
 assert.equal(BL.addLink(BK, 'tape', 'a', 'b').ok, true, 'tape mellom deler som ligger inntil hverandre');
+assert.deepEqual(BL.linkTargets(BK, 'tape', 'a').parts, [], 'R113: allerede festet (b) og for langt (w) = ingen mål');
+assert.deepEqual(BL.linkTargets(BK, 'hinge', 'a').parts, ['b'], 'R113: ledd kan festes til nabodelen, ikke den langt unna'); assert.deepEqual(BL.linkTargets(BK, 'rope', 'a').parts.sort(), ['b', 'w'], 'R113: tau hvor som helst'); assert.equal(BK.links.length, 1, 'R113: linkTargets endrer ingenting');
 assert.equal(BL.addLink(BK, 'tape', 'a', 'b').why, 'dup', 'ikke to like koblinger'); assert.equal(BL.addLink(BK, 'tape', 'a', 'w').why, 'far', 'tape krever at delene berører hverandre');
 assert.ok(BL.addLink(BK, 'rope', 'a', 'w').ok, 'tau kan gå over avstand'); assert.ok(BL.addLink(BK, 'hinge', 'b', null, { u: 0.2, v: 2.2 }).ok, 'ledd i underlaget ved delen');
 assert.equal(BL.addLink(BK, 'tape', 'a', null, { u: 9, v: 9 }).why, 'far', 'tape i underlaget krever at punktet er ved delen'); assert.equal(BK.links.length, 3);
