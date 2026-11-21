@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.95** – R111 integrert (fra Rune): låste steder i Byggeskolen og brobrettene viser nytt skall med kort og GÅ TIL i stedet for den gamle skjermen.
 - **2.94** – R110 (fra Rune): trykk på brikke i delebrettet legger ut delen, trykk på del velger alltid, «Tåler» bare der måleren vises (debouncet).
 - **2.93** – R111 (fra Rune): låste steder (Byggeskole 4 m.fl.) viser den gamle layouten; lagt i veikartet.
 - **2.92** – R110 (fra Rune): trykk på planker i byggeren (legg ut, velg) og Tåler-beregningen, lagt i veikartet.
