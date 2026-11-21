@@ -32,6 +32,7 @@ import { SCHOOL, schoolProgress, schoolRead, schoolMark, schoolCardShould, schoo
 import { createSchoolView, schoolMenuHtml } from './byggeskole_view.js';
 import { createLab3dView } from './grid3d_view.js';   // R130: 3D-laben (egen skjerm: bygg fritt i tre dimensjoner)
 import { LAB3D, WORLD3 } from './grid3d_site.js';
+import { MISSIONS } from './grid3d_missions.js';   // R131: tre 3D-oppdrag (tårn, tripod, bred bro i sidevind)
 import { showWorld3, worldOrigin } from './grid3d_world.js';
 import { createBuildTex } from './build_tex.js';
 import { summaryOf as r2SummaryOf } from './stars2_logic.js';   // R126
@@ -179,9 +180,10 @@ if (levelId && levelId !== 'soverom') {
 }
 if (!LEVEL) { LEVEL = (await import('./level.js')).LEVEL; levelId = 'soverom'; }
 const lab3dVisit = levelParam === SCHOOL.levelId && new URLSearchParams(location.search).get('lab3d') === '1';   // R130: åpnet fra 3D-LAB i menyen
+const lab3dMis = lab3dVisit ? new URLSearchParams(location.search).get('m') : null;   // R131: lenke rett til et 3D-oppdrag (?lab3d=1&m=tower3d)
 const schoolVisit = levelParam === SCHOOL.levelId && (lab3dVisit || new URLSearchParams(location.search).get('skole') === '1');   // R95: åpnet fra BYGGESKOLE: «sist spilte brett» beholdes
 if (!schoolVisit) store.set('tlm.level', levelId);
-if (schoolVisit) { try { const u = new URL(location.href); u.searchParams.delete('skole'); u.searchParams.delete('lab3d'); history.replaceState(null, '', u.pathname + u.search); } catch { /* ingen historikk */ } }
+if (schoolVisit) { try { const u = new URL(location.href); u.searchParams.delete('skole'); u.searchParams.delete('lab3d'); u.searchParams.delete('m'); history.replaceState(null, '', u.pathname + u.search); } catch { /* ingen historikk */ } }
 const levelInfo = LEVELS.find((l) => l.id === levelId), levelLabel = levelInfo?.short || levelId;
 const nextLevel = levelInfo?.n ? nextLevelOf(LEVELS, levelInfo.n) : null;   // R63: lavest n over dette nivået (et hull i nummereringen stopper ikke spillet)
 const goLevel = (id) => { store.set('tlm.level', id); location.search = `?level=${id}`; };
@@ -263,7 +265,7 @@ let buildMirror = store.get('tlm.buildmirror', true);   // R121: speiling og kop
 let buildTruss2 = normTrussMode(store.get('tlm.buildtruss2', 'auto'));   // R122: trekant- og diagonalhjelp i rutenett-bygging (auto: ikke på Ekspert)
 let buildCable = store.get('tlm.buildcable', true);   // R127: kabel (hengebro) som materiale i Rutenett (Byggeskolen: Hengebro)
 let buildStars2 = store.get('tlm.buildstars2', true);   // R126: ekstra stjerner (billigst, lettest, smule) og beste-liste i Badebroen og Byggeskolen
-let build3d = store.get('tlm.build3d', true), build3dSlow = +store.get('tlm.build3dslow', 0.3) || 0.3, build3dPick = +store.get('tlm.build3dpick', 26) || 26;   // R130: 3D-lab (egen skjerm i Byggeskolen); SLOW-tempo og trykkradius (admin)
+let build3d = store.get('tlm.build3d', true), build3dSlow = +store.get('tlm.build3dslow', 0.3) || 0.3, build3dPick = +store.get('tlm.build3dpick', 26) || 26, build3dLock = store.get('tlm.build3dlock', true), build3dWind = +store.get('tlm.build3dwind', 1) || 1;   // R130: 3D-lab (egen skjerm i Byggeskolen); SLOW-tempo og trykkradius (admin)
 let build25d = store.get('tlm.build25d', true);   // R123: DOBBEL BRO (2,5D) i Rutenett: ⋯ → DOBBEL BRO
 let buildSpan = store.get('tlm.buildfromto', true);   // R118: FRA og TIL ved byggestedet (markører i verden, tekst på BYGG-knappen, etiketter i byggeskjermen)
 let partsStart = store.get('tlm.partsfromstart', true);   // R120: delene er der fra start; samling er bonus
@@ -1242,12 +1244,12 @@ const lab3dShow = (ctl) => {
   lab3dHide(); if (!ctl?.last?.passed) return null;
   try {
     if (buildTex && !lab3dTex) lab3dTex = createBuildTex(THREE, { make: (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }, low: !!texLow });
-    lab3dWorld = showWorld3(THREE, buildTex ? lab3dTex : null, scene, ctl.B.rg, LAB3D, worldOrigin({ x: player.x, y: player.y, z: player.z }, { x: -Math.sin(cam.yaw), z: -Math.cos(cam.yaw) }, WORLD3));
+    lab3dWorld = showWorld3(THREE, buildTex ? lab3dTex : null, scene, ctl.B.rg, ctl.site, worldOrigin({ x: player.x, y: player.y, z: player.z }, { x: -Math.sin(cam.yaw), z: -Math.cos(cam.yaw) }, { ...WORLD3, dy: WORLD3.dy - (ctl.site.floor - LAB3D.floor) }, ctl.site));
     logEv('bygg3d', `bygget står i rommet: ${lab3dWorld.stats.rods} staver, ${lab3dWorld.stats.draws} tegnekall, ingen kollisjon`); toast(T('lab3d.world'));
   } catch (e) { logEv('bygg3d', 'feil i verden: ' + (e?.message || e)); }
   return lab3dWorld;
 };
-const lab3dV = createLab3dView({ T, logEv, toast, buzz, store, site: LAB3D, getSlow: () => build3dSlow, getPick: () => build3dPick, onPass: (ctl) => lab3dShow(ctl), onClose: (ctl) => { if (ctl?.last?.passed && !lab3dWorld) lab3dShow(ctl); } });
+const lab3dV = createLab3dView({ T, logEv, toast, buzz, store, site: LAB3D, sites: MISSIONS, getLock: () => build3dLock, getWind: () => build3dWind, getSlow: () => build3dSlow, getPick: () => build3dPick, onPass: (ctl) => lab3dShow(ctl), onClose: (ctl) => { if (ctl?.last?.passed && !lab3dWorld) lab3dShow(ctl); } });
 lab3dV.setWorld({ hide: lab3dHide });
 let lab3dAuto = !lab3dVisit;   // åpnes av seg selv én gang når 3D-LAB er valgt i menyen
 
@@ -2016,6 +2018,8 @@ const SETTINGS = [
   fl('buildcable', 'spill', 'Kabel (R127): i Rutenett får Byggeskole-stedet Hengebro en ny del, KABEL, som bare bærer i strekk (som tau, men mye sterkere) og henger litt ned. Bygg et dekk av tre, hengt opp i kabelen mellom tårnene. Av = ingen kabelknapp, og dagens materialer er uendret', true, () => buildCable, kp('tlm.buildcable', (v) => { buildCable = v; logEv('bygg', `kabel ${v ? 'på' : 'av'}`); })),
   fl('buildstars2', 'spill', 'Ekstra stjerner (R126): Badebroen og Byggeskolens steder gir ekstra stjerner på resultatkortet: BILLIGST (bygg under en kostnad), LETTEST (bygg under en vekt) og SMULE (en knute midt på spennet), og en beste-liste per sted (de tre beste byggene). Dagens stjerner er uendret. Av = ingen ekstra stjerner og ingen liste', true, () => buildStars2, kp('tlm.buildstars2', (v) => { buildStars2 = v; logEv('bygg', `runde 2 (ekstra stjerner og beste-liste) ${v ? 'på' : 'av'}`); })),
   fl('build3d', 'spill', '3D-lab (R130): hovedmenyen får en knapp «3D-LAB» med en egen byggeskjerm i tre dimensjoner: roter med én finger, klyp for å zoome, to fingre flytter; FORAN, SIDE, TOPP og 3D som hurtigvisninger; LAG ◀ ▶ bytter dybde; trykk et punkt for en knute og to knuter for en stav. PRØV kjører en bil over broen; grønt er lite belastet, rødt mye. Bestått bro står i rommet. Av = ingen knapp; dagens bygging er uendret', true, () => build3d, kp('tlm.build3d', (v) => { build3d = v; logEv('bygg3d', `3D-lab ${v ? 'på' : 'av'}`); })),
+  fl('build3dlock', 'spill', '3D-oppdrag (R131): 3D-laben har fire oppdrag: Broen, Tårnet (last på toppen), Tripoden (last i tau) og Bred bro i sidevind. Hvert nytt oppdrag er låst til det forrige er bestått (som Byggeskolens steder). Av = alle oppdrag åpne fra start', true, () => build3dLock, kp('tlm.build3dlock', (v) => { build3dLock = v; logEv('bygg3d', `oppdragslås ${v ? 'på' : 'av'}`); })),
+  rg('build3dwind', 'admin', '3D-oppdrag (R131): styrke på sidevinden i oppdraget «Bred bro i sidevind» (1 = vanlig; mer = hardere vind)', 1, 0.5, 1.5, 0.05, () => build3dWind, kp('tlm.build3dwind', (v) => { build3dWind = v; }), { digits: 2 }),
   rg('build3dslow', 'admin', '3D-lab (R130): tempo i SLOW under prøven (1 = vanlig fart)', 0.3, 0.1, 0.8, 0.05, () => build3dSlow, kp('tlm.build3dslow', (v) => { build3dSlow = v; }), { digits: 2 }),
   rg('build3dpick', 'admin', '3D-lab (R130): trykkradius for knuter (piksler; større = lettere å treffe med tykk finger)', 26, 14, 48, 2, () => build3dPick, kp('tlm.build3dpick', (v) => { build3dPick = v; })),
   fl('build25d', 'spill', 'Dobbel bro (2,5D, R123): i Rutenett kan du trykke ⋯ → DOBBEL BRO for å kopiere bygget til et parallelt plan med tverrstag (smal, middels eller bred; X-form eller rett). Broen blir bred og står som to fagverk med dekk mellom i rommet, og tåler vind fra siden (Byggeskolen: Bred bro; Kjøkkenbroen: valgfritt delmål). Kostnaden teller mot budsjettet. Av = ingen knapp og alle bygg er som før', true, () => build25d, kp('tlm.build25d', (v) => { build25d = v; logEv('bygg', `dobbel bro (2,5D) ${v ? 'på' : 'av'}`); })),
@@ -3123,7 +3127,7 @@ function render(now, dt) {
   if (leke) leke.update(legoOn && !lowOn && mode !== 'plan');
   if (atmos) atmos.update(now / 1000, { rays: raysOn && !lowOn && variant.raysFactor > 0.3, ao: aoOn, clutter: clutterOn, plan: mode === 'plan', cam: camera.position });
   ov.applyCamera(); camera.updateMatrixWorld(); ov.update(dt, now); bld.update(CINE.on ? 0 : dt, mode === 'play' && !won && !menuOpen && !ov.active);   // kinomodus: byggetiden går bare i cine.step / cine.build.step
-  if (!lab3dAuto && mode === 'play' && !won && !menuOpen && !ov.active && !bld.active && !bossFighting() && (player.onGround || player.state === 'ground')) { lab3dAuto = true; labAuto.done = true; if (lab3dV.open()) { logEv('bygg3d', 'åpnet fra menyen'); const sv = store.get('tlm.lab3d', null); if (sv && sv.passed && lab3dV.ctl && !lab3dWorld) lab3dShow(lab3dV.ctl); } }   // R130
+  if (!lab3dAuto && mode === 'play' && !won && !menuOpen && !ov.active && !bld.active && !bossFighting() && (player.onGround || player.state === 'ground')) { lab3dAuto = true; labAuto.done = true; if (lab3dV.open(lab3dMis)) { logEv('bygg3d', 'åpnet fra menyen'); const sv = store.get('tlm.lab3d', null); if (sv && sv.passed && lab3dV.ctl && !lab3dWorld) lab3dShow(lab3dV.ctl); } }   // R130
   if (labAutoOpen({ lab: isLab(LEVEL), on: labStart, done: labAuto.done || lab3dVisit, playing: mode === 'play' && !won && !menuOpen && !ov.active && !bossFighting(), onGround: player.onGround || player.state === 'ground' }) && bld.open()) { labAuto.done = true; logEv('bygglab', 'byggeskjermen åpnet ved start'); }   // R67
   updateFades(dt); updateOffscreen();
   heroSeen(bossMesh && bossOn && !LEVEL.bossS.gone && camBossK > 0.05 && mode === 'play' && !viewFirst);

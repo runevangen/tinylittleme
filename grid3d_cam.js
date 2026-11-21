@@ -17,7 +17,7 @@ export const siteCenter = (site) => ({ x: (site.x[0] + site.x[1]) / 2, y: (site.
 export const siteRadius = (site) => Math.max(1, Math.hypot(site.x[1] - site.x[0], site.y[1] - site.y[0], site.z[1] - site.z[0]) / 2);
 
 export function camNew(site, view = '3d') {
-  const c = siteCenter(site), R = siteRadius(site);
+  const c = siteCenter(site), tall = (site.y[1] - site.y[0]) > Math.max(site.x[1] - site.x[0], site.z[1] - site.z[0]) * 1.5, R = siteRadius(site) * (tall ? 1.35 : 1);   // R131: høye steder (tårn, tripod) får bildet litt mer luft, så toppen og lasten ikke kuttes
   return camView({ yaw: 0, pitch: 0, zoom: 1, tx: c.x, ty: c.y, tz: c.z, R, view }, view);
 }
 // fører kameraet til en av hurtigvisningene (flytter ikke målet eller zoomen)

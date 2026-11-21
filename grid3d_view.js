@@ -6,6 +6,8 @@ import { VIEW_IDS, camRotate, camZoom, camPan } from './grid3d_cam.js';
 import { MAX_NODES } from './grid3d_logic.js';
 import { starText } from './build_budget.js';
 import { stressCss } from './grid_stress.js';
+import { MISSIONS, mkey, MISSION_LEVEL, passedIds, missionOf } from './grid3d_missions.js';   // R131: oppdrag
+import { stageLocked, stageNext, passRecord, passRead } from './grid_stage.js';
 
 export const LAB3D_CSS = `
 #lab3d{position:fixed;inset:0;z-index:7;display:none;flex-direction:column;background:linear-gradient(#263249,#141a2c);color:#fff;font:600 14px system-ui;touch-action:none;user-select:none;-webkit-user-select:none;padding:calc(max(8px,env(safe-area-inset-top)) + 40px) 8px max(8px,env(safe-area-inset-bottom)) 8px;gap:6px;box-sizing:border-box}
@@ -32,6 +34,8 @@ body.lab3d #panel{z-index:10}
 #lab3d .lay .lt{flex:0 0 auto;min-width:92px;text-align:center;font:800 13px system-ui;color:#cfe8ff}
 #lab3d .lay input{flex:1 1 0;min-width:0;height:46px;accent-color:#3df0b0}
 #lab3d .mat button{border-color:#8a96b8}
+#lab3d .lay.mis .mt{flex:1 1 0;min-width:0;text-align:center;font:800 13px/1.15 system-ui;color:#ffe9a8}
+#lab3d .lay.mis button{border-color:#ffd23f}
 @media (orientation:landscape) and (max-height:520px){
   #lab3d{padding-top:calc(max(6px,env(safe-area-inset-top)) + 4px);gap:4px}
   #lab3d .main{flex-direction:row}
@@ -44,6 +48,7 @@ body.lab3d #panel{z-index:10}
 }
 `;
 export const lab3dMarkup = () => `<div id="lab3d" role="dialog" aria-modal="true"><div class="top"><button data-l="back" style="flex:0 0 auto;padding:0 12px"></button><div class="ttl"></div><div class="cost"></div></div><div class="msg"></div><div class="main"><canvas></canvas><div class="ctl">
+<div class="lay mis"><button data-l="mprev" aria-label="◀">◀</button><div class="mt"></div><button data-l="mnext" aria-label="▶">▶</button></div>
 <div class="row views">${VIEW_IDS.map((v) => `<button data-l="view:${v}"></button>`).join('')}</div>
 <div class="lay"><button data-l="lprev" aria-label="◀">◀</button><div class="lt"></div><input type="range" min="0" max="2" step="1" value="1" data-l="lslide" aria-label="LAG"><button data-l="lnext" aria-label="▶">▶</button></div>
 <div class="row mat"><button data-l="tool:build"></button><button data-l="tool:erase"></button><button data-l="mat:wood"></button><button data-l="mat:steel"></button><button data-l="mat:rope"></button></div>
@@ -51,7 +56,9 @@ export const lab3dMarkup = () => `<div id="lab3d" role="dialog" aria-modal="true
 <div class="row sim" style="display:none"><button data-l="pause"></button><button data-l="slow"></button><button data-l="stop"></button></div>
 </div></div></div>`;
 
-export function createLab3dView({ T, logEv = () => {}, toast, buzz, getSlow, getPick, onPass, onClose, onOpen, store = null, storeKey = 'tlm.lab3d', site, doc = typeof document !== 'undefined' ? document : null } = {}) {
+export function createLab3dView({ T, logEv = () => {}, toast, buzz, getSlow, getPick, onPass, onClose, onOpen, store = null, storeKey = 'tlm.lab3d', site, sites = null, getWind, getLock = () => true, doc = typeof document !== 'undefined' ? document : null } = {}) {
+  const list = sites && sites.length ? sites : [site]; let cur = list[0];   // R131: oppdragene (ett sted = som i R130)
+  const multi = list.length > 1, skey = () => (multi ? mkey(cur.id) : storeKey);
   let el = null, cv = null, g = null, ctl = null, raf = 0, dirty = true, last = 0, msg = { k: 'intro' }, closeCbs = [];
   const cache = new Map(), q = (k) => el?.querySelector(`[data-l="${k}"]`);
   const put = (node, key, val, f) => { if (!node) return; let m = cache.get(node); if (!m) cache.set(node, m = new Map()); if (m.get(key) !== val) { m.set(key, val); f(val); } };
@@ -69,11 +76,12 @@ export function createLab3dView({ T, logEv = () => {}, toast, buzz, getSlow, get
   }
   const layerVals = () => ctl.lattice().map((p) => p[ctl.axis()]).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b);
   function fresh() {
-    ctl = createLab3d({ site, logEv, getSlow, getPick });
-    let code = null; try { code = store?.get(storeKey, null)?.code; } catch { /* ingen lagring */ }
+    ctl = createLab3d({ site: cur, logEv, getSlow, getPick, getWind }); msg = { k: 'intro' };
+    let code = null; try { code = store?.get(skey(), null)?.code; } catch { /* ingen lagring */ }
     if (code) { const r = ctl.load(code); if (r.ok) { msg = { k: 'restored' }; ctl.runAll(); ctl.back(); } }
     return ctl;
   }
+  const introKey = () => cur.msgs?.intro || 'intro';
   const say = (k, p, tone) => { msg = { k, p: p || {}, tone: tone || '' }; };
 
   // ---------- gester ----------
@@ -125,6 +133,7 @@ export function createLab3dView({ T, logEv = () => {}, toast, buzz, getSlow, get
   }
   function act(k) {
     if (k === 'back') return close('knapp');
+    if (k === 'mprev' || k === 'mnext') return step(k === 'mnext' ? 1 : -1);
     if (k.startsWith('view:')) { ctl.setView(k.slice(5)); say(ctl.guideOn ? 'build' : 'build'); }
     else if (k === 'lprev') ctl.stepLayer(-1); else if (k === 'lnext') ctl.stepLayer(1);
     else if (k.startsWith('tool:')) { ctl.setTool(k.slice(5)); say(k === 'tool:erase' ? 'eraseTip' : 'build'); }
@@ -137,23 +146,39 @@ export function createLab3dView({ T, logEv = () => {}, toast, buzz, getSlow, get
     else if (k === 'stop') { ctl.back(); say('build'); }
     dirty = true; sync();
   }
+  // R131: bytt oppdrag (◀ ▶). Låste oppdrag åpnes ved å bestå det forrige (grid_stage.js; ⚙ kan skru låsen av).
+  const passed = () => passedIds(store, passRead);
+  const lockedNow = (id) => multi && stageLocked(list, passed(), id, !!getLock());
+  function pick(id) {
+    const to = list.find((m) => m.id === id); if (!to || to === cur) return false;
+    if (lockedNow(id)) { const pv = list[list.indexOf(to) - 1]; say('locked', { n: list.indexOf(to), name: T(pv.name) }, 'bad'); logEv('bygg3d', `oppdrag låst: ${id}`); return false; }
+    if (ctl.state === 'run') ctl.back(); saveNow(); hideWorld(); cur = to; fresh(); wire(); try { store?.set('tlm.lab3d.cur', cur.id); } catch { /* ok */ }
+    logEv('bygg3d', `oppdrag valgt: ${cur.id}`); say(introKey()); dirty = true; if (!raf && isOpen()) raf = requestAnimationFrame(loop); return true;
+  }
+  function step(d) { const i = list.indexOf(cur) + d; if (i < 0 || i >= list.length) return false; return pick(list[i].id); }
   function tryIt() {
     if (ctl.state === 'done') { ctl.back(); say('build'); return; }
-    const r = ctl.start(); if (!r.ok) { say(r.why === 'empty' ? 'empty' : 'build', {}, 'bad'); return; }
+    const r = ctl.start(); if (!r.ok) { say(r.why === 'empty' ? 'empty' : r.why === 'nogoal' ? (cur.msgs?.nogoal || 'build') : 'build', {}, 'bad'); return; }
     say('running'); if (!raf) loop();
   }
   function finished() {
     const l = ctl.last, st = ctl.status();
-    if (l.passed) { say('won', { stars: starText(l.stars), cost: l.cost, budget: l.budget }, 'ok'); buzz?.(30); saveNow(); onPass?.(ctl, l); }
+    if (l.passed) {
+      const first = multi ? passRecord(store, MISSION_LEVEL, cur.id).first : false, nx = multi ? stageNext(list, cur.id) : null, p = { stars: starText(l.stars), cost: l.cost, budget: l.budget };
+      if (multi) logEv('bygg3d', `oppdrag bestått: ${cur.id}, ${l.stars} stjerner, kostnad ${l.cost}/${l.budget}${first ? ' (første gang)' : ''}`);
+      if (first && nx) say('wonNext', { ...p, next: T(nx.name) }, 'ok'); else say('won', p, 'ok');
+      buzz?.(30); saveNow(); onPass?.(ctl, l);
+    }
     else if (l.won && l.over) say('over', { cost: l.cost, budget: l.budget }, 'bad');
     else {
       const flat = (() => { const zs = new Set(ctl.B.rg.nodes.filter((n) => !n.fixed && !n.deck).map((n) => n.z)); return zs.size <= 1; })();
       const nm = l.top ? T('lab3d.rodNo', { id: l.top.id }) : '';
-      say(l.breaks ? (flat ? 'brokeFlat' : 'broke') : (flat ? 'fellFlat' : 'fell'), { rod: nm }, 'bad');
+      const mm = cur.msgs || {}, own = l.breaks ? mm.brk : mm.fall;
+      say(own || (l.breaks ? (flat ? 'brokeFlat' : 'broke') : (flat ? 'fellFlat' : 'fell')), { rod: nm }, 'bad');
     }
     void st;
   }
-  function saveNow() { try { store?.set(storeKey, { code: ctl.save(), stars: ctl.status().stars, passed: passedOf(ctl) }); } catch { /* ok */ } }
+  function saveNow() { try { store?.set(skey(), { code: ctl.save(), stars: ctl.status().stars, passed: passedOf(ctl) }); } catch { /* ok */ } }
   let worldCtl = null; const hideWorld = () => worldCtl?.hide?.();
   const setWorld = (w) => { worldCtl = w; };
 
@@ -161,7 +186,8 @@ export function createLab3dView({ T, logEv = () => {}, toast, buzz, getSlow, get
   const AX = { z: 'lab3d.ax.z', x: 'lab3d.ax.x', y: 'lab3d.ax.y' };
   function sync() {
     if (!el || !ctl) return; const st = ctl.status(), run = ctl.state === 'run', done = ctl.state === 'done', li = ctl.layerInfo();
-    text(el.querySelector('.ttl'), T('lab3d.title'));
+    text(el.querySelector('.ttl'), multi ? T('lab3d.title') + ' · ' + T(cur.name) : T('lab3d.title'));
+    { const row = el.querySelector('.lay.mis'); put(row, 'vis', multi, (x) => { row.style.display = x ? 'flex' : 'none'; }); if (multi) { const i = list.indexOf(cur); text(el.querySelector('.mt'), T('lab3d.mis.of', { i: i + 1, n: list.length, name: T(cur.name) })); for (const k of ['mprev', 'mnext']) { const b = q(k); put(b, 'dis', run, (x) => { if (b) b.disabled = x; }); } } }
     text(q('back'), T('lab3d.back'));
     text(el.querySelector('.cost'), T('lab3d.cost', { cost: st.cost, budget: st.budget ?? '–', stars: starText(st.stars) }));
     el.querySelector('.cost').style.color = st.over ? '#ff9a8a' : '#ffe9a8';
@@ -176,7 +202,7 @@ export function createLab3dView({ T, logEv = () => {}, toast, buzz, getSlow, get
     put(sim, 'vis', run, (x) => { sim.style.display = x ? 'flex' : 'none'; }); put(act2, 'vis', !run, (x) => { act2.style.display = x ? 'flex' : 'none'; });
     text(q('pause'), ctl.paused ? T('lab3d.resume') : T('lab3d.pause')); text(q('slow'), T('lab3d.slow')); put(q('slow'), 'on', ctl.slow, (x) => q('slow').classList.toggle('on', x)); text(q('stop'), T('lab3d.stop'));
     const m = el.querySelector('.msg'); let k = msg.k, p = msg.p || {}, tone = msg.tone || '';
-    if (k === 'intro' || (k === 'build' && !st.rods)) { k = ctl.tool === 'erase' ? 'eraseTip' : ctl.guideOn ? 'guide' : 'intro'; }
+    if (k === 'intro' || (k === 'build' && !st.rods)) { k = ctl.tool === 'erase' ? 'eraseTip' : ctl.guideOn ? 'guide' : introKey(); }
     if (k === 'guide') { const gd = ctl.guideNext(); if (gd && gd.t) { text(m, T(gd.t) + ' ' + T('lab3d.gprog', ctl.guideProgress())); put(m, 'c', 'tip', (x) => { m.className = 'msg ' + x; }); return; } if (gd && gd.done) k = 'guideDone'; }
     text(m, T('lab3d.m.' + k, p)); put(m, 'c', tone, (x) => { m.className = 'msg ' + x; });
   }
@@ -207,6 +233,14 @@ export function createLab3dView({ T, logEv = () => {}, toast, buzz, getSlow, get
       g.globalAlpha = 1;
     }
     if (f.guideNode) { const pulse = 1 + 0.25 * Math.sin(performance.now() / 180); g.beginPath(); g.arc(f.guideNode.x, f.guideNode.y, 13 * pulse, 0, 7); g.strokeStyle = '#ffd23f'; g.lineWidth = 3; g.stroke(); if (!f.guideNode.inLayer) { g.fillStyle = '#ffd23f'; g.font = '700 11px system-ui'; g.textAlign = 'center'; g.fillText('↕ ' + T('lab3d.otherLayer'), f.guideNode.x, f.guideNode.y - 18); } }
+    if (f.mass) {   // R131: lasten (vekt) på toppen eller hengt i tau, og målpunktet
+      const ms = f.mass, sz = Math.max(14, ms.s * 0.9), cx = ms.x, cy = ms.up ? ms.y - sz * 0.55 : ms.y + sz * 0.2;
+      g.globalAlpha = ms.placed ? 1 : 0.45;
+      if (ms.rope) { g.beginPath(); g.moveTo(ms.rope[0].x, ms.rope[0].y); g.lineTo(ms.rope[1].x, ms.rope[1].y); g.strokeStyle = '#d8b46a'; g.lineWidth = 3; g.setLineDash([6, 4]); g.stroke(); g.setLineDash([]); }
+      g.fillStyle = '#6b7488'; g.strokeStyle = '#10151f'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx - sz * 0.6, cy + sz * 0.5); g.lineTo(cx - sz * 0.38, cy - sz * 0.5); g.lineTo(cx + sz * 0.38, cy - sz * 0.5); g.lineTo(cx + sz * 0.6, cy + sz * 0.5); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#fff'; g.font = '800 ' + Math.max(10, Math.round(sz * 0.42)) + 'px system-ui'; g.textAlign = 'center'; g.fillText(String(ms.m), cx, cy + sz * 0.22); g.globalAlpha = 1;
+    }
+    if (f.goal) { const pulse = f.goal.placed ? 1 : 1 + 0.2 * Math.sin(performance.now() / 200), rr = 15 * pulse; g.beginPath(); g.arc(f.goal.x, f.goal.y, rr, 0, 7); g.strokeStyle = f.goal.placed ? '#3df0b0' : '#ffd23f'; g.lineWidth = 3; g.setLineDash(f.goal.placed ? [] : [6, 4]); g.stroke(); g.setLineDash([]); if (!f.goal.placed) { g.fillStyle = '#ffd23f'; g.font = '800 12px system-ui'; g.textAlign = 'center'; g.fillText(T('lab3d.goal') + (f.goal.inLayer ? '' : ' ↕'), f.goal.x, f.goal.y - rr - 4); } }
     if (f.load) { g.beginPath(); g.arc(f.load.x, f.load.y, Math.max(7, f.load.s * 0.4), 0, 7); g.fillStyle = '#ff5a5a'; g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke(); }
     if (ctl.state === 'done' || ctl.state === 'run') drawLegend(w, h);
     void dt;
@@ -224,12 +258,16 @@ export function createLab3dView({ T, logEv = () => {}, toast, buzz, getSlow, get
   const redraw = () => { dirty = true; if (!raf && isOpen()) raf = requestAnimationFrame(loop); };
 
   // ---------- åpne og lukke ----------
-  function open() {
-    if (!doc) return false; mount(); if (!ctl) { fresh(); wire(); }
-    doc.body.classList.add('lab3d'); say(ctl.guideOn ? 'guide' : 'intro'); last = 0; dirty = true; sync(); onOpen?.(ctl); logEv('bygg3d', 'laben åpnet'); redraw(); requestAnimationFrame?.(() => { paint(0); sync(); }); return true;
+  function open(startId = null) {
+    if (!doc) return false; mount();
+    if (!ctl) {   // R131: sist valgte oppdrag (eller det som ble bedt om i lenken), hvis det er åpent
+      if (multi) { let id = startId; if (!id) { try { id = store?.get('tlm.lab3d.cur', null); } catch { /* ok */ } } const m = list.find((q2) => q2.id === id); if (m && !lockedNow(m.id)) cur = m; }
+      fresh(); wire();
+    } else if (startId && startId !== cur.id) pick(startId);
+    doc.body.classList.add('lab3d'); say(ctl.guideOn ? 'guide' : introKey()); last = 0; dirty = true; sync(); onOpen?.(ctl); logEv('bygg3d', 'laben åpnet'); redraw(); requestAnimationFrame?.(() => { paint(0); sync(); }); return true;
   }
   function close(from = '') { if (!isOpen()) return false; if (ctl.state === 'run') ctl.back(); doc.body.classList.remove('lab3d'); logEv('bygg3d', `laben lukket ${from}`); for (const f of closeCbs) f(); onClose?.(ctl); return true; }
   const onCloseCb = (f) => closeCbs.push(f);
-  const api = { open, close, isOpen, get active() { return isOpen(); }, get ctl() { return ctl; }, act, tap: (x, y) => { const r = cv.getBoundingClientRect(); doTap(x, y, r.width, r.height); }, redraw, sync, finished, setWorld, onCloseCb, tryIt, say, saveNow, paintNow: () => { paint(0); sync(); } };
+  const api = { open, close, pick, step, get site() { return cur; }, sites: list, locked: lockedNow, isOpen, get active() { return isOpen(); }, get ctl() { return ctl; }, act, tap: (x, y) => { const r = cv.getBoundingClientRect(); doTap(x, y, r.width, r.height); }, redraw, sync, finished, setWorld, onCloseCb, tryIt, say, saveNow, paintNow: () => { paint(0); sync(); } };
   return api;
 }

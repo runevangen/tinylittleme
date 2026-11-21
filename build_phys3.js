@@ -17,6 +17,7 @@ export const PHYS3 = {          // tallene kan finjusteres (R130 legger dem i SE
   DISTURB: [0.5, 0.35], DISTURB_T: 0.25,   // sidestøt (akselerasjon i x og z) de første sekundene
   FALL_D: 1.2, DRIFT: 0.4,     // en knute som har flyttet seg mer enn FALL_D har falt; i STAND-prøven får ingen knute flytte seg mer enn DRIFT
   T_STAND: 4.5, T_MAX: 10,
+  WIND_K: 30,                  // R131: sidevind (opts.wind, 0..3): konstant akselerasjon i z på alle frie knuter, satt på jevnt (RAMP)
 };
 export const LOADS3 = { ball: { m: 18, speed: 2.4, name: 'Kule', en: 'Ball' }, car: { m: 40, speed: 2, name: 'Bil', en: 'Car' }, heavy: { m: 160, speed: 2, name: 'Tung bil', en: 'Heavy car' } };
 export const DEFAULT_LOAD3 = 'ball';
@@ -37,7 +38,7 @@ export function simDef3(B, extra = {}) {
   return { nodes, rods, mass: { ...extra }, road };
 }
 
-// opts: { load: 'ball' | 'car' | 'heavy' | null (ingen last), mode: 'load' | 'stand' }
+// opts: { load: 'ball' | 'car' | 'heavy' | null (ingen last), mode: 'load' | 'stand', wind: sidevind 0..3 (R131) }
 export function createSim3(def, opts = {}) {
   const P = PHYS3, h = P.DT / P.SUB, idx = new Map(def.nodes.map((n, i) => [n.id, i])), N = def.nodes.length;
   const px = new Float64Array(N), py = new Float64Array(N), pz = new Float64Array(N), vx = new Float64Array(N), vy = new Float64Array(N), vz = new Float64Array(N), w = new Float64Array(N), x0 = new Float64Array(N), y0 = new Float64Array(N), z0 = new Float64Array(N), m = new Float64Array(N);
@@ -50,6 +51,7 @@ export function createSim3(def, opts = {}) {
   for (const [id, mass] of Object.entries(def.mass || {})) if (idx.has(id)) m[idx.get(id)] += mass;
   def.nodes.forEach((n, i) => { w[i] = n.fixed ? 0 : 1 / Math.max(m[i], 0.05); });
   const LD = opts.load ? LOADS3[opts.load] : null, road = (def.road || []).map((id) => idx.get(id)), mode = opts.mode || (LD && road.length >= 2 ? 'load' : 'stand');
+  const wind = Number.isFinite(opts.wind) && opts.wind > 0 ? Math.min(3, opts.wind) * P.WIND_K : 0;
   const sim = { t: 0, steps: 0, breaks: [], state: { state: 'run', reason: null }, load: null, mode, def, rods, pos: { x: px, y: py, z: pz }, ids: def.nodes.map((n) => n.id) };
   if (mode === 'load' && LD && road.length >= 2) sim.load = { m: LD.m, speed: LD.speed, s: px[road[0]], end: px[road[road.length - 1]], seg: 0, n: 0 };
   const lam = new Float64Array(rods.length), fsum = new Float64Array(rods.length);
@@ -72,7 +74,7 @@ export function createSim3(def, opts = {}) {
       for (let i = 0; i < N; i++) {
         if (!w[i]) continue;
         let ax = 0, az = 0; if (dist) { ax = P.DISTURB[0] * (i % 2 ? 1 : 0.6); az = P.DISTURB[1] * (i % 3 ? 1 : 0.5); }
-        vy[i] -= P.G * gk * h; vx[i] += ax * h; vz[i] += az * h;
+        vy[i] -= P.G * gk * h; vx[i] += ax * h; vz[i] += (az + wind * gk) * h;
         if (i === fy.a) vy[i] -= fy.wa * w[i]; if (i === fy.b) vy[i] -= fy.wb * w[i];
         const dmp = 1 - P.DAMP * h; vx[i] *= dmp; vy[i] *= dmp; vz[i] *= dmp;
         px[i] += vx[i] * h; py[i] += vy[i] * h; pz[i] += vz[i] * h;

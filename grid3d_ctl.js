@@ -3,7 +3,8 @@
 //  - hint: SÅ SLIK (tetraeder-guide, site.guide). Prøve: build_phys3.js (lasten kjører på dekk), SLOW og PAUSE, GRØNN/RØD belastning (grid_stress.js).
 //  - kamera og lag: grid3d_cam.js. Lagring: kode (TLM3D1.), i `tlm.lab3d`.
 import { createBuild3, g3AddNode, g3AddRod, g3RemoveRod, g3RemoveNode, g3Undo, g3Reset, nodeOf, nodeAt, rodsAt, cost3, stars3, matsOf, userRods, userNodes, exportCode3, importCode3, maxLenOf, lattice3, MAX_NODES, MAX_RODS } from './grid3d_logic.js';
-import { simDef3, createSim3, PHYS3, LOADS3, DEFAULT_LOAD3 } from './build_phys3.js';
+import { createSim3, PHYS3, LOADS3, DEFAULT_LOAD3 } from './build_phys3.js';
+import { missionDef3, goalNode, goalPoint, hasGoal, windOf } from './grid3d_missions.js';
 import { loadsNow, createPeaks, peakSummary, stressCss } from './grid_stress.js';
 import * as C from './grid3d_cam.js';
 
@@ -11,7 +12,7 @@ export const MAT_COLOR = { wood: '#c98a45', steel: '#9fb4c9', rope: '#d8b46a', c
 export const TAP = { node: 26, nodeOther: 20, rod: 14, point: 30 };   // plukkradier i piksler (finger)
 const FPS_STEPS = 6;   // flest fysikk-steg per tegning
 
-export function createLab3d({ site, deck = true, logEv = () => {}, getSlow = () => 0.3, getPick = () => TAP.node } = {}) {
+export function createLab3d({ site, deck = true, logEv = () => {}, getSlow = () => 0.3, getPick = () => TAP.node, getWind = () => 1 } = {}) {
   const B = createBuild3(site, deck), cam = C.camNew(site), layers = { x: C.layerMid(site, 'x'), y: C.layerMid(site, 'y'), z: C.layerMid(site, 'z') };
   const ctl = { B, cam, layers, site, tool: 'build', mat: matsOf(site)[0], sel: null, state: 'build', paused: false, slow: false, sim: null, peaks: null, last: null, guideOn: false, msg: null, acc: 0 };
   const log = (t, d) => { try { logEv('bygg3d', `${t}${d ? ': ' + d : ''}`); } catch { /* ingen logg */ } };
@@ -28,9 +29,9 @@ export function createLab3d({ site, deck = true, logEv = () => {}, getSlow = () 
   // ---------- bygging ----------
   const nodes3 = () => B.rg.nodes;
   const pickRadius = () => { const r = getPick(); return Number.isFinite(r) && r > 8 ? r : TAP.node; };
-  function addRod(a, b) {
-    const r = g3AddRod(B, a, b, ctl.mat); if (!r.ok) return { kind: 'rodfail', why: r.why };
-    edited(); log('stav', `${ctl.mat} ${a}-${b} (${cost3(B.rg)}/${site.budget})`); return { kind: 'rod', rod: r.rod };
+  function addRod(a, b, mat = ctl.mat) {
+    const r = g3AddRod(B, a, b, mat); if (!r.ok) return { kind: 'rodfail', why: r.why };
+    edited(); log('stav', `${mat} ${a}-${b} (${cost3(B.rg)}/${site.budget})`); return { kind: 'rod', rod: r.rod };
   }
   // trykk på skjermpunktet (sx, sy) i et lerret w × h
   function tap(sx, sy, w, h) {
@@ -77,7 +78,7 @@ export function createLab3d({ site, deck = true, logEv = () => {}, getSlow = () 
     for (const s of gd) {
       if (s.k === 'node') { if (!keyNode(s.key)) return { k: 'node', key: s.key, p: { x: s.p[0], y: s.p[1], z: s.p[2] }, t: s.t }; continue; }
       const a = keyNode(s.a), b = keyNode(s.b); if (!a || !b) return { k: 'wait', t: s.t };
-      if (!B.rg.rods.some((r) => (r.a === a.id && r.b === b.id) || (r.a === b.id && r.b === a.id))) return { k: 'rod', a: a.id, b: b.id, t: s.t };
+      if (!B.rg.rods.some((r) => (r.a === a.id && r.b === b.id) || (r.a === b.id && r.b === a.id))) return { k: 'rod', a: a.id, b: b.id, t: s.t, ...(s.m ? { m: s.m } : {}) };
     }
     return { done: true };
   }
@@ -92,7 +93,7 @@ export function createLab3d({ site, deck = true, logEv = () => {}, getSlow = () 
   // utfylt eksempel (til test og «vis meg»): bygger hele guiden i stål/tre; returnerer antall staver
   function guideAuto(mat = 'wood') {
     ctl.mat = mat; let n = 0, guard = 40;
-    while (guard-- > 0) { const g = guideNext(); if (!g || g.done) break; if (g.k === 'node') { const r = g3AddNode(B, g.p); if (!r.ok) break; edited(); } else if (g.k === 'rod') { const r = addRod(g.a, g.b); if (r.kind !== 'rod') break; n++; } else break; }
+    while (guard-- > 0) { const g = guideNext(); if (!g || g.done) break; if (g.k === 'node') { const r = g3AddNode(B, g.p); if (!r.ok) break; edited(); } else if (g.k === 'rod') { const r = addRod(g.a, g.b, g.m && matsOf(site).includes(g.m) ? g.m : mat); if (r.kind !== 'rod') break; n++; } else break; }
     return n;
   }
 
@@ -101,9 +102,10 @@ export function createLab3d({ site, deck = true, logEv = () => {}, getSlow = () 
   function start() {
     if (ctl.state === 'run') return { ok: false, why: 'busy' };
     if (!userRods(B.rg).length) return { ok: false, why: 'empty' };
-    const def = simDef3(B), load = site.load && LOADS3[site.load] ? site.load : DEFAULT_LOAD3;
-    ctl.sim = createSim3(def, { load: B.rg.deck ? load : null }); ctl.peaks = createPeaks(); ctl.state = 'run'; ctl.paused = false; ctl.last = null; ctl.acc = 0; ctl.sel = null;
-    log('prøve', `${ctl.sim.mode}, ${userNodes(B.rg).length} knuter, ${userRods(B.rg).length} staver, kostnad ${cost3(B.rg)}`); return { ok: true, mode: ctl.sim.mode };
+    const md = missionDef3(B, site); if (!md.ok) { log('mangler mål', md.why); return { ok: false, why: md.why }; }
+    const load = site.load && LOADS3[site.load] ? site.load : DEFAULT_LOAD3, wind = windOf(site, getWind());
+    ctl.sim = createSim3(md.def, { load: B.rg.deck ? load : null, wind }); ctl.peaks = createPeaks(); ctl.state = 'run'; ctl.paused = false; ctl.last = null; ctl.acc = 0; ctl.sel = null;
+    log('prøve', `${site.id}: ${ctl.sim.mode}${wind ? ', vind ' + wind : ''}, ${userNodes(B.rg).length} knuter, ${userRods(B.rg).length} staver, kostnad ${cost3(B.rg)}`); return { ok: true, mode: ctl.sim.mode };
   }
   function finish() {
     const s = ctl.sim, won = s.state.state === 'won', st = status(), over = st.over, passed = won && !over;
@@ -149,6 +151,12 @@ export function createLab3d({ site, deck = true, logEv = () => {}, getSlow = () 
       return { id: r.id, a: { x: a.x, y: a.y }, b: { x: b.x, y: b.y }, z: (a.z + b.z) / 2, s: (a.s + b.s) / 2, mat: r.mat, deck: !!r.deck, inLayer: C.inLayer(na, ax, val) && C.inLayer(nb, ax, val), color, ratio, broken, rope: r.mat === 'rope' || r.mat === 'cable', guide: !!g && g.k === 'rod' && ((g.a === r.a && g.b === r.b) || (g.a === r.b && g.b === r.a)) };
     });
     out.rods.sort((p, q) => q.z - p.z); out.nodes.sort((p, q) => q.z - p.z);
+    if (hasGoal(site)) {   // R131: målpunktet og lasten (på toppen eller hengt i tau)
+      const gp = goalPoint(site), gn = goalNode(B, site), q = C.project(cam, gn ? at(gn) : gp, w, h), hang = site.goal.hang;
+      out.goal = { x: q.x, y: q.y, s: q.s, inLayer: C.inLayer(gp, ax, val), placed: !!gn };
+      const base = gn ? at(gn) : gp, lp = hang ? (pos.get('load') || { x: base.x, y: base.y - hang.drop, z: base.z }) : base, wq = C.project(cam, lp, w, h);
+      out.mass = { x: wq.x, y: wq.y, s: wq.s, m: site.goal.m, hang: !!hang, rope: hang ? [{ x: q.x, y: q.y }, { x: wq.x, y: wq.y }] : null, placed: !!gn, up: !hang };
+    }
     if (g && g.k === 'node') { const q = C.project(cam, g.p, w, h); out.guideNode = { x: q.x, y: q.y, s: q.s, inLayer: C.inLayer(g.p, ax, val) }; }
     if (run && ctl.sim.load) { const lp = ctl.sim.loadPos(), road = ctl.sim.def.road.map((id) => pos.get(id)).filter(Boolean); if (lp && road.length > 1) { const k = Math.min(lp.seg, road.length - 2), a = road[k], b = road[k + 1], t = b.x - a.x > 1e-6 ? Math.min(1, Math.max(0, (lp.x - a.x) / (b.x - a.x))) : 0; const p = { x: lp.x, y: a.y + (b.y - a.y) * t + 0.55, z: a.z + (b.z - a.z) * t }, q = C.project(cam, p, w, h); out.load = { x: q.x, y: q.y, s: q.s }; } }
     return out;

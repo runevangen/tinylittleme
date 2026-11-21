@@ -22,6 +22,13 @@ export const rodType = (mat) => `rod_${mat}_100`;
 export function postPlacements(G, site, o) {
   return G.nodes.filter((n) => n.fixed).map((n) => { const h = n.y - site.floor; return { id: 'post_' + n.id, x: o.x + n.x, z: o.z + n.z, y0: o.y + site.floor, h: Math.max(0.2, h) }; });
 }
+// R131: lasten i verden: på toppen (en kloss) eller hengt i tau (tynn stav + kloss), ved knuten i målpunktet. Bare tegnet. Tom liste når stedet ikke har mål eller knuten mangler.
+export function massPlacements(G, site, o) {
+  const gp = site?.goal?.p; if (!gp) return []; const n = G.nodes.find((q) => Math.abs(q.x - gp[0]) < 1e-3 && Math.abs(q.y - gp[1]) < 1e-3 && Math.abs(q.z - gp[2]) < 1e-3); if (!n) return [];
+  const x = o.x + n.x, y = o.y + n.y, z = o.z + n.z, S = 0.9, h = site.goal.hang;
+  if (!h) return [{ id: 'mass', x, y: y + S / 2 + 0.1, z, size: S }];
+  return [{ id: 'rope', x, y: y - h.drop / 2, z, size: 0.1, h: h.drop }, { id: 'mass', x, y: y - h.drop - S / 2, z, size: S }];
+}
 export const worldStats = (G, site) => ({ rods: G.rods.length, nodes: G.nodes.filter((n) => !n.fixed && !n.deck).length, posts: G.nodes.filter((n) => n.fixed).length, draws: G.rods.length + G.nodes.filter((n) => !n.fixed && !n.deck).length + G.nodes.filter((n) => n.fixed).length, floor: site.floor });
 
 // THREE: modulen, tx: createBuildTex-objektet (kan være null: enkle materialer), scene: der gruppen legges. Returnerer { group, stats, dispose }
@@ -42,7 +49,11 @@ export function showWorld3(THREE, tx, scene, G, site, o) {
     const geo = tx ? tx.geometry('plank', 0.8, s.h, 0.8, s.id) : new THREE.BoxGeometry(0.8, s.h, 0.8); if (!tx) own.push(geo);
     const m = new THREE.Mesh(geo, mat('plank', '#9a6b3c')); m.position.set(s.x, s.y0 + s.h / 2, s.z); m.castShadow = true; m.receiveShadow = true; g.add(m);
   }
+  const massList = massPlacements(G, site, o);
+  for (const q of massList) {   // R131: last (en kloss) og tau
+    const geo = new THREE.BoxGeometry(q.size, q.h || q.size, q.size); own.push(geo); const m = new THREE.Mesh(geo, mat(q.id === 'rope' ? 'rod_rope_100' : 'plank', q.id === 'rope' ? '#d8b46a' : '#6b7488')); m.position.set(q.x, q.y, q.z); m.castShadow = true; g.add(m);
+  }
   scene.add(g);
-  const stats = worldStats(G, site);
+  const stats = worldStats(G, site); stats.draws += massList.length;
   return { group: g, stats, dispose() { scene.remove(g); for (const o2 of own) o2.dispose?.(); g.traverse?.((m) => { if (m.geometry && tx) m.geometry.dispose?.(); }); } };
 }
