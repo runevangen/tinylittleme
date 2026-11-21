@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r117-teksturer-bygde-deler', version: '2.102', date: '2026-11-21', title: 'Bygde deler i rommet ser nå ut som tre (med trekorn og kvister), stål (børstet), tau (flettet), plast med knotter og leker, i stedet for ensfargede kasser.',
+    how: 'Åpne BYGGESKOLE → Bro (eller Hyllebroen), bygg og trykk PRØV til du består, gå ut og se på delene. Skru av/på under ⚙ → Spill → «Teksturer på bygde deler».', level: 'bygglab', spot: null },
   { id: 'r116-ingen-usynlig-vegg', version: '2.101', date: '2026-11-21', title: 'Bygde deler (Byggeskole, Vippe og andre steder) har ikke lenger en usynlig vegg: kollisjonen følger nå de skrå plankene tett, så du kommer forbi og over dem som det ser ut.',
     how: 'Åpne BYGGESKOLE → Vippe, bygg med planker i skrå vinkler og trykk PRØV til du består. Gå ut i rommet og gå langs og opp på delene: ingenting skal stoppe deg i lufta ved siden av dem.', level: 'bygglab', spot: null },
   { id: 'r115-vippe-aapner-fagverk', version: '2.100', date: '2026-11-21', title: 'Å bestå Vippe (og andre klassiske steder) åpner nå neste sted i Byggeskolen. Før sto Fagverk låst selv om du hadde bestått Vippe.',
