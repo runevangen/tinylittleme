@@ -2,7 +2,7 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
-  { id: 'r112-rester-fra-prove', version: '2.96', date: '2026-11-21', title: 'Byggeskjermen: etter en prøve ligger det ikke lenger igjen et spøkelse, ringer eller dobbel tekst fra forrige forsøk; ett trykk på ↺ ↻ vrer delen bare ett trinn; og bygde deler i verdenen har ikke lenger tynne streker.',
+  { id: 'r112-rester-fra-prove', version: '2.97', date: '2026-11-21', title: 'Byggeskjermen: etter en prøve ligger det ikke lenger igjen et spøkelse, ringer eller dobbel tekst fra forrige forsøk; ett trykk på ↺ ↻ vrer delen bare ett trinn; og bygde deler i verdenen har ikke lenger tynne streker.',
     how: 'Åpne BYGGESKOLE → Vippe (3/8), legg en planke og trykk PRØV, la den feile. Trykk PRØV IGJEN og så STOPP: ingen halvgjennomsiktige rester. Trykk ↻ én gang på en del: den vris ett trinn (15°).', level: 'bygglab', spot: null },
   { id: 'r111-last-sted-nytt-skall', version: '2.95', date: '2026-11-21', title: 'Låste byggesteder (f.eks. Byggeskole · Fagverk 4/8) viser samme nye byggeskjerm som de åpne, med kort «Bestå Vippe (3/8) først» og en stor GÅ TIL VIPPE-knapp, i stedet for den gamle skjermen.',
     how: 'Åpne BYGGESKOLE, trykk ⋯ og så ▶ tre ganger til Fagverk 4/8. Les kortet og trykk GÅ TIL VIPPE. Snu telefonen og se at kortet og knappen står rolig.', level: 'bygglab', spot: null },

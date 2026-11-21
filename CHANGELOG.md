@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.97** – R112 (fra Rune) rettet: all prøvetilstand nullstilles samlet (resetRunState), spøkelset vises bare under en ny prøve, ingen z-fighting av bygde deler i verdenen, og ett trykk på ↺ ↻ gir én rotasjon.
 - **2.96** – R112 (fra Rune): replay/spøkelse som henger igjen, «to tynne streker» i verdenen og mulig dobbel rotering, lagt i veikartet.
 - **2.95** – R111 integrert (fra Rune): låste steder i Byggeskolen og brobrettene viser nytt skall med kort og GÅ TIL i stedet for den gamle skjermen.
 - **2.94** – R110 (fra Rune): trykk på brikke i delebrettet legger ut delen, trykk på del velger alltid, «Tåler» bare der måleren vises (debouncet).
