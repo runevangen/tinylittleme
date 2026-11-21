@@ -64,14 +64,14 @@ export function applySpec(B, spec) {
 export const specCode = (B) => exportAny(B, () => null);
 // ruta over det rutenett-bygde: den klassiske referanseruta med flata `@bro` byttet ut med smale flater langs bygget (stavene henger ned i midten som en hengebro, så høyden følger toppen av stavene
 // for hver halve enhet, med toleranse). Brukes av tools/bot.mjs og test_gridplay.mjs.
-export function gridRefRoute(site, solids, w = 0.5) {
+export function gridRefRoute(site, solids, w = 0.5, tol = 0.2) {
   const ref = site.ref; if (!ref?.route || !solids?.length) return null;
   const an = gridAnchors(site).slice().sort((a, b) => a.u - b.u), surfaces = [], ids = [];
   for (let u = an[0].u - 0.2, k = 1; u < an[1].u + 0.2 - 1e-6; u += w, k++) {
     const u1 = Math.min(u + w + 0.1, an[1].u + 0.2), x0 = site.x + u, x1 = site.x + u1;
     const tops = solids.filter((q) => q.max[0] > x0 && q.min[0] < x1).map((q) => q.max[1] - site.y);
     if (!tops.length) return null; const top = Math.max(...tops);
-    const id = '@rutenett' + k; surfaces.push({ id, u0: u, u1, top, tol: 0.2 }); ids.push(id);
+    const id = '@rutenett' + k; surfaces.push({ id, u0: u, u1, top, tol }); ids.push(id);
   }
   return { surfaces, route: ref.route.flatMap((id) => (id === '@bro' ? ids : [id])) };
 }

@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r119-broen-over-badekaret', version: '2.110', date: '2026-11-21', title: 'Nytt byggebrett «Bygg 5: Broen over badekaret»: gapet er så bredt og lasten så tung at bare en bro av trekanter holder. En rett rad av staver og en firkant uten diagonal gir etter. Nytt hint: «En firkant gir etter. Legg inn en diagonal.»',
+    how: 'Velg «Bygg 5: Broen over badekaret» under ⚙ → Spill → Brett. Gå til karkanten, trykk BYGG, og bygg en bro av trekanter (stål nederst, tre og tau over). Trykk PRØV. Eller ta den harde veien rundt.', level: 'badebro', spot: { x: 4, y: 9, z: -4 } },
   { id: 'r120-deler-fra-start', version: '2.108', date: '2026-11-21', title: 'Delene er der fra start: i byggebrettene ligger alle delene i delebrettet første gang du åpner byggestedet. Å finne delene i rommet er nå en bonus (+1 på budsjettet per del, og delmålet «Finn tre rare deler»).',
     how: 'Start Hyllebroen fra ny lagring og trykk BYGG ved byggestedet: delene ligger klare nederst. Finn en del i rommet og se bonusmeldingen. Skru av/på under ⚙ → Spill → «Delene er der fra start».', level: 'bro', spot: null },
   { id: 'r121-speil-kopi', version: '2.109', date: '2026-11-21', title: 'Rutenett-byggeren (broene og Byggeskolen) kan speile bygget og kopiere et felt: bygg halve broen og speil resten, eller kopier en trekant til neste felt.',

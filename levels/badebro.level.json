@@ -1,0 +1,777 @@
+{
+ "name": "Broen over badekaret",
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -52,
+    -2,
+    -20
+   ],
+   "max": [
+    52,
+    0,
+    20
+   ],
+   "id": "gulv",
+   "color": 13947335,
+   "slick": true,
+   "material": "tile"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -53,
+    0,
+    -20
+   ],
+   "max": [
+    -52,
+    48,
+    20
+   ],
+   "id": "vegg_v",
+   "color": 14868436,
+   "material": "tile"
+  },
+  {
+   "type": "wall",
+   "min": [
+    52,
+    0,
+    -20
+   ],
+   "max": [
+    53,
+    48,
+    20
+   ],
+   "id": "vegg_o",
+   "color": 14868436,
+   "material": "tile"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -52,
+    0,
+    -21
+   ],
+   "max": [
+    52,
+    48,
+    -20
+   ],
+   "id": "vegg_n",
+   "color": 14868436,
+   "material": "tile"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -52,
+    0,
+    20
+   ],
+   "max": [
+    52,
+    48,
+    21
+   ],
+   "id": "vegg_s",
+   "color": 14868436,
+   "material": "tile"
+  },
+  {
+   "type": "wood",
+   "min": [
+    -40,
+    0,
+    -12
+   ],
+   "max": [
+    -32,
+    2,
+    4
+   ],
+   "id": "saape1",
+   "kind": "chest",
+   "color": 15262416,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -32,
+    0,
+    -12
+   ],
+   "max": [
+    -24,
+    4,
+    4
+   ],
+   "id": "saape2",
+   "kind": "chest",
+   "color": 14274472,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -24,
+    0,
+    -12
+   ],
+   "max": [
+    -16,
+    6,
+    4
+   ],
+   "id": "saape3",
+   "kind": "chest",
+   "color": 13220234,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    -16,
+    0,
+    -12
+   ],
+   "max": [
+    0,
+    8,
+    4
+   ],
+   "id": "karkant",
+   "kind": "tub",
+   "color": 15460575,
+   "material": "porcelain",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "porcelain",
+   "min": [
+    0,
+    0,
+    -12
+   ],
+   "max": [
+    8,
+    1.2,
+    4
+   ],
+   "id": "karbunn",
+   "kind": "tub",
+   "color": 12179168,
+   "material": "porcelain",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "tile",
+   "min": [
+    8,
+    0,
+    -12
+   ],
+   "max": [
+    21,
+    8,
+    4
+   ],
+   "id": "dusjkant",
+   "kind": "chest",
+   "color": 14673900,
+   "material": "tile",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    21,
+    0,
+    -12
+   ],
+   "max": [
+    27,
+    10.4,
+    4
+   ],
+   "id": "dusjtopp1",
+   "kind": "chest",
+   "color": 15906891,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    27,
+    0,
+    -12
+   ],
+   "max": [
+    33,
+    12.8,
+    4
+   ],
+   "id": "dusjtopp2",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    34,
+    0,
+    -8
+   ],
+   "max": [
+    39.6,
+    9.4,
+    0
+   ],
+   "id": "krakk3",
+   "kind": "chest",
+   "color": 11887990,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    40.6,
+    0,
+    -8
+   ],
+   "max": [
+    46,
+    6.2,
+    0
+   ],
+   "id": "krakk2",
+   "kind": "chest",
+   "color": 8499866,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    47,
+    0,
+    -8
+   ],
+   "max": [
+    52,
+    3,
+    0
+   ],
+   "id": "krakk1",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  }
+ ],
+ "movables": [],
+ "decor": [],
+ "hints": [
+  {
+   "id": "karkant",
+   "text": "Badekaret er en innsjø\nBygg broen: trykk BYGG ved kanten. En rett stav eller en firkant gir etter, bare trekanter er stive. Eller ta den harde veien rundt.",
+   "pos": [
+    -8,
+    8.9,
+    -4
+   ]
+  }
+ ],
+ "hazards": [
+  {
+   "id": "kar_vann",
+   "type": "pit",
+   "message": "Plask! Du falt i badekaret",
+   "min": [
+    0.4,
+    0,
+    -11.6
+   ],
+   "max": [
+    7.6,
+    6,
+    3.6
+   ]
+  }
+ ],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    0,
+    26,
+    -19.95
+   ],
+   "size": [
+    24,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 0.9,
+  "sun": 2.4
+ },
+ "audio": {
+  "reverb": 0.38,
+  "ambience": [
+   "drip",
+   "fan"
+  ]
+ },
+ "ants": [
+  {
+   "id": "maur_gulv",
+   "a": [
+    -2,
+    0,
+    12
+   ],
+   "b": [
+    20,
+    0,
+    12
+   ]
+  }
+ ],
+ "collectibles": [
+  {
+   "id": "smule_1",
+   "x": -22,
+   "y": 0.8,
+   "z": 14
+  },
+  {
+   "id": "smule_2",
+   "x": 43.3,
+   "y": 7,
+   "z": -4
+  },
+  {
+   "id": "smule_3",
+   "x": 32,
+   "y": 0.8,
+   "z": 14
+  }
+ ],
+ "build": {
+  "sites": [
+   {
+    "id": "bad1",
+    "label": "Badekaret mellom karkanten og dusjkanten",
+    "x": 4,
+    "y": 8,
+    "z": -4,
+    "w": 20,
+    "h": 14,
+    "anchors": [
+     {
+      "u": -4,
+      "v": 0
+     },
+     {
+      "u": 4,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -4
+     },
+     {
+      "u0": 4,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "d": 4,
+    "grid": {
+     "step": 2,
+     "stars": {
+      "three": {
+       "cost": 19,
+       "parts": 8
+      },
+      "two": {
+       "cost": 26,
+       "parts": 13
+      }
+     },
+     "stage": {
+      "loads": [
+       "ball",
+       "figure",
+       "robot",
+       "car"
+      ],
+      "massK": 28,
+      "budget": 30
+     }
+    },
+    "ref": {
+     "placed": [],
+     "links": [],
+     "surfaces": [],
+     "grid": {
+      "nodes": [
+       [
+        -2,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        2,
+        0
+       ],
+       [
+        -2,
+        2
+       ],
+       [
+        0,
+        2
+       ],
+       [
+        2,
+        2
+       ]
+      ],
+      "rods": [
+       [
+        0,
+        2,
+        "steel"
+       ],
+       [
+        2,
+        3,
+        "steel"
+       ],
+       [
+        3,
+        4,
+        "steel"
+       ],
+       [
+        4,
+        1,
+        "steel"
+       ],
+       [
+        5,
+        6,
+        "wood"
+       ],
+       [
+        6,
+        7,
+        "wood"
+       ],
+       [
+        0,
+        5,
+        "wood"
+       ],
+       [
+        1,
+        7,
+        "wood"
+       ],
+       [
+        2,
+        5,
+        "rope"
+       ],
+       [
+        3,
+        6,
+        "rope"
+       ],
+       [
+        4,
+        7,
+        "rope"
+       ],
+       [
+        5,
+        3,
+        "wood"
+       ],
+       [
+        7,
+        3,
+        "wood"
+       ]
+      ]
+     },
+     "best": {
+      "nodes": [
+       [
+        -2,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        2,
+        0
+       ],
+       [
+        -2,
+        2
+       ],
+       [
+        0,
+        2
+       ],
+       [
+        2,
+        2
+       ]
+      ],
+      "rods": [
+       [
+        0,
+        2,
+        "steel"
+       ],
+       [
+        2,
+        3,
+        "steel"
+       ],
+       [
+        3,
+        4,
+        "steel"
+       ],
+       [
+        4,
+        1,
+        "steel"
+       ],
+       [
+        1,
+        7,
+        "wood"
+       ],
+       [
+        4,
+        7,
+        "rope"
+       ],
+       [
+        7,
+        3,
+        "wood"
+       ]
+      ]
+     },
+     "route": [
+      "gulv",
+      "saape1",
+      "saape2",
+      "saape3",
+      "karkant",
+      "@bro",
+      "dusjkant",
+      "dusjtopp1",
+      "dusjtopp2"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "p1",
+    "type": "plank_l",
+    "x": 8,
+    "y": 0.9,
+    "z": 14
+   },
+   {
+    "id": "p2",
+    "type": "plank_s",
+    "x": -36,
+    "y": 2.9,
+    "z": -4
+   },
+   {
+    "id": "p3",
+    "type": "block",
+    "x": -28,
+    "y": 0.9,
+    "z": 16
+   },
+   {
+    "id": "p4",
+    "type": "weight",
+    "x": -12,
+    "y": 0.9,
+    "z": 16
+   }
+  ]
+ },
+ "goals": [
+  {
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg broen over badekaret (BYGG-knappen)",
+   "en": "Build the bridge over the bathtub (BUILD button)",
+   "flag": "bad1"
+  },
+  {
+   "id": "flagg",
+   "type": "reach",
+   "label": "Nå flagget på dusjkanten",
+   "en": "Reach the flag on the shower ledge",
+   "gate": true,
+   "on": "dusjtopp2",
+   "x0": 27,
+   "x1": 33,
+   "z0": -12,
+   "z1": 4,
+   "top": 12.8
+  },
+  {
+   "id": "smuler",
+   "type": "crumbs",
+   "label": "Samle 3 smuler",
+   "en": "Collect 3 crumbs",
+   "n": 3
+  }
+ ],
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -52,
+   "x1": 52,
+   "z0": -20,
+   "z1": 20,
+   "top": 0
+  },
+  {
+   "id": "krakk1",
+   "x0": 47,
+   "x1": 52,
+   "z0": -8,
+   "z1": 0,
+   "top": 3
+  },
+  {
+   "id": "krakk2",
+   "x0": 40.6,
+   "x1": 46,
+   "z0": -8,
+   "z1": 0,
+   "top": 6.2
+  },
+  {
+   "id": "krakk3",
+   "x0": 34,
+   "x1": 39.6,
+   "z0": -8,
+   "z1": 0,
+   "top": 9.4
+  },
+  {
+   "id": "dusjtopp2",
+   "x0": 27,
+   "x1": 33,
+   "z0": -12,
+   "z1": 4,
+   "top": 12.8
+  }
+ ],
+ "start": [
+  -44,
+  0,
+  12
+ ],
+ "goal": [
+  30,
+  12.8,
+  -4
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -52,
+  "x1": 52,
+  "z0": -20,
+  "z1": 20,
+  "height": 48,
+  "floor": {
+   "material": "tile",
+   "color": "#d4d1c7",
+   "slick": true,
+   "tile_cm": 20,
+   "diagonal": true
+  },
+  "walls": {
+   "material": "tile",
+   "color": "#e2dfd4",
+   "tile_cm": 20
+  },
+  "ceiling": {
+   "material": "woodpanel",
+   "color": "#cdb695"
+  }
+ },
+ "report": {
+  "source": {
+   "note": "Byggebrett (R119, bad): badekaret er en innsjø på 40 cm mellom karkanten og dusjkanten (flisgulv). En rett planke eller en firkant holder ikke: bare en bro av trekanter (fagverk) bærer den tunge lasten. Den harde veien er langt rundt og opp den smale kasse-trappa til høyre."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 11,
+  "reachable": 11
+ }
+}

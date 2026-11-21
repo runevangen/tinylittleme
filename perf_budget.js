@@ -20,6 +20,7 @@ export const ROOM_CAPS = {
   trapp: { calls: 151, tris: 16100, texMB: 10 },
   vippe: { calls: 150, tris: 17400, texMB: 10 },
   kjokkenbro: { calls: 151, tris: 16400, texMB: 6 },
+  badebro: { calls: 145, tris: 17400, texMB: 9 },   // R119: målt 133 kall, 16240 trekanter, 7,7 MB (samme bad-teksturer; tak med luft for nytt bygg)
   bygglab: { calls: 147, tris: 14700, texMB: 11 },
 };
 export const roomCaps = (id) => ROOM_CAPS[id] || {};

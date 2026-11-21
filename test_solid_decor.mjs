@@ -46,7 +46,7 @@ for (const n of ['kjokken', 'kjokken2']) {
 // 3) revisjonen: ingen store dekorting uten kollisjon i noe brett (grensene ligger i SOLID)
 {
   const res = auditAll(); let solid = 0;
-  assert.equal(res.length, 18, 'alle brett er med');
+  assert.equal(res.length, 19, 'alle brett er med');   // R119: + badebro
   for (const r of res) { assert.deepEqual(r.missing.map((d) => d.id), [], `${r.level}: store ting uten kollisjon`); solid += r.nBoxes; }
   assert.ok(solid === 11, `solide dekorbokser totalt (${solid})`);
   // bevisst flate/høye/små står uendret: dører, speil, tepper, plater, plakater, håndtak høyt oppe

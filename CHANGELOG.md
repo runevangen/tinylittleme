@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.110** – R119: nytt byggebrett «Bygg 5: Broen over badekaret» (bare trekanter holder), firkant-hint, Fagverk-kort; slått sammen med R120/R121.
 - **2.109** – R121: speiling og kopi i Rutenett-byggeren (SPEIL BYGGET, KOPIER med spøkelse), valg `buildmirror`; slått sammen med R120.
 - **2.108** – R120: delene er der fra start i byggebrettene; å finne delene i rommet er en bonus (+1 budsjett per del, valg `partsfromstart`).
 - **2.107** – R120 (delene fra start), R121 (speiling og kopi), R122 (fagverk-hjelp) og R123 (2,5D dobbel bro) lagt i veikartet, runde 2 etter Runes valg.

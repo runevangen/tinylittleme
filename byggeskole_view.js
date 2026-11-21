@@ -17,7 +17,9 @@ export function schoolMenuHtml(T, prog) {
   const b = schoolBadge(prog), tag = b.kind === 'recommended' ? `<span class="sktag">${esc(T('school.rec'))}</span>` : `<span class="sktag p">✓ ${b.n}/${b.total}</span>`;
   return `<button class="mbtn sec" id="mSchool">🏗 ${esc(T('school.btn'))}${tag}<small>${esc(T('school.sub', { n: prog.n, total: prog.total }))}</small></button>`;
 }
-export const schoolCardHtml = (T, kind) => kind === 'done'
+export const schoolCardHtml = (T, kind) => kind === 'fagverk'
+  ? `<b>${esc(T('badebro.fagverk.title'))}</b>${esc(T('badebro.fagverk.text'))}<div class="skb"><button data-sk="try">${esc(T('badebro.fagverk.go'))}</button><button data-sk="skip">${esc(T('badebro.fagverk.skip'))}</button></div>`   // R119
+  : kind === 'done'
   ? `<b>${esc(T('school.done.title'))}</b>${esc(T('school.done.text'))}<div class="skb"><button data-sk="ok">${esc(T('school.done.ok'))}</button></div>`
   : `<b>${esc(T('school.card.title'))}</b>${esc(T('school.card.text'))}<div class="skb"><button data-sk="try">${esc(T('school.card.try'))}</button><button data-sk="skip">${esc(T('school.card.skip'))}</button></div>`;
 
@@ -37,6 +39,7 @@ export function createSchoolView({ T, logEv } = {}) {
     // T: tekstfunksjon (følger språket)
     showCard: ({ onTry, onSkip }) => mount('card', { try: onTry, skip: onSkip }),
     showDone: ({ onOk }) => mount('done', { ok: onOk }),
+    showFagverk: ({ onTry, onSkip }) => mount('fagverk', { try: onTry, skip: onSkip }),   // R119: «Prøv Byggeskolen · Fagverk først» (TIL BYGGESKOLEN / HOPP OVER)
     hide, get open() { return !!el; },
   };
 }

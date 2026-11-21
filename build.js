@@ -48,8 +48,9 @@ import { buxSite } from './buildux_logic.js';
 import { touchEvent, hanging, plateTop, createWriteCounter, writeOnce } from './build_touch_logic.js';   // R109: berøringstilstand, tekstplassering, DOM-skrivinger
 import { createClassicUx, cbxCss, cbxMarkup } from './buildux_classic_view.js';   // R96: samme nye skall for klassiske steder (Trapp, Vippe, ...)
 import { createPeaks, loadsNow, peakSummary, stressCss as gStressCss, colorCss as gColorCss, widthK as gWidthK, isDanger as gDanger, shown as gShown, pct as gPct } from './grid_stress.js';   // R73: farge etter belastning, «største belastning»
+import { squareTipShould } from './badebro_logic.js';   // R119: firkant uten diagonal
 import { stageScaled, stageSite, stageOf, hasStage, overBudget, stagesOf, stagePrev, stageLocked, stageLockText, stageLines, passRead, passRecord, passClear } from './grid_stage.js';   // R74: rutenett-oppdrag: mål, budsjett, tung last, låsing
-import { gridAnchors, gridStep, isGrid, simDef as gridSimDef, simDefAuto as gridSimDefAuto, gUndo, gReset, wipe as gridWipe, exportAny, importAny, gApplyImport, gridSave, gridLoad, gridStats } from './grid_logic.js';
+import { gridAnchors, gridStep, isGrid, simDef as gridSimDef, simDefAuto as gridSimDefAuto, loadPass as gridLoadPass, gUndo, gReset, wipe as gridWipe, exportAny, importAny, gApplyImport, gridSave, gridLoad, gridStats } from './grid_logic.js';
 
 const css = `
 #bld{position:fixed;inset:0;z-index:7;display:none;background:linear-gradient(#26324bfa,#141a2cff);touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font:600 14px system-ui}
@@ -105,7 +106,7 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#btnBuildSpan{top:max(56px,calc(env(safe-area-inset-top) + 48px));right:250px;max-width:220px}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }), getPartsStart = () => true, getMirror = () => true }) {
+export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getSquareTip = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }), getPartsStart = () => true, getMirror = () => true }) {
   initParts(LEVEL);
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
   const enabled = sites.length > 0;
@@ -178,7 +179,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
   function commitWorld(site, why) {          // R26: flytt bygget ut i verdenen som solid
     if (!getWorld() || !LEVEL.boxes) return 0; const B = getB(site);
     const wp = settledPlaced(isGrid(B) ? gridSimDef(B) : { site, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() }); worldPlaced.set(site.id, wp);   // delene der de ender opp (klosser har falt på plass)
-    const n = applyBuilt(LEVEL, site, wp);
+    const n = applyBuilt(LEVEL, site, wp, { skip: isGrid(B) ? new Set(gridLoadPass(B)) : null });   // R119: bare veien er fast i verdenen
     committed.set(site.id, sigOf(B)); if (liftOut(LEVEL, player, site.id)) logEv('bygg', 'figuren løftet ut av bygget'); showWorld(site);
     logEv('bygg', `bygget står i verdenen (${why}): ${site.id}, ${B.placed.length} deler, ${n} flater`); return n;
   }
@@ -234,7 +235,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
   });
   const loupe = createLoupe({ root, cv, T, logEv, getOn: () => getLoupe(), getZoom: () => getLoupeZoom(), getSizePct: () => getLoupeSize?.(), dpr });   // R106
   const buxCtx = {   // R92: forenklet byggeskjerm (buildux_view.js, buildux_logic.js): bruker rutenett-koden over, men egne knapper og direkte bygging
-    root, T, toast, logEv, buzz, audio, grid, levelId, store: st0, onChange, getOn: () => getBuildUx(), getMirror: () => getMirror(), getHelp: () => getBuxHelp(), getCrumbs: () => getCrumbs(), budgetNow: () => { const g = stageNow(); return g ? g.budget : undefined; }, getHint: () => getGridHint(), getGuideOn: () => getGridGuide(), getDbl: () => getDbl(),
+    root, T, toast, logEv, buzz, audio, grid, levelId, store: st0, onChange, getOn: () => getBuildUx(), getMirror: () => getMirror(), getHelp: () => getBuxHelp(), getCrumbs: () => getCrumbs(), budgetNow: () => { const g = stageNow(); return g ? g.budget : undefined; }, getHint: () => getGridHint(), squareTip: () => !!active && squareTipNow(getB(active)), getGuideOn: () => getGridGuide(), getDbl: () => getDbl(),
     site: () => active, getB: () => (active ? getB(active) : null), view: () => view, toWorld: (x, y) => toWorld(view, W, H, x, y), loc: (e) => loc(e), isSim: () => !!sim, width: () => W, topY: () => TOPPX(), trayRender: () => trayRender(),
     startPan: (e, x, y) => { sel = null; gest = { kind: 'pan', x, y, cu: view.cu, cv: view.cv, t: e.timeStamp || performance.now(), tn: performance.now(), moved: false }; capture(e); },
     fit: () => zoomAct.fit(), speed: (k) => { if (active && sim && grid.on() && !simDone) gSpeed = grid.setSpeed(k); },
@@ -814,10 +815,17 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     try { onStagePass(active.id, { first: r.first, stars: res.stars }); } catch { /* R95 */ }
     grid.sync(); if (r.first) toast(nx ? T('gstage.unlocked', { n: nx.lab?.n || 0 }) : T('gstage.allDone'));
   }
+  // R119: en firkant uten diagonal i rutenett-bygget (hintet «Legg inn en diagonal»); logges én gang per bygg
+  let tipSig = '';
+  function squareTipNow(B) {
+    const on = squareTipShould({ on: getSquareTip(), grid: isGrid(B), G: B.rg }); if (!on) { tipSig = ''; return false; }
+    const sg = JSON.stringify(B.rg.rods.map((r) => r.id)); if (sg !== tipSig) { tipSig = sg; logEv('bygg', `hint: firkant uten diagonal (${active?.id})`); }
+    return true;
+  }
   function stageState(B) {   // tallene til infokortet (grid_stage.js: stageLines)
     const gst = stageNow(); if (!gst) return null;
     const r = starsFor(active, B.placed, B.links), req = requiredLoads(lsite()), done = passedOf(active), won = !!sim && simDone && sim.state.state === 'won';
-    return { st: gst, cost: r.cost, parts: r.parts, stars: r.stars, next: r.next, over: overBudget(gst, r.cost), on: B.placed.length > 0, ran: !!sim && simDone && !replaying, won, passed: won && winSolved && !winOver, loadsLeft: req.filter((i) => !done.includes(i)), peak: sim && simDone ? peakLine() : '', done: gPass().has(active.id) };
+    return { st: gst, cost: r.cost, parts: r.parts, stars: r.stars, next: r.next, over: overBudget(gst, r.cost), on: B.placed.length > 0, ran: !!sim && simDone && !replaying, won, passed: won && winSolved && !winOver, loadsLeft: req.filter((i) => !done.includes(i)), peak: sim && simDone ? peakLine() : '', done: gPass().has(active.id), tip: squareTipNow(B) };
   }
   function peakFinish() {
     gSpeed = 'play'; grid.simSync('play', true);
