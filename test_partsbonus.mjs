@@ -35,7 +35,7 @@ globalThis.window = globalThis; globalThis.innerWidth = 390; globalThis.innerHei
 globalThis.addEventListener = () => {}; globalThis.removeEventListener = () => {}; globalThis.requestAnimationFrame = () => 0; globalThis.cancelAnimationFrame = () => {};
 const { createBuildMode } = await import('./build.js');
 const { initGoals, setGoalFlag, goalById } = await import('./goals.js');
-const boards = ['bro', 'trapp', 'vippe', 'kjokkenbro', ...(fs.existsSync('levels/badebro.level.json') ? ['badebro'] : [])];
+const boards = ['bro', 'trapp', 'vippe', 'kjokkenbro', ...(fs.existsSync('levels/badebro.level.json') ? ['badebro'] : []), ...(fs.existsSync('levels/bro2.level.json') ? ['bro2', 'kjokkenbro2'] : [])];
 for (const id of boards) {
   const mkLevel = () => { const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')); initGoals(L); P.addPartsGoal(L); return L; };
   const run = (on, gotIds = []) => {

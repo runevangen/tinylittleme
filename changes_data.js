@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r124-runde-2-broer', version: '2.113', date: '2026-11-21', title: 'Runde 2 av Hyllebroen og Kjøkkenbroen: gapet er mye større (12 og 16 byggeenheter), tre alene holder ikke, og bare et fagverk med stål bærer bil, robot og figur etter hverandre. To mål i ulik høyde: flagget og en lavere hylle.',
+    how: 'Åpne ⚙ → Spill → Brett og velg «Runde 2: Hyllebroen» (eller Kjøkkenbroen). Gå til kanten, trykk BYGG, bygg et fagverk med stål nederst og trykk PRØV. Eller ta den harde veien rundt. Skru av/på under ⚙ → Spill («Runde 2»).', level: 'bro2', spot: { x: 6, y: 9, z: -4 } },
   { id: 'r123-dobbel-bro', version: '2.112', date: '2026-11-21', title: 'DOBBEL BRO (2,5D): bygg ett fagverk, trykk ⋯ → DOBBEL BRO og få to parallelle plan med tverrstag. Se den i 3D, prøv den mot vind fra siden og se den stå i rommet. Nytt Byggeskole-sted 9, Bred bro.',
     how: 'Åpne BYGGESKOLE → sted 9 (Bred bro) eller Hyllebroen, bygg en bro med minst to staver, trykk ⋯ → DOBBEL BRO, dra i bildet for å snu, velg BRED og RETT eller X-FORM og trykk BRUK. Trykk PRØV, og gå ut for å se den stå i rommet.', level: 'bygglab', spot: null },
   { id: 'r122-trekant-diagonal', version: '2.111', date: '2026-11-21', title: 'Fagverk-hjelp i rutenett-bygging (broene og Byggeskolen): TREKANT foreslår et tredje punkt når du har valgt to knuter, og en firkant uten diagonal får en DIAGONAL-forslag. Hjelpen legger aldri til noe av seg selv.',

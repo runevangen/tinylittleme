@@ -62,7 +62,7 @@ export const LAYERS = {
 export const AMB_BY_ID = {
   bad: ['drip', 'fan'], bad2: ['drip', 'fan'],
   barnerom: ['room:toy', 'plink'], barnerom2: ['room:toy', 'plink'],
-  kjokken: ['fridge', 'clock', 'drip'], kjokken2: ['fridge', 'clock', 'drip'], kjokkenbro: ['fridge', 'clock', 'drip'], badebro: ['drip', 'fan'],
+  kjokken: ['fridge', 'clock', 'drip'], kjokken2: ['fridge', 'clock', 'drip'], kjokkenbro: ['fridge', 'clock', 'drip'], badebro: ['drip', 'fan'], bro2: ['room:lab'], kjokkenbro2: ['fridge', 'clock', 'drip'],
   leke: ['room:play', 'plink'], stue: ['room:stue', 'clock', 'gust'], verksted: ['room:shop', 'knock'],
   soverom: ['room:night', 'gust'], bygglab: ['room:lab', 'knock'],
   bro: ['room:lab'], trapp: ['room:lab'], vippe: ['room:toy'], gaate: ['room:stue'], poc: ['room:lab'], klatring: ['room:lab'], kontroll: ['room:lab'],

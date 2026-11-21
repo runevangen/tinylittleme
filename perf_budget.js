@@ -21,6 +21,8 @@ export const ROOM_CAPS = {
   vippe: { calls: 150, tris: 17400, texMB: 10 },
   kjokkenbro: { calls: 151, tris: 16400, texMB: 6 },
   badebro: { calls: 145, tris: 17400, texMB: 9 },   // R119: målt 133 kall, 16240 trekanter, 7,7 MB (samme bad-teksturer; tak med luft for nytt bygg)
+  bro2: { calls: 143, tris: 15500, texMB: 10 },   // R124: runde 2 (Hyllebroen): målt 132 kall, 14308 trekanter, 9,0 MB (som bro + en lav hylle)
+  kjokkenbro2: { calls: 150, tris: 17500, texMB: 6 },   // R124: målt 139 kall, 16124 trekanter, 5,8 MB (som kjokkenbro + en lav hylle)
   bygglab: { calls: 147, tris: 14700, texMB: 11 },
 };
 export const roomCaps = (id) => ROOM_CAPS[id] || {};
