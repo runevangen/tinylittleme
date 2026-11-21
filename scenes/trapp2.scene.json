@@ -1,0 +1,317 @@
+{
+ "name": "Klossetrappa, runde 2",
+ "units": "cm",
+ "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
+ "validate": true,
+ "source": {
+  "note": "Byggebrett runde 2 (R125): hylla er 45 cm (9 enheter). Den smarte veien er et tårn av klosser og to ramper av lange planker; den harde veien er to små trinn bak hylla (21 og 33 cm) og et gaphopp. Laget av tools/make_round2.mjs."
+ },
+ "room": {
+  "width": 500,
+  "depth": 200,
+  "height": 240,
+  "floor": {
+   "material": "wood",
+   "color": "#d6b88a",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#dfe6ea"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "start": {
+  "x": 40,
+  "z": 170
+ },
+ "goal": {
+  "x": 365,
+  "y": 45,
+  "z": 90,
+  "on": "hylle",
+  "note": "Flagget står på den høye hylla."
+ },
+ "windows": [
+  {
+   "wall": "N",
+   "z": 250,
+   "y": 130,
+   "w": 120,
+   "h": 70
+  }
+ ],
+ "hazards": [],
+ "objects": [
+  {
+   "id": "hylle",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#6c8ebf",
+   "box": [
+    300,
+    420,
+    0,
+    45,
+    40,
+    140
+   ],
+   "confidence": 1,
+   "cp": true,
+   "help": "Høy hylle\nHer er hylla for høy for en vanlig trapp. Trykk BYGG: sett opp et tårn av tre klosser og legg to lange planker som ramper, én opp til tårnet og én opp på hylla. Eller ta den harde veien bak hylla."
+  },
+  {
+   "id": "e1",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#e07a5f",
+   "box": [
+    466,
+    496,
+    0,
+    21,
+    50,
+    130
+   ],
+   "confidence": 1
+  },
+  {
+   "id": "e2",
+   "kind": "chest",
+   "material": "wood",
+   "color": "#f2b84b",
+   "box": [
+    428,
+    458,
+    0,
+    33,
+    50,
+    130
+   ],
+   "confidence": 1
+  }
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ants": [
+  {
+   "id": "maur_gulv",
+   "on": "gulv",
+   "from": [
+    380,
+    175
+   ],
+   "to": [
+    480,
+    175
+   ]
+  }
+ ],
+ "goals": [
+  {
+   "id": "bygg",
+   "type": "flag",
+   "flag": "trapp2a",
+   "label": "Bygg tårn og ramper (BYGG-knappen)",
+   "en": "Build a tower and ramps (BUILD button)"
+  },
+  {
+   "id": "flagg",
+   "type": "reach",
+   "on": "hylle",
+   "label": "Kom opp på den høye hylla",
+   "en": "Get up on the tall shelf",
+   "gate": true
+  }
+ ],
+ "build": {
+  "sites": [
+   {
+    "id": "trapp2a",
+    "label": "Foran den høye hylla (tårn og ramper)",
+    "at": [
+     285,
+     90
+    ],
+    "y": 0,
+    "w": 140,
+    "h": 70,
+    "d": 20,
+    "stars": {
+     "three": {
+      "cost": 7,
+      "parts": 5
+     },
+     "two": {
+      "cost": 10,
+      "parts": 8
+     }
+    },
+    "anchors": [],
+    "deck": [
+     [
+      -85,
+      15
+     ],
+     [
+      15,
+      70,
+      45
+     ]
+    ],
+    "start": [
+     -60,
+     0
+    ],
+    "goal": [
+     45,
+     45
+    ],
+    "ref": {
+     "placed": [
+      {
+       "id": "k1",
+       "type": "block",
+       "u": -3,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k2",
+       "type": "block",
+       "u": -3,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k3",
+       "type": "block",
+       "u": -3,
+       "v": 3.75,
+       "rot": 0
+      },
+      {
+       "id": "k6",
+       "type": "plank_l",
+       "u": -7,
+       "v": 2.5,
+       "rot": 0.5236
+      },
+      {
+       "id": "k7",
+       "type": "plank_l",
+       "u": 0,
+       "v": 6.5,
+       "rot": 0.5236
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@r1",
+       "u0": -6,
+       "u1": -5.5,
+       "top": 3.7
+      }
+     ],
+     "route": [
+      "gulv",
+      "@r1",
+      "hylle"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "k1",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     100,
+     40
+    ]
+   },
+   {
+    "id": "k2",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     140,
+     160
+    ]
+   },
+   {
+    "id": "k3",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     180,
+     40
+    ]
+   },
+   {
+    "id": "k4",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     220,
+     170
+    ]
+   },
+   {
+    "id": "k5",
+    "type": "block",
+    "on": "gulv",
+    "at": [
+     100,
+     160
+    ]
+   },
+   {
+    "id": "k6",
+    "type": "plank_l",
+    "on": "gulv",
+    "at": [
+     200,
+     30
+    ]
+   },
+   {
+    "id": "k7",
+    "type": "plank_l",
+    "on": "gulv",
+    "at": [
+     60,
+     40
+    ]
+   },
+   {
+    "id": "k8",
+    "type": "plank_s",
+    "on": "gulv",
+    "at": [
+     150,
+     30
+    ]
+   },
+   {
+    "id": "k9",
+    "type": "weight",
+    "on": "gulv",
+    "at": [
+     60,
+     160
+    ]
+   }
+  ]
+ }
+}

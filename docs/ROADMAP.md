@@ -74,10 +74,6 @@ Fra `docs/BYGGING_RUNDE2.md` §2 (kreativitet). Badebroen (R119) og Byggeskolens
 Krav: (1) ekstra stjerner i resultatkortet og i Byggeskolens stedsliste; (2) valgfritt bonusmål ved midtpunktet; (3) beste-liste vises og lagres; (4) test + NYTT-rad.
 Ferdig når: Badebroen og minst fire Byggeskole-steder viser runde 2-stjerner, beste-lister virker, og tester og boot er grønne.
 
-### [ ] R125 · Runde 2 av Klossetrappa og Vippa: høyere bygging og balanse
-Fra `docs/BYGGING_RUNDE2.md` §2 (høyere bygging, hindringer). Klossetrappa: tårn som må bygges 6–10 enheter opp for å nå en hylle, mål og ankre i ulik høyde. Vippa: bevegelig støtte som krever balanse og/eller sidevind. En ny ting per brett. Lages som runde 2-variant (valg `buildround2`, vanskelighet «Runde 2» i brettvalget), dagens brett uendret. Gå med `tools/walk_route.mjs` og bevis med bot.
-Ferdig når: begge runde 2-brett kan spilles og vinnes, første forsøk med enkleste bygg feiler, og tester og boot er grønne.
-
 ### [ ] R124 · Runde 2 av Hyllebroen og Kjøkkenbroen: større spenn, ulik høyde og to mål
 Fra `docs/BYGGING_RUNDE2.md` §2 (Runes valg: runde 2 med større bruer og kreativitet). Gap 12–18 byggeenheter (stål og fagverk nødvendig), mål og ankre i ulik høyde, to gyldige veier/mål, variert last (tung bil + robot etter hverandre). Delene er der fra start (R120). Lages som runde 2-variant (valg `buildround2`, vanskelighet «Runde 2»), dagens brett uendret. Gå med `tools/walk_route.mjs`, bevis med bot, bruk `make_variants` der det passer.
 Ferdig når: begge runde 2-brett kan spilles og vinnes med fagverk i stål, tre alene feiler, og tester og boot er grønne.
@@ -87,6 +83,10 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R125 · Runde 2 av Klossetrappa og Vippa: høyere bygging og balanse (v2.117)
+Fra `docs/BYGGING_RUNDE2.md` §2 (høyere bygging, hindringer). Klossetrappa: tårn som må bygges 6–10 enheter opp for å nå en hylle, mål og ankre i ulik høyde. Vippa: bevegelig støtte som krever balanse og/eller sidevind. En ny ting per brett. Lages som runde 2-variant (valg `buildround2`, vanskelighet «Runde 2» i brettvalget), dagens brett uendret. Gå med `tools/walk_route.mjs` og bevis med bot.
+Ferdig når: begge runde 2-brett kan spilles og vinnes, første forsøk med enkleste bygg feiler, og tester og boot er grønne.
 
 ### [x] R127 · Ny del: kabel som bærer i strekk (hengebro) + Byggeskole-oppdrag (v2.116)
 Fra `docs/BYGGING_RUNDE2.md` §3.3 (Runes valg). Kabel er en stav som bare bærer i strekk (som tau, men med bue/slakk og høy styrke) og som lar spilleren bygge en hengebro mellom høye tårn. Additivt, bak valg `buildcable`; dagens materialer uendret.

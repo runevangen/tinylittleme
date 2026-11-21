@@ -1,0 +1,459 @@
+{
+ "name": "Klossetrappa, runde 2",
+ "boxes": [
+  {
+   "type": "floor",
+   "min": [
+    -50,
+    -2,
+    -20
+   ],
+   "max": [
+    50,
+    0,
+    20
+   ],
+   "id": "gulv",
+   "color": 14071946,
+   "slick": false,
+   "material": "wood"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -51,
+    0,
+    -20
+   ],
+   "max": [
+    -50,
+    48,
+    20
+   ],
+   "id": "vegg_v",
+   "color": 14673642,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    50,
+    0,
+    -20
+   ],
+   "max": [
+    51,
+    48,
+    20
+   ],
+   "id": "vegg_o",
+   "color": 14673642,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -50,
+    0,
+    -21
+   ],
+   "max": [
+    50,
+    48,
+    -20
+   ],
+   "id": "vegg_n",
+   "color": 14673642,
+   "material": "plaster"
+  },
+  {
+   "type": "wall",
+   "min": [
+    -50,
+    0,
+    20
+   ],
+   "max": [
+    50,
+    48,
+    21
+   ],
+   "id": "vegg_s",
+   "color": 14673642,
+   "material": "plaster"
+  },
+  {
+   "type": "wood",
+   "min": [
+    10,
+    0,
+    -12
+   ],
+   "max": [
+    34,
+    9,
+    8
+   ],
+   "id": "hylle",
+   "kind": "chest",
+   "color": 7114431,
+   "material": "wood",
+   "cp": true,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    43.2,
+    0,
+    -10
+   ],
+   "max": [
+    49.2,
+    4.2,
+    6
+   ],
+   "id": "e1",
+   "kind": "chest",
+   "color": 14711391,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    35.6,
+    0,
+    -10
+   ],
+   "max": [
+    41.6,
+    6.6,
+    6
+   ],
+   "id": "e2",
+   "kind": "chest",
+   "color": 15906891,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  }
+ ],
+ "movables": [],
+ "decor": [],
+ "hints": [
+  {
+   "id": "hylle",
+   "text": "Høy hylle\nHer er hylla for høy for en vanlig trapp. Trykk BYGG: sett opp et tårn av tre klosser og legg to lange planker som ramper, én opp til tårnet og én opp på hylla. Eller ta den harde veien bak hylla.",
+   "pos": [
+    22,
+    9.9,
+    -2
+   ]
+  }
+ ],
+ "hazards": [],
+ "holds": [],
+ "windows": [
+  {
+   "wall": "N",
+   "pos": [
+    0,
+    26,
+    -19.95
+   ],
+   "size": [
+    24,
+    14
+   ]
+  }
+ ],
+ "sun": [
+  8,
+  60,
+  -30
+ ],
+ "look": {
+  "exposure": 1,
+  "sun": 2
+ },
+ "audio": {
+  "reverb": 0.15
+ },
+ "ants": [
+  {
+   "id": "maur_gulv",
+   "a": [
+    26,
+    0,
+    15
+   ],
+   "b": [
+    46,
+    0,
+    15
+   ]
+  }
+ ],
+ "collectibles": [],
+ "build": {
+  "sites": [
+   {
+    "id": "trapp2a",
+    "label": "Foran den høye hylla (tårn og ramper)",
+    "x": 7,
+    "y": 0,
+    "z": -2,
+    "w": 28,
+    "h": 14,
+    "anchors": [],
+    "deck": [
+     {
+      "u0": -17,
+      "u1": 3
+     },
+     {
+      "u0": 3,
+      "u1": 14,
+      "top": 9
+     }
+    ],
+    "start": {
+     "u": -12,
+     "v": 0
+    },
+    "goal": {
+     "u": 9,
+     "v": 9
+    },
+    "d": 4,
+    "stars": {
+     "three": {
+      "cost": 7,
+      "parts": 5
+     },
+     "two": {
+      "cost": 10,
+      "parts": 8
+     }
+    },
+    "ref": {
+     "placed": [
+      {
+       "id": "k1",
+       "type": "block",
+       "u": -3,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k2",
+       "type": "block",
+       "u": -3,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k3",
+       "type": "block",
+       "u": -3,
+       "v": 3.75,
+       "rot": 0
+      },
+      {
+       "id": "k6",
+       "type": "plank_l",
+       "u": -7,
+       "v": 2.5,
+       "rot": 0.5236
+      },
+      {
+       "id": "k7",
+       "type": "plank_l",
+       "u": 0,
+       "v": 6.5,
+       "rot": 0.5236
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@r1",
+       "u0": -6,
+       "u1": -5.5,
+       "top": 3.7
+      }
+     ],
+     "route": [
+      "gulv",
+      "@r1",
+      "hylle"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "k1",
+    "type": "block",
+    "x": -30,
+    "y": 0.9,
+    "z": -12
+   },
+   {
+    "id": "k2",
+    "type": "block",
+    "x": -22,
+    "y": 0.9,
+    "z": 12
+   },
+   {
+    "id": "k3",
+    "type": "block",
+    "x": -14,
+    "y": 0.9,
+    "z": -12
+   },
+   {
+    "id": "k4",
+    "type": "block",
+    "x": -6,
+    "y": 0.9,
+    "z": 14
+   },
+   {
+    "id": "k5",
+    "type": "block",
+    "x": -30,
+    "y": 0.9,
+    "z": 12
+   },
+   {
+    "id": "k6",
+    "type": "plank_l",
+    "x": -10,
+    "y": 0.9,
+    "z": -14
+   },
+   {
+    "id": "k7",
+    "type": "plank_l",
+    "x": -38,
+    "y": 0.9,
+    "z": -12
+   },
+   {
+    "id": "k8",
+    "type": "plank_s",
+    "x": -20,
+    "y": 0.9,
+    "z": -14
+   },
+   {
+    "id": "k9",
+    "type": "weight",
+    "x": -38,
+    "y": 0.9,
+    "z": 12
+   }
+  ]
+ },
+ "goals": [
+  {
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg tårn og ramper (BYGG-knappen)",
+   "en": "Build a tower and ramps (BUILD button)",
+   "flag": "trapp2a"
+  },
+  {
+   "id": "flagg",
+   "type": "reach",
+   "label": "Kom opp på den høye hylla",
+   "en": "Get up on the tall shelf",
+   "gate": true,
+   "on": "hylle",
+   "x0": 10,
+   "x1": 34,
+   "z0": -12,
+   "z1": 8,
+   "top": 9
+  }
+ ],
+ "ropes": [],
+ "route": [
+  {
+   "id": "gulv",
+   "x0": -50,
+   "x1": 50,
+   "z0": -20,
+   "z1": 20,
+   "top": 0
+  },
+  {
+   "id": "e1",
+   "x0": 43.2,
+   "x1": 49.2,
+   "z0": -10,
+   "z1": 6,
+   "top": 4.2
+  },
+  {
+   "id": "e2",
+   "x0": 35.6,
+   "x1": 41.6,
+   "z0": -10,
+   "z1": 6,
+   "top": 6.6
+  },
+  {
+   "id": "hylle",
+   "x0": 10,
+   "x1": 34,
+   "z0": -12,
+   "z1": 8,
+   "top": 9
+  }
+ ],
+ "start": [
+  -42,
+  0,
+  14
+ ],
+ "goal": [
+  23,
+  9,
+  -2
+ ],
+ "deathY": -15,
+ "room": {
+  "x0": -50,
+  "x1": 50,
+  "z0": -20,
+  "z1": 20,
+  "height": 48,
+  "floor": {
+   "material": "wood",
+   "color": "#d6b88a",
+   "slick": false
+  },
+  "walls": {
+   "material": "plaster",
+   "color": "#dfe6ea"
+  },
+  "ceiling": {
+   "material": "plaster",
+   "color": "#f5f1e8"
+  }
+ },
+ "report": {
+  "source": {
+   "note": "Byggebrett runde 2 (R125): hylla er 45 cm (9 enheter). Den smarte veien er et tårn av klosser og to ramper av lange planker; den harde veien er to små trinn bak hylla (21 og 33 cm) og et gaphopp. Laget av tools/make_round2.mjs."
+  },
+  "solvable_by_graph": true,
+  "helpers": [],
+  "nodes": 4,
+  "reachable": 4
+ }
+}
