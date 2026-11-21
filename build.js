@@ -22,7 +22,7 @@ import { createRecorder, createReplay, ghostPose } from './build_replay.js';   /
 import { drawGhost } from './build_replay_view.js';
 import { ghostChoice } from './build_ghost.js';   // R78
 import { submitBridge, bestBridges, bridgeLevel, netReady, standing } from './build_net.js';   // R50: beste bygg på nett
-import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum } from './build_world.js';   // R26: bygget flyttes ut i verdenen
+import { applyBuilt, clearBuilt, liftOut, builtCount, fulcrum, worldMeshDepth } from './build_world.js';   // R26: bygget flyttes ut i verdenen
 import { isLab, labSitesOf, labFill, labRegister, labTrayItems, labStepSite, labInfoOf, labNameKey, labTaskKey, labFlagStep, labReachedSave, labReachedLoad, labHome, labFar } from './bygglab_logic.js';   // R67: Bygglab
 import { labCss, labMarkup, labSync, LAB_TOP, LAB_TOP_LAND } from './bygglab_view.js';
 import { parseRod } from './build_materials.js';
@@ -34,6 +34,7 @@ import { createBuildUx, buxCss, buxMarkup, BUX_TOP, BUX_BOT, BUX_TOP_LAND, BUX_B
 import { KEY_MODE, KEY_TIP } from './grid_guide_logic.js';
 import { createLoupe, loupeCss, loupeMarkup } from './build_loupe_view.js';   // R106: hjørneglass (build_loupe_logic.js)
 import { holdReached, partLine } from './build_loupe_logic.js';
+import { blankRun, staleKeys, dirtyKeys, ghostVisible } from './build_runstate.js';
 import { createBuildNext, bnCss, bnMarkup } from './buildnext_view.js';
 import { createBuildLock, blkCss, blkMarkup } from './buildlock_view.js';   // R111: låste steder får det nye skallet (kort + GÅ TIL)
 import { lockShown } from './buildlock_logic.js';   // R107: resultatkort og NESTE STED
@@ -153,11 +154,11 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
   const worldMeshes = new Map();             // stedets id -> three-gruppe med de ferdige delene
   const sigOf = (B) => JSON.stringify(serialize(B).placed);
   function showWorld(site) {                 // tegn bygget i verdenen (nedbøyning er bare faket: delene står i designposen)
-    hideWorld(site.id); const g = new THREE.Group(), hd = (site.d ?? 4);
+    hideWorld(site.id); const g = new THREE.Group(), hd = worldMeshDepth(site);   // R112: litt smalere enn sokkelen (ingen z-fighting)
     for (const p of worldPlaced.get(site.id) || []) {
       const t = partType(p.type), m = new THREE.Mesh(new THREE.BoxGeometry(t.w, t.h, hd), new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.65, metalness: p.type === 'weight' ? 0.5 : 0 }));
       m.position.set(site.x + p.u, site.y + p.v, site.z); m.rotation.z = p.rot || 0; g.add(m);
-      if (t.pivot) { const f = fulcrum(site, p); if (f) { const fm = new THREE.Mesh(new THREE.BoxGeometry(f.max[0] - f.min[0], f.max[1] - f.min[1], f.max[2] - f.min[2]), new THREE.MeshStandardMaterial({ color: f.color, roughness: 0.7 })); fm.position.set((f.min[0] + f.max[0]) / 2, (f.min[1] + f.max[1]) / 2, (f.min[2] + f.max[2]) / 2); g.add(fm); } }
+      if (t.pivot) { const f = fulcrum(site, p); if (f) { const fm = new THREE.Mesh(new THREE.BoxGeometry(f.max[0] - f.min[0], f.max[1] - f.min[1], hd), new THREE.MeshStandardMaterial({ color: f.color, roughness: 0.7 })); fm.position.set((f.min[0] + f.max[0]) / 2, (f.min[1] + f.max[1]) / 2, (f.min[2] + f.max[2]) / 2); g.add(fm); } }
     }
     scene.add(g); worldMeshes.set(site.id, g);
   }
@@ -504,7 +505,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     const pose = sim.pose(), sc = view.scale, stressOn = getStress(), lm = loadMap(pose);
     const gOn = !!gPeaks && !replaying && getGridStress() && isGrid(getB(active)), gamma = getGridGamma(), gLive = gOn && !simDone && sim.axial ? loadsNow(sim.axial()) : null;   // R73: farge etter belastning i rutenett-modus (nå under prøven, toppen etter)
     const gR = (id) => (gOn ? (simDone ? gPeaks.peaks.get(id) : gLive?.get(id)) : null);
-    if (ghostRec && !replaying && getGhost()) drawGhost(g2, ghostPose(ghostRec, Math.round(sim.t / DT)), sx, sc);   // R50: forrige prøve som spøkelse
+    if (ghostVisible({ ghostRec, replaying, simDone, sim, on: getGhost() })) drawGhost(g2, ghostPose(ghostRec, Math.round(sim.t / DT)), sx, sc);   // R50: forrige prøve som spøkelse
     for (const p of pose.parts) {
       const t = partType(p.type);
       if (t.pivot) { const m = p.pts[(p.pts.length - 1) / 2]; drawPivot({ u: m.u, v: m.v }, sx); }
@@ -687,7 +688,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
   }
   function siteGoTo(next) {   // R107: felles for ◀ ▶ i ⋯-arket, ▶ i topplinjen og NESTE STED i resultatkortet; bygget på stedet du forlater beholdes
     if (!active || !next || next === active) return false;
-    if (sim) stopSim('sted');
+    stopSim('sted');
     const B = getB(active);
     if (committed.has(active.id) && committed.get(active.id) !== sigOf(B)) { uncommitWorld(active, 'endret uten ny prøve'); solved.delete(active.id); }
     closeModal(); tool = null; linkFrom = null; selLink = null; sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; grid.reset();
@@ -698,7 +699,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
   }
   function labReset(s, why) {
     const b = getB(s), had = !!(b.placed.length || b.links.length || committed.has(s.id) || solved.has(s.id) || lab.reached.has(s.id) || passedL.has(s.id) || recs.has(s.id));
-    if (active === s && sim) stopSim('nullstill');
+    if (active === s) stopSim('nullstill');
     uncommitWorld(s, 'nullstilt'); gridWipe(b); if (active === s) grid.reset(); solved.delete(s.id); passedL.delete(s.id); recs.delete(s.id); lab.reached.delete(s.id); loadSel.delete(s.id);
     if (active === s) { sel = null; selLink = null; linkFrom = null; drag = null; bux.reset(); cbx.reset(); buxEnter(); labels(); trayRender(); labUI(); }   // R105: nullstilling setter stedet tilbake til klassisk modus (gridWipe): gå inn i den nye byggeskjermen igjen
     logEv('bygglab', `nullstilt ${s.id} (${why})`); onChange?.(); return had;
@@ -738,7 +739,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     if (blk.on()) return false;   // R111: ingen PRØV mens stedet er låst
     const B = getB(active); if (!B.placed.length) { toast(T('build.tryEmpty')); return false; }
     const so = { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(stageNow() ? { massK: stageNow().massK } : {}) };
-    let gdef = null; if (isGrid(B)) { const a = gridSimDefAuto(B); gdef = a.def; if (a.passed && !startSim.logged) { startSim.logged = true; logEv('bygg', 'lasten kjører bare på veien: støttestaver stopper den ikke'); } }
+    resetRunState('ny prøve'); let gdef = null; if (isGrid(B)) { const a = gridSimDefAuto(B); gdef = a.def; if (a.passed && !startSim.logged) { startSim.logged = true; logEv('bygg', 'lasten kjører bare på veien: støttestaver stopper den ikke'); } }
     sim = createSim(isGrid(B) ? gdef : { site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(stageNow() ? { massK: stageNow().massK } : {}) });
     simLoad = curLoad(); winOver = false; loadMore = null; replaying = false; winSolved = false; { const gc = getGhost() ? ghostChoice(recs.get(active.id), sim.pose()) : { rec: null, why: 'av' }; ghostRec = gc.rec; if (gc.why === 'endret') logEv('bygg', 'spøkelse skjult: delene er endret siden forrige prøve'); } recorder = createRecorder(sim, { load: simLoad }); simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; simHelp = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
     gPeaks = isGrid(B) ? createPeaks() : null; gSum = null; gSpeed = 'play'; grid.simSync('play', false); bux.onTry(); cbx.onTry();
@@ -753,8 +754,15 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     if (st.state === 'won') return loadMore ? T('build.wonMore', { name: nm, next: loadThe(loadMore) }) : getBudget() && winRes ? wonText() : L ? T('build.wonL', { name: nm }) : T('build.won');
     return simWhy ? T(simWhy.key) : simMarks.length ? T('build.lostBreak') : st.reason === 'fell' ? (L ? T('build.lostFellL', { name: nm }) : T('build.lostFell')) : (L ? T('build.lostStuckL', { name: nm }) : T('build.lostStuck'));
   }
+  // R112: ALL prøvetilstand nullstilles her (sim, opptak, spøkelse, merker, forklaring, resultat, konfetti, toppbelastning, resultatkort); alle veier bruker den
+  function resetRunState(why) {
+    const stale = staleKeys({ sim, simAcc, simMarks, simDone, simBreaks, simWhy, simHelp, confetti, breakAt, loadMore, winSolved, winOver, replaying, recorder, ghostRec, gPeaks, gSum, gSpeed });
+    ({ sim, simAcc, simMarks, simDone, simBreaks, simWhy, simHelp, confetti, breakAt, loadMore, winSolved, winOver, replaying, recorder, ghostRec, gPeaks, gSum, gSpeed } = blankRun());
+    root.classList.remove('sim'); bn.reset();
+    if (stale.length) logEv('bygg', `prøvetilstand nullstilt: ${why} (${stale.join(', ')})`);
+  }
   function stopSim(why) {
-    if (!sim) return; logEv('bygg', `stopp prøve (${why}) etter ${sim.t.toFixed(1)} s`); sim = null; recorder = null; ghostRec = null; replaying = false; simMarks = []; simBreaks = []; simWhy = null; simDone = false; confetti = []; gPeaks = null; gSum = null; gSpeed = 'play'; root.classList.remove('sim'); labels(); trayRender();
+    if (!sim) { resetRunState(why); return; } logEv('bygg', `stopp prøve (${why}) etter ${sim.t.toFixed(1)} s`); resetRunState(why); labels(); trayRender();
   }
   // R73: «største belastning» (grid_stress.js): tekst om staven som brakk først, ellers den som var nærmest brudd
   function rodName(id) { const p = getB(active).placed.find((q) => q.id === id), r = p && parseRod(p.type); return r ? `${T('grid.mat.' + r.mat).toLowerCase()} ${String(+r.len.toFixed(2)).replace('.', ',')}` : id; }
@@ -797,7 +805,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
         else if (e.type === 'splash') audio?.bsplash?.();
         else if (e.type === 'win') { audio?.barrive?.(); audio?.bstars?.(starsNow()); buzz?.([30, 40, 30]); if (!replaying) { winRes = starsFor(active, getB(active).placed, getB(active).links); const gst = stageNow(); winOver = overBudget(gst, winRes.cost); const r = winOver ? { passed: passedOf(active), solved: false, left: [] } : afterWin(lsite(), passedOf(active), simLoad); if (winOver) logEv('bygg', `oppdrag: holdt, men over budsjett (${winRes.cost} av ${gst.budget}) ${active.id}`); else { passedL.set(active.id, { sig: sigOf(getB(active)), ids: r.passed }); logEv('bygg', `last ${simLoad} bestått (${r.passed.length}/${requiredLoads(lsite()).length || 1})`); } winSolved = !replaying && r.solved; if (!replaying && r.solved) { const rec = recordBuildStars(st0, levelId, active.id, winRes); starsCache = null; logEv('bygg', `stjerner ${winRes.stars} (kostnad ${winRes.cost}, ${winRes.parts} deler, modus ${isGrid(getB(active)) ? 'rutenett' : 'klassisk'}) ${active.id}${rec.first ? ', første gang' : rec.improved ? ', ny rekord' : ''}`); solved.add(active.id); if (gst) stagePass(gst, winRes); commitWorld(active, 'prøve klarte det'); onSolved(active.id); } else if (!replaying && !winOver) loadMore = nextLoad(lsite(), r.passed); } for (let i = 0; i < 46; i++) confetti.push({ u: e.u + (i % 9 - 4) * 0.3, v: e.v + 1 + (i % 5) * 0.2, vx: ((i * 37) % 13 - 6) * 0.4, vy: 5 + (i * 17) % 7, c: ['#ffd23f', '#3df0b0', '#ff6a5a', '#6ab8ff'][i % 4] }); }
       }
-      if (sim.state.state !== 'run') { simDone = true; if (!replaying) { bux.onResult(sim.state.state === 'won'); cbx.onResult(sim.state.state === 'won'); } if (recorder) { recs.set(active.id, recorder.finish(sim.state)); logEv('bygg', `opptak lagret: ${recorder.rec.frames.length} steg`); recorder = null; if (winSolved) submitBest(); } shareSync(); if (!replaying) { const rs = starsFor(active, getB(active).placed, getB(active).links); onStat('build_try', { sted: active.id, modus: isGrid(getB(active)) ? 'rutenett' : 'klassisk', resultat: sim.state.state === 'won' ? 'vant' : 'tapte', kostnad: rs.cost, stjerner: rs.stars, deler: rs.parts }); } simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; simHelp = sim.state.state === 'lost' && getTruss() ? helpOf(getB(active)) : null; if (!simWhy && simHelp?.joints.length) { const j = simHelp.joints[0]; simWhy = { key: 'build.why.floppy', kind: 'floppy', id: j.id, u: j.u, v: j.v, t: sim.t }; } if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); peakFinish(); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); toast(simText()); onChange?.(); }
+      if (sim.state.state !== 'run') { simDone = true; if (!replaying) { bux.onResult(sim.state.state === 'won'); cbx.onResult(sim.state.state === 'won'); } if (recorder) { recs.set(active.id, recorder.finish(sim.state)); logEv('bygg', `opptak lagret: ${recorder.rec.frames.length} steg`); recorder = null; if (winSolved) submitBest(); } shareSync(); if (!replaying) { const rs = starsFor(active, getB(active).placed, getB(active).links); onStat('build_try', { sted: active.id, modus: isGrid(getB(active)) ? 'rutenett' : 'klassisk', resultat: sim.state.state === 'won' ? 'vant' : 'tapte', kostnad: rs.cost, stjerner: rs.stars, deler: rs.parts }); } simWhy = sim.state.state === 'lost' ? whyBroke(simBreaks) : null; simHelp = sim.state.state === 'lost' && getTruss() ? helpOf(getB(active)) : null; if (!simWhy && simHelp?.joints.length) { const j = simHelp.joints[0]; simWhy = { key: 'build.why.floppy', kind: 'floppy', id: j.id, u: j.u, v: j.v, t: sim.t }; } if (simWhy) logEv('bygg', `forklaring: ${simWhy.kind} ${simWhy.id}`); peakFinish(); logEv('bygg', `prøve ${sim.state.state === 'won' ? 'klarte det' : 'feilet: ' + sim.state.reason} etter ${sim.t.toFixed(1)} s${simMarks.length ? `, ${simMarks.length} brudd` : ''}`); if (sim.state.state === 'won') toast(simText()); onChange?.(); }
     }
     for (const q of confetti) { q.u += q.vx * dt; q.v += q.vy * dt; q.vy -= 14 * dt; }
     confetti = confetti.filter((q) => q.v > -8);
@@ -812,9 +820,9 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
   }
   function startReplay() {
     const rec = active && recs.get(active.id); if (!rec) return false;
-    const rp = createReplay(rec), q = [], st = { state: 'run', reason: '' };
+    const rp = createReplay(rec), q = [], st = { state: 'run', reason: '' }; resetRunState('replay');
     sim = { state: st, get t() { return rp.i * DT; }, pose: () => rp.pose(), drain: () => q.splice(0, q.length), step() { for (const e of rp.step()) q.push(e); if (rp.done) { st.state = rec.result ? rec.result.state : 'lost'; st.reason = rec.result ? rec.result.reason : 'time'; } } };
-    simLoad = rec.meta?.load || DEFAULT_LOAD; loadMore = null; replaying = true; recorder = null; ghostRec = null; simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = [];
+    simLoad = rec.meta?.load || DEFAULT_LOAD; replaying = true; simT0 = tNow;
     sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear(); gPeaks = null; gSum = null; gSpeed = 'play'; grid.simSync('play', false); root.classList.add('sim'); labels();
     logEv('bygg', `replay ${active.id}: ${rec.frames.length - 1} steg, last ${simLoad}`); return true;
   }
@@ -873,7 +881,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     active = s; const B = getB(s); B.snap = getSnap();
     for (const q of parts) if (q.got) addPart(B, q.id);
     if (allParts()) for (const q of parts) addPart(B, q.id);
-    loupe.reset(); sim = null; simDone = false; recorder = null; ghostRec = null; replaying = false; closeModal(); root.classList.remove('sim'); tool = null; linkFrom = null; selLink = null;
+    loupe.reset(); resetRunState('inn'); closeModal(); root.classList.remove('sim'); tool = null; linkFrom = null; selLink = null;
     sel = null; drag = null; gest = null; ptrs.clear(); lastTap = null; zoomMsg = ''; grid.reset(); gguide.reset(); size(); view = fitNow(); hint = '';
     document.body.classList.add('building'); labels(); trayRender();
     if (grid.restoreMode()) { view = fitNow(); labels(); }   // R75: sist valgte modus huskes
@@ -886,7 +894,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     if (!active) return; const B = getB(active);
     logEv('bygg', `ut (${why}): ${B.placed.length}/${B.have.length} plassert`);
     if (committed.has(active.id) && committed.get(active.id) !== sigOf(B)) { uncommitWorld(active, 'endret uten ny prøve'); solved.delete(active.id); }   // R26: et endret bygg må prøves på nytt før det står i verden
-    sim = null; recorder = null; replaying = false; closeModal(); gguide.reset(); root.classList.remove('sim'); tool = null; linkFrom = null;
+    resetRunState('ut'); closeModal(); gguide.reset(); tool = null; linkFrom = null;
     if (lab && (lab.moved || labFar(active, player))) { const h = labHome(active); Object.assign(player, { x: h.x, y: h.y, z: h.z, vx: 0, vy: 0, vz: 0, onGround: true }); logEv('bygglab', `figuren flyttet til sted ${labInfo().n}`); }   // R67: ut fra et annet sted enn der du sto: på sokkelen før gapet
     if (lab) lab.moved = false;
     cbx.reset(); bn.reset(); loupe.reset(); active = null; drag = null; gest = null; ptrs.clear(); document.body.classList.remove('building'); onChange?.();
@@ -919,7 +927,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
       const s = sites.find((q) => q.id === siteId), ref = s?.ref; if (!enabled || !ref?.placed?.length) return false; const B = getB(s), used = new Set(), map = new Map();
       for (const p of ref.placed) { const id = B.have.find((h) => !used.has(h) && B.types[h] === p.type); if (!id) return false; used.add(id); map.set(p.id, id); }
       restore(B, { have: B.have, placed: ref.placed.map((p) => ({ ...p, id: map.get(p.id) })), links: (ref.links || []).map((l) => ({ ...l, a: map.get(l.a), b: l.b ? map.get(l.b) : null })) });
-      if (active && active.id === s.id) { sim = null; simDone = false; root.classList.remove('sim'); labels(); trayRender(); draw(); }
+      if (active && active.id === s.id) { resetRunState('referansebygg'); labels(); trayRender(); draw(); }
       logEv('bygg', `referansebygg lagt inn ${s.id}: ${B.placed.length} deler`); return true;
     },
     showMarks(v) { for (const { g } of siteMeshes) g.visible = !!v; },   // R68: stedsrammene kan skjules (kinomodus)
@@ -933,7 +941,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
       for (const s of sites) { const ids = cleanPassed(data.loads?.[s.id]); if (ids.length) passedL.set(s.id, { sig: sigOf(getB(s)), ids }); }
       for (const s of sites) if (solved.has(s.id) && getB(s).placed.length) commitWorld(s, 'fortsett');   // R26: bygget gjenopprettes i verdenen
     },
-    resetAll() { if (passClear(st0, levelId)) logEv('bygg', 'oppdrag nullstilt (start på nytt)'); gPassCache = null; if (lab) { lab.reached.clear(); lab.moved = false; } for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); passedL.clear(); loadSel.clear(); recs.clear(); recorder = null; replaying = false; sim = null; winRes = null; lastBonusKey = ''; lastCrumbs = -1; },
+    resetAll() { if (passClear(st0, levelId)) logEv('bygg', 'oppdrag nullstilt (start på nytt)'); gPassCache = null; if (lab) { lab.reached.clear(); lab.moved = false; } for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); passedL.clear(); loadSel.clear(); recs.clear(); resetRunState('start på nytt'); winRes = null; lastBonusKey = ''; lastCrumbs = -1; },
     screenPos: (u, v) => (active && view ? toScreen(view, W, H, u, v) : null),   // til tester på mobil (Playwright)
     starsMap, bonusOpen, get lastResult() { return winRes; }, get cap() { return capRes; },
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
@@ -945,6 +953,7 @@ export function createBuildMode({ onGoLevel = () => {}, onMenu, onStat = () => {
     touch: { get hanging() { return hanging({ drag, gest, ptrs: ptrs.size, capture: capIds.size > 0 }); }, get writes() { return wc.n; }, resetWrites: () => wc.reset(), get budgetBox() { return budgetBox; }, hintBottom: () => hintBottom(), get sel() { return sel; }, get selLink() { return selLink; }, get linkFrom() { return linkFrom; }, get capture() { return capIds.size; } },   // R109: til tester
     guide: { get open() { return gguide.isOpen(); }, get btn() { return root.classList.contains('gguidebtn'); }, get tip() { return root.classList.contains('gmodetip'); }, tipText: () => grid.modeTip(), show: () => gguide.show('test'), hide: (h) => gguide.hide(h), act: () => act.gguide() },
     grid: { get speed() { return gSpeed; }, setSpeed: (k) => { if (sim && !simDone) gSpeed = grid.setSpeed(k); return gSpeed; }, example: () => grid.example(), get peaks() { return gPeaks ? [...gPeaks.peaks].map(([id, p]) => ({ id, ...p })) : null; }, get summary() { return gSum; }, get on() { return grid.on(); }, get available() { return !!active && grid.enabledHere(); }, toggle: () => grid.toggleMode('kode'), setMat: (m) => grid.setMat(m), tap: (x, y) => grid.tap(x, y), del: () => grid.del(), get mat() { return grid.mat; }, get selNode() { return grid.selNode; }, get selRod() { return grid.selRod; }, info: () => (active && getB(active).rg ? { mode: getB(active).mode || 'classic', ...gridStats(getB(active)), cost: starsFor(active, getB(active).placed, getB(active).links).cost, nodes: getB(active).rg.nodes.map((n) => ({ id: n.id, u: n.u, v: n.v, fixed: !!n.fixed, ...(n.deck ? { deck: true } : {}) })), rods: getB(active).rg.rods.map((r) => ({ ...r })) } : null) },   // R72: til tester (node og Playwright)
+    runInfo: () => ({ dirty: dirtyKeys({ sim, simAcc, simMarks, simDone, simBreaks, simWhy, simHelp, confetti, breakAt, loadMore, winSolved, winOver, replaying, recorder, ghostRec, gPeaks, gSum, gSpeed }), ghost: ghostVisible({ ghostRec, replaying, simDone, sim, on: getGhost() }), sim: !!sim, done: simDone, replaying, simSigned: root.classList.contains('sim') }),   // R112: til tester
     startReplay: () => !!active && startReplay(), get replaying() { return replaying; }, record: (id) => recs.get(id) || null, importText: (t) => !!active && doImport(t), exportText: () => (active ? exportAny(getB(active), exportCode) : null),   // R50: til tester (node og Playwright)
     lab: lab ? { go: labGo, resetSite: (id) => { const s = labSites.find((q) => q.id === id); return s ? labReset(s, 'kode') : false; }, resetAll: labResetAll, get reached() { return [...lab.reached]; }, sites: labSites.map((q) => q.id), line: () => (active ? labLine() : ''), info: () => (active ? labInfo() : null), get home() { return lab.moved; } } : null,   // R67: til tester
     state: () => ({ active: active?.id || null, view: view ? { scale: view.scale, cu: view.cu, cv: view.cv, oy: view.oy || 0, W, H } : null, builds: [...builds].map(([k, b]) => ({ id: k, have: b.have.length, placed: b.placed.length, links: b.links.length, parts: b.placed.map((p) => ({ id: p.id, u: p.u, v: p.v, rot: p.rot })) })) }),

@@ -10,6 +10,14 @@ const TILT_EPS = 0.02;            // under dette (rad) regnes delen som rett
 
 export const siteDepth = (site) => site.d ?? DEPTH;
 
+// R112: de tegnede delene i verdenen er litt smalere i dybden enn kollisjonsflatene og underlaget (siteDepth), så fronten og baksiden aldri ligger i samme plan som sokkelen/gapkanten
+// (to flater i samme plan z-fighter som «to tynne streker» der planken ligger delvis inne i sokkelen). Fysikken (buildSolids) bruker fortsatt full dybde.
+export const MESH_INSET = 0.04;
+export const worldMeshDepth = (site) => siteDepth(site) - MESH_INSET;
+// minste synlige mål på en tegnet del i verdenen (under dette er det en hårfin flate som flimrer): brukes av testen
+export const MIN_VISIBLE = 0.02;
+export const thinDims = (dims) => dims.some((d) => d < MIN_VISIBLE);
+
 // høyden (nedre og øvre) til en konveks firkant ved x (null utenfor)
 function spanAt(cs, x) {
   let lo = Infinity, hi = -Infinity;

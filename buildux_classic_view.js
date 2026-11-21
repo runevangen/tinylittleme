@@ -281,11 +281,11 @@ export function createClassicUx(ctx) {
   let fired = { k: '', t: 0 }, downK = '';
   root.addEventListener('click', (e) => {
     const b = e.target.closest?.('[data-cx]'), k = b?.dataset?.cx; if (!k || !Object.hasOwn(actions, k)) return; e.stopPropagation();
-    if (k === fired.k && wall() - fired.t < 0.6) { fired = { k: '', t: 0 }; return; }
+    if (k === fired.k && wall() - fired.t < SWALLOW_S) { fired = { k: '', t: 0 }; return; }   // R112: klikket til et trykk som alt er gjort på slipp svelges (også på treg enhet), så ett trykk = én rotasjon
     actions[k](); invalidate();
   }, true);
-  const NEAR = ['rotl', 'rotr', 'del'];
-  root.addEventListener('pointerdown', (e) => { const k = e.target.closest?.('.cxsel [data-cx]')?.dataset?.cx; downK = k && NEAR.includes(k) ? k : ''; }, true);
+  const NEAR = ['rotl', 'rotr', 'del'], SWALLOW_S = 2;
+  root.addEventListener('pointerdown', (e) => { fired = { k: '', t: 0 }; const k = e.target.closest?.('.cxsel [data-cx]')?.dataset?.cx; downK = k && NEAR.includes(k) ? k : ''; }, true);
   root.addEventListener('pointercancel', () => { downK = ''; }, true);
   root.addEventListener('pointerup', (e) => {
     const k = e.target.closest?.('.cxsel [data-cx]')?.dataset?.cx; if (!downK || k !== downK) { downK = ''; return; } downK = '';
