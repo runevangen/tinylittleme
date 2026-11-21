@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r111-last-sted-nytt-skall', version: '2.94', date: '2026-11-21', title: 'Låste byggesteder (f.eks. Byggeskole · Fagverk 4/8) viser samme nye byggeskjerm som de åpne, med kort «Bestå Vippe (3/8) først» og en stor GÅ TIL VIPPE-knapp, i stedet for den gamle skjermen.',
+    how: 'Åpne BYGGESKOLE, trykk ⋯ og så ▶ tre ganger til Fagverk 4/8. Les kortet og trykk GÅ TIL VIPPE. Snu telefonen og se at kortet og knappen står rolig.', level: 'bygglab', spot: null },
   { id: 'r110-trykk-paa-planker', version: '2.92', date: '2026-11-21', title: 'Byggeskjermen: et kort trykk på en del i delebrettet legger den ut og velger den, et trykk på en plassert del velger den alltid (også med TAPE/LEDD/TAU/GUMMI valgt, og trykk igjen velger delen under), og «Tåler»-beregningen kjøres ikke lenger på Vippe og Trapp.',
     how: 'Åpne BYGGESKOLE → Vippe (3/8). Trykk (ikke dra) på en planke nederst: den legges ut midt i bildet med et lite sprett og ↺ ↻ ✕ vises. Trykk TAPE og så på planken: den får ramme. Trykk på tom flate og så på planken igjen: den velges.', level: 'bygglab', spot: null },
   { id: 'r109-vri-flagg-tekst', version: '2.91', date: '2026-11-20', title: 'Byggeskjermen (Trapp, Vippe m.fl.): ↺ ↻ ✕ står i en fast rad rett over delebrettet og virker rett etter at du har satt ut en del; ⚑ virker alltid; tekstene ligger ikke lenger over hverandre i liggende; og skjermen går lettere.',
