@@ -59,11 +59,6 @@ Fra Rune: «Vi har 3D-spill. Trenger 3D-bygging.» Når kjernen (R129) og 3D-lab
 Krav: tre oppdrag i 3D-laben med stjerner, hint («SÅ SLIK»), bot-bevis som viser at enkleste bygg feiler og en gyldig løsning består, NYTT-rader, test og `logEv`.
 Ferdig når: de tre oppdragene kan spilles og vinnes, og tester og boot er grønne.
 
-### [ ] R130 · 3D-lab, bygging (trinn 3): bygg fritt i tre dimensjoner med orbit-kamera og lag-glidebryter (deler R129)
-Fra Rune: «3D i egen lab. Vi har 3D-spill. Trenger 3D-bygging.» Valgt vei: **C, men mobilvennlig:** fri 3D-bygging i en **egen 3D-lab** (eget sted i Byggeskolen, «3D-LAB», og eget valg `build3d` i ⚙ → Spill). Dagens 2D-bygging og dobbel bro (R123) endres ikke. Plassering i rommet på mobil løses med **lag-for-lag** (se `docs/BYGGING_RUNDE2.md` §4 B): ett tydelig plan vises om gangen, og spilleren bytter dybde.
-Krav: (1) **Kamera:** orbit-kamera i byggeskjermen (dra med én finger for å rotere, klyp for å zoome, to fingre for å flytte) og fire hurtigvisninger: **FORAN, SIDE, TOPP, 3D** (ett trykk); (2) **Plassering:** et 3D-rutenett (x, y, z) med synlig valgt **lag** (z) som et lyst plan; **◀ LAG ▶** (eller glidebryter) bytter dybde; trykk et punkt på laget for å legge en knute; trykk to knuter for å lage en stav; knuter og staver i andre lag vises dempet, så man ser hvor man bygger; (3) **Staver:** samme materialer som i Rutenett (tre, stål, tau, kabel hvis R127 er inne), budsjett og stjerner; stav mellom hvilke som helst to knuter (også på skrå gjennom lag); ANGRE, SLETT, NULLSTILL; (4) **Hint:** «bygg en tetraeder» som liten veiledning, og **GRØNN/RØD** belastningsfarge i 3D etter PRØV; (5) **Prøve:** bruker `build_phys3.js` fra R129 (last kjører på dekk), SLOW/PAUSE som i Rutenett; (6) **Verden:** bestått 3D-bygg legges ut i rommet som 3D-staver med tekstur (R117) og ingen usynlige vegger (R116); (7) alt mobil først (stikke/knapper, ingen taster), sjekk med Playwright `devices['iPhone 14']`, R101-paritet (laben er et Byggeskole-sted, delt kode i `grid3d_*`).
-Ferdig når: man kan bygge en stiv 3D-bro (tetraeder-fagverk) i 3D-laben på mobil, rotere og bytte lag, prøve den og se den stå i rommet, bak et valg og uten å endre dagens bygging, og tester og boot er grønne.
-
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
@@ -218,6 +213,7 @@ Ferdig når: blyanter og viskelær stopper figuren, men kan gås over og stås p
 Ferdig i v2.58.
 
 
+- [x] R130 · 3D-lab, bygging (trinn 3): bygg fritt i tre dimensjoner med orbit-kamera og lag-glidebryter (deler R129) (v2.121)
 - [x] R129 · 3D-bygging, kjerne: 3D-modell og 3D-fysikk for fagverk (`grid3d_logic.js`, `build_phys3.js`, ingen UI) (v2.120)
 - [x] R89 · Fra tester: Rune · låst mål får alltid en beskjed, og låsende delmål teller for alle veier (v2.56)
 - [x] R88 · Anonym statistikk: hvor stopper spillerne? valgfri, anonym, i grupper, docs/STATISTIKK.md (v2.52)
