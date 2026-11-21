@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.103** – R119 (L3: Bygg 5, broen over badekaret, bare trekanter holder) lagt i veikartet.
 - **2.102** – R117 (teksturer på bygde deler) og R118 (fra og til ved BYGG-knappen), fra Rune, lagt i veikartet.
 - **2.101** – R116 (fra Rune): ingen usynlig vegg rundt bygde deler (Byggeskole, Vippe m.fl.): kollisjonen følger skrå planker tett, tak på antall bokser, test og NYTT-rad.
 - **2.100** – R115 (fra Rune): å bestå Vippe (klassisk modus) åpner nå Fagverk i Byggeskolen. R116 (usynlig vegg rundt bygde deler) lagt i veikartet.
