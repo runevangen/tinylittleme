@@ -13,9 +13,9 @@ export const schoolCss = () => `
 .skcard button[data-sk="try"],.skcard button[data-sk="ok"]{border-color:#3df0b0;background:#0f3b2c;color:#e8fff6}
 `;
 // pure: teksten på menyknappen (T = tekstfunksjon; prog = { n, total, started, done })
-export function schoolMenuHtml(T, prog) {
+export function schoolMenuHtml(T, prog, r2 = null) {   // r2: { n, total } ekstra stjerner (R126) eller null
   const b = schoolBadge(prog), tag = b.kind === 'recommended' ? `<span class="sktag">${esc(T('school.rec'))}</span>` : `<span class="sktag p">✓ ${b.n}/${b.total}</span>`;
-  return `<button class="mbtn sec" id="mSchool">🏗 ${esc(T('school.btn'))}${tag}<small>${esc(T('school.sub', { n: prog.n, total: prog.total }))}</small></button>`;
+  return `<button class="mbtn sec" id="mSchool">🏗 ${esc(T('school.btn'))}${tag}<small>${esc(T('school.sub', { n: prog.n, total: prog.total }))}${r2 && r2.total && r2.n ? ' · ' + esc(T('r2.menu', { n: r2.n, total: r2.total })) : ''}</small></button>`;
 }
 export const schoolCardHtml = (T, kind) => kind === 'fagverk'
   ? `<b>${esc(T('badebro.fagverk.title'))}</b>${esc(T('badebro.fagverk.text'))}<div class="skb"><button data-sk="try">${esc(T('badebro.fagverk.go'))}</button><button data-sk="skip">${esc(T('badebro.fagverk.skip'))}</button></div>`   // R119

@@ -69,16 +69,16 @@ Fra Rune: «Vi trenger 3D-bygging» (valgt vei C, `docs/BYGGING_RUNDE2.md` §4).
 Krav: (1) **Modell** (`grid3d_logic.js`): knuter {x,y,z} på et 3D-rutenett, staver mellom knuter (materialer som i `grid_logic.js`: tre, stål, tau, ev. kabel), ankre (faste knuter), dekk/vei-staver, budsjett og stjerner; lovlighetsregler (lengde, overlapp, ikke gjennom ankre); serialisering (lagring og KODE; **ny** kodeprefiks, ikke bland med `TLM1.`); (2) **Fysikk** (`build_phys3.js`): en liten, **deterministisk** 3D-solver for stavverk (for eksempel verlet/posisjonsbasert med avstandsbånd per stav, brudd ved strekk/trykk-grense etter materiale, tau/kabel bare i strekk) med last (kule/bil) som kjører over dekkstavene og gir kraft på knutene; (3) **Belastning** per stav for visning (gjenbruk logikk fra `grid_stress.js` der det går); (4) **Ytelse:** en prøve skal ta under 2 s på iPhone-klasse (SwiftShader-måling i test, tak på antall knuter/staver, f.eks. 40/120); (5) **Tester** (`test_grid3d.mjs`, i `npm test`): en tetraeder består, en rektangulær boks uten diagonaler faller sammen, et fritt tårn på én stav velter, deterministisk resultat (samme bygg gir samme utfall), brudd ved overlast; (6) dokumenter antakelsene i `docs/BYGGING_RUNDE2.md` (som §4A i drift).
 Ferdig når: 3D-modell og 3D-fysikk er bevist i tester (stiv tetraeder holder, boks uten diagonaler faller, tårn med én stav velter), prøven er rask nok, og `npm test` og `npm run boot` er grønne.
 
-### [ ] R126 · Runde 2 av Badebroen og Byggeskolen: ekstra stjerner (billigst, lettest) og beste-liste
-Fra `docs/BYGGING_RUNDE2.md` §2 (kreativitet). Badebroen (R119) og Byggeskolens steder får runde 2-stjerner: «bygg billigst» og «bygg lettest» som egne stjerner, bonusmål (samle en smule midt på spennet som valgfri omvei) og beste-liste per brett (KODE/BESTE finnes). Delte moduler (R101), bak valg `buildround2`.
-Krav: (1) ekstra stjerner i resultatkortet og i Byggeskolens stedsliste; (2) valgfritt bonusmål ved midtpunktet; (3) beste-liste vises og lagres; (4) test + NYTT-rad.
-Ferdig når: Badebroen og minst fire Byggeskole-steder viser runde 2-stjerner, beste-lister virker, og tester og boot er grønne.
-
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R126 · Runde 2 av Badebroen og Byggeskolen: ekstra stjerner (billigst, lettest) og beste-liste (v2.119)
+Fra `docs/BYGGING_RUNDE2.md` §2 (kreativitet). Badebroen (R119) og Byggeskolens steder får runde 2-stjerner: «bygg billigst» og «bygg lettest» som egne stjerner, bonusmål (samle en smule midt på spennet som valgfri omvei) og beste-liste per brett (KODE/BESTE finnes). Delte moduler (R101), bak valg `buildround2`.
+Krav: (1) ekstra stjerner i resultatkortet og i Byggeskolens stedsliste; (2) valgfritt bonusmål ved midtpunktet; (3) beste-liste vises og lagres; (4) test + NYTT-rad.
+Ferdig når: Badebroen og minst fire Byggeskole-steder viser runde 2-stjerner, beste-lister virker, og tester og boot er grønne.
 
 ### [x] R124 · Runde 2 av Hyllebroen og Kjøkkenbroen: større spenn, ulik høyde og to mål (v2.118)
 Fra `docs/BYGGING_RUNDE2.md` §2 (Runes valg: runde 2 med større bruer og kreativitet). Gap 12–18 byggeenheter (stål og fagverk nødvendig), mål og ankre i ulik høyde, to gyldige veier/mål, variert last (tung bil + robot etter hverandre). Delene er der fra start (R120). Lages som runde 2-variant (valg `buildround2`, vanskelighet «Runde 2»), dagens brett uendret. Gå med `tools/walk_route.mjs`, bevis med bot, bruk `make_variants` der det passer.

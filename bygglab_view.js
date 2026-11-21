@@ -17,9 +17,9 @@ export const labCss = () => `
 export const labMarkup = () => '<div class="lab"><button data-lb="prev" aria-label="◀">◀</button><div class="nm"></div><button data-lb="next" aria-label="▶">▶</button><button data-lb="site"></button><button data-lb="all"></button></div>';
 
 // tekstene på raden: info = { n, of, key }, nm = stedets navn (språk), flag = nådd?
-export function labSync(root, T, info, nm, reached) {
+export function labSync(root, T, info, nm, reached, tag = '') {   // tag: R126 «★ 2/3» (runde 2)
   const q = (k) => root.querySelector(`[data-lb="${k}"]`), el = root.querySelector('.lab .nm');
-  if (el) el.textContent = `${reached ? '🚩 ' : ''}${T('lab.bar', { n: info.n, of: info.of, name: nm })}`;
+  if (el) el.textContent = `${reached ? '🚩 ' : ''}${T('lab.bar', { n: info.n, of: info.of, name: nm })}${tag ? ' ' + tag : ''}`;
   const s = q('site'), a = q('all'), p = q('prev'), n = q('next');
   if (s) s.textContent = T('lab.resetSite'); if (a) a.textContent = T('lab.resetAll');
   if (p) p.setAttribute?.('aria-label', T('lab.prev')); if (n) n.setAttribute?.('aria-label', T('lab.next'));
