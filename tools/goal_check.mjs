@@ -17,7 +17,7 @@ import { DIFFS, diffProfile } from '../difficulty.js';
 import { makeT } from '../i18n.js';
 
 const verbose = process.argv.includes('--verbose'), json = process.argv.includes('--json');
-const IDS = { bad: 1, barnerom: 2, kjokken: 3, bad2: 4, barnerom2: 5, kjokken2: 6, leke: 7, stue: 8, verksted: 9, bro: 0, trapp: 0, vippe: 0, kjokkenbro: 0, badebro: 0, gaate: 0 };
+const IDS = { bad: 1, barnerom: 2, kjokken: 3, bad2: 4, barnerom2: 5, kjokken2: 6, leke: 7, stue: 8, verksted: 9, bro: 0, trapp: 0, vippe: 0, kjokkenbro: 0, badebro: 0, trapp2: 0, vippe2: 0, gaate: 0 };
 const Tn = makeT(() => 'nb').T, Te = makeT(() => 'en').T;
 const load = (id) => { const L = JSON.parse(fs.readFileSync(new URL(`../levels/${id}.level.json`, import.meta.url), 'utf8')); initBodies(L); initAnts(L); resetAnts(L); initBoss(L); initCollect(L); initPuzzles(L); initGoals(L); initGates(L); return L; };
 const wrap = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
