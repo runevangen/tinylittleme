@@ -189,3 +189,11 @@ Målt med `node tools/perf_build.cjs` (Chromium uten GPU/SwiftShader, `Emulation
 ## R110: «Tåler»-beregningen (trykk i byggeren)
 - Før: på Vippe/Trapp (og alle ikke-rutenett-steder) ble «Tåler ca. N klosser» regnet ut etter hver flytting: ca. 40 ms × 4 simuleringer (målt i Rune sin rapport, v2.91; `bygg tåler ca. 0 klosser … (41 ms, 4 sim)`).
 - Etter: `capShown` (build_tap_logic.js) viser og regner bare på bro-steder og i Byggeskolen-stedet «Tåler X». Vippe/Trapp: 0 kjøringer (Playwright: `bld.cap.runs === 0`). Der den kjøres: aldri mens fingeren er nede, 160 ms etter siste endring (debounce, tak 300 ms), ny endring avbryter ventende beregning, resultatet bufres per bygg. Ekte følelse på iPhone testes av Rune.
+
+## Teksturer på bygde deler (R117)
+Bygde deler i verdenen (`build.js` `showWorld`) bruker `build_tex.js`: én prosedyre-tekstur per materialfamilie (tre, stål, tau, plast, blyant, linjal, bokbind, svamp) og ett materiale per familie og farge; tone per del ligger i hjørnefargene (`vertexColors`), kvistene flyttes med UV-forskyvning per del. Statiske tall (ikke FPS):
+- **Tegnekall:** uendret per del (ett mesh per del før og etter; delene deler materialer, så fire bygde deler i Bygglab «Vippe» bruker 4 materialer og 2 teksturer). Ingen ekstra mesh for knotter: de er flettet inn i klossens geometri.
+- **Trekanter:** +96 per kloss/legoklosse (maks 12 knotter à 32 trekanter, vanlig kloss 3 knotter), andre deler uendret (12).
+- **Teksturminne:** fire klassiske deler (planke, kort planke, kloss, høykant): 2 teksturer, ca. 196 KB (mål: `bld.world.texStats()`); alle åtte familiene til sammen ca. 0,4 MB, under kravet på 1 MB; halvert på Lav profil/Enkel grafikk (`texLow`).
+- **Skygge:** delene kaster/tar imot skygge, men kasterne begrenses av `shradius`/`shevery` som for møbler (`⚙ → Admin`). Normalkart er utelatt (malt trekorn og børsting holder, ingen ekstra tekstur).
+- Ekte FPS og følelse: **testes på iPhone** (SwiftShader her gir bare relativ tid). Slå av med ⚙ → Spill → «Teksturer på bygde deler» for å sammenligne.
