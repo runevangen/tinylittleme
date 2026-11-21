@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r122-trekant-diagonal', version: '2.111', date: '2026-11-21', title: 'Fagverk-hjelp i rutenett-bygging (broene og Byggeskolen): TREKANT foreslår et tredje punkt når du har valgt to knuter, og en firkant uten diagonal får en DIAGONAL-forslag. Hjelpen legger aldri til noe av seg selv.',
+    how: 'Åpne Hyllebroen, trykk BYGG, trykk to knuter og så TREKANT; trykk forslaget for å bytte og TREKANT igjen for å legge det til. Tegn en firkant og trykk DIAGONAL. Skru av/på under ⚙ → Spill.', level: 'bro', spot: null },
   { id: 'r119-broen-over-badekaret', version: '2.110', date: '2026-11-21', title: 'Nytt byggebrett «Bygg 5: Broen over badekaret»: gapet er så bredt og lasten så tung at bare en bro av trekanter holder. En rett rad av staver og en firkant uten diagonal gir etter. Nytt hint: «En firkant gir etter. Legg inn en diagonal.»',
     how: 'Velg «Bygg 5: Broen over badekaret» under ⚙ → Spill → Brett. Gå til karkanten, trykk BYGG, og bygg en bro av trekanter (stål nederst, tre og tau over). Trykk PRØV. Eller ta den harde veien rundt.', level: 'badebro', spot: { x: 4, y: 9, z: -4 } },
   { id: 'r120-deler-fra-start', version: '2.108', date: '2026-11-21', title: 'Delene er der fra start: i byggebrettene ligger alle delene i delebrettet første gang du åpner byggestedet. Å finne delene i rommet er nå en bonus (+1 på budsjettet per del, og delmålet «Finn tre rare deler»).',
