@@ -136,6 +136,6 @@ export function fnv1a(bytes) {           // streng eller Uint8Array
 }
 
 // ---- det som skjules / stenges av i kinomodus (dokumentasjon og test) ----
-export const HIDDEN_UI = ['hud', 'topband', 'goals', 'toast', 'cues', 'bubble', 'stam', 'offscreen', 'compass', 'hint', 'help', 'panel', 'start', 'story', 'introsw', 'introhint', 'win', 'stick', 'knob', 'btnGrab', 'btnCarry', 'btnCenter', 'btnMap', 'btnJump', 'more', 'bar', 'qbtn', 'qpop', 'minimap', 'ovdots', 'xhair', 'fps', 'guideEdge', 'wmark', 'wcross', 'floodVig', 'bossbar', 'infocard', 'soundPill', 'btnBuild'];
+export const HIDDEN_UI = ['hud', 'topband', 'goals', 'toast', 'cues', 'bubble', 'stam', 'offscreen', 'compass', 'hint', 'help', 'panel', 'start', 'story', 'introsw', 'introhint', 'win', 'stick', 'knob', 'btnGrab', 'btnCarry', 'btnCenter', 'btnMap', 'btnJump', 'more', 'bar', 'qbtn', 'qpop', 'minimap', 'ovdots', 'xhair', 'fps', 'guideEdge', 'wmark', 'wcross', 'floodVig', 'bossbar', 'infocard', 'soundPill', 'btnBuild', 'btnBuildSpan'];
 // Kinomodus-CSS: alt på siden unntatt tegneflata og byggeskjermen (#bld) skjules. Byggeskjermen er innholdet når den filmes.
 export const CINE_CSS = 'body.cinema>*:not(canvas):not(#bld){display:none!important}body.cinema{cursor:none}';

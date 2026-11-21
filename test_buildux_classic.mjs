@@ -120,7 +120,7 @@ const { createBuildMode } = await import('./build.js');
 const mkMode = (name, on) => {
   const L = lvl(name), log = []; const player = { x: L.build.sites[0].x, y: L.build.sites[0].y, z: L.build.sites[0].z, onGround: true, state: 'ground' };
   const bm = createBuildMode({ scene: { add() {}, remove() {} }, LEVEL: L, player, $: () => mkEl(), T: (k) => k, logEv: (t, d) => log.push([t, d]), toast() {}, TOUCH: true, buzz() {}, audio: {}, isPlay: () => true, isMenu: () => false, isBoss: () => false, isWon: () => false, isOv: () => false, getSnap: () => true, setSnap() {}, allParts: () => true, onChange() {}, getBuildUx: () => on, levelId: name });
-  return { bm, log, root: body.children[body.children.length - 2] || body.children[body.children.length - 1] };
+  return { bm, log, root: body.children[body.children.length - 3] || body.children[body.children.length - 1] };
 };
 const rootOf = () => body.children.filter((c) => c._html && c._html.includes('cxtools'))[body.children.filter((c) => c._html && c._html.includes('cxtools')).length - 1];
 for (const name of ['trapp', 'vippe']) {

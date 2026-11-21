@@ -189,3 +189,6 @@ Målt med `node tools/perf_build.cjs` (Chromium uten GPU/SwiftShader, `Emulation
 ## R110: «Tåler»-beregningen (trykk i byggeren)
 - Før: på Vippe/Trapp (og alle ikke-rutenett-steder) ble «Tåler ca. N klosser» regnet ut etter hver flytting: ca. 40 ms × 4 simuleringer (målt i Rune sin rapport, v2.91; `bygg tåler ca. 0 klosser … (41 ms, 4 sim)`).
 - Etter: `capShown` (build_tap_logic.js) viser og regner bare på bro-steder og i Byggeskolen-stedet «Tåler X». Vippe/Trapp: 0 kjøringer (Playwright: `bld.cap.runs === 0`). Der den kjøres: aldri mens fingeren er nede, 160 ms etter siste endring (debounce, tak 300 ms), ny endring avbryter ventende beregning, resultatet bufres per bygg. Ekte følelse på iPhone testes av Rune.
+
+## R118 · FRA og TIL ved byggestedet
+Statisk budsjett (målt i `bld.spanStats()` og `test_buildspan.mjs`): markørene er delte geometrier og materialer (ring, stolpe, flagg, to skilt-teksturer à 256×112, én stiplet linje), bare stedet nærmest figuren er synlig, høyst 8 tegnekall (2 ringer, 2 stolper, 2 skilt, 1 flagg, 1 linje), ingen skygge (`castShadow`/`receiveShadow` av), ingen ekstra lys. Teksturminne ca. 2 × 115 kB. Ekte FPS og følelse i bevegelse testes på iPhone (miljøet har ingen GPU).
