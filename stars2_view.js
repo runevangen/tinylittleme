@@ -1,6 +1,6 @@
 // R126: runde 2, visning (DOM-fri tekst-HTML, kjøres også i node). Delt av resultatkortet (buildnext_view.js) og Byggeskolens stedsrad (bygglab_view.js), så Badebroen og Bygglab-stedene ser likt ut (R101).
-// Viser tre små merker (BILLIGST, LETTEST, SMULE; ★ når tatt, ☆ med målet når ikke) og beste-lista (de tre beste byggene). Ingen taster nevnes. Logikken står i round2_logic.js.
-import { chips, weightText } from './round2_logic.js';
+// Viser tre små merker (BILLIGST, LETTEST, SMULE; ★ når tatt, ☆ med målet når ikke) og beste-lista (de tre beste byggene). Ingen taster nevnes. Logikken står i stars2_logic.js.
+import { chips, weightText } from './stars2_logic.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export const r2Css = () => `
@@ -16,7 +16,7 @@ export const r2Css = () => `
 `;
 export const chipLabel = (T, c) => (c.ok ? '★ ' : '☆ ') + T('r2.' + c.k) + (c.ok ? '' : c.target != null ? ' ' + T('r2.goal', { c: c.k === 'cheap' ? c.target : weightText(c.target) }) : '');
 export const bestLine = (T, e, i, mine) => `<i>${i + 1}.</i> ${esc(T('r2.entry', { cost: e.cost, k: weightText(e.weight), parts: e.parts }))}${mine ? ' ◀' : ''}`;
-// r2: { ev, rec } fra build.js (ev = round2_logic.evaluate, rec = round2_logic.record). Tom tekst når det ikke er noe å vise.
+// r2: { ev, rec } fra build.js (ev = stars2_logic.evaluate, rec = stars2_logic.record). Tom tekst når det ikke er noe å vise.
 export function r2CardHtml(T, r2) {
   if (!r2 || !r2.ev) return '';
   const cs = chips(r2.ev, (r2.rec && r2.rec.got) || []), fresh = new Set((r2.rec && r2.rec.newGot) || []);

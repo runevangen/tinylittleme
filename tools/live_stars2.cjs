@@ -1,6 +1,6 @@
 // R126: runde 2 på iPhone 14 med EKTE berøring (CDP Input.dispatchTouchEvent), stående og liggende: Byggeskole · Fagverk (lab4) og Badebroen (bad1).
-// Bygger spesifikasjonen fra round2_data.js med dra mellom rutenettpunkt, trykker PRØV, og sjekker at resultatkortet viser BILLIGST, LETTEST og SMULE (★) og beste-lista,
-// at stedsraden viser «★n/m», at kortet ligger innenfor skjermen og at ingen konsollfeil kommer. Bilder i <utmappe>. node tools/live_round2.cjs <utmappe> [port]  (playwright via NODE_PATH). Ingen FPS-krav (ingen GPU).
+// Bygger spesifikasjonen fra stars2_data.js med dra mellom rutenettpunkt, trykker PRØV, og sjekker at resultatkortet viser BILLIGST, LETTEST og SMULE (★) og beste-lista,
+// at stedsraden viser «★n/m», at kortet ligger innenfor skjermen og at ingen konsollfeil kommer. Bilder i <utmappe>. node tools/live_stars2.cjs <utmappe> [port]  (playwright via NODE_PATH). Ingen FPS-krav (ingen GPU).
 const { chromium, devices } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const root = path.resolve(__dirname, '..');
@@ -34,7 +34,7 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
     await fn(t, pg); await ctx.close();
   }
   const ON = () => { try { localStorage.setItem('tlm.buildux', 'true'); localStorage.setItem('tlm.buildall', 'true'); localStorage.setItem('tlm.gridlock', 'false'); localStorage.setItem('tlm.gridguide', 'false'); localStorage.setItem('tlm.skole', JSON.stringify({ opened: true, card: 'skipped', done: false })); } catch (e) { /* ok */ } };
-  const { ROUND2_DATA } = await import(path.join(root, 'round2_data.js'));
+  const { STARS2_DATA } = await import(path.join(root, 'stars2_data.js'));
   async function buildSpec(t, pg, spec) {
     const info = await pg.evaluate(() => window.__game.bld.grid.info()), an = info.nodes.filter((n) => n.fixed).sort((p, q) => p.u - q.u), pts = [an[0], an[1], ...spec.nodes.map(([u, v]) => ({ u, v }))];
     const seen = new Set([0, 1]);   // en dra må starte i en knute som finnes: snu retningen når bare enden finnes
@@ -44,7 +44,7 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   }
   for (const [level, site, nm] of [['bygglab', 'lab4', 'Byggeskole · Fagverk'], ['badebro', 'bad1', 'Badebroen']]) {
     for (const land of [false, true]) {
-      const tag = `${nm} ${land ? 'liggende' : 'stående'}`, L = `${site}_${land ? 'l' : 'p'}`, W = land ? 844 : 390, H = land ? 390 : 844, D = ROUND2_DATA[site];
+      const tag = `${nm} ${land ? 'liggende' : 'stående'}`, L = `${site}_${land ? 'l' : 'p'}`, W = land ? 844 : 390, H = land ? 390 : 844, D = STARS2_DATA[site];
       await session(level, ON, land, async (t, pg) => {
         await t.run(60); if (level === 'bygglab') { for (let k = 0; k < 9 && (await t.site()) !== site; k++) { await pg.evaluate(() => window.__game.bld.lab.go(1)); await t.run(3); } } else { await t.open(site); await t.run(3); const sk = pg.locator('.skcard button[data-sk="skip"]').first(); if (await sk.count()) await sk.click(); await t.run(3); }
         ok(`${tag}: på stedet ${site}`, (await t.site()) === site, await t.site());

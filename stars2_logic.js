@@ -1,6 +1,6 @@
 // R126: runde 2 av Badebroen og Byggeskolen: ekstra stjerner («bygg billigst», «bygg lettest»), valgfri smule midt på spennet og beste-liste per sted.
-// Ren logikk (ingen DOM, ingen three.js, kjøres i node: test_round2.mjs). Delt av alle rutenett-steder med oppdrag (R101: Badebroen og Bygglab-stedene bruker samme kode).
-// Bak ⚙-valget `buildround2`. Terskler og bevisbygg per sted står i `round2_data.js` (generert av tools/make_round2.mjs med den ekte fysikken).
+// Ren logikk (ingen DOM, ingen three.js, kjøres i node: test_stars2.mjs). Delt av alle rutenett-steder med oppdrag (R101: Badebroen og Bygglab-stedene bruker samme kode).
+// Bak ⚙-valget `buildstars2`. Terskler og bevisbygg per sted står i `stars2_data.js` (generert av tools/make_stars2.mjs med den ekte fysikken).
 //  - BILLIGST: bestått bygg med kostnad ≤ terskelen (den billigste vi har funnet som består alle lastene)
 //  - LETTEST:  bestått bygg med vekt ≤ terskelen (staver: lengde × masse per enhet; tau og tre er lettere enn stål)
 //  - SMULE:    bestått bygg med en knute midt på spennet over veien, festet i bygget (stav som henger sammen med et anker): en omvei som krever en ekstra knute og staver dit
@@ -8,21 +8,21 @@
 import { parseRod, GRID_MAT } from './build_materials.js';
 import { buildCost } from './build_budget.js';
 import { exampleSpec } from './grid_example.js';
-import { ROUND2_DATA } from './round2_data.js';
+import { STARS2_DATA } from './stars2_data.js';
 
-export const ROUND2 = { key: 'tlm.best2', top: 3, bonusR: 0.06, extraW: 0.6, kinds: ['cheap', 'light', 'bonus'] };
+export const STARS2 = { key: 'tlm.best2', top: 3, bonusR: 0.06, extraW: 0.6, kinds: ['cheap', 'light', 'bonus'] };
 
 // ---------- mål ----------
 export const rodWeight = (type) => { const r = parseRod(type); return r ? r.len * (GRID_MAT[r.mat]?.m ?? 0) : 0; };
 // extra: { cost, parts } fra dobbel bro (grid_25d.extraOf): tverrstag og kopi veier som stål per kostnad (grov, men samme hver gang)
 export function measure(placed, links, extra) {
-  const c = buildCost(placed, links, extra), w = (placed || []).reduce((s, p) => s + rodWeight(p.type), 0) + (Number.isFinite(extra?.cost) ? extra.cost * ROUND2.extraW : 0);
+  const c = buildCost(placed, links, extra), w = (placed || []).reduce((s, p) => s + rodWeight(p.type), 0) + (Number.isFinite(extra?.cost) ? extra.cost * STARS2.extraW : 0);
   return { cost: c.cost, parts: c.parts, weight: +w.toFixed(3) };
 }
 export const weightText = (w) => String(+(+w || 0).toFixed(1)).replace('.', ',');
 
 // ---------- steder ----------
-const dataOf = (site, levelId) => { const d = ROUND2_DATA[site?.id]; return d && (!levelId || d.level === levelId) ? d : null; };
+const dataOf = (site, levelId) => { const d = STARS2_DATA[site?.id]; return d && (!levelId || d.level === levelId) ? d : null; };
 export const hasRound2 = (site, levelId) => !!dataOf(site, levelId);
 // den knuten midt på spennet som en bygd bro kan «samle» smulen på: den øverste knuten i eksempelbroen nærmest midten (ligger alltid på rutenettet). null uten veilinje.
 export function bonusPoint(site) {
@@ -46,7 +46,7 @@ export function connectedRods(placed, links) {
 }
 export function bonusHit(bonus, placed, links) {
   if (!bonus) return false; const con = connectedRods(placed, links);
-  return endpoints((placed || []).filter((p) => con.has(p.id))).some(([u, v]) => Math.hypot(u - bonus.u, v - bonus.v) <= ROUND2.bonusR);
+  return endpoints((placed || []).filter((p) => con.has(p.id))).some(([u, v]) => Math.hypot(u - bonus.u, v - bonus.v) <= STARS2.bonusR);
 }
 
 // ---------- vurdering ----------
@@ -56,7 +56,7 @@ export function evaluate({ site, levelId, placed, links, extra, passed }) {
   const T = targetsOf(site, levelId); if (!T) return null;
   const m = measure(placed, links, extra), ok = !!passed;
   const cheap = ok && m.cost <= T.cheap, light = ok && m.weight <= T.light + 1e-6, bonus = ok && !!T.bonus && bonusHit(T.bonus, placed, links);
-  const got = ROUND2.kinds.filter((k) => ({ cheap, light, bonus }[k]));
+  const got = STARS2.kinds.filter((k) => ({ cheap, light, bonus }[k]));
   return { cheap, light, bonus, n: got.length, got, m, targets: T };
 }
 
@@ -64,10 +64,10 @@ export function evaluate({ site, levelId, placed, links, extra, passed }) {
 // tlm.best2 = { brett: { sted: { got: ['cheap', ...], list: [{ cost, weight, parts, stars, v }] } } }
 const cleanEntry = (e) => (e && Number.isFinite(e.cost) && Number.isFinite(e.weight) && Number.isFinite(e.parts) ? { cost: e.cost, weight: +e.weight, parts: e.parts, stars: Math.max(0, Math.min(6, e.stars | 0)), v: String(e.v || '').slice(0, 12) } : null);
 export const better = (a, b) => a.cost < b.cost || (a.cost === b.cost && (a.weight < b.weight || (a.weight === b.weight && a.parts < b.parts)));
-function readAll(st) { let all = null; try { all = st.get(ROUND2.key, {}); } catch { /* ingen lagring */ } return all && typeof all === 'object' && !Array.isArray(all) ? all : {}; }
+function readAll(st) { let all = null; try { all = st.get(STARS2.key, {}); } catch { /* ingen lagring */ } return all && typeof all === 'object' && !Array.isArray(all) ? all : {}; }
 export function readSite(st, levelId, siteId) {
   const lv = readAll(st)[levelId], s = lv && typeof lv === 'object' ? lv[siteId] : null;
-  const got = s && Array.isArray(s.got) ? ROUND2.kinds.filter((k) => s.got.includes(k)) : [], list = (s && Array.isArray(s.list) ? s.list : []).map(cleanEntry).filter(Boolean).sort((a, b) => (better(a, b) ? -1 : better(b, a) ? 1 : 0)).slice(0, ROUND2.top);
+  const got = s && Array.isArray(s.got) ? STARS2.kinds.filter((k) => s.got.includes(k)) : [], list = (s && Array.isArray(s.list) ? s.list : []).map(cleanEntry).filter(Boolean).sort((a, b) => (better(a, b) ? -1 : better(b, a) ? 1 : 0)).slice(0, STARS2.top);
   return { got, list };
 }
 // legger et bestått bygg i lista og husker hvilke ekstra stjerner som er tatt. ev = resultatet av evaluate(); entry = { cost, weight, parts, stars, v }.
@@ -76,20 +76,20 @@ export function record(st, levelId, siteId, ev, entry) {
   const cur = readSite(st, levelId, siteId), e = cleanEntry(entry); let rank = 0, isNew = false;
   const got = [...new Set([...cur.got, ...(ev ? ev.got : [])])], newGot = got.filter((k) => !cur.got.includes(k));
   let list = cur.list;
-  if (e && !list.some((x) => x.cost === e.cost && x.weight === e.weight && x.parts === e.parts)) { list = [...list, e].sort((a, b) => (better(a, b) ? -1 : better(b, a) ? 1 : 0)).slice(0, ROUND2.top); }
+  if (e && !list.some((x) => x.cost === e.cost && x.weight === e.weight && x.parts === e.parts)) { list = [...list, e].sort((a, b) => (better(a, b) ? -1 : better(b, a) ? 1 : 0)).slice(0, STARS2.top); }
   if (e) { const i = list.findIndex((x) => x.cost === e.cost && x.weight === e.weight && x.parts === e.parts); rank = i >= 0 ? i + 1 : 0; isNew = rank === 1 && !cur.list.some((x) => x.cost === e.cost && x.weight === e.weight && x.parts === e.parts); }
-  try { const all = readAll(st), lv = all[levelId] && typeof all[levelId] === 'object' ? all[levelId] : {}; lv[siteId] = { got, list }; all[levelId] = lv; st.set(ROUND2.key, all); } catch { /* ingen lagring */ }
+  try { const all = readAll(st), lv = all[levelId] && typeof all[levelId] === 'object' ? all[levelId] : {}; lv[siteId] = { got, list }; all[levelId] = lv; st.set(STARS2.key, all); } catch { /* ingen lagring */ }
   return { rank, isNew, newGot, got, list };
 }
-export const clearAll = (st) => { try { st.set(ROUND2.key, {}); } catch { /* ingen lagring */ } };
+export const clearAll = (st) => { try { st.set(STARS2.key, {}); } catch { /* ingen lagring */ } };
 // antall ekstra stjerner tatt / mulige i et brett (sites: brettets steder; bare steder med runde 2 teller)
 export function summary(st, levelId, sites) {
   let n = 0, total = 0; for (const s of sites || []) { const T = targetsOf(s, levelId); if (!T) continue; total += T.bonus ? 3 : 2; n += readSite(st, levelId, s.id).got.length; }
   return { n, total };
 }
-// som summary, men uten stedene: bare tallene fra round2_data.js og lagringen (menyen kjenner ikke brettet)
+// som summary, men uten stedene: bare tallene fra stars2_data.js og lagringen (menyen kjenner ikke brettet)
 export function summaryOf(st, levelId) {
-  let n = 0, total = 0; for (const [id, d] of Object.entries(ROUND2_DATA)) { if (d.level !== levelId) continue; total += d.bonus ? 3 : 2; n += readSite(st, levelId, id).got.length; }
+  let n = 0, total = 0; for (const [id, d] of Object.entries(STARS2_DATA)) { if (d.level !== levelId) continue; total += d.bonus ? 3 : 2; n += readSite(st, levelId, id).got.length; }
   return { n, total };
 }
 // hvor mange steder har runde 2 (til kravet «minst fire»)
@@ -99,5 +99,5 @@ export const sitesWith = (sites, levelId) => (sites || []).filter((s) => hasRoun
 // ev: evaluate(); got: tidligere tatt (readSite().got). Returnerer [{ k, ok, now, label }] i fast rekkefølge (bonus bare der stedet har en smule)
 export function chips(ev, got = []) {
   if (!ev) return [];
-  return ROUND2.kinds.filter((k) => k !== 'bonus' || ev.targets.bonus).map((k) => ({ k, ok: !!ev[k], had: got.includes(k), target: k === 'cheap' ? ev.targets.cheap : k === 'light' ? ev.targets.light : null }));
+  return STARS2.kinds.filter((k) => k !== 'bonus' || ev.targets.bonus).map((k) => ({ k, ok: !!ev[k], had: got.includes(k), target: k === 'cheap' ? ev.targets.cheap : k === 'light' ? ev.targets.light : null }));
 }

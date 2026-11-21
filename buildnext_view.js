@@ -2,7 +2,7 @@
 //  1) resultatkortet etter en prøve: «Bestått ★★☆», stor primærknapp (NESTE STED ▶ med navn og nummer, eller TILBAKE TIL SPILLET / FERDIG) og en mindre PRØV IGJEN. Kortet erstatter PRØV-raden mens resultatet vises.
 //  2) en ▶-knapp med navnet på neste sted i topplinjen (🔒 når det er låst; trykk viser hvorfor).
 // Stående: kortet ligger nederst over PRØV-raden. Liggende: kortet står i høyre panel der PRØV står. Logikken ligger i buildnext_logic.js. Ingen taster nevnes.
-import { r2Css, r2CardHtml, r2Sig } from './round2_view.js';   // R126
+import { r2Css, r2CardHtml, r2Sig } from './stars2_view.js';   // R126
 import { BN, cardOf, titleKey, primaryKey, starLine, createUse } from './buildnext_logic.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

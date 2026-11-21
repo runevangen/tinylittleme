@@ -1,11 +1,11 @@
 // R126: finner runde 2-terskler («bygg billigst», «bygg lettest») og et bevisbygg for hvert rutenett-sted med veilinje, ved å minimere et fagverk med den ekte fysikken (build_phys.js).
-// Bruk: node tools/make_round2.mjs   (skriver round2_data.js). Kjør på nytt hvis et sted, en last eller fysikken endres; test_round2.mjs sjekker at dataene fortsatt holder.
+// Bruk: node tools/make_stars2.mjs   (skriver stars2_data.js). Kjør på nytt hvis et sted, en last eller fysikken endres; test_stars2.mjs sjekker at dataene fortsatt holder.
 import fs from 'node:fs';
 import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
 const R = fileURLToPath(new URL('../', import.meta.url));
 register('data:text/javascript,' + encodeURIComponent(`export async function resolve(s,c,n){ if(s==='three') return {url:${JSON.stringify('file://' + R + 'lib/three.module.min.js')},shortCircuit:true}; return n(s,c); }`));
-const BL = await import(R + 'build_logic.js'), G = await import(R + 'grid_logic.js'), BP = await import(R + 'build_phys.js'), GS = await import(R + 'grid_stage.js'), EX = await import(R + 'grid_example.js'), GP = await import(R + 'grid_play.js'), R2 = await import(R + 'round2_logic.js');
+const BL = await import(R + 'build_logic.js'), G = await import(R + 'grid_logic.js'), BP = await import(R + 'build_phys.js'), GS = await import(R + 'grid_stage.js'), EX = await import(R + 'grid_example.js'), GP = await import(R + 'grid_play.js'), R2 = await import(R + 'stars2_logic.js');
 const rd = (f) => JSON.parse(fs.readFileSync(R + f, 'utf8'));
 const sources = [['levels/bygglab.level.json', null], ['levels/badebro.level.json', null]];
 const mkB = (site) => { const B = BL.createBuild(JSON.parse(JSON.stringify(site)), {}, []); B.gridDeck = false; G.setMode(B, 'grid'); return B; };
@@ -54,6 +54,6 @@ for (const [file] of sources) {
     console.log(site.id, 'billigst', mc.cost, 'lettest', ml.weight.toFixed(2), 'bonus', bonus ? JSON.stringify(bonus) : '-', withBonus ? 'bevist' : 'ikke bevist');
   }
 }
-const body = '// R126: generert av tools/make_round2.mjs (ikke rediger for hånd). Terskler for runde 2-stjerner og bevisbygg (applySpec-format: 0 og 1 = ankrene, 2.. = nodes) per byggested.\n'
-  + 'export const ROUND2_DATA = ' + JSON.stringify(out, null, 1).replace(/\n\s+/g, ' ') + ';\n';
-fs.writeFileSync(R + 'round2_data.js', body); console.log('skrev round2_data.js:', Object.keys(out).join(', '));
+const body = '// R126: generert av tools/make_stars2.mjs (ikke rediger for hånd). Terskler for runde 2-stjerner og bevisbygg (applySpec-format: 0 og 1 = ankrene, 2.. = nodes) per byggested.\n'
+  + 'export const STARS2_DATA = ' + JSON.stringify(out, null, 1).replace(/\n\s+/g, ' ') + ';\n';
+fs.writeFileSync(R + 'stars2_data.js', body); console.log('skrev stars2_data.js:', Object.keys(out).join(', '));
