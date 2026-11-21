@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.93** – R111 (fra Rune): låste steder (Byggeskole 4 m.fl.) viser den gamle layouten; lagt i veikartet.
 - **2.92** – R110 (fra Rune): trykk på planker i byggeren (legg ut, velg) og Tåler-beregningen, lagt i veikartet.
 - **2.91** – R109 (fra Rune): berøringsrettelser i byggeskjermen: fast ↺ ↻ ✕-rad, avbrutt berøring, ⚑ øverst, tekst uten overlapp, pause i 3D bak byggeskjermen.
 - **2.90** – R109 (fra Rune): Vippe og klassiske steder (vri, ⚑, tekst i liggende, tregt) lagt i veikartet.
