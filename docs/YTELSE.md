@@ -197,3 +197,6 @@ Bygde deler i verdenen (`build.js` `showWorld`) bruker `build_tex.js`: én prose
 - **Teksturminne:** fire klassiske deler (planke, kort planke, kloss, høykant): 2 teksturer, ca. 196 KB (mål: `bld.world.texStats()`); alle åtte familiene til sammen ca. 0,4 MB, under kravet på 1 MB; halvert på Lav profil/Enkel grafikk (`texLow`).
 - **Skygge:** delene kaster/tar imot skygge, men kasterne begrenses av `shradius`/`shevery` som for møbler (`⚙ → Admin`). Normalkart er utelatt (malt trekorn og børsting holder, ingen ekstra tekstur).
 - Ekte FPS og følelse: **testes på iPhone** (SwiftShader her gir bare relativ tid). Slå av med ⚙ → Spill → «Teksturer på bygde deler» for å sammenligne.
+
+## R118 · FRA og TIL ved byggestedet
+Statisk budsjett (målt i `bld.spanStats()` og `test_buildspan.mjs`): markørene er delte geometrier og materialer (ring, stolpe, flagg, to skilt-teksturer à 256×112, én stiplet linje), bare stedet nærmest figuren er synlig, høyst 8 tegnekall (2 ringer, 2 stolper, 2 skilt, 1 flagg, 1 linje), ingen skygge (`castShadow`/`receiveShadow` av), ingen ekstra lys. Teksturminne ca. 2 × 115 kB. Ekte FPS og følelse i bevegelse testes på iPhone (miljøet har ingen GPU).

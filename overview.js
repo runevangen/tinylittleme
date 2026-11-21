@@ -7,7 +7,7 @@ import { miniLayout, toMap, mapScale, mapDots, overviewCam, ovBlend, ovDone, ovD
 
 const COL = { crumb: '#ffd23f', flag: '#4aa3ff', goal: '#3df0b0', hero: '#ffffff' };
 
-export function createOverview({ scene, camera, LEVEL, player, mv, $, getYaw, getSave, getSaves, crumbsOn, miniOn, isPlay, isMenu, isBoss, isWon, logEv, toast }) {
+export function createOverview({ scene, camera, LEVEL, player, mv, $, getYaw, getSave, getSaves, crumbsOn, miniOn, isPlay, isMenu, isBoss, isWon, logEv, toast, getSpans = () => [] }) {
   const room = LEVEL.room, dpr = () => Math.min(2, window.devicePixelRatio || 1);
   const _q = new THREE.Quaternion(), _m = new THREE.Matrix4(), _up = new THREE.Vector3(0, 1, 0), _p = new THREE.Vector3(), _l = new THREE.Vector3();
   const finite = !!room && [room.x0, room.x1, room.z0, room.z1].every(Number.isFinite);
@@ -32,6 +32,11 @@ export function createOverview({ scene, camera, LEVEL, player, mv, $, getYaw, ge
     path(poly(room.x0, room.z0, room.x1, room.z1)); mg.fillStyle = 'rgba(255,255,255,.10)'; mg.fill(); mg.strokeStyle = 'rgba(255,255,255,.55)'; mg.lineWidth = 1.2; mg.stroke();
     mg.fillStyle = 'rgba(255,200,120,.22)';
     for (const b of boxes) { if ((b.max[0] - b.min[0]) * (b.max[2] - b.min[2]) < 6) continue; path(poly(b.min[0], b.min[2], b.max[0], b.max[2])); mg.fill(); }
+    for (const sp of getSpans()) {   // R118: byggested som spenn: grønn FRA-prikk, gul TIL-prikk og en linje mellom
+      const a = toMap(sp.from.x, sp.from.z, room, S, yaw), b = toMap(sp.to.x, sp.to.z, room, S, yaw);
+      mg.strokeStyle = '#ffffff'; mg.lineWidth = 1.6; mg.setLineDash([3, 2]); mg.beginPath(); mg.moveTo(a.x, a.y); mg.lineTo(b.x, b.y); mg.stroke(); mg.setLineDash([]);
+      for (const [m, col] of [[a, '#3df0b0'], [b, '#ffd23f']]) { mg.beginPath(); mg.arc(m.x, m.y, 3.2, 0, Math.PI * 2); mg.fillStyle = col; mg.fill(); mg.lineWidth = 1.2; mg.strokeStyle = '#10151f'; mg.stroke(); }
+    }
     for (const p of mapDots({ goal: LEVEL.goal, save: getSave(), saves: getSaves(), crumbs: LEVEL.crumbList || [], player, crumbsOn: crumbsOn() })) {
       const m = toMap(p.x, p.z, room, S, yaw);
       if (p.kind === 'hero') {                                       // figuren: hvit trekant som peker dit kameraet ser (opp)

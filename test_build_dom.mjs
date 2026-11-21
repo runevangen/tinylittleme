@@ -42,7 +42,7 @@ assert.ok(bm.active, 'B åpner på tastatur'); for (const f of keys) f(key('Esca
   const L2 = { boxes: [], build: { sites: [{ id: 'q', x: 0, y: 2, z: 0, w: 6, h: 8, loads: ['ball', 'car'], anchors: [{ u: -1.5, v: 0 }, { u: 1.5, v: 0 }], start: { u: -4, v: 0 }, goal: { u: 4, v: 0 } }], parts: [{ id: 'p', type: 'plank_l', x: 10, y: 1, z: 0 }] } };
   const log2 = []; const solvedIds = [];
   const b2 = createBuildMode({ scene: { add() {}, remove() {} }, LEVEL: L2, player, $: () => mkEl(), T: (k) => k, logEv: (t, d) => log2.push([t, d]), toast() {}, TOUCH: true, buzz() {}, audio: {}, isPlay: () => true, isMenu: () => false, isBoss: () => false, isWon: () => false, isOv: () => false, getSnap: () => true, setSnap() {}, allParts: () => true, onSolved: (id) => solvedIds.push(id), getWorld: () => false });
-  const root2 = body.children[body.children.length - 2], click = (l) => { for (const f of root2._l.click || []) f({ target: { closest: () => ({ dataset: { l } }) } }); };
+  const root2 = body.children[body.children.length - 3], click = (l) => { for (const f of root2._l.click || []) f({ target: { closest: () => ({ dataset: { l } }) } }); };
   b2.update(0.016, true); assert.ok(b2.open()); b2.close('t');
   b2.load({ got: ['p'], solved: [], sites: { q: { have: ['p'], placed: [{ id: 'p', u: 0, v: 0.25, rot: 0 }], links: [] } } });
   b2.update(0.016, true); assert.ok(b2.open());
@@ -63,7 +63,7 @@ assert.ok(bm.active, 'B åpner på tastatur'); for (const f of keys) f(key('Esca
   const log4 = [], toasts = [], calls = [], copied = []; let tcode = 'tlm-7c3e8e5d', fail = false;
   const mkB = (L) => createBuildMode({ scene: { add() {}, remove() {} }, LEVEL: L, player, $: () => mkEl(), T: (k, p) => k + (p ? JSON.stringify(p) : ''), logEv: (t, d) => log4.push([t, d]), toast: (m) => toasts.push(m), TOUCH: true, buzz() {}, audio: {}, isPlay: () => true, isMenu: () => false, isBoss: () => false, isWon: () => false, isOv: () => false, getSnap: () => true, setSnap() {}, allParts: () => true, getWorld: () => false, levelId: 'tst', getVersion: () => '9.9', getCode: () => tcode,
     netFetch: async (url, init) => { calls.push({ url, body: JSON.parse(init.body) }); if (fail) throw new Error('offline'); return { ok: true, status: 200, json: async () => ({ ok: true, rank: 2, cost: 2, parts: 1 }) }; }, copyText: async (t) => { copied.push(t); } });
-  const b4 = mkB(L4); const root4 = body.children[body.children.length - 2], clk = (s) => { for (const f of root4._l.click || []) f({ target: { closest: () => ({ dataset: { s } }) } }); };
+  const b4 = mkB(L4); const root4 = body.children[body.children.length - 3], clk = (s) => { for (const f of root4._l.click || []) f({ target: { closest: () => ({ dataset: { s } }) } }); };
   const tick = () => new Promise((r) => setTimeout(r, 0));
   b4.load({ got: ['p'], solved: [], sites: { q: { have: ['p'], placed: [{ id: 'p', u: 0, v: 0.25, rot: 0 }], links: [] } } });
   b4.update(0.016, true); assert.ok(b4.open()); assert.equal(b4.record('q'), null, 'ingen opptak før første prøve');

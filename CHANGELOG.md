@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.106** – R118: FRA og TIL ved byggestedet: markører i verden, BYGG-knapp med sted og gap, etiketter i byggeskjermen, minikart og pil (valg `buildfromto`).
 - **2.105** – R117: teksturer på bygde deler i verdenen (tre, stål, tau, plast, leker), valg `buildtex` i ⚙ → Spill.
 - **2.104** – `docs/BYGGING_RUNDE2.md`: utkast til runde 2 av byggebrettene, mindre samling, nye byggemekanismer og 3D (kilder fra søk).
 - **2.103** – R119 (L3: Bygg 5, broen over badekaret, bare trekanter holder) lagt i veikartet.
