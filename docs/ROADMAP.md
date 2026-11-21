@@ -54,6 +54,29 @@ Rapport (⚑ fra spillet, v2.99, Byggeskole, 174,9 s): «Stopper av usynlig vegg
 Ferdig når: ingen usynlige vegger rundt bygde deler, figuren kommer forbi og over dem som den ser ut til, og tester og boot er grønne.
 
 
+### [ ] R128 · Belastningsvisning som verktøy: ett trykk «bytt til stål» (Rutenett)
+Fra `docs/BYGGING_RUNDE2.md` §3.4 (Runes valg: alle fire mekanismer). Etter en PRØV som feilet (eller i SLOW/PAUSE) vises hvilken stav som tar mest; trykk den og så **BYTT TIL STÅL** (ett trykk) i stedet for å slette og tegne på nytt. Tillegg i det delte Rutenett-laget (`grid_view.js`, `grid_logic.js`, `buildux_*`), dagens knapper uendret, bak valg `buildswapsteel` i ⚙ → Spill.
+Krav: (1) knappen vises ved valgt stav (tre/tau → stål), pris/budsjett vises og kontrolleres; (2) ANGRE virker; (3) sterkeste belastning pulserer som hint etter en feilet prøve; (4) fungerer i Hyllebroen og Byggeskolen (R101); (5) test + NYTT-rad + `logEv`.
+Ferdig når: en svak stav kan byttes til stål med ett trykk, budsjett og angre virker i begge byggesteder, og tester og boot er grønne.
+
+### [ ] R127 · Ny del: kabel som bærer i strekk (hengebro) + Byggeskole-oppdrag
+Fra `docs/BYGGING_RUNDE2.md` §3.3 (Runes valg). Kabel er en stav som bare bærer i strekk (som tau, men med bue/slakk og høy styrke) og som lar spilleren bygge en hengebro mellom høye tårn. Additivt, bak valg `buildcable`; dagens materialer uendret.
+Krav: (1) `grid_logic.js`/`build_phys.js`: kabel som tau med høy strekkstyrke, null trykkstyrke, vist med lett nedbøyning; (2) delen i delebrettet og i materialvalg i Rutenett; (3) et nytt Byggeskole-sted «Hengebro» (lås via `grid_stage.js`, egen start/mål, sjekk med `tools/` bot/walk) som introduserer bare kabel (én ny ting om gangen); (4) test, NYTT-rad, `logEv`.
+Ferdig når: en hengebro med kabel og to tårn består og en uten kabelstrekk feiler, stedet kan spilles i Byggeskolen, og tester og boot er grønne.
+
+### [ ] R126 · Runde 2 av Badebroen og Byggeskolen: ekstra stjerner (billigst, lettest) og beste-liste
+Fra `docs/BYGGING_RUNDE2.md` §2 (kreativitet). Badebroen (R119) og Byggeskolens steder får runde 2-stjerner: «bygg billigst» og «bygg lettest» som egne stjerner, bonusmål (samle en smule midt på spennet som valgfri omvei) og beste-liste per brett (KODE/BESTE finnes). Delte moduler (R101), bak valg `buildround2`.
+Krav: (1) ekstra stjerner i resultatkortet og i Byggeskolens stedsliste; (2) valgfritt bonusmål ved midtpunktet; (3) beste-liste vises og lagres; (4) test + NYTT-rad.
+Ferdig når: Badebroen og minst fire Byggeskole-steder viser runde 2-stjerner, beste-lister virker, og tester og boot er grønne.
+
+### [ ] R125 · Runde 2 av Klossetrappa og Vippa: høyere bygging og balanse
+Fra `docs/BYGGING_RUNDE2.md` §2 (høyere bygging, hindringer). Klossetrappa: tårn som må bygges 6–10 enheter opp for å nå en hylle, mål og ankre i ulik høyde. Vippa: bevegelig støtte som krever balanse og/eller sidevind. En ny ting per brett. Lages som runde 2-variant (valg `buildround2`, vanskelighet «Runde 2» i brettvalget), dagens brett uendret. Gå med `tools/walk_route.mjs` og bevis med bot.
+Ferdig når: begge runde 2-brett kan spilles og vinnes, første forsøk med enkleste bygg feiler, og tester og boot er grønne.
+
+### [ ] R124 · Runde 2 av Hyllebroen og Kjøkkenbroen: større spenn, ulik høyde og to mål
+Fra `docs/BYGGING_RUNDE2.md` §2 (Runes valg: runde 2 med større bruer og kreativitet). Gap 12–18 byggeenheter (stål og fagverk nødvendig), mål og ankre i ulik høyde, to gyldige veier/mål, variert last (tung bil + robot etter hverandre). Delene er der fra start (R120). Lages som runde 2-variant (valg `buildround2`, vanskelighet «Runde 2»), dagens brett uendret. Gå med `tools/walk_route.mjs`, bevis med bot, bruk `make_variants` der det passer.
+Ferdig når: begge runde 2-brett kan spilles og vinnes med fagverk i stål, tre alene feiler, og tester og boot er grønne.
+
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
