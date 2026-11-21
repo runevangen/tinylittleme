@@ -144,7 +144,7 @@ const bridge = (site, mat = 'wood', order = null) => {   // flatt dekke fra anke
 // ---------- 7) Bygglab: stedene med rutenett ----------
 {
   const gs = lab.build.sites.filter((s) => s.grid); assert.ok(gs.length >= 1 && gs.some((s) => s.lab.key === 'bro'), 'Bygglab har minst ett sted i rutenett-modus: ' + gs.map((s) => s.lab.key));
-  assert.equal(gs.length, 8, 'R74: alle åtte steder har rutenett');
+  assert.equal(gs.length, 9, 'R74: alle ni steder har rutenett');
   for (const s of gs.filter((q) => !q.grid.anchors)) {   // R74: trapp og vippe har egne ankre i rutenett-modus (grid.anchors, testes i test_gridstage.mjs)
     const pts = G.latticePoints(s); for (const an of s.anchors) assert.ok(pts.some((p) => Math.abs(p.u - an.u) < 1e-6 && Math.abs(p.v - an.v) < 1e-6), `${s.id}: ankrene ligger på rutenettet`);
     assert.ok(G.gridStep(s) > 0.5 && G.gridStep(s) <= 3 && s.grid.stars?.three && s.grid.stars?.two, `${s.id}: trinn og terskler`);

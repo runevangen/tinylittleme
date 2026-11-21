@@ -7,7 +7,7 @@ import { starThresholds } from './build_budget.js';
 
 export const BUX = {
   levels: { bro: ['bro1'], kjokkenbro: ['kjokken1'] },   // vanlige brett: byggestedene som får skjermen
-  labKeys: ['bro', 'fagverk'],                            // Bygglab: stedene «bro» og «fagverk» (lab.key)
+  labKeys: ['bro', 'fagverk', 'bred'],                            // Bygglab: stedene «bro», «fagverk» og «bred» (lab.key, R123)
   snapPx: 30,        // fingeren snapper til en knute innen så mange px
   pointPx: 34,       // ... og til et rutenettpunkt innen så mange px (eller 0,62 rute, det som er størst)
   grabPx: 28,        // grep en knute (dra fra den) innen så mange px

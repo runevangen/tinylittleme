@@ -364,3 +364,57 @@ export function runSim(def, opts = {}) {
   }
   return { load: isLoad(opts.load) ? opts.load : DEFAULT_LOAD, result: sim.state.state === 'won' ? 'won' : 'lost', reason: sim.state.reason, t: +sim.t.toFixed(3), breaks, linkBreaks, figure: { u: sim.figure.x, v: sim.figure.y } };
 }
+
+// ---------- R123: to-lags bygg («2,5D», dobbel bro) og sidekraft ----------
+// Forenkling (docs/BYGGING_RUNDE2.md §4A): hvert plan har den vanlige 2D-fysikken for seg (lasten ligger på planet den kjører på, og de to planene er like, så én simulering gjelder begge: lasten kjører i to baner side om side).
+// Sidekraften (vind) er en egen, enkel stivhetsmodell oppå: ingen 3D-fysikk, bare tall som vokser jevnt og kan telles på:
+//  - vinden W(t) vokser lineært fra 0 til `wind` fra SETTLE over SIDE.ramp sekunder
+//  - et enkelt plan tåler SIDE.plane. Uten tverrstag (eller når alle er røket) står hvert plan alene mot hele vinden: W > SIDE.plane velter bygget (tap, grunn 'wind')
+//  - med tverrstag deler planene vinden (W/2 hver) og tverrstagene bærer momentet: kraft per levende stag f = W · SIDE.hk / (d · antall levende). Et stag ryker når f > kapasiteten (SIDE.cap, diagonaler SIDE.diag ganger så sterke,
+//    en fast, liten forskjell per stag så de ikke ryker i samme steg) i SIDE.steps steg på rad; da faller lasten på de gjenværende (de røyker en og en)
+//  - to plan tåler til sammen 2 · SIDE.plane (W over det velter også med hele tverrstag)
+// Alt er deterministisk (ingen tilfeldighet, bare tid og tall) og bruker ingen ekstra simulering: tiden per prøve er den samme som for ett plan (planene er like), pluss noen få tall per steg.
+export const SIDE = { plane: 1.0, hk: 1.2, cap: 0.45, diag: 1.3, ramp: 2, steps: 3 };
+export const windAt = (wind, t) => (wind > 0 ? wind * Math.min(1, Math.max(0, (t - SETTLE) / SIDE.ramp)) : 0);
+// ett steg av sidekraft-modellen. S = tilstand { braces: [{ id, cap, over, broken }] } (lages av sideState). Returnerer { f, alive, lost } og hendelser i ev.
+export function sideState(layers) {
+  return { n: layers?.n || 1, d: layers?.d || 1, braces: (layers?.braces || []).map((b, i) => ({ id: b.id, cap: SIDE.cap * (b.diag ? SIDE.diag : 1) * (1 + 0.04 * (i % 5)), over: 0, broken: false })), lost: false, f: 0, W: 0 };
+}
+export function sideStep(S, W, t, ev) {
+  S.W = W; if (S.lost || W <= 0) return S;
+  const alive = S.braces.filter((b) => !b.broken), layered = S.n >= 2;
+  if (layered && alive.length) {
+    S.f = W * SIDE.hk / (S.d * alive.length);
+    for (const b of alive) { b.over = S.f > b.cap ? b.over + 1 : 0; if (b.over >= SIDE.steps) { b.broken = true; ev.push({ type: 'bracebreak', id: b.id, t }); } }   // et stag om gangen går av hvert steg de er over grensen (de svakeste først fordi cap er litt ulik)
+  } else S.f = 0;
+  const left = S.braces.filter((b) => !b.broken).length;
+  if (W > (layered && left ? S.n * SIDE.plane : SIDE.plane)) S.lost = true;
+  return S;
+}
+// createSim med to-lags bygg og/eller sidekraft. def.layers = { n: 2, d, braces: [{ id, diag }] } (grid_25d.layersOf); opts.wind = sidekraft ved slutten av oppbyggingen (0 = ingen).
+// Uten layers og uten vind er dette nøyaktig createSim. Grensesnittet er det samme (step, pose, drain, state, figure, t, breaks, axial), pluss `side` (tilstand) og pose().lanes.
+export function createSim2(def, opts = {}) {
+  const wind = Number.isFinite(opts.wind) && opts.wind > 0 ? opts.wind : 0, layers = def.layers || null;
+  if (!wind && !layers) return createSim(def, opts);
+  const { layers: _l, ...plain } = def; void _l;
+  const A = createSim(plain, opts), S = sideState(layers), ev = [];
+  const step = () => {
+    if (A.state.state !== 'run') return A.state;
+    A.step(); if (A.state.state !== 'run' || A.t < SETTLE) return A.state;
+    sideStep(S, windAt(wind, A.t), A.t, ev);
+    if (S.lost && A.state.state === 'run') { A.state.state = 'lost'; A.state.reason = 'wind'; ev.push({ type: 'lose', why: 'wind', u: A.figure.x, v: A.figure.y }); }
+    return A.state;
+  };
+  const drain = () => { const a = A.drain(); return ev.length ? [...a, ...ev.splice(0, ev.length)] : a; };
+  const pose = () => { const p = A.pose(); p.lanes = layers ? 2 : 1; p.side = { W: S.W, f: S.f, braces: S.braces.map((b) => ({ id: b.id, broken: b.broken })) }; return p; };
+  return { ...A, step, drain, pose, side: S, get t() { return A.t; }, wind, layers };
+}
+// som runSim, men med createSim2 (to-lags bygg og/eller vind)
+export function runSim2(def, opts = {}) {
+  const sim = createSim2(def, opts), breaks = [], linkBreaks = [], braceBreaks = []; const maxT = opts.maxT ?? MAX_T;
+  while (sim.state.state === 'run' && sim.t < maxT + 0.001) {
+    sim.step();
+    for (const e of sim.drain()) { if (e.type === 'break') breaks.push({ id: e.id, u: e.u, v: e.v, t: e.t, ...(e.mode ? { mode: e.mode } : {}) }); else if (e.type === 'linkbreak') linkBreaks.push({ id: e.id, kind: e.kind, u: e.u, v: e.v, t: e.t }); else if (e.type === 'bracebreak') braceBreaks.push({ id: e.id, t: e.t }); }
+  }
+  return { load: isLoad(opts.load) ? opts.load : DEFAULT_LOAD, result: sim.state.state === 'won' ? 'won' : 'lost', reason: sim.state.reason, t: +sim.t.toFixed(3), breaks, linkBreaks, braceBreaks, figure: { u: sim.figure.x, v: sim.figure.y } };
+}

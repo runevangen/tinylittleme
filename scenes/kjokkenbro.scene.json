@@ -241,6 +241,13 @@
    "label": "Nå flagget oppå kjøleskapet",
    "en": "Reach the flag on top of the fridge",
    "gate": true
+  },
+  {
+   "id": "bred",
+   "type": "flag",
+   "flag": "bred_kjokken1",
+   "label": "Valgfritt: bygg en DOBBEL BRO som tåler sidevind (⋯ → DOBBEL BRO)",
+   "en": "Optional: build a DOUBLE BRIDGE that stands up to side wind (⋯ → DOUBLE BRIDGE)"
   }
  ],
  "build": {

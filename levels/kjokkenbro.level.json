@@ -507,6 +507,13 @@
    "z0": -12,
    "z1": 4,
    "top": 12.8
+  },
+  {
+   "id": "bred",
+   "type": "flag",
+   "flag": "bred_kjokken1",
+   "label": "Valgfritt: bygg en DOBBEL BRO som tåler sidevind (⋯ → DOBBEL BRO)",
+   "en": "Optional: build a DOUBLE BRIDGE that stands up to side wind (⋯ → DOUBLE BRIDGE)"
   }
  ],
  "ropes": [],

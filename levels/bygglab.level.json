@@ -5,12 +5,12 @@
   {
    "type": "floor",
    "min": [
-    -130,
+    -145,
     -2,
     -20
    ],
    "max": [
-    130,
+    145,
     0,
     20
    ],
@@ -22,12 +22,12 @@
   {
    "type": "wall",
    "min": [
-    -131,
+    -146,
     0,
     -20
    ],
    "max": [
-    -130,
+    -145,
     48,
     20
    ],
@@ -38,12 +38,12 @@
   {
    "type": "wall",
    "min": [
-    130,
+    145,
     0,
     -20
    ],
    "max": [
-    131,
+    146,
     48,
     20
    ],
@@ -54,12 +54,12 @@
   {
    "type": "wall",
    "min": [
-    -130,
+    -145,
     0,
     -21
    ],
    "max": [
-    130,
+    145,
     48,
     -20
    ],
@@ -70,12 +70,12 @@
   {
    "type": "wall",
    "min": [
-    -130,
+    -145,
     0,
     20
    ],
    "max": [
-    130,
+    145,
     48,
     21
    ],
@@ -86,12 +86,12 @@
   {
    "type": "wood",
    "min": [
-    -115,
+    -130,
     0,
     -8
    ],
    "max": [
-    -103.5,
+    -118.5,
     3,
     8
    ],
@@ -105,12 +105,12 @@
   {
    "type": "wood",
    "min": [
-    -96.5,
+    -111.5,
     0,
     -8
    ],
    "max": [
-    -85,
+    -100,
     3,
     8
    ],
@@ -124,12 +124,12 @@
   {
    "type": "wood",
    "min": [
-    -85,
+    -100,
     0,
     -8
    ],
    "max": [
-    -65.75,
+    -80.75,
     3,
     8
    ],
@@ -143,12 +143,12 @@
   {
    "type": "wood",
    "min": [
-    -65.75,
+    -80.75,
     0,
     -8
    ],
    "max": [
-    -55,
+    -70,
     8,
     8
    ],
@@ -162,12 +162,12 @@
   {
    "type": "wood",
    "min": [
-    -55,
+    -70,
     0,
     -8
    ],
    "max": [
-    -43.25,
+    -58.25,
     3,
     8
    ],
@@ -181,12 +181,12 @@
   {
    "type": "wood",
    "min": [
-    -36.75,
+    -51.75,
     0,
     -8
    ],
    "max": [
-    -25,
+    -40,
     6.5,
     8
    ],
@@ -200,12 +200,12 @@
   {
    "type": "wood",
    "min": [
-    -25,
+    -40,
     0,
     -8
    ],
    "max": [
-    -12.5,
+    -27.5,
     3,
     8
    ],
@@ -219,12 +219,12 @@
   {
    "type": "wood",
    "min": [
-    -7.5,
+    -22.5,
     0,
     -8
    ],
    "max": [
-    5,
+    -10,
     3,
     8
    ],
@@ -238,12 +238,12 @@
   {
    "type": "wood",
    "min": [
-    5,
+    -10,
     0,
     -8
    ],
    "max": [
-    16.5,
+    1.5,
     3,
     8
    ],
@@ -257,12 +257,12 @@
   {
    "type": "wood",
    "min": [
-    23.5,
+    8.5,
     0,
     -8
    ],
    "max": [
-    35,
+    20,
     3,
     8
    ],
@@ -276,12 +276,12 @@
   {
    "type": "wood",
    "min": [
-    35,
+    20,
     0,
     -8
    ],
    "max": [
-    46.5,
+    31.5,
     3,
     8
    ],
@@ -295,12 +295,12 @@
   {
    "type": "wood",
    "min": [
-    53.5,
+    38.5,
     0,
     -8
    ],
    "max": [
-    65,
+    50,
     3,
     8
    ],
@@ -314,12 +314,12 @@
   {
    "type": "wood",
    "min": [
-    65,
+    50,
     0,
     -8
    ],
    "max": [
-    77.5,
+    62.5,
     3,
     8
    ],
@@ -333,12 +333,12 @@
   {
    "type": "wood",
    "min": [
-    82.5,
+    67.5,
     0,
     -8
    ],
    "max": [
-    95,
+    80,
     3,
     8
    ],
@@ -352,12 +352,12 @@
   {
    "type": "wood",
    "min": [
-    95,
+    80,
     0,
     -8
    ],
    "max": [
-    106.5,
+    91.5,
     3,
     8
    ],
@@ -371,14 +371,14 @@
   {
    "type": "wood",
    "min": [
-    113.5,
+    98.5,
     0,
-    -20
+    -8
    ],
    "max": [
-    125,
+    110,
     3,
-    20
+    8
    ],
    "id": "ped_b8",
    "kind": "box",
@@ -390,12 +390,50 @@
   {
    "type": "wood",
    "min": [
-    -55,
+    110,
+    0,
+    -8
+   ],
+   "max": [
+    121.5,
+    3,
+    8
+   ],
+   "id": "ped_a9",
+   "kind": "box",
+   "color": 12159573,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    128.5,
+    0,
+    -20
+   ],
+   "max": [
+    140,
+    3,
+    20
+   ],
+   "id": "ped_b9",
+   "kind": "box",
+   "color": 13212261,
+   "material": "wood",
+   "cp": false,
+   "soft": false
+  },
+  {
+   "type": "wood",
+   "min": [
+    -70,
     3,
     -8
    ],
    "max": [
-    -52,
+    -67,
     5.5,
     8
    ],
@@ -409,12 +447,12 @@
   {
    "type": "wood",
    "min": [
-    -25,
+    -40,
     3,
     -8
    ],
    "max": [
-    -22,
+    -37,
     4.75,
     8
    ],
@@ -433,7 +471,7 @@
    "id": "flagg_stang_1",
    "kind": "box",
    "pos": [
-    -87.6,
+    -102.6,
     6,
     0
    ],
@@ -450,7 +488,7 @@
    "id": "flagg_duk_1",
    "kind": "box",
    "pos": [
-    -86.32,
+    -101.32,
     8,
     0
    ],
@@ -467,7 +505,7 @@
    "id": "flagg_stang_2",
    "kind": "box",
    "pos": [
-    -57.6,
+    -72.6,
     11,
     0
    ],
@@ -484,7 +522,7 @@
    "id": "flagg_duk_2",
    "kind": "box",
    "pos": [
-    -56.32,
+    -71.32,
     13,
     0
    ],
@@ -501,7 +539,7 @@
    "id": "flagg_stang_3",
    "kind": "box",
    "pos": [
-    -27.6,
+    -42.6,
     9.5,
     0
    ],
@@ -518,7 +556,7 @@
    "id": "flagg_duk_3",
    "kind": "box",
    "pos": [
-    -26.32,
+    -41.32,
     11.5,
     0
    ],
@@ -535,7 +573,7 @@
    "id": "flagg_stang_4",
    "kind": "box",
    "pos": [
-    2.4,
+    -12.6,
     6,
     0
    ],
@@ -552,7 +590,7 @@
    "id": "flagg_duk_4",
    "kind": "box",
    "pos": [
-    3.68,
+    -11.32,
     8,
     0
    ],
@@ -569,7 +607,7 @@
    "id": "flagg_stang_5",
    "kind": "box",
    "pos": [
-    32.4,
+    17.4,
     6,
     0
    ],
@@ -586,7 +624,7 @@
    "id": "flagg_duk_5",
    "kind": "box",
    "pos": [
-    33.68,
+    18.68,
     8,
     0
    ],
@@ -603,7 +641,7 @@
    "id": "flagg_stang_6",
    "kind": "box",
    "pos": [
-    62.4,
+    47.4,
     6,
     0
    ],
@@ -620,7 +658,7 @@
    "id": "flagg_duk_6",
    "kind": "box",
    "pos": [
-    63.68,
+    48.68,
     8,
     0
    ],
@@ -637,7 +675,7 @@
    "id": "flagg_stang_7",
    "kind": "box",
    "pos": [
-    92.4,
+    77.4,
     6,
     0
    ],
@@ -654,7 +692,7 @@
    "id": "flagg_duk_7",
    "kind": "box",
    "pos": [
-    93.68,
+    78.68,
     8,
     0
    ],
@@ -671,7 +709,7 @@
    "id": "flagg_stang_8",
    "kind": "box",
    "pos": [
-    122.4,
+    107.4,
     6,
     0
    ],
@@ -688,7 +726,41 @@
    "id": "flagg_duk_8",
    "kind": "box",
    "pos": [
-    123.68,
+    108.68,
+    8,
+    0
+   ],
+   "size": [
+    2.24,
+    2,
+    0.2
+   ],
+   "color": 14697786,
+   "material": "fabric"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_stang_9",
+   "kind": "box",
+   "pos": [
+    137.4,
+    6,
+    0
+   ],
+   "size": [
+    0.32,
+    6,
+    0.32
+   ],
+   "color": 16118248,
+   "material": "plastic"
+  },
+  {
+   "shape": "box",
+   "id": "flagg_duk_9",
+   "kind": "box",
+   "pos": [
+    138.68,
     8,
     0
    ],
@@ -704,72 +776,81 @@
  "hints": [
   {
    "id": "ped_a1",
-   "text": "Sted 1/8\nTrykk BYGG for å bygge her.",
+   "text": "Sted 1/9\nTrykk BYGG for å bygge her.",
    "pos": [
-    -109.25,
+    -124.25,
     3.9,
     0
    ]
   },
   {
    "id": "ped_a2",
-   "text": "Sted 2/8\nTrykk BYGG for å bygge her.",
+   "text": "Sted 2/9\nTrykk BYGG for å bygge her.",
    "pos": [
-    -75.375,
+    -90.375,
     3.9,
     0
    ]
   },
   {
    "id": "ped_a3",
-   "text": "Sted 3/8\nTrykk BYGG for å bygge her.",
+   "text": "Sted 3/9\nTrykk BYGG for å bygge her.",
    "pos": [
-    -49.125,
+    -64.125,
     3.9,
     0
    ]
   },
   {
    "id": "ped_a4",
-   "text": "Sted 4/8\nTrykk BYGG for å bygge her.",
+   "text": "Sted 4/9\nTrykk BYGG for å bygge her.",
    "pos": [
-    -18.75,
+    -33.75,
     3.9,
     0
    ]
   },
   {
    "id": "ped_a5",
-   "text": "Sted 5/8\nTrykk BYGG for å bygge her.",
+   "text": "Sted 5/9\nTrykk BYGG for å bygge her.",
    "pos": [
-    10.75,
+    -4.25,
     3.9,
     0
    ]
   },
   {
    "id": "ped_a6",
-   "text": "Sted 6/8\nTrykk BYGG for å bygge her.",
+   "text": "Sted 6/9\nTrykk BYGG for å bygge her.",
    "pos": [
-    40.75,
+    25.75,
     3.9,
     0
    ]
   },
   {
    "id": "ped_a7",
-   "text": "Sted 7/8\nTrykk BYGG for å bygge her.",
+   "text": "Sted 7/9\nTrykk BYGG for å bygge her.",
    "pos": [
-    71.25,
+    56.25,
     3.9,
     0
    ]
   },
   {
    "id": "ped_a8",
-   "text": "Sted 8/8\nTrykk BYGG for å bygge her.",
+   "text": "Sted 8/9\nTrykk BYGG for å bygge her.",
    "pos": [
-    100.75,
+    85.75,
+    3.9,
+    0
+   ]
+  },
+  {
+   "id": "ped_a9",
+   "text": "Sted 9/9\nTrykk BYGG for å bygge her.",
+   "pos": [
+    115.75,
     3.9,
     0
    ]
@@ -778,7 +859,7 @@
    "id": "trinn_2",
    "text": "Trinn\nVeien opp på den høye hylla uten å bygge.",
    "pos": [
-    -53.5,
+    -68.5,
     6.4,
     0
    ]
@@ -787,7 +868,7 @@
    "id": "trinn_3",
    "text": "Trinn\nVeien opp på den høye hylla uten å bygge.",
    "pos": [
-    -23.5,
+    -38.5,
     5.65,
     0
    ]
@@ -799,7 +880,7 @@
   {
    "wall": "N",
    "pos": [
-    -64,
+    -79,
     30,
     -19.95
    ],
@@ -811,7 +892,7 @@
   {
    "wall": "N",
    "pos": [
-    56,
+    41,
     30,
     -19.95
    ],
@@ -843,8 +924,8 @@
   "sites": [
    {
     "id": "lab1",
-    "label": "Sted 1/8",
-    "x": -100,
+    "label": "Sted 1/9",
+    "x": -115,
     "y": 3,
     "z": 0,
     "w": 20,
@@ -921,9 +1002,9 @@
     "lab": {
      "key": "bro",
      "n": 1,
-     "of": 8,
+     "of": 9,
      "flag": [
-      -87.6,
+      -102.6,
       3,
       0
      ],
@@ -1021,8 +1102,8 @@
    },
    {
     "id": "lab2",
-    "label": "Sted 2/8",
-    "x": -70,
+    "label": "Sted 2/9",
+    "x": -85,
     "y": 3,
     "z": 0,
     "w": 20,
@@ -1148,9 +1229,9 @@
     "lab": {
      "key": "trapp",
      "n": 2,
-     "of": 8,
+     "of": 9,
      "flag": [
-      -57.6,
+      -72.6,
       8,
       0
      ],
@@ -1276,8 +1357,8 @@
    },
    {
     "id": "lab3",
-    "label": "Sted 3/8",
-    "x": -40,
+    "label": "Sted 3/9",
+    "x": -55,
     "y": 3,
     "z": 0,
     "w": 20,
@@ -1356,9 +1437,9 @@
     "lab": {
      "key": "vippe",
      "n": 3,
-     "of": 8,
+     "of": 9,
      "flag": [
-      -27.6,
+      -42.6,
       6.5,
       0
      ],
@@ -1406,8 +1487,8 @@
    },
    {
     "id": "lab4",
-    "label": "Sted 4/8",
-    "x": -10,
+    "label": "Sted 4/9",
+    "x": -25,
     "y": 3,
     "z": 0,
     "w": 20,
@@ -1541,9 +1622,9 @@
     "lab": {
      "key": "fagverk",
      "n": 4,
-     "of": 8,
+     "of": 9,
      "flag": [
-      2.4,
+      -12.6,
       3,
       0
      ],
@@ -1721,8 +1802,8 @@
    },
    {
     "id": "lab5",
-    "label": "Sted 5/8",
-    "x": 20,
+    "label": "Sted 5/9",
+    "x": 5,
     "y": 3,
     "z": 0,
     "w": 20,
@@ -1836,9 +1917,9 @@
     "lab": {
      "key": "tau",
      "n": 5,
-     "of": 8,
+     "of": 9,
      "flag": [
-      32.4,
+      17.4,
       3,
       0
      ],
@@ -2049,8 +2130,8 @@
    },
    {
     "id": "lab6",
-    "label": "Sted 6/8",
-    "x": 50,
+    "label": "Sted 6/9",
+    "x": 35,
     "y": 3,
     "z": 0,
     "w": 20,
@@ -2134,9 +2215,9 @@
     "lab": {
      "key": "last",
      "n": 6,
-     "of": 8,
+     "of": 9,
      "flag": [
-      62.4,
+      47.4,
       3,
       0
      ],
@@ -2200,8 +2281,8 @@
    },
    {
     "id": "lab7",
-    "label": "Sted 7/8",
-    "x": 80,
+    "label": "Sted 7/9",
+    "x": 65,
     "y": 3,
     "z": 0,
     "w": 20,
@@ -2335,9 +2416,9 @@
     "lab": {
      "key": "taaler",
      "n": 7,
-     "of": 8,
+     "of": 9,
      "flag": [
-      92.4,
+      77.4,
       3,
       0
      ],
@@ -2508,8 +2589,8 @@
    },
    {
     "id": "lab8",
-    "label": "Sted 8/8",
-    "x": 110,
+    "label": "Sted 8/9",
+    "x": 95,
     "y": 3,
     "z": 0,
     "w": 20,
@@ -2586,9 +2667,9 @@
     "lab": {
      "key": "materialer",
      "n": 8,
-     "of": 8,
+     "of": 9,
      "flag": [
-      122.4,
+      107.4,
       3,
       0
      ],
@@ -2705,6 +2786,151 @@
       }
      ]
     }
+   },
+   {
+    "id": "lab9",
+    "label": "Sted 9/9",
+    "x": 125,
+    "y": 3,
+    "z": 0,
+    "w": 20,
+    "h": 12,
+    "anchors": [
+     {
+      "u": -3.5,
+      "v": 0
+     },
+     {
+      "u": 3.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.5
+     },
+     {
+      "u0": 3.5,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "d": 4,
+    "grid": {
+     "step": 1.75,
+     "stars": {
+      "three": {
+       "cost": 17,
+       "parts": 11
+      },
+      "two": {
+       "cost": 20,
+       "parts": 14
+      }
+     },
+     "stage": {
+      "loads": [
+       "ball"
+      ],
+      "massK": 1,
+      "budget": 20,
+      "wind": 1.6
+     }
+    },
+    "ref": {
+     "placed": [
+      {
+       "id": "p1",
+       "type": "plank_l",
+       "u": 0,
+       "v": 0.25,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
+      }
+     ]
+    },
+    "lab": {
+     "key": "bred",
+     "n": 9,
+     "of": 9,
+     "flag": [
+      137.4,
+      3,
+      0
+     ],
+     "solutions": [
+      {
+       "name": "lang planke",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "plank_l",
+         "u": 0,
+         "v": 0.25,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 0.5
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a9",
+        "@bro",
+        "ped_b9"
+       ]
+      },
+      {
+       "name": "linjal",
+       "placed": [
+        {
+         "id": "p1",
+         "type": "ruler",
+         "u": 0,
+         "v": 0.2,
+         "rot": 0
+        }
+       ],
+       "links": [],
+       "surfaces": [
+        {
+         "id": "@bro",
+         "u0": -5,
+         "u1": 5,
+         "top": 0.4
+        }
+       ],
+       "route": [
+        "gulv",
+        "ped_a9",
+        "@bro",
+        "ped_b9"
+       ]
+      }
+     ]
+    }
    }
   ],
   "parts": []
@@ -2716,35 +2942,35 @@
  "route": [
   {
    "id": "gulv",
-   "x0": -130,
-   "x1": 130,
+   "x0": -145,
+   "x1": 145,
    "z0": -20,
    "z1": 20,
    "top": 0
   },
   {
-   "id": "ped_b8",
-   "x0": 113.5,
-   "x1": 125,
+   "id": "ped_b9",
+   "x0": 128.5,
+   "x1": 140,
    "z0": -20,
    "z1": 20,
    "top": 3
   }
  ],
  "start": [
-  -108,
+  -123,
   0,
   -9
  ],
  "goal": [
-  123.2,
+  138.2,
   3,
   0
  ],
  "deathY": -15,
  "room": {
-  "x0": -130,
-  "x1": 130,
+  "x0": -145,
+  "x1": 145,
   "z0": -20,
   "z1": 20,
   "height": 48,
@@ -2773,11 +2999,11 @@
     "gap 25–35 cm"
    ],
    "uncertainty": "Ingen: rommet er tegnet for testing.",
-   "note": "Bygglab (R67). Åtte byggesteder i én bane; spillet åpner byggeskjermen ved start (valg i ⚙). Vanskelig vei uten bygging: gå på gulvet og hopp opp på sokkelen."
+   "note": "Bygglab (R67). Ni byggesteder i én bane; spillet åpner byggeskjermen ved start (valg i ⚙). Vanskelig vei uten bygging: gå på gulvet og hopp opp på sokkelen."
   },
   "solvable_by_graph": true,
   "helpers": [],
-  "nodes": 19,
-  "reachable": 19
+  "nodes": 21,
+  "reachable": 21
  }
 }

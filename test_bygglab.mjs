@@ -45,7 +45,7 @@ const L = lv('bygglab'), scene = JSON.parse(fs.readFileSync('scenes/bygglab.scen
 const sites = labSites(L);
 assert.deepEqual(LG.checkLab(L), [], 'brettdata i orden'); assert.ok(sites.length >= 7, `minst 7 byggesteder (${sites.length})`);
 assert.ok(LG.isLab(L) && !LG.isLab(lv('kontroll')) && !LG.isLab(lv('stue')), 'bare Bygglab er et lab-brett');
-assert.deepEqual(sites.map((s) => s.lab.key), ['bro', 'trapp', 'vippe', 'fagverk', 'tau', 'last', 'taaler', 'materialer'], 'rekkefølgen: bro, trapp, vippe, fagverk, tau og gummi, lasttest, «Tåler X», materialer');
+assert.deepEqual(sites.map((s) => s.lab.key), ['bro', 'trapp', 'vippe', 'fagverk', 'tau', 'last', 'taaler', 'materialer', 'bred'], 'rekkefølgen: bro, trapp, vippe, fagverk, tau og gummi, lasttest, «Tåler X», materialer, bred bro');
 assert.ok(L.build.parts.length === 0, 'ingen deler å lete etter: alt kommer fra byggeskjermen'); assert.ok(sites.every((s) => s.d === 4 && s.lab.solutions.length >= 2));
 for (const s of sites) assert.ok(L.boxes.some((b) => b.id === `ped_a${s.lab.n}`) && L.boxes.some((b) => b.id === `ped_b${s.lab.n}`), `${s.id}: sokler før og etter gapet`);
 // dekker alle byggefunksjonene fra R24–R50: planke, tape, trapp, vippe, fagverk (ledd), tau, gummistrikk, laster (ball, bil, robot), «Tåler X», materialer
@@ -108,10 +108,10 @@ for (const s of sites) {
   const B2 = BL.createBuild(site, {}, []), t2 = {}; LG.labFill(B2, t2, { unlimited: false }); assert.equal(B2.have.length, LG.labTypes().length * LG.LAB.fixed, 'uten ubegrenset: to av hver'); LG.labFill(B2, t2, { unlimited: false }); assert.equal(B2.have.length, LG.labTypes().length * LG.LAB.fixed, 'og aldri flere');
   const t3 = {}; assert.equal(LG.labRegister(t3, ['lab_block_2', 'p9', 'lab_seesaw_1']), 2); assert.deepEqual(t3, { lab_block_2: 'block', lab_seesaw_1: 'seesaw' }, 'typen leses av id-en ved Fortsett');
   assert.equal(LG.labStepSite(sites, sites[0].id, -1).id, sites.at(-1).id, '◀ på første sted går til siste'); assert.equal(LG.labStepSite(sites, sites.at(-1).id, 1).id, sites[0].id, '▶ på siste går til første'); assert.equal(LG.labStepSite(sites, sites[2].id, 1).id, sites[3].id);
-  const seen = new Set(); let id = sites[0].id; for (let i = 0; i < sites.length; i++) { seen.add(id); id = LG.labStepSite(sites, id, 1).id; } assert.equal(seen.size, sites.length, 'alle stedene nås med ▶'); assert.deepEqual(LG.labInfoOf(sites[2], sites), { n: 3, of: 8, key: 'vippe', cap: 0, loads: [] });
+  const seen = new Set(); let id = sites[0].id; for (let i = 0; i < sites.length; i++) { seen.add(id); id = LG.labStepSite(sites, id, 1).id; } assert.equal(seen.size, sites.length, 'alle stedene nås med ▶'); assert.deepEqual(LG.labInfoOf(sites[2], sites), { n: 3, of: 9, key: 'vippe', cap: 0, loads: [] });
   const reached = new Set(), f = sites[1].lab.flag, pl = { x: f[0], y: f[1], z: f[2], onGround: true };
   assert.equal(LG.labFlagStep(sites, reached, { x: 0, y: 0, z: 0, onGround: true }).length, 0, 'ikke ved noe flagg'); assert.equal(LG.labFlagStep(sites, reached, { ...pl, y: f[1] + 8 }).length, 0, 'ikke i lufta langt over');
-  const ev = LG.labFlagStep(sites, reached, pl); assert.deepEqual(ev.map((e) => [e.n, e.of, e.total, e.all]), [[2, 8, 1, false]]); assert.equal(LG.labFlagStep(sites, reached, pl).length, 0, 'bare én gang');
+  const ev = LG.labFlagStep(sites, reached, pl); assert.deepEqual(ev.map((e) => [e.n, e.of, e.total, e.all]), [[2, 9, 1, false]]); assert.equal(LG.labFlagStep(sites, reached, pl).length, 0, 'bare én gang');
   assert.deepEqual([...LG.labReachedLoad(LG.labReachedSave(reached), sites)], [sites[1].id]); assert.equal(LG.labReachedLoad(['finnes_ikke', 7], sites).size, 0);
   const home = LG.labHome(sites[3]); assert.ok(home.x < sites[3].x && home.x > sites[3].x - 15 && Math.abs(home.y - sites[3].y) < 0.1 && home.z === sites[3].z, 'hjem: på sokkelen før gapet'); assert.ok(!LG.labFar(sites[3], home) && LG.labFar(sites[3], { x: sites[5].x, y: 0, z: 0 }));
   assert.ok(LG.labAutoOpen({ lab: true, on: true, done: false, playing: true, onGround: true }) && !LG.labAutoOpen({ lab: true, on: false, done: false, playing: true, onGround: true }) && !LG.labAutoOpen({ lab: true, on: true, done: true, playing: true, onGround: true }) && !LG.labAutoOpen({ lab: false, on: true, done: false, playing: true, onGround: true }) && !LG.labAutoOpen({ lab: true, on: true, done: false, playing: false, onGround: true }) && !LG.labAutoOpen({ lab: true, on: true, done: false, playing: true, onGround: false }), 'åpner av seg selv bare når det skal');
@@ -129,8 +129,8 @@ for (const s of sites) {
   // ubegrenset mengde: alle delene finnes (først brettet), og blir ikke borte
   const st = () => bm.state().builds.find((q) => q.id === 'lab1'); assert.equal(st().have, LG.labTypes().length * LG.LAB.spare, 'tre av hver type med en gang');
   // ◀ ▶
-  const seq = []; for (let i = 0; i < 8; i++) { assert.ok(bm.lab.go(1)); seq.push(bm.lab.info().n); } assert.deepEqual(seq, [2, 3, 4, 5, 6, 7, 8, 1], '▶ går gjennom alle åtte og rundt'); assert.ok(bm.lab.go(-1) && bm.lab.info().n === 8, '◀ går bakover rundt'); bm.lab.go(1);
-  click('next'); assert.equal(bm.lab.info().n, 2, 'knappen ▶ (data-lb) virker'); click('prev'); assert.equal(bm.lab.info().n, 1, 'knappen ◀ virker'); assert.ok(log.some(([t, d]) => t === 'bygglab' && /^sted 2\/8 \(trapp\)/.test(d)), 'valg av sted logges (bygglab)');
+  const seq = []; for (let i = 0; i < 9; i++) { assert.ok(bm.lab.go(1)); seq.push(bm.lab.info().n); } assert.deepEqual(seq, [2, 3, 4, 5, 6, 7, 8, 9, 1], '▶ går gjennom alle ni og rundt'); assert.ok(bm.lab.go(-1) && bm.lab.info().n === 9, '◀ går bakover rundt'); bm.lab.go(1);
+  click('next'); assert.equal(bm.lab.info().n, 2, 'knappen ▶ (data-lb) virker'); click('prev'); assert.equal(bm.lab.info().n, 1, 'knappen ◀ virker'); assert.ok(log.some(([t, d]) => t === 'bygglab' && /^sted 2\/9 \(trapp\)/.test(d)), 'valg av sted logges (bygglab)');
   assert.ok(bm.lab.go(1) && bm.lab.go(1) && bm.lab.go(1) && bm.lab.go(1) && bm.lab.go(1) && bm.lab.go(1), 'til sted 7'); assert.equal(bm.lab.info().n, 7); assert.equal(bm.lab.info().cap, 10); assert.ok(bm.lab.line().includes('lab.task.taaler'), 'Tåler-stedet har sin oppgave'); bm.lab.go(-1); bm.lab.go(-1); bm.lab.go(-1); bm.lab.go(-1); bm.lab.go(-1); bm.lab.go(-1);
   assert.equal(bm.lab.info().n, 1);
   // bygg på sted 1 med ubrukte deler fra brettet: en lang planke (ingen leting) og prøv
@@ -158,7 +158,7 @@ for (const s of sites) {
   assert.ok(b2.inWorld('lab1') && LV2.boxes.some((b) => b.built === 'lab1'), 'bygget gjenopprettes i verdenen'); p2.x = LV2.start[0]; p2.z = LV2.start[2]; b2.update(0.016, true); assert.ok(b2.open()); assert.equal(b2.state().builds.find((q) => q.id === 'lab1').placed, 1, 'delene ligger igjen på brettet');
   b2.close('test'); b2.resetAll(); assert.ok(!b2.inWorld('lab1'), 'start på nytt nullstiller også lab');
   // målflagg: figuren står ved flagg 3
-  const f3 = LV.build.sites[2].lab.flag; Object.assign(player, { x: f3[0], y: f3[1], z: f3[2], onGround: true }); bm.update(0.016, true); assert.deepEqual(bm.lab.reached, ['lab3'], 'flagg 3 nådd'); assert.ok(log.some(([t, d]) => t === 'bygglab' && /^målflagg 3\/8 nådd \(1\/8\)/.test(d)) && toasts.some((m) => m.startsWith('lab.flag{"n":3,"of":8')), 'logges og vises');
+  const f3 = LV.build.sites[2].lab.flag; Object.assign(player, { x: f3[0], y: f3[1], z: f3[2], onGround: true }); bm.update(0.016, true); assert.deepEqual(bm.lab.reached, ['lab3'], 'flagg 3 nådd'); assert.ok(log.some(([t, d]) => t === 'bygglab' && /^målflagg 3\/9 nådd \(1\/9\)/.test(d)) && toasts.some((m) => m.startsWith('lab.flag{"n":3,"of":9')), 'logges og vises');
   assert.deepEqual(JSON.parse(JSON.stringify(bm.save())).lab.flags, ['lab3'], 'flagg lagres');
   // uten «ubegrenset»: bare to av hver
   const LV3 = JSON.parse(JSON.stringify(L)), p3 = { x: LV3.start[0], y: 0, z: LV3.start[2], onGround: true, state: 'ground' }, b3 = mk(LV3, p3, false); b3.update(0.016, true); assert.ok(b3.open()); assert.equal(b3.state().builds.find((q) => q.id === 'lab1').have, LG.labTypes().length * LG.LAB.fixed, 'admin: bare to av hver når ubegrenset er av');

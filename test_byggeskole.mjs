@@ -9,11 +9,11 @@ const mem = () => { const m = new Map(); return { get: (k, d) => (m.has(k) ? m.g
 const L = JSON.parse(fs.readFileSync('levels/bygglab.level.json', 'utf8')), sites = (L.build?.sites || L.buildSites).filter((s) => s.lab).sort((a, b) => a.lab.n - b.lab.n);
 
 // 1) fremdrift og merkelapp
-assert.equal(SL.SCHOOL.total, sites.length, 'antall steder stemmer med brettet (8)'); assert.deepEqual(SL.schoolSiteIds(), sites.map((s) => s.id), 'stedene lab1..lab8');
-assert.deepEqual(SL.schoolProgress(new Set()), { n: 0, total: 8, started: false, done: false });
-assert.deepEqual(SL.schoolProgress(['lab1', 'lab1', 'finnesikke', 7]), { n: 1, total: 8, started: true, done: false }, 'ukjente og doble telles ikke');
+assert.equal(SL.SCHOOL.total, sites.length, 'antall steder stemmer med brettet (9)'); assert.deepEqual(SL.schoolSiteIds(), sites.map((s) => s.id), 'stedene lab1..lab9');
+assert.deepEqual(SL.schoolProgress(new Set()), { n: 0, total: 9, started: false, done: false });
+assert.deepEqual(SL.schoolProgress(['lab1', 'lab1', 'finnesikke', 7]), { n: 1, total: 9, started: true, done: false }, 'ukjente og doble telles ikke');
 assert.equal(SL.schoolProgress(SL.schoolSiteIds()).done, true);
-assert.equal(SL.schoolBadge(SL.schoolProgress([])).kind, 'recommended'); assert.deepEqual(SL.schoolBadge(SL.schoolProgress(['lab1', 'lab2', 'lab3'])), { kind: 'progress', n: 3, total: 8 }); assert.equal(SL.schoolBadge(SL.schoolProgress(SL.schoolSiteIds())).kind, 'done');
+assert.equal(SL.schoolBadge(SL.schoolProgress([])).kind, 'recommended'); assert.deepEqual(SL.schoolBadge(SL.schoolProgress(['lab1', 'lab2', 'lab3'])), { kind: 'progress', n: 3, total: 9 }); assert.equal(SL.schoolBadge(SL.schoolProgress(SL.schoolSiteIds())).kind, 'done');
 { const st = mem(); GS.passRecord(st, 'bygglab', 'lab1'); GS.passRecord(st, 'bygglab', 'lab2'); assert.equal(SL.schoolProgress(GS.passRead(st, 'bygglab')).n, 2, 'leser bestått-lista fra rutenett-oppdragene'); }
 
 // 2) lagring tåler rot, kaster aldri
@@ -38,8 +38,8 @@ assert.equal(SL.schoolBadge(SL.schoolProgress([])).kind, 'recommended'); assert.
   const els = []; const mk = () => { const o = { _q: {}, style: {}, children: [], className: '', _html: '', setAttribute() {}, remove() { o.gone = true; }, appendChild(c) { o.children.push(c); return c; }, querySelector(sel) { const m = /data-sk="(\w+)"/.exec(sel); return m && o._html.includes(`data-sk="${m[1]}"`) ? (o._q[m[1]] ||= {}) : null; }, set innerHTML(v) { o._html = v; }, get innerHTML() { return o._html; } }; els.push(o); return o; };
   globalThis.document = { createElement: mk, head: mk(), body: mk() };
   const { T } = makeT(() => 'nb'), { T: TE } = makeT(() => 'en');
-  const h0 = SV.schoolMenuHtml(T, SL.schoolProgress([])); assert.ok(h0.includes('id="mSchool"') && h0.includes('BYGGESKOLE') && h0.includes('ANBEFALT') && h0.includes('0 av 8'), h0);
-  const h1 = SV.schoolMenuHtml(T, SL.schoolProgress(['lab1', 'lab2'])); assert.ok(h1.includes('✓ 2/8') && !h1.includes('ANBEFALT'), h1);
+  const h0 = SV.schoolMenuHtml(T, SL.schoolProgress([])); assert.ok(h0.includes('id="mSchool"') && h0.includes('BYGGESKOLE') && h0.includes('ANBEFALT') && h0.includes('0 av 9'), h0);
+  const h1 = SV.schoolMenuHtml(T, SL.schoolProgress(['lab1', 'lab2'])); assert.ok(h1.includes('✓ 2/9') && !h1.includes('ANBEFALT'), h1);
   assert.ok(SV.schoolMenuHtml(TE, SL.schoolProgress([])).includes('RECOMMENDED'), 'engelsk');
   const v = SV.createSchoolView({ T, logEv() {} }); let tried = 0, skipped = 0;
   const c = v.showCard({ onTry: () => tried++, onSkip: () => skipped++ }); assert.ok(v.open && c.innerHTML.includes('Ny til bygging?') && c.innerHTML.includes('PRØV SKOLEN') && c.innerHTML.includes('HOPP OVER'), 'kortet har tekst og begge knapper');

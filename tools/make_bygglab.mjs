@@ -1,6 +1,6 @@
 // Bygglab (R67): et prøverom som starter i byggemodus og samler alle byggestedene (R24-R50) i én lang, ryddig bane.
 // Skriver scenes/bygglab.scene.json. Bruk: node tools/make_bygglab.mjs && node tools/scene2level.mjs scenes/bygglab.scene.json levels/bygglab.level.json && node tools/walk_route.mjs levels/bygglab.level.json
-// Rommet (cm, x øst, z sør): én lang hylle (to sokler per sted, 17,5 cm over gulvet) med et gap midt på hvert sted. Åtte steder, 150 cm fra hverandre:
+// Rommet (cm, x øst, z sør): én lang hylle (to sokler per sted, 17,5 cm over gulvet) med et gap midt på hvert sted. Ni steder, 150 cm fra hverandre:
 //   1 bro (planker, tape) · 2 trapp (klosser) · 3 vippe · 4 fagverk (trekanter) · 5 tau og gummistrikk · 6 lasttest (ball, bil, robot) · 7 «Tåler X» · 8 materialer.
 // Den vanskelige veien uten bygging: gå på gulvet langs rommet (sokkelen står midt i rommet, gulvet er fritt på begge sider) og hopp opp på sokkelen etter gapet.
 // Hvert sted har et målflagg etter gapet og minst to kjente løsninger (`lab.solutions`, den første er også `ref` som test og bot bruker).
@@ -13,7 +13,7 @@ const tape = (id, a, ax, ay, b, bx, by) => ({ id, kind: 'tape', a, la: { x: ax, 
 const gnd = (id, kind, a, u, v) => ({ id, kind, a, la: { x: 0, y: 0 }, b: null, lb: null, g: { u, v } });
 const o = (id, kind, material, color, box, extra = {}) => ({ id, kind, material, color, box, confidence: 1, photos: [], ...extra });
 
-const TOP = 15, ZA = 60, ZB = 140, ZC = 100, STEP = 150, XC = (k) => STEP * k, W = STEP * 8 + 100;
+const TOP = 15, ZA = 60, ZB = 140, ZC = 100, STEP = 150, XC = (k) => STEP * k, W = STEP * 9 + 100;
 const TOPP = (top) => ({ id: '@topp', u0: -0.6, u1: 0.6, top });   // fagverk i verden: figuren klatrer opp sperren og over mønet
 const BRO = (id = '@bro', u0 = -4, u1 = 4, top = 0.5) => ({ id, u0, u1, top });
 const triangle = (rt = 'plank_s', L = 4, hs = 3) => {   // tre planker og tre ledd: base over gapet og to sperrer som møtes i toppen (fagverk, R49a2)
@@ -61,6 +61,10 @@ const SITES = [
     { name: 'to linjaler teipet oppå hverandre', placed: [P('p1', 'ruler', 0, 0.2), P('p2', 'ruler', 0, 0.6)], links: [tape('t1', 'p1', 0, 0.2, 'p2', 0, -0.2)], surfaces: [BRO('@bro', -5, 5, 0.8)] },
     { name: 'linjal med en blyant oppå', placed: [P('p1', 'ruler', 0, 0.2), P('p2', 'pencil', 0, 0.6)], links: [], surfaces: [BRO('@bro', -5, 5, 0.8)] },
   ] },
+  { key: 'bred', gap: 7, h: 12, solutions: [   // R123: Bred bro (2,5D): i rutenett-modus blåser det fra siden, og bare en DOBBEL BRO (⋯) står imot; klassisk er som «bro»
+    { name: 'lang planke', placed: [P('p1', 'plank_l', 0, 0.25)], links: [], surfaces: [BRO()] },
+    { name: 'linjal', placed: [P('p1', 'ruler', 0, 0.2)], links: [], surfaces: [BRO('@bro', -5, 5, 0.4)] },
+  ] },
 ];
 // R74: rutenett-oppdrag per sted (cm for ankre og trinn). Ankre i rutenett-modus: stedene uten to klipper på lik høyde (trapp, vippe) har egne.
 const GRID_STAGES = {
@@ -71,6 +75,7 @@ const GRID_STAGES = {
   tau: { stars: { three: { cost: 4, parts: 4 }, two: { cost: 6, parts: 6 } }, stage: { loads: ['car'], massK: 3, budget: 6 } },
   last: { stars: { three: { cost: 4, parts: 4 }, two: { cost: 6, parts: 5 } }, stage: { loads: ['ball', 'car', 'robot'], massK: 4, budget: 6 } },
   taaler: { stars: { three: { cost: 8, parts: 4 }, two: { cost: 9, parts: 6 } }, stage: { loads: ['car'], massK: 12, budget: 9 } },
+  bred: { stars: { three: { cost: 17, parts: 11 }, two: { cost: 20, parts: 14 } }, stage: { loads: ['ball'], massK: 1, budget: 20, wind: 1.6 } },
   materialer: { stars: { three: { cost: 10, parts: 4 }, two: { cost: 11, parts: 5 } }, stage: { loads: ['car'], massK: 8, budget: 11 } },
 };
 const N = SITES.length;
@@ -112,7 +117,7 @@ const last = flags[flags.length - 1];
 const s = {
   name: 'Prøverom: Bygglab', units: 'cm', frame: 'Origo i nordvestre hjørne. x øst, z sør, y opp.', validate: true, rev: 1,
   source: { photos: 0, views: [], interpreted_by: 'Oppdiktet prøverom (ikke fra bilder), laget for R67: alle byggestedene på rad.', scale_anchors: ['sokkel 15 cm', 'gap 25–35 cm'], uncertainty: 'Ingen: rommet er tegnet for testing.',
-    note: 'Bygglab (R67). Åtte byggesteder i én bane; spillet åpner byggeskjermen ved start (valg i ⚙). Vanskelig vei uten bygging: gå på gulvet og hopp opp på sokkelen.' },
+    note: 'Bygglab (R67). Ni byggesteder i én bane; spillet åpner byggeskjermen ved start (valg i ⚙). Vanskelig vei uten bygging: gå på gulvet og hopp opp på sokkelen.' },
   room: { width: W, depth: 200, height: 240, floor: { material: 'wood', color: '#d9b382', slick: false }, walls: { material: 'plaster', color: '#e9e1d3' }, ceiling: { material: 'plaster', color: '#f5f1e8' }, fdetMax: 60 },
   start: { x: 110, z: 55 }, goal: { x: last.x + 4, y: last.y, z: last.z, on: `ped_b${N}`, note: 'Flagget etter siste sted.' },
   windows: [{ wall: 'N', z: 330, y: 150, w: 150, h: 80 }, { wall: 'N', z: 930, y: 150, w: 150, h: 80 }],

@@ -47,10 +47,10 @@ assert.ok(spanGuideShould({ id: 'bro:bro1' })); assert.ok(!spanGuideShould({ id:
 // flere steder i Bygglab: nærmeste velges
 const lab = sitesOf('bygglab.level.json');
 for (const s of lab) assert.equal(spanSite(lab, { x: s.x + 2, y: s.y, z: s.z + 1 })?.id, s.id, `${s.id}: nærmeste sted`);
-assert.equal(spanSite(lab, { x: -85, y: 3, z: 0 })?.id, 'lab1', 'nærmere lab1 (−100) enn lab2 (−70)'); assert.equal(spanSite(lab, { x: -300, y: 3, z: 0 }), null);
+assert.equal(spanSite(lab, { x: lab[0].x + 15, y: 3, z: 0 })?.id, 'lab1', 'nærmere lab1 enn lab2 (30 enheter fra hverandre)'); assert.equal(spanSite(lab, { x: -300, y: 3, z: 0 }), null);
 
 // ---- minikart og veilederpil ----
-const md = spanMapDots(lab); assert.equal(md.length, 8); assert.ok(md.every((d) => d.to.x > d.from.x));
+const md = spanMapDots(lab); assert.equal(md.length, 9); assert.ok(md.every((d) => d.to.x > d.from.x));
 assert.equal(spanArrowTarget(site, P(0)), null, 'nær: ingen pil'); const far = spanArrowTarget(site, P(60)); assert.deepEqual(far, { x: bro.w.from.x, y: bro.w.from.y, z: bro.w.from.z }, 'pila peker mot FRA');
 const ap = arcPoints(bro.w.from, bro.w.to); assert.equal(ap.length, 17); assert.ok(ap[8].y > ap[0].y, 'buen løfter seg i midten');
 

@@ -14,7 +14,7 @@ const mk = (n, sid) => { const L = lvl(n); P.ensurePlayGrid(L.build.sites); cons
   assert.ok(X.buxSite({ levelId: 'bro', site: bro.site }) && X.buxSite({ levelId: 'kjokkenbro', site: kb.site }), 'bro og kjokkenbro');
   assert.ok(!X.buxSite({ levelId: 'kjokkenbro', site: bro.site }) && !X.buxSite({ levelId: 'bro', site: null }), 'riktig brett og sted');
   const yes = lab.filter((s) => X.buxSite({ levelId: 'bygglab', site: s })).map((s) => s.lab.key);
-  assert.deepEqual(yes, ['bro', 'fagverk'], 'Bygglab: bare «bro» og «fagverk»');
+  assert.deepEqual(yes, ['bro', 'fagverk', 'bred'], 'Bygglab: bare «bro», «fagverk» og «bred»');
   for (const n of ['leke', 'stue', 'trapp', 'vippe', 'verksted', 'kontroll']) { const L = lvl(n); P.ensurePlayGrid(L.build.sites); assert.ok(L.build.sites.every((s) => !X.buxSite({ levelId: n, site: s })), n + ' får ikke skjermen'); }
   assert.equal(X.buxWanted({ on: false, levelId: 'bro', site: bro.site }), false, 'valget av: aldri'); assert.equal(X.buxWanted({ on: true, levelId: 'bro', site: bro.site }), true);
 }
