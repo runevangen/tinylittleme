@@ -36,6 +36,8 @@ import { createLoupe, loupeCss, loupeMarkup } from './build_loupe_view.js';   //
 import { holdReached, partLine } from './build_loupe_logic.js';
 import { createBuildNext, bnCss, bnMarkup } from './buildnext_view.js';   // R107: resultatkort og NESTE STED
 import { seriesOf, phaseOf, topNext } from './buildnext_logic.js';
+import { isTap, hitsAt, tapAction, trayPlace, capShown, capWait, createCapStats, TAP } from './build_tap_logic.js';   // R110: trykk på brikke/del, «Tåler» bare der måleren vises
+import { buxSite } from './buildux_logic.js';
 import { touchEvent, hanging, plateTop, createWriteCounter, writeOnce } from './build_touch_logic.js';   // R109: berøringstilstand, tekstplassering, DOM-skrivinger
 import { createClassicUx, cbxCss, cbxMarkup } from './buildux_classic_view.js';   // R96: samme nye skall for klassiske steder (Trapp, Vippe, ...)
 import { createPeaks, loadsNow, peakSummary, stressCss as gStressCss, colorCss as gColorCss, widthK as gWidthK, isDanger as gDanger, shown as gShown, pct as gPct } from './grid_stress.js';   // R73: farge etter belastning, «største belastning»
@@ -281,6 +283,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
       c.addEventListener('pointerdown', (e) => { if (!used) startDrag(e, id, true); else { toast(T('build.usedHint')); } });
       tray.appendChild(c);
     }
+    if (items.length && !sim && getGridHint() && !st0.get(TAP.hintKey, 0)) { st0.set(TAP.hintKey, 1); toast(T('tray.tap')); logEv('bygg', 'hjelp: trykk eller dra en del i delebrettet'); }   // R110: én gang, bort på Ekspert
   }
 
   // ---- R44: zoom ----
@@ -351,6 +354,7 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
       if (t.pivot) drawPivot(p, sx);
       if (p.anchored) { const c = sx(p.u, p.v); g2.beginPath(); g2.arc(c.x, c.y, 4, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); }
     }
+    if (bounce) { const q = (tNow - bounce.t) / TAP.bounceSecs, p0 = B.placed.find((z) => z.id === bounce.id); if (q >= 1 || q < 0 || !p0) bounce = null; else { const c = sx(p0.u, p0.v); g2.beginPath(); g2.arc(c.x, c.y, 16 + 36 * q, 0, 7); g2.strokeStyle = `rgba(255,233,168,${(1 - q).toFixed(2)})`; g2.lineWidth = 4; g2.stroke(); } }   // R110: sprett etter trykk-ut
     drawLinks(B, sx);
     if (!drag) drawHelp(helpOf(B), sx);
     cbx.draw(sx, tNow, g2);   // R96: første del markert, spøkelseslinje, hånd-hjelp, verktøylinje ved valgt del
@@ -402,18 +406,19 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
   // R47: kostnad og stjerner (og smuler) nede til høyre over brettet. Vanlige canvas-kall, ingen nye tegnejobber utover én avrundet boks og noen tekstlinjer.
   // R49a1: «Tåler ca. N klosser» (build_capacity.js): regnes ut litt etter at du slipper en del (ikke mens du drar), og bufres per bygg
   let capKey = '', capRes = null, capTimer = 0; const capCache = new Map();
-  const capOn = () => !grid.on() && getCap() || (!!lab && !!active?.lab?.cap);   // R67: Bygglab: «Tåler X»-stedet viser alltid måleren
+  const capStats = createCapStats();
+  const capOn = () => capShown({ lab: !!lab, labCap: !!active?.lab?.cap, gridOn: grid.on(), setting: getCap(), bridge: !!active && buxSite({ levelId, site: active }) });   // R67: Bygglab: «Tåler X»-stedet viser alltid måleren. R110: ellers bare på bro-steder (ikke Trapp/Vippe m.fl.)
   function capUpdate(B) {
     if (!capOn() || !B.placed.length) { capRes = null; capKey = ''; return; }
     if (drag) { capKey = ''; return; }
     const key = `${active.id}|${sigOf(B)}|${JSON.stringify(B.links)}|${getStrength()}`; if (key === capKey) return; capKey = key;
     if (capCache.has(key)) { capRes = capCache.get(key); return; }
-    capRes = null; clearTimeout(capTimer);
+    capRes = null; clearTimeout(capTimer);   // R110: ny endring avbryter ventende beregning (debounce)
     capTimer = setTimeout(() => {
       if (capKey !== key || !active) return; const t0 = performance.now();
-      const r = capacity({ site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() }); r.ms = Math.round(performance.now() - t0); capCache.set(key, r);
+      const r = capacity({ site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() }); r.ms = Math.round(performance.now() - t0); capCache.set(key, r); capStats.add(r.ms);
       if (capKey === key) { capRes = r; logEv('bygg', `tåler ca. ${r.n}${r.capped ? '+' : ''} klosser midt på spennet (${r.ms} ms, ${r.sims} sim)`); }
-    }, 160);
+    }, capWait({ shown: true }));
   }
   // R49a2: hjelp som viser ledd som kan svinge og slanke deler (build_truss.js). Algebra uten simulering, bufret per bygg.
   let helpKeyStr = '', helpRes = null;
@@ -535,10 +540,17 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
 
   // ---- dra og trykk ----
   const loc = (e) => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  let bounce = null;
+  function trayTap(B, id) {   // R110: trykk på brikke i delebrettet: legg delen ut på et fornuftig sted, velg den og gi et lite sprett
+    const type = B.types[id], tp = trayPlace({ B, id, type, view }), p = place(B, id, tp.u, tp.v, tp.rot);
+    if (!p) { logEv('bygg', 'trykk på del uten effekt: delen kunne ikke legges ut'); return; }
+    sel = id; selLink = null; linkFrom = null; bounce = { id, t: tNow };
+    logEv('bygg', `trykk på del i delebrettet legger ut ${id} (${type}) ${tp.why}${tp.why === 'full' ? ' (brettet er fullt)' : ''}`); cbx.act(`plasser ${type}`); buzz?.(10); audio?.bplace?.(type); onChange?.();
+  }
   function startDrag(e, id, fromTray) {
     e.preventDefault(); e.stopPropagation(); const B = getB(active); const { x, y } = loc(e);
     const w = toWorld(view, W, H, x, y), ex = B.placed.find((p) => p.id === id);
-    drag = { id, fromTray, pid: e.pointerId, x, y, part: { id, type: B.types[id], u: w.u, v: w.v, rot: ex?.rot || 0 }, ox: ex ? ex.u - w.u : 0, oy: ex ? ex.v - w.v : 0 };
+    drag = { id, fromTray, pid: e.pointerId, x, y, x0: x, y0: y, hits: hitsAt(B, w.u, w.v, pickPad(view.scale)), wasSel: sel, part: { id, type: B.types[id], u: w.u, v: w.v, rot: ex?.rot || 0 }, ox: ex ? ex.u - w.u : 0, oy: ex ? ex.v - w.v : 0 };
     sel = id; if (ex) { raise(B, id); }
     capture(e);   // R109: capture på lerretet (ikke på roten), og bare mens fingeren er nede
   }
@@ -546,11 +558,11 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
     if (!active) return; e.preventDefault(); const { x, y } = loc(e), B = getB(active); ptrs.set(e.pointerId, { x, y }); cbx.point(x, y); cbx.touch();   // R96
     if (ptrs.size === 2) { drag = drag && drag.fromTray ? drag : null; grid.cancel(); bux.cancel(); startGesture(); return; }
     const w = toWorld(view, W, H, x, y), hit = topHit(B, w.u, w.v, pickPad(view.scale));
-    if (sim) { ptrs.delete(e.pointerId); return; }
+    if (sim) { ptrs.delete(e.pointerId); if (hit) logEv('bygg', tapAction({ sim: true }).log); return; }
     if (bux.on()) { bux.down(e, x, y); return; }   // R92
     if (grid.on()) { grid.down(e, x, y); return; }   // R72: rutenett-modus tolker trykket selv (knute, stav, flytt eller panorering)
     const cur = { t: e.timeStamp || performance.now(), x, y };
-    if (getDbl() && !tool && !drag && isDoubleTap(lastTap, cur)) { lastTap = null; ptrs.delete(e.pointerId); setView(dblTapView(view, fitNow(), W, H, x, y), 'dobbelttrykk'); return; }   // R44
+    if (getDbl() && !tool && !drag && !hit && isDoubleTap(lastTap, cur)) { lastTap = null; ptrs.delete(e.pointerId); setView(dblTapView(view, fitNow(), W, H, x, y), 'dobbelttrykk'); return; }   // R44
     if (tool && hit) { const before = hit.rot; startDrag(e, hit.id, false); drag.before = { u: hit.u, v: hit.v, rot: before }; drag.x0 = x; drag.y0 = y; drag.tapLink = w; ptrs.delete(e.pointerId); return; }   // R70: med et verktøy valgt kan en del fortsatt dras; bare et trykk (uten å dra) kobler
     if (tool) { ptrs.delete(e.pointerId); linkTap(B, hit, w); return; }
     const lk = !hit && topLink(B, w.u, w.v);
@@ -571,8 +583,10 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
   }, true);
   root.addEventListener('click', (e) => { if (swallowClick && performance.now() - swallowClick < 900 && e.target.closest?.('.tools button,.share button,.loads button')) { swallowClick = 0; e.stopPropagation(); e.preventDefault(); } }, true);
   function linkTap(B, hit, w) {
-    if (!linkFrom) { if (hit) { linkFrom = hit.id; sel = null; selLink = null; buzz?.(6); } return; }
-    if (hit && hit.id === linkFrom) { linkFrom = null; return; }
+    const ta = tapAction({ tool, linkFrom, hits: hit ? [hit.id] : [] }); if (ta.log) logEv('bygg', ta.log);   // R110: alltid logg/tilbakemelding
+    if (ta.kind === 'none') return;
+    if (ta.kind === 'linkFirst') { linkFrom = hit.id; sel = null; selLink = null; buzz?.(6); return; }
+    if (ta.kind === 'select') { linkFrom = null; sel = ta.id; selLink = null; buzz?.(6); return; }   // R110: trykk på første del igjen velger den heller enn å avbryte uten å si noe
     const r = addLink(B, tool, linkFrom, hit ? hit.id : null, { u: w.u, v: w.v });
     if (r.ok) { logEv('bygg', `${tool} ${linkFrom} ${hit ? hit.id : 'underlag'}`); audio?.battach?.(tool); buzz?.(10); selLink = r.link.id; cbx.linked(tool, linkFrom, hit ? hit.id : null); onChange?.(); }
     else toast(T(r.why === 'dup' ? 'build.link.dup' : 'build.link.far'));
@@ -614,11 +628,13 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
     }
     if (drag && e.pointerId === drag.pid) {
       const B = getB(active), tr = tray.getBoundingClientRect(), over = drag.y > tr.top - root.getBoundingClientRect().top;
-      const ex = B.placed.find((p) => p.id === drag.id);
+      const ex = B.placed.find((p) => p.id === drag.id), tapped = isTap(drag.x0, drag.y0, drag.x, drag.y);
+      if (drag.fromTray && !ex && tapped && !sim) { trayTap(B, drag.id); drag = null; trayRender(); return; }   // R110: kort trykk på brikke i delebrettet legger delen ut og velger den
       if (drag.tapLink && ex && Math.hypot(drag.x - drag.x0, drag.y - drag.y0) < 10) { const w0 = drag.tapLink; drag = null; if (tool) linkTap(B, ex, w0); trayRender(); return; }   // R70: trykk med verktøy = koble
       if (over) { if (ex) { remove(B, drag.id); logEv('bygg', `tilbake i brettet ${drag.id}`); cbx.act('tilbake i brettet'); onChange?.(); } sel = null; }
       else {
-        const moved = ex ? Math.hypot(drag.part.u - drag.before.u, drag.part.v - drag.before.v) > 0.05 : true;
+        const moved = ex ? !tapped && Math.hypot(drag.part.u - drag.before.u, drag.part.v - drag.before.v) > 0.05 : true;
+        if (ex && tapped && !tool) { const ta = tapAction({ tool, linkFrom, sel: drag.wasSel, hits: drag.hits }); if (ta.kind === 'select') { sel = ta.id; selLink = null; if (ta.id !== drag.id) raise(B, ta.id); if (ta.log) logEv('bygg', ta.log); buzz?.(5); } }   // R110: trykk på del velger den (igjen: delen under)
         if (ex && !moved && getDbl()) lastTap = { t: e.timeStamp || performance.now(), x: drag.x, y: drag.y };   // R44: trykk på en del teller som første trykk i et dobbelttrykk
         if (moved) { const p = place(B, drag.id, drag.part.u, drag.part.v, drag.part.rot); logEv('bygg', `${drag.fromTray ? 'plasser' : 'flytt'} ${drag.id} (${p.type}) ${p.snapTo ? 'lego-klikk mot ' + p.snapTo : p.anchored ? 'festet' : 'rutenett'}`); cbx.act(`${drag.fromTray ? 'plasser' : 'flytt'} ${p.type}`); buzz?.(p.snapTo ? 14 : 8); audio?.bplace?.(p.type); if (isToy(p.type) && (drag.fromTray || p.snapTo)) toast(T('build.snd.' + p.type)); if (drag.fromTray && partType(p.type).pivot && getSeeHint() && !seeShown) { seeShown = true; toast(T('build.seesawHint')); } onChange?.(); }
       }
@@ -907,8 +923,9 @@ export function createBuildMode({ onMenu, onStat = () => {}, onOpen = () => {}, 
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'), resetBuild: () => !!active && act.reset(),   // R74: til tester
     stage: { get now() { return stageNow(); }, locked: (id) => stageLockedFor(sites.find((q) => q.id === id)), get passed() { return [...gPass()]; }, get over() { return winOver; }, lines: () => (active && stageState(getB(active)) ? stageLines(stageState(getB(active)), T) : []), get state() { return active ? stageState(getB(active)) : null; } },   // R74
     bux, bn,   // R92: til tester (R107: bn)
+    cap: { get shown() { return capOn(); }, get runs() { return capStats.runs; }, get ms() { return capStats.ms; }, get last() { return capStats.last; }, reset: () => capStats.reset() },   // R110: til tester: «Tåler»-beregninger
     cbx,   // R96: til tester
-    touch: { get hanging() { return hanging({ drag, gest, ptrs: ptrs.size, capture: capIds.size > 0 }); }, get writes() { return wc.n; }, resetWrites: () => wc.reset(), get budgetBox() { return budgetBox; }, hintBottom: () => hintBottom(), get sel() { return sel; }, get selLink() { return selLink; }, get capture() { return capIds.size; } },   // R109: til tester
+    touch: { get hanging() { return hanging({ drag, gest, ptrs: ptrs.size, capture: capIds.size > 0 }); }, get writes() { return wc.n; }, resetWrites: () => wc.reset(), get budgetBox() { return budgetBox; }, hintBottom: () => hintBottom(), get sel() { return sel; }, get selLink() { return selLink; }, get linkFrom() { return linkFrom; }, get capture() { return capIds.size; } },   // R109: til tester
     guide: { get open() { return gguide.isOpen(); }, get btn() { return root.classList.contains('gguidebtn'); }, get tip() { return root.classList.contains('gmodetip'); }, tipText: () => grid.modeTip(), show: () => gguide.show('test'), hide: (h) => gguide.hide(h), act: () => act.gguide() },
     grid: { get speed() { return gSpeed; }, setSpeed: (k) => { if (sim && !simDone) gSpeed = grid.setSpeed(k); return gSpeed; }, example: () => grid.example(), get peaks() { return gPeaks ? [...gPeaks.peaks].map(([id, p]) => ({ id, ...p })) : null; }, get summary() { return gSum; }, get on() { return grid.on(); }, get available() { return !!active && grid.enabledHere(); }, toggle: () => grid.toggleMode('kode'), setMat: (m) => grid.setMat(m), tap: (x, y) => grid.tap(x, y), del: () => grid.del(), get mat() { return grid.mat; }, get selNode() { return grid.selNode; }, get selRod() { return grid.selRod; }, info: () => (active && getB(active).rg ? { mode: getB(active).mode || 'classic', ...gridStats(getB(active)), cost: starsFor(active, getB(active).placed, getB(active).links).cost, nodes: getB(active).rg.nodes.map((n) => ({ id: n.id, u: n.u, v: n.v, fixed: !!n.fixed, ...(n.deck ? { deck: true } : {}) })), rods: getB(active).rg.rods.map((r) => ({ ...r })) } : null) },   // R72: til tester (node og Playwright)
     startReplay: () => !!active && startReplay(), get replaying() { return replaying; }, record: (id) => recs.get(id) || null, importText: (t) => !!active && doImport(t), exportText: () => (active ? exportAny(getB(active), exportCode) : null),   // R50: til tester (node og Playwright)
