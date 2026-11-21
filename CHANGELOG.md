@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.115** – R128: BYTT TIL STÅL i Rutenett (pulserende svakeste stav etter feilet prøve, ett trykk, budsjett, ANGRE).
 - **2.114** – R129–R131 (3D-bygging i egen 3D-lab: kjerne, bygging, oppdrag) lagt i veikartet, fra Rune.
 - **2.113** – R124–R128 (runde 2: brett, kabel, bytt til stål) lagt i veikartet.
 - **2.112** – R123: DOBBEL BRO (2,5D) i Rutenett: to plan med tverrstag, sidekraft i fysikken, 3D-forhåndsvisning, Byggeskole sted 9 Bred bro; slått sammen med R119–R122.
