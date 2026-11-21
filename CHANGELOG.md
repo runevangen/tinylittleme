@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.120** – R129: 3D-bygging, kjerne: `grid3d_logic.js` (3D-modell) og `build_phys3.js` (3D-fysikk for fagverk), ingen UI; `test_grid3d.mjs`.
 - **2.119** – R126: ekstra stjerner (BILLIGST, LETTEST, SMULE) og beste-liste i Badebroen og Byggeskolen (`stars2_*`, valget `buildstars2`); slått sammen med runde 2-brettene (R124/R125).
 - **2.118** – R124: Runde 2 av Hyllebroen og Kjøkkenbroen (`bro2`, `kjokkenbro2`): store gap, bare fagverk i stål holder, to mål; slått sammen med R125 (felles `round2_logic.js`, valget `buildround2`).
 - **2.117** – R125: Runde 2 av Klossetrappa (45 cm hylle, tårn og ramper) og Vippa (høyere hylle, vippa må stå på skrå); valg `buildround2`.
