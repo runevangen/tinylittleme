@@ -1,0 +1,722 @@
+{
+  "name": "Hyllebroen · Runde 2",
+  "units": "cm",
+  "frame": "Origo i nordvestre hjørne. x øst, z sør, y opp.",
+  "validate": true,
+  "source": {
+    "note": "Byggebrett runde 2 (R124): gapet mellom hyllene er 60 cm (12 byggeenheter, i dag 7). Tre alene holder ikke; bare et fagverk med stål bærer bil, robot og figur etter hverandre. To mål i ulik høyde: flagget øverst og en lavere hylle. Den harde veien er langt rundt og opp den smale trappa til høyre."
+  },
+  "room": {
+    "width": 520,
+    "depth": 200,
+    "height": 240,
+    "floor": {
+      "material": "wood",
+      "color": "#d9b382",
+      "slick": false
+    },
+    "walls": {
+      "material": "plaster",
+      "color": "#e6dccb"
+    },
+    "ceiling": {
+      "material": "plaster",
+      "color": "#f5f1e8"
+    }
+  },
+  "start": {
+    "x": 40,
+    "z": 160
+  },
+  "goal": {
+    "x": 412,
+    "y": 64,
+    "z": 80,
+    "on": "s2",
+    "note": "Flagget står øverst på s2."
+  },
+  "windows": [
+    {
+      "wall": "N",
+      "z": 260,
+      "y": 130,
+      "w": 120,
+      "h": 70
+    }
+  ],
+  "hazards": [],
+  "objects": [
+    {
+      "id": "a1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e07a5f",
+      "box": [
+        50,
+        90,
+        0,
+        10,
+        40,
+        120
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "a2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#f2b84b",
+      "box": [
+        90,
+        130,
+        0,
+        20,
+        40,
+        120
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "a3",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#81b29a",
+      "box": [
+        130,
+        170,
+        0,
+        30,
+        40,
+        120
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "hylleA",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#6c8ebf",
+      "box": [
+        170,
+        260,
+        0,
+        40,
+        40,
+        120
+      ],
+      "confidence": 1,
+      "cp": true,
+      "help": "Runde 2: et stort gap\nGapet er 12 byggeenheter. Tre alene holder ikke: trykk BYGG ved kanten og bygg et fagverk med stål. Eller ta den harde veien rundt."
+    },
+    {
+      "id": "hylleB",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#6c8ebf",
+      "box": [
+        320,
+        370,
+        0,
+        40,
+        40,
+        120
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "s1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e07a5f",
+      "box": [
+        370,
+        398,
+        0,
+        52,
+        40,
+        120
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "s2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#f2b84b",
+      "box": [
+        398,
+        426,
+        0,
+        64,
+        40,
+        120
+      ],
+      "confidence": 1,
+      "cp": true
+    },
+    {
+      "id": "c3",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#b56576",
+      "box": [
+        430,
+        458,
+        0,
+        47,
+        60,
+        100
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "c2",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#81b29a",
+      "box": [
+        463,
+        490,
+        0,
+        31,
+        60,
+        100
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "c1",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#e07a5f",
+      "box": [
+        495,
+        520,
+        0,
+        15,
+        60,
+        100
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "balkong",
+      "kind": "chest",
+      "material": "wood",
+      "color": "#9fc5a0",
+      "box": [
+        330,
+        380,
+        0,
+        30,
+        125,
+        168
+      ],
+      "confidence": 1,
+      "help": "Det lave målet\nOgså denne hylla teller som mål: den ligger lavere enn flagget og kan bare nås fra hylla etter broen."
+    }
+  ],
+  "look": {
+    "exposure": 1,
+    "sun": 2
+  },
+  "audio": {
+    "reverb": 0.15,
+    "ambience": [
+      "room:lab"
+    ]
+  },
+  "ants": [
+    {
+      "id": "maur_gulv",
+      "on": "gulv",
+      "from": [
+        250,
+        187
+      ],
+      "to": [
+        360,
+        187
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "bygg",
+      "type": "flag",
+      "flag": "hylle2",
+      "label": "Bygg en bro over det store gapet (BYGG-knappen)",
+      "en": "Build a bridge over the big gap (BUILD button)"
+    },
+    {
+      "id": "flagg",
+      "type": "reach",
+      "on": "s2",
+      "also": [
+        "balkong"
+      ],
+      "label": "Nå flagget, eller den lave hylla",
+      "en": "Reach the flag, or the low shelf",
+      "gate": true
+    },
+    {
+      "id": "smuler",
+      "type": "crumbs",
+      "n": 3,
+      "label": "Samle 3 smuler",
+      "en": "Collect 3 crumbs"
+    }
+  ],
+  "build": {
+    "sites": [
+      {
+        "id": "hylle2",
+        "label": "Det store gapet mellom hyllene (runde 2)",
+        "at": [
+          290,
+          80
+        ],
+        "y": 40,
+        "w": 120,
+        "h": 80,
+        "d": 20,
+        "anchors": [
+          [
+            -30,
+            0
+          ],
+          [
+            30,
+            0
+          ]
+        ],
+        "deck": [
+          [
+            -57.5,
+            -30
+          ],
+          [
+            30,
+            57.5
+          ]
+        ],
+        "start": [
+          -50,
+          0
+        ],
+        "goal": [
+          50,
+          0
+        ],
+        "grid": {
+          "step": 2,
+          "stars": {
+            "three": {
+              "cost": 40,
+              "parts": 12
+            },
+            "two": {
+              "cost": 76,
+              "parts": 21
+            }
+          },
+          "stage": {
+            "loads": [
+              "car",
+              "robot",
+              "figure"
+            ],
+            "massK": 18,
+            "budget": 80
+          }
+        },
+        "ref": {
+          "placed": [],
+          "links": [],
+          "surfaces": [],
+          "grid": {
+            "nodes": [
+              [
+                -4,
+                0
+              ],
+              [
+                -2,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                -4,
+                2
+              ],
+              [
+                -2,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                4,
+                2
+              ]
+            ],
+            "rods": [
+              [
+                0,
+                2,
+                "steel"
+              ],
+              [
+                2,
+                3,
+                "steel"
+              ],
+              [
+                3,
+                4,
+                "steel"
+              ],
+              [
+                4,
+                5,
+                "steel"
+              ],
+              [
+                5,
+                6,
+                "steel"
+              ],
+              [
+                6,
+                1,
+                "steel"
+              ],
+              [
+                7,
+                8,
+                "steel"
+              ],
+              [
+                8,
+                9,
+                "steel"
+              ],
+              [
+                9,
+                10,
+                "steel"
+              ],
+              [
+                10,
+                11,
+                "steel"
+              ],
+              [
+                0,
+                7,
+                "steel"
+              ],
+              [
+                1,
+                11,
+                "steel"
+              ],
+              [
+                2,
+                7,
+                "steel"
+              ],
+              [
+                3,
+                8,
+                "steel"
+              ],
+              [
+                4,
+                9,
+                "steel"
+              ],
+              [
+                5,
+                10,
+                "steel"
+              ],
+              [
+                6,
+                11,
+                "steel"
+              ],
+              [
+                2,
+                8,
+                "steel"
+              ],
+              [
+                3,
+                9,
+                "steel"
+              ],
+              [
+                9,
+                5,
+                "steel"
+              ],
+              [
+                10,
+                6,
+                "steel"
+              ]
+            ]
+          },
+          "best": {
+            "nodes": [
+              [
+                -4,
+                0
+              ],
+              [
+                -2,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                -4,
+                2
+              ],
+              [
+                -2,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                4,
+                2
+              ]
+            ],
+            "rods": [
+              [
+                0,
+                2,
+                "steel"
+              ],
+              [
+                2,
+                3,
+                "steel"
+              ],
+              [
+                3,
+                4,
+                "steel"
+              ],
+              [
+                4,
+                5,
+                "steel"
+              ],
+              [
+                5,
+                6,
+                "steel"
+              ],
+              [
+                6,
+                1,
+                "steel"
+              ],
+              [
+                10,
+                11,
+                "steel"
+              ],
+              [
+                1,
+                11,
+                "steel"
+              ],
+              [
+                5,
+                10,
+                "steel"
+              ],
+              [
+                6,
+                11,
+                "wood"
+              ],
+              [
+                10,
+                6,
+                "steel"
+              ]
+            ]
+          },
+          "route": [
+            "gulv",
+            "a1",
+            "a2",
+            "a3",
+            "hylleA",
+            "@bro",
+            "hylleB",
+            "s1",
+            "s2"
+          ]
+        }
+      }
+    ],
+    "parts": [
+      {
+        "id": "d1",
+        "type": "plank_s",
+        "on": "a1",
+        "at": [
+          70,
+          80
+        ]
+      },
+      {
+        "id": "d2",
+        "type": "plank_l",
+        "on": "gulv",
+        "at": [
+          300,
+          170
+        ]
+      },
+      {
+        "id": "d3",
+        "type": "block",
+        "on": "gulv",
+        "at": [
+          120,
+          180
+        ]
+      },
+      {
+        "id": "d4",
+        "type": "weight",
+        "on": "gulv",
+        "at": [
+          200,
+          180
+        ]
+      },
+      {
+        "id": "d5",
+        "type": "plank_l",
+        "on": "hylleA",
+        "at": [
+          220,
+          80
+        ]
+      },
+      {
+        "id": "d6",
+        "type": "pencil",
+        "on": "gulv",
+        "at": [
+          260,
+          215
+        ]
+      },
+      {
+        "id": "d7",
+        "type": "lego",
+        "on": "gulv",
+        "at": [
+          150,
+          215
+        ]
+      },
+      {
+        "id": "d8",
+        "type": "lego",
+        "on": "gulv",
+        "at": [
+          175,
+          215
+        ]
+      },
+      {
+        "id": "d9",
+        "type": "book",
+        "on": "gulv",
+        "at": [
+          60,
+          215
+        ]
+      },
+      {
+        "id": "d10",
+        "type": "sponge",
+        "on": "gulv",
+        "at": [
+          330,
+          215
+        ]
+      }
+    ]
+  },
+  "collectibles": [
+    {
+      "id": "smule_1",
+      "on": "gulv",
+      "at": [
+        150,
+        170
+      ]
+    },
+    {
+      "id": "smule_2",
+      "on": "balkong",
+      "at": [
+        355,
+        146
+      ]
+    },
+    {
+      "id": "smule_3",
+      "on": "gulv",
+      "at": [
+        420,
+        170
+      ]
+    }
+  ]
+}

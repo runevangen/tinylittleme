@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.118** – R124: Runde 2 av Hyllebroen og Kjøkkenbroen (`bro2`, `kjokkenbro2`): store gap, bare fagverk i stål holder, to mål; slått sammen med R125 (felles `round2_logic.js`, valget `buildround2`).
 - **2.117** – R125: Runde 2 av Klossetrappa (45 cm hylle, tårn og ramper) og Vippa (høyere hylle, vippa må stå på skrå); valg `buildround2`.
 - **2.116** – R127: KABEL (bærer bare i strekk, henger ned) og Byggeskole-sted 10, Hengebro.
 - **2.115** – R128: BYTT TIL STÅL i Rutenett (pulserende svakeste stav etter feilet prøve, ett trykk, budsjett, ANGRE).

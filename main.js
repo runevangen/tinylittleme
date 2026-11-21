@@ -153,6 +153,8 @@ const LEVELS = [
   { id: 'badebro', label: 'Bygg 5: Broen over badekaret (bad: bygg en bro av trekanter, eller ta den harde veien)', short: 'Bygg · Badebro' },   // R119
   { id: 'trapp2', label: 'Runde 2 · Bygg 2: Klossetrappa, høy hylle (bygg et tårn og to ramper, eller ta den harde veien)', short: 'Bygg · Trapp, runde 2' },   // R125
   { id: 'vippe2', label: 'Runde 2 · Bygg 3: Vippa over det høye gapet (barnerom: sett vippa på skrå, eller ta den harde veien)', short: 'Bygg · Vippe, runde 2' },   // R125
+  { id: 'bro2', round2: true, label: 'Runde 2: Hyllebroen, stort gap (bygg et fagverk i stål, eller ta den harde veien)', short: 'Runde 2 · Hyllebro' },   // R124
+  { id: 'kjokkenbro2', round2: true, label: 'Runde 2: Bro til kjøleskapet, enda større gap (fagverk i stål, to mål)', short: 'Runde 2 · Kjøkkenbro' },   // R124
   { id: 'soverom', label: 'Ekstra: Soverom (håndlaget)', short: 'Soverom' },
   { id: 'gaate', label: 'Prøverom: gåter (plate, dør, bryter og vindebro)', short: 'Gåter' },
   { id: 'poc', label: 'Prøverom: flytte ting', short: 'Prøverom' },
@@ -244,6 +246,7 @@ let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avsl
 let shaderWarm = store.get('tlm.shaderwarm', true);   // R35: full tegning av alt under forvarmingen (admin)
 let schoolCardOn = store.get('tlm.schoolcard', true);   // R95
 let round2On = store.get('tlm.buildround2', true);   // R125: runde 2-brettene vises i brettvalget
+const levelsShown = () => visibleLevels(LEVELS, round2On);
 let squareTipOn = store.get('tlm.squaretip', true), fagverkCardOn = store.get('tlm.fagverkcard', true);   // R119: firkant-hint i byggeren, og «Prøv Byggeskolen · Fagverk først» på Badebro
 let labStart = store.get('tlm.labstart', true), labFree = store.get('tlm.labfree', true), labAuto = { done: false };   // R67: Bygglab: åpne byggeskjermen ved start, ubegrenset mengde av alle deler
 GRIDOPT.pass = store.get('tlm.buildgridpass', true) !== false;
@@ -1824,7 +1827,7 @@ function confirmed(btn, label, cost, fn) {
 }
 confirmed($('bThings'), 'Ting', SCORE.resetThings, () => { resetThings(); closeMore(); });
 $('bLevel').textContent = `Brett: ${levelLabel}`;
-$('bLevel').onclick = () => { const vl = visibleLevels(LEVELS, round2On), i = vl.findIndex((l) => l.id === levelId), n = vl[(i + 1) % vl.length].id; store.set('tlm.level', n); location.search = `?level=${n}`; };
+$('bLevel').onclick = () => { const vl = levelsShown(), i = vl.findIndex((l) => l.id === levelId), n = vl[(i + 1) % vl.length].id; store.set('tlm.level', n); location.search = `?level=${n}`; };
 $('bSound').onclick = toggleSound; $('bSound').textContent = soundMuted ? 'Lyd av' : 'Lyd'; $('bSound').classList.toggle('on', !soundMuted);
 confirmed($('bSave'), 'Lagre', SCORE.save, () => { doSave(); closeMore(); }); confirmed($('bBack'), 'Tilbake', SCORE.respawn, goBack);
 // ⋯-menyen (v0.75): Lagre, Ting ↺ (og på PC Brett, Plan, Fly, Lyd) ligger skjult, så bunnlinjen bare er Tilbake · ⋯ · ⚙
@@ -2002,7 +2005,7 @@ const SETTINGS = [
   rg('buildloupezoom', 'spill', 'Glass i byggeskjermen: forstørrelse (ganger, 1,5 til 6; standard 3,75 = 25 % mer enn før)', 3.75, 1.5, 6, 0.25, () => buildLoupeZoom, kp('tlm.buildloupezoom', (v) => { buildLoupeZoom = normZoom(v); logEv('bygg', `glass forstørrelse ${buildLoupeZoom}`); })),
   rg('buildloupesize', 'spill', 'Glass i byggeskjermen: størrelse (% av 140 px stående og 120 px liggende; standard 100)', 100, 70, 200, 5, () => buildLoupeSize, kp('tlm.buildloupesize', (v) => { buildLoupeSize = normSizePct(v); logEv('bygg', `glass størrelse ${buildLoupeSize} %`); })),
   rg('buildgridslow', 'admin', 'Byggeskjerm (rutenett, R73): tempo i SLOW under prøven (1 = vanlig fart)', 0.3, 0.1, 0.8, 0.05, () => buildGridSlow, kp('tlm.buildgridslow', (v) => { buildGridSlow = v; }), { digits: 2 }),
-  fl('buildround2', 'spill', 'Runde 2 av byggebrettene (R125): «Runde 2: vanskeligere byggebrett» vises i Brett-velgeren (Klossetrappa med høy hylle: tårn og to ramper; Vippa med høyere hylle: vippa må stå på skrå). Dagens brett er uendret', true, () => round2On, kp('tlm.buildround2', (v) => { round2On = v; logEv('bygg', v ? 'runde 2 på' : 'runde 2 av'); })),
+  fl('buildround2', 'spill', 'Runde 2 av byggebrettene (R124, R125): «Runde 2»-brettene vises i Brett-velgeren (Hyllebroen og Kjøkkenbroen med store gap, fagverk i stål og to mål; Klossetrappa med høy hylle: tårn og to ramper; Vippa med høyere hylle: vippa må stå på skrå). Dagens brett er uendret', true, () => round2On, kp('tlm.buildround2', (v) => { round2On = v; logEv('bygg', v ? 'runde 2 på' : 'runde 2 av'); })),
   fl('squaretip', 'hjelp', 'Byggeskjerm (R119): hint når bygget har en firkant uten diagonal: «En firkant gir etter. Legg inn en diagonal, så blir den stiv.» Gjelder rutenett-bygging i alle steder (broene og Byggeskolen)', true, () => squareTipOn, kp('tlm.squaretip', (v) => { squareTipOn = v; logEv('bygg', v ? 'firkant-hint på' : 'firkant-hint av'); })),
   fl('fagverkcard', 'hjelp', 'Badebro (R119): første gang du bygger på «Bygg 5: Broen over badekaret» uten at Byggeskolen · Fagverk er bestått, vises «Prøv Byggeskolen · Fagverk først» (TIL BYGGESKOLEN / HOPP OVER). Én gang, aldri på Ekspert', true, () => fagverkCardOn, kp('tlm.fagverkcard', (v) => { fagverkCardOn = v; logEv('byggeskole', v ? 'fagverk-kort på' : 'fagverk-kort av'); })),
   fl('schoolcard', 'spill', 'Byggeskole (R95): vis et lite kort første gang du åpner byggeskjermen i et vanlig byggebrett («Ny til bygging? Prøv BYGGESKOLE først»). Vises bare én gang, aldri på Ekspert', true, () => schoolCardOn, kp('tlm.schoolcard', (v) => { schoolCardOn = v; logEv('byggeskole', v ? 'første-møte-kort på' : 'første-møte-kort av'); })),
@@ -3381,7 +3384,7 @@ function showStart(o = {}) {
     if (!has || !confirmNewOn) { pick(); return; }
     svView.confirmWipe({ kind: 'new', plan: wipePlan('new', disk.keys('tlm.'), store), onCancel: showStart, onOk: pick });   // R86: vis hva som slettes FØR noe slettes (selve slettingen skjer i newGame)
   };
-  $('mLevels').onclick = () => { unlockAudio(); dv.pickLevel({ levels: LEVELS, st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, ...(CINE.on ? {} : { school: { label: T('school.label'), sub: T('school.sub', { n: schoolProg().n, total: schoolProg().total }), onOpen: () => openSchool('velg brett') } }) }); };
+  $('mLevels').onclick = () => { unlockAudio(); dv.pickLevel({ levels: levelsShown(), st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, ...(CINE.on ? {} : { school: { label: T('school.label'), sub: T('school.sub', { n: schoolProg().n, total: schoolProg().total }), onOpen: () => openSchool('velg brett') } }) }); };
   if ($('mSchool')) $('mSchool').onclick = () => { unlockAudio(); openSchool('meny'); };
   $('mToys').onclick = () => { logEv('belønning', 'lekerom åpnet'); showCloset($('start'), { st: store, lang, all: rewardsAll, levels: LEVELS, onChange: (e) => { refreshAccessories(); logEv('belønning', `valgt ${Object.values(e).filter(Boolean).join(',') || 'ingen'}`); }, onBack: showStart }); };
   $('mChg').onclick = () => { logEv('nytt', 'knapp'); openChanges(); };
