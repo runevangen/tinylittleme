@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.129** – Logo «Liten på stor kloss» (brand/, tools/make_logo.cjs) og R134 (logo på hovedmeny, lasteskjerm, ikon og favicon) i veikartet.
 - **2.128** – R133 integrert (fra Rune): BYGGESKOLE og 3D-LAB nås via VELG BRETT → BYGGING.
 - **2.127** – R132 (fra Rune): spøkelsesbro i verden og oppdragskort ved BYGG-knappen (valg `buildghostworld`), også i Byggeskolen/Bygglab.
 - **2.126** – R133 (fra Rune): BYGGESKOLE og 3D-LAB flyttes til VELG BRETT, lagt i veikartet.

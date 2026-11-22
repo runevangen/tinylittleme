@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs>
+<linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0584E"/><stop offset="1" stop-color="#D23A31"/></linearGradient>
+<linearGradient id="gYel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC933"/><stop offset="1" stop-color="#F2A900"/></linearGradient>
+<symbol id="fig" viewBox="0 0 20 32">
+<rect x="6" y="22" width="3.4" height="9" rx="1.5" fill="#3A4A6B"/><rect x="10.6" y="22" width="3.4" height="9" rx="1.5" fill="#3A4A6B"/>
+<rect x="4" y="11" width="12" height="13" rx="4" fill="#2D7FF9"/><rect x="3" y="13" width="14" height="3.4" rx="1.6" fill="#F7B500"/>
+<path d="M15.5 14 l3.2 3.4 -2.4 .6z" fill="#F7B500"/><circle cx="10" cy="6.2" r="5.2" fill="#F2C49B"/>
+<path d="M4.9 5.6 q.6 -5.2 5.2 -5.2 q4.8 0 5 5.2 q-3 -2.6 -10.2 0z" fill="#6B3F24"/>
+<circle cx="8.2" cy="6.6" r=".85" fill="#1C2A44"/><circle cx="11.8" cy="6.6" r=".85" fill="#1C2A44"/>
+<path d="M8.6 8.6 q1.4 1 2.8 0" stroke="#1C2A44" stroke-width=".7" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="mark" viewBox="0 0 136 190">
+<ellipse cx="68" cy="68" rx="24" ry="3.4" fill="#000" opacity=".2"/>
+<rect x="22" y="62" width="14" height="10" rx="4" fill="#B52F27"/><rect x="100" y="62" width="14" height="10" rx="4" fill="#B52F27"/>
+<rect x="0" y="68" width="136" height="122" rx="20" fill="url(#gRed)"/>
+<rect x="18" y="69" width="100" height="9" rx="4.5" fill="#FF8A80" opacity=".55"/>
+<rect x="122" y="84" width="14" height="86" rx="7" fill="#B52F27" opacity=".35"/>
+<text x="62" y="168" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="104" fill="#fff">t</text>
+<use href="#fig" x="55" y="26" width="26.25" height="42"/></symbol></defs>
+<rect width="120" height="120" rx="0" fill="url(#gYel)"/><use href="#mark" x="24.2" y="8" width="71.6" height="100"/></svg>
