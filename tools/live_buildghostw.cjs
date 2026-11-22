@@ -22,13 +22,20 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
       const sh = async (n) => { await pg.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))); await pg.screenshot({ path: `${out}/ghostw_${tag}_${fmt}_${n}.png` }); };
       const place = (dx, dz = 4) => pg.evaluate(([dx, dz, sid]) => { const g = window.__game, s = g.LEVEL.buildSites.find((q) => !sid || q.id === sid) || g.LEVEL.buildSites[0]; Object.assign(g.player, { x: s.x + dx, y: s.y + 0.2, z: s.z + dz, vx: 0, vy: 0, vz: 0, onGround: true }); return s.id; }, [dx, dz, siteId]);
       await run(30);
-      const id = await place(-9, 7); await run(40);
+      const id = await place(-9, 7); await pg.evaluate(() => { const g = window.__game, s = g.LEVEL.buildSites.find((q) => q.id === g.bld.ghostStats().shown) || g.LEVEL.buildSites[0]; g.cam.yaw = Math.atan2(g.player.x - s.x, g.player.z - s.z); }); await run(60);
       const st = await pg.evaluate(() => window.__game.bld.ghostStats());
       ok(`${lvl}/${tag} ${fmt}: spøkelsesbro vises (${id}, ${kind})`, st.shown === id && st.kind === kind && st.draw === 2 && st.shadow === 0 && st.tris <= 72, JSON.stringify(st));
       const card = await pg.evaluate(() => { const e = document.getElementById('btnBuildCard'); return { t: e.innerText, vis: getComputedStyle(e).display, small: e.className, r: e.getBoundingClientRect().toJSON(), btn: document.getElementById('btnBuild').getBoundingClientRect().toJSON(), vw: innerWidth, vh: innerHeight }; });
       ok(`${lvl}/${tag} ${fmt}: oppdragskort med knappenavn og gap`, card.vis !== 'none' && /OPPDRAG/.test(card.t) && /Bygg en|Legg en/.test(card.t) && /BYGG/.test(card.t) && !/\[|tast/i.test(card.t) && card.r.right <= card.vw && card.r.bottom <= card.vh, JSON.stringify(card));
+      const box = await pg.evaluate(() => { const g = window.__game; return { b: g.bld.ghostBox(g.camera), c: document.getElementById('btnBuildCard').getBoundingClientRect().toJSON(), vw: innerWidth, vh: innerHeight }; });
+      // skjermboks: NDC -> px; omrisset må ligge (helt eller delvis) i bildet og kortet skal ikke dekke det
+      const px = box.b && { l: (box.b.x0 + 1) / 2 * box.vw, r: (box.b.x1 + 1) / 2 * box.vw, t: (1 - box.b.y1) / 2 * box.vh, bt: (1 - box.b.y0) / 2 * box.vh };
+      const vis = px && box.b.inFront > 0.9 && px.r > 0 && px.l < box.vw && px.bt > 0 && px.t < box.vh;
+      const inter = px ? Math.max(0, Math.min(px.r, box.c.right) - Math.max(px.l, box.c.left)) * Math.max(0, Math.min(px.bt, box.c.bottom) - Math.max(px.t, box.c.top)) : 0, area = px ? Math.max(1, (px.r - px.l) * (px.bt - px.t)) : 1;
+      ok(`${lvl}/${tag} ${fmt}: omrisset er i kamerabildet`, !!vis, JSON.stringify({ px, inFront: box.b && box.b.inFront }));
+      ok(`${lvl}/${tag} ${fmt}: kortet dekker under 45 % av omrisset`, inter / area < 0.45, `${(inter / area * 100).toFixed(0)} %`);
       await sh('1_naer');
-      await place(-12, 30); await run(40);
+      for (let i = 0; i < 4; i++) { await place(-12, 30); await run(10); }
       const far = await pg.evaluate(() => ({ g: window.__game.bld.ghostStats().shown, v: getComputedStyle(document.getElementById('btnBuildCard')).display }));
       ok(`${lvl}/${tag} ${fmt}: borte når du går langt unna`, far.g === null && far.v === 'none', JSON.stringify(far));
       await place(-9, 7); await run(40);

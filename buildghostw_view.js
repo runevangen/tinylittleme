@@ -29,5 +29,12 @@ export function createGhostWorldView({ scene, sites, getOn = () => true }) {
     if (it) { it.g.traverse((o) => { if (o.isMesh || o.isLine) { draw++; if (o.castShadow || o.receiveShadow) shadow++; } }); tris = it.b.tris; }
     return { shown, draw, shadow, tris, sites: items.length, kind: it ? it.b.kind : null };
   }
-  return { update, stats, get shown() { return shown; }, groups: items.map((q) => q.g), dispose() { for (const it of items) scene.remove(it.g); } };
+  // Omrisset projisert til skjermen (-1..1): { x0, x1, y0, y1, inFront } eller null. Brukes i live-testen for å bevise at omrisset faktisk er i kamerabildet.
+  function screenBox(camera) {
+    const it = items.find((q) => q.s.id === shown); if (!it) return null;
+    const v = new THREE.Vector3(); let x0 = 9, x1 = -9, y0 = 9, y1 = -9, front = 0, n = 0;
+    for (let i = 0; i < it.b.line.length; i += 3) { v.set(it.b.line[i], it.b.line[i + 1], it.b.line[i + 2]).project(camera); n++; if (v.z > 1) continue; front++; x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); }
+    return { x0, x1, y0, y1, inFront: front / Math.max(1, n) };
+  }
+  return { update, stats, screenBox, get shown() { return shown; }, groups: items.map((q) => q.g), dispose() { for (const it of items) scene.remove(it.g); } };
 }
