@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.125** – Arbeidsregel presisert: bekreftelser og alle spørsmål til Rune er alltid klikkbare (CLAUDE.md).
 - **2.124** – Ny arbeidsregel: bekreft forståelsen med Rune før arbeid (CLAUDE.md).
 - **2.123** – R132 (fra Rune): spøkelsesbro i verden og oppdragskort når BYGG-knappen vises, lagt i veikartet.
 - **2.122** – R131: 3D-lab, oppdrag: Tårnet, Tripoden og Bred bro i sidevind (`grid3d_missions.js`), sidevind i `build_phys3`, lås via `grid_stage`; `test_grid3d_missions.mjs`.
