@@ -3435,7 +3435,7 @@ function showStart(o = {}) {
   $('start').classList.remove('hide'); document.body.classList.add('instart'); logoUi.menu($('start'));   // R134
   if ($('mCont')) $('mCont').onclick = () => { unlockAudio(); hideStart(); logEv('fortsett'); };
   if ($('mStart')) $('mStart').onclick = () => { unlockAudio(); logEv('forstekjoring', 'START valgt (ny spiller, ' + DEFAULT_DIFF + ')'); newGame(DEFAULT_DIFF); };   // R97: ingen vanskelighetsvalg første gang (⚙ → Spill → Vanskelighet)
-  if ($('mMore')) $('mMore').onclick = () => { const open = $('mFold').classList.toggle('open'); $('mMore').textContent = `${ft(lang, open ? 'fr.less' : 'fr.more')} ${open ? '▴' : '▾'}`; };
+  if ($('mMore')) $('mMore').onclick = () => { const open = $('mFold').classList.toggle('open'); $('mMore').textContent = `${ft(lang, open ? 'fr.less' : 'fr.more')} ${open ? '▴' : '▾'}`; if (open) $('mFold').after($('mMore')); else $('mFold').before($('mMore')); };   // utbrettet: «mindre» under Avslutt; sammenfoldet: «mer» under START
   $('mNew').onclick = () => {
     unlockAudio();
     const pick = () => dv.pickDifficulty({ current: difficulty, onPick: (d) => newGame(d), onBack: showStart });   // R69: velg vanskelighet først

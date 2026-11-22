@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.132** – Fra Rune: «mindre ▴» flyttes nederst (under Avslutt) når hovedmenyen er brettet ut.
 - **2.131** – Fra Rune: logoen midtstilt (tett utsnitt) og knappelisten under «mer» midtstilt på hovedmenyen.
 - **2.130** – R134 integrert (fra Rune): logo «Liten på stor kloss» på hovedmeny og lasteskjerm, ikon, favicon og manifest (valg `showlogo`).
 - **2.129** – Logo «Liten på stor kloss» (brand/, tools/make_logo.cjs) og R134 (logo på hovedmeny, lasteskjerm, ikon og favicon) i veikartet.
