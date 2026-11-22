@@ -2267,13 +2267,14 @@ const marks = [];
 // rask vurdering mens du spiller: ⚑ → velg tema → 👍 / 😐 / 😫 (havner i testrapporten med posisjon og innstillinger)
 {
   let tag = store.get('tlm.qtag', 'Styring'); const pop = $('qpop'), tags = ['Styring', 'Kamera', 'Hopp', 'Gange', 'Annet'];
-  const draw = () => { syncPrivNotes(); const qc = $('qcode'); if (qc) qc.style.display = validCode(store.get('tlm.tcode', '')) ? 'none' : 'block'; const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
-  pop.innerHTML = `<div id="qinbox"></div><input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang)" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button><div id="qprivhost"></div>`;
+  const draw = () => { syncPrivNotes(); const qc = $('qcode'); if (qc) qc.style.display = validCode(store.get('tlm.tcode', '')) ? 'none' : 'block'; const qk = $('qsave'); if (qk) qk.style.display = qc ? qc.style.display : 'none'; const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
+  pop.innerHTML = `<div id="qinbox"></div><input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang), f.eks. testbruker1" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-savecode="1" class="qk" id="qsave">🔑 LAGRE KODE</button><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button><div id="qprivhost"></div>`;
   addPrivNote($('qprivhost'), '⚑');
   const qtext = () => { const el = $('qtext'), v = el.value.trim(); el.value = ''; return v; };
   pop.addEventListener('click', (e) => {
     e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tag) { tag = b.dataset.tag; store.set('tlm.qtag', tag); draw(); return; }
+    if (b.dataset.savecode) { const c = $('qcode'), v = cleanCode(c ? c.value : ''); if (!validCode(v)) { toast('Koden ser feil ut (4–24 tegn: bokstaver, tall, - og _)'); return; } store.set('tlm.tcode', v); c.value = ''; toast(`Kode lagret ✓ (${v}). Nå kan du trykke Send til Claude`); logEv('kode', 'tester-kode lagret'); draw(); return; }
     if (b.dataset.send) { const c = $('qcode'); if (c && c.value.trim()) { store.set('tlm.tcode', cleanCode(c.value)); c.value = ''; } const tx = qtext(); sendToClaude(tx ? `${tag}: ${tx}` : '').then((r) => { if (r === 'ok') pop.classList.add('hide'); draw(); }); return; }
     if (b.dataset.copy) { doShare(true).then((r) => { toast(r === 'kopiert' ? 'Tilbakemeldingene er kopiert. Lim dem inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis tilbakemeldingene'); if (r === 'kopiert') pop.classList.add('hide'); }); return; }
     if (b.dataset.mark) { markHere(`${tag}: ${qtext()}`.replace(/: $/, '')); pop.classList.add('hide'); return; }
@@ -2382,7 +2383,8 @@ function buildPanel() {
     if (g === 'test') extra = `
       <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
       <div class="row"><button id="bMark">⚑ Marker her</button></div>
-      <label>Tester-kode (får du av Rune)</label><input type="text" id="testerCode" placeholder="tlm-…" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <label>Tester-kode (får du av Rune)</label><input type="text" id="testerCode" placeholder="f.eks. testbruker1" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="row"><button id="bSaveCode">🔑 LAGRE KODE</button></div>
       <div class="row"><button id="bSend">📤 Send til Claude</button></div><div id="privHost"></div>
       <div class="row"><button id="bReport">Del tilbakemeldinger</button><button id="bCopyRep">Kopier tilbakemeldinger</button></div>
       <details><summary>Vis tilbakemeldingene (rapporten)</summary><textarea id="reportBox" readonly rows="9"></textarea></details>
@@ -2444,6 +2446,7 @@ function buildPanel() {
   $('bPriv').onclick = () => priv.open('⚙'); addPrivNote($('privHost'), '⚙');   // R87
   $('testerCode').value = store.get('tlm.tcode', '');
   $('testerCode').onchange = () => { const v = cleanCode($('testerCode').value); store.set('tlm.tcode', v); if (v && !validCode(v)) toast('Koden ser feil ut (4–24 tegn: bokstaver, tall, - og _)'); };
+  $('bSaveCode').onclick = () => { const v = cleanCode($('testerCode').value); if (!validCode(v)) { toast('Koden ser feil ut (4–24 tegn: bokstaver, tall, - og _)'); return; } store.set('tlm.tcode', v); $('testerCode').value = v; toast(`Kode lagret ✓ (${v})`); logEv('kode', 'tester-kode lagret'); };
   $('bSend').onclick = () => { $('testerCode').onchange(); const tx = $('markText').value.trim(); sendToClaude(tx).then((r) => { if (r === 'ok') { $('markText').value = ''; $('reportBox').value = reportText(); } }); };
   $('bMark').onclick = () => { markHere($('markText').value.trim()); $('markText').value = ''; $('reportBox').value = reportText(); };
   $('bCopyRep').onclick = () => doShare(true).then((r) => { toast(r === 'kopiert' ? 'Tilbakemeldingene er kopiert. Lim dem inn til Claude' : 'Kunne ikke kopiere: åpne «Vis tilbakemeldingene» og kopier teksten'); if (r === 'vis') $('reportBox').closest('details').open = true; });
