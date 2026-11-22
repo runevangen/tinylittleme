@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.126** – R133 (fra Rune): BYGGESKOLE og 3D-LAB flyttes til VELG BRETT, lagt i veikartet.
 - **2.125** – Arbeidsregel presisert: bekreftelser og alle spørsmål til Rune er alltid klikkbare (CLAUDE.md).
 - **2.124** – Ny arbeidsregel: bekreft forståelsen med Rune før arbeid (CLAUDE.md).
 - **2.123** – R132 (fra Rune): spøkelsesbro i verden og oppdragskort når BYGG-knappen vises, lagt i veikartet.
