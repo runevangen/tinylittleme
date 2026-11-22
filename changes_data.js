@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r135-sene-shadere', version: '2.135', date: '2026-11-22', title: 'Mindre hakking i Nivå 1 · Bad: flere shadere forvarmes før spillet starter.',
+    how: 'Start Nivå 1 · Bad og gå rundt i et minutt. Det skal ikke hakke når nye ting kommer til syne.', level: 'bad', spot: null },
   { id: 'r137-lagre-kode', version: '2.134', date: '2026-11-22', title: 'Tester-koden har en egen LAGRE KODE-knapp (i ⚑-boksen og i ⚙ → Test), med bekreftelse «Kode lagret ✓».',
     how: 'Trykk ⚑ og skriv koden (f.eks. testbruker1) i feltet, trykk LAGRE KODE og se «Kode lagret ✓». Det samme finnes i ⚙ → Test.', level: '', spot: null },
   { id: 'r136-mindre-nederst', version: '2.132', date: '2026-11-22', title: 'Når hovedmenyen er brettet ut, står «mindre ▴» nederst under Avslutt i stedet for rett under START.',

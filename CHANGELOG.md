@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.135** – R135 (fra Rune): forvarmer transmission-varianter og utoningssteg i warmUpSpread (færre sene shadere i Bad), logger ytelse ved nytt program.
 - **2.134** – Fra Rune: egen LAGRE KODE-knapp for tester-koden (⚑-boksen og ⚙ → Test) med bekreftelse.
 - **2.133** – R135 (fra Rune): hakking i Nivå 1 · Bad (verste bilde 600 ms, sene shadere) lagt i veikartet.
 - **2.132** – Fra Rune: «mindre ▴» flyttes nederst (under Avslutt) når hovedmenyen er brettet ut.
