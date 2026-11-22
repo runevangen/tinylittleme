@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r132-spokelsesbro', version: '2.123', date: '2026-11-22', title: 'Ved byggestedene i selve spillet står nå et stiplet omriss av det som skal bygges (bro, trapp eller planke) mellom FRA og TIL, og et OPPDRAG-kort ved BYGG-knappen sier hva som skal bygges, hva som kjører over og hvor stort gapet er.',
+    how: 'Gå bort til gapet i Hyllebroen (⚙ → Spill → «Spøkelsesbro i verden» skal stå på). Se omrisset og OPPDRAG-kortet under BYGG. Trykk BYGG og gå tilbake: kortet er blitt en liten linje. Prøv også et Bygglab-sted (Byggeskolen).', level: 'bro', spot: { x: 3.5, y: 9, z: -4 } },
   { id: 'r131-3d-oppdrag', version: '2.122', date: '2026-11-21', title: 'Tre oppdrag i 3D-LAB: Tårnet, Tripoden og Bred bro i sidevind. Hvert oppdrag har budsjett og stjerner, og neste åpnes når du består det forrige.',
     how: 'Trykk 3D-LAB på hovedmenyen. Trykk ▶ øverst for å velge oppdrag. Bygg og trykk PRØV; bestått oppdrag åpner det neste.', level: '', spot: null },
   { id: 'r130-3d-lab', version: '2.121', date: '2026-11-21', title: 'Ny 3D-LAB på hovedmenyen: bygg fritt i tre dimensjoner med orbit-kamera, lag (◀ LAG ▶), staver mellom hvilke som helst knuter og PRØV. Et bestått 3D-bygg havner i rommet.',
