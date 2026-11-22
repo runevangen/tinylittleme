@@ -3,7 +3,7 @@
 import * as THREE from './lib/three.module.min.js';
 import fs from 'node:fs';
 import { register } from 'node:module';
-import { capSide, texMB, antQ, antSeg, ANT_Q, SHADOW, sphereOf, wantsShadow, createShadowCull, createShadowPacer, movedBy, planWarm, chunkByKey, runSteps } from './perf2_logic.js';
+import { capSide, texMB, antQ, antSeg, ANT_Q, SHADOW, sphereOf, wantsShadow, createShadowCull, createShadowPacer, movedBy, planWarm, chunkByKey, runSteps, transmissiveItems } from './perf2_logic.js';
 import { memStats, ROOM_CAPS } from './perf_budget.js';
 let bad = 0; const ok = (c, m) => { if (!c) { bad++; console.log('FEIL', m); } };
 
@@ -22,6 +22,13 @@ ok(Math.abs(texMB(1024, 1024) - 5.333) < 0.01 && texMB(512, 512) * 4 === texMB(1
   ok(Math.abs(s.texMB - texMB(512, 512)) < 0.01, `teksturminne telles én gang (${s.texMB.toFixed(2)} MB)`);
   const other = new THREE.Texture({ width: 256, height: 256 }); root.add(new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({ map: other })));
   const s2 = memStats(root); ok(s2.sources === 2 && s2.texMB > s.texMB, 'et annet bilde legges til');
+}
+
+// ---- R135: transmission-ting ----
+{
+  const mk = (tr) => ({ material: tr === 'arr' ? [{ transmission: 0 }, { transmission: 0.9 }] : { transmission: tr } });
+  const its = [mk(0), mk(0.9), mk('arr'), { material: undefined }, mk(undefined)];
+  const r = transmissiveItems(its); ok(r.length === 2 && r[0] === its[1] && r[1] === its[2], 'transmissiveItems: bare ting med transmission > 0 (også materialtabell)');
 }
 
 // ---- maur ----
@@ -133,6 +140,11 @@ ok(antSeg(20, 6, 1) === 20 && antSeg(20, 6, 0.6) === 12 && antSeg(8, 5, 0.3) ===
   ok(/makeLook\(\{ aniso: maxAniso, low: texLow, texMax \}\)/.test(m) && /setAntDetail\(antQv\)/.test(m), 'teksturtak og maurdetalj sendt inn');
   ok(/warmUpSpread/.test(m) && /runSteps\(/.test(m), 'forvarmingen går i små steg');
   ok(/'perf2_logic'/.test(idx), 'perf2_logic står i files i index.html');
+  // R135: transmission-ting tas med i hvert forvarmingssteg (ellers kompileres målvariantene midt i spillet), og utoningsstegene bygger «only» etter at kopiene finnes
+  ok(/transmissiveItems\(items\)/.test(m) && /for \(const o of transItems\) only\.add\(o\)/.test(m), 'R135: glass med transmission er med i hvert forvarmingssteg');
+  ok(!/const only = new Set\(\); for \(const e of part\) \{ for \(const o of e\.clone\.keys\(\)\) only\.add\(o\); \}/.test(m), 'R135: utoningssteget bygger ikke «only» før kopiene finnes');
+  ok(/logEv\('ytelse', `nytt shaderprogram etter forvarming/.test(m), 'R135: nytt shaderprogram etter forvarming logges som ytelse');
+
   ok(/r94-ytelse/.test(ch) && /Kjøkken, Bad og Bygglab/.test(ch), 'NYTT-rad for R94');
 }
 if (bad) { console.log(bad, 'feil'); process.exit(1); } console.log('test_perf2: ok');

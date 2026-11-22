@@ -117,3 +117,7 @@ export function runSteps(steps, run, next, done, now = () => Date.now()) {
   };
   next(go);
 }
+
+// R135: ting med transmission (glass, målflasken). three tegner da først alt ugjennomsiktig til et eget mål (srgb-linear, uten toneMapping), og hvert materiale får et ekstra shaderprogram.
+// Forvarmingen i små steg skjuler det meste per steg, så disse tas med i hvert tegnesteg (og i utoningsstegene): da kompileres målvariantene under oppstart i stedet for midt i spillet.
+export const transmissiveItems = (items) => items.filter((o) => [].concat(o.material || []).some((mt) => mt && mt.transmission > 0));

@@ -49,6 +49,21 @@ Viktigste funn før kuttene (Verkstedet, v2.43): **figuren var 76 % av alle trek
 - Skygge: sola har ett skyggekart (2048, 17 enheter) som tegner alt som kaster skygge på nytt. Skyggepasset er ikke med i tallene over, men figuren er nå billigere også der.
 - Færre enn 72 tegnekall for figuren krever skinning (ett mesh med bein).
 
+## R135: hakking i Nivå 1 · Bad, sene shadere (Rune, v2.132)
+**Rapport:** verste bilde 600 ms, et hakk på 159 ms ved 68 shadere (50 ved start, +18 etter forvarming), 111 tegnekall.
+
+**Årsak (målt med `tools/live_shaders.cjs 8361 bad`, SwiftShader):** 50 shadere ved start, 70 etter en økt (+20): 11 når spillet starter og i første bilder, 3 ved utoning, 6 ved plan-visning. Programnøklene viste `srgb-linear` og `toneMapping 0` på de nye: det er three sitt **transmission-pass**. Så snart et glass med `transmission` (badekaret, målflasken) er i bildet, tegner three først alt ugjennomsiktig til et eget mål, og hvert materiale får et ekstra shaderprogram. `warmUpSpread` (R94) viser bare noen få meshes per steg, så glasset og de ugjennomsiktige tingene aldri var med i samme bilde, og målvariantene ble ikke kompilert. Hver kompilering midt i spillet er et hakk, og flere samtidig (11 ved start) gir enkeltbildet på flere hundre ms på iPhone. I tillegg hadde utoningsstegene en feil: `only` (hva som tegnes i steget) ble bygget FØR utoningskopiene fantes, så mengden var tom og ingenting ble tegnet i dem.
+
+**Rettet (`main.js`, `perf2_logic.js`):** (1) `transmissiveItems()`: transmission-tingene tas med i hvert tegnesteg og hvert utoningssteg i `warmUpSpread`, så målvariantene kompileres under oppstart (introskjermen), ikke i spillet; (2) utoningssteget bygger `only` etter at kopiene er laget; (3) `logEv('ytelse', 'nytt shaderprogram etter forvarming: …')` når et program likevel kompileres senere (viser nøkler og hva som skjedde like før). Ingen visuelle ting er fjernet eller senket.
+
+| Mål (Nivå 1 Bad, SwiftShader) | Før | Etter |
+|---|---|---|
+| Shadere ved start (etter forvarming) | 50 | 75 |
+| Shadere etter økt (gå, hopp, fall, grep, oversikt, utoning, fiender, lek-pop, lav profil, plan/spill) | 70 (+20 sene) | 75 (**0 sene**) |
+| Verste forvarmingssteg | 957 ms | 891 ms |
+
+Merk: de 25 ekstra programmene kompileres nå under oppstart (introskjermen) i stedet for midt i spillet; oppstarten tar litt lenger, men går i små steg. **Ekte verste bilde og FPS på iPhone er ikke målt her (ingen GPU): testes på iPhone.** Test selv: velg Nivå 1 · Bad, spill 77 s, send rapport med ⚑ og se at «shadere» sier like mange nå som ved start og at verste bilde er lavere; hendelsen `ytelse: nytt shaderprogram…` skal ikke komme. Bevis: `node test_perf2.mjs` og `node tools/live_shaders.cjs <port> bad`.
+
 ## Slik tester du på iPhone (testes på iPhone)
 1. Åpne spillet fra GitHub Pages, velg **Nivå 9 Verksted** (⚙ → Spill → Brett) og spill 3–5 minutter.
 2. Slå på fps-visning (⚙ → Test) og se at den holder 30 (iPhone 12 eller nyere). Oppløsningen vises ved siden av hvis den er senket (f.eks. «29 fps · 1.70×»).

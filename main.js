@@ -110,7 +110,7 @@ import { classify as landClass, impactAt, markerStyle, windBoost, fovTarget, app
 import { Relay, inCore, CAM_SLOP, yawDelta, pitchDelta, shouldHintDrag } from './camdrag.js';
 import { fovForAspect, effectiveFov, fovChosen, migrateCalm, camLine } from './camcalm_logic.js';
 import { followYaw, impactSpeed, landingClass, bossFrame, bossCamStep, angleDiff, anchorLook, shiftLookX, BOSS_HERO_X, BOSS_HERO_Y } from './camera_util.js';
-import { createShadowCull, createShadowPacer, movedBy, planWarm, chunkByKey, runSteps, SHADOW, TEX_MAX, ANT_Q, antQ } from './perf2_logic.js';   // R94: teksturtak, skyggeutvalg og -tempo, maurdetalj, oppstart i små steg
+import { createShadowCull, createShadowPacer, movedBy, planWarm, chunkByKey, runSteps, transmissiveItems, SHADOW, TEX_MAX, ANT_Q, antQ } from './perf2_logic.js';   // R94: teksturtak, skyggeutvalg og -tempo, maurdetalj, oppstart i små steg
 import { programCount, programKeys, warmRender, warmFades, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver, roomCaps, BUDGET, MEM_BUDGET } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { GRIDOPT } from './grid_logic.js';
@@ -3500,6 +3500,7 @@ function warmUpSpread() {
   scene.traverse((o) => { if (o.isMesh || o.isPoints) items.push(o); for (const m of [].concat(o.material || [])) for (const k of ['map', 'emissiveMap', 'roughnessMap', 'normalMap', 'bumpMap', 'alphaMap', 'aoMap']) { const t = m[k]; if (t && !seen.has(t.source || t)) { seen.add(t.source || t); texs.push(t); } } });
   const progKey = (o) => [].concat(o.material || []).map((mt) => [mt.type, !!mt.map, !!mt.normalMap, !!mt.roughnessMap, !!mt.bumpMap, !!mt.alphaMap, mt.vertexColors, mt.transparent, mt.side, mt.flatShading, o.receiveShadow, o.isPoints, mt.customProgramCacheKey ? mt.customProgramCacheKey() : ''].join(',')).join('|');   // omtrent shadernøkkelen
   const plan = planWarm({ textures: texs.length, per: 12, chunks: chunkByKey(items.map(progKey), { maxKeys: 3, maxItems: 80 }), fades: shaderWarm && fadeEntries.length > 0 });
+  const transItems = transmissiveItems(items);   // R135: three tegner først alt ugjennomsiktig til et eget mål (srgb-linear, ingen toneMapping) når et glass med transmission er i bildet: det gir egne shaderprogram per materiale. Tas med i hvert steg så variantene kompileres her og ikke midt i spillet
   const FSLICE = 6; warmProg.i = 0; warmProg.n = plan.length - 1;
   const withVisible = (only, fn) => {             // vis bare `only` (og lys): tegn: gjenopprett
     const was = new Map(); const hidden = hiddenAll.filter((o) => !o.visible);
@@ -3511,11 +3512,12 @@ function warmUpSpread() {
   const run = (s) => {
     warmProg.i++;
     if (s.kind === 'tex') { for (const t of texs.slice(s.from, s.to)) { try { renderer.initTexture(t); } catch { /* ikke støttet */ } } }
-    else if (s.kind === 'draw') { const only = new Set(s.idx.map((i) => items[i])); withVisible(only, () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); }); }
+    else if (s.kind === 'draw') { const only = new Set(s.idx.map((i) => items[i])); for (const o of transItems) only.add(o); withVisible(only, () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); }); }
     else if (s.kind === 'fades') {
       const es = fadeEntries.slice(); const done = []; let fi = 0;
-      try { while (fi < es.length) { const part = es.slice(fi, fi + FSLICE); fi += FSLICE; const only = new Set(); for (const e of part) { for (const o of e.clone.keys()) only.add(o); }
-        for (const e of part) { setFadeMats(e, true); done.push(e); for (const c of e.clone.values()) for (const mt of [].concat(c)) { mt.opacity = fadeOp; mt.depthWrite = false; } }
+      try { while (fi < es.length) { const part = es.slice(fi, fi + FSLICE); fi += FSLICE; const only = new Set();
+        for (const e of part) { setFadeMats(e, true); done.push(e); for (const c of e.clone.values()) for (const mt of [].concat(c)) { mt.opacity = fadeOp; mt.depthWrite = false; } for (const o of e.clone.keys()) only.add(o); }   // R135: kopiene lages i setFadeMats, så «only» må bygges ETTER (før ble den tom og ingenting ble tegnet)
+        for (const o of transItems) only.add(o);
         withVisible(only, () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); });
         for (const e of part) { setFadeMats(e, false); } }
       } finally { for (const e of done) { setFadeMats(e, false); if (e.clone && e.clone.clear) e.clone.clear(); if (e.orig && e.orig.clear) e.orig.clear(); } }
@@ -3540,7 +3542,7 @@ function frame(now) {
     lastHitch = clock; const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'lav fps').slice(-3).map((e) => e.type).join(', ');
     logEv('hakk', `${Math.round(raw)} ms${near ? ' etter: ' + near : ''} · ${renderer.info.programs?.length ?? '?'} shadere, ${renderer.info.render.calls} tegnekall`);
   }
-  if ((++shwN & 15) === 0) { const ev = shw.tick(); if (ev) { const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'shadere').slice(-3).map((e) => e.type).join(', '); logEv('shadere', `${ev.from} til ${ev.to} (start ${ev.base})${ev.keys && ev.keys.length ? ' nye: ' + ev.keys.join(' ') : ''}${near ? ' etter: ' + near : ''}`); } }   // R35: hver ny shader etter forvarmingen logges med det som skjedde like før
+  if ((++shwN & 15) === 0) { const ev = shw.tick(); if (ev) { const near = evLog.filter((e) => e.c >= clock - 1.5 && e.type !== 'hakk' && e.type !== 'shadere').slice(-3).map((e) => e.type).join(', '); logEv('shadere', `${ev.from} til ${ev.to} (start ${ev.base})${ev.keys && ev.keys.length ? ' nye: ' + ev.keys.join(' ') : ''}${near ? ' etter: ' + near : ''}`); logEv('ytelse', `nytt shaderprogram etter forvarming: ${ev.to - ev.from} (${ev.keys && ev.keys.length ? ev.keys.join(' ') : 'ukjent'})${near ? ' etter: ' + near : ''}`); } }   // R35: hver ny shader etter forvarmingen logges med det som skjedde like før
   if (raw > 0 && raw < 2000) { perf.n++; perf.sum += raw; perf.worst = Math.max(perf.worst, raw); perf.win += raw; perf.winN++; if (perf.win > 500) { if (fpsOn) $('fps').textContent = `${Math.round(1000 * perf.winN / perf.win)} fps${renderer.getPixelRatio() < basePr - 0.01 ? ' · ' + renderer.getPixelRatio().toFixed(2) + '×' : ''}`; perf.win = perf.winN = 0; } }
   { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
     if (mode === 'play' && !menuOpen) autoQC.feed(raw);
