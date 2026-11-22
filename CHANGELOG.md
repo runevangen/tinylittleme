@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.123** – R132 (fra Rune): spøkelsesbro i verden og oppdragskort når BYGG-knappen vises, lagt i veikartet.
 - **2.122** – R131: 3D-lab, oppdrag: Tårnet, Tripoden og Bred bro i sidevind (`grid3d_missions.js`), sidevind i `build_phys3`, lås via `grid_stage`; `test_grid3d_missions.mjs`.
 - **2.121** – R130: 3D-lab, bygging: orbit-kamera, lag (◀ LAG ▶), trykk-bygging, PRØV, bygget i rommet (`grid3d_*`), `test_grid3d_ui.mjs`.
 - **2.120** – R129: 3D-bygging, kjerne: `grid3d_logic.js` (3D-modell) og `build_phys3.js` (3D-fysikk for fagverk), ingen UI; `test_grid3d.mjs`.
