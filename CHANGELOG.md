@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.139** – Plan «bygging tidlig og nødvendig» (docs/PLAN_BYGG_TIDLIG.md) godkjent av Rune; R138–R142 lagt i veikartet.
 - **2.138** – R136 (fra Rune): neste last velges automatisk etter bestått prøve (autoload_logic.js, valg autonextload).
 - **2.137** – R137 (fra Rune): 2,5D-visning i byggeskjermen (dybde og lett skråkamera, 2D-tegning og fysikk uendret) lagt i veikartet.
 - **2.136** – R136 (fra Rune): neste last velges automatisk etter bestått prøve, lagt i veikartet.
