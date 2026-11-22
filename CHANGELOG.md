@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.137** – R137 (fra Rune): 2,5D-visning i byggeskjermen (dybde og lett skråkamera, 2D-tegning og fysikk uendret) lagt i veikartet.
 - **2.136** – R136 (fra Rune): neste last velges automatisk etter bestått prøve, lagt i veikartet.
 - **2.135** – R135 (fra Rune): forvarmer transmission-varianter og utoningssteg i warmUpSpread (færre sene shadere i Bad), logger ytelse ved nytt program.
 - **2.134** – Fra Rune: egen LAGRE KODE-knapp for tester-koden (⚑-boksen og ⚙ → Test) med bekreftelse.
