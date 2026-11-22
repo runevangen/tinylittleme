@@ -72,6 +72,7 @@ import { initBoss, resetBoss, stepBoss } from './boss.js';   // R9: sjef-maur i 
 import { buildBoss, buildPrize } from './boss_model.js';
 import { createBossBar } from './boss_ui.js';
 import { createBuildMode } from './build.js';
+import { createLogo } from './logo_view.js';   // R134: logo på hovedmeny og lasteskjerm (logo_logic.js)
 import { createVersionCheck } from './version_check_view.js';   // R77: versjonsjekk og «Start ny versjon» (version_check_logic.js)
 import { createCinema } from './cinema_view.js';   // R68: kinomodus: kamera-API, fast tid og byggeskjerm for trailer-opptak
 import { CRUMB, initCollect, resetCollect, stepCollect, crumbCount, crumbTotal, collectedIds, restoreCollected } from './collect.js';
@@ -270,6 +271,7 @@ let buildStars2 = store.get('tlm.buildstars2', true);   // R126: ekstra stjerner
 let movedNoticeOn = store.get('tlm.buildmoved', true);   // R133: engangsvarsel om at BYGGESKOLE og 3D-LAB er flyttet
 let build3d = store.get('tlm.build3d', true), build3dSlow = +store.get('tlm.build3dslow', 0.3) || 0.3, build3dPick = +store.get('tlm.build3dpick', 26) || 26, build3dLock = store.get('tlm.build3dlock', true), build3dWind = +store.get('tlm.build3dwind', 1) || 1;   // R130: 3D-lab (egen skjerm i Byggeskolen); SLOW-tempo og trykkradius (admin)
 let build25d = store.get('tlm.build25d', true);   // R123: DOBBEL BRO (2,5D) i Rutenett: ⋯ → DOBBEL BRO
+let showLogo = store.get('tlm.showlogo', true) !== false;   // R134: logo på hovedmeny og lasteskjerm
 let buildGhostW = store.get('tlm.buildghostworld', true);   // R132: spøkelsesbro og oppdragskort ved BYGG-knappen
 let buildSpan = store.get('tlm.buildfromto', true);   // R118: FRA og TIL ved byggestedet (markører i verden, tekst på BYGG-knappen, etiketter i byggeskjermen)
 let partsStart = store.get('tlm.partsfromstart', true);   // R120: delene er der fra start; samling er bonus
@@ -308,6 +310,7 @@ const applyUiFlags = () => { document.body.classList.toggle('nocenter', !showCen
 const evLog = store.get('tlm.evlog', []);
 let statHook = null;   // R88: settes når statistikken er klar (logEv kan kalles før)
 const logEv = (type, detail = '') => { if (type === 'tilbake' && statHook) statHook.back(detail); evLog.push({ c: +clock.toFixed(1), type, detail, pos: [player.x, player.y, player.z].map((v) => +v.toFixed(1)), st: player.state, v: VERSION, lv: levelLabel }); if (evLog.length > 120) evLog.shift(); };
+const logoUi = createLogo({ logEv, getOn: () => showLogo, version: VERSION });   // R134
 // R86: ved feil under lagring (privat modus, full lagring) sies det én gang; spilleren får også en rød linje på hovedmenyen (saveWarn)
 let saveFailNoted = false;
 function noteSaveFail(k, e) { if (saveFailNoted) return; try { logEv('lagring', `FEIL ved skriving av ${k}: ${e}`); setTimeout(() => toast(sv(lang, 'sv.fail')), 300); saveFailNoted = true; } catch { /* clock/toast ikke klar ennå: prøver igjen ved neste feil */ } }
@@ -2027,6 +2030,7 @@ const SETTINGS = [
   rg('build3dslow', 'admin', '3D-lab (R130): tempo i SLOW under prøven (1 = vanlig fart)', 0.3, 0.1, 0.8, 0.05, () => build3dSlow, kp('tlm.build3dslow', (v) => { build3dSlow = v; }), { digits: 2 }),
   rg('build3dpick', 'admin', '3D-lab (R130): trykkradius for knuter (piksler; større = lettere å treffe med tykk finger)', 26, 14, 48, 2, () => build3dPick, kp('tlm.build3dpick', (v) => { build3dPick = v; })),
   fl('build25d', 'spill', 'Dobbel bro (2,5D, R123): i Rutenett kan du trykke ⋯ → DOBBEL BRO for å kopiere bygget til et parallelt plan med tverrstag (smal, middels eller bred; X-form eller rett). Broen blir bred og står som to fagverk med dekk mellom i rommet, og tåler vind fra siden (Byggeskolen: Bred bro; Kjøkkenbroen: valgfritt delmål). Kostnaden teller mot budsjettet. Av = ingen knapp og alle bygg er som før', true, () => build25d, kp('tlm.build25d', (v) => { build25d = v; logEv('bygg', `dobbel bro (2,5D) ${v ? 'på' : 'av'}`); })),
+  fl('showlogo', 'spill', 'Logo (R134): «Liten på stor kloss» på hovedmenyen og på lasteskjermen når spillet starter. Skru av for å sammenligne med bare tekst (gjelder fra neste gang menyen vises og neste oppstart)', true, () => showLogo, kp('tlm.showlogo', (v) => { showLogo = v; logEv('logo', v ? 'logo på' : 'logo av'); })),
   fl('buildghostworld', 'spill', 'Spøkelsesbro i verden (R132): nær et byggested (der BYGG-knappen kommer) står et stiplet, gjennomsiktig omriss av det som skal bygges mellom FRA og TIL (bro = dekk over gapet, trapp = trinn opp til hylla, vippe = en planke), og et lite OPPDRAG-kort ved BYGG-knappen sier hva som skal bygges, hva som kjører over og gapets mål. Kortet krymper etter første BYGG, og omrisset forsvinner når stedet er bestått. Skjules på Ekspert uten hjelp', true, () => buildGhostW, kp('tlm.buildghostworld', (v) => { buildGhostW = v; logEv('bygg', v ? 'spøkelsesbro på' : 'spøkelsesbro av'); })),
   fl('buildfromto', 'spill', 'Vis fra og til ved byggestedet (R118): nær et byggested står grønn FRA og gul TIL i rommet med en stiplet bue mellom, BYGG-knappen sier hvilket sted det gjelder med gap og høydeforskjell, FRA og TIL står også i byggeskjermen, og første gang per sted kommer en kort veiledning (ikke på Ekspert). Skjules på Ekspert uten hjelp. Minikartet viser stedet som et spenn', true, () => buildSpan, kp('tlm.buildfromto', (v) => { buildSpan = v; logEv('bygg', v ? 'fra/til på' : 'fra/til av'); })),
   fl('partsfromstart', 'spill', 'Delene er der fra start (R120): i byggebrettene ligger alle delene stedet trenger i delebrettet første gang du åpner det, uten at du må samle dem i rommet. Delene i rommet er en bonus: hver du finner gir +1 på budsjettet i byggeoppdraget (opptil +3) og teller i delmålet «Finn tre rare deler». Av = som før (du må finne delene selv)', true, () => partsStart, kp('tlm.partsfromstart', (v) => { partsStart = v; logEv('bygg', v ? 'deler fra start på' : 'deler fra start av'); })),
@@ -3428,7 +3432,7 @@ function showStart(o = {}) {
   $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${o.saved ? '✓ ' + dft(lang, 'df.saved') : T('menu.tagline')}</p>${saveWarn()}
     ${coll ? `${has ? bContinue : bStart}<button class="mmore" id="mMore">${ft(lang, 'fr.more')} ▾</button><div class="mfold" id="mFold">${rest}</div>` : `${bContinue}${rest}`}
     <div class="ver">v${VERSION}</div>`;
-  $('start').classList.remove('hide'); document.body.classList.add('instart');
+  $('start').classList.remove('hide'); document.body.classList.add('instart'); logoUi.menu($('start'));   // R134
   if ($('mCont')) $('mCont').onclick = () => { unlockAudio(); hideStart(); logEv('fortsett'); };
   if ($('mStart')) $('mStart').onclick = () => { unlockAudio(); logEv('forstekjoring', 'START valgt (ny spiller, ' + DEFAULT_DIFF + ')'); newGame(DEFAULT_DIFF); };   // R97: ingen vanskelighetsvalg første gang (⚙ → Spill → Vanskelighet)
   if ($('mMore')) $('mMore').onclick = () => { const open = $('mFold').classList.toggle('open'); $('mMore').textContent = `${ft(lang, open ? 'fr.less' : 'fr.more')} ${open ? '▴' : '▾'}`; };

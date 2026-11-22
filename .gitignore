@@ -11,3 +11,4 @@ bilder/
 # Rå research-notater og rapporter fra research-kjøringer (den ferdige rapporten kopieres til docs/)
 research_notes/
 reports/
+!brand/*.png
