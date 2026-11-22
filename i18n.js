@@ -145,6 +145,7 @@ const DICT = {
 
     'lab.siteReset': 'Sted {n} nullstilt', 'lab.allReset': 'Alle steder nullstilt', 'lab.flag': 'Målflagg {n}/{of} nådd ({total} flagg)', 'lab.flagAll': 'Alle målflaggene er nådd!',
     // R95: Byggeskolen i menyen (byggeskole_logic.js, byggeskole_view.js): knapp med merkelapp, første-møte-kort og «klar»-kort (tekstene nevner knappene)
+    'bygging.group': 'BYGGING', 'bygging.moved.title': 'Flyttet', 'bygging.moved.text': 'BYGGESKOLE og 3D-LAB ligger nå under VELG BRETT, nederst i gruppen BYGGING.', 'bygging.moved.ok': 'OK',   // R133
     'school.btn': 'BYGGESKOLE', 'school.rec': 'ANBEFALT', 'school.sub': 'Lær å bygge: {n} av {total} steder klare', 'school.label': 'Byggeskole · Bygglab',
     'badebro.fagverk.title': 'Prøv Byggeskolen · Fagverk først', 'badebro.fagverk.text': 'Trekanter er stive. Her bærer bare en bro av trekanter lasten. Øv deg på Fagverk i Byggeskolen, eller hopp over og prøv selv.', 'badebro.fagverk.go': 'TIL BYGGESKOLEN', 'badebro.fagverk.skip': 'HOPP OVER',   // R119
     'gstage.squareTip': 'En firkant gir etter. Legg inn en diagonal, så blir den stiv.', 'bux.hint.square': 'En firkant gir etter. Legg inn en diagonal, så blir den stiv.',   // R119
@@ -401,6 +402,7 @@ const DICT = {
 
     'lab.siteReset': 'Site {n} reset', 'lab.allReset': 'All sites reset', 'lab.flag': 'Goal flag {n}/{of} reached ({total} flags)', 'lab.flagAll': 'All goal flags reached!',
     // R95: Building school in the menu (byggeskole_logic.js, byggeskole_view.js): button with tag, first-meeting card and «done» card
+    'bygging.group': 'BUILDING', 'bygging.moved.title': 'Moved', 'bygging.moved.text': 'BUILDING SCHOOL and 3D LAB are now under PICK LEVEL, at the bottom in the BUILDING group.', 'bygging.moved.ok': 'OK',   // R133
     'school.btn': 'BUILDING SCHOOL', 'school.rec': 'RECOMMENDED', 'school.sub': 'Learn to build: {n} of {total} sites done', 'school.label': 'Building school · Bygglab',
     'badebro.fagverk.title': 'Try Building School · Trusses first', 'badebro.fagverk.text': 'Triangles are stiff. Only a bridge of triangles carries the load here. Practise Trusses in Building School, or skip and try it yourself.', 'badebro.fagverk.go': 'TO BUILDING SCHOOL', 'badebro.fagverk.skip': 'SKIP',   // R119
     'gstage.squareTip': 'A square gives way. Add a diagonal and it turns stiff.', 'bux.hint.square': 'A square gives way. Add a diagonal and it turns stiff.',   // R119

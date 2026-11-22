@@ -29,8 +29,8 @@ export const isFirstRun = (cleared) => !cleared || typeof cleared !== 'object' |
 //   primary: 'start' | 'continue' (den ene store knappen), collapse: resten ligger under «mer», keep: hvilke rader som beholdes (dempet).
 export function menuPlan({ has, firstRun, on = true }) {
   const primary = has ? 'continue' : 'start';
-  if (!on || !firstRun) return { primary, collapse: false, keep: ['school', 'chg', 'fix'], moreOpen: true };
-  return { primary, collapse: true, keep: ['school', 'chg', 'fix'], moreOpen: false };
+  if (!on || !firstRun) return { primary, collapse: false, keep: ['chg', 'fix'], moreOpen: true };
+  return { primary, collapse: true, keep: ['chg', 'fix'], moreOpen: false };
 }
 
 // ---------- kontroll-hint ----------

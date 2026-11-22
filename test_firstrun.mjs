@@ -13,7 +13,7 @@ assert.deepEqual([menuPlan({ has: false, firstRun: true }).primary, menuPlan({ h
 assert.deepEqual([menuPlan({ has: true, firstRun: true }).primary, menuPlan({ has: true, firstRun: true }).collapse], ['continue', true]);
 assert.equal(menuPlan({ has: true, firstRun: false }).collapse, false, 'etter første mål: vanlig meny');
 assert.equal(menuPlan({ has: false, firstRun: true, on: false }).collapse, false, 'valget av: gammel meny');
-assert.ok(menuPlan({ has: false, firstRun: true }).keep.includes('school') && menuPlan({ has: false, firstRun: true }).keep.includes('chg'), 'BYGGESKOLE og NYTT beholdes');
+assert.ok(menuPlan({ has: false, firstRun: true }).keep.includes('fix') && menuPlan({ has: false, firstRun: true }).keep.includes('chg'), 'NYTT og RETTELSER beholdes (BYGGESKOLE ligger i VELG BRETT, R133)');
 
 // ---- hint: ett om gangen, i rekkefølge, forsvinner når knappen brukes, aldri på Ekspert
 const run = (diff, script, secs = 60) => {   // script: (t) => { use?: id, near? }  ; tid i s, steg 0,2 s

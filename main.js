@@ -30,6 +30,8 @@ import { GATE, initGates, resetGates, restoreGates, gatesSave, stepGates, nearSw
 import { buildGateViews } from './plates_view.js';
 import { SCHOOL, schoolProgress, schoolRead, schoolMark, schoolCardShould, schoolDoneShould, schoolUrl } from './byggeskole_logic.js';   // R95: Byggeskolen i menyen
 import { createSchoolView, schoolMenuHtml } from './byggeskole_view.js';
+import { BYGGING, buildingCards, movedNoticeShould } from './bygging_logic.js';   // R133: BYGGESKOLE og 3D-LAB ligger under VELG BRETT → BYGGING
+import { createBuildingView, buildingGroupHtml } from './bygging_view.js';
 import { createLab3dView } from './grid3d_view.js';   // R130: 3D-laben (egen skjerm: bygg fritt i tre dimensjoner)
 import { LAB3D, WORLD3 } from './grid3d_site.js';
 import { MISSIONS } from './grid3d_missions.js';   // R131: tre 3D-oppdrag (tårn, tripod, bred bro i sidevind)
@@ -265,6 +267,7 @@ let buildMirror = store.get('tlm.buildmirror', true);   // R121: speiling og kop
 let buildTruss2 = normTrussMode(store.get('tlm.buildtruss2', 'auto'));   // R122: trekant- og diagonalhjelp i rutenett-bygging (auto: ikke på Ekspert)
 let buildCable = store.get('tlm.buildcable', true);   // R127: kabel (hengebro) som materiale i Rutenett (Byggeskolen: Hengebro)
 let buildStars2 = store.get('tlm.buildstars2', true);   // R126: ekstra stjerner (billigst, lettest, smule) og beste-liste i Badebroen og Byggeskolen
+let movedNoticeOn = store.get('tlm.buildmoved', true);   // R133: engangsvarsel om at BYGGESKOLE og 3D-LAB er flyttet
 let build3d = store.get('tlm.build3d', true), build3dSlow = +store.get('tlm.build3dslow', 0.3) || 0.3, build3dPick = +store.get('tlm.build3dpick', 26) || 26, build3dLock = store.get('tlm.build3dlock', true), build3dWind = +store.get('tlm.build3dwind', 1) || 1;   // R130: 3D-lab (egen skjerm i Byggeskolen); SLOW-tempo og trykkradius (admin)
 let build25d = store.get('tlm.build25d', true);   // R123: DOBBEL BRO (2,5D) i Rutenett: ⋯ → DOBBEL BRO
 let buildGhostW = store.get('tlm.buildghostworld', true);   // R132: spøkelsesbro og oppdragskort ved BYGG-knappen
@@ -2018,7 +2021,7 @@ const SETTINGS = [
   sl('buildtruss2', 'spill', 'Trekant- og diagonalhjelp (R122): i rutenett-bygging (Hyllebroen, Kjøkkenbroen, Byggeskolen) foreslår TREKANT et tredje punkt når du har valgt to knuter eller en stav (trykk forslaget for å bytte, TREKANT for å legge det til), og en firkant uten diagonal får en «gir etter»-prikk og knappen DIAGONAL (billigste lovlige skråstav). Hjelpen legger aldri til noe av seg selv og bruker valgt materiale. Etter vanskelighet: på for Nybegynner og Medium, av for Ekspert; «På» slår den på også der. Kan skjules i ⋯', 'auto', [['auto', 'Etter vanskelighet'], ['on', 'På'], ['off', 'Av']], () => buildTruss2, kp('tlm.buildtruss2', (v) => { buildTruss2 = normTrussMode(v); logEv('bygg', `trekant- og diagonalhjelp: ${buildTruss2}`); })),
   fl('buildcable', 'spill', 'Kabel (R127): i Rutenett får Byggeskole-stedet Hengebro en ny del, KABEL, som bare bærer i strekk (som tau, men mye sterkere) og henger litt ned. Bygg et dekk av tre, hengt opp i kabelen mellom tårnene. Av = ingen kabelknapp, og dagens materialer er uendret', true, () => buildCable, kp('tlm.buildcable', (v) => { buildCable = v; logEv('bygg', `kabel ${v ? 'på' : 'av'}`); })),
   fl('buildstars2', 'spill', 'Ekstra stjerner (R126): Badebroen og Byggeskolens steder gir ekstra stjerner på resultatkortet: BILLIGST (bygg under en kostnad), LETTEST (bygg under en vekt) og SMULE (en knute midt på spennet), og en beste-liste per sted (de tre beste byggene). Dagens stjerner er uendret. Av = ingen ekstra stjerner og ingen liste', true, () => buildStars2, kp('tlm.buildstars2', (v) => { buildStars2 = v; logEv('bygg', `runde 2 (ekstra stjerner og beste-liste) ${v ? 'på' : 'av'}`); })),
-  fl('build3d', 'spill', '3D-lab (R130): hovedmenyen får en knapp «3D-LAB» med en egen byggeskjerm i tre dimensjoner: roter med én finger, klyp for å zoome, to fingre flytter; FORAN, SIDE, TOPP og 3D som hurtigvisninger; LAG ◀ ▶ bytter dybde; trykk et punkt for en knute og to knuter for en stav. PRØV kjører en bil over broen; grønt er lite belastet, rødt mye. Bestått bro står i rommet. Av = ingen knapp; dagens bygging er uendret', true, () => build3d, kp('tlm.build3d', (v) => { build3d = v; logEv('bygg3d', `3D-lab ${v ? 'på' : 'av'}`); })),
+  fl('build3d', 'spill', '3D-lab (R130): VELG BRETT får et kort «3D-LAB» (gruppen BYGGING nederst) med en egen byggeskjerm i tre dimensjoner: roter med én finger, klyp for å zoome, to fingre flytter; FORAN, SIDE, TOPP og 3D som hurtigvisninger; LAG ◀ ▶ bytter dybde; trykk et punkt for en knute og to knuter for en stav. PRØV kjører en bil over broen; grønt er lite belastet, rødt mye. Bestått bro står i rommet. Av = ingen knapp; dagens bygging er uendret', true, () => build3d, kp('tlm.build3d', (v) => { build3d = v; logEv('bygg3d', `3D-lab ${v ? 'på' : 'av'}`); })),
   fl('build3dlock', 'spill', '3D-oppdrag (R131): 3D-laben har fire oppdrag: Broen, Tårnet (last på toppen), Tripoden (last i tau) og Bred bro i sidevind. Hvert nytt oppdrag er låst til det forrige er bestått (som Byggeskolens steder). Av = alle oppdrag åpne fra start', true, () => build3dLock, kp('tlm.build3dlock', (v) => { build3dLock = v; logEv('bygg3d', `oppdragslås ${v ? 'på' : 'av'}`); })),
   rg('build3dwind', 'admin', '3D-oppdrag (R131): styrke på sidevinden i oppdraget «Bred bro i sidevind» (1 = vanlig; mer = hardere vind)', 1, 0.5, 1.5, 0.05, () => build3dWind, kp('tlm.build3dwind', (v) => { build3dWind = v; }), { digits: 2 }),
   rg('build3dslow', 'admin', '3D-lab (R130): tempo i SLOW under prøven (1 = vanlig fart)', 0.3, 0.1, 0.8, 0.05, () => build3dSlow, kp('tlm.build3dslow', (v) => { build3dSlow = v; }), { digits: 2 }),
@@ -2042,6 +2045,7 @@ const SETTINGS = [
   fl('buildround2', 'spill', 'Runde 2 av byggebrettene (R124, R125): «Runde 2»-brettene vises i Brett-velgeren (Hyllebroen og Kjøkkenbroen med store gap, fagverk i stål og to mål; Klossetrappa med høy hylle: tårn og to ramper; Vippa med høyere hylle: vippa må stå på skrå). Dagens brett er uendret', true, () => round2On, kp('tlm.buildround2', (v) => { round2On = v; logEv('bygg', v ? 'runde 2 på' : 'runde 2 av'); })),
   fl('squaretip', 'hjelp', 'Byggeskjerm (R119): hint når bygget har en firkant uten diagonal: «En firkant gir etter. Legg inn en diagonal, så blir den stiv.» Gjelder rutenett-bygging i alle steder (broene og Byggeskolen)', true, () => squareTipOn, kp('tlm.squaretip', (v) => { squareTipOn = v; logEv('bygg', v ? 'firkant-hint på' : 'firkant-hint av'); })),
   fl('fagverkcard', 'hjelp', 'Badebro (R119): første gang du bygger på «Bygg 5: Broen over badekaret» uten at Byggeskolen · Fagverk er bestått, vises «Prøv Byggeskolen · Fagverk først» (TIL BYGGESKOLEN / HOPP OVER). Én gang, aldri på Ekspert', true, () => fagverkCardOn, kp('tlm.fagverkcard', (v) => { fagverkCardOn = v; logEv('byggeskole', v ? 'fagverk-kort på' : 'fagverk-kort av'); })),
+  fl('buildmoved', 'hjelp', 'Flyttet-varsel (R133): første gang hovedmenyen vises etter at BYGGESKOLE og 3D-LAB ble flyttet til VELG BRETT → BYGGING, vises et lite kort som kan lukkes med OK. Vises bare én gang, aldri for helt nye spillere. Av = ingen varsel', true, () => movedNoticeOn, kp('tlm.buildmoved', (v) => { movedNoticeOn = v; logEv('byggeskole', `flyttet-varsel ${v ? 'på' : 'av'}`); })),
   fl('schoolcard', 'spill', 'Byggeskole (R95): vis et lite kort første gang du åpner byggeskjermen i et vanlig byggebrett («Ny til bygging? Prøv BYGGESKOLE først»). Vises bare én gang, aldri på Ekspert', true, () => schoolCardOn, kp('tlm.schoolcard', (v) => { schoolCardOn = v; logEv('byggeskole', v ? 'første-møte-kort på' : 'første-møte-kort av'); })),
   fl('gridstage', 'spill', 'Bygglab, rutenett (R74): hvert sted har et mål (last som må over), et budsjett og stjerner etter pris; tyngre last enn i klassisk modus. Av = fri rutenett-bygging uten krav', true, () => gridStage, kp('tlm.gridstage', (v) => { gridStage = v; logEv('bygg', v ? 'rutenett-oppdrag på' : 'rutenett-oppdrag av'); })),
   fl('gridlock', 'spill', 'Bygglab, rutenett (R74): neste sted åpnes i rutenett først når forrige er bestått. Av = alle steder åpne', true, () => gridLock, kp('tlm.gridlock', (v) => { gridLock = v; logEv('bygg', v ? 'rutenett-låsing på' : 'rutenett-låsing av'); })),
@@ -3261,7 +3265,7 @@ const hasProgress = () => !gameDone && (resumed || clock > 4 || levelId !== 'bad
 const svView = createStorageView({ $, lang: () => lang, logEv });   // R86: bekreftelse før noe slettes
 const saveWarn = () => (disk.status().failures > 0 || !disk.status().available ? `<p class="tag" id="mSaveWarn" style="color:#ffb4a8">${sv(lang, 'sv.fail')}</p>` : '');
 function clearAllProgress() { disk.keys('tlm.').filter((k) => isNewGameKey(k) && k !== 'tlm.cleared').forEach((k) => disk.remove(k)); }   // R86: «Nytt spill» (tlm.cleared settes tom av kalleren)
-function hideStart() { statsLevelStart(); menuOpen = false; $('start').classList.add('hide'); $('start').classList.remove('dfl'); document.body.classList.remove('instart'); }
+function hideStart() { buildV.hide(); statsLevelStart(); menuOpen = false; $('start').classList.add('hide'); $('start').classList.remove('dfl'); document.body.classList.remove('instart'); }
 // R69: vanskelighet. Bare hjelpen endres (tabellen i difficulty.js). carry: ta fremgangen med til det nye nivåets nøkkel (endring midt i et brett).
 const dv = createDifficultyView({ $, lang: () => lang, logEv });
 function applyDifficulty(v, { carry = false, why = 'valgt' } = {}) {
@@ -3393,6 +3397,19 @@ function schoolOnPass(id, r) {
     schoolV.showDone({ onOk: () => {} });
   }
 }
+// R133: VELG BRETT med gruppen BYGGING nederst: BYGGESKOLE (n/total) og 3D-LAB (bak valget build3d). Samme handlinger som knappene på hovedmenyen hadde.
+const buildV = createBuildingView({ T, logEv });
+function openLab3d(from) {
+  logEv('bygg3d', `åpnet fra ${from}`); saveProgress();
+  try { location.href = BYGGING.lab3dUrl(location.pathname); } catch { location.search = `?level=${SCHOOL.levelId}&lab3d=1`; }
+}
+function buildingPick() {
+  const cards = buildingCards({ cinema: CINE.on, build3d });
+  if (!cards.length) return null; buildV.style();
+  const items = cards.map((c) => c === 'school' ? { html: schoolMenuHtml(T, schoolProg(), r2Summary()) } : { html: `<button class="mbtn sec" id="mLab3d">🧊 ${T('lab3d.menu')}<small>${T('lab3d.menu.sub')}</small></button>` });
+  return { html: buildingGroupHtml(T('bygging.group'), items), on: { mSchool: () => { unlockAudio(); openSchool('velg brett'); }, mLab3d: () => { unlockAudio(); openLab3d('velg brett'); } } };
+}
+function openPicker() { dv.pickLevel({ levels: levelsShown(), st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, building: buildingPick() }); }
 function showStart(o = {}) {
   menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; saveProgress();
   if (document.pointerLockElement) document.exitPointerLock();
@@ -3404,8 +3421,6 @@ function showStart(o = {}) {
   const bStart = `<button class="mbtn big" id="mStart">${ft(lang, 'fr.start')}</button>`;
   const rest = `<button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
     <button class="mbtn sec" id="mLevels">${dft(lang, 'df.pick')}${bl ? `<small>${bl}</small>` : ''}</button>
-    ${CINE.on ? '' : schoolMenuHtml(T, schoolProg(), r2Summary())}
-    ${CINE.on || !build3d ? '' : `<button class="mbtn sec" id="mLab3d">🧊 ${T('lab3d.menu')}<small>${T('lab3d.menu.sub')}</small></button>`}
     <button class="mbtn sec" id="mToys">🧸 ${rwT(lang, 'rw.closet')}</button>
     ${menuVisible(testerCode(), validCode) ? `<div class="mrow"><button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button><button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button></div>` : `<button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button>`}
     <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
@@ -3423,9 +3438,12 @@ function showStart(o = {}) {
     if (!has || !confirmNewOn) { pick(); return; }
     svView.confirmWipe({ kind: 'new', plan: wipePlan('new', disk.keys('tlm.'), store), onCancel: showStart, onOk: pick });   // R86: vis hva som slettes FØR noe slettes (selve slettingen skjer i newGame)
   };
-  $('mLevels').onclick = () => { unlockAudio(); dv.pickLevel({ levels: levelsShown(), st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, ...(CINE.on ? {} : { school: { label: T('school.label'), sub: T('school.sub', { n: schoolProg().n, total: schoolProg().total }), onOpen: () => openSchool('velg brett') } }) }); };
-  if ($('mSchool')) $('mSchool').onclick = () => { unlockAudio(); openSchool('meny'); };
-  if ($('mLab3d')) $('mLab3d').onclick = () => { unlockAudio(); logEv('bygg3d', 'åpnet fra menyen (knapp)'); saveProgress(); try { location.href = `${location.pathname}?level=${SCHOOL.levelId}&lab3d=1`; } catch { location.search = `?level=${SCHOOL.levelId}&lab3d=1`; } };   // R130
+  $('mLevels').onclick = () => { unlockAudio(); openPicker(); };
+  if (!CINE.on && !store.get(BYGGING.seenKey, false)) {   // R133: engangsvarsel; helt nye spillere har aldri sett knappene, så for dem merkes det bare som sett
+    const show = movedNoticeShould({ on: movedNoticeOn, seen: false, firstRun: isFirstRun(normCleared(store.get('tlm.cleared', {}))), cinema: CINE.on });
+    store.set(BYGGING.seenKey, true);
+    if (show) { logEv('byggeskole', 'flyttet-varsel vist (BYGGESKOLE og 3D-LAB under VELG BRETT)'); buildV.showMoved({ onOk: () => logEv('byggeskole', 'flyttet-varsel lukket') }); }
+  }
   $('mToys').onclick = () => { logEv('belønning', 'lekerom åpnet'); showCloset($('start'), { st: store, lang, all: rewardsAll, levels: LEVELS, onChange: (e) => { refreshAccessories(); logEv('belønning', `valgt ${Object.values(e).filter(Boolean).join(',') || 'ingen'}`); }, onBack: showStart }); };
   $('mChg').onclick = () => { logEv('nytt', 'knapp'); openChanges(); };
   if (validCode(testerCode())) { const tryChg = (left) => fetchChanges().then((l) => { if (l) chgBtnRefresh(); else if (left > 0) setTimeout(() => { if ($('mChg')) tryChg(left - 1); }, 8000); }).catch(() => {}); tryChg(2); }   // stille ved feil, med nytt forsøk som Rettelser

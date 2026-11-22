@@ -71,7 +71,7 @@ assert.equal(SL.schoolBadge(SL.schoolProgress([])).kind, 'recommended'); assert.
   const main = fs.readFileSync('main.js', 'utf8'), html = fs.readFileSync('index.html', 'utf8'), list = (html.match(/const files = \[([^\]]+)\]/) || [])[1] || '';
   for (const f of ['byggeskole_logic', 'byggeskole_view']) assert.ok(list.includes(`'${f}'`), `index.html: ${f}`);
   assert.match(main, /fl\('schoolcard', 'spill'/, 'valg i SETTINGS (Spill)'); assert.match(main, /id: 'bygglab', label: 'Byggeskole/, 'etikett «Byggeskole», id bygglab');
-  assert.match(main, /schoolMenuHtml\(T, schoolProg\(\)(, r2Summary\(\))?\)/, 'knappen i showStart'); assert.ok(/CINE\.on \? '' : schoolMenuHtml/.test(main), 'ikke i kinomodus');
+  assert.match(main, /schoolMenuHtml\(T, schoolProg\(\)(, r2Summary\(\))?\)/, 'kortet i VELG BRETT → BYGGING (R133)'); assert.ok(/buildingCards\(\{ cinema: CINE\.on/.test(main), 'ikke i kinomodus'); assert.ok(!/\$\{CINE\.on \? '' : schoolMenuHtml/.test(main), 'ikke lenger på hovedmenyen');
   for (const k of ["logEv('byggeskole', `åpnet fra", "første-møte-kort vist", "første-møte-kort: hoppet over", "første-møte-kort: prøv skolen", "sted bestått"]) assert.ok(main.includes(k), `logEv: ${k}`);
   assert.ok(fs.readFileSync('docs/INNSTILLINGER.md', 'utf8').includes('tlm.schoolcard'), 'dokumentert i INNSTILLINGER.md');
   for (const f of ['byggeskole_logic.js', 'byggeskole_view.js']) assert.ok(!/from 'three'|THREE\./.test(fs.readFileSync(f, 'utf8')), `${f} uten three`);
