@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r136-neste-last', version: '2.136', date: '2026-11-22', title: 'Neste last velges automatisk etter bestått prøve.',
+    how: 'Åpne Nivå 7 · Lekerom (byggeskjerm), la Ball over og trykk STOPP. Kortet sier «Neste last: …»; trykk PRØV.', level: 'leke', spot: null },
   { id: 'r135-sene-shadere', version: '2.135', date: '2026-11-22', title: 'Mindre hakking i Nivå 1 · Bad: flere shadere forvarmes før spillet starter.',
     how: 'Start Nivå 1 · Bad og gå rundt i et minutt. Det skal ikke hakke når nye ting kommer til syne.', level: 'bad', spot: null },
   { id: 'r137-lagre-kode', version: '2.134', date: '2026-11-22', title: 'Tester-koden har en egen LAGRE KODE-knapp (i ⚑-boksen og i ⚙ → Test), med bekreftelse «Kode lagret ✓».',
