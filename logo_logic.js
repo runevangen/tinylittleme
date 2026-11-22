@@ -5,7 +5,7 @@ export const LOGO = {
   dir: 'brand',
   menu: 'logo-mork.png',        // hovedmenyen har mørk bakgrunn: hvit tekst
   splash: 'logo-mork.png',      // lasteskjermen er mørk
-  ratio: 440 / 208,             // bredde / høyde på logofilene
+  ratio: 335 / 208,             // bredde / høyde på logofilene
   splashMaxMs: 6000,            // lasteskjermen lukkes uansett etter dette (også hvis menyen aldri kommer)
   splashMinMs: 700,             // vises minst så lenge (så den ikke blinker forbi)
   fadeMs: 350,
@@ -16,7 +16,7 @@ export const logoUrl = (file, v = '') => `./${LOGO.dir}/${file}${v ? '?v=' + enc
 // raw: strengen fra localStorage (eller null/undefined). Bare en uttrykkelig «false» skrur logoen av.
 export const logoOn = (raw) => { if (raw === false) return false; if (typeof raw !== 'string') return true; try { return JSON.parse(raw) !== false; } catch { return true; } };
 export const menuLogoHtml = ({ on = true, v = '', alt = 'tinylittleme' } = {}) =>
-  on ? `<h1 class="logoh1"><img class="logoimg" src="${logoUrl(LOGO.menu, v)}" alt="${alt}" width="440" height="208" decoding="async"></h1>` : `<h1>${alt}</h1>`;
+  on ? `<h1 class="logoh1"><img class="logoimg" src="${logoUrl(LOGO.menu, v)}" alt="${alt}" width="335" height="208" decoding="async"></h1>` : `<h1>${alt}</h1>`;
 // Når kan lasteskjermen lukkes? Når menyen vises og den har stått minst splashMinMs, eller etter splashMaxMs uansett.
 export const splashCloseDelay = ({ elapsed = 0, menuShown = false } = {}) => (elapsed >= LOGO.splashMaxMs ? 0 : menuShown ? Math.max(0, LOGO.splashMinMs - elapsed) : Math.max(0, LOGO.splashMaxMs - elapsed));
 export const manifestJson = () => ({

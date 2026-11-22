@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r135-meny-sentrert', version: '2.131', date: '2026-11-22', title: 'Hovedmenyen står rett: logoen er midtstilt og knappene under «mer» er like brede og midtstilte som START.',
+    how: 'Åpne spillet. Trykk «mer ▾» under START og se at logoen og alle knappene står midt på skjermen. Snu telefonen og se det samme.', level: '', spot: null },
   { id: 'r134-logo', version: '2.127', date: '2026-11-22', title: 'Spillet har fått logo: «Liten på stor kloss» på hovedmenyen og på lasteskjermen, og som ikon på hjemskjermen og i nettleserfanen.',
     how: 'Åpne spillet og se logoen under lasting og øverst på hovedmenyen. Legg spillet på hjemskjermen og se ikonet. ⚙ → Spill → «Logo» kan skrus av.', level: '', spot: null },
   { id: 'r133-bygging-gruppe', version: '2.127', date: '2026-11-22', title: 'BYGGESKOLE og 3D-LAB er flyttet fra hovedmenyen til VELG BRETT, i en egen gruppe BYGGING nederst. Hovedmenyen er ryddigere, og et lite varsel forteller om flyttingen første gang.',

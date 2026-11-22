@@ -17,7 +17,7 @@ const CSS = `#frhint{position:fixed;z-index:6;pointer-events:none;display:none}
 #start .mrow2{display:flex;flex-direction:column;gap:8px;width:100%}
 #start .mbtn.big{font-size:22px;padding:18px 22px;letter-spacing:.06em}
 #start .mmore{background:none!important;border:0!important;color:#ffffffa0!important;font:600 13px system-ui!important;padding:8px!important;box-shadow:none!important;text-decoration:underline}
-#start .mfold{display:none;flex-direction:column;gap:8px;width:100%;opacity:.8}
+#start .mfold{display:none;flex-direction:column;align-items:center;gap:8px;width:100%;opacity:.8}
 #start .mfold.open{display:flex}
 body.nohints #frhint{display:none!important}`;
 

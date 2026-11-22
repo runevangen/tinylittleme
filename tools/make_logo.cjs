@@ -21,7 +21,7 @@ const DEFS = `
 <rect x="122" y="84" width="14" height="86" rx="7" fill="#B52F27" opacity=".35"/>
 <text x="62" y="168" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="104" fill="#fff">t</text>
 <use href="#fig" x="55" y="26" width="26.25" height="42"/></symbol>`;
-const logoSvg = (ink, me) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 208" width="880" height="416"><defs>${DEFS}</defs>
+const logoSvg = (ink, me) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 0 335 208" width="670" height="416"><defs>${DEFS}</defs>
 <use href="#mark" x="14" y="6" width="136" height="190"/>
 <text x="176" y="126" font-family="Fredoka" font-weight="700" font-size="78" fill="${ink}">tiny</text>
 <text x="178" y="172" font-family="Fredoka" font-weight="700" font-size="42" fill="${me}">little me</text></svg>`;
@@ -40,8 +40,8 @@ const iconSvg = (round) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0
     await p.screenshot({ path: path.join(OUT, file), omitBackground: transparent });
     await p.close();
   }
-  await png(logoSvg('#1C2A44', '#2D7FF9'), 880, 416, 'logo-lys.png', true);
-  await png(logoSvg('#FFFFFF', '#8FD0FF'), 880, 416, 'logo-mork.png', true);
+  await png(logoSvg('#1C2A44', '#2D7FF9'), 670, 416, 'logo-lys.png', true);
+  await png(logoSvg('#FFFFFF', '#8FD0FF'), 670, 416, 'logo-mork.png', true);
   await png(iconSvg(false), 180, 180, 'icon-180.png', false);
   await png(iconSvg(false), 192, 192, 'icon-192.png', false);
   await png(iconSvg(false), 512, 512, 'icon-512.png', false);
