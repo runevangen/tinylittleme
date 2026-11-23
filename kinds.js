@@ -72,6 +72,16 @@ export const KINDS = {
   vise:         { shaped: false, desc: 'skrustikke (metall, vanlig boks)' },
   nut:          { shaped: false, desc: 'mutter (R63): movable light, ca. 8 cm kube; veier 2 på en trykkplate' },
   tire:         { shaped: true,  desc: 'sykkeldekk (R63): movable light, kube ca. 14 cm; ekte kulekollisjon (ruller når du dytter det), bæres med TA' },
+  // utendørs (R151): vanlige bokser med material fra listen under (stein/grus = plaster eller tile, tre = wood, gress = fabric)
+  stone:        { shaped: false, desc: 'utendørs: stein / heller / steinblokk (vanlig boks, material plaster eller tile)' },
+  grass:        { shaped: false, desc: 'utendørs: gressflekk (lav boks 2–5 cm, material fabric, grønn, soft: true, decor: true hvis helt flat)' },
+  gravel:       { shaped: false, desc: 'utendørs: grus (lav boks, material plaster, grå/beige, slick: true hvis løs grus du sklir i)' },
+  bench:        { shaped: false, desc: 'utendørs: benk (vanlig boks av tre eller metall, ca. 40–45 cm høy sitteflate)' },
+  stairs:       { shaped: false, desc: 'utendørs: trapp (ett trinn per boks, hvert trinn 15–20 cm høyere enn forrige)' },
+  hedge:        { shaped: false, desc: 'utendørs: hekk / busk (høy boks, material fabric, mørkegrønn, ikke klatrebar)' },
+  playground:   { shaped: false, desc: 'utendørs: lekeapparat (huske, sklie, klatrestativ) som en eller flere vanlige bokser; plattformer er flater man kan hoppe opp på' },
+  water:        { shaped: false, desc: 'utendørs: vann (dam, vanndam, sluk) som en fare «pit» i hazards, i tillegg til en lav dekorboks i blått (material glass, decor: true)' },
+  curb:         { shaped: false, desc: 'utendørs: kantstein (lav boks 10–15 cm, material plaster); gir et trinn, og en fare der den danner kanten ned mot vei eller vann' },
 };
 export const MATERIALS = ['wood', 'woodpanel', 'tile', 'porcelain', 'ceramic', 'plastic', 'fabric', 'paper', 'metal', 'glass', 'mirror', 'wicker', 'book', 'plaster'];
 export const WEIGHTS = ['light', 'medium', 'heavy'];

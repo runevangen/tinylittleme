@@ -8,11 +8,11 @@ export function promptText() {
   const rows = Object.entries(KINDS).map(([k, v]) => `| \`${k}\` | ${v.shaped ? 'ja' : 'boks'} | ${v.desc} |`).join('\n');
   return `# Instruks til bildetolkningen (generert av \`tools/make_prompt.mjs\`: ikke rediger for hånd)
 
-Du får 3–4 vanlige mobilbilder av ett rom. Lag en **scene** (JSON som følger \`docs/scene.schema.json\`) som spillet gjør om til et 3D-brett.
-Svar bare med JSON. Kontroller resultatet med \`node tools/validate_scene.mjs\` før det brukes.
+Du får 2–4 vanlige mobilbilder av ett sted: et rom innendørs, eller et lite avgrenset område utendørs (terrasse, hjørne av hagen, liten lekeplass). Lag en **scene** (JSON som følger \`docs/scene.schema.json\`) som spillet gjør om til et 3D-brett.
+Svar bare med JSON. **Personer, ansikter og dyr skal aldri med i scenen** (ikke som ting, navn eller notater); hopp over dem, og beskriv aldri hvem som bor eller er der. Kontroller resultatet med \`node tools/validate_scene.mjs\` før det brukes.
 
 ## Mål og koordinater
-- Alle mål i **cm**. Origo i rommets nordvestre hjørne: x mot øst, z mot sør (mot døra), y opp fra gulvet.
+- Alle mål i **cm**. Origo i stedets nordvestre hjørne (utendørs: avgrens stedet med usynlige vegger rundt det du ser; hekker, gjerder og murer er egne ting): x mot øst, z mot sør (mot døra), y opp fra gulvet.
 - Finn skala fra kjente gjenstander: toalettrull ≈ 10 × 10 cm, flis ≈ 20 × 20 cm, do-sete ≈ 40 cm over gulvet, dør ≈ 200 cm.
 - Hver ting er en aksejustert boks \`box: [x0, x1, y0, y1, z0, z1]\` (min før maks). Bruk flere bokser for ting som ikke er firkantede (se grupper).
 - Gi hver ting \`confidence\` (0–1) og hvilke bilder den sees på (\`photos\`). Gjett heller enn å utelate, men sett lav confidence.
@@ -37,6 +37,10 @@ ${rows}
 - \`hazards\`: type ${HAZARDS.join(' | ')} (pit = kar/grop man ikke kommer ut av; flush = do-skål). \`box\` i cm og en \`message\`.
 - \`start\`: {x, z} der spilleren kommer inn (ved døra). \`goal\`: {x, y, z} en ting høyt oppe som er et mål.
 - \`windows\`: vegg (N/S/E/W), posisjon langs veggen, y, w, h. \`look\`: lysdempning. \`audio\`: {reverb, ambience: ["drip","fan"]}.
+
+## Utendørs og farer
+- Utendørs bruker du stein, gress, grus, benk, trapp, hekk, bord, lekeapparat, vann og kantstein fra tabellen. Gulvet er bakken (\`room.floor\`); \`room.height\` er hvor høyt brettet skal gå (f.eks. 250 cm), \`ceiling\` settes til en usynlig, lav lysdempning.
+- Farer: **vann** = \`hazards\` med type \`pit\` (man kommer ikke opp igjen); **kantstein** = lav boks, og der den danner en kant ned mot vei eller vann legger du en \`pit\` ved siden av; **glatt underlag** (våt stein, løs grus, is) = \`slick: true\` på tingen.
 
 ## Det du ikke ser
 Døras plassering og baksider må gjettes. Skriv det i \`source.uncertainty\`. Et menneske skal se over **hjelpeobjekter** (trappetrinn generatoren legger inn) og feilplasserte ting før brettet spilles.
