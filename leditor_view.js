@@ -112,6 +112,7 @@ export function createLeditorView(ctx) {
   }
 
   // ---- 4. kall til tjenesten ----
+  const KEEP_PHOTOS = ['nett', 'feil', 'tolkning', 'avbrutt'];
   async function make() {
     if (busy) return; busy = true; const t0 = Date.now(); abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const el = root(); let step = 0;
@@ -121,8 +122,9 @@ export function createLeditorView(ctx) {
     logEv?.('leveleditor', `sender ${S.photos.length} bilder`);
     const res = await callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers }, { signal: abort?.signal });
     stopTick(); busy = false; abort = null;
-    S.photos.length = 0;   // bildene slippes straks (ingenting lagres)
-    if (!res.ok) { logEv?.('leveleditor', `feilet: ${res.reason} (${Date.now() - t0} ms)`); failed(res.reason); return; }
+    // Bildene lagres aldri, bare i minnet. Ved nett- og tjenestefeil beholdes de så du slipper å velge dem på nytt (NYTT FORSØK); ellers slippes de straks.
+    if (!res.ok) { const keep = KEEP_PHOTOS.includes(res.reason) && S.photos.length; if (!keep) S.photos.length = 0; logEv?.('leveleditor', `feilet: ${res.reason} (${Date.now() - t0} ms)${keep ? ' · bildene beholdt for nytt forsøk' : ''}`); failed(res.reason); return; }
+    S.photos.length = 0;
     S.scene = res.scene; S.usage = res.usage || { cost_usd: 0, ms: 0 }; S.name = defaultName(res.scene);
     const room = sceneToRoom(res.scene); S.room = room; if (room.scene) S.scene = room.scene;
     if (!room.ok) { logEv?.('leveleditor', `scene ble ikke brett: ${room.reason}`); failed(room.reason); return; }
