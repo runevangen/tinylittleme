@@ -34,3 +34,10 @@ Andre funn: duplisert nøkkel `roll` i `voice.js` (replikkene «Og rull!» osv. 
 6. Til slutt `index.html` (seierskjerm og PC-tastehjelp) og de fire egne ordbøkene (`difficulty`, `firstrun`, `rewards`, `storage`) inn i `i18n.js`.
 
 Filer: `i18n_dekning.json` (dekning), `norsk_vurdering.json` (86 funn med forslag).
+
+## R146 runde 1: lagt ut (⚙, NYTT, spillhendelser)
+- **⚙-etiketter:** `settings_text.js` (`SETTING_TEXT`: id → [norsk, engelsk], eller 4 tekster med PC-variant; `PANEL_TEXT` for gruppenavn og faste tekster). Nye valg i `SETTINGS` legges også inn her (test_i18n.mjs feiler hvis en ikke-admin-innstilling mangler). Admin-justeringer beholder SETTINGS-teksten. Språkbytte i ⚙ tegner panelet på nytt uten omstart.
+- **NYTT:** `changes_text.js` (`CHANGES_TEXT`: id → [kortere norsk tittel eller null, engelsk tittel, engelsk «slik tester du»]); hver nye rad i `changes_data.js` får også en rad der. Visningen (`fixes_view.js`, delt med RETTELSER) bruker `fixes_text.js`.
+- **Spillhendelser:** `toast.*` i `i18n.js`; ting vises med navn (`nameOfId`), aldri rå id. Stemmen (`voice.js`) har `en`-replikker, og `roll`-duplikatet er skilt (`unroll`).
+- **Rettet norsk:** «ville gå», «Erstatte», «Legokloss», «Tåler mest», SNAP/SLOW, «brakk» i stedet for «røk/røyk», «Sugd full», «Genvei», pillbug → kulemark, wind-up → opptrekksrobot, rå id i toast.
+- **Gjenstår (runde 2–3):** brett-JSON og `LEVELS`, RETTELSER-innhold, ⚑ Send, versjonssjekk, `index.html`, lydmikser, de fire ordbøkene, og tekster som fortsatt er norske i ⚙ (versjonsknapp, «Tilbake»). Sjekk: `NODE_PATH=$(npm root -g) node tools/lang_check.cjs [bildemappe]`.

@@ -177,7 +177,7 @@ const TXT = {
     'sv.allOk': 'NULLSTILL ALT', 'sv.allDone': 'Alt er nullstilt', 'sv.allBtn': 'Nullstill alt (fremgang, merker og innstillinger)',
     'sv.copy': 'KOPIER FREMGANG', 'sv.paste': 'LIM INN FREMGANG', 'sv.copied': 'Fremgangen er kopiert. Lim den inn på den andre enheten med LIM INN FREMGANG.', 'sv.copyFail': 'Kunne ikke kopiere. Prøv igjen.',
     'sv.err.empty': 'Ingenting å lime inn.', 'sv.err.nocode': 'Fant ingen fremgangskode i teksten. Bruk KOPIER FREMGANG på den andre enheten.', 'sv.err.broken': 'Koden er ødelagt eller avkortet. Kopier den på nytt.', 'sv.err.big': 'Teksten er for stor.', 'sv.err.none': 'Koden inneholdt ingen fremgang.',
-    'sv.pasteAsk': 'Bytte fremgangen på denne enheten med koden ({boards} brett, {cleared} klarte)? Valgene dine endres ikke.', 'sv.pasteDone': 'Fremgangen er limt inn ({n} deler). Spillet laster på nytt.', 'sv.pastePrompt': 'Lim inn fremgangskoden her:',
+    'sv.pasteAsk': 'Erstatte fremgangen på denne enheten med koden ({boards} brett, {cleared} klarte)? Valgene dine endres ikke.', 'sv.pasteDone': 'Fremgangen er limt inn ({n} deler). Spillet laster på nytt.', 'sv.pastePrompt': 'Lim inn fremgangskoden her:',
     'sv.fail': 'Kan ikke lagre på denne enheten (privat modus eller full lagring). Fremgangen blir ikke husket når du lukker siden.', 'sv.saved': 'Lagret på denne enheten', 'sv.status': '{boards} brett med fremgang · {cleared} klarte · {badges} merker.',
     'sv.note': 'Fremgangen ligger i nettleseren på denne enheten. Bruk KOPIER FREMGANG for å flytte den.',
   },

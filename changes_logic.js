@@ -1,7 +1,7 @@
 // R83: «NYTT»-menyen (data i changes_data.js, visning i fixes_view.js som også brukes av Rettelser). Ren logikk uten DOM og nett, testes i node (test_changes.mjs).
 // En rad ligner en rettelse: { id, version, message (= title), how, level, spot, at, check: 'ok'|'fail'|null, note, checked_at }, så sortering, faner og skjuling fra fixes_logic.js virker uten endring.
 export const LOCAL_KEY = 'tlm.changechecks';
-export const buttonLabel = (n) => (n > 0 ? `NYTT · ${n}` : 'NYTT');
+export const buttonLabel = (n, lang = 'nb') => { const w = lang === 'en' ? 'NEW' : 'NYTT'; return n > 0 ? `${w} · ${n}` : w; };
 
 const cleanCheck = (c) => (c && (c.check === 'ok' || c.check === 'fail') ? { check: c.check, note: c.check === 'fail' ? String(c.note || '').slice(0, 200) : '', checked_at: c.checked_at ? String(c.checked_at) : null } : null);
 const ms = (t) => { const n = Date.parse(t); return Number.isFinite(n) ? n : 0; };
@@ -33,10 +33,10 @@ export function pendingChecks(server, local) {
   return out;
 }
 // Radene til menyen: CHANGES (nyeste først i data) + avkryssinger.
-export function buildRows(changes, checks) {
+export function buildRows(changes, checks, textOf) {   // textOf(c) → {title, how} på valgt språk (changes_text.js); uten den brukes norsk fra dataene
   return (changes || []).map((c, i) => {
-    const k = (checks || {})[c.id];
-    return { id: c.id, version: c.version, message: c.title, how: c.how, level: c.level || '', spot: c.spot || null, at: new Date(Date.parse(`${c.date}T12:00:00Z`) - i * 1000).toISOString(),   // like datoer holder rekkefølgen fra dataene
+    const k = (checks || {})[c.id], tx = textOf ? textOf(c) : { title: c.title, how: c.how };
+    return { id: c.id, version: c.version, message: tx.title, how: tx.how, level: c.level || '', spot: c.spot || null, at: new Date(Date.parse(`${c.date}T12:00:00Z`) - i * 1000).toISOString(),   // like datoer holder rekkefølgen fra dataene
        check: k ? k.check : null, note: k ? k.note : '', checked_at: k ? k.checked_at : null };
   });
 }

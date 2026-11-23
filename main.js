@@ -17,6 +17,8 @@ import { createStats, createRoomAgg, hasBackData, routeShare, fpsOf, screenClass
 import { createStatsNet } from './stats_net.js';
 import { CHANGES } from './changes_data.js';   // R83: NYTT-menyen (changes_data.js, changes_logic.js; visningen er den samme som Rettelser)
 import * as chg from './changes_logic.js';
+import { changeText } from './changes_text.js';
+import { fx as fxText } from './fixes_text.js';
 import { setDrawerCue, drawerCue, drawerSummary } from './drawers.js';
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, setAntDetail, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
@@ -117,6 +119,7 @@ import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, scen
 import { GRIDOPT } from './grid_logic.js';
 import { normZoom, normSizePct } from './build_loupe_logic.js';   // R106   // R102
 import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
+import { SETTING_TEXT, panelText, settingLabel as settingLabelOf } from './settings_text.js';   // R146: ⚙-etiketter på norsk og engelsk
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -238,7 +241,7 @@ addEventListener('pageshow', () => audio?.resume());
 // valgfri kamerafølging: kameraet dreier seg langsomt bak figuren når den går (av etter at du selv har dratt i kameraet)
 migrateCalm((k, d) => store.get(k, d), (k, v) => store.set(k, v));   // R54: følging av som standard (én gang, også for gammel lagret verdi)
 let autoCam = store.get('tlm.follow', false), lastDrag = -99;
-function toggleAutoCam() { autoCam = !autoCam; store.set('tlm.follow', autoCam); toast(autoCam ? 'Kamera følger retning' : 'Kamera følger ikke'); const c = document.getElementById('chkAutoCam'); if (c) c.checked = autoCam; }
+function toggleAutoCam() { autoCam = !autoCam; store.set('tlm.follow', autoCam); toast(T(autoCam ? 'toast.camFollowOn' : 'toast.camFollowOff')); const c = document.getElementById('chkAutoCam'); if (c) c.checked = autoCam; }
 
 let vibOn = store.get('tlm.vib', true);
 const buzz = (ms) => { if (vibOn && navigator.vibrate) try { navigator.vibrate(ms); } catch { /* ikke støttet */ } };   // Android; iOS Safari støtter ikke vibrasjon
@@ -378,7 +381,7 @@ function cue(text, pan = 0) {
   box.appendChild(el); while (box.children.length > 4) box.firstChild.remove();
   setTimeout(() => el.classList.add('out'), 1500); setTimeout(() => el.remove(), 2000);
 }
-function toggleCues() { cuesOn = !cuesOn; store.set('tlm.cues', cuesOn); toast(cuesOn ? 'Lydtekst på' : 'Lydtekst av'); const c = document.getElementById('chkCues'); if (c) c.checked = cuesOn; }
+function toggleCues() { cuesOn = !cuesOn; store.set('tlm.cues', cuesOn); toast(T(cuesOn ? 'toast.cuesOn' : 'toast.cuesOff')); const c = document.getElementById('chkCues'); if (c) c.checked = cuesOn; }
 
 function toggleSound() {
   soundMuted = !soundMuted; store.set('tlm.muted', soundMuted);
@@ -1087,7 +1090,7 @@ const setMood = (name, secs) => { hero.mood.name = name; hero.mood.t = secs; };
 // stemmen: korte replikker (voice.js) sies med nettleserens talesyntese (høy tone, norsk stemme om den finnes) og vises i en snakkeboble over hodet
 const hasTTS = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
 let voiceOn = store.get('tlm.voice', true), bubblesOn = store.get('tlm.bubbles', true), voiceVol = store.get('tlm.voicevol', 0.9), ttsVoice = null;
-function pickVoice() { const vs = hasTTS ? speechSynthesis.getVoices() : []; ttsVoice = vs.find((v) => /^nb/i.test(v.lang)) || vs.find((v) => /^no/i.test(v.lang)) || vs.find((v) => /^nn/i.test(v.lang)) || null; }
+function pickVoice() { const vs = hasTTS ? speechSynthesis.getVoices() : []; ttsVoice = lang === 'en' ? (vs.find((v) => /^en/i.test(v.lang)) || null) : vs.find((v) => /^nb/i.test(v.lang)) || vs.find((v) => /^no/i.test(v.lang)) || vs.find((v) => /^nn/i.test(v.lang)) || null; }
 if (hasTTS) { pickVoice(); speechSynthesis.addEventListener?.('voiceschanged', pickVoice); }
 function speakTTS(text) {
   if (!hasTTS || !voiceOn || soundMuted || !ttsVoice) return;                       // uten norsk stemme: bare snakkebobler
@@ -1099,7 +1102,7 @@ function speakTTS(text) {
 }
 const bubbleEl = document.getElementById('bubble'); let bubbleUntil = 0;
 function showBubble(text, secs) { if (!bubblesOn) return; bubbleEl.textContent = text; bubbleEl.classList.add('show'); bubbleUntil = performance.now() / 1000 + secs; hero.talkT = secs; }
-const voice = createVoice({ speak: speakTTS, show: showBubble, now: () => performance.now() / 1000, enabled: () => (voiceOn || bubblesOn) && mode === 'play' });
+const voice = createVoice({ speak: speakTTS, show: showBubble, now: () => performance.now() / 1000, enabled: () => (voiceOn || bubblesOn) && mode === 'play', lang: () => lang });
 const say = (key, force) => voice.say(key, force);
 const _v3 = new THREE.Vector3();
 function updateBubble(now) {
@@ -1323,7 +1326,7 @@ let compassForce = 0;
 function failAt(why = 'fall') {
   logEv('tilbake', why);
   const k = `${Math.round(player.x / 6)}|${Math.round(player.y / 6)}|${Math.round(player.z / 6)}`, n = (failCells.get(k) || 0) + 1; failCells.set(k, n);
-  if (failHintOn && DIF.failTips > 0 && n >= DIF.failTips && n % DIF.failTips === 0) setTimeout(() => { const t = nextTarget(); compassForce = performance.now() + 15000; toast(`Tips: prøv ${t.final ? 'målet' : t.label}${t.act ? ` (${t.act})` : ''}. Pilen viser veien.`); }, 1800);
+  if (failHintOn && DIF.failTips > 0 && n >= DIF.failTips && n % DIF.failTips === 0) setTimeout(() => { const t = nextTarget(); compassForce = performance.now() + 15000; toast(T('toast.tip', { name: t.final ? T('toast.goalWord') : t.label, act: t.act ? ` (${t.act})` : '' })); }, 1800);
 }
 {
   const pr = normProgress(store.get(progKey, null)), okAt = (p) => Array.isArray(p) && p.length === 3 && freeAt(LEVEL, p[0], p[1] + 0.05, p[2]);
@@ -1340,32 +1343,32 @@ addEventListener('pagehide', saveProgress);
 for (const n of storeNotes) logEv('lagring', n);
 if (resumed) logEv('gjenopptatt');
 logEv('grade', gradeMode + (gfxLow ? ' (enkel: ingen kantlys/fyll/filter)' : ''));   // R1: hvilken gradering som kjører (rapporten)
-if (resumed) setTimeout(() => toast('Fortsetter der du var · ⚙ → Start på nytt for å begynne på nytt'), 1500);
+if (resumed) setTimeout(() => toast(T('toast.resumed')), 1500);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveProgress(); });
 
 function doSave() {
-  if (mode !== 'play') return toast('Gå ut av plan-/flymodus først');
-  if (!player.onGround) return toast('Stå støtt for å lagre');
+  if (mode !== 'play') return toast(T('toast.exitMode'));
+  if (!player.onGround) return toast(T('toast.standSteady'));
   save.pos = [player.x, player.y, player.z]; stats.saves++; placeFlag(); lightFlag('lagringspunkt'); audio?.checkpoint(); saveProgress();
-  logEv('lagret'); toast(`Lagringspunkt satt  −${SCORE.save} poeng`);
+  logEv('lagret'); toast(T('toast.saved', { n: SCORE.save }));
 }
 function goBack() {
   if (mode !== 'play') return;
   logEv('tilbake', 'knapp'); resetPlayer(player, ...save.pos); stats.respawns++;
-  toast(`Tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
+  toast(T('toast.backToSave', { n: SCORE.respawn }));
 }
 const lostQueue = [];
 function stepLost(dt) {
   for (let i = lostQueue.length - 1; i >= 0; i--) {
     const q = lostQueue[i]; q.t -= dt; if (q.t > 0) continue;
-    if (returnBody(LEVEL, q.id, player)) { toast(`${q.id} er tilbake på plassen sin`); lostQueue.splice(i, 1); } else q.t = 1;
+    if (returnBody(LEVEL, q.id, player)) { toast(T('toast.returned', { name: nameOfId(q.id) })); lostQueue.splice(i, 1); } else q.t = 1;
   }
 }
 function resetThings() {
   if (mode !== 'play') return;
-  if (!(LEVEL.bodies || []).some((b) => !b.alive || b.min.some((v, i) => Math.abs(v - b.home.min[i]) > 0.05))) return toast('Alt står på plass');
+  if (!(LEVEL.bodies || []).some((b) => !b.alive || b.min.some((v, i) => Math.abs(v - b.home.min[i]) > 0.05))) return toast(T('toast.allInPlace'));
   logEv('ting nullstilt'); resetBodies(LEVEL, player); resetToys(toyLife); resetShortcutWatch(shortcutWatch); stats.resets++; say('reset');
-  toast(`Ting satt tilbake  −${SCORE.resetThings} poeng`);
+  toast(T('toast.thingsReset', { n: SCORE.resetThings }));
 }
 function restartAll() {
   runDiffMin = DIFFS.indexOf(difficulty); clearProgress(); failCells.clear(); bld.resetAll();
@@ -1398,9 +1401,9 @@ function setMode(m) {
   }
   mode = m;
   if (m === 'plan') planCam.pivot.set(player.x, player.y + 4, player.z);
-  if (m === 'fly') { stats.flew = true; toast('Flymodus – tiden teller ikke som gyldig'); }
+  if (m === 'fly') { stats.flew = true; toast(T('toast.fly')); }
   $('bPlan').classList.toggle('on', m === 'plan'); $('bFly').classList.toggle('on', m === 'fly');
-  if (m === 'plan') toast(TOUCH ? 'Plan: stikken flytter, dra for å snurre, klyp for zoom' : 'Plan: WASD flytter, dra for å snurre, hjul/klyp for zoom');
+  if (m === 'plan') toast(T(TOUCH ? 'toast.plan.touch' : 'toast.plan.pc'));
 }
 
 // ---------- input ----------
@@ -1424,7 +1427,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyM') toggleSound();
   if (e.code === 'KeyV') toggleCues();
   if (e.code === 'KeyX') toggleAutoCam();
-  if (e.code === 'KeyL' && labels.length) { labelsOn = !labelsOn; store.set('tlm.labels', labelsOn); toast(labelsOn ? 'Brukslapper på' : 'Brukslapper av'); const c = document.getElementById('chkLabels'); if (c) c.checked = labelsOn; }
+  if (e.code === 'KeyL' && labels.length) { labelsOn = !labelsOn; store.set('tlm.labels', labelsOn); toast(T(labelsOn ? 'toast.labelsOn' : 'toast.labelsOff')); const c = document.getElementById('chkLabels'); if (c) c.checked = labelsOn; }
   if (e.code === 'KeyP' || e.code === 'Tab') setMode('plan');
   if (e.code === 'KeyG') setMode('fly');
   if (e.code === 'KeyH') $('help').classList.toggle('hide');
@@ -2089,7 +2092,7 @@ const SETTINGS = [
   fl('labfree', 'admin', 'Bygglab: ubegrenset mengde av alle deler (av = bare to av hver type)', true, () => labFree, kp('tlm.labfree', (v) => { labFree = v; logEv('bygglab', v ? 'ubegrenset mengde på' : 'ubegrenset mengde av'); })),
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
-  fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, wind-up og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
+  fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, opptrekksrobot og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
   fl('replies', 'test', 'Vis svar og tellere fra Claude (⚑-boksen)', true, () => repliesOn, kp('tlm.replies', (v) => { repliesOn = v; if (v) refreshInbox(false); else renderInbox(); })),
   fl('combo', 'spill', 'Kombinasjoner: svamp + vann, håndkle + håndkle, tung ting + papirhaug (TA ved siden av)', true, () => COMBO.on, kp('tlm.combo', (v) => { COMBO.on = v; logEv('kombo', v ? 'kombinasjoner på' : 'kombinasjoner av'); })),
   fl('vaultanim', 'spill', 'Stavhopp: egen animasjon (figuren svinger over staven)', true, () => COMBO.vaultAnim, kp('tlm.vaultanim', (v) => { COMBO.vaultAnim = v; logEv('kombo', v ? 'stavhopp-animasjon på' : 'stavhopp-animasjon av'); })),
@@ -2100,7 +2103,7 @@ const SETTINGS = [
   rg('kickspeed', 'admin', 'Sprettboks-kast: fart bort fra boksen', 5.5, 0, 9, 0.5, () => KICK.speed, kp('tlm.kickspeed', (v) => { KICK.speed = v; }), { digits: 1 }),
   rg('kickup', 'admin', 'Sprettboks-kast: fart opp', 11, 4, 16, 0.5, () => KICK.up, kp('tlm.kickup', (v) => { KICK.up = v; }), { digits: 1 }),
   rg('kicksafe', 'admin', 'Sprettboks-kast: uskadd-tid etter kastet (sekunder)', 1.6, 0, 4, 0.2, () => KICK.safeT, kp('tlm.kicksafe', (v) => { KICK.safeT = v; }), { digits: 1 }),
-  rg('toywind', 'admin', 'Levende leker: hvor lenge wind-up-roboten går (sekunder)', 2.6, 1, 6, 0.2, () => TOY.windT, kp('tlm.toywind', (v) => { TOY.windT = v; }), { digits: 1 }),
+  rg('toywind', 'admin', 'Levende leker: hvor lenge opptrekksroboten går (sekunder)', 2.6, 1, 6, 0.2, () => TOY.windT, kp('tlm.toywind', (v) => { TOY.windT = v; }), { digits: 1 }),
   fl('creatures', 'spill', 'Nye skapninger (pillbug som ruller, edderkopp i tråd): av = bare maur', true, () => creaturesOn, kp('tlm.creatures', (v) => { creaturesOn = v; LEVEL.noCreatures = !v; logEv('fiende', v ? 'skapninger på' : 'skapninger av'); })),
   rg('creaturewarn', 'admin', 'Nye skapninger: varseltid (faktor, 1 = standard)', 1, 0.7, 2.5, 0.1, () => creatureWarn, kp('tlm.creaturewarn', (v) => { creatureWarn = v; CREATURE_TUNE.warn = v; }), { digits: 1 }),
   fl('wasp', 'spill', 'Veps som flyr (varsler, stuper mot deg: gjem deg under en ting, stikk til siden eller hopp på den); av = ingen veps', true, () => waspOn, kp('tlm.wasp', (v) => { waspOn = v; LEVEL.noWasps = !v; logEv('fiende', v ? 'veps på' : 'veps av'); })),
@@ -2160,7 +2163,7 @@ const SETTINGS = [
   fl('showmapbtn', 'styring', 'Vis kart-knappen (oversikt) ved siden av ◎. Av = ingen knapp; minikartet øverst virker fortsatt', false, () => showMapBtn, kp('tlm.showmapbtn2', (v) => { showMapBtn = v; applyUiFlags(); })),
   fl('showcenter', 'styring', 'Vis ◎-knappen (sentrer kamera)', false, () => showCenter, kp('tlm.showcenter2', (v) => { showCenter = v; applyUiFlags(); })),
   fl('edgeguard', 'styring', TOUCH ? 'Kanthjelp: stopp ved kanten når du skyver stikken forsiktig' : 'Kanthjelp: stopp ved kanten når du går forsiktig (C)', true, () => edgeGuardOn, kp('tlm.edgeguard', (v) => { edgeGuardOn = v; reapplyKnobs(); })),
-  fl('shimmy', 'styring', TOUCH ? 'Kant-shimmy: heng i en kant og skyv stikken sidelengs for å gå langs den' : 'Kant-shimmy: heng i en kant og gå sidelengs langs den (A/D)', true, () => shimmyOn, kp('tlm.shimmy', (v) => { shimmyOn = v; reapplyKnobs(); logEv('finpuss', 'shimmy ' + (v ? 'på' : 'av')); })),
+  fl('shimmy', 'styring', TOUCH ? 'Sidelengs i kanten: heng i en kant og skyv stikken sidelengs' : 'Sidelengs i kanten: heng i en kant og gå sidelengs (A/D)', true, () => shimmyOn, kp('tlm.shimmy', (v) => { shimmyOn = v; reapplyKnobs(); logEv('finpuss', 'shimmy ' + (v ? 'på' : 'av')); })),
   fl('roll', 'styring', TOUCH ? 'Rulle ved landing: lander du hardt i fart og skyver stikken, ruller du i stedet for å bli bedøvd' : 'Rulle ved landing: lander du hardt i fart og styrer, ruller du i stedet for å bli bedøvd', true, () => rollOn, kp('tlm.roll', (v) => { rollOn = v; reapplyKnobs(); logEv('finpuss', 'rulle ' + (v ? 'på' : 'av')); })),
   fl('careful', 'styring', TOUCH ? 'Forsiktig gange: lett stikke gir rolig gange (stopper ved kanten med Kanthjelp)' : 'Forsiktig gange: lett styring gir rolig gange (stopper ved kanten med Kanthjelp)', true, () => carefulOn, kp('tlm.careful', (v) => { carefulOn = v; reapplyKnobs(); logEv('finpuss', 'forsiktig gange ' + (v ? 'på' : 'av')); })),
   fl('ropeheavy', 'styring', 'Tyngre tau: lengre sving med mer treghet og fart i utsvinget', true, () => ropeHeavyOn, kp('tlm.ropeheavy', (v) => { ropeHeavyOn = v; reapplyKnobs(); logEv('finpuss', 'tungt tau ' + (v ? 'på' : 'av')); })),
@@ -2379,19 +2382,28 @@ async function shareText(text, title) {
   try { await navigator.clipboard.writeText(text); return 'kopiert'; } catch { return 'vis'; }
 }
 
+function settingLabel(d) {   // R146: etiketten på valgt språk (admin-justeringer uten oversettelse beholder SETTINGS-teksten)
+  if (d.id === 'platform') return lang === 'en' ? `Device (checked at start: ${platform.auto === 'mobil' ? 'mobile' : 'PC'})` : d.label;
+  const t = SETTING_TEXT[d.id]; if (!t) return d.label;
+  const base = settingLabelOf(d.id, d.label, lang, TOUCH), nb0 = settingLabelOf(d.id, d.label, 'nb', TOUCH);
+  const suf = d.label.startsWith(nb0) ? d.label.slice(nb0.length) : '';
+  return base + (suf.length <= 12 ? suf : '');   // tastehint som key() la til (bare PC)
+}
 function buildPanel() {
+  const PT = (id) => panelText(id, lang);
   const p = $('panel'), open = store.get('tlm.panelopen', { spill: true });
   const nChanged = changedSettings(SETTINGS.filter(visible)).length;
   const row0 = (d) => {
-    if (d.type === 'bool') return `<label class="chk"><input type="checkbox" data-s="${d.id}"> ${d.label}</label>`;
-    if (d.type === 'range') return `<label>${d.label}<span data-v="${d.id}"></span></label><input type="range" data-s="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}">`;
-    return `<label>${d.label}</label><select data-s="${d.id}">${d.options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
+    const lb = settingLabel(d);
+    if (d.type === 'bool') return `<label class="chk"><input type="checkbox" data-s="${d.id}"> ${lb}</label>`;
+    if (d.type === 'range') return `<label>${lb}<span data-v="${d.id}"></span></label><input type="range" data-s="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}">`;
+    return `<label>${lb}</label><select data-s="${d.id}">${d.options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
   };
-  const row = (d) => `<div class="srow" data-q="${(d.label + ' ' + d.id).toLowerCase().replace(/"/g, '')}">${row0(d)}</div>`;   // innpakket så søket kan skjule enkeltrader
+  const row = (d) => `<div class="srow" data-q="${(settingLabel(d) + ' ' + d.label + ' ' + d.id).toLowerCase().replace(/"/g, '')}">${row0(d)}</div>`;   // innpakket så søket kan skjule enkeltrader
   const groupHtml = (g, title) => {
     const items = SETTINGS.filter((d) => d.group === g && visible(d));
     let extra = '';
-    if (g === 'spill') extra = `<label>Brett</label><select id="levelSel">${(() => { const sp = splitLevels(LEVELS, round2On || isRound2(levelId)), op = (l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`; return sp.main.map(op).join('') + (sp.round2.length ? `<optgroup label="Runde 2: vanskeligere byggebrett">${sp.round2.map(op).join('')}</optgroup>` : ''); })()}</select><div class="row"><button id="pRestart">Start på nytt</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div><small id="saveNote"></small><div class="row"><button id="bSaveCopy">${sv(lang, 'sv.copy')}</button><button id="bSavePaste">${sv(lang, 'sv.paste')}</button></div>`;
+    if (g === 'spill') extra = `<label>${PT('level')}</label><select id="levelSel">${(() => { const sp = splitLevels(LEVELS, round2On || isRound2(levelId)), op = (l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`; return sp.main.map(op).join('') + (sp.round2.length ? `<optgroup label="Runde 2: vanskeligere byggebrett">${sp.round2.map(op).join('')}</optgroup>` : ''); })()}</select><div class="row"><button id="pRestart">${PT('restart')}</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div><small id="saveNote"></small><div class="row"><button id="bSaveCopy">${sv(lang, 'sv.copy')}</button><button id="bSavePaste">${sv(lang, 'sv.paste')}</button></div>`;
     if (g === 'test') extra = `
       <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
       <div class="row"><button id="bMark">⚑ Marker her</button></div>
@@ -2411,15 +2423,15 @@ function buildPanel() {
       <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. ${TOUCH ? 'Skyv stikken forsiktig for å gå forsiktig.' : 'Hold C for å gå forsiktig.'}<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke ${GREP}${key('Shift/E')} i riktig øyeblikk for å gripe kant eller tau.</small>
       <div class="row"><button id="lockAdmin">Lås admin</button></div>`;
     const n = changedSettings(items).length;
-    return `<details data-g="${g}" ${open[g] ? 'open' : ''}${g === 'admin' ? ' class="adm"' : ''}><summary>${title}${n ? ` <em>${n} endret</em>` : ''}</summary>${items.filter((d) => !d.sub).map(row).join('')}${[...new Set(items.filter((d) => d.sub).map((d) => d.sub))].map((sb) => { const si = items.filter((d) => d.sub === sb), sn = changedSettings(si).length; return `<details class="sub" data-sub="${g}:${sb}"><summary>${sb}${sn ? ` <em>${sn} endret</em>` : ''}</summary>${si.map(row).join('')}</details>`; }).join('')}${extra}</details>`;
+    return `<details data-g="${g}" ${open[g] ? 'open' : ''}${g === 'admin' ? ' class="adm"' : ''}><summary>${title}${n ? ` <em>${n} ${PT('changedTag')}</em>` : ''}</summary>${items.filter((d) => !d.sub).map(row).join('')}${[...new Set(items.filter((d) => d.sub).map((d) => d.sub))].map((sb) => { const si = items.filter((d) => d.sub === sb), sn = changedSettings(si).length; return `<details class="sub" data-sub="${g}:${sb}"><summary>${panelText('sub.' + sb, lang, sb)}${sn ? ` <em>${sn} ${PT('changedTag')}</em>` : ''}</summary>${si.map(row).join('')}</details>`; }).join('')}${extra}</details>`;
   };
-  p.innerHTML = `<div class="phead"><button id="pCloseTop" class="pclose" aria-label="Lukk">✕ Lukk</button><button id="pFlag" aria-label="Meld og vurder">⚑</button><h3 id="pTitle">Innstillinger</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
+  p.innerHTML = `<div class="phead"><button id="pCloseTop" class="pclose" aria-label="${PT('close')}">${PT('closeTop')}</button><button id="pFlag" aria-label="Meld og vurder">⚑</button><h3 id="pTitle">${PT('title')}</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
     <div id="repHead" class="rhead">${repHeadHtml()}</div>
     <div class="row"><button id="bVerCheck"></button><button id="bPriv">${T('priv.btn')}</button></div><small id="verNote"></small>
-    <input type="search" id="pSearch" placeholder="Søk i innstillinger" autocomplete="off" enterkeyhint="search">
-    ${nChanged ? `<div class="pchg">${nChanged} innstilling${nChanged > 1 ? 'er' : ''} endret fra standard</div>` : ''}
-    ${GROUPS.filter(([g]) => g !== 'admin' || adminOn).map(([g, t]) => groupHtml(g, t)).join('')}
-    <div class="row"><button id="closePanel">Lukk</button></div>`;
+    <input type="search" id="pSearch" placeholder="${PT('search')}" autocomplete="off" enterkeyhint="search">
+    ${nChanged ? `<div class="pchg">${nChanged} ${PT(nChanged > 1 ? 'changedN' : 'changed1')}</div>` : ''}
+    ${GROUPS.filter(([g]) => g !== 'admin' || adminOn).map(([g, t]) => groupHtml(g, PT('g.' + g))).join('')}
+    <div class="row"><button id="closePanel">${PT('close')}</button></div>`;
 
   // koble hver rad til registeret
   const refresh = (d) => { const v = d.get(), el = p.querySelector(`[data-s="${d.id}"]`); if (!el) return; if (d.type === 'bool') el.checked = !!v; else el.value = v; const lab = p.querySelector(`[data-v="${d.id}"]`); if (lab) lab.textContent = fmtVal(d, v); };
@@ -2429,7 +2441,7 @@ function buildPanel() {
     el.oninput = el.onchange = (e) => {
       const v = d.type === 'bool' ? e.target.checked : d.type === 'range' ? +e.target.value : e.target.value;
       d.set(v); refresh(d); logEv('innstilling', `${d.id}=${v}`);
-      if (d.id === 'preset') buildPanel();
+      if (d.id === 'preset' || d.id === 'lang') buildPanel();   // R146: språkbytte tegner panelet på nytt
     };
   }
   const subOpen = store.get('tlm.subopen', {});
@@ -2444,7 +2456,7 @@ function buildPanel() {
     p.querySelectorAll('details[data-g]').forEach((el) => { const hit = !q || [...el.querySelectorAll('.srow')].some((r) => r.style.display !== 'none'); el.style.display = hit ? '' : 'none'; setOpen(el, q ? hit : !!open[el.dataset.g]); });
   };
   $('levelSel').value = levelId; $('levelSel').onchange = (e) => { store.set('tlm.level', e.target.value); location.search = `?level=${e.target.value}`; };
-  confirmed($('pRestart'), 'Start på nytt', 0, () => { restartAll(); $('panel').classList.add('hide'); toast('Startet på nytt'); });
+  confirmed($('pRestart'), 'Start på nytt', 0, () => { restartAll(); $('panel').classList.add('hide'); toast(T('toast.restarted')); });
   $('pMenu').onclick = () => quitToMenu('⚙');
   $('closePanel').onclick = () => $('panel').classList.add('hide');
   $('pCloseTop').onclick = () => $('panel').classList.add('hide');
@@ -2453,7 +2465,7 @@ function buildPanel() {
   // admin skjules bak 7 trykk på tittelen (eller ?admin=1)
   let taps = 0, tapT = 0;
   $('pTitle').onclick = () => { const n = performance.now(); taps = n - tapT < 900 ? taps + 1 : 1; tapT = n; if (taps >= 7) { taps = 0; adminOn = !adminOn; store.set('tlm.admin', adminOn); toast(adminOn ? 'Admin på' : 'Admin av'); buildPanel(); } };
-  if ($('lockAdmin')) $('lockAdmin').onclick = () => { adminOn = false; store.set('tlm.admin', false); buildPanel(); toast('Admin låst'); };
+  if ($('lockAdmin')) $('lockAdmin').onclick = () => { adminOn = false; store.set('tlm.admin', false); buildPanel(); toast(T('toast.adminLocked')); };
   // test
   $('bPriv').onclick = () => priv.open('⚙'); addPrivNote($('privHost'), '⚙');   // R87
   $('testerCode').value = store.get('tlm.tcode', '');
@@ -2486,7 +2498,7 @@ function buildPanel() {
     };
     if ($('bWipeAll')) $('bWipeAll').onclick = () => { $('panel').classList.add('hide'); $('start').classList.remove('hide'); document.body.classList.add('instart'); menuOpen = true; svView.confirmWipe({ kind: 'all', plan: wipePlan('all', disk.keys('tlm.'), store), onCancel: showStart, onOk: () => { logEv('lagring', 'nullstill alt'); noSave = true; const n = wipe('all', disk); toast(sv(lang, 'sv.allDone') + ` (${n})`); setTimeout(() => { location.href = location.pathname + '?start=1'; }, 700); } }); };
   }
-  confirmed($('bResetAll'), 'Alt til standard', 0, () => { resetAllSettings(); logEv('alt til standard'); buildPanel(); applyUiFlags(); toast('Alt er satt til standard'); });
+  confirmed($('bResetAll'), 'Alt til standard', 0, () => { resetAllSettings(); logEv('alt til standard'); buildPanel(); applyUiFlags(); toast(T('toast.allDefault')); });
   // lyd
   for (const [id, snd] of [['bHearBreath', 'breath'], ['bHearStep', 'step:wood'], ['bHearJump', 'jump']]) $(id).onclick = () => { unlockAudio(); Promise.resolve(audio?.resume()).then(() => audio?.preview(snd)); };
   if ($('voiceNote')) $('voiceNote').textContent = hasTTS ? (ttsVoice ? `Stemme: ${ttsVoice.name} (${ttsVoice.lang}). Lyden kommer fra telefonen.` : 'Fant ingen norsk stemme på denne enheten: da vises bare snakkebobler.') : '';
@@ -2518,12 +2530,12 @@ const boost = () => held('ShiftLeft', 'ShiftRight');
 // maur: hopp på ryggen = knus og sprett; ellers støt tilbake (v0.77)
 // R19: pillbug (roller) og tråd-edderkopp (dangler): varsel, støt, knus. Alle hendelser logges som «fiende».
 function creatureEvent(ev) {
-  const J = TOUCH ? T('btn.jump') : 'Mellomrom', roller = ev.kind === 'roller', seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); tip(msg); } };
+  const J = TOUCH ? T('btn.jump') : (lang === 'en' ? 'Space' : 'Mellomrom'), roller = ev.kind === 'roller', seen = (k, msg) => { if (!store.get('tlm.seen.' + k, false)) { store.set('tlm.seen.' + k, true); tip(msg); } };
   logEv('fiende', `${ev.kind} ${ev.type} ${ev.id}`);
-  if (ev.type === 'alert') { audio?.spiderhiss(); buzz(15); if (roller) seen('roller', `En pillbug! Den ruller seg sammen og ruller rett mot deg: stikk til siden, eller hopp på den (${J})`); else seen('dangler', `Edderkopp i tråd! Den rister før den stuper: løp forbi mens den er oppe, eller hopp på den (${J}) når den henger lavt`); }
+  if (ev.type === 'alert') { audio?.spiderhiss(); buzz(15); if (roller) seen('roller', T('toast.rollerAlert', { jump: J })); else seen('dangler', T('toast.danglerAlert', { jump: J })); }
   else if (ev.type === 'roll' || ev.type === 'plunge') { audio?.spiderleap(); buzz(25); }
   else if (ev.type === 'stomp') { react.trigger('stomp'); stats.squashed++; audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], roller ? ROLLER_COL : DANGLER_COL); }
-  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${roller ? 'Pillbuggen rullet over deg' : 'Edderkoppen falt ned på deg'}  −${SCORE.antHit} poeng. Hopp på den (${J}) for å knuse den`); }
+  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(T(roller ? 'toast.hurtRoller' : 'toast.hurtDangler', { n: SCORE.antHit, jump: J })); }
 }
 // R61: veps som flyr: varsel (summing + rød glød + ring på flata), stup, krasj, knus og støt. Alt logges som «fiende».
 function waspEvent(ev) {
@@ -2533,7 +2545,7 @@ function waspEvent(ev) {
   else if (ev.type === 'dive') { audio?.waspdive(); buzz(25); cue('vepsen stuper!'); }
   else if (ev.type === 'crash') { audio?.bossbump(); cue('vepsen smalt i noe'); }
   else if (ev.type === 'stomp') { react.trigger('stomp'); stats.squashed++; audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], WASP_COL); }
-  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! Vepsen stupte på deg  −${SCORE.antHit} poeng. Gjem deg under en ting, eller hopp på den (${J}) når den stuper`); }
+  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(T('toast.hurtWasp', { n: SCORE.antHit, jump: J })); }
 }
 function antEvent(ev) {
   if (ev.id && isSoldier(LEVEL.ants?.find((a) => a.id === ev.id))) {            // R31: tinnsoldaten (egen fiende i nivå 7): egne meldinger og logg, ellers som en maur
@@ -2543,13 +2555,13 @@ function antEvent(ev) {
   }
   if (ev.kind === 'wasp') { waspEvent(ev); return; }                                           // R61 (wasp.js)
   if (ev.kind === 'roller' || ev.kind === 'dangler') { creatureEvent(ev); return; }          // R19 (creatures.js)
-  if (ev.type === 'alert' && ev.kind === 'spider') { if (!store.get('tlm.seen.spider', false)) { store.set('tlm.seen.spider', true); toast(`En edderkopp-vakt! Den dukker og hopper: rygg unna, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); } audio?.spiderhiss(); }
-  else if (ev.type === 'alert' && !store.get('tlm.seen.ant', false)) { store.set('tlm.seen.ant', true); toast(`En maur! Unngå den, eller hopp på ryggen (${TOUCH ? T('btn.jump') : 'Mellomrom'}) for å knuse den`); }
+  if (ev.type === 'alert' && ev.kind === 'spider') { if (!store.get('tlm.seen.spider', false)) { store.set('tlm.seen.spider', true); toast(T('toast.spiderGuard', { jump: TOUCH ? T('btn.jump') : (lang === 'en' ? 'Space' : 'Mellomrom') })); } audio?.spiderhiss(); }
+  else if (ev.type === 'alert' && !store.get('tlm.seen.ant', false)) { store.set('tlm.seen.ant', true); toast(T('toast.antAlert', { jump: TOUCH ? T('btn.jump') : (lang === 'en' ? 'Space' : 'Mellomrom') })); }
   if (ev.type === 'leap') { logEv('edderkopp hopper', ev.id); audio?.spiderleap(); }
-  else if (ev.type === 'drop') { logEv('smule sluppet', ev.id); if (!store.get('tlm.seen.crumb', false)) { store.set('tlm.seen.crumb', true); toast('Bæreren slapp smula! Gå bort til den for å ta den'); } }
-  else if (ev.type === 'crumb') { stats.carried++; logEv('bærer-smule tatt', ev.id); audio?.crumb(5, 99); buzz(20); setMood('happy', 1); cue('smule!'); toast(`Smule tatt  +${SCORE.carried} poeng`); }
+  else if (ev.type === 'drop') { logEv('smule sluppet', ev.id); if (!store.get('tlm.seen.crumb', false)) { store.set('tlm.seen.crumb', true); toast(T('toast.carrierDrop')); } }
+  else if (ev.type === 'crumb') { stats.carried++; logEv('bærer-smule tatt', ev.id); audio?.crumb(5, 99); buzz(20); setMood('happy', 1); cue('smule!'); toast(T('toast.crumbTaken', { n: SCORE.carried })); }
   if (ev.type === 'stomp') { react.trigger('stomp'); stats.squashed++; logEv(ev.kind === 'spider' ? 'edderkopp knust' : 'maur knust', ev.id); audio?.squash(); music?.duck(0.45, 0.8); buzz(25); setMood('happy', 1.4); cue('knust!'); spawnShards([ev.x, ev.y, ev.z], ev.kind === 'spider' ? 0x6a3a86 : ev.kind === 'carrier' ? 0x5f6b2a : 0x9a3a1e); }
-  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; logEv(ev.kind === 'spider' ? 'edderkopp støt' : 'maur støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(`Au! ${ev.kind === 'spider' ? 'Edderkoppen hoppet på deg' : 'En maur støtet deg'}  −${SCORE.antHit} poeng. Hopp på ryggen for å knuse den`); }
+  else if (ev.type === 'hurt') { react.trigger('hurt'); stats.hits++; logEv(ev.kind === 'spider' ? 'edderkopp støt' : 'maur støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(70); setMood('hurt', 0.9); toast(T(ev.kind === 'spider' ? 'toast.hurtSpider' : 'toast.hurtAnt', { n: SCORE.antHit })); }
 }
 // første gang du står på flata der gåten ligger: én kort forklaring (bruker knappenavn)
 function puzzleIntro() {
@@ -2606,16 +2618,16 @@ function bossEvent(ev) {
   else if (ev.type === 'bump') { logEv('sjef svimmel', ev.id); audio?.bossbump(); music?.duck(0.4, 1.2); buzz(60); setMood('happy', 1); cue('bom!'); spawnShards([ev.x, ev.y + 1, ev.z], 0xc8c0b0); seen('boss2', `Den er svimmel! Hopp på ryggen (${J}) mens stjernene går rundt`); }
   else if (ev.type === 'tired') { logEv(ev.worn ? 'sjef slumper' : 'sjef sliten', ev.id); if (ev.worn) { cue('sliten!'); setMood('happy', 0.8); seen('boss4', `Den er helt utslitt og svimmel! Hopp på ryggen (${J})`); } }
   else if (ev.type === 'hit') { logEv('sjef truffet', `${ev.hp} igjen`); audio?.squash(); buzz(40); setMood('happy', 1.6); cue(ev.hp > 0 ? 'au!' : 'seier!'); spawnShards([ev.x, ev.y, ev.z], 0x7c1f14); }
-  else if (ev.type === 'phase') { logEv('sjef fase', ev.phase); toast(ev.phase === 3 ? 'Rasende!' : 'Sint!'); }
+  else if (ev.type === 'phase') { logEv('sjef fase', ev.phase); toast(T(ev.phase === 3 ? 'toast.bossRage' : 'toast.bossAngry')); }
   else if (ev.type === 'clang') { logEv('sjef pansret'); audio?.anthit(); buzz(20); seen('boss3', 'Ryggen er for hard nå. Vent til den er svimmel'); }
-  else if (ev.type === 'hurt') { stats.hits++; logEv('sjef støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(80); setMood('hurt', 1); toast(`Au! −${SCORE.antHit}`); }
-  else if (ev.type === 'defeat') { stats.squashed++; logEv('SJEF SLÅTT', ev.id); audio?.fanfare(); music?.duck(0.2, 3); buzz([40, 60, 40, 60, 120]); setMood('happy', 6); cue('SJEF SLÅTT!'); toast('Du slo sjef-mauren! Ta den gylne smula'); for (let i = 0; i < 3; i++) spawnShards([ev.x + (i - 1) * 0.8, ev.y + 1.4, ev.z], [0xffc83a, 0xe23a3a, 0x3aa0e2][i]); }
-  else if (ev.type === 'prize') { stats.boss++; logEv('sjef-smule tatt', ev.id); audio?.crumb(12, 12); buzz(30); setMood('happy', 3); cue('siste smule!'); toast(`Den siste smula! +${SCORE.boss} poeng`); spawnShards([ev.x, ev.y, ev.z], 0xffc83a); }
+  else if (ev.type === 'hurt') { stats.hits++; logEv('sjef støt', ev.id); audio?.anthit(); music?.duck(0.4, 0.9); buzz(80); setMood('hurt', 1); toast(T('toast.hurtShort', { n: SCORE.antHit })); }
+  else if (ev.type === 'defeat') { stats.squashed++; logEv('SJEF SLÅTT', ev.id); audio?.fanfare(); music?.duck(0.2, 3); buzz([40, 60, 40, 60, 120]); setMood('happy', 6); cue('SJEF SLÅTT!'); toast(T('toast.bossBeaten')); for (let i = 0; i < 3; i++) spawnShards([ev.x + (i - 1) * 0.8, ev.y + 1.4, ev.z], [0xffc83a, 0xe23a3a, 0x3aa0e2][i]); }
+  else if (ev.type === 'prize') { stats.boss++; logEv('sjef-smule tatt', ev.id); audio?.crumb(12, 12); buzz(30); setMood('happy', 3); cue('siste smule!'); toast(T('toast.lastCrumb', { n: SCORE.boss })); spawnShards([ev.x, ev.y, ev.z], 0xffc83a); }
 }
 // smuler: plukk (R3). Små, rolige tilbakemeldinger: lyd, poeng, kort melding, gnister
 function crumbEvent(ev) {
   stats.crumbs = ev.n; logEv('smule', `${ev.id} ${ev.n}/${ev.total}`); audio?.crumb(ev.n, ev.total); buzz(15); setMood('happy', 0.9); spawnShards([ev.x, ev.y, ev.z], 0xffc83a);
-  toast(ev.n === ev.total ? `Alle smulene! ${ev.n}/${ev.total}  +${SCORE.crumb} poeng` : `Smule ${ev.n}/${ev.total}  +${SCORE.crumb} poeng`);
+  toast(T(ev.n === ev.total ? 'toast.allCrumbs' : 'toast.crumb', { n: ev.n, total: ev.total, pts: SCORE.crumb }));
 }
 // R23: målskjermen viser hvilke delmål som er klare
 // R47: stjerner for byggene i nivået på målskjermen (bare steder som er klart)
@@ -2753,13 +2765,13 @@ function update(dt) {
   }
   musicFrame(); audioFrame(pre, dt); cueFrame(pre); ambientTick(dt);
 
-  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); lightFlag('sjekkpunkt'); saveProgress(); logEv('sjekkpunkt'); toast('Sjekkpunkt'); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
-  if (player.y < LEVEL.deathY) { failAt('falt'); resetPlayer(player, ...save.pos); stats.respawns++; toast(`Falt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`); }
+  if (player.onGround && player.groundBox?.cp && player.y > save.pos[1] + 0.01) { save.pos = [player.x, player.y, player.z]; placeFlag(); lightFlag('sjekkpunkt'); saveProgress(); logEv('sjekkpunkt'); toast(T('toast.checkpoint')); audio?.checkpoint(); cue('sjekkpunkt'); setMood('happy', 1.6); say('checkpoint'); }
+  if (player.y < LEVEL.deathY) { failAt('falt'); resetPlayer(player, ...save.pos); stats.respawns++; toast(T('toast.fell', { n: SCORE.respawn })); }
   for (const ev of drainEvents(LEVEL)) {
     if (ev.type === 'combo') { comboEvent(ev); continue; }
     logEv(ev.type, ev.id || ev.tool || ev.why || '');
-    if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(`${ev.id} gikk i stykker  −${SCORE.broken} poeng`); }
-    else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(lostReturnOn ? `${ev.id} forsvant – kommer tilbake om litt` : `${ev.id} forsvant`); if (lostReturnOn) lostQueue.push({ id: ev.id, t: 3 }); }
+    if (ev.type === 'broke') { audio?.shatter(); cue('noe knuses'); stats.broken++; spawnShards(ev.pos, LEVEL.bodies.find((b) => b.id === ev.id)?.color); toast(T('toast.broke', { name: nameOfId(ev.id), n: SCORE.broken })); }
+    else if (ev.type === 'lost') { audio?.splash('pit'); cue('plask'); toast(T(lostReturnOn ? 'toast.lostBack' : 'toast.lost', { name: nameOfId(ev.id) })); if (lostReturnOn) lostQueue.push({ id: ev.id, t: 3 }); }
     else if (ev.type === 'exhausted') { setMood('hurt', 0.6); buzz(30); if (breathSound) cue('puster tungt'); }
     else if (ev.type === 'use') {
       audio?.pickup(); buzz(20); setMood('happy', 0.9);
@@ -2767,14 +2779,14 @@ function update(dt) {
       else if (ev.tool === 'zipA') toast(T('toast.tiedTop', { tieEnd: T('btn.tieEnd') }));
       else if (ev.tool === 'zip') { toast(T('toast.zipMade', { grab: GREP })); say('zip'); }
       else if (ev.tool === 'knotrope') { toast(T('toast.knotRope', { grab: GREP })); say('knot'); logEv('kombo', 'tau hengt ned'); }
-      else say(ev.tool === 'gel' ? 'gel' : 'roll');
+      else say(ev.tool === 'gel' ? 'gel' : 'unroll');
     }
     else if (ev.type === 'toolhint') tip(ev.tool === 'needle' ? T('toast.needSpool', { thread: T('btn.thread') }) : ev.tool === 'spool' ? T('toast.needNeedle', { thread: T('btn.thread') }) : ev.tool === 'zip' ? ({ 'zip-flat': T('toast.zipFlat'), 'zip-far': T('toast.zipFar'), 'zip-blocked': T('toast.zipBlocked') }[ev.why] || T('toast.zipStand', { tieTop: T('btn.tieTop') })) : ev.tool === 'gel' ? T('toast.needGel', { smear: T('btn.smear'), drop: T('btn.drop') }) : T('toast.needRoll', { unroll: T('btn.unroll'), drop: T('btn.drop') }));
-    else if (ev.type === 'autojump') { buzz(15); if (!store.get('tlm.seen.autojump', false)) { store.set('tlm.seen.autojump', true); toast(TOUCH ? 'Hoppet av seg selv: stikken helt ut mot en kant = hopp over. Skyv forsiktig for å stoppe ved kanten.' : 'Hoppet av seg selv over gapet. Hold C for å gå forsiktig og stoppe ved kanten.'); } }
-    else if (ev.type === 'edgestop') { buzz(10); if (!store.get('tlm.seen.edgestop', false)) { store.set('tlm.seen.edgestop', true); toast(TOUCH ? 'Stopper ved kanten. Skyv stikken helt ut for å hoppe over eller gå utfor.' : 'Stopper ved kanten. Slipp C for å gå utfor.'); } }
-    else if (ev.type === 'shimmy') { logEv('shimmy'); buzz(8); if (!store.get('tlm.seen.shimmy', false)) { store.set('tlm.seen.shimmy', true); toast(TOUCH ? `Du kan gå sidelengs i kanten: skyv stikken til siden. ${T('btn.jump')} hiver deg opp.` : 'Du kan gå sidelengs i kanten (A/D). Mellomrom hiver deg opp.'); } }
-    else if (ev.type === 'roll') { logEv('rulle', `v=${ev.v}`); audio?.roll(); buzz(20); cue('rulle'); setMood('happy', 0.8); say('roll'); if (!store.get('tlm.seen.roll', false)) { store.set('tlm.seen.roll', true); toast('Rullet! Fart og stikke i landingen gjør at du ikke blir bedøvd.'); } }
-    else if (ev.type === 'tore') { audio?.drop('paper'); toast('Papirbåndet revnet'); say('tore'); }
+    else if (ev.type === 'autojump') { buzz(15); if (!store.get('tlm.seen.autojump', false)) { store.set('tlm.seen.autojump', true); toast(T(TOUCH ? 'toast.autojump.touch' : 'toast.autojump.pc')); } }
+    else if (ev.type === 'edgestop') { buzz(10); if (!store.get('tlm.seen.edgestop', false)) { store.set('tlm.seen.edgestop', true); toast(T(TOUCH ? 'toast.edgestop.touch' : 'toast.edgestop.pc')); } }
+    else if (ev.type === 'shimmy') { logEv('shimmy'); buzz(8); if (!store.get('tlm.seen.shimmy', false)) { store.set('tlm.seen.shimmy', true); toast(TOUCH ? T('toast.shimmy.touch', { jump: T('btn.jump') }) : T('toast.shimmy.pc')); } }
+    else if (ev.type === 'roll') { logEv('rulle', `v=${ev.v}`); audio?.roll(); buzz(20); cue('rulle'); setMood('happy', 0.8); say('roll'); if (!store.get('tlm.seen.roll', false)) { store.set('tlm.seen.roll', true); toast(T('toast.rolled')); } }
+    else if (ev.type === 'tore') { audio?.drop('paper'); toast(T('toast.tore')); say('tore'); }
   }
   if (LEVEL.shortcuts?.length && mode === 'play') for (const ev of stepShortcutWatch(shortcutWatch, player)) {           // R29: genvei med verktøy
     logEv('genvei', `${ev.id} ${ev.act === 'top' ? 'oppe' : 'første trinn'}`);
@@ -2789,16 +2801,16 @@ function update(dt) {
     const snd = TOY_SOUND[ev.act]; if (snd === 'squeak') audio?.squeak(ev.amp); else if (snd === 'honk') audio?.honk(ev.amp); else if (snd === 'creak') audio?.creak(ev.amp); else if (snd === 'boing') audio?.boing(ev.amp); else if (snd === 'tick') audio?.toyTick();
     if (ev.act !== 'tick') { logEv('leke', `${ev.id} ${ev.act}`); cue(TOY_CUE[ev.act] || ev.act); if (ev.act !== 'stop') buzz(12); }
   }
-  if (player.hardLands > pre.hard) { logEv('hard landing'); setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(`Hardt landet – bedøvet  −${SCORE.hardLand} poeng`); }
+  if (player.hardLands > pre.hard) { logEv('hard landing'); setMood('hurt', 1.3); say('hardland'); stats.hard++; toast(T('toast.hardLand', { n: SCORE.hardLand })); }
   if (player.knockout) {
     player.knockout = false; audio?.crush(); buzz(90); say('knockout'); failAt('hardt fall');
     resetPlayer(player, ...save.pos); stats.respawns++;
-    toast(`Landet for hardt – tilbake til lagringspunkt  −${SCORE.respawn} poeng`);
+    toast(T('toast.hardBack', { n: SCORE.respawn }));
   }
   if (player.crushed) {
     const id = player.crushed; player.crushed = null; failAt('klemt'); audio?.crush(); cue('dunk: klemt');
     resetPlayer(player, ...save.pos); stats.respawns++;
-    toast(`Klemt av ${id}!  −${SCORE.respawn} poeng`);
+    toast(T('toast.squeezed', { name: nameOfId(id), n: SCORE.respawn }));
   }
   const hz = inHazard(LEVEL, player);
   if (hz) {
@@ -3252,7 +3264,7 @@ function updateCarryButton() {
   if (sig === taPrev) return; taPrev = sig;
   const tb = $('btnCarry'); tb.textContent = label; tb.className = `tbtn ${s.tone} ${s.ready ? 'ready' : 'dim'}${label.length > 6 ? ' long' : ''}`;
 }
-function applyLang() { GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); }
+function applyLang() { if (typeof pickVoice === 'function') pickVoice(); GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); }
 // navn på ting: fra kind (norsk/engelsk), ellers lappen eller id-en
 const nameOfId = (id) => kindName(LEVEL.bodies?.find((b) => b.id === id)?.kind ?? LEVEL.boxes.find((b) => b.id === id)?.kind, nice(id));
 const nameOfObj = (o) => kindName(o?.kind, nice(o?.id));
@@ -3327,7 +3339,7 @@ function newGame(diff = difficulty) {
   clearAllProgress(); logEv('nytt spill', diff);
   gameDone = false; store.set('tlm.done', false);
   applyDifficulty(diff, { why: 'nytt spill' });
-  if (levelId === 'bad') { restartAll(); hideStart(); toast('Nytt spill'); resumed = false; showIntro(); }
+  if (levelId === 'bad') { restartAll(); hideStart(); toast(T('toast.newGame')); resumed = false; showIntro(); }
   else { noSave = true; goLevel('bad'); }                                  // laster nivå 1 på nytt (noSave: pagehide skal ikke skrive tilbake gammel fremgang)
 }
 // «Velg brett» og «Spill igjen»: spill et brett fra start på valgt vanskelighet uten å slette annen fremgang
@@ -3353,14 +3365,14 @@ async function fetchFixes() { const code = testerCode(); if (!validCode(code)) r
 function fixesBtnRefresh() { const b = $('mFix'); if (b) b.textContent = buttonLabel(uncheckedCount(fixList)); }
 function openFixes() {
   const el = $('start');
-  showFixes(el, { list: fixList, version: VERSION, levels: LEVELS, logEv, refresh: fetchFixes, check: (id, res, note) => checkReply(testerCode(), id, res, note), onChange: (l) => { fixList = l; },
+  showFixes(el, { lang: () => lang, list: fixList, version: VERSION, levels: LEVELS, logEv, refresh: fetchFixes, check: (id, res, note) => checkReply(testerCode(), id, res, note), onChange: (l) => { fixList = l; },
     goTo: (fix) => { saveProgress(); location.href = goUrl(location.href, fix); }, update: async () => { await verView.check({ force: true, why: 'rettelser' }); await verView.update(); }, onBack: () => showStart() });
 }
 // R83: NYTT-menyen. Avkryssinger lagres alltid lokalt (localStorage) og sendes til serveren når tester-kode og nett finnes; aldri feil uten nett.
 let chgServer = {};
 const chgLocal = () => chg.parseLocal(JSON.stringify(store.get(chg.LOCAL_KEY, {})));
-const chgRows = () => chg.buildRows(CHANGES, chg.mergeChecks(chgServer, chgLocal()));
-function chgBtnRefresh() { const b = $('mChg'); if (b) b.textContent = chg.buttonLabel(uncheckedCount(chgRows())); }
+const chgRows = () => chg.buildRows(CHANGES, chg.mergeChecks(chgServer, chgLocal()), (c) => changeText(c, lang));   // R146: tittel og «slik tester du» på valgt språk
+function chgBtnRefresh() { const b = $('mChg'); if (b) b.textContent = chg.buttonLabel(uncheckedCount(chgRows()), lang); }
 async function fetchChanges() {
   const code = testerCode(); if (!validCode(code)) return null;
   const d = await fetchChangeChecks(code); if (!d) return null;
@@ -3372,8 +3384,8 @@ async function fetchChanges() {
   return chgRows();
 }
 function openChanges() {
-  const code = testerCode(), cfg = { title: 'Nytt', tag: 'nytt', word: 'Kom', intro: (n) => (n ? `${n} nye ting å prøve. Trykk GÅ DIT, prøv det, og si om det fungerer.` : 'Ingenting nytt å sjekke akkurat nå.'), emptyA: 'Ingenting nytt å sjekke her.', emptyB: 'Ingenting sjekket å vise.' };
-  showFixes($('start'), { cfg, list: chgRows(), version: VERSION, levels: LEVELS, logEv, refresh: fetchChanges,
+  const code = testerCode(), X = fxText(lang), cfg = { title: X.newTitle, tag: 'nytt', word: X.newWord, intro: X.newIntro, emptyA: X.newEmptyA, emptyB: X.newEmptyB };
+  showFixes($('start'), { cfg, lang: () => lang, list: chgRows(), version: VERSION, levels: LEVELS, logEv, refresh: fetchChanges,
     check: async (id, res, note) => {
       const at = new Date().toISOString(), cur = chgLocal(), v = { check: res, note: res === 'fail' ? String(note || '').slice(0, 200) : '', checked_at: at };
       store.set(chg.LOCAL_KEY, { ...cur, [id]: v });   // lokalt først: virker uten kode og uten nett
@@ -3446,7 +3458,7 @@ function showStart(o = {}) {
   const rest = `<button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>
     <button class="mbtn sec" id="mLevels">${dft(lang, 'df.pick')}${bl ? `<small>${bl}</small>` : ''}</button>
     <button class="mbtn sec" id="mToys">🧸 ${rwT(lang, 'rw.closet')}</button>
-    ${menuVisible(testerCode(), validCode) ? `<div class="mrow"><button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button><button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button></div>` : `<button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()))}</button>`}
+    ${menuVisible(testerCode(), validCode) ? `<div class="mrow"><button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()), lang)}</button><button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button></div>` : `<button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()), lang)}</button>`}
     <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
     <button class="mbtn sec" id="mQuit">${T('menu.quit')}</button>`;
   $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${o.saved ? '✓ ' + dft(lang, 'df.saved') : T('menu.tagline')}</p>${saveWarn()}
@@ -3484,15 +3496,15 @@ function showStart(o = {}) {
     if (pl) {
       resetPlayer(player, pl.x, pl.y, pl.z); cam.yaw = pl.yaw; camFocusY = null; cam.target.set(pl.x, pl.y + 0.62, pl.z); resumed = true;   // resumed: hopp over fortelling og intro
       logEv('rettelser', `ankom ${levelId} ved ${spot.x.toFixed(1)},${spot.y.toFixed(1)},${spot.z.toFixed(1)}: stod ${pl.dist} unna`);
-      setTimeout(() => toast('Her ble det rettet. Prøv stedet, og kryss av i RETTELSER.'), 1200);
-    } else { logEv('rettelser', `ankom ${levelId}: ingen trygg plass ved stedet, vanlig start`); setTimeout(() => toast('Fant ikke stedet, så du starter vanlig'), 1200); }
+      setTimeout(() => toast(T('toast.fixedHere')), 1200);
+    } else { logEv('rettelser', `ankom ${levelId}: ingen trygg plass ved stedet, vanlig start`); setTimeout(() => toast(T('toast.noSpot')), 1200); }
   }
 }
 if (startWanted) showStart(); else { statsLevelStart(); showIntro(); }
 
 applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
-if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true); setTimeout(() => toast('PC: klikk i bildet for å styre blikket med musa (Esc slipper). WASD går, mellomrom hopper, venstre museknapp eller F tar, høyre eller E griper.'), 2500); }
+if (!TOUCH && !store.get('tlm.pcseen2', false)) { store.set('tlm.pcseen2', true); setTimeout(() => toast(T('toast.pcHelp')), 2500); }
 // v0.97: forvarming. three kompilerer shadere og laster opp teksturer først når noe kommer i syne, som gir et plutselig «stopp» (100-300 ms) første gang du ser nytt område eller en effekt. Gjør alt på forhånd, mens introskjermen vises
 const shw = createShaderWatch(() => programCount(renderer), () => programKeys(renderer));   // R35: teller shaderprogram etter forvarmingen
 function warmUp() {
@@ -3564,7 +3576,7 @@ function frame(now) {
   { const fr = fpsW.push(raw); if (fr && mode === 'play' && !menuOpen && fr.low && (fr.lowRuns === 1 || fr.lowRuns % 10 === 0)) logEv('lav fps', `${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms`);
     if (mode === 'play' && !menuOpen) autoQC.feed(raw);
     const dq = fr && mode === 'play' && !menuOpen ? autoQC.decide(fr, renderer.getPixelRatio(), autoQ, basePr) : null;
-    { const lp = fr && mode === 'play' && !menuOpen ? lowP.decide(fr, renderer.getPixelRatio(), 1, lowMode, autoQC.warm) : null; if (lp !== null) { applyLowProfile(lp); if (lp && lowMode === 'auto') toast('Lav profil på for jevnere bilde. ⚙ → Test → Lav profil styrer det', true); } }
+    { const lp = fr && mode === 'play' && !menuOpen ? lowP.decide(fr, renderer.getPixelRatio(), 1, lowMode, autoQC.warm) : null; if (lp !== null) { applyLowProfile(lp); if (lp && lowMode === 'auto') toast(T('toast.lowProfile'), true); } }
     if (dq) { const pr = renderer.getPixelRatio(); renderer.setPixelRatio(dq.pr); renderer.setSize(innerWidth, innerHeight, false); qSteps++; logEv(dq.dir === 'down' ? 'kvalitet ned' : 'kvalitet opp', `oppløsning ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× (${fr.fps.toFixed(0)} fps)`); logEv('ytelse', `${levelId}: oppløsning ${dq.dir === 'down' ? 'ned' : 'opp'} ${pr.toFixed(2)}× til ${dq.pr.toFixed(2)}× · ${fr.fps.toFixed(0)} fps, verste ${Math.round(fr.worst)} ms · ${renderer.info.render.calls} tegnekall, ${renderer.info.render.triangles} trekanter`); if (dq.dir === 'down' && !qToasted) { qToasted = true; toast('Lavere oppløsning for jevnere bilde. ⚙ → Test → Oppløsning styrer det', true); } } }   // én melding per økt, nede ved kanten så den ikke dekker målpilen; resten logges bare
   if (!window.__paused && !menuOpen && !ov.active && !bld.active && !lab3dV.active) update(dt);   // R20: spillet venter mens oversikten vises
   showMeFrame(dt); stepCamAnim(dt); compassFrame(now); floodFrame(now, dt);
