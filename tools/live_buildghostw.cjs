@@ -26,7 +26,7 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
       const st = await pg.evaluate(() => window.__game.bld.ghostStats());
       ok(`${lvl}/${tag} ${fmt}: spøkelsesbro vises (${id}, ${kind})`, st.shown === id && st.kind === kind && st.draw === 1 && st.shadow === 0 && st.tris <= 72, JSON.stringify(st));
       const card = await pg.evaluate(() => { const e = document.getElementById('btnBuildCard'); return { t: e.innerText, vis: getComputedStyle(e).display, small: e.className, r: e.getBoundingClientRect().toJSON(), btn: document.getElementById('btnBuild').getBoundingClientRect().toJSON(), vw: innerWidth, vh: innerHeight }; });
-      ok(`${lvl}/${tag} ${fmt}: oppdragskort med knappenavn og gap`, card.vis !== 'none' && /OPPDRAG/.test(card.t) && /Bygg en|Legg en/.test(card.t) && /BYGG/.test(card.t) && !/\[|tast/i.test(card.t) && card.r.right <= card.vw && card.r.bottom <= card.vh, JSON.stringify(card));
+      ok(`${lvl}/${tag} ${fmt}: oppdragskort med knappenavn og gap`, card.vis !== 'none' && /Bro|Trapp|Planke/.test(card.t) && card.t.length < 40 && !/\[|tast/i.test(card.t) && card.r.right <= card.vw && card.r.bottom <= card.vh, JSON.stringify(card));
       const box = await pg.evaluate(() => { const g = window.__game; return { b: g.bld.ghostBox(g.camera), c: document.getElementById('btnBuildCard').getBoundingClientRect().toJSON(), vw: innerWidth, vh: innerHeight }; });
       // skjermboks: NDC -> px; omrisset må ligge (helt eller delvis) i bildet og kortet skal ikke dekke det
       const px = box.b && { l: (box.b.x0 + 1) / 2 * box.vw, r: (box.b.x1 + 1) / 2 * box.vw, t: (1 - box.b.y1) / 2 * box.vh, bt: (1 - box.b.y0) / 2 * box.vh };
@@ -42,8 +42,8 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
       await pg.evaluate(() => window.__game.bld.open()); await run(4);
       const hid = await pg.evaluate(() => window.__game.bld.ghostStats().shown); ok(`${lvl}/${tag} ${fmt}: skjult i byggeskjermen`, hid === null, String(hid));
       await pg.evaluate(() => window.__game.bld.close('test')); for (let i = 0; i < 8; i++) { await place(-9, 7); await run(20); if (await pg.evaluate(() => getComputedStyle(document.getElementById('btnBuildCard')).display !== 'none')) break; }   // BYGG vises bare med føttene i bakken
-      const sm = await pg.evaluate(() => { const e = document.getElementById('btnBuildCard'); return { c: e.className, t: e.innerText, vis: getComputedStyle(e).display }; });
-      ok(`${lvl}/${tag} ${fmt}: kortet krymper etter første BYGG`, sm.c === 'small' && sm.vis !== 'none' && sm.t.length < 40, JSON.stringify(sm));
+      const sm = await pg.evaluate(() => { const e = document.getElementById('btnBuildCard'); return { vis: getComputedStyle(e).display }; });
+      ok(`${lvl}/${tag} ${fmt}: R144 kortet er borte etter første BYGG`, sm.vis === 'none', JSON.stringify(sm));
       await sh('2_etter_bygg');
       if (fmt === 'st') {   // bestått: borte; valget av; Ekspert uten hjelp
         await pg.evaluate((sid) => window.__game.bld.stage.markPassed(sid), id); await run(40);

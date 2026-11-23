@@ -87,3 +87,8 @@ export function ghostCard(site, T, { touch = true } = {}) {
 export const cardCompact = (seen, id) => Array.isArray(seen) && seen.includes(id);
 export const cardMark = (seen, id) => (Array.isArray(seen) && seen.includes(id) ? seen : [...(Array.isArray(seen) ? seen : []), id]);
 export { fmtLen };
+
+// R144: kortet vises kort (én linje, forsvinner av seg selv) og aldri igjen når BYGG allerede er trykket på stedet. Valget «buildcard» skrur det av helt.
+export const CARD_SECS = 5, CARD_FADE = 1;
+export function cardShow({ on = true, seen = false, shown = 0 } = {}) { return !!on && !seen && shown < CARD_SECS; }
+export function cardOpacity(shown) { return shown <= CARD_SECS - CARD_FADE ? 1 : Math.max(0, (CARD_SECS - shown) / CARD_FADE); }
