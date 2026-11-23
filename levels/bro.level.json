@@ -394,7 +394,8 @@
       "s1",
       "s2"
      ]
-    }
+    },
+    "en": "The gap between the shelves"
    }
   ],
   "parts": [
@@ -574,5 +575,6 @@
   "helpers": [],
   "nodes": 11,
   "reachable": 11
- }
+ },
+ "nameEn": "The shelf bridge"
 }

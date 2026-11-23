@@ -779,7 +779,8 @@
     -53.4,
     1.9,
     19.8
-   ]
+   ],
+   "en": "The remote\nTake it (TAKE) and carry it to the yellow plate in front of the sliding door. Put it down (TAKE again): the door opens."
   },
   {
    "id": "sofa",
@@ -788,7 +789,8 @@
     -3.8,
     8.9,
     -16
-   ]
+   ],
+   "en": "The sofa\nClimb the books and up onto the sofa. The gap to the coffee table is too wide: press BUILD and build a bridge, or take the long way."
   }
  ],
  "hazards": [
@@ -1044,7 +1046,8 @@
       "hylle_n3",
       "maal"
      ]
-    }
+    },
+    "en": "The gap between the sofa and the coffee table"
    }
   ],
   "parts": [
@@ -1319,5 +1322,6 @@
   "helpers": [],
   "nodes": 27,
   "reachable": 26
- }
+ },
+ "nameEn": "Level 8: The living room"
 }

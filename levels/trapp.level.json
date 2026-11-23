@@ -281,7 +281,8 @@
       "@t3",
       "hylle"
      ]
-    }
+    },
+    "en": "In front of the shelf (stairs)"
    }
   ],
   "parts": [
@@ -431,5 +432,6 @@
   "helpers": [],
   "nodes": 3,
   "reachable": 3
- }
+ },
+ "nameEn": "The block stairs"
 }

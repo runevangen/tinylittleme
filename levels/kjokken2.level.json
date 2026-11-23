@@ -1473,7 +1473,8 @@
     -23.5,
     38.9,
     -23.5
-   ]
+   ],
+   "en": "Build a bridge\nIt is too far from the small shelf to the fridge, and wood gives way. Press BUILD at the edge, switch to steel with STEEL, make triangles and press TRY."
   },
   {
    "id": "benk_vask_foran",
@@ -1482,7 +1483,8 @@
     -7.5,
     18.9,
     -19
-   ]
+   ],
+   "en": "The sink\nWalk on the narrow edge in front of the sink. Push the stick gently (green knob), and you stop at the edge instead of falling in."
   },
   {
    "id": "komfyr_front",
@@ -1491,7 +1493,8 @@
     10,
     18.9,
     -19
-   ]
+   ],
+   "en": "The hobs\nThe plates behind you are hot. Walk straight sideways along the edge."
   },
   {
    "id": "kjokkenhandkle",
@@ -1500,7 +1503,8 @@
     20.2,
     31.3,
     -26.8
-   ]
+   ],
+   "en": "Kitchen towel\nClimb: stand on the microwave, walk up to the towel and hold GRAB. At the top you pull yourself onto the spice shelf."
   },
   {
    "id": "hvitlok",
@@ -1509,7 +1513,8 @@
     15.9,
     40.9,
     -28.4
-   ]
+   ],
+   "en": "Garlic braid\nClimb up onto the top cupboard. It is a long climb: rest on the shelf first so your strength is full."
   },
   {
    "id": "leke_robot",
@@ -1518,7 +1523,8 @@
     12,
     3.7,
     -4.2
-   ]
+   ],
+   "en": "Living toys\nJump on the jack-in-the-box or the horse. TAKE the wind-up robot and drop it, and it walks a few steps."
   },
   {
    "id": "kasse",
@@ -1527,7 +1533,8 @@
     10,
     4.9,
     -13.4
-   ]
+   ],
+   "en": "The drawers are closed\nNew way up: jump onto the crate and climb the towel that hangs on the stove (hold GRAB)."
   },
   {
    "id": "hargele_kjokken",
@@ -1536,7 +1543,8 @@
     -18,
     2.9,
     21
-   ]
+   ],
+   "en": "Hair gel\nTake the bottle (TAKE), carry it to the high step by the counter and press SMEAR. Put it down (DROP) and climb the gel (GRAB). Wet for 20 s: slippery."
   },
   {
    "id": "gele_kjokken_trinn_1",
@@ -1545,7 +1553,8 @@
     22.5,
     6.3,
     -3.6
-   ]
+   ],
+   "en": "High step\nToo high to jump onto. Smear hair gel on the step (TAKE with the bottle), climb up and walk the stairs to the counter. The long way via the crate and the towel still works."
   }
  ],
  "hazards": [
@@ -2167,7 +2176,8 @@
       "@bro",
       "kjoleskap"
      ]
-    }
+    },
+    "en": "The gap from the shelf to the fridge (steel)"
    }
   ],
   "parts": [
@@ -2526,5 +2536,6 @@
   "helpers": [],
   "nodes": 26,
   "reachable": 22
- }
+ },
+ "nameEn": "Level 6: The kitchen, tidied up"
 }

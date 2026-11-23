@@ -853,7 +853,8 @@
     -139.25,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 1/10\nPress BUILD to build here."
   },
   {
    "id": "ped_a2",
@@ -862,7 +863,8 @@
     -105.375,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 2/10\nPress BUILD to build here."
   },
   {
    "id": "ped_a3",
@@ -871,7 +873,8 @@
     -79.125,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 3/10\nPress BUILD to build here."
   },
   {
    "id": "ped_a4",
@@ -880,7 +883,8 @@
     -48.75,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 4/10\nPress BUILD to build here."
   },
   {
    "id": "ped_a5",
@@ -889,7 +893,8 @@
     -19.25,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 5/10\nPress BUILD to build here."
   },
   {
    "id": "ped_a6",
@@ -898,7 +903,8 @@
     10.75,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 6/10\nPress BUILD to build here."
   },
   {
    "id": "ped_a7",
@@ -907,7 +913,8 @@
     41.25,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 7/10\nPress BUILD to build here."
   },
   {
    "id": "ped_a8",
@@ -916,7 +923,8 @@
     70.75,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 8/10\nPress BUILD to build here."
   },
   {
    "id": "ped_a9",
@@ -925,7 +933,8 @@
     100.75,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 9/10\nPress BUILD to build here."
   },
   {
    "id": "ped_a10",
@@ -934,7 +943,8 @@
     130.75,
     3.9,
     0
-   ]
+   ],
+   "en": "Spot 10/10\nPress BUILD to build here."
   },
   {
    "id": "trinn_2",
@@ -943,7 +953,8 @@
     -83.5,
     6.4,
     0
-   ]
+   ],
+   "en": "Steps\nThe way up onto the high shelf without building."
   },
   {
    "id": "trinn_3",
@@ -952,7 +963,8 @@
     -53.5,
     5.65,
     0
-   ]
+   ],
+   "en": "Steps\nThe way up onto the high shelf without building."
   }
  ],
  "hazards": [],
@@ -1115,7 +1127,8 @@
         "ped_a1",
         "@bro",
         "ped_b1"
-       ]
+       ],
+       "en": "long plank"
       },
       {
        "name": "linjal",
@@ -1142,7 +1155,8 @@
         "ped_a1",
         "@bro",
         "ped_b1"
-       ]
+       ],
+       "en": "ruler"
       },
       {
        "name": "lang planke med en kort oppå",
@@ -1176,10 +1190,12 @@
         "ped_a1",
         "@bro",
         "ped_b1"
-       ]
+       ],
+       "en": "long plank with a short one on top"
       }
      ]
-    }
+    },
+    "en": "Spot 1/10"
    },
    {
     "id": "lab2",
@@ -1391,7 +1407,8 @@
         "@t2",
         "@t3",
         "ped_b2"
-       ]
+       ],
+       "en": "stairs of six blocks"
       },
       {
        "name": "tårn av tre klosser og en rampe",
@@ -1431,10 +1448,12 @@
         "gulv",
         "ped_a2",
         "ped_b2"
-       ]
+       ],
+       "en": "tower of three blocks and a ramp"
       }
      ]
-    }
+    },
+    "en": "Spot 2/10"
    },
    {
     "id": "lab3",
@@ -1542,7 +1561,8 @@
         "gulv",
         "ped_a3",
         "ped_b3"
-       ]
+       ],
+       "en": "seesaw"
       },
       {
        "name": "skrå lang planke",
@@ -1561,10 +1581,12 @@
         "gulv",
         "ped_a3",
         "ped_b3"
-       ]
+       ],
+       "en": "sloped long plank"
       }
      ]
-    }
+    },
+    "en": "Spot 3/10"
    },
    {
     "id": "lab4",
@@ -1792,7 +1814,8 @@
         "ped_a4",
         "@topp",
         "ped_b4"
-       ]
+       ],
+       "en": "triangle, low (4 long rafters, 3 out)"
       },
       {
        "name": "trekant, høy (sperrer 4 lange, 2 ut)",
@@ -1876,10 +1899,12 @@
         "ped_a4",
         "@topp",
         "ped_b4"
-       ]
+       ],
+       "en": "triangle, tall (4 long rafters, 2 out)"
       }
      ]
-    }
+    },
+    "en": "Spot 4/10"
    },
    {
     "id": "lab5",
@@ -2067,7 +2092,8 @@
         "ped_a5",
         "@bro",
         "ped_b5"
-       ]
+       ],
+       "en": "two short planks, tape and rope"
       },
       {
        "name": "to korte planker, ledd og gummistrikk",
@@ -2146,7 +2172,8 @@
         "ped_a5",
         "@bro",
         "ped_b5"
-       ]
+       ],
+       "en": "two short planks, a joint and a rubber band"
       },
       {
        "name": "lang planke i to tau",
@@ -2204,10 +2231,12 @@
         "ped_a5",
         "@bro",
         "ped_b5"
-       ]
+       ],
+       "en": "long plank in two ropes"
       }
      ]
-    }
+    },
+    "en": "Spot 5/10"
    },
    {
     "id": "lab6",
@@ -2328,7 +2357,8 @@
         "ped_a6",
         "@bro",
         "ped_b6"
-       ]
+       ],
+       "en": "long plank"
       },
       {
        "name": "linjal",
@@ -2355,10 +2385,12 @@
         "ped_a6",
         "@bro",
         "ped_b6"
-       ]
+       ],
+       "en": "ruler"
       }
      ]
-    }
+    },
+    "en": "Spot 6/10"
    },
    {
     "id": "lab7",
@@ -2587,7 +2619,8 @@
         "ped_a7",
         "@topp",
         "ped_b7"
-       ]
+       ],
+       "en": "triangle (truss)"
       },
       {
        "name": "to lange planker med tape",
@@ -2636,7 +2669,8 @@
         "ped_a7",
         "@bro",
         "ped_b7"
-       ]
+       ],
+       "en": "two long planks with tape"
       },
       {
        "name": "høykant-planke",
@@ -2663,10 +2697,12 @@
         "ped_a7",
         "@bro",
         "ped_b7"
-       ]
+       ],
+       "en": "plank on edge"
       }
      ]
-    }
+    },
+    "en": "Spot 7/10"
    },
    {
     "id": "lab8",
@@ -2780,7 +2816,8 @@
         "ped_a8",
         "@bro",
         "ped_b8"
-       ]
+       ],
+       "en": "ruler"
       },
       {
        "name": "to linjaler teipet oppå hverandre",
@@ -2829,7 +2866,8 @@
         "ped_a8",
         "@bro",
         "ped_b8"
-       ]
+       ],
+       "en": "two rulers taped on top of each other"
       },
       {
        "name": "linjal med en blyant oppå",
@@ -2863,10 +2901,12 @@
         "ped_a8",
         "@bro",
         "ped_b8"
-       ]
+       ],
+       "en": "ruler with a pencil on top"
       }
      ]
-    }
+    },
+    "en": "Spot 8/10"
    },
    {
     "id": "lab9",
@@ -2981,7 +3021,8 @@
         "ped_a9",
         "@bro",
         "ped_b9"
-       ]
+       ],
+       "en": "long plank"
       },
       {
        "name": "linjal",
@@ -3008,10 +3049,12 @@
         "ped_a9",
         "@bro",
         "ped_b9"
-       ]
+       ],
+       "en": "ruler"
       }
      ]
-    }
+    },
+    "en": "Spot 9/10"
    },
    {
     "id": "lab10",
@@ -3148,7 +3191,8 @@
         "ped_a10",
         "@bro",
         "ped_b10"
-       ]
+       ],
+       "en": "long plank"
       },
       {
        "name": "linjal",
@@ -3175,10 +3219,12 @@
         "ped_a10",
         "@bro",
         "ped_b10"
-       ]
+       ],
+       "en": "ruler"
       }
      ]
-    }
+    },
+    "en": "Spot 10/10"
    }
   ],
   "parts": []
@@ -3253,5 +3299,6 @@
   "helpers": [],
   "nodes": 23,
   "reachable": 23
- }
+ },
+ "nameEn": "Test room: Build lab"
 }

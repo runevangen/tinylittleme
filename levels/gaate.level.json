@@ -263,7 +263,8 @@
     -64.8,
     3.3,
     -16.8
-   ]
+   ],
+   "en": "Puzzle 1\nTake the block (TAKE), carry it to the yellow plate and put it down (TAKE again). If it is heavy enough, the gate opens."
   },
   {
    "id": "klosse_b",
@@ -272,7 +273,8 @@
     -32.8,
     3.3,
     -4.8
-   ]
+   ],
+   "en": "Puzzle 2\nTwo plates must be pressed at the same time. Carry a block to each plate (TAKE)."
   },
   {
    "id": "plat_a",
@@ -281,7 +283,8 @@
     22,
     6.9,
     0
-   ]
+   ],
+   "en": "Puzzle 3\nWalk up to the switch and press TAKE: a bridge is lowered over the gap. JUMP across when it is out."
   }
  ],
  "hazards": [],
@@ -605,5 +608,6 @@
   "helpers": [],
   "nodes": 8,
   "reachable": 5
- }
+ },
+ "nameEn": "The puzzle room"
 }

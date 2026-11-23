@@ -1941,7 +1941,8 @@
     5.7,
     12.9,
     7.4
-   ]
+   ],
+   "en": "The laundry basket has moved\nIt now stands under the hooks. Climb up it (GRAB), and on up the bathrobe to the hook rail."
   },
   {
    "id": "badekape_bla",
@@ -1950,7 +1951,8 @@
     9.6,
     27.9,
     5.2
-   ]
+   ],
+   "en": "Bathrobe\nClimb from the basket up to the hook rail. It is a long climb: start with full strength."
   },
   {
    "id": "trapp_bad_1",
@@ -1959,7 +1961,8 @@
     -10.5,
     4.7,
     0.6
-   ]
+   ],
+   "en": "The hard way\nBoxes as stairs: jump (JUMP) up step by step to the medicine cabinet. No climbing, but it takes precise jumps."
   },
   {
    "id": "ny_hylle",
@@ -1968,7 +1971,8 @@
     6.8,
     33.5,
     17.2
-   ]
+   ],
+   "en": "New shelf\nRest here until your strength is full. The gap to the shower shelf is too far to jump: press BUILD at the edge and build a seesaw."
   },
   {
    "id": "hargele_bad",
@@ -1977,7 +1981,8 @@
     -8.1,
     2.9,
     17
-   ]
+   ],
+   "en": "Hair gel\nTake the bottle (TAKE), carry it to the high step by the laundry basket and press SMEAR. Put it down (DROP) and climb the gel (GRAB). Wet for 20 s: slippery."
   },
   {
    "id": "gele_bad_trinn_1",
@@ -1986,7 +1991,8 @@
     -3,
     6.3,
     5.5
-   ]
+   ],
+   "en": "High step\nToo high to jump onto. Smear hair gel on the step (TAKE with the bottle), then climb up and go on to the laundry basket. The long way still works."
   },
   {
    "id": "hylle_ost",
@@ -1995,7 +2001,8 @@
     22.75,
     35.5,
     16.6
-   ]
+   ],
+   "en": "Shower shelf\nThe antidote is here. The seesaw you build must carry you over the gap from the new shelf."
   }
  ],
  "hazards": [
@@ -2419,7 +2426,8 @@
       "ny_hylle",
       "hylle_ost"
      ]
-    }
+    },
+    "en": "The gap to the shower shelf (seesaw)"
    }
   ],
   "parts": [
@@ -2675,7 +2683,8 @@
        6.8,
        33.5,
        17.2
-      ]
+      ],
+      "en": "New shelf\nRest here until your strength is full. The gap to the shower shelf is too far to jump: press BUILD at the edge and build a seesaw."
      },
      {
       "id": "hylle_ost",
@@ -2684,7 +2693,8 @@
        22.75,
        35.5,
        16.6
-      ]
+      ],
+      "en": "Shower shelf\nThe antidote is here. The seesaw you build must carry you over the gap from the new shelf."
      }
     ],
     "add": [
@@ -2695,7 +2705,8 @@
        5.8,
        33.5,
        17.2
-      ]
+      ],
+      "en": "New shelf\nRest here until your strength is full. The last towel hangs from the top shelf."
      }
     ]
    },
@@ -3292,5 +3303,6 @@
   "nodes": 42,
   "reachable": 20,
   "hard_solvable_by_graph": false
- }
+ },
+ "nameEn": "Level 4: The bathroom, rearranged"
 }

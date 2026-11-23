@@ -392,7 +392,8 @@
       "s1",
       "s2"
      ]
-    }
+    },
+    "en": "The gap in front of the high shelf (seesaw)"
    }
   ],
   "parts": [
@@ -537,5 +538,6 @@
   "helpers": [],
   "nodes": 11,
   "reachable": 11
- }
+ },
+ "nameEn": "The seesaw over the gap"
 }

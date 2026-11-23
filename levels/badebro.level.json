@@ -302,7 +302,8 @@
     -8,
     8.9,
     -4
-   ]
+   ],
+   "en": "The bathtub is a lake\nBuild the bridge: press BUILD at the edge. A single rod or a square gives way, only triangles are stiff. Or take the hard way around."
   }
  ],
  "hazards": [
@@ -625,7 +626,8 @@
       "dusjtopp1",
       "dusjtopp2"
      ]
-    }
+    },
+    "en": "The bathtub between the tub edge and the shower edge"
    }
   ],
   "parts": [
@@ -773,5 +775,6 @@
   "helpers": [],
   "nodes": 11,
   "reachable": 11
- }
+ },
+ "nameEn": "The bridge over the bathtub"
 }

@@ -701,7 +701,8 @@
     -49,
     6.9,
     -4
-   ]
+   ],
+   "en": "Slalom\nWalk between the poles without stopping. Try slow and fast walking (stick halfway and all the way out)."
   },
   {
    "id": "trinn_1",
@@ -710,7 +711,8 @@
     -15,
     1.4,
     0
-   ]
+   ],
+   "en": "Steps\nWalk straight across: the lowest step (2.5 cm) is stepped up by itself, you have to jump onto the next ones (help level «A lot» helps a bit more)."
   },
   {
    "id": "plattform_1",
@@ -719,7 +721,8 @@
     20,
     2.9,
     0
-   ]
+   ],
+   "en": "Jump the gaps\nThree jumps with growing gaps (2, 3 and 4 units). Goal: the last platform."
   },
   {
    "id": "fall_1",
@@ -728,7 +731,8 @@
     -18,
     3.9,
     18
-   ]
+   ],
+   "en": "Fall tower\nJump up the stairs. At the top: jump down onto the soft mat (east) or straight onto the floor in the west, and watch the landing marker change colour (white, orange, red)."
   },
   {
    "id": "fall_matte",
@@ -737,7 +741,8 @@
     11,
     1.5,
     18
-   ]
+   ],
+   "en": "Soft mat\nCushions the fall."
   },
   {
    "id": "bjelke",
@@ -746,7 +751,8 @@
     41,
     3.3,
     17
-   ]
+   ],
+   "en": "Balance beam\nNarrow. Walk across slowly (stick halfway). Jump off and watch the shadow."
   },
   {
    "id": "baerekasse",
@@ -755,7 +761,8 @@
     -54,
     3.3,
     -13
-   ]
+   ],
+   "en": "Low crate\n12 cm. Jump up, and step up onto the low steps."
   },
   {
    "id": "trapp_1",
@@ -764,7 +771,8 @@
     -64,
     1,
     18
-   ]
+   ],
+   "en": "Stairs (foot lift)\nWalk up and down: the edges are 0.5 to 1 cm, and your feet lift to each edge. Try slow, calm walking too."
   }
  ],
  "hazards": [],
@@ -837,7 +845,8 @@
       "u0": 1.5,
       "u1": 5.5
      }
-    ]
+    ],
+    "en": "The hole between platform 2 and 3"
    },
    {
     "id": "trapp1",
@@ -866,7 +875,8 @@
       "u1": 9,
       "top": 3
      }
-    ]
+    ],
+    "en": "Up onto the shelf (stairs)"
    }
   ],
   "parts": [
@@ -1020,5 +1030,6 @@
   "helpers": [],
   "nodes": 24,
   "reachable": 20
- }
+ },
+ "nameEn": "The control course"
 }
