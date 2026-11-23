@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.171** – Lag brett fra bilder: aldri blindgate. Feil gir JUSTER og VIS TOLKNING, målforslag MÅL 1–4, ekte feilårsak og tolkningsoppsummering i rapporten (leditor_logic/view/text, scene2level_core, test_leditor).
 - **2.170** – Lag brett fra bilder: auto-målet bruker brettbyggerens egne flater, og setter inn en sokkel i rommet hvis stedet ikke har noen flate å stå på (scene2level_core, leditor_logic, test_leditor).
 - **2.169** – Lag brett fra bilder: svar som kommer fram men ikke kan leses gir ett automatisk nytt forsøk med samme bilder, og feillogger viser statuskode og tid (leditor_logic/view, test_leditor).
 - **2.168** – Lag brett fra bilder: bildene beholdes i minnet (aldri lagret) når tjenesten ikke svarer, så NYTT FORSØK ikke krever nye bilder (leditor_view).

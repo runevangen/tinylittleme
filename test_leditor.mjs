@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { LE, REASONS } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, sceneToRoom, goalCandidates, summarizeScene, interpretation, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
 import { sceneToLevel } from './scene2level_core.js';
 import { listRooms, loadRoom, validateRoom } from './rooms_logic.js';
 import { LEDITOR_TEXT, ltx, lerr, lverdict } from './leditor_text.js';
@@ -60,6 +60,13 @@ assert.deepEqual(JSON.parse(JSON.stringify(core.level.boxes)), cli.boxes, 'scene
   const flat = { ...bad, objects: bad.objects.map((o) => ({ ...o, box: [o.box[0], o.box[1], 0, 1, o.box[4], o.box[5]] })), hazards: [], gates: undefined, goals: undefined, goal: { ...bad.goal, y: 9999 } };
   const pedestal = sceneToRoom(flat); assert.equal(pedestal.ok, true, 'ingen flate å stå på: spillet setter inn en sokkel og legger målet der'); assert.ok(pedestal.scene.objects.some((o) => o.id === pedestal.autoGoal) || pedestal.autoGoal, 'målet er satt'); assert.ok(pedestal.scene.goal.on); }
 assert.equal(sceneToRoom({}).ok, false);
+// R162: målforslag, oppsummering til feillogg og VIS TOLKNING
+{ const cands = goalCandidates(bad, 4); assert.ok(cands.length >= 2, 'minst to målforslag'); assert.equal(new Set(cands.map((c) => c.id)).size, cands.length, 'ulike flater');
+  for (const c of cands) { assert.equal(c.scene.goal.on, c.id); assert.equal(sceneToRoom(c.scene, undefined, { auto: false }).ok, true, 'hvert forslag gir et gyldig brett'); }
+  const sm = summarizeScene(bad); assert.ok(/ting/.test(sm) && /mål/.test(sm) && sm.length < 1000 && !/data:|base64/.test(sm), 'oppsummeringen er kort og uten bilder');
+  const I = interpretation(bad, sceneToRoom(bad)); assert.ok(I.things.length > 5 && I.things.every((t) => Number.isFinite(t.h) && typeof t.label === 'string')); assert.ok(I.things[0].h >= I.things[I.things.length - 1].h, 'høyeste først');
+  const broken = sceneToRoom({ ...bad, objects: bad.objects.slice(0, 1), goal: { ...bad.goal, y: 9999 } }, undefined, { auto: false }); assert.equal(broken.ok, false); assert.ok(typeof broken.detail === 'string');
+  const failAfter = sceneToRoom({ ...bad, goal: { ...bad.goal, y: 9999 } }); assert.equal(failAfter.ok, true); }
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
 

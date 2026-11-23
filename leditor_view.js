@@ -1,7 +1,7 @@
 // R152: «Lag brett fra bilder» (DOM). Bruker startskjermens #start og knappestiler (.mbtn) som VELG BRETT/MINE BRETT. Logikk: leditor_logic.js, tekster: leditor_text.js.
 // Flyt: veiledning + samtykke → 2–4 bilder (nedskalert her, i minnet) → fire spørsmål → LAG BRETT (tjenesten) → forslag med SJEKK, JUSTER, SPILL, DEL, LAGRE. Bilder lagres aldri.
 import { LE } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation } from './leditor_logic.js';
 import { shareRoom, setRoomCode, safeName } from './rooms_logic.js';
 import { ltx, lerr, lverdict, lsub } from './leditor_text.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -131,14 +131,18 @@ export function createLeditorView(ctx) {
     S.photos.length = 0;
     S.scene = res.scene; S.usage = res.usage || { cost_usd: 0, ms: 0 }; S.name = defaultName(res.scene);
     const room = sceneToRoom(res.scene); S.room = room; if (room.scene) S.scene = room.scene;
-    if (!room.ok) { logEv?.('leveleditor', `scene ble ikke brett: ${room.reason}`); failed(room.reason); return; }
+    if (!room.ok) { logEv?.('leveleditor', `scene ble ikke brett: ${room.reason}${room.detail ? ' (' + room.detail + ')' : ''} · ${summarizeScene(S.scene)}`); failed(room.reason); return; }
     if (room.autoGoal) logEv?.('leveleditor', `auto-mål på ${room.autoGoal}`);
     logEv?.('leveleditor', ledLog({ what: 'forslag', cost: S.usage.cost_usd, ms: S.usage.ms || Date.now() - t0, edits: 0, bot: room.solvable ? 'vei' : 'ingen', extra: `${room.things} ting, ${room.helperCount} hjelpeobjekter` }));
     result(room.autoGoal ? T('autoGoal') : '');
   }
   function failed(reason) {
     const el = root();
-    el.innerHTML = `<h1>${esc(T('title'))}</h1><p class="tag">${esc(lerr(L(), reason))}</p><button class="mbtn" id="ledAgain">${esc(T('again'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
+    const hasScene = !!(S && S.scene && S.scene.room);   // forslaget finnes, men ble ikke et brett: JUSTER og VIS TOLKNING gir en vei videre
+    el.innerHTML = `<h1>${esc(T('title'))}</h1><p class="tag">${esc(lerr(L(), reason))}</p>`
+      + (hasScene ? `<button class="mbtn" id="ledFixAdj">${esc(T('adjust'))}</button><button class="mbtn sec" id="ledFixInt">${esc(T('interp'))}</button>` : '')
+      + `<button class="mbtn${hasScene ? ' sec' : ''}" id="ledAgain">${esc(T('again'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
+    if (hasScene) { $('ledFixAdj').onclick = () => { logEv?.('leveleditor', `juster etter feil: ${reason}`); adjust(); }; $('ledFixInt').onclick = () => interp(); }
     $('ledAgain').onclick = () => { S.photos.length ? questions() : (logEv?.('leveleditor', 'nytt forsøk: velg bilder på nytt'), photos()); };
     $('ledBack').onclick = leave;
   }
@@ -150,7 +154,7 @@ export function createLeditorView(ctx) {
     const el = root(), r = S.room, ok = canPlay(r);
     el.innerHTML = `<h1>${esc(T('resultH'))}</h1><div class="ledbox"><b>${esc(S.name)}</b><span>${esc(T('things', r.things))}</span><span id="ledVerdict">${esc(verdictText())}</span></div>`
       + `<p class="tag">${esc(T('nameLabel'))}</p><input class="ledin" id="ledName" maxlength="30" value="${esc(S.name)}" autocomplete="off">`
-      + `<div class="ledrow"><button class="mbtn" id="ledPlay">${esc(T('play'))}</button><button class="mbtn sec" id="ledAdj">${esc(T('adjust'))}</button><button class="mbtn sec" id="ledChk">${esc(T('check'))}</button><button class="mbtn sec" id="ledShare">${esc(T('share'))}</button></div>`
+      + `<div class="ledrow"><button class="mbtn" id="ledPlay">${esc(T('play'))}</button><button class="mbtn sec" id="ledAdj">${esc(T('adjust'))}</button><button class="mbtn sec" id="ledChk">${esc(T('check'))}</button><button class="mbtn sec" id="ledShare">${esc(T('share'))}</button><button class="mbtn sec" id="ledInt">${esc(T('interp'))}</button></div>`
       + `<div class="ledmsg" id="ledMsg">${esc(note)}</div><button class="mbtn sec" id="ledSave">${esc(S.savedId ? T('mine') : T('save'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
     const nm = () => { S.name = safeName($('ledName').value, S.name || 'Mitt brett'); return S.name; };
     const save = () => {
@@ -160,7 +164,7 @@ export function createLeditorView(ctx) {
     };
     $('ledPlay').disabled = false; if (!ok) $('ledPlay').classList.add('sec');
     $('ledPlay').onclick = () => { const id = save(); if (id) { logSummary('spiller'); ctx.onPlay?.(id); } };
-    $('ledAdj').onclick = adjust;
+    $('ledAdj').onclick = adjust; $('ledInt').onclick = () => interp();
     $('ledChk').onclick = () => { S.room = sceneToRoom(S.scene, S.name); if (S.room.scene) S.scene = S.room.scene; logSummary('sjekk'); result(); };
     $('ledSave').onclick = () => { if (S.savedId) { ctx.onMine?.(); return; } const id = save(); if (id) { result(T('saved')); } };
     $('ledBack').onclick = leave;
@@ -177,15 +181,29 @@ export function createLeditorView(ctx) {
     };
   }
 
+  // ---- 5b. vis tolkningen: hva spillet fant i bildene (liste), og hva det la inn selv ----
+  function interp() {
+    const el = root(), I = interpretation(S.scene, S.room), ok = !!(S.room && S.room.ok);
+    el.innerHTML = `<h1>${esc(T('interpH'))}</h1><p class="tag" style="max-width:320px">${esc(T('interpIntro', I.things.length))}</p>`
+      + `<div class="ledbox" style="text-align:left;max-height:46vh;overflow-y:auto">${I.things.length ? '<ul>' + I.things.map((t) => `<li>${esc(T('interpRow', t))}</li>`).join('') + '</ul>' : esc(T('interpNone'))}</div>`
+      + (I.goalAuto ? `<p class="tag">${esc(T('interpAuto'))}</p>` : '') + (I.helpers.length ? `<p class="tag">${esc(T('interpHelpers', I.helpers.length))}</p>` : '')
+      + (I.uncertainty ? `<p class="tag" style="max-width:320px">${esc(T('interpUnc'))} ${esc(I.uncertainty)}</p>` : '')
+      + `<button class="mbtn" id="ledIntBack">${esc(T('back'))}</button>`;
+    $('ledIntBack').onclick = () => (ok ? result() : failed(S.room ? S.room.reason : 'scene'));
+  }
+
   // ---- 6. juster: kart ovenfra, trykk en ting, flytt med piler eller slett ----
   function adjust() {
     const el = root(), sc = () => S.scene;
     el.innerHTML = `<h1>${esc(T('adjH'))}</h1><p class="tag" style="max-width:320px">${esc(T('adjIntro'))}</p><canvas class="ledmap" id="ledMap"></canvas>`
       + `<p class="tag" id="ledSel">${esc(T('adjNone'))}</p>`
+      + `<p class="tag">${esc(T('goalH'))}</p><div class="ledrow" id="ledGoals"></div>`
       + `<div class="ledarrows"><span></span><button class="mbtn sec" data-d="0,-1">▲</button><span></span><button class="mbtn sec" data-d="-1,0">◀</button><button class="mbtn sec" id="ledDel" style="font-size:13px">${esc(T('del'))}</button><button class="mbtn sec" data-d="1,0">▶</button><span></span><button class="mbtn sec" data-d="0,1">▼</button><span></span></div>`
       + `<div class="ledmsg" id="ledMsg"></div><div class="ledrow"><button class="mbtn sec" id="ledUndo">${esc(T('undo'))}</button><button class="mbtn" id="ledDone">${esc(T('done'))}</button></div>`;
     const cv = $('ledMap'), R = sc().room, W = 340, Hh = Math.round(W * R.depth / R.width); cv.width = W * 2; cv.height = Hh * 2; cv.style.height = `${Hh}px`;
     const k = (W * 2) / R.width;
+    let cands = goalCandidates(S.scene, 4);   // målforslag: de høyeste flatene (helst nåbare), nummerert på kartet
+    const renderGoals = () => { const g = $('ledGoals'); g.innerHTML = cands.map((c, i) => `<button class="mbtn sec" data-g="${i}">${esc(T('goalN', i + 1))}</button>`).join(''); g.querySelectorAll('[data-g]').forEach((b) => { b.onclick = () => { const i = +b.dataset.g; if (apply(cands[i].scene, `mål ${i + 1}`)) { msg(T('goalSet', i + 1)); cands = goalCandidates(S.scene, 4); renderGoals(); draw(); } }; }); };
     const draw = () => {
       const g = cv.getContext('2d'), s = sc(); g.clearRect(0, 0, cv.width, cv.height); g.strokeStyle = '#ffffff66'; g.lineWidth = 3; g.strokeRect(1, 1, cv.width - 2, cv.height - 2);
       const th = thingsOf(s).sort((a, b) => a.top - b.top), mx = Math.max(1, ...th.map((t) => t.top));
@@ -193,13 +211,16 @@ export function createLeditorView(ctx) {
         const sel = t.key === S.sel; g.fillStyle = `hsl(${210 - 160 * (t.top / mx)} 55% ${sel ? 62 : 42}% / ${sel ? 1 : 0.8})`; g.strokeStyle = sel ? '#fff' : '#0b1226'; g.lineWidth = sel ? 5 : 2;
         g.fillRect(t.rect.x0 * k, t.rect.z0 * k, (t.rect.x1 - t.rect.x0) * k, (t.rect.z1 - t.rect.z0) * k); g.strokeRect(t.rect.x0 * k, t.rect.z0 * k, (t.rect.x1 - t.rect.x0) * k, (t.rect.z1 - t.rect.z0) * k);
       }
+      cands.forEach((c, i) => { g.beginPath(); g.arc(c.x * k, c.z * k, 12, 0, 7); g.fillStyle = '#ffd24a55'; g.fill(); g.lineWidth = 3; g.strokeStyle = '#ffd24a'; g.stroke(); g.fillStyle = '#fff'; g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.fillText(String(i + 1), c.x * k, c.z * k + 7); });
       const ring = (x, z, c) => { g.beginPath(); g.arc(x * k, z * k, 14, 0, 7); g.lineWidth = 6; g.strokeStyle = c; g.stroke(); };
       if (s.start) ring(s.start.x, s.start.z, '#59e07a'); if (s.goal) ring(s.goal.x, s.goal.z, '#ffd24a');
       const t = th.find((q) => q.key === S.sel); $('ledSel').textContent = t ? T('adjSel', t.label) : T('adjNone');
     };
     const apply = (next, what) => {
       if (!next) return false; const room = sceneToRoom(next, S.name, { auto: false });   // ved justering skjules ingenting: ødelegger flyttingen brettet, angres den
-      if (!room.ok) { msg(T('adjFail')); return false; }
+      const wasBad = !S.room || !S.room.ok;   // er brettet allerede ødelagt (kom hit etter en feil), godtas rettingen selv om det ikke blir helt bra ennå
+      if (!room.ok && !wasBad) { msg(T('adjFail')); return false; }
+      if (!room.ok) { S.undo.push(S.scene); S.scene = next; S.room = room; S.edits++; msg(T('adjStill')); logEv?.('leveleditor', `retting ${S.edits}: ${what} (fortsatt ikke riktig: ${room.reason})`); return true; }
       S.undo.push(S.scene); S.scene = next; S.room = room; S.edits++;
       if (S.savedId) { saveRoom(st, { id: S.savedId, name: S.name, level: room.level }); if (S.code) { setRoomCode(st, S.savedId, ''); S.code = ''; } }   // rettet brett: den delte versjonen er gammel, DEL gir ny kode
       msg(verdictText()); logEv?.('leveleditor', `retting ${S.edits}: ${what}`); return true;
@@ -208,8 +229,8 @@ export function createLeditorView(ctx) {
     el.querySelectorAll('[data-d]').forEach((b) => { b.onclick = () => { if (!S.sel) { msg(T('adjNone')); return; } const [dx, dz] = b.dataset.d.split(',').map(Number); if (apply(moveThing(sc(), S.sel, dx * LED.step, dz * LED.step), 'flytt')) draw(); }; });
     $('ledDel').onclick = () => { if (!S.sel) { msg(T('adjNone')); return; } const n = deleteThing(sc(), S.sel); if (!n) { msg(T('noGoalDel')); return; } if (apply(n, 'slett')) { S.sel = ''; draw(); } };
     $('ledUndo').onclick = () => { const p = S.undo.pop(); if (!p) return; S.scene = p; S.room = sceneToRoom(p, S.name); S.edits = Math.max(0, S.edits - 1); if (S.savedId && S.room.ok) saveRoom(st, { id: S.savedId, name: S.name, level: S.room.level }); S.sel = ''; msg(verdictText()); draw(); };
-    $('ledDone').onclick = () => result();
-    draw();
+    $('ledDone').onclick = () => { if (S.room && S.room.ok) result(); else { logEv?.('leveleditor', `ferdig uten brett: ${S.room ? S.room.reason : '?'}`); failed(S.room ? S.room.reason : 'scene'); } };
+    renderGoals(); if (!S.room || !S.room.ok) msg(T('adjBad')); draw();
   }
   return { show };
 }

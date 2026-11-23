@@ -69,11 +69,12 @@ const clone = (o) => JSON.parse(JSON.stringify(o));
 export function sceneToRoom(scene, name, opts = {}) {
   let r;
   try { r = sceneToLevel(scene); } catch (e) {
-    if (/flate under målet/.test(String(e && e.message)) && opts.auto !== false) { const g = autoGoal(scene); if (g) { const room = sceneToRoom(g.scene, name, { auto: false }); if (room.ok) return { ...room, scene: g.scene, autoGoal: g.on }; } }
-    return { ok: false, reason: /flate under målet/.test(String(e && e.message)) ? 'maal' : 'scene' };
+    const noFlat = /flate under målet/.test(String(e && e.message));
+    if (noFlat && opts.auto !== false) { const g = autoGoal(scene); if (g) { const room = sceneToRoom(g.scene, name, { auto: false }); if (room.ok) return { ...room, scene: g.scene, autoGoal: g.on }; return { ...room, scene: g.scene, detail: 'etter auto-mål' }; } }
+    return { ok: false, reason: noFlat ? 'maal' : 'scene', detail: String(e && e.message || '').slice(0, 120) };
   }
   const level = r.level; if (name) level.name = level.nameEn = safeName(name);
-  const v = validateRoom(level); if (!v.ok) return { ok: false, reason: v.error };
+  const v = validateRoom(level); if (!v.ok) return { ok: false, reason: v.error, detail: `${(level.boxes || []).length} bokser` };
   const helperCount = r.helpers.length;
   return { ok: true, level: v.level, solvable: !!r.solvable, helpers: r.helpers.map((h) => ({ id: h.id, size_cm: h.size_cm, at_cm: h.at_cm })), helperCount, tooMany: helperCount > LED.maxHelpers, things: thingsOf(scene).length };
 }
@@ -156,3 +157,35 @@ export const ledLog = ({ what, cost = 0, ms = 0, edits = 0, bot = '', extra = ''
 // Skal knappen vises? Valget på og gyldig tester-kode (som MINE BRETT)
 export const ledAvailable = ({ on = true, code = '', cinema = false } = {}) => !!on && !cinema && validCode(code);
 export { ANSWER_OPTS };
+
+// Målforslag: opptil n ulike flater til målflagget (høyeste, helst nåbare først). Hvert forslag er { id, scene } med målet flyttet dit. Aldri tom hvis rommet finnes (da en sokkel).
+export function goalCandidates(scene, n = 4) {
+  const out = [], skip = [];
+  for (let i = 0; i < n; i++) {
+    let r = null; try { r = sceneToLevel(clone(scene), { autoGoal: 'force', autoGoalSkip: skip }); } catch { r = null; }
+    if (!r || !r.autoGoal) break;
+    skip.push(r.autoGoal.id);
+    const s = clone(scene); s.goal = { ...(scene.goal || {}), x: r.autoGoal.x, y: r.autoGoal.y, z: r.autoGoal.z, on: r.autoGoal.id };
+    out.push({ id: r.autoGoal.id, x: s.goal.x, z: s.goal.z, scene: s });
+  }
+  if (!out.length) { const g = autoGoal(scene); if (g) out.push({ id: g.on, x: g.scene.goal.x, z: g.scene.goal.z, scene: g.scene }); }
+  return out;
+}
+// Kort oppsummering av tolkningen til feilloggen (tall og former, aldri bilder, aldri fritekst fra bildene)
+export function summarizeScene(scene) {
+  try {
+    const R = scene.room || {}, th = thingsOf(scene).sort((a, b) => b.top - a.top);
+    const f = (n) => Math.round(Number(n) || 0);
+    return `rom ${f(R.width)}×${f(R.depth)}×${f(R.height)} cm, ${th.length} ting, mål ${scene.goal ? `${f(scene.goal.x)},${f(scene.goal.y)},${f(scene.goal.z)}` : 'mangler'}${scene.goal && scene.goal.on ? ' på ' + String(scene.goal.on).slice(0, 20) : ''}, start ${scene.start ? `${f(scene.start.x)},${f(scene.start.z)}` : 'mangler'}; høyeste: ${th.slice(0, 8).map((t) => `${String(t.kind).slice(0, 14)} ${f(t.top)}cm ${f(t.rect.x1 - t.rect.x0)}×${f(t.rect.z1 - t.rect.z0)}`).join(' | ')}`.slice(0, 900);
+  } catch { return 'ingen oppsummering'; }
+}
+// Liste til VIS TOLKNING: hver ting (høyeste først) med størrelse (cm) og sikkerhet (0–1 eller null), og hva spillet la inn selv
+export function interpretation(scene, room) {
+  const objs = (scene && scene.objects) || [];
+  const things = thingsOf(scene).sort((a, b) => b.top - a.top).map((t) => {
+    const os = objs.filter((o) => t.ids.includes(o.id)), conf = os.map((o) => o.confidence).filter(Number.isFinite);
+    return { label: t.label, kind: t.kind, w: Math.round(t.rect.x1 - t.rect.x0), d: Math.round(t.rect.z1 - t.rect.z0), h: Math.round(t.top), conf: conf.length ? Math.min(...conf) : null, goal: !!(scene.goal && t.ids.includes(scene.goal.on)) };
+  });
+  const unc = scene && scene.source && typeof scene.source.uncertainty === 'string' ? scene.source.uncertainty.replace(/[<>`]/g, ' ').slice(0, 300) : '';
+  return { things, helpers: (room && room.helpers) || [], uncertainty: unc, goalAuto: !!(room && room.autoGoal) };
+}

@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r162-aldri-blindgate', version: '2.171', date: '2026-11-23', title: 'Lag brett fra bilder: får spillet ikke til et brett, kan du åpne JUSTER og velge selv. Nye knapper: MÅL 1–4 (målforslag) og VIS TOLKNING (liste over det spillet fant).',
+    how: 'Lag et brett fra bilder. I resultatet: trykk VIS TOLKNING for listen. Trykk JUSTER og velg MÅL 1–4 for å flytte målflagget. Feiler det, trykk JUSTER på feilskjermen.', level: '', spot: null },
   { id: 'r161-auto-maal2', version: '2.170', date: '2026-11-23', title: 'Lag brett fra bilder får alltid et mål: finner ikke bildene noe sted, setter spillet inn en liten sokkel i den andre enden av rommet.',
     how: 'Prøv LAG BRETT FRA BILDER igjen med bildene som ga «Fant ikke noe sted for målet». Brettet skal nå lages, og målflagget kan flyttes med JUSTER.', level: '', spot: null },
   { id: 'r160-tapt-svar', version: '2.169', date: '2026-11-23', title: 'Lag brett fra bilder prøver selv én gang til hvis svaret fra tjenesten ikke kan leses, med de samme bildene.',
