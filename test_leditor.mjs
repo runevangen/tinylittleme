@@ -74,6 +74,26 @@ assert.equal(sceneToRoom({}).ok, false);
   const lut = gammaLut(0.6); assert.equal(lut[0], 0); assert.equal(lut[255], 255); assert.ok(lut[60] > 60, 'midtonene lysnes');
   const dark = px(50), r = brightenData(dark); assert.ok(r.gamma < 1 && r.after > r.mean && r.after <= 140, 'mørkt bilde lysnes mot målet'); assert.equal(dark[3], 255, 'alfa urørt');
   const bright = px(160), r2 = brightenData(bright); assert.equal(r2.gamma, 1); assert.equal(bright[0], 160, 'lyst bilde endres ikke'); }
+// R164: jobb-flyten i telefonen: start → spør til ferdig, nettfeil underveis, gjenoppta uten nye bilder
+{ const U = '11111111-2222-4333-8444-555555555555', imgs = [img(), img()], calls = [];
+  const mk = (script) => async (u, i) => { const b = JSON.parse(i.body); calls.push(b.job ? 'poll' : 'start'); return script(b); };
+  const R = (status, body) => ({ ok: status < 300, status, json: async () => body });
+  let n = 0; const seen = [];
+  const a = await callTolk({ code: 'Rune', images: imgs }, { pollMs: 1, onJob: (id) => seen.push(id), fetchFn: mk((b) => b.job ? (++n < 3 ? R(200, { ok: true, pending: true }) : R(200, { ok: true, scene: bad, usage: { cost_usd: 0.07, ms: 40000 } })) : R(202, { ok: true, job: U })) });
+  assert.equal(a.ok, true); assert.equal(a.scene.objects.length, bad.objects.length); assert.deepEqual(seen, [U]); assert.deepEqual(calls.slice(0, 2), ['start', 'poll'], 'først start, så spørring');
+  // nettet faller ut under spørringen: spør videre, ingen tapt svar
+  calls.length = 0; n = 0; const b2 = await callTolk({ code: 'Rune', images: imgs }, { pollMs: 1, fetchFn: mk((b) => { if (!b.job) return R(202, { ok: true, job: U }); n++; if (n <= 2) throw new Error('offline'); return R(200, { ok: true, scene: bad }); }) });
+  assert.equal(b2.ok, true, 'nettfeil under spørringen taper ikke svaret'); assert.equal(calls.filter((c) => c === 'poll').length, 3);
+  // tidsavbrudd: gir job så den kan hentes igjen; gjenoppta sender ikke bildene
+  const t = await callTolk({ code: 'Rune', images: imgs }, { pollMs: 1, timeoutMs: 30, fetchFn: mk((b) => b.job ? R(200, { ok: true, pending: true }) : R(202, { ok: true, job: U })) });
+  assert.equal(t.ok, false); assert.equal(t.reason, 'nett'); assert.equal(t.job, U);
+  calls.length = 0; let sentImages = false; const r = await callTolk({ code: 'Rune', images: [] }, { job: t.job, pollMs: 1, fetchFn: async (u, i) => { const b = JSON.parse(i.body); if (b.images) sentImages = true; calls.push(b.job ? 'poll' : 'start'); return R(200, { ok: true, scene: bad }); } });
+  assert.equal(r.ok, true); assert.equal(sentImages, false, 'gjenopptak sender ikke bildene på nytt'); assert.deepEqual(calls, ['poll']);
+  // ferdig med feil, og ukjent jobb
+  const f = await callTolk({ code: 'Rune', images: imgs }, { pollMs: 1, fetchFn: mk((b) => b.job ? R(200, { ok: false, reason: 'kvote' }) : R(202, { ok: true, job: U })) }); assert.equal(f.reason, 'kvote'); assert.equal(f.job, '');
+  const g = await callTolk({ code: 'Rune', images: imgs }, { job: U, pollMs: 1, fetchFn: mk(() => R(404, { ok: false, reason: 'finnes_ikke' })) }); assert.equal(g.reason, 'finnes_ikke'); assert.equal(g.job, '');
+  // avbrutt av spilleren mens vi venter
+  const ac = new AbortController(); setTimeout(() => ac.abort(), 20); const av = await callTolk({ code: 'Rune', images: imgs }, { pollMs: 5, signal: ac.signal, fetchFn: mk((b) => b.job ? R(200, { ok: true, pending: true }) : R(202, { ok: true, job: U })) }); assert.equal(av.reason, 'avbrutt'); assert.equal(av.job, U); }
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
 

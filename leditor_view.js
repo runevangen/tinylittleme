@@ -50,7 +50,7 @@ export function createLeditorView(ctx) {
   let S = null, busy = false, abort = null, tick = null;
   const T = (k, ...a) => ltx(L(), k, ...a);
   const css = () => { if (!document.getElementById('ledcss')) { const s = document.createElement('style'); s.id = 'ledcss'; s.textContent = CSS; document.head.appendChild(s); } };
-  const fresh = () => ({ photos: [], answers: { goal: 'top', difficulty: 'medium', theme: '', foes: true }, scene: null, room: null, savedId: '', name: '', usage: { cost_usd: 0, ms: 0 }, edits: 0, undo: undoStack(), sel: '', code: '' });
+  const fresh = () => ({ photos: [], answers: { goal: 'top', difficulty: 'medium', theme: '', foes: true }, scene: null, room: null, savedId: '', name: '', usage: { cost_usd: 0, ms: 0 }, edits: 0, undo: undoStack(), sel: '', code: '', job: '' });
   const root = () => { css(); const el = $('start'); el.classList.add('rml'); return el; };
   const msg = (t) => { const m = $('ledMsg'); if (m) m.textContent = t || ''; };
   const consented = () => { try { return localStorage.getItem(LED.consentKey) === '1'; } catch { return false; } };
@@ -122,12 +122,16 @@ export function createLeditorView(ctx) {
     $('ledCancel').onclick = () => abort?.abort();
     tick = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); const e = $('ledEl'); if (e) e.textContent = T('elapsed', s); const k = s < 4 ? 0 : s < 25 ? 1 : 2; if (k !== step) { step = k; const st2 = $('ledStep'); if (st2) st2.textContent = T('working')[k]; } }, 500);
     logEv?.('leveleditor', `sender ${S.photos.length} bilder`);
-    let res = await callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers }, { signal: abort?.signal });
+    const tolk = (job) => callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers }, { signal: abort?.signal, job, onJob: (id) => { S.job = id; logEv?.('leveleditor', `jobb startet ${String(id).slice(0, 8)}`); } });
+    if (S.job) logEv?.('leveleditor', `henter jobb ${String(S.job).slice(0, 8)} på nytt (uten å sende bildene)`);
+    let res = await tolk(S.job || '');
+    if (!res.ok && res.reason === 'finnes_ikke' && S.job && S.photos.length) { S.job = ''; logEv?.('leveleditor', 'jobben var borte: sender bildene på nytt'); res = await tolk(''); }
     if (!res.ok && res.unreadable && S.photos.length && !abort?.signal?.aborted) {   // svaret kom, men kunne ikke leses: ett nytt forsøk av seg selv med de samme bildene
       logEv?.('leveleditor', `svar ${res.status} kunne ikke leses etter ${res.ms} ms: prøver én gang til`);
-      res = await callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers }, { signal: abort?.signal });
+      res = await tolk('');
     }
     stopTick(); busy = false; abort = null;
+    S.job = res.ok ? '' : (res.job || '');   // et tidsavbrudd beholder jobben så NYTT FORSØK henter den samme uten ny tolkning
     // Bildene lagres aldri, bare i minnet. Ved nett- og tjenestefeil beholdes de så du slipper å velge dem på nytt (NYTT FORSØK); ellers slippes de straks.
     if (!res.ok) { const keep = KEEP_PHOTOS.includes(res.reason) && S.photos.length; if (!keep) S.photos.length = 0; logEv?.('leveleditor', `feilet: ${res.reason} · status ${res.status ?? '?'}${res.unreadable ? ' (svar kunne ikke leses)' : ''} (${Date.now() - t0} ms)${keep ? ' · bildene beholdt for nytt forsøk' : ''}`); failed(res.reason); return; }
     S.photos.length = 0;

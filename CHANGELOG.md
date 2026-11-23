@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.174** – Lag brett fra bilder: tjenesten svarer straks med en jobb-id og tolker i bakgrunnen, telefonen spør til brettet er ferdig (tapt nett taper ikke svaret), og NYTT FORSØK henter samme jobb uten nye bilder (leveleditor_logic, leditor_logic/view/text, tlm_le_jobs, tolk-bilder).
 - **2.173** – Lag brett fra bilder: for mørke bilder lysnes automatisk på telefonen (gamma, aldri lagret), med lystips og logg av lysstyrke (leditor_logic/view/text, test_leditor).
 - **2.172** – Veikart: R157 (roller i byggeren: gulv, bjelke og tau, så figuren ikke går på bærebjelker; bygger videre på veilinje-regelen fra R108/R119).
 - **2.171** – Lag brett fra bilder: aldri blindgate. Feil gir JUSTER og VIS TOLKNING, målforslag MÅL 1–4, ekte feilårsak og tolkningsoppsummering i rapporten (leditor_logic/view/text, scene2level_core, test_leditor).

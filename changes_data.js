@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r164-jobb-og-henting', version: '2.174', date: '2026-11-23', title: 'Lag brett fra bilder tåler at nettet faller ut: tolkningen går i bakgrunnen hos tjenesten, og telefonen henter brettet når det er ferdig.',
+    how: 'Trykk LAG BRETT og bytt gjerne mellom wifi og mobilnett mens du venter. Brettet kommer når det er ferdig. Ble nettet borte, trykk NYTT FORSØK og LAG BRETT: samme jobb hentes uten nye bilder.', level: '', spot: null },
   { id: 'r163-lysne-bilder', version: '2.173', date: '2026-11-23', title: 'Lag brett fra bilder lysner for mørke bilder automatisk, og gir et lystips hvis bildet er veldig mørkt.',
     how: 'Trykk LAG BRETT FRA BILDER og ta et bilde i dårlig lys. Bildet lysnes litt, og du ser et tips om lys hvis det er svært mørkt.', level: '', spot: null },
   { id: 'r162-aldri-blindgate', version: '2.171', date: '2026-11-23', title: 'Lag brett fra bilder: får spillet ikke til et brett, kan du åpne JUSTER og velge selv. Nye knapper: MÅL 1–4 (målforslag) og VIS TOLKNING (liste over det spillet fant).',

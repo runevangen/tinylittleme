@@ -8,7 +8,7 @@ import { validateRoom, addRoom, ROOMS, safeName } from './rooms_logic.js';
 
 export const LED = {
   consentKey: 'tlm.leconsent',        // samtykket gis én gang (lagres lokalt)
-  fn: 'tolk-bilder', timeoutMs: 120000,
+  fn: 'tolk-bilder', timeoutMs: 180000, pollMs: 3000, pollTimeoutMs: 15000, startTimeoutMs: 90000,   // timeoutMs: hele ventetiden på en jobb; startTimeoutMs: opplasting av bildene
   quality: 0.8, minQuality: 0.4,
   brightMin: 90, brightTarget: 112, brightGammaMin: 0.6, darkTip: 55,   // lysning (R163): snitt-lysstyrke 0–255 under brightMin lysnes mot brightTarget (gamma, aldri under brightGammaMin); under darkTip vises et lystips
   step: 10,                           // cm per trykk når en ting flyttes
@@ -40,28 +40,51 @@ export function buildBody(code, images, answers) {
   return { code: cleanCode(code), images: images.map((i) => ({ media_type: i.media_type, data: i.data })), answers: normAnswers(answers) };
 }
 const REASON_KEYS = Object.keys(REASONS);
-// Svar: { ok:true, scene, warnings, check, usage:{cost_usd,ms}, left } | { ok:false, reason }   (reason: nøkkel fra REASONS, eller 'kode_mangler' | 'bilder_mangler' | 'avbrutt')
-export async function callTolk({ code, images, answers }, { fetchFn = globalThis.fetch, cfg = FEEDBACK, timeoutMs = LED.timeoutMs, signal } = {}) {
+// Svar: { ok:true, scene, warnings, check, usage:{cost_usd,ms}, left } | { ok:false, reason, job? }   (reason: nøkkel fra REASONS, eller 'kode_mangler' | 'bilder_mangler' | 'avbrutt')
+// R164: tjenesten svarer straks med en jobb-id ({ ok:true, job }) og gjør tolkningen i bakgrunnen; telefonen spør hvert pollMs til den er ferdig.
+// Faller nettet ut under spørringen, fortsetter den å spørre. `job` (fra et tidligere forsøk) gjenopptar en jobb uten å sende bildene på nytt. `onJob(id)` får id-en.
+// Ved tidsavbrudd gir svaret { reason:'nett', job } så den samme jobben kan hentes igjen. En gammel tjeneste som svarer med ferdig scene, virker fortsatt.
+export async function callTolk({ code, images, answers }, { fetchFn = globalThis.fetch, cfg = FEEDBACK, timeoutMs = LED.timeoutMs, signal, pollMs = LED.pollMs, job = '', onJob } = {}) {
   if (!validCode(code)) return { ok: false, reason: 'kode_mangler' };
-  if (!photoCountOk((images || []).length)) return { ok: false, reason: 'bilder_mangler' };
-  const t0 = Date.now();
-  const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
-  if (signal && ctl) signal.addEventListener?.('abort', () => ctl.abort());
+  if (!job && !photoCountOk((images || []).length)) return { ok: false, reason: 'bilder_mangler' };
+  const t0 = Date.now(), ms = () => Date.now() - t0, aborted = () => !!(signal && signal.aborted);
+  const headers = { apikey: cfg.key, Authorization: `Bearer ${cfg.key}`, 'Content-Type': 'application/json' };
+  // ett kall med egen tidsgrense (kaster ved nettfeil); gir { res, d, parsed }
+  const post = async (payload, limitMs) => {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, timer = ctl ? setTimeout(() => ctl.abort(), limitMs) : null;
+    const onAbort = () => ctl && ctl.abort(); signal?.addEventListener?.('abort', onAbort);
+    try { const res = await fetchFn(toleUrl(cfg), { method: 'POST', headers, body: JSON.stringify(payload), signal: ctl?.signal }); let d = null, parsed = true; try { d = await res.json(); } catch { parsed = false; } return { res, d, parsed }; }
+    finally { if (timer) clearTimeout(timer); signal?.removeEventListener?.('abort', onAbort); }
+  };
+  const success = (d) => ({ ok: true, scene: d.scene, warnings: Array.isArray(d.warnings) ? d.warnings : [], check: d.check || { ran: false }, usage: d.usage || { cost_usd: 0, ms: 0 }, left: d.left || null });
+  const isScene = (r) => r.res.ok && r.d && r.d.ok === true && r.d.scene && typeof r.d.scene === 'object';
+  const failOf = (r, extra = {}) => {
+    const unreadable = !!r.res.ok && !r.parsed;   // svar 200 som ikke kunne leses (nettet falt ut underveis): regnes som nettfeil og kan prøves igjen
+    const reason = unreadable ? 'nett' : r.d && REASON_KEYS.includes(r.d.reason) ? r.d.reason : (r.res.status === 401 || r.res.status === 403 ? 'kode' : 'feil');
+    return { ok: false, reason, status: r.res.status, unreadable, ms: ms(), ...extra };
+  };
   try {
-    const res = await fetchFn(toleUrl(cfg), {
-      method: 'POST', headers: { apikey: cfg.key, Authorization: `Bearer ${cfg.key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildBody(code, images, answers)), signal: ctl?.signal,
-    });
-    let d = null, parsed = true; try { d = await res.json(); } catch { parsed = false; /* ikke json */ }
-    if (res.ok && d && d.ok === true && d.scene && typeof d.scene === 'object') return { ok: true, scene: d.scene, warnings: Array.isArray(d.warnings) ? d.warnings : [], check: d.check || { ran: false }, usage: d.usage || { cost_usd: 0, ms: 0 }, left: d.left || null };
-    // Tjenesten svarte 200, men svaret kunne ikke leses (nettet falt ut underveis): regnes som nettfeil og kan prøves igjen
-    const unreadable = !!res.ok && !parsed;
-    const r = unreadable ? 'nett' : d && REASON_KEYS.includes(d.reason) ? d.reason : (res.status === 401 || res.status === 403 ? 'kode' : 'feil');
-    return { ok: false, reason: r, status: res.status, unreadable, ms: Date.now() - t0 };
+    let jobId = job;
+    if (!jobId) {
+      const r = await post(buildBody(code, images, answers), LED.startTimeoutMs);
+      if (isScene(r)) return success(r.d);   // gammel tjeneste: svarer med ferdig scene
+      if (r.res.ok && r.d && r.d.ok === true && typeof r.d.job === 'string') { jobId = r.d.job; onJob?.(jobId); }
+      else return failOf(r);
+    }
+    while (ms() < timeoutMs) {
+      if (aborted()) return { ok: false, reason: 'avbrutt', status: 0, ms: ms(), job: jobId };
+      await new Promise((ok) => setTimeout(ok, pollMs));
+      if (aborted()) return { ok: false, reason: 'avbrutt', status: 0, ms: ms(), job: jobId };
+      let p; try { p = await post({ code: cleanCode(code), job: jobId }, LED.pollTimeoutMs); } catch { continue; }   // nettfeil under spørringen: spør igjen
+      if (p.res.ok && p.d && p.d.pending === true) continue;
+      if (isScene(p)) return success(p.d);
+      if (!p.parsed) continue;
+      return failOf(p, { job: '' });   // ferdig med feil (eller ukjent jobb): ikke gjenoppta
+    }
+    return { ok: false, reason: 'nett', status: 0, ms: ms(), job: jobId };
   } catch (e) {
-    return { ok: false, reason: signal && signal.aborted ? 'avbrutt' : 'nett', status: 0, ms: Date.now() - t0 };
-  } finally { if (timer) clearTimeout(timer); }
+    return { ok: false, reason: aborted() ? 'avbrutt' : 'nett', status: 0, ms: ms(), ...(job ? { job } : {}) };
+  }
 }
 
 // ---------- scene → brett ----------

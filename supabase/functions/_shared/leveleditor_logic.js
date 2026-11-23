@@ -29,6 +29,7 @@ export const REASONS = {
   for_stor: { status: 413, text: 'Bildene er for store. Prøv igjen (de skaleres ned på telefonen).' },
   tolkning: { status: 502, text: 'Tolkningen ga ikke et brett. Prøv igjen, gjerne med et bilde til.' },
   nett: { status: 502, text: 'Ingen kontakt med tolkningstjenesten. Prøv igjen når du har nett.' },
+  finnes_ikke: { status: 404, text: 'Fant ikke tolkningen igjen (den kan være for gammel). Prøv igjen.' },
   metode: { status: 405, text: 'Ugyldig kall.' },
   feil: { status: 500, text: 'Noe gikk galt hos tjenesten. Prøv igjen senere.' },
 };
@@ -137,3 +138,35 @@ export async function handleTolk(body, deps) {
   await done(true, { cost, ms, warnings: val.warns.length, bot });
   return { status: 200, body: { ok: true, scene, warnings: val.warns, check, usage: { cost_usd: cost, ms }, left: { month: rsv.left_month, code: rsv.left_code } } };
 }
+
+// ---------- R164: svar raskt, hent resultatet etterpå ----------
+// Selve tolkningen tar 30–50 sekunder, og mobilnettet kan falle ut så lenge. Derfor tar tjenesten imot bildene, svarer straks med en jobb-id,
+// og gjør tolkningen i bakgrunnen (deps.waitUntil). Telefonen spør om jobben til den er ferdig. Det ferdige svaret (scene = tall og former, aldri bilder)
+// ligger i databasen noen minutter (deps.createJob/finishJob/getJob, tabellen tlm_le_jobs) så en telefon som mistet nettet kan hente det igjen uten ny tolkning.
+export const JOB = { staleMs: 4 * 60 * 1000 };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const fail = (r, extra = {}) => ({ status: REASONS[r].status, body: { ok: false, reason: r, message: REASONS[r].text, ...extra } });
+//   deps: createJob(code) → id | null, finishJob(id, resultBody), getJob(id, code) → { status, result, age_ms } | null, waitUntil(promise), tolk (deps til handleTolk)
+export async function startTolk(body, deps) {
+  const v = validateRequest(body);
+  if (!v.ok) return fail(v.reason);
+  let id = null; try { id = await deps.createJob(v.code); } catch { id = null; }
+  if (!id) return fail('feil');
+  const work = (async () => {
+    let out; try { out = await handleTolk(body, deps.tolk); } catch { out = fail('feil'); }
+    try { await deps.finishJob(id, out.body); } catch { /* telefonen får «feil» etter tidsavbrudd */ }
+  })();
+  deps.waitUntil(work);
+  return { status: 202, body: { ok: true, job: id } };
+}
+export async function pollTolk(body, deps) {
+  const code = String((body && body.code) ?? '').trim().toLowerCase(), id = String((body && body.job) ?? '');
+  if (!/^[a-z0-9_-]{4,24}$/.test(code)) return fail('kode');
+  if (!UUID.test(id)) return fail('finnes_ikke');
+  let row = null; try { row = await deps.getJob(id, code); } catch { return fail('feil'); }
+  if (!row) return fail('finnes_ikke');
+  if (row.status === 'kjorer') return row.age_ms > JOB.staleMs ? fail('feil') : { status: 200, body: { ok: true, pending: true } };   // en jobb som ikke ble ferdig (tjenesten døde): feil, ikke evig venting
+  return { status: 200, body: row.result && typeof row.result === 'object' ? row.result : { ok: false, reason: 'feil', message: REASONS.feil.text } };
+}
+// Hvilken av de to: en start (bilder) eller en spørring (job)
+export const handleJobRequest = (body, deps) => (body && typeof body === 'object' && body.job !== undefined ? pollTolk(body, deps) : startTolk(body, deps));

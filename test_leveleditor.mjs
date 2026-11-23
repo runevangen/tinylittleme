@@ -1,7 +1,7 @@
 // node test_leveleditor.mjs (R151): tjenesten for bildetolkning, med stub i stedet for Claude (ingen nett, ingen nøkkel).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { LE, REASONS, validateRequest, normAnswers, buildClaudeRequest, parseClaudeResponse, costOf, scrubScene, handleTolk, userText } from './leveleditor_logic.js';
+import { LE, REASONS, validateRequest, normAnswers, buildClaudeRequest, parseClaudeResponse, costOf, scrubScene, handleTolk, userText, startTolk, pollTolk, handleJobRequest, JOB } from './leveleditor_logic.js';
 import { validateScene } from './tools/validate_scene.mjs';
 import { promptText } from './tools/make_prompt.mjs';
 import { checkScene } from './tools/scene_pipeline.mjs';
@@ -76,4 +76,28 @@ assert.ok(!/create policy/i.test(sql) && !/bytea|image|data text/i.test(sql), 'i
 { const c = checkScene(bad); assert.equal(c.ran, true); assert.equal(c.solvable, true, `bot: ${c.bot} ${c.why || ''}`); assert.ok(c.helperCount <= 5);
   const d = mkDeps({ check: async (s) => { const r = checkScene(s); return { ran: true, solvable: r.solvable, helpers: r.helperCount, bot: r.bot }; } }), out = await handleTolk(req(), d);
   assert.equal(out.body.check.solvable, true); assert.equal(d.log.finish[0].bot, 'vei'); }
+// R164: svar raskt, hent resultatet etterpå (jobb-id, bakgrunnsarbeid, spørring)
+{ const jobs = new Map(); let bg = []; const U = '11111111-2222-4333-8444-555555555555';
+  const jd = (over = {}) => { const d = mkDeps(); return { tolk: d, createJob: async (c) => { jobs.set(U, { code: c, status: 'kjorer', result: null, born: Date.now() }); return U; },
+    finishJob: async (id, r) => { Object.assign(jobs.get(id), { status: 'ferdig', result: r }); },
+    getJob: async (id, c) => { const j = jobs.get(id); return j && j.code === c ? { status: j.status, result: j.result, age_ms: Date.now() - j.born } : null; },
+    waitUntil: (p) => { bg.push(p); }, ...over, d }; };
+  const dd = jd(), start = await handleJobRequest(req(), dd);
+  assert.equal(start.status, 202); assert.equal(start.body.ok, true); assert.equal(start.body.job, U, 'svarer straks med jobb-id');
+  const mid = await handleJobRequest({ code: 'rune', job: U }, dd); assert.deepEqual(mid.body, { ok: true, pending: true }); assert.equal(mid.status, 200, 'mens jobben går: venter');
+  await Promise.all(bg); const done = await handleJobRequest({ code: 'rune', job: U }, dd);
+  assert.equal(done.body.ok, true); assert.ok(done.body.scene.objects.length > 50, 'ferdig: scenen hentes etterpå'); assert.ok(!JSON.stringify(jobs.get(U)).includes('AAAA'), 'ingen bilder i jobbraden');
+  assert.equal((await handleJobRequest({ code: 'annen', job: U }, dd)).body.reason, 'finnes_ikke', 'en annen kode får ikke hente jobben');
+  assert.equal((await handleJobRequest({ code: 'rune', job: 'ikke-en-uuid' }, dd)).body.reason, 'finnes_ikke');
+  assert.equal((await handleJobRequest({ code: 'x', job: U }, dd)).body.reason, 'kode');
+  assert.equal((await handleJobRequest(req({ images: [img()] }), jd())).body.reason, 'bilder', 'ugyldig start avvises straks, uten jobb');
+  // kvote hos tjenesten kommer som ferdig-med-feil når du spør
+  jobs.clear(); bg = []; const dq = jd(); dq.tolk.reserve = async () => ({ ok: false, reason: 'kvote' }); await handleJobRequest(req(), dq); await Promise.all(bg);
+  const q = await handleJobRequest({ code: 'rune', job: U }, dq); assert.equal(q.body.ok, false); assert.equal(q.body.reason, 'kvote');
+  // jobb som aldri ble ferdig (tjenesten døde): feil, ikke evig venting
+  jobs.clear(); bg = []; const ds = jd({ waitUntil: () => {} }); await handleJobRequest(req(), ds); jobs.get(U).born -= JOB.staleMs + 1000;
+  assert.equal((await handleJobRequest({ code: 'rune', job: U }, ds)).body.reason, 'feil');
+  // krasj i selve tolkningen gir feil i jobben
+  jobs.clear(); bg = []; const dk = jd(); dk.tolk.callClaude = async () => { throw new Error('x'); }; dk.tolk.reserve = async () => ({ ok: true, id: 'u9' }); await handleJobRequest(req(), dk); await Promise.all(bg);
+  assert.equal((await handleJobRequest({ code: 'rune', job: U }, dk)).body.ok, false); }
 console.log('leveleditor-tjenesten ok');
