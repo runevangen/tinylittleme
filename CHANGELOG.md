@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.148** – R144: oppdragskortet ved BYGG er én linje, forsvinner av seg selv og vises ikke etter BYGG; valg «Oppdragskort ved BYGG».
 - **2.147** – R143: ingen løse tynne streker i verdenen ved byggesteder (spøkelsesbro, FRA-TIL-bue, stedsramme).
 - **2.146** – Fra Rune (rapport v2.143, Bygg · Vippe): R143 (tynne streker), R144 (oppdragsteksten rotete) og R145 (flagget ser rart ut) lagt i veikartet.
 - **2.145** – R140: Nivå 5 (fagverk, trekanter over lekebøtta) og Nivå 6 (materialer, stål til kjøleskapet) får nødvendig bygg; valget buildrequired respekteres.

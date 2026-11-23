@@ -69,11 +69,6 @@ Fra Rune (rapport v2.143, byggeskjermen `vippe1`, merket «Styring»): flagget (
 Krav: (1) gjenskap med Playwright `devices['iPhone 14']` i Vippa og minst ett Bygglab-sted og finn årsaken; (2) flagget tegnes lesbart og riktig plassert i begge visninger (2D og 2,5D), også i Byggeskolen (R101); (3) test som fanger feilen der det går.
 Ferdig når: flagget ser riktig ut i Vippa og i et Bygglab-sted, og tester og boot er grønne.
 
-### [ ] R144 · Fra tester: Rune · Oppdragsteksten ved BYGG-knappen lager rot på skjermen
-Fra Rune (rapport v2.143, `vippe1`): oppdragsteksten (R132) kan fjernes eller dempes, det er mye rot på skjermen, og BYGG-knappen forstås uten den. Ønske.
-Krav: (1) oppdragskortet vises kort og forsvinner av seg selv eller dempes til én linje, og vises ikke igjen når spilleren allerede har trykket BYGG på stedet; (2) valg i `SETTINGS` (gruppe Spill) for å skru av helt, med `logEv`; (3) gjelder også Byggeskolen (R101).
-Ferdig når: skjermen ved byggestedet er ryddig, valget virker, og tester og boot er grønne.
-
 ### [ ] R142 · Sikkerhetsnett og belønning for nødvendig bygging (deler R138–R141)
 Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) etter 3 feilforsøk på et nødvendig bygg: hint («Prøv en trekant her», spøkelsesbro uthevet); etter 5: knappen VIS MEG som legger ut en ferdig løsning (koster ingen stjerner, logges); (2) bygget beholdes i rommet etter bestått og figuren går over i en liten sekvens (kamera følger over bygget); (3) ekstra stjerne for billig eller lett bygg også i Nivå 2–9; (4) `logEv('bygg', 'påkrevd bygg: bestått etter N forsøk')` og `logEv('bygg', 'hjelp: …')`; (5) test og NYTT-rad.
 Ferdig når: ingen spiller kan sette seg fast på et nødvendig bygg, bygget gir en merkbar belønning, og tester og boot er grønne.
@@ -87,6 +82,11 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R144 · Fra tester: Rune · Oppdragsteksten ved BYGG-knappen lager rot på skjermen (v2.148)
+Fra Rune (rapport v2.143, `vippe1`): oppdragsteksten (R132) kan fjernes eller dempes, det er mye rot på skjermen, og BYGG-knappen forstås uten den. Ønske.
+Krav: (1) oppdragskortet vises kort og forsvinner av seg selv eller dempes til én linje, og vises ikke igjen når spilleren allerede har trykket BYGG på stedet; (2) valg i `SETTINGS` (gruppe Spill) for å skru av helt, med `logEv`; (3) gjelder også Byggeskolen (R101).
+Ferdig når: skjermen ved byggestedet er ryddig, valget virker, og tester og boot er grønne.
 
 ### [x] R143 · Fra tester: Rune · ingen løse 1 px-streker i verdenen ved byggesteder (spøkelsesbro, FRA-TIL-bue, stedsramme) (v2.147)
 

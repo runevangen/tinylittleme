@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r144-oppdragskort', version: '2.148', date: '2026-11-23', title: 'Oppdragskortet ved BYGG er nå én kort linje som forsvinner av seg selv og ikke vises igjen etter at du har trykket BYGG. Kan skrus av i ⚙.',
+    how: 'Gå til et byggested (f.eks. Hyllebroen eller et Bygglab-sted) og se linja under BYGG. Trykk BYGG og kom tilbake: linja er borte. Skru av under ⚙ Spill, «Oppdragskort ved BYGG».', level: 'bro', spot: null },
   { id: 'r139-bygg-nivaa3', version: '2.143', date: '2026-11-23', title: 'Nivå 3 · Kjøkkenet: krydderhylla er for høy å hoppe til, du må bygge en trapp av klosser ved mikrobølgeovnen.',
     how: 'Start Nivå 3, gå opp på benken og mikroen, og trykk BYGG. Legg klosser som en trapp og trykk PRØV, og gå så opp på krydderhylla.', level: 'kjokken', spot: { x: 20, y: 24.4, z: -25 } },
   { id: 'r139-bygg-nivaa4', version: '2.143', date: '2026-11-23', title: 'Nivå 4 · Badet: gapet til dusjhylla er for langt å hoppe, du må bygge en vippe over åpningen i panelveggen.',
