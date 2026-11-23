@@ -82,11 +82,6 @@ Fra Rune (skjermbilde v2.156, Nivå 5, 2,5D-visning, materialene TRE/STÅL/TAU, 
 Krav: (1) gjenskap med Playwright `devices['iPhone 14']` i Nivå 5 og i et Bygglab-sted: legg stenger og kuler, fjern dem (angre, slett, trykk to ganger), bytt materiale, og se om rester blir hengende i 2D og 2,5D; (2) etter fjerning er modellen og tegningen like: ingen spøkelsesstenger, kuler eller etiketter; (3) ⚑, ←, ⋯ og PRØV svarer alltid (finn hva som stjeler trykkene: usynlig lag, overlay som ikke fjernes, feil i hendelseshåndtering), også etter mange rydde-handlinger; (4) oppdragsteksten ligger ikke igjen når byggingen har startet, og TIL/FRA-etiketter flytter seg bort fra knuter; (5) test som rydder mange ganger og sjekker at knappene fortsatt svarer; (6) gjelder også Byggeskolen (R101).
 Ferdig når: feilen er gjenskapt og rettet i Nivå 5 og et Bygglab-sted, og tester og boot er grønne.
 
-### [ ] R155 · Fra tester: Rune · Telefonens klokke og batteri vises øverst i spillet (Nivå 4 · Bad)
-Fra Rune (rapport v2.156, merket «Styring»): han ser iPhones klokke og batteriindikator øverst i spillet. På skjermbildet av byggeskjermen ligger statuslinjen som en beige stripe over spillet. Må avklares om det er ønsket (sikker sone) eller om spillet skal gå helt ut til kanten, og om fargen på stripen skal passe til spillet.
-Krav: (1) sjekk meta `viewport-fit=cover`, `theme-color` og `apple-mobile-web-app-status-bar-style` i `index.html`/manifest og hvordan siden vises i Safari og som hjemmeskjermapp; (2) la spillet fylle hele skjermen og la knapper og HUD ligge innenfor `env(safe-area-inset-*)`, slik at klokke og batteri ligger over bakgrunnen uten å dekke noe; (3) fargen under statuslinjen passer til spillet (mørk), også på byggeskjermen; (4) sjekk visuelt med `devices['iPhone 14']`.
-Ferdig når: statuslinjen ser ryddig ut og ikke dekker eller skiller seg fra spillet, og tester og boot er grønne.
-
 ### [ ] R156 · Fra tester: Rune · Mulig å gå bak veggen i Nivå 4 · Bad
 Fra Rune (rapport v2.156, merket «Styring», figuren ved (−11.1, 0, 24.7)): det går an å gå bak veggen ved vaskeområdet. Loggen viser kollisjon mot `dekor_dor_gerikt_v` rett før.
 Krav: (1) gjenskap med boten eller Playwright ved posisjonen i Nivå 4 · Bad (`bad2`); (2) finn åpningen (glipe mellom vegg og dekor, gerikt/dørkarm uten solid kollisjon) og tett den, også i Nivå 1 (`bad`) og andre brett med samme dekor; (3) test som sjekker at figuren ikke kan gå bak veggen i Badet og at ruten fortsatt går (`walk_route`).
@@ -105,6 +100,11 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R155 · Fra tester: Rune · Telefonens klokke og batteri vises øverst i spillet (Nivå 4 · Bad) (v2.159)
+Fra Rune (rapport v2.156, merket «Styring»): han ser iPhones klokke og batteriindikator øverst i spillet. På skjermbildet av byggeskjermen ligger statuslinjen som en beige stripe over spillet. Må avklares om det er ønsket (sikker sone) eller om spillet skal gå helt ut til kanten, og om fargen på stripen skal passe til spillet.
+Krav: (1) sjekk meta `viewport-fit=cover`, `theme-color` og `apple-mobile-web-app-status-bar-style` i `index.html`/manifest og hvordan siden vises i Safari og som hjemmeskjermapp; (2) la spillet fylle hele skjermen og la knapper og HUD ligge innenfor `env(safe-area-inset-*)`, slik at klokke og batteri ligger over bakgrunnen uten å dekke noe; (3) fargen under statuslinjen passer til spillet (mørk), også på byggeskjermen; (4) sjekk visuelt med `devices['iPhone 14']`.
+Ferdig når: statuslinjen ser ryddig ut og ikke dekker eller skiller seg fra spillet, og tester og boot er grønne.
 
 ### [x] R149 · Fra tester: Rune · Oppsummeringen forteller hva som manglet for full score (stjerner og merker per brett) (v2.158)
 Fra Rune, bekreftet: når et brett er ferdig skal spilleren få vite hva som manglet for full score, målt i stjerner og merker per brett (stjerner, delmål, tid). Kommer etter språkjobben.
