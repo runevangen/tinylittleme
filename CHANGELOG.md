@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.154** – Leveleditor: 2–4 bilder, innendørs og utendørs (plan og R151/R152), hemmelighetens navn og R151 åpnet.
 - **2.153** – Plan for leveleditor (docs/PLAN_LEVELEDITOR.md) og R149 (hva som manglet for full score), R151/R152 (leveleditor fase A: AI-test) i veikartet, fra Rune.
 - **2.152** – R146 NYTT-rad og R147/R148 (språk runde 2 og 3) i veikartet.
 - **2.151** – R146 runde 1: språkvalget bytter ⚙, NYTT, spillhendelser og stemme; rettet norsk (alvor 3 og 2).

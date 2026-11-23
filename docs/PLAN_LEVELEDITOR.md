@@ -1,9 +1,9 @@
 # Plan: leveleditor (utkast, godkjent retning av Rune 2026-11-23)
 
-Spilleren tar bilder av sitt eget rom, får et spillbart brett, og kan spille det selv eller dele det. Kjeden er testet på badet (`docs/FOTO_TIL_BRETT.md`): bilder → tolkning (`docs/VISJON_PROMPT.md`, `docs/scene.schema.json`) → validering (`tools/validate_scene.mjs`) → `tools/scene2level.mjs` → bot som beviser at målet kan nås. Mangler: tolkning som tjeneste, editor på mobil, lagring og deling.
+Spilleren tar 2–4 bilder av sitt eget rom eller et lite avgrenset område ute (terrasse, hjørne av hagen, liten lekeplass), får et spillbart brett, og kan spille det selv eller dele det. Kjeden er testet på badet (`docs/FOTO_TIL_BRETT.md`): bilder → tolkning (`docs/VISJON_PROMPT.md`, `docs/scene.schema.json`) → validering (`tools/validate_scene.mjs`) → `tools/scene2level.mjs` → bot som beviser at målet kan nås. Mangler: tolkning som tjeneste, editor på mobil, lagring og deling.
 
 ## Rekkefølge (Runes valg)
-1. **Fase A, tidlig AI-test (først).** Bare Rune og testere. Claude (bildeforståelse) via en Supabase edge function. Tak 200 tolkninger i måneden som stopper automatisk, av-bryter, bilder lagres aldri (slettes straks etter tolkning, nedskalert før sending). I spillet: knapp «Lag brett fra bilder» (bak valg i ⚙, bare testere), fangstveiledning (to hjørner, ett fra gulvhøyde, ett med A4-ark som mål), bildeopplasting (`<input type="file" capture>`), forslag, enkel retting (flytt og slett), boten sjekker, spill. Brettet lagres lokalt på telefonen. Logg: kostnad, tid, antall rettinger, om boten fant en vei.
+1. **Fase A, tidlig AI-test (først).** Bare Rune og testere. Claude (bildeforståelse) via en Supabase edge function. Tak 200 tolkninger i måneden som stopper automatisk, av-bryter, bilder lagres aldri (slettes straks etter tolkning, nedskalert før sending). I spillet: knapp «Lag brett fra bilder» (bak valg i ⚙, bare testere), fangstveiledning (fungerer med 2 bilder som minimum: to motstående hjørner, gjerne ett fra bakkehøyde og ett med A4-ark som mål; innendørs og utendørs), bildeopplasting (`<input type="file" capture>`), forslag, enkel retting (flytt og slett), boten sjekker, spill. Brettet lagres lokalt på telefonen. Logg: kostnad, tid, antall rettinger, om boten fant en vei.
 2. **Fase 1:** «Mine brett»: lagre, laste fra kode og spille egne brett i VELG BRETT.
 3. **Fase 2:** manuell romeditor på mobil (ting fra `kinds.js`, flytt/skaler, start og mål, «Sjekk» med bot, maks fem hjelpeobjekter). Gjenbruker byggeskjermen (R101).
 4. **Fase 3:** forslaget fra fase A åpnes i den fulle editoren; åpnes for flere enn testere først etter vurdering av personvern og kostnad.
@@ -17,6 +17,9 @@ Spilleren tar bilder av sitt eget rom, får et spillbart brett, og kan spille de
 - Brett som ikke kan vinnes: bot må bevise løsbarhet før lagring; maks fem hjelpeobjekter.
 - Ytelse: tak på antall bokser, 30 fps.
 - Upassende innhold: delte brett er tall og former; navnefilter, melde-knapp, ingen offentlig liste før moderering.
+
+## Sted: inne og ute
+Begge deler er lov, 2–4 bilder. Utendørs trenger egne ting i `kinds.js` og i instruksen til tolkningen (stein, gress, benk, trapp, hekk, bord, lekeapparat, grus, vann) og egne farer (kantstein, vann, glatt underlag). Alle ting må få mål og materiale slik at fysikken virker.
 
 ## Måling
 Brett laget og andel løsbare første gang; tid fra første trykk til første runde (mål under 10 minutter); andel rettet av spilleren; andel delt og spilt av andre; kostnad per brett; andel som gir opp.
