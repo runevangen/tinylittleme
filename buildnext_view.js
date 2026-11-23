@@ -3,6 +3,8 @@
 //  2) en ▶-knapp med navnet på neste sted i topplinjen (🔒 når det er låst; trykk viser hvorfor).
 // Stående: kortet ligger nederst over PRØV-raden. Liggende: kortet står i høyre panel der PRØV står. Logikken ligger i buildnext_logic.js. Ingen taster nevnes.
 import { r2Css, r2CardHtml, r2Sig } from './stars2_view.js';   // R126
+import { siteMissingText } from './missing_logic.js';   // R149
+import { weightText } from './stars2_logic.js';
 import { BN, cardOf, titleKey, primaryKey, starLine, createUse } from './buildnext_logic.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -74,7 +76,7 @@ export function createBuildNext(ctx) {
     const sub = c.primary === 'next' ? `<small>${esc(T('bn.nextSub', { name: s.nextName, n: s.series.nextN, of: s.series.of }))}</small>` : '';
     const label = c.primary === 'next' ? T('bn.next') : T(primaryKey(c.primary));
     res.className = `bnres${c.kind === 'passed' ? '' : ' bad'}`;
-    res.innerHTML = `<div class="bnt">${t}${stTag}</div>${c.kind === 'passed' ? r2CardHtml(T, s.round2) : ''}${c.kind === 'more' && s.nextLoadName ? `<div class="bnh">${esc(T('bn.nextLoad', { name: s.nextLoadName, n: (s.loadDone || 0) + 1, of: s.loadTotal || 0 }))}</div>` : ''}${sl ? `<div class="bnh">${esc(T('bn.starHint', { cost: sl.cost, parts: sl.parts ?? '' }))}</div>` : ''}`
+    res.innerHTML = `<div class="bnt">${t}${stTag}</div>${c.kind === 'passed' ? r2CardHtml(T, s.round2) : ''}${c.kind === 'more' && s.nextLoadName ? `<div class="bnh">${esc(T('bn.nextLoad', { name: s.nextLoadName, n: (s.loadDone || 0) + 1, of: s.loadTotal || 0 }))}</div>` : ''}${s.missing && c.kind === 'passed' ? (s.missing.length ? `<div class="bnh bnmiss">${esc(siteMissingText(s.missing, T, weightText))}</div>` : '') : sl ? `<div class="bnh">${esc(T('bn.starHint', { cost: sl.cost, parts: sl.parts ?? '' }))}</div>` : ''}`
       + `<button type="button" class="bnp" data-bn="${c.primary}"><span>${esc(label)}</span>${sub}</button>`
       + (c.secondary ? `<button type="button" class="bnq" data-bn="${c.secondary}">${esc(T('bn.again'))}</button>` : '');
   }
@@ -82,7 +84,7 @@ export function createBuildNext(ctx) {
   // hver tegning: oppdaterer bare når noe er endret
   function frame() {
     const s = ctx.state(), skin = s && s.skin, tn = skin ? (s.topState ? { state: s.topState } : null) : null, c = skin ? cardOf(s) : null;
-    const sg = [skin, tn && tn.state, s && s.nextName, s && s.series && s.series.n, c && c.kind, c && c.primary, c && c.secondary, c && c.final, s && s.stars, s && s.nextStar && s.nextStar.cost, s && s.loadMore, s && s.nextLoadName, s && s.loadDone, T('bn.again'), r2Sig(s && s.round2)].join('|');
+    const sg = [skin, tn && tn.state, s && s.nextName, s && s.series && s.series.n, c && c.kind, c && c.primary, c && c.secondary, c && c.final, s && s.stars, s && s.nextStar && s.nextStar.cost, s && s.loadMore, s && s.nextLoadName, s && s.loadDone, T('bn.again'), r2Sig(s && s.round2), s && s.missing ? s.missing.length : -1].join('|');
     if (sg === sig) return; sig = sg;
     root.classList.toggle('bnser', !!tn); root.classList.toggle('bnshow', !!c);
     if (tn) paintTop(s, tn);
