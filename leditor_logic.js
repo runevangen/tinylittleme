@@ -10,6 +10,7 @@ export const LED = {
   consentKey: 'tlm.leconsent',        // samtykket gis én gang (lagres lokalt)
   fn: 'tolk-bilder', timeoutMs: 120000,
   quality: 0.8, minQuality: 0.4,
+  brightMin: 90, brightTarget: 112, brightGammaMin: 0.6, darkTip: 55,   // lysning (R163): snitt-lysstyrke 0–255 under brightMin lysnes mot brightTarget (gamma, aldri under brightGammaMin); under darkTip vises et lystips
   step: 10,                           // cm per trykk når en ting flyttes
   maxHelpers: 5,                      // maks hjelpeobjekter fra verktøyet (planen: maks fem)
   themes: ['', 'jungel', 'rom', 'slott', 'piratskip', 'godteri', 'vinter'],   // '' = ingen; fritekst støttes ikke i knappene (kort tema holder)
@@ -189,4 +190,24 @@ export function interpretation(scene, room) {
   });
   const unc = scene && scene.source && typeof scene.source.uncertainty === 'string' ? scene.source.uncertainty.replace(/[<>`]/g, ' ').slice(0, 300) : '';
   return { things, helpers: (room && room.helpers) || [], uncertainty: unc, goalAuto: !!(room && room.autoGoal) };
+}
+
+// ---------- lysning av mørke bilder (R163): ren logikk, kjøres på telefonen mens bildet nedskaleres ----------
+// Snitt-lysstyrke (0–255, Rec. 601) av RGBA-data; tar hvert `step`-te piksel
+export function meanLuma(data, step = 4) {
+  let sum = 0, n = 0; const stride = 4 * Math.max(1, step | 0);
+  for (let i = 0; i + 2 < data.length; i += stride) { sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]; n++; }
+  return n ? sum / n : 128;
+}
+// Gamma (under 1 = lysere) som flytter snittet mot brightTarget. 1 = ikke rør (bildet er lyst nok, eller helt svart).
+export function gammaFor(mean) {
+  if (!(mean >= 8) || mean >= LED.brightMin) return 1;
+  return Math.max(LED.brightGammaMin, Math.min(1, Math.log(LED.brightTarget / 255) / Math.log(mean / 255)));
+}
+export function gammaLut(g) { const lut = new Uint8ClampedArray(256); for (let i = 0; i < 256; i++) lut[i] = Math.round(255 * Math.pow(i / 255, g)); return lut; }
+// Lysner RGBA-data på stedet. Gir { mean, gamma, after }
+export function brightenData(data) {
+  const mean = meanLuma(data), gamma = gammaFor(mean); let after = mean;
+  if (gamma < 1) { const lut = gammaLut(gamma); for (let i = 0; i < data.length; i += 4) { data[i] = lut[data[i]]; data[i + 1] = lut[data[i + 1]]; data[i + 2] = lut[data[i + 2]]; } after = meanLuma(data); }
+  return { mean: Math.round(mean), gamma: +gamma.toFixed(2), after: Math.round(after) };
 }

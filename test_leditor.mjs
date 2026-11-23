@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { LE, REASONS } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, sceneToRoom, goalCandidates, summarizeScene, interpretation, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, meanLuma, gammaFor, gammaLut, brightenData, sceneToRoom, goalCandidates, summarizeScene, interpretation, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
 import { sceneToLevel } from './scene2level_core.js';
 import { listRooms, loadRoom, validateRoom } from './rooms_logic.js';
 import { LEDITOR_TEXT, ltx, lerr, lverdict } from './leditor_text.js';
@@ -67,6 +67,13 @@ assert.equal(sceneToRoom({}).ok, false);
   const I = interpretation(bad, sceneToRoom(bad)); assert.ok(I.things.length > 5 && I.things.every((t) => Number.isFinite(t.h) && typeof t.label === 'string')); assert.ok(I.things[0].h >= I.things[I.things.length - 1].h, 'høyeste først');
   const broken = sceneToRoom({ ...bad, objects: bad.objects.slice(0, 1), goal: { ...bad.goal, y: 9999 } }, undefined, { auto: false }); assert.equal(broken.ok, false); assert.ok(typeof broken.detail === 'string');
   const failAfter = sceneToRoom({ ...bad, goal: { ...bad.goal, y: 9999 } }); assert.equal(failAfter.ok, true); }
+// R163: lysning av mørke bilder
+{ const px = (v, n = 400) => { const d = new Uint8ClampedArray(n * 4); for (let i = 0; i < n; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v; d[i * 4 + 3] = 255; } return d; };
+  assert.ok(Math.abs(meanLuma(px(100)) - 100) < 0.5, 'snitt av en jevn flate'); assert.equal(gammaFor(150), 1, 'lyst nok: ikke rør'); assert.equal(gammaFor(3), 1, 'nesten svart: ikke rør (ingenting å hente)');
+  assert.ok(gammaFor(60) < 1 && gammaFor(60) >= LED.brightGammaMin, 'mørkt: lysere'); assert.ok(gammaFor(30) === LED.brightGammaMin, 'veldig mørkt: aldri under grensen'); assert.ok(gammaFor(40) <= gammaFor(80), 'mørkere gir sterkere lysning');
+  const lut = gammaLut(0.6); assert.equal(lut[0], 0); assert.equal(lut[255], 255); assert.ok(lut[60] > 60, 'midtonene lysnes');
+  const dark = px(50), r = brightenData(dark); assert.ok(r.gamma < 1 && r.after > r.mean && r.after <= 140, 'mørkt bilde lysnes mot målet'); assert.equal(dark[3], 255, 'alfa urørt');
+  const bright = px(160), r2 = brightenData(bright); assert.equal(r2.gamma, 1); assert.equal(bright[0], 160, 'lyst bilde endres ikke'); }
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
 

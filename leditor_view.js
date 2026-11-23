@@ -1,7 +1,7 @@
 // R152: «Lag brett fra bilder» (DOM). Bruker startskjermens #start og knappestiler (.mbtn) som VELG BRETT/MINE BRETT. Logikk: leditor_logic.js, tekster: leditor_text.js.
 // Flyt: veiledning + samtykke → 2–4 bilder (nedskalert her, i minnet) → fire spørsmål → LAG BRETT (tjenesten) → forslag med SJEKK, JUSTER, SPILL, DEL, LAGRE. Bilder lagres aldri.
 import { LE } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData } from './leditor_logic.js';
 import { shareRoom, setRoomCode, safeName } from './rooms_logic.js';
 import { ltx, lerr, lverdict, lsub } from './leditor_text.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -29,13 +29,14 @@ async function scaleFile(file) {
     cleanup = () => URL.revokeObjectURL(u);
   }
   try {
-    let dim = LE.maxDim;
+    let dim = LE.maxDim, bright = null;
     for (let tries = 0; tries < 4; tries++) {
       const f = fitDim(w, h, dim), c = document.createElement('canvas'); c.width = f.w; c.height = f.h;
-      c.getContext('2d').drawImage(src, 0, 0, f.w, f.h);
+      const g2 = c.getContext('2d'); g2.drawImage(src, 0, 0, f.w, f.h);
+      if (!bright) { try { const id = g2.getImageData(0, 0, f.w, f.h); bright = brightenData(id.data); if (bright.gamma < 1) g2.putImageData(id, 0, 0); } catch { bright = { mean: -1, gamma: 1, after: -1 }; } }   // R163: for mørkt bilde lysnes (bare i minnet)
       for (let q = LED.quality; q !== null; q = lowerQuality(q)) {
         const url = c.toDataURL('image/jpeg', q), im = splitDataUrl(url);
-        if (imageFits(im)) return { ...im, url };
+        if (imageFits(im)) return { ...im, url, bright };
       }
       dim = Math.round(dim * 0.75);
     }
@@ -85,7 +86,8 @@ export function createLeditorView(ctx) {
         if (S.photos.length >= LE.photosMax) { msg(T('tooMany')); break; }
         msg(T('scaling')); const p = await scaleFile(f);
         if (!p) { msg(T('badImage')); continue; }
-        S.photos.push(p); msg(''); draw();
+        S.photos.push(p); msg(p.bright && p.bright.mean >= 0 && p.bright.mean < LED.darkTip ? T('darkTip') : ''); draw();
+        if (p.bright && p.bright.mean >= 0) logEv?.('leveleditor', `bilde lysstyrke ${p.bright.mean}${p.bright.gamma < 1 ? ` → ${p.bright.after} (lysnet, gamma ${p.bright.gamma})` : ' (ikke lysnet)'}`);
       }
     };
     $('ledTake').onclick = () => $('ledFileCam').click(); $('ledPick').onclick = () => $('ledFileSel').click();
