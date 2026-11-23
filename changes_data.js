@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'tekst-flere-ting', version: '2.142', date: '2026-11-23', title: 'Resultatkortet i bygging sier nå «Bra! Nå må flere ting over».',
+    how: 'Åpne Byggeskolen, bygg en bro som holder første last, og les resultatkortet etter PRØV.', level: 'lab1', spot: null },
   { id: 'r138-bygg-nivaa2', version: '2.140', date: '2026-11-23', title: 'Nivå 2 · Barnerommet: gapet over lekebøtta er for langt å hoppe, du må bygge en bro med planken som ligger klar. Valget «Påkrevd bygg» (⚙ → Admin) kan skrus av.',
     how: 'Start Nivå 2, gå til nattbordet og trykk BYGG. Legg planken over gapet og trykk PRØV, og gå så over til krakken og skrivebordet.', level: 'barnerom', spot: null },
   { id: 'r137-visning-25d', version: '2.140', date: '2026-11-22', title: 'Byggeskjermen vises i lett 3D: staver med tykkelse, kuler i knutene, tykk veiplate og skygge. Du tegner og trykker som før.',
