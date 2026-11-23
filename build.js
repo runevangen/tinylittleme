@@ -233,9 +233,10 @@ export function createBuildMode({ getStars2 = () => true, getView25 = () => fals
     const m = new THREE.Mesh(new THREE.BoxGeometry(t.w * 0.6, Math.max(0.35, t.h * 0.9), 0.9), new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.6, emissive: t.color, emissiveIntensity: 0.18 }));
     g.add(m); g.position.set(q.x, q.y, q.z); scene.add(g); return { q, g };
   });
+  const SPAN_FRAME = !!SPAN.frame;
   const siteMeshes = sites.map((s) => {
     const g = new THREE.Group(), mat = new THREE.LineBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.85 });
-    const box = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(s.w, s.h, 1.2)), mat); box.position.y = s.h / 2; g.add(box);
+    const box = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(s.w, s.h, 1.2)), mat); box.position.y = s.h / 2; if (SPAN_FRAME) g.add(box);   // R143: den gylne 1 px-rammen er av (løse, tynne streker i verdenen); FRA/TIL-markørene og spøkelsesbroen viser stedet
     g.position.set(s.x, s.y, s.z); scene.add(g); return { s, g, mat };
   });
 

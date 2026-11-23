@@ -14,7 +14,7 @@ export function createGhostWorldView({ scene, sites, getOn = () => true }) {
     const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(b.tri, 3)); fg.setAttribute('color', new THREE.Float32BufferAttribute(b.triCol, 3));
     const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(b.line, 3)); lg.setAttribute('color', new THREE.Float32BufferAttribute(b.lineCol, 3));
     const fill = nd(new THREE.Mesh(fg, fillMat)), line = nd(new THREE.LineSegments(lg, lineMat)); line.computeLineDistances(); fill.renderOrder = 6; line.renderOrder = 7;
-    g.add(fill, line); scene.add(g); return { s, g, b };
+    g.add(fill); if (GHOST.wire) g.add(line); scene.add(g); return { s, g, b };
   });
   let shown = null, t = 0;
   // Kalles hver ramme med id på stedet som skal vises (eller null). Retur: id som vises.

@@ -11,7 +11,9 @@ export const GHOST = {
   ext: 0.6,           // vippeplanken stikker litt ut over kantene
   depthDefault: 4,    // dybde (z) når stedet ikke sier noe (site.d)
   key: 'tlm.ghostseen',   // steder der spilleren har trykket BYGG minst én gang (kortet krymper)
-  fillOp: [0.3, 0.5], lineOp: [0.9, 1], dash: 0.7, gap: 0.5,
+  fillOp: [0.34, 0.54], lineOp: [0.9, 1], dash: 0.7, gap: 0.5,
+  wire: false,        // R143: 1 px kantlinjer tegnes ikke i verdenen (ble til løse, tynne streker på iPhone); omrisset er den gjennomsiktige flaten
+
 };
 export const GHOST_KINDS = ['bridge', 'stairs', 'seesaw'];
 

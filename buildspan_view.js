@@ -39,7 +39,7 @@ export function createSpanView({ scene, sites, T, getOn = () => true }) {
     const pts = arcPoints(sp.w.from, sp.w.to), geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pts.flatMap((p) => [p.x, p.y, p.z]), 3));
     geo.setAttribute('color', new THREE.Float32BufferAttribute(pts.flatMap((_, i) => { const t = i / (pts.length - 1); return [cols.from.r + (cols.to.r - cols.from.r) * t, cols.from.g + (cols.to.g - cols.from.g) * t, cols.from.b + (cols.to.b - cols.from.b) * t]; }), 3));
-    const line = nd(new THREE.Line(geo, lineMat)); line.computeLineDistances(); g.add(line);
+    const line = nd(new THREE.Line(geo, lineMat)); line.computeLineDistances(); if (SPAN.arc) g.add(line);
     scene.add(g); return { s, sp, g, r1, r2 };
   });
 

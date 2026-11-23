@@ -6,6 +6,8 @@ export const SPAN = {
   minGap: 2,          // minste vannrette spenn (enheter à 5 cm) før vi regner det som et gap; ellers (trapp) brukes ankre eller fast bredde
   fallbackGap: 6.25,  // fast bredde foran målet når stedet ikke har noe gap (trapp)
   unitM: 0.05,        // én enhet = 5 cm
+  frame: false,       // R143: den gylne 1 px-rammen rundt stedet tegnes ikke i verdenen
+  arc: false,         // R143: den stiplede 1 px-buen mellom FRA og TIL tegnes ikke (løse, tynne streker på iPhone); ringene, stolpene og skiltene viser spennet
   colFrom: '#3df0b0', colTo: '#ffd23f',   // samme farger som byggeskjermen (grønne ankerprikker, gult målflagg)
 };
 export const KEY_SEEN = 'tlm.byggfromto';

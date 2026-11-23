@@ -24,7 +24,7 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
       await run(30);
       const id = await place(-9, 7); await pg.evaluate(() => { const g = window.__game, s = g.LEVEL.buildSites.find((q) => q.id === g.bld.ghostStats().shown) || g.LEVEL.buildSites[0]; g.cam.yaw = Math.atan2(g.player.x - s.x, g.player.z - s.z); }); await run(60);
       const st = await pg.evaluate(() => window.__game.bld.ghostStats());
-      ok(`${lvl}/${tag} ${fmt}: spøkelsesbro vises (${id}, ${kind})`, st.shown === id && st.kind === kind && st.draw === 2 && st.shadow === 0 && st.tris <= 72, JSON.stringify(st));
+      ok(`${lvl}/${tag} ${fmt}: spøkelsesbro vises (${id}, ${kind})`, st.shown === id && st.kind === kind && st.draw === 1 && st.shadow === 0 && st.tris <= 72, JSON.stringify(st));
       const card = await pg.evaluate(() => { const e = document.getElementById('btnBuildCard'); return { t: e.innerText, vis: getComputedStyle(e).display, small: e.className, r: e.getBoundingClientRect().toJSON(), btn: document.getElementById('btnBuild').getBoundingClientRect().toJSON(), vw: innerWidth, vh: innerHeight }; });
       ok(`${lvl}/${tag} ${fmt}: oppdragskort med knappenavn og gap`, card.vis !== 'none' && /OPPDRAG/.test(card.t) && /Bygg en|Legg en/.test(card.t) && /BYGG/.test(card.t) && !/\[|tast/i.test(card.t) && card.r.right <= card.vw && card.r.bottom <= card.vh, JSON.stringify(card));
       const box = await pg.evaluate(() => { const g = window.__game; return { b: g.bld.ghostBox(g.camera), c: document.getElementById('btnBuildCard').getBoundingClientRect().toJSON(), vw: innerWidth, vh: innerHeight }; });

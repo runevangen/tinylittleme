@@ -71,4 +71,8 @@ assert.ok(cin.includes("'btnBuildCard'"), 'skjules i kinomodus');
 assert.ok(!/castShadow\s*=\s*true|receiveShadow\s*=\s*true/.test(vsrc) && /castShadow = false/.test(vsrc) && /depthWrite: false/.test(vsrc), 'ingen skygge, gjennomsiktig uten dybdeskriving');
 // tegnebudsjett: to tegnekall (flatemesh + linjemesh) og høyst 6 deler x 12 trekanter per synlig sted; bare ett sted er synlig om gangen
 const worst = Math.max(...all.map(({ s }) => ghostBuffers(s).tris)); assert.ok(worst <= GHOST.maxSteps * 12, `trekanter ${worst}`);
-console.log('buildghostw: ok, verste sted', worst, 'trekanter, 2 tegnekall');
+// R143: ingen 1 px-linjer i verdenen (løse, tynne streker ved Vippa): kantlinjer og FRA-TIL-bue er av, og viewene legger dem bare til når flaggene er på
+assert.equal(GHOST.wire, false, 'R143: spøkelsesbroens kantlinjer av'); assert.equal(SPAN.arc, false, 'R143: FRA-TIL-buen av'); assert.equal(SPAN.frame, false, 'R143: stedsrammen av'); assert.ok(/if \(SPAN_FRAME\) g\.add\(box\)/.test(bsrc), 'R143: rammen legges ikke i gruppa som standard');
+assert.ok(/if \(GHOST\.wire\) g\.add\(line\)/.test(vsrc) && !/g\.add\(fill, line\)/.test(vsrc), 'R143: linjemesh legges ikke i gruppa som standard');
+const spanSrc = fs.readFileSync('buildspan_view.js', 'utf8'); assert.ok(/if \(SPAN\.arc\) g\.add\(line\)/.test(spanSrc) && !/g\.add\(line\)(?!;)/.test(spanSrc.replace('if (SPAN.arc) g.add(line)', '')), 'R143: buen legges ikke i gruppa som standard');
+console.log('buildghostw: ok, verste sted', worst, 'trekanter, 1 tegnekall (R143: uten kantlinjer)');
