@@ -7,11 +7,14 @@ import { shortcutsOf, shortcutRoute, gateRoute, toolBoxes, stepIds, createShortc
 import { walkShortcut } from './tools/walk_route.mjs';
 import { KINDS, TOOLS } from './kinds.js';
 
+import { applyRequired } from './buildreq_logic.js';
 const lv = (id) => JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8'));
+// R140: Nivå 5 har hårgelé-trappa bare når valget buildrequired er av (ellers går den forbi det påkrevde bygget): da testes brettet slik det er med valget av
+const lvE = (id) => { const L = lv(id); applyRequired(L, false); return L; };
 for (const id of ['bad', 'barnerom', 'kjokken']) assert.equal(lv(id).shortcuts, undefined, `${id}: grunnrommene har ingen genvei`);
 const tools = new Set();
 for (const id of ['bad2', 'barnerom2', 'kjokken2', 'leke']) {
-  const L = lv(id), list = shortcutsOf(L); assert.ok(list.length >= 1, `${id}: minst én verktøy-gåte`);
+  const L = id === 'barnerom2' ? lvE(id) : lv(id), list = shortcutsOf(L); assert.ok(list.length >= 1, `${id}: minst én verktøy-gåte`);
   for (const sc of list) {
     tools.add(sc.tool); assert.ok(TOOLS.includes(sc.tool), `${id}: kjent verktøy`);
     const item = L.movables.find((m) => m.id === sc.item); assert.ok(item && item.tool === sc.tool && KINDS[item.kind], `${id}: flaska finnes som verktøy`);
@@ -24,7 +27,7 @@ for (const id of ['bad2', 'barnerom2', 'kjokken2', 'leke']) {
     for (const b of L.boxes) { if (b.type === 'floor' || b.type === 'wall') continue; if (b.min[1] < 0.5 && b.max[1] < 0.5) continue; assert.ok(!ov(item0, b), `${id}: flaska ligger inni ${b.id}`); }
     for (const st of sc.steps.slice(1)) { const a = L.boxes.find((x) => x.id === st); for (const b of L.boxes) if (b.id !== a.id && b.type !== 'floor' && b.type !== 'wall' && !sc.steps.includes(b.id) && !(b.max[1] < 0.5) && b.id !== sc.join) assert.ok(!ov(a, b) || b.id === 'gulv', `${id}: ${a.id} overlapper ${b.id}`); }
     // beviset: uten verktøy, med verktøy, og den vanlige ruta (lengre)
-    const w = walkShortcut(`levels/${id}.level.json`, sc); assert.ok(w.ok, `${id}/${sc.id}: ${w.why}`);
+    const w = walkShortcut(`levels/${id}.level.json`, sc, { level: L }); assert.ok(w.ok, `${id}/${sc.id}: ${w.why}`);
     assert.ok(!w.noTool.ok, 'første trinn kan ikke nås uten verktøyet'); assert.ok(w.plain.ok && w.withTool.ok); assert.ok(w.withTool.secs < w.plain.secs, 'genveien er raskere enn den vanlige ruta');
     const tb = toolBoxes(L, sc); assert.equal(tb.boxes.length, 1); assert.equal(tb.boxes[0].kind, 'gel'); assert.ok(tb.boxes[0].grip, 'gelfeltet er et grep');
     assert.ok(tb.boxes[0].min[1] < 1 && tb.boxes[0].max[1] > sc.steps.map((t) => nodeOf(L, t).top)[0], 'gelfeltet dekker trinnets høyde');

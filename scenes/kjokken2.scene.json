@@ -1,7 +1,7 @@
 {
   "name": "Nivå 6: Kjøkkenet, ryddet om",
   "units": "cm",
-  "rev": 1,
+  "rev": 2,
   "frame": "Origo i nordvestre hjørne (kjøleskapet). x mot øst, z mot sør (døra), y opp. Kjøkkenbenken står langs nordveggen.",
   "source": {
     "photos": 0,
@@ -40,8 +40,8 @@
     "note": "Innenfor døra"
   },
   "goal": {
-    "x": 76,
-    "y": 190,
+    "x": 46,
+    "y": 198,
     "z": 44,
     "on": "kjoleskap",
     "note": "Motgift-bit på toppen av kjøleskapet"
@@ -62,16 +62,16 @@
       "material": "plastic",
       "color": "#eef0f1",
       "box": [
-        30,
-        95,
         0,
-        190,
+        58,
+        0,
+        198,
         0,
         65
       ],
       "confidence": 1,
       "photos": [],
-      "help": "Kjøleskapet er flyttet\nOverskapet er kortere nå. Fra enden hopper du til den lille hylla, og derfra til kjøleskapet."
+      "help": "Bygg en bro\nFra den lille hylla er det for langt til kjøleskapet, og tre gir etter. Trykk BYGG ved kanten, bytt til stål med STÅL, lag trekanter og trykk PRØV."
     },
     {
       "id": "kjoleskap_handtak",
@@ -79,8 +79,8 @@
       "material": "metal",
       "color": "#c9ccd0",
       "box": [
-        86,
-        89,
+        49,
+        52,
         70,
         150,
         65,
@@ -96,8 +96,8 @@
       "material": "plastic",
       "color": "#b9bdc0",
       "box": [
-        30,
-        95,
+        0,
+        58,
         118,
         119,
         65,
@@ -113,10 +113,10 @@
       "material": "ceramic",
       "color": "#c9483b",
       "box": [
-        38,
-        60,
-        190,
-        208,
+        8,
+        30,
+        198,
+        216,
         8,
         30
       ],
@@ -1493,7 +1493,7 @@
       "on": "gulv",
       "at": [
         11.3,
-        11.3
+        71.3
       ]
     },
     {
@@ -1543,11 +1543,11 @@
   ],
   "goals": [
     {
-      "id": "smuler",
-      "type": "crumbs",
-      "n": 6,
-      "label": "Samle 6 smuler",
-      "en": "Collect 6 crumbs"
+      "id": "bygg",
+      "type": "flag",
+      "flag": "kjk6",
+      "label": "Bygg en bro i stål (BYGG-knappen)",
+      "en": "Build a steel bridge (BUILD button)"
     },
     {
       "id": "sjef",
@@ -1612,6 +1612,431 @@
       85,
       110
     ]
+  },
+  "build": {
+    "sites": [
+      {
+        "id": "kjk6",
+        "label": "Gapet fra hylla til kjøleskapet (stål)",
+        "at": [
+          88,
+          15
+        ],
+        "y": 198,
+        "w": 120,
+        "h": 80,
+        "d": 20,
+        "anchors": [
+          [
+            -30,
+            0
+          ],
+          [
+            30,
+            0
+          ]
+        ],
+        "deck": [
+          [
+            -57.5,
+            -30
+          ],
+          [
+            30,
+            57.5
+          ]
+        ],
+        "start": [
+          -50,
+          0
+        ],
+        "goal": [
+          50,
+          0
+        ],
+        "walkDir": -1,
+        "grid": {
+          "step": 2,
+          "stars": {
+            "three": {
+              "cost": 40,
+              "parts": 12
+            },
+            "two": {
+              "cost": 76,
+              "parts": 21
+            }
+          },
+          "stage": {
+            "loads": [
+              "car",
+              "robot",
+              "figure"
+            ],
+            "massK": 18,
+            "budget": 80
+          }
+        },
+        "need": "material",
+        "ref": {
+          "placed": [],
+          "links": [],
+          "surfaces": [],
+          "grid": {
+            "nodes": [
+              [
+                -4,
+                0
+              ],
+              [
+                -2,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                -4,
+                2
+              ],
+              [
+                -2,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                4,
+                2
+              ]
+            ],
+            "rods": [
+              [
+                0,
+                2,
+                "steel"
+              ],
+              [
+                2,
+                3,
+                "steel"
+              ],
+              [
+                3,
+                4,
+                "steel"
+              ],
+              [
+                4,
+                5,
+                "steel"
+              ],
+              [
+                5,
+                6,
+                "steel"
+              ],
+              [
+                6,
+                1,
+                "steel"
+              ],
+              [
+                7,
+                8,
+                "steel"
+              ],
+              [
+                8,
+                9,
+                "steel"
+              ],
+              [
+                9,
+                10,
+                "steel"
+              ],
+              [
+                10,
+                11,
+                "steel"
+              ],
+              [
+                0,
+                7,
+                "steel"
+              ],
+              [
+                1,
+                11,
+                "steel"
+              ],
+              [
+                2,
+                7,
+                "steel"
+              ],
+              [
+                3,
+                8,
+                "steel"
+              ],
+              [
+                4,
+                9,
+                "steel"
+              ],
+              [
+                5,
+                10,
+                "steel"
+              ],
+              [
+                6,
+                11,
+                "steel"
+              ],
+              [
+                2,
+                8,
+                "steel"
+              ],
+              [
+                3,
+                9,
+                "steel"
+              ],
+              [
+                9,
+                5,
+                "steel"
+              ],
+              [
+                10,
+                6,
+                "steel"
+              ]
+            ]
+          },
+          "best": {
+            "nodes": [
+              [
+                -4,
+                0
+              ],
+              [
+                -2,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                -4,
+                2
+              ],
+              [
+                -2,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                4,
+                2
+              ]
+            ],
+            "rods": [
+              [
+                0,
+                2,
+                "steel"
+              ],
+              [
+                2,
+                3,
+                "steel"
+              ],
+              [
+                3,
+                4,
+                "steel"
+              ],
+              [
+                4,
+                5,
+                "steel"
+              ],
+              [
+                5,
+                6,
+                "steel"
+              ],
+              [
+                6,
+                1,
+                "steel"
+              ],
+              [
+                10,
+                11,
+                "steel"
+              ],
+              [
+                1,
+                11,
+                "steel"
+              ],
+              [
+                5,
+                10,
+                "steel"
+              ],
+              [
+                6,
+                11,
+                "wood"
+              ],
+              [
+                10,
+                6,
+                "steel"
+              ]
+            ]
+          },
+          "route": [
+            "gulv",
+            "kasse",
+            "komfyrhandkle",
+            "komfyr_front",
+            "benk_o",
+            "brodrister",
+            "mikro",
+            "kjokkenhandkle",
+            "krydderhylle",
+            "hvitlok",
+            "overskap",
+            "hylle_over_vask",
+            "@bro",
+            "kjoleskap"
+          ]
+        }
+      }
+    ],
+    "parts": [
+      {
+        "id": "k1",
+        "type": "plank_l",
+        "on": "gulv",
+        "at": [
+          320,
+          255
+        ]
+      },
+      {
+        "id": "k2",
+        "type": "plank_s",
+        "on": "gulv",
+        "at": [
+          345,
+          230
+        ]
+      },
+      {
+        "id": "k3",
+        "type": "block",
+        "on": "gulv",
+        "at": [
+          300,
+          278
+        ]
+      },
+      {
+        "id": "k4",
+        "type": "weight",
+        "on": "gulv",
+        "at": [
+          338,
+          278
+        ]
+      }
+    ]
+  },
+  "required": {
+    "site": "kjk6",
+    "ease": {
+      "kjoleskap": [
+        30,
+        95,
+        0,
+        190,
+        0,
+        65
+      ],
+      "kjoleskap_handtak": [
+        86,
+        89,
+        70,
+        150,
+        65,
+        68
+      ],
+      "kjoleskap_fuge": [
+        30,
+        95,
+        118,
+        119,
+        65,
+        65.5
+      ],
+      "kakeboks": [
+        38,
+        60,
+        190,
+        208,
+        8,
+        30
+      ]
+    },
+    "easeGoal": [
+      76,
+      190,
+      44
+    ],
+    "note": "R140: gapet fra hylla til kjøleskapet er 60 cm og bare et fagverk i stål bærer bil, robot og figur. `ease` og `easeGoal` = kjøleskapet slik det sto før (to hopp, 23 cm), brukt når valget buildrequired er av.",
+    "easeHints": {
+      "kjoleskap": "Kjøleskapet er flyttet\nOverskapet er kortere nå. Fra enden hopper du til den lille hylla, og derfra til kjøleskapet."
+    }
   },
   "shortcuts": [
     {

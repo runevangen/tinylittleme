@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r140-bygg-nivaa5-6', version: '2.143', date: '2026-11-23', title: 'Nivå 5 og 6 har nå hvert sitt nødvendige bygg: i Nivå 5 er det et gap over lekebøtta som bare en bro med trekanter (fagverk) bærer, i Nivå 6 er det et gap fra den lille hylla til kjøleskapet der bare stål holder. Valget «Påkrevd bygg» (⚙ → Admin) kan skrus av.',
+    how: 'Start Nivå 5 (Barnerommet, ommøblert), gå til nattbordet og trykk BYGG. Trykk TREKANT og lag en stiv bro, trykk PRØV. I Nivå 6 trykker du BYGG ved den lille hylla over vasken, velger STÅL, lager trekanter og trykker PRØV.', level: 'barnerom2', spot: null },
   { id: 'tekst-flere-ting', version: '2.142', date: '2026-11-23', title: 'Resultatkortet i bygging sier nå «Bra! Nå må flere ting over».',
     how: 'Åpne Byggeskolen, bygg en bro som holder første last, og les resultatkortet etter PRØV.', level: 'bygglab', spot: null },
   { id: 'r138-bygg-nivaa2', version: '2.140', date: '2026-11-23', title: 'Nivå 2 · Barnerommet: gapet over lekebøtta er for langt å hoppe, du må bygge en bro med planken som ligger klar. Valget «Påkrevd bygg» (⚙ → Admin) kan skrus av.',

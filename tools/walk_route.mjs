@@ -8,7 +8,13 @@ import { initGates, openAllGates } from '../plates_logic.js';
 import { decorSolidBoxes } from '../solid_decor_logic.js';
 import { shortcutsOf, shortcutRoute, gateRoute, toolBoxes } from '../shortcut.js';
 import { refRoute, buildSolids } from '../build_world.js';
+import * as BP from '../build_phys.js';
 import { settledPlaced } from '../build_phys.js';
+import { createBuild } from '../build_logic.js';
+import { applySpec, gridRefRoute } from '../grid_play.js';
+import { simDef as gridSimDef, simDefAuto as gridSimDefAuto, loadPass as gridLoadPass, setMode as gridSetMode } from '../grid_logic.js';
+import { stageOf } from '../grid_stage.js';
+import { MOVE } from '../hero_move.js';
 import { requiredOf } from '../buildreq_logic.js';
 
 export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [], helpers = true, only = null, wallJump = true, trace = null, traceEvery = 6, closedGates = false, solidDecor = true, stepUp = null } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
@@ -24,7 +30,9 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario', level 
   const near = (n, m = 0.35) => [clamp(p.x, Math.min(n.x0 + m, (n.x0 + n.x1) / 2), Math.max(n.x1 - m, (n.x0 + n.x1) / 2)), clamp(p.z, Math.min(n.z0 + m, (n.z0 + n.z1) / 2), Math.max(n.z1 - m, (n.z0 + n.z1) / 2))];
   const on = (n) => p.onGround && Math.abs(p.y - n.top) < (n.tol || 0.06) && p.x > n.x0 - 0.32 && p.x < n.x1 + 0.32 && p.z > n.z0 - 0.32 && p.z < n.z1 + 0.32;
   for (let i = 0; i < 20; i++) tick({});
+  const baseStep = P.stepUp;   // R140: noder kan ha egen tråkkegrense (`stepUp`): langs et rutenett-bygg tråkker spillet over små trinn (MOVE.stepOverMax), ellers som før
   for (let i = 1; i < R.length && !fail; i++) {
+    P.stepUp = R[i].stepUp != null ? R[i].stepUp : baseStep;
     const B = R[i], t0 = t; let jumpT = -99, tries = 0, lastPos = [p.x, p.z], lastT = t, detour = 0, side = 1, stuckN = 0;
     if (B.grip) {                                              // klatreflate: gå inntil, hold GREP, klatre til toppen av neste flate
       const C = R[i + 1]; i++;
@@ -79,6 +87,7 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario', level 
         if (p.onGround && p.y < R[i - 1].top - 0.5 && rise > 0.45 && edge >= 0.9 && t - t0 > 60 * 12) fail = `falt ned før ${B.id}`;
       }
       if (!jump && staged && p.onGround && p.recover <= 0 && B.top < p.y - 0.5 && t - lastT >= 49 && t - jumpT > 50 && Math.hypot(p.x - lastPos[0], p.z - lastPos[1]) < 0.25) jump = true;   // R67: kanthjelpen holder deg igjen ved en kant mer enn en halv enhet ned: hopp ned (som en spiller ville gjort)
+      if (!jump && B.hop && p.onGround && p.recover <= 0 && t - lastT >= 30 && t - jumpT > 40 && Math.hypot(p.x - lastPos[0], p.z - lastPos[1]) < 0.12) jump = true;   // R140: en skrå stav i et rutenett-bygg er en trapp av små trinn: står du fast mot dem, hopp (HOPP) som en spiller ville gjort
       if (jump) { jumpT = t; tries++; }
       if (t - lastT >= 50) {                                    // står du fast bak noe (en kran, en flaske): gå rundt, annenhver side og litt lenger for hver gang
         const edgeB = Math.max(0, Math.max(B.x0 - p.x, p.x - B.x1), Math.max(B.z0 - p.z, p.z - B.z1));
@@ -105,19 +114,47 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario', level 
 export function walkRouteAny(levelPath, opts = {}) {
   const L = opts.level || JSON.parse(fs.readFileSync(levelPath, 'utf8')), req = requiredOf(L);
   if (!req || req.eased) return walkRoute(levelPath, { ...opts, level: L });
-  const site = (L.build?.sites || []).find((s) => s.id === req.site), route = site && refRoute(L, site);
+  const site = (L.build?.sites || []).find((s) => s.id === req.site);
+  if (site && site.ref?.grid && !(site.ref.placed || []).length) {   // R140: fagverk/materialer (rutenett-referanse): bygges, prøves med oppdragets laster og tunge vekt (som boten), og ruta går over det ferdige bygget
+    const g = gridBuiltRoute(L, site); if (!g.route) return { ok: false, why: `påkrevd bygg ${req.site}: ${g.why}`, secs: 0, steps: 0 };
+    return { ...walkRoute(levelPath, { ...opts, level: L, route: g.route, extraBoxes: g.solids }), built: true, grid: true };
+  }
+  const route = site && refRoute(L, site);
   if (!route) return { ok: false, why: `påkrevd bygg ${req.site}: finner ikke referansebygget eller ruta`, secs: 0, steps: 0 };
   return { ...walkRoute(levelPath, { ...opts, level: L, route, extraBoxes: buildSolids(site, settledPlaced({ site, placed: site.ref.placed, links: site.ref.links || [] })) }), built: true };
+}
+
+// R140: rutenett-referansen (site.ref.grid) legges, prøves med alle oppdragets laster og tunge vekt, og settes inn i verden. Gir { route, solids, why }.
+export function gridBuiltRoute(L, site0, spec = null) {
+  const stg = stageOf(site0), s = spec || site0.ref?.grid; if (!s || !stg || !site0.ref?.route) return { route: null, solids: [], why: 'stedet har ikke rutenett-referanse og oppdrag' };
+  const site = JSON.parse(JSON.stringify(site0)), B = createBuild(site, {}, []); B.gridDeck = false; gridSetMode(B, 'grid');
+  const ok = applySpec(B, s).ok; if (!ok) return { route: null, solids: [], why: 'fagverk-referansen kan ikke legges' };
+  const def = gridSimDefAuto(B).def, bad = stg.loads.map((l) => BP.runSim(def, { load: l, massK: stg.massK }).result).find((r) => r !== 'won');
+  if (bad) return { route: null, solids: [], why: `referansen består ikke PRØV (${bad})` };
+  const solids = buildSolids(site, settledPlaced(gridSimDef(B)), { skip: new Set(gridLoadPass(B)) }), gr = gridRefRoute(site, solids), route = gr && refRoute(L, { ...site, ref: { ...site.ref, ...gr } });
+  if (!route) return { route: null, solids, why: 'finner ikke ruta over bygget' };
+  route.forEach((n, i) => { if (n.id.startsWith('@rutenett')) { n.stepUp = MOVE.stepOverMax; if (n.top > route[i - 1].top + 0.01) n.hop = true; } });   // langs bygget tråkker figuren over små trinn (spillets tråkkegrense), og trinn opp tas med hopp (også første stav)
+  return { route, solids, why: '' };
+}
+
+// R140: brett med påkrevd rutenett-bygg: ruta og de ferdige flatene (null for andre brett). Genveier (verktøy) og boten bruker dem i stedet for den vanlige ruta, som stopper ved gapet.
+export function builtContext(L) {
+  const req = requiredOf(L); if (!req || req.eased) return null;
+  const site = (L.build?.sites || []).find((s) => s.id === req.site); if (!site || !site.ref?.grid || (site.ref.placed || []).length) return null;
+  const g = gridBuiltRoute(L, site); return g.route ? { site, route: g.route, solids: g.solids } : { site, route: null, solids: [], why: g.why };
 }
 
 // R29: verktøy-genveier. Bevis at (1) første trinn ikke kan nås uten verktøyet, (2) målet nås via genveien med verktøyet (gelfeltet lages av den ekte fysikken),
 // og (3) den vanlige ruta uten verktøy også når målet, og er lengre (secs) enn genveien.
 export function walkShortcut(levelPath, sc, { level = null, ...opts } = {}) {   // R32: opts (helpers, only, wallJump, trace) går videre til walkRoute
   const L = level || JSON.parse(fs.readFileSync(levelPath, 'utf8')), out = { id: sc.id, ok: false, why: '' };
-  const gate = gateRoute(L, sc), route = shortcutRoute(L, sc); if (!gate || !route) return { ...out, why: 'finner ikke trinnene eller flata genveien ender på' };
-  const plain = walkRoute(levelPath, { ...opts, level: L }), noTool = walkRoute(levelPath, { ...opts, level: L, route: gate }), tb = toolBoxes(L, sc);
+  const ctx = builtContext(L);   // R140: påkrevd bygg: den vanlige ruta går over det ferdige bygget (uten bygg stopper den ved gapet)
+  if (ctx && !ctx.route) return { ...out, why: `påkrevd bygg ${ctx.site.id}: ${ctx.why}` };
+  const Lb = ctx ? { ...L, route: ctx.route } : L, solids = ctx ? ctx.solids : [];
+  const gate = gateRoute(L, sc), route = shortcutRoute(Lb, sc); if (!gate || !route) return { ...out, why: 'finner ikke trinnene eller flata genveien ender på' };
+  const plain = walkRoute(levelPath, { ...opts, level: L, ...(ctx ? { route: ctx.route, extraBoxes: solids } : {}) }), noTool = walkRoute(levelPath, { ...opts, level: L, route: gate }), tb = toolBoxes(L, sc);
   if (!tb.boxes.length) return { ...out, why: tb.why };
-  const withTool = walkRoute(levelPath, { ...opts, level: L, route, extraBoxes: tb.boxes });
+  const withTool = walkRoute(levelPath, { ...opts, level: L, route, extraBoxes: [...tb.boxes, ...solids] });
   Object.assign(out, { plain, noTool, withTool, gel: tb.boxes.length });
   if (!plain.ok) out.why = `den vanlige ruta går ikke: ${plain.why}`;
   else if (noTool.ok) out.why = 'første trinn kan nås uten verktøyet (for lavt)';

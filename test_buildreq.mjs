@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { walkRoute } from './tools/walk_route.mjs';
+import { walkRoute, walkRouteAny } from './tools/walk_route.mjs';
 import * as BW from './build_world.js';
 import * as BP from './build_phys.js';
 import { REQ, requiredOf, needsBuild, applyRequired, safeResume, reqCardShould, createTryCounter, solvedLine } from './buildreq_logic.js';
@@ -62,13 +62,14 @@ const L = lv('barnerom'), site = L.build.sites[0];
   assert.ok(/Hopp over lekebøtta/.test(B.hints.find((h) => h.id === 'nattbord').text), 'gammel tekst tilbake');
   const w = walkRoute(null, { level: B }); assert.ok(w.ok, `uten påkrevd bygg går ruta uten å bygge: ${w.why}`);
   assert.equal(applyRequired({ boxes: [] }, false), null, 'brett uten påkrevd bygg: ingen endring');
-  for (const id of ['bad', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke', 'stue', 'verksted', 'bro']) assert.equal(requiredOf(lv(id)), null, `${id}: ingen påkrevd bygg`);
+  for (const id of ['bad', 'kjokken', 'bad2', 'leke', 'stue', 'verksted', 'bro']) assert.equal(requiredOf(lv(id)), null, `${id}: ingen påkrevd bygg`);   // R140: Nivå 5 og 6 har egne påkrevde bygg (test_buildreq2.mjs)
 }
-// 6) Nivå 5 (barnerom2) er uendret: ingen bygg, ingen krakk, samme scene som før (make_variants gir de samme filene)
+// 6) Nivå 5 (barnerom2) har fra R140 sitt eget påkrevde bygg (test_buildreq2.mjs); make_variants gir de samme filene, og Nivå 2 er uberørt av det
 {
   const before = rd('scenes/barnerom2.scene.json'); execFileSync('node', ['tools/make_variants.mjs'], { stdio: 'pipe' }); assert.equal(rd('scenes/barnerom2.scene.json'), before, 'barnerom2: scenen er utdatert, kjør node tools/make_variants.mjs');
-  const L5 = lv('barnerom2'); assert.ok(!L5.build && !L5.required && !L5.boxes.some((b) => b.id === 'krakk'), 'nivå 5 har verken bygg eller krakk');
-  const w = walkRoute('levels/barnerom2.level.json'); assert.ok(w.ok, w.why);
+  const L5 = lv('barnerom2'); assert.ok(L5.build && L5.required && L5.required.site === 'barn2' && !L5.boxes.some((b) => b.id === 'krakk'), 'nivå 5 har sitt eget bygg og ingen krakk');
+  assert.equal(requiredOf(L).site, 'barn1', 'nivå 2 er uendret');
+  const w = walkRouteAny('levels/barnerom2.level.json'); assert.ok(w.ok && w.built, w.why);
 }
 // 7) delmål (bygg-flagget), maks fire delmål
 {

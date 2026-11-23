@@ -6,7 +6,7 @@ import { nearestPoint, nodeAt, nodeOf, rodOf, rodCheck, hitNode, hitRod, gridSte
 import { starThresholds } from './build_budget.js';
 
 export const BUX = {
-  levels: { bro: ['bro1'], kjokkenbro: ['kjokken1'], badebro: ['bad1'], bro2: ['hylle2'], kjokkenbro2: ['kjk2'] },   // vanlige brett: byggestedene som får skjermen
+  levels: { bro: ['bro1'], kjokkenbro: ['kjokken1'], badebro: ['bad1'], bro2: ['hylle2'], kjokkenbro2: ['kjk2'], barnerom2: ['barn2'], kjokken2: ['kjk6'] },   // vanlige brett: byggestedene som får skjermen
   labKeys: ['bro', 'fagverk', 'bred'],                            // Bygglab: stedene «bro», «fagverk» og «bred» (lab.key, R123)
   snapPx: 30,        // fingeren snapper til en knute innen så mange px
   pointPx: 34,       // ... og til et rutenettpunkt innen så mange px (eller 0,62 rute, det som er størst)

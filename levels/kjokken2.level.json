@@ -1,6 +1,6 @@
 {
  "name": "Nivå 6: Kjøkkenet, ryddet om",
- "rev": 1,
+ "rev": 2,
  "boxes": [
   {
    "type": "floor",
@@ -86,13 +86,13 @@
   {
    "type": "plastic",
    "min": [
-    -30,
+    -36,
     0,
     -30
    ],
    "max": [
-    -17,
-    38,
+    -24.4,
+    39.6,
     -17
    ],
    "id": "kjoleskap",
@@ -105,13 +105,13 @@
   {
    "type": "ceramic",
    "min": [
-    -28.4,
-    38,
+    -34.4,
+    39.6,
     -28.4
    ],
    "max": [
-    -24,
-    41.6,
+    -30,
+    43.2,
     -24
    ],
    "id": "kakeboks",
@@ -1105,7 +1105,7 @@
    "id": "kjoleskap_handtak",
    "kind": "box",
    "pos": [
-    -18.5,
+    -25.9,
     22,
     -16.7
    ],
@@ -1122,12 +1122,12 @@
    "id": "kjoleskap_fuge",
    "kind": "box",
    "pos": [
-    -23.5,
+    -30.2,
     23.7,
     -16.95
    ],
    "size": [
-    13,
+    11.6,
     0.2,
     0.1
    ],
@@ -1468,7 +1468,7 @@
  "hints": [
   {
    "id": "kjoleskap",
-   "text": "Kjøleskapet er flyttet\nOverskapet er kortere nå. Fra enden hopper du til den lille hylla, og derfra til kjøleskapet.",
+   "text": "Bygg en bro\nFra den lille hylla er det for langt til kjøleskapet, og tre gir etter. Trykk BYGG ved kanten, bytt til stål med STÅL, lag trekanter og trykk PRØV.",
    "pos": [
     -23.5,
     38.9,
@@ -1817,7 +1817,7 @@
    "id": "smule_8",
    "x": -33.74,
    "y": 0.8,
-   "z": -27.74
+   "z": -15.74
   },
   {
    "id": "smule_9",
@@ -1832,6 +1832,449 @@
    "z": -2.24
   }
  ],
+ "build": {
+  "sites": [
+   {
+    "id": "kjk6",
+    "label": "Gapet fra hylla til kjøleskapet (stål)",
+    "x": -18.4,
+    "y": 39.6,
+    "z": -27,
+    "w": 24,
+    "h": 16,
+    "anchors": [
+     {
+      "u": -6,
+      "v": 0
+     },
+     {
+      "u": 6,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -11.5,
+      "u1": -6
+     },
+     {
+      "u0": 6,
+      "u1": 11.5
+     }
+    ],
+    "start": {
+     "u": -10,
+     "v": 0
+    },
+    "goal": {
+     "u": 10,
+     "v": 0
+    },
+    "d": 4,
+    "need": "material",
+    "walkDir": -1,
+    "grid": {
+     "step": 0.4,
+     "stars": {
+      "three": {
+       "cost": 40,
+       "parts": 12
+      },
+      "two": {
+       "cost": 76,
+       "parts": 21
+      }
+     },
+     "stage": {
+      "loads": [
+       "car",
+       "robot",
+       "figure"
+      ],
+      "massK": 18,
+      "budget": 80
+     }
+    },
+    "ref": {
+     "placed": [],
+     "links": [],
+     "surfaces": [],
+     "grid": {
+      "nodes": [
+       [
+        -4,
+        0
+       ],
+       [
+        -2,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        2,
+        0
+       ],
+       [
+        4,
+        0
+       ],
+       [
+        -4,
+        2
+       ],
+       [
+        -2,
+        2
+       ],
+       [
+        0,
+        2
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        4,
+        2
+       ]
+      ],
+      "rods": [
+       [
+        0,
+        2,
+        "steel"
+       ],
+       [
+        2,
+        3,
+        "steel"
+       ],
+       [
+        3,
+        4,
+        "steel"
+       ],
+       [
+        4,
+        5,
+        "steel"
+       ],
+       [
+        5,
+        6,
+        "steel"
+       ],
+       [
+        6,
+        1,
+        "steel"
+       ],
+       [
+        7,
+        8,
+        "steel"
+       ],
+       [
+        8,
+        9,
+        "steel"
+       ],
+       [
+        9,
+        10,
+        "steel"
+       ],
+       [
+        10,
+        11,
+        "steel"
+       ],
+       [
+        0,
+        7,
+        "steel"
+       ],
+       [
+        1,
+        11,
+        "steel"
+       ],
+       [
+        2,
+        7,
+        "steel"
+       ],
+       [
+        3,
+        8,
+        "steel"
+       ],
+       [
+        4,
+        9,
+        "steel"
+       ],
+       [
+        5,
+        10,
+        "steel"
+       ],
+       [
+        6,
+        11,
+        "steel"
+       ],
+       [
+        2,
+        8,
+        "steel"
+       ],
+       [
+        3,
+        9,
+        "steel"
+       ],
+       [
+        9,
+        5,
+        "steel"
+       ],
+       [
+        10,
+        6,
+        "steel"
+       ]
+      ]
+     },
+     "best": {
+      "nodes": [
+       [
+        -4,
+        0
+       ],
+       [
+        -2,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        2,
+        0
+       ],
+       [
+        4,
+        0
+       ],
+       [
+        -4,
+        2
+       ],
+       [
+        -2,
+        2
+       ],
+       [
+        0,
+        2
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        4,
+        2
+       ]
+      ],
+      "rods": [
+       [
+        0,
+        2,
+        "steel"
+       ],
+       [
+        2,
+        3,
+        "steel"
+       ],
+       [
+        3,
+        4,
+        "steel"
+       ],
+       [
+        4,
+        5,
+        "steel"
+       ],
+       [
+        5,
+        6,
+        "steel"
+       ],
+       [
+        6,
+        1,
+        "steel"
+       ],
+       [
+        10,
+        11,
+        "steel"
+       ],
+       [
+        1,
+        11,
+        "steel"
+       ],
+       [
+        5,
+        10,
+        "steel"
+       ],
+       [
+        6,
+        11,
+        "wood"
+       ],
+       [
+        10,
+        6,
+        "steel"
+       ]
+      ]
+     },
+     "route": [
+      "gulv",
+      "kasse",
+      "komfyrhandkle",
+      "komfyr_front",
+      "benk_o",
+      "brodrister",
+      "mikro",
+      "kjokkenhandkle",
+      "krydderhylle",
+      "hvitlok",
+      "overskap",
+      "hylle_over_vask",
+      "@bro",
+      "kjoleskap"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "k1",
+    "type": "plank_l",
+    "x": 28,
+    "y": 0.9,
+    "z": 21
+   },
+   {
+    "id": "k2",
+    "type": "plank_s",
+    "x": 33,
+    "y": 0.9,
+    "z": 16
+   },
+   {
+    "id": "k3",
+    "type": "block",
+    "x": 24,
+    "y": 0.9,
+    "z": 25.6
+   },
+   {
+    "id": "k4",
+    "type": "weight",
+    "x": 31.6,
+    "y": 0.9,
+    "z": 25.6
+   }
+  ]
+ },
+ "required": {
+  "site": "kjk6",
+  "ease": [
+   {
+    "id": "kjoleskap",
+    "min": [
+     -30,
+     0,
+     -30
+    ],
+    "max": [
+     -17,
+     38,
+     -17
+    ],
+    "route": {
+     "x0": -30,
+     "x1": -17,
+     "z0": -30,
+     "z1": -17,
+     "top": 38
+    }
+   },
+   {
+    "id": "kjoleskap_handtak",
+    "decor": true,
+    "pos": [
+     -18.5,
+     22,
+     -16.7
+    ],
+    "size": [
+     0.6,
+     16,
+     0.6
+    ]
+   },
+   {
+    "id": "kjoleskap_fuge",
+    "decor": true,
+    "pos": [
+     -23.5,
+     23.7,
+     -16.95
+    ],
+    "size": [
+     13,
+     0.2,
+     0.1
+    ]
+   },
+   {
+    "id": "kakeboks",
+    "min": [
+     -28.4,
+     38,
+     -28.4
+    ],
+    "max": [
+     -24,
+     41.6,
+     -24
+    ]
+   }
+  ],
+  "easeHints": {
+   "kjoleskap": "Kjøleskapet er flyttet\nOverskapet er kortere nå. Fra enden hopper du til den lille hylla, og derfra til kjøleskapet."
+  },
+  "easeGoal": [
+   -20.8,
+   38,
+   -21.2
+  ]
+ },
  "puzzles": [
   {
    "id": "bro",
@@ -1867,11 +2310,11 @@
  ],
  "goals": [
   {
-   "id": "smuler",
-   "type": "crumbs",
-   "label": "Samle 6 smuler",
-   "en": "Collect 6 crumbs",
-   "n": 6
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg en bro i stål (BYGG-knappen)",
+   "en": "Build a steel bridge (BUILD button)",
+   "flag": "kjk6"
   },
   {
    "id": "sjef",
@@ -2027,11 +2470,11 @@
   },
   {
    "id": "kjoleskap",
-   "x0": -30,
-   "x1": -17,
+   "x0": -36,
+   "x1": -24.4,
    "z0": -30,
    "z1": -17,
-   "top": 38
+   "top": 39.6
   }
  ],
  "start": [
@@ -2040,8 +2483,8 @@
   24
  ],
  "goal": [
-  -20.8,
-  38,
+  -26.8,
+  39.6,
   -21.2
  ],
  "deathY": -15,

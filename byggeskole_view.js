@@ -17,8 +17,8 @@ export function schoolMenuHtml(T, prog, r2 = null) {   // r2: { n, total } ekstr
   const b = schoolBadge(prog), tag = b.kind === 'recommended' ? `<span class="sktag">${esc(T('school.rec'))}</span>` : `<span class="sktag p">✓ ${b.n}/${b.total}</span>`;
   return `<button class="mbtn sec" id="mSchool">🏗 ${esc(T('school.btn'))}${tag}<small>${esc(T('school.sub', { n: prog.n, total: prog.total }))}${r2 && r2.total && r2.n ? ' · ' + esc(T('r2.menu', { n: r2.n, total: r2.total })) : ''}</small></button>`;
 }
-export const schoolCardHtml = (T, kind) => kind === 'req'
-  ? `<b>${esc(T('req.card.title'))}</b>${esc(T('req.card.text'))}<div class="skb"><button data-sk="try">${esc(T('req.card.how'))}</button><button data-sk="skip">${esc(T('req.card.ok'))}</button></div>`   // R138: påkrevd bygg
+export const schoolCardHtml = (T, kind) => kind === 'req' || kind === 'req.truss' || kind === 'req.mat'
+  ? `<b>${esc(T('req.card.title'))}</b>${esc(T(kind === 'req' ? 'req.card.text' : `req.card.text.${kind.slice(4)}`))}<div class="skb"><button data-sk="try">${esc(T('req.card.how'))}</button><button data-sk="skip">${esc(T('req.card.ok'))}</button></div>`   // R138: påkrevd bygg
   : kind === 'fagverk'
   ? `<b>${esc(T('badebro.fagverk.title'))}</b>${esc(T('badebro.fagverk.text'))}<div class="skb"><button data-sk="try">${esc(T('badebro.fagverk.go'))}</button><button data-sk="skip">${esc(T('badebro.fagverk.skip'))}</button></div>`   // R119
   : kind === 'done'
@@ -40,7 +40,7 @@ export function createSchoolView({ T, logEv } = {}) {
   return {
     // T: tekstfunksjon (følger språket)
     showCard: ({ onTry, onSkip }) => mount('card', { try: onTry, skip: onSkip }),
-    showReq: ({ onHow, onOk }) => mount('req', { try: onHow, skip: onOk }),   // R138: «Ny til bygging?» i brett med påkrevd bygg (SÅ SLIK / FORSTÅTT)
+    showReq: ({ onHow, onOk, kind = 'req' }) => mount(kind, { try: onHow, skip: onOk }),   // R140: kind = 'req' | 'req.truss' | 'req.mat'. R138: «Ny til bygging?» i brett med påkrevd bygg (SÅ SLIK / FORSTÅTT)
     showDone: ({ onOk }) => mount('done', { ok: onOk }),
     showFagverk: ({ onTry, onSkip }) => mount('fagverk', { try: onTry, skip: onSkip }),   // R119: «Prøv Byggeskolen · Fagverk først» (TIL BYGGESKOLEN / HOPP OVER)
     hide, get open() { return !!el; },
