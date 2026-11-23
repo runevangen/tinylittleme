@@ -102,6 +102,12 @@ assert.equal(sceneToRoom({}).ok, false);
   const sc = { ...bad, objects: [...bad.objects, ...extra], goal: { ...bad.goal, y: 9999 } }; delete sc.goal.on;
   const r = sceneToRoom(sc); assert.equal(r.ok, true); assert.ok(!['test_dor', 'test_taklist'].includes(r.autoGoal), `auto-målet er ikke en dør eller liste (${r.autoGoal})`);
   for (const c of goalCandidates(sc, 4)) assert.ok(!['test_dor', 'test_taklist'].includes(c.id), 'målforslag er ikke dør eller liste'); }
+// R166: en tolkning fra bilder har ikke `rev`; den skal likevel bli et gyldig brett (slik oppsto «Forslaget ble ikke et riktig brett»)
+{ const ai = JSON.parse(JSON.stringify({ name: 'Stuen', units: 'cm', room: { width: 400, depth: 350, height: 240, floor: { material: 'plastic', color: '#d8c8b0' }, walls: { material: 'plaster', color: '#a8b8d0' }, ceiling: { material: 'plaster', color: '#f0f0f0' } },
+    start: { x: 350, z: 10 }, goal: { x: 30, y: 180, z: 170, on: 'shelf_tall' },
+    objects: [{ id: 'sofa', kind: 'sofa', material: 'fabric', color: '#334455', box: [180, 400, 0, 45, 180, 330] }, { id: 'skrivebord', kind: 'table', material: 'wood', color: '#d2b48c', box: [20, 120, 0, 75, 20, 70] }, { id: 'shelf_tall', kind: 'shelf', material: 'wood', color: '#c9a36b', box: [10, 50, 0, 180, 150, 190] }] }));
+  assert.ok(!('rev' in ai), 'tolkningen har ikke rev'); const r = sceneToRoom(ai); assert.equal(r.ok, true, `tolkning uten rev gir et brett (${r.reason} ${r.detail || ''})`); assert.equal(r.level.rev, 1);
+  const bad2 = sceneToRoom({ ...ai, goal: { ...ai.goal, y: 9999 } }); assert.equal(bad2.ok, true, 'auto-mål virker også uten rev'); }
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
 

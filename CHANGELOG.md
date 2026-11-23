@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.178** – RETTET: brett fra bilder ble alltid avvist som «Forslaget ble ikke et riktig brett» fordi tolkningen mangler feltet `rev`; får nå rev 1. Feillogg viser årsaken også etter auto-mål (leditor_logic, test_leditor).
 - **2.177** – Bildetolkning: personlig kvote per tester-kode (tlm_testers.le_quota). Rune har 100, andre 15; månedstaket 200 gjelder alle til sammen (kun databasen, migrasjon).
 - **2.176** – Lag brett fra bilder: auto-målet og målforslagene velger møbler (fast, 30–160 cm, stor nok, ikke dør, liste, speil, veggskap eller løs ting), helst nåbare (scene2level_core, test_leditor).
 - **2.175** – Feilsøking: «Forslaget ble ikke et riktig brett» logger nå nøyaktig hva som avvises (start, mål, deathY, bokser, innhold) i rapporten (rooms_logic, leditor_logic).

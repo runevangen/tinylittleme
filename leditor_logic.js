@@ -94,10 +94,11 @@ export function sceneToRoom(scene, name, opts = {}) {
   let r;
   try { r = sceneToLevel(scene); } catch (e) {
     const noFlat = /flate under målet/.test(String(e && e.message));
-    if (noFlat && opts.auto !== false) { const g = autoGoal(scene); if (g) { const room = sceneToRoom(g.scene, name, { auto: false }); if (room.ok) return { ...room, scene: g.scene, autoGoal: g.on }; return { ...room, scene: g.scene, detail: 'etter auto-mål' }; } }
+    if (noFlat && opts.auto !== false) { const g = autoGoal(scene); if (g) { const room = sceneToRoom(g.scene, name, { auto: false }); if (room.ok) return { ...room, scene: g.scene, autoGoal: g.on }; return { ...room, scene: g.scene, detail: `${room.detail || ''} (etter auto-mål)`.trim() }; } }
     return { ok: false, reason: noFlat ? 'maal' : 'scene', detail: String(e && e.message || '').slice(0, 120) };
   }
   const level = r.level; if (name) level.name = level.nameEn = safeName(name);
+  if (!('rev' in level) || !Number.isFinite(level.rev)) level.rev = 1;   // tolkningen fra bilder har ikke `rev` (versjon av brettet); sjekken krever det
   const v = validateRoom(level); if (!v.ok) return { ok: false, reason: v.error, detail: String(v.why || '').slice(0, 160) };
   const helperCount = r.helpers.length;
   return { ok: true, level: v.level, solvable: !!r.solvable, helpers: r.helpers.map((h) => ({ id: h.id, size_cm: h.size_cm, at_cm: h.at_cm })), helperCount, tooMany: helperCount > LED.maxHelpers, things: thingsOf(scene).length };
