@@ -94,6 +94,7 @@ export const SETTING_TEXT = {
   ants: ['Maur (fiender som patruljerer): av = ingen maur i brettene', 'Ants (patrolling enemies): off = no ants in the levels'],
   toys: ['Levende leker (tennisball, bil, vippehest, wind-up-robot og sprettboks reagerer med lyd og bevegelse)', 'Living toys (tennis ball, car, rocking horse, wind-up robot and jack-in-the-box react with sound and movement)'],
   roomson: ['Mine brett (testere): VELG BRETT får knappen MINE BRETT, der du spiller brett fra en kode og deler egne brett med en kode. Krever tester-kode', 'My levels (testers): the level picker gets a MY LEVELS button where you play a level from a code and share your own with a code. Needs a tester code'],
+  ledon: ['Lag brett fra bilder (testere): VELG BRETT får knappen LAG BRETT FRA BILDER, som lager et spillbart brett av 2–4 bilder av et sted. Krever tester-kode', 'Make a level from photos (testers): the level picker gets a MAKE A LEVEL FROM PHOTOS button that turns 2–4 photos of a place into a playable level. Needs a tester code'],
   replies: ['Vis svar og tellere fra Claude (⚑-boksen)', 'Show replies and counters from Claude (the ⚑ box)'],
   combo: ['Kombinasjoner: svamp + vann, håndkle + håndkle, tung ting + papirhaug (TA ved siden av)', 'Combinations: sponge + water, towel + towel, heavy thing + paper pile (TAKE next to it)'],
   vaultanim: ['Stavhopp: egen animasjon (figuren svinger over staven)', 'Pole vault: its own animation (the character swings over the pole)'],
