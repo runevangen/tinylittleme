@@ -63,13 +63,30 @@ export async function callTolk({ code, images, answers }, { fetchFn = globalThis
 // ---------- scene → brett ----------
 const clone = (o) => JSON.parse(JSON.stringify(o));
 // { ok, level, solvable, helpers, helperCount, tooMany, things } | { ok:false, reason: 'maal' | 'form' | 'stor' | 'scene' }
-export function sceneToRoom(scene, name) {
+export function sceneToRoom(scene, name, opts = {}) {
   let r;
-  try { r = sceneToLevel(scene); } catch (e) { return { ok: false, reason: /flate under målet/.test(String(e && e.message)) ? 'maal' : 'scene' }; }
+  try { r = sceneToLevel(scene); } catch (e) {
+    if (/flate under målet/.test(String(e && e.message)) && opts.auto !== false) { const g = autoGoal(scene); if (g) { const room = sceneToRoom(g.scene, name, { auto: false }); if (room.ok) return { ...room, scene: g.scene, autoGoal: g.on }; } }
+    return { ok: false, reason: /flate under målet/.test(String(e && e.message)) ? 'maal' : 'scene' };
+  }
   const level = r.level; if (name) level.name = level.nameEn = safeName(name);
   const v = validateRoom(level); if (!v.ok) return { ok: false, reason: v.error };
   const helperCount = r.helpers.length;
   return { ok: true, level: v.level, solvable: !!r.solvable, helpers: r.helpers.map((h) => ({ id: h.id, size_cm: h.size_cm, at_cm: h.at_cm })), helperCount, tooMany: helperCount > LED.maxHelpers, things: thingsOf(scene).length };
+}
+// Fant tolkningen ikke et brukbart mål, velger spillet selv: den høyeste faste flata som kan nås (løsbar først), målet midt på den.
+// Gir { scene, on } eller null. Prøver de høyeste flatene først (maks 12).
+export function autoGoal(scene) {
+  const objs = ((scene && scene.objects) || []).filter((o) => o && Array.isArray(o.box) && o.box.length === 6 && !o.movable && !o.decor && o.box.every(Number.isFinite) && o.box[3] > o.box[2] + 1 && o.box[1] - o.box[0] >= 6 && o.box[5] - o.box[4] >= 6)
+    .sort((a, b) => b.box[3] - a.box[3]).slice(0, 12);
+  let fallback = null;
+  for (const o of objs) {
+    const s = clone(scene); s.goal = { ...(scene.goal || {}), x: (o.box[0] + o.box[1]) / 2, y: o.box[3], z: (o.box[4] + o.box[5]) / 2, on: o.id };
+    let r; try { r = sceneToLevel(clone(s)); } catch { continue; }
+    if (r.solvable && r.helpers.length <= LED.maxHelpers) return { scene: s, on: o.id };
+    if (!fallback) fallback = { scene: s, on: o.id };
+  }
+  return fallback;
 }
 // Kan brettet spilles? Løsbar etter rutegrafen og ikke for mange hjelpeobjekter
 export const canPlay = (room) => !!room && room.ok && room.solvable && !room.tooMany;

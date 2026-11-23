@@ -124,10 +124,11 @@ export function createLeditorView(ctx) {
     S.photos.length = 0;   // bildene slippes straks (ingenting lagres)
     if (!res.ok) { logEv?.('leveleditor', `feilet: ${res.reason} (${Date.now() - t0} ms)`); failed(res.reason); return; }
     S.scene = res.scene; S.usage = res.usage || { cost_usd: 0, ms: 0 }; S.name = defaultName(res.scene);
-    const room = sceneToRoom(res.scene); S.room = room;
+    const room = sceneToRoom(res.scene); S.room = room; if (room.scene) S.scene = room.scene;
     if (!room.ok) { logEv?.('leveleditor', `scene ble ikke brett: ${room.reason}`); failed(room.reason); return; }
+    if (room.autoGoal) logEv?.('leveleditor', `auto-mål på ${room.autoGoal}`);
     logEv?.('leveleditor', ledLog({ what: 'forslag', cost: S.usage.cost_usd, ms: S.usage.ms || Date.now() - t0, edits: 0, bot: room.solvable ? 'vei' : 'ingen', extra: `${room.things} ting, ${room.helperCount} hjelpeobjekter` }));
-    result();
+    result(room.autoGoal ? T('autoGoal') : '');
   }
   function failed(reason) {
     const el = root();
@@ -154,7 +155,7 @@ export function createLeditorView(ctx) {
     $('ledPlay').disabled = false; if (!ok) $('ledPlay').classList.add('sec');
     $('ledPlay').onclick = () => { const id = save(); if (id) { logSummary('spiller'); ctx.onPlay?.(id); } };
     $('ledAdj').onclick = adjust;
-    $('ledChk').onclick = () => { S.room = sceneToRoom(S.scene, S.name); logSummary('sjekk'); result(); };
+    $('ledChk').onclick = () => { S.room = sceneToRoom(S.scene, S.name); if (S.room.scene) S.scene = S.room.scene; logSummary('sjekk'); result(); };
     $('ledSave').onclick = () => { if (S.savedId) { ctx.onMine?.(); return; } const id = save(); if (id) { result(T('saved')); } };
     $('ledBack').onclick = leave;
     $('ledShare').onclick = async () => {
@@ -191,7 +192,7 @@ export function createLeditorView(ctx) {
       const t = th.find((q) => q.key === S.sel); $('ledSel').textContent = t ? T('adjSel', t.label) : T('adjNone');
     };
     const apply = (next, what) => {
-      if (!next) return false; const room = sceneToRoom(next, S.name);
+      if (!next) return false; const room = sceneToRoom(next, S.name, { auto: false });   // ved justering skjules ingenting: ødelegger flyttingen brettet, angres den
       if (!room.ok) { msg(T('adjFail')); return false; }
       S.undo.push(S.scene); S.scene = next; S.room = room; S.edits++;
       if (S.savedId) { saveRoom(st, { id: S.savedId, name: S.name, level: room.level }); if (S.code) { setRoomCode(st, S.savedId, ''); S.code = ''; } }   // rettet brett: den delte versjonen er gammel, DEL gir ny kode

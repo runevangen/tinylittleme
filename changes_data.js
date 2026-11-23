@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r157-auto-maal', version: '2.166', date: '2026-11-23', title: 'Lag brett fra bilder: finner ikke bildene et sted for målet, legger spillet målflagget selv på det høyeste stedet du kan nå.',
+    how: 'Trykk LAG BRETT FRA BILDER i VELG BRETT, ta 2–4 bilder og trykk LAG BRETT. Står målet på et uvanlig sted, kan du flytte det med JUSTER.', level: '', spot: null },
   { id: 'r154-bygg-rydder', version: '2.161', date: '2026-11-23', title: 'Byggeskjermen rydder etter seg: stenger og kuler du fjerner blir borte, knappene (⚑, tilbake, PRØV) svarer alltid, og FRA/TIL-etiketten legger seg ikke over knuter.',
     how: 'Åpne Nivå 5 og trykk BYGG. Legg noen stenger, fjern dem igjen og bytt materiale. Sjekk at ingenting blir hengende og at ⚑ og PRØV fortsatt virker.', level: 'barnerom2', spot: null },
   { id: 'r155-statuslinje', version: '2.159', date: '2026-11-23', title: 'Telefonens klokke og batteri øverst passer nå til spillet, og knapper og tekst ligger innenfor den sikre sonen.',

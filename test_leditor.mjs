@@ -50,7 +50,12 @@ assert.equal(room.ok, true); assert.equal(room.solvable, true); assert.equal(roo
 assert.equal(room.level.name, 'Badet mitt'); assert.equal(validateRoom(room.level).ok, true); assert.ok(JSON.stringify(room.level).length < 150000);
 const core = sceneToLevel(bad); const cli = JSON.parse(fs.readFileSync('levels/bad.level.json', 'utf8'));
 assert.deepEqual(JSON.parse(JSON.stringify(core.level.boxes)), cli.boxes, 'scene2level_core gir de samme boksene som levels/bad.level.json'); assert.deepEqual(core.level.start, cli.start); assert.deepEqual(core.level.goal, cli.goal);
-assert.equal(sceneToRoom({ ...bad, goal: { ...bad.goal, y: 9999 } }).reason, 'maal'); assert.equal(sceneToRoom({}).ok, false);
+{ const noGoal = { ...bad, goal: { ...bad.goal, y: 9999 } };
+  assert.equal(sceneToRoom(noGoal, undefined, { auto: false }).reason, 'maal', 'uten auto-mål gir et umulig mål feilen maal');
+  const fixed = sceneToRoom(noGoal); assert.equal(fixed.ok, true, 'auto-mål: spillet velger selv et sted for målet'); assert.ok(fixed.autoGoal && fixed.scene && fixed.scene.goal.on === fixed.autoGoal);
+  assert.ok(fixed.scene.goal.y < 9999 && sceneToRoom(fixed.scene).ok, 'det nye målet gir et gyldig brett'); assert.equal(fixed.solvable, true, 'auto-målet velges så brettet kan vinnes når det går');
+  assert.equal(sceneToRoom({ ...noGoal, objects: [] }).ok, false, 'ingen flater å velge: fortsatt feil'); }
+assert.equal(sceneToRoom({}).ok, false);
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
 
@@ -65,7 +70,7 @@ assert.equal(moveThing(bad, 'o:finnesikke', 10, 0), null);
 assert.equal(deleteThing(bad, 'o:' + bad.goal.on), null, 'tingen med målet kan ikke slettes');
 const gone = deleteThing(bad, key); assert.ok(!gone.objects.some((o) => o.id === 'vaskekurv')); assert.equal(sceneToRoom(gone).ok, true);
 const goalMove = moveThing(bad, 'o:' + bad.goal.on, 0, 10); assert.equal(goalMove.goal.z, bad.goal.z + 10); assert.equal(sceneToRoom(goalMove).ok, true, 'målet følger tingen');
-assert.equal(sceneToRoom(moveThing(bad, 'o:' + bad.goal.on, 10, 0)).ok, false, 'en flytting som ødelegger brettet gir ok:false (visningen angrer den)');
+assert.equal(sceneToRoom(moveThing(bad, 'o:' + bad.goal.on, 10, 0), undefined, { auto: false }).ok, false, 'en flytting som ødelegger brettet gir ok:false (visningen angrer den)');
 const u = undoStack(2); u.push(1); u.push(2); u.push(3); assert.equal(u.size, 2); assert.equal(u.pop(), 3); assert.equal(u.pop(), 2); assert.equal(u.pop(), null);
 // mange rettinger på rad: hver gir et gyldig brett eller blir angret (aldri et ødelagt brett)
 { let s = bad; for (let i = 0; i < 12; i++) { const t = thingsOf(s)[(i * 7) % thingsOf(s).length]; const n = i % 3 === 2 ? deleteThing(s, t.key) : moveThing(s, t.key, 10 * ((i % 2) * 2 - 1), 10); if (!n) continue; const r = sceneToRoom(n); if (r.ok) s = n; } assert.ok(sceneToRoom(s).ok); }

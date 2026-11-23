@@ -1,6 +1,7 @@
 // R146: NYTT-menyen på to språk. id (fra changes_data.js) → [kortere norsk tittel eller null (da brukes title i changes_data.js), engelsk tittel, engelsk «slik tester du»].
 // Nye rader i changes_data.js legges også inn her, så de står på begge språk. Knappene skrives som i spillet (store bokstaver).
 export const CHANGES_TEXT = {
+  'r157-auto-maal': [null, 'Make a level from photos: if the photos give no spot for the goal, the game puts the goal flag on the highest place you can reach.', 'Tap MAKE LEVEL FROM PHOTOS in PICK LEVEL, take 2–4 photos and tap MAKE LEVEL. If the goal ends up somewhere odd, move it with ADJUST.'],
   'r154-bygg-rydder': [null, 'The build screen now cleans up after itself: rods and joints you remove disappear, the buttons (flag, back, TRY) always respond, and the FROM/TO label no longer sits on top of joints.', 'Open Level 5 and tap BUILD. Place a few rods, remove them and change material. Check that nothing is left behind and that the flag and TRY still work.'],
   'r155-statuslinje': [null, 'The phone clock and battery at the top now match the game, and buttons and text stay inside the safe area.', 'Open the game on your phone and look at the top of the screen, both in the game and on the build screen.'],
   'r156-vegg-bad': [null, 'The gap by the door frame in the Bathroom is sealed, so the figure can no longer get behind the wall.', 'Start Level 4 · Bathroom and walk to the wall by the laundry basket and door frame. Try to get behind the wall: it should not work.'],
