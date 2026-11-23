@@ -275,7 +275,7 @@ export function createBuildMode({ getStars2 = () => true, getView25 = () => fals
   const bux = createBuildUx(buxCtx);
   const trh = createTrussHelp({   // R122: TREKANT / DIAGONAL / ? (grid_truss_view.js, grid_truss_help.js): delt kode for broene, Byggeskolen og den gamle rutenett-skjermen
     root, T, toast, logEv, buzz, audio, grid, store: st0, onChange, getB: () => (active ? getB(active) : null), site: () => active, view: () => view, isSim: () => !!sim, width: () => W, topY: () => TOPPX(), botY: () => H - BOTPX(), trayRender: () => trayRender(),
-    toWorld: (x, y) => toWorld(view, W, H, x, y), insets: () => (cbx.on() ? cbx.insets() : bux.on() ? bux.insets() : { l: 0, r: 0 }), getCfg: () => ({ on: trussOn(getTruss2()) }),
+    toWorld: (x, y) => toWorld(view, W, H, x, y), insets: () => (cbx.on() ? cbx.insets() : bux.on() ? bux.insets() : { l: 0, r: 0 }), getCfg: () => { const need = !!(lsite()?.need === 'truss' && LEVEL.required?.site === lsite()?.id); return { on: trussOn({ ...getTruss2(), need }), need }; },
     getBudget: () => { const g = active ? stageNow() : null; if (!g) return null; const b = getB(active), r = starsFor(active, b.placed, b.links); return budgetOf({ site: active, cost: r.cost, stageBudget: g.budget }); },   // bare et oppdragsbudsjett (Byggeskolen) er en grense; i Hyllebroen er «budsjettet» tersklen for to stjerner og hjelpen blir ikke stoppet av den
   });
   const swp = createSwapUI({   // R128: BYTT TIL STÅL (grid_swap_view.js, grid_swap.js): delt kode for broene, Byggeskolen og den gamle rutenett-skjermen

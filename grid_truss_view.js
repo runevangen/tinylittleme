@@ -60,7 +60,7 @@ export function createTrussHelp(ctx) {
     const el = q('.gtr'); if (!el) return;
     if (!active()) { el.classList.remove('show'); rowSig = ''; return; }
     const c = recompute(), cq = c.quads[qIdx], cd = cq ? c.diag[qIdx] : null, ins = ctx.insets ? ctx.insets() : { l: 0, r: 0 };
-    const tb = q('[data-th="tri"]'), db = q('[data-th="diag"]'), show = !!c.base || !!cq;
+    const tb = q('[data-th="tri"]'), db = q('[data-th="diag"]'), nudge = !!cfg().need && !c.base && !cq && G().rods.length === 0, show = !!c.base || !!cq || nudge;   // R140: steder som krever trekanter viser «?» (forklaringen) fra første stund, før noe er valgt
     const sig = [show, !!c.base, c.tri.list.length, !!cq, !!(cd && cd.diag), mat(), Math.round(ctx.botY()), Math.round(ins.l || 0), Math.round(ins.r || 0), ctx.lang?.()].join('|');
     if (sig === rowSig) return; rowSig = sig;
     el.classList.toggle('show', show);

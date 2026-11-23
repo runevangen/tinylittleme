@@ -73,5 +73,6 @@ export function gridRefRoute(site, solids, w = 0.5, tol = 0.2) {
     if (!tops.length) return null; const top = Math.max(...tops);
     const id = '@rutenett' + k; surfaces.push({ id, u0: u, u1, top, tol }); ids.push(id);
   }
-  return { surfaces, route: ref.route.flatMap((id) => (id === '@bro' ? ids : [id])) };
+  const back = site.walkDir === -1;   // R140: figuren går mot venstre i rommet (Nivå 6): flatene rekkes fra høyre (prøven i byggeskjermen går fortsatt fra venstre)
+  return { surfaces, route: ref.route.flatMap((id) => (id === '@bro' ? (back ? ids.slice().reverse() : ids) : [id])) };
 }

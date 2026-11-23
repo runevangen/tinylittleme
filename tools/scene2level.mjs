@@ -20,7 +20,7 @@ if (!inPath || !outPath) { console.error('bruk: scene2level.mjs <scene.json> <le
 const scene = JSON.parse(fs.readFileSync(inPath, 'utf8'));
 // R138: påkrevd bygg. `required: { site, ease: { <id>: [boks i cm] }, easeHints? }`: tingene i `objects` har den VANSKELIGE (påkrevde) plasseringen, `ease` er den gamle lette plasseringen.
 // Rutegrafen og ruta regnes på den lette plasseringen (ellers legger verktøyet inn en hjelpebro); brettet skrives med den vanskelige, og `required` får den lette tilbake til valget buildrequired = av (buildreq_logic.js).
-const reqCfg = scene.required || null, hardBox = {};
+const reqCfg = scene.required || null, hardBox = {}, hardGoalCm = reqCfg?.easeGoal ? { ...scene.goal } : null;   // R140: easeGoal
 // R139: `required.easyPatch` (se tools/scene_patch.mjs): det lette brettet lages først (ruta, grafen og rapporten kommer derfra), det vanskelige skrives med `required.easy` = forskjellen
 let easyLevel = null;
 if (reqCfg && reqCfg.easyPatch) {
@@ -30,6 +30,8 @@ if (reqCfg && reqCfg.easyPatch) {
   easyLevel = JSON.parse(fs.readFileSync(eo, 'utf8')); scene.validate = false;   // det vanskelige brettet har ingen vei uten bygg: ingen hjelpebroer fra verktøyet
 }
 if (reqCfg) for (const [id, eb] of Object.entries(reqCfg.ease || {})) { const o = scene.objects.find((q) => q.id === id); if (!o) throw new Error(`required.ease: fant ikke ${id}`); hardBox[id] = o.box; o.box = eb; }
+// R140: `required.easeGoal: [x, y, z]` (cm) = målet slik det sto før (Nivå 6: kjøleskapet er flyttet); ruta regnes på det, og brettet skrives med målet fra `goal`
+if (hardGoalCm) Object.assign(scene.goal, { x: reqCfg.easeGoal[0], y: reqCfg.easeGoal[1], z: reqCfg.easeGoal[2] });
 
 const U = 5;                                    // cm per enhet
 const R = scene.room;
@@ -83,7 +85,7 @@ const windows = (scene.windows || []).map((w) => {
 });
 const sun = windows[0] ? (windows[0].wall === 'E' ? [30, 60, -8] : windows[0].wall === 'W' ? [-30, 60, -8] : windows[0].wall === 'N' ? [8, 60, -30] : [8, 60, 30]) : [28, 60, -24];
 
-const goal = [ux(scene.goal.x), uy(scene.goal.y), uz(scene.goal.z)];
+let goal = [ux(scene.goal.x), uy(scene.goal.y), uz(scene.goal.z)];
 const start = [ux(scene.start.x), 0, uz(scene.start.z)];
 
 // ---- 2. overflatekart -----------------------------------------------------
@@ -307,18 +309,23 @@ const route = (() => {
   return out;
 })();
 // R138: bytt til den påkrevde (vanskelige) plasseringen; den lette ligger igjen i `required` så valget buildrequired = av gir dagens brett
-let required;
+let required, reqSolvable = null;
 if (reqCfg) {
   const ease = [];
   for (const [id, hb] of Object.entries(hardBox)) {
-    const b = boxes.find((q) => q.id === id), o = scene.objects.find((q) => q.id === id), r = route.find((q) => q.id === id);
-    if (!b) throw new Error(`required: ${id} er ikke en fast boks`);
+    const b = boxes.find((q) => q.id === id), o = scene.objects.find((q) => q.id === id), r = route.find((q) => q.id === id), dc = !b && decor.find((q) => q.id === id);
+    if (dc) {   // R140: dekor (f.eks. håndtaket på kjøleskapet) flyttes med; den lette plasseringen ligger igjen som { id, decor, pos, size }
+      const lo = [ux(hb[0]), uy(hb[2]), uz(hb[4])], hi = [ux(hb[1]), uy(hb[3]), uz(hb[5])];
+      ease.push({ id, decor: true, pos: [...dc.pos], size: [...dc.size] }); dc.pos = lo.map((v, i) => round((v + hi[i]) / 2)); dc.size = lo.map((v, i) => round(Math.max(0.05, hi[i] - v))); o.box = hb; continue;
+    }
+    if (!b) throw new Error(`required: ${id} er ikke en fast boks eller dekor`);
     const e = { id, min: [...b.min], max: [...b.max] };
     b.min = [ux(hb[0]), uy(hb[2]), uz(hb[4])]; b.max = [ux(hb[1]), uy(hb[3]), uz(hb[5])]; o.box = hb;
     if (r) { e.route = { x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1, top: r.top }; Object.assign(r, { x0: round(b.min[0]), x1: round(b.max[0]), z0: round(b.min[2]), z1: round(b.max[2]), top: round(b.max[1]) }); }
     ease.push(e);
   }
   required = { site: reqCfg.site, ease, ...(reqCfg.easeHints ? { easeHints: reqCfg.easeHints } : {}) };
+  if (hardGoalCm) { reqSolvable = reachable().has(goalIdx()); required.easeGoal = [...goal]; goal = [ux(hardGoalCm.x), uy(hardGoalCm.y), uz(hardGoalCm.z)]; scene.goal = hardGoalCm; }   // R140: målet flyttes med (rutegrafen gjelder den lette plasseringen); + restore (dropShortcut), se under
 }
 // maur: patruljer i scenen oppgis i cm: { id, on: «gulv» eller id på en ting (flaten de går på), from: [x, z], to: [x, z], speed?, type?: 'ant' | 'spider' | 'carrier' | 'roller' | 'dangler' | 'wasp', alt? (veps: flyhøyde i cm over flata) }
 const ants = (scene.ants || []).map((a) => {
@@ -403,6 +410,7 @@ const build = scene.build ? {
     ...(s.d ? { d: round(s.d / U) } : {}),                                  // R26: dybden på bygget i verden (cm)
     ...(s.drop ? { drop: round(s.drop / U) } : {}),                         // R30: hvor langt ned støtta under en vippe når (cm), ned til rommets gulv
     // R26: referansebygg (kjent god bygging) og ruta gjennom det: ref = { placed: [{id,type,u,v,rot}] (enheter, som lagret), links: [], surfaces: [{id,u0,u1,top}] (enheter), route: [id i ruta eller i surfaces] }
+    ...(s.need ? { need: s.need } : {}), ...(s.walkDir ? { walkDir: s.walkDir } : {}),   // R140: hva stedet krever (truss = trekanter, material = stål); trekanthjelpen er da på også på Ekspert
     ...(s.grid ? { grid: { ...(s.grid.step ? { step: round(s.grid.step / U) } : {}), ...(Array.isArray(s.grid.anchors) && s.grid.anchors.length ? { anchors: s.grid.anchors.map((a) => ({ u: round(a[0] / U), v: round(a[1] / U) })) } : {}), ...(s.grid.stars ? { stars: s.grid.stars } : {}), ...(s.grid.stage ? { stage: s.grid.stage } : {}), ...(s.grid.cable ? { cable: true } : {}), ...(Array.isArray(s.grid.mats) ? { mats: s.grid.mats } : {}) } } : {}),   // R74: egne ankre i rutenett-modus (cm) og oppdrag (laster, massK, budsjett)
       // R72: rutenett-modus tillatt her: step = trinn (cm), stars = terskler for rutenett-bygg
     ...(s.stars ? { stars: s.stars } : {}),                                  // R47: stjerne-terskler { three: { cost, parts }, two: { cost, parts } } (build_budget.js)
@@ -430,8 +438,15 @@ const alts = (scene.alts || []).map((a) => {
   return { id: a.id, label: a.label, ...(a.en ? { en: a.en } : {}), route };
 });
 
+// R140: `required.dropShortcut: <id på genvei>`: en verktøy-genvei som ville gå forbi det påkrevde bygget (hårgelé-trappa til skrivebordet i Nivå 5) tas ut av brettet når bygging er påkrevd,
+// og ligger igjen i `required.restore` (bokser, løse ting, lapper, genvei) til valget buildrequired = av legger den tilbake (buildreq_logic.js applyRequired).
+if (required && reqCfg.dropShortcut) {
+  const i = shortcuts.findIndex((c) => c.id === reqCfg.dropShortcut); if (i < 0) throw new Error(`required.dropShortcut: fant ikke genveien ${reqCfg.dropShortcut}`);
+  const sc = shortcuts[i], ids = new Set([sc.item, ...sc.steps]), take = (arr, pred) => { const out = []; for (let k = arr.length - 1; k >= 0; k--) if (pred(arr[k])) out.unshift(arr.splice(k, 1)[0]); return out; };
+  required.restore = { boxes: take(boxes, (b) => ids.has(b.id)), movables: take(movables, (m) => ids.has(m.id)), hints: take(hints, (h) => ids.has(h.id)), shortcuts: shortcuts.splice(i, 1) };
+}
 const finalSeen = reachable();
-const solvable = finalSeen.has(goalIdx());
+const solvable = reqSolvable ?? finalSeen.has(goalIdx());
 
 // ---- 4. skriv ---------------------------------------------------------------
 let level = {

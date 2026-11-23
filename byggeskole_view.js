@@ -18,8 +18,8 @@ export function schoolMenuHtml(T, prog, r2 = null) {   // r2: { n, total } ekstr
   return `<button class="mbtn sec" id="mSchool">🏗 ${esc(T('school.btn'))}${tag}<small>${esc(T('school.sub', { n: prog.n, total: prog.total }))}${r2 && r2.total && r2.n ? ' · ' + esc(T('r2.menu', { n: r2.n, total: r2.total })) : ''}</small></button>`;
 }
 export const reqText = (T, level) => { const k = `req.card.text.${level}`, t = level ? T(k) : k; return t && t !== k ? t : T('req.card.text'); };   // R139: egen setning per brett (trappa, vippa); reserven er Nivå 2-setningen
-export const schoolCardHtml = (T, kind, level = '') => kind === 'req'
-  ? `<b>${esc(T('req.card.title'))}</b>${esc(reqText(T, level))}<div class="skb"><button data-sk="try">${esc(T('req.card.how'))}</button><button data-sk="skip">${esc(T('req.card.ok'))}</button></div>`   // R138: påkrevd bygg
+export const schoolCardHtml = (T, kind, level = '') => kind === 'req' || kind === 'req.truss' || kind === 'req.mat'   // R140: Nivå 5 (trekanter) og Nivå 6 (stål) har egen tekst
+  ? `<b>${esc(T('req.card.title'))}</b>${esc(kind === 'req.truss' ? T('req.card.text.truss') : kind === 'req.mat' ? T('req.card.text.mat') : reqText(T, level))}<div class="skb"><button data-sk="try">${esc(T('req.card.how'))}</button><button data-sk="skip">${esc(T('req.card.ok'))}</button></div>`   // R138: påkrevd bygg
   : kind === 'fagverk'
   ? `<b>${esc(T('badebro.fagverk.title'))}</b>${esc(T('badebro.fagverk.text'))}<div class="skb"><button data-sk="try">${esc(T('badebro.fagverk.go'))}</button><button data-sk="skip">${esc(T('badebro.fagverk.skip'))}</button></div>`   // R119
   : kind === 'done'
@@ -41,7 +41,7 @@ export function createSchoolView({ T, logEv } = {}) {
   return {
     // T: tekstfunksjon (følger språket)
     showCard: ({ onTry, onSkip }) => mount('card', { try: onTry, skip: onSkip }),
-    showReq: ({ onHow, onOk, level = '' }) => mount('req', { try: onHow, skip: onOk }, level),   // R138: «Ny til bygging?» i brett med påkrevd bygg (SÅ SLIK / FORSTÅTT)
+    showReq: ({ onHow, onOk, kind = 'req', level = '' }) => mount(kind, { try: onHow, skip: onOk }, level),   // R138: «Ny til bygging?» i brett med påkrevd bygg (SÅ SLIK / FORSTÅTT)
     showDone: ({ onOk }) => mount('done', { ok: onOk }),
     showFagverk: ({ onTry, onSkip }) => mount('fagverk', { try: onTry, skip: onSkip }),   // R119: «Prøv Byggeskolen · Fagverk først» (TIL BYGGESKOLEN / HOPP OVER)
     hide, get open() { return !!el; },

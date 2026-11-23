@@ -88,8 +88,8 @@ for (const C of CASES) {
 {
   const names = ['bad2', 'barnerom2', 'kjokken2'], before = names.map((n) => rd(`scenes/${n}.scene.json`));
   execFileSync('node', ['tools/make_variants.mjs'], { stdio: 'pipe' }); names.forEach((n, i) => assert.equal(rd(`scenes/${n}.scene.json`), before[i], `${n}: scenen er utdatert, kjør node tools/make_variants.mjs`));
-  for (const n of ['kjokken2', 'barnerom2']) { const L = lv(n); assert.ok(!L.build && !L.required, `${n}: ingen bygg`); assert.deepEqual(toLevel(sc(n)), L, `${n}: brettet er laget av scenen`); const w = walkRoute(`levels/${n}.level.json`); assert.ok(w.ok, w.why); }
-  for (const id of ['bad', 'bad2x', 'barnerom2', 'kjokken2', 'leke', 'stue', 'verksted', 'bro']) if (fs.existsSync(`levels/${id}.level.json`)) assert.equal(requiredOf(lv(id)), null, `${id}: ingen påkrevd bygg`);
+  for (const n of ['kjokken2', 'barnerom2']) { const L = lv(n); assert.deepEqual(toLevel(sc(n)), L, `${n}: brettet er laget av scenen`); }   // R140: har nå påkrevd bygg (test_buildreq3.mjs)
+  for (const id of ['bad', 'bad2x', 'leke', 'stue', 'verksted', 'bro']) if (fs.existsSync(`levels/${id}.level.json`)) assert.equal(requiredOf(lv(id)), null, `${id}: ingen påkrevd bygg`);
   const ps = scenePatch(sc('bad2'), applyEasyPatch(sc('bad2'), sc('bad2').required.easyPatch)); assert.ok(ps.objects, 'scenePatch gir en patch tilbake');
   assert.deepEqual(levelEasy(lv('bad2'), lv('bad2')), {}, 'ingen forskjell mellom like brett'); assert.ok(Object.keys(lv('bad2').required.easy).includes('boxes') && Object.keys(lv('kjokken').required.easy).includes('goals'));
 }
@@ -101,7 +101,7 @@ for (const C of CASES) {
   lang = 'nb'; assert.equal(reqText(T, 'barnerom'), T('req.card.text'), 'Nivå 2 bruker reserveteksten'); assert.equal(reqText(T, ''), T('req.card.text'));
   assert.deepEqual(DICT_KEYS.nb.filter((k) => /^req\./.test(k)).sort(), DICT_KEYS.en.filter((k) => /^req\./.test(k)).sort());
   const main = rd('main.js'), docs = rd('docs/INNSTILLINGER.md'), nivaer = rd('docs/NIVAER.md');
-  assert.ok(/cardKeyOf\(levelId\)/.test(main) && /showReq\(\{ level: levelId/.test(main), 'kortet er per brett'); assert.ok(/Nivå 3.*Nivå 4|Nivå 3 \(trapp/.test(main.match(/fl\('buildrequired'[^\n]+/)[0]), 'valget nevner Nivå 3 og 4');
+  assert.ok(/cardKeyOf\(levelId\)/.test(main) && /showReq\(\{ kind: cardKindOf\(levelId\), level: levelId/.test(main), 'kortet er per brett'); assert.ok(/Nivå 3.*Nivå 4|Nivå 3 \(trapp/.test(main.match(/fl\('buildrequired'[^\n]+/)[0]), 'valget nevner Nivå 3 og 4');
   assert.ok(docs.includes('R139') && docs.includes('easyPatch'), 'dokumentert i docs/INNSTILLINGER.md'); assert.ok(nivaer.includes('R139'), 'dokumentert i docs/NIVAER.md');
 }
 fs.rmSync(tmpdir, { recursive: true, force: true });

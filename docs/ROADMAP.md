@@ -72,15 +72,15 @@ Ferdig når: ingen spiller kan sette seg fast på et nødvendig bygg, bygget gir
 Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) byggestedene i Nivå 7, 8 og 9 blir nødvendige på hovedruta når `buildrequired` er på (gap utvides eller veien rundt fjernes); (2) «den harde veien» beholdes som alternativ i Ekspert og når valget er av; (3) bruk byggepoengene fra Nivå 2–6 i kombinasjon (ball og bil, to materialer); (4) bot og `walk_route` beviser både veien via bygg og at dagens hovedvei er stengt når kravet er på; (5) test og NYTT-rad.
 Ferdig når: Nivå 7–9 krever bygging (unntatt Ekspert og valg av), alle kan vinnes, og tester og boot er grønne.
 
-### [ ] R140 · Nivå 5 (fagverk) og Nivå 6 (materialer) med nødvendig bygg (deler R138)
-Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) Nivå 5: den smale hylla over lekebøtta byttes med et gap som bare lar seg bygge med trekanter (fagverk); R122-hjelpen (TREKANT, DIAGONAL) skal være synlig første gang; (2) Nivå 6: en bro mellom overskapene med tyngre last, der materialvalget (tre, tau, kabel, stål, R127/R128 bytt til stål) avgjør; (3) endres i `scenes/` og `tools/make_variants.mjs` (kjør på nytt), alle nivåer går `walk_route` og bot med bygg; (4) valg `buildrequired` respekteres; (5) test, NYTT-rader. **Start ikke før Rune har svart etter R138-testen.**
-Ferdig når: Nivå 5 og 6 har hvert ett nødvendig, bevist løsbart bygg med nytt byggepoeng, og tester og boot er grønne.
-
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R140 · Nivå 5 (fagverk) og Nivå 6 (materialer) med nødvendig bygg (deler R138) (v2.145)
+Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) Nivå 5: den smale hylla over lekebøtta byttes med et gap som bare lar seg bygge med trekanter (fagverk); R122-hjelpen (TREKANT, DIAGONAL) skal være synlig første gang; (2) Nivå 6: en bro mellom overskapene med tyngre last, der materialvalget (tre, tau, kabel, stål, R127/R128 bytt til stål) avgjør; (3) endres i `scenes/` og `tools/make_variants.mjs` (kjør på nytt), alle nivåer går `walk_route` og bot med bygg; (4) valg `buildrequired` respekteres; (5) test, NYTT-rader. **Start ikke før Rune har svart etter R138-testen.**
+Ferdig når: Nivå 5 og 6 har hvert ett nødvendig, bevist løsbart bygg med nytt byggepoeng, og tester og boot er grønne.
 
 ### [x] R139 · Nivå 3 (trapp/rampe) og Nivå 4 (vippe) med nødvendig bygg (deler R138) (v2.144)
 Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) Nivå 3 Kjøkkenet: det høye trinnet mellom benk og overskap kan bare nås ved å bygge en trapp av klosser eller en rampe; (2) Nivå 4 Badet ommøblert: vannet stiger og en vippe må bygges over vannet til hylla; (3) endres i `scenes/` og `tools/make_variants.mjs` (kjør på nytt); `walk_route` og bot beviser at nivåene kan vinnes med bygget, og at de ikke kan vinnes uten når `buildrequired` er på; (4) første gang vises oppdragskortet (R132) og kortet «Ny til bygging?»; (5) valg `buildrequired` respekteres; (6) test, NYTT-rader. **Start ikke før Rune har svart etter R138-testen.**

@@ -15,7 +15,8 @@ export const TH = {
 export const MODES = ['auto', 'on', 'off'];
 export const normMode = (v) => (MODES.includes(v) ? v : 'auto');
 // innstillingen buildtruss2: auto = på for Nybegynner og Medium, av på Ekspert; on = alltid; off = aldri (Ekspert får den bare når spilleren selv slår den på)
-export const trussOn = ({ mode, expert }) => { const m = normMode(mode); return m === 'on' || (m === 'auto' && !expert); };
+// R140: need = stedet krever trekanter (påkrevd bygg, `site.need`): da er hjelpen på også på Ekspert (auto), så TREKANT og DIAGONAL er synlige første gang. «Av» respekteres alltid.
+export const trussOn = ({ mode, expert, need = false }) => { const m = normMode(mode); return m === 'on' || (m === 'auto' && (!expert || !!need)); };
 // skal knappene vises nå? (hjelpen er på, rutenett-modus, ikke under prøven, og ikke skjult i ⋯)
 export const trussShow = ({ on, grid, sim, hidden }) => !!on && !!grid && !sim && !hidden;
 

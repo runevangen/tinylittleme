@@ -6,6 +6,8 @@ export const CHANGES = [
     how: 'Start Nivå 3, gå opp på benken og mikroen, og trykk BYGG. Legg klosser som en trapp og trykk PRØV, og gå så opp på krydderhylla.', level: 'kjokken', spot: { x: 20, y: 24.4, z: -25 } },
   { id: 'r139-bygg-nivaa4', version: '2.143', date: '2026-11-23', title: 'Nivå 4 · Badet: gapet til dusjhylla er for langt å hoppe, du må bygge en vippe over åpningen i panelveggen.',
     how: 'Start Nivå 4, klatre til den nye hylla og trykk BYGG ved kanten. Legg vippa i gapet og trykk PRØV, og gå så over til dusjhylla.', level: 'bad2', spot: { x: 15.75, y: 32.6, z: 17 } },
+  { id: 'r140-bygg-nivaa5-6', version: '2.145', date: '2026-11-23', title: 'Nivå 5 og 6 har nå hvert sitt nødvendige bygg: i Nivå 5 er det et gap over lekebøtta som bare en bro med trekanter (fagverk) bærer, i Nivå 6 er det et gap fra den lille hylla til kjøleskapet der bare stål holder. Valget «Påkrevd bygg» (⚙ → Admin) kan skrus av.',
+    how: 'Start Nivå 5 (Barnerommet, ommøblert), gå til nattbordet og trykk BYGG. Trykk TREKANT og lag en stiv bro, trykk PRØV. I Nivå 6 trykker du BYGG ved den lille hylla over vasken, velger STÅL, lager trekanter og trykker PRØV.', level: 'barnerom2', spot: null },
   { id: 'tekst-flere-ting', version: '2.142', date: '2026-11-23', title: 'Resultatkortet i bygging sier nå «Bra! Nå må flere ting over».',
     how: 'Åpne Byggeskolen, bygg en bro som holder første last, og les resultatkortet etter PRØV.', level: 'bygglab', spot: null },
   { id: 'r138-bygg-nivaa2', version: '2.140', date: '2026-11-23', title: 'Nivå 2 · Barnerommet: gapet over lekebøtta er for langt å hoppe, du må bygge en bro med planken som ligger klar. Valget «Påkrevd bygg» (⚙ → Admin) kan skrus av.',

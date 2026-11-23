@@ -36,9 +36,11 @@ assert.deepEqual(botSolve(path('bro')).plans.map((p) => p.id), ['ruta', 'bygg:br
 assert.ok(lv('kontroll').route.length >= 6, 'Kontroll har en ekte rute (trinn og plattformer), ikke bare gulv → mål');
 
 // 3) en ødelagt rute: fjern en flate. Kort rute = FEIL, lang rute = TIL_GJENNOMGANG (og står i review)
-const broken = (id, k) => { const L = lv(id), gone = L.route[k].id; L.boxes = L.boxes.filter((b) => b.id !== gone); L.route = L.route.map((n) => n); return L; };
+const broken = (id, k) => { const L = lv(id); applyRequired(L, false);   // R139/R140: brett med påkrevd bygg testes med valget av (den vanlige ruta)
+  const gone = L.route[k].id; L.boxes = L.boxes.filter((b) => b.id !== gone); L.route = L.route.map((n) => n); return L; };
 { const L = broken('bro', 2), r = botSolve(path('bro'), { level: L }); assert.equal(r.plans[0].verdict, 'FEIL', 'kort rute som ikke går er FEIL'); assert.equal(r.verdict, 'FEIL'); }
-{ const L = broken('barnerom2', 6), r = botSolve(path('barnerom2'), { level: L }); assert.equal(r.plans[0].verdict, 'TIL_GJENNOMGANG', JSON.stringify(r.plans[0].løs)); assert.equal(r.verdict, 'TIL_GJENNOMGANG');
+{ const L = broken('kjokken', 6), r = botSolve(path('kjokken'), { level: L });   // R140: barnerom2 har ikke lenger en vanlig rute (påkrevd bygg), så en lang rute uten bygg brukes
+   assert.equal(r.plans[0].verdict, 'TIL_GJENNOMGANG', JSON.stringify(r.plans[0].løs)); assert.equal(r.verdict, 'TIL_GJENNOMGANG');
   assert.equal(r.review[0].id, 'ruta'); assert.ok(r.review[0].why.length > 5 && r.review[0].steps >= LONG.steps, 'gjennomgangslista sier hvorfor og hvor lang ruta er'); }
 { const L = lv('bad'); L.route = [L.route[0]]; assert.equal(botSolve(path('bad'), { level: L }).verdict, 'FEIL', 'uten rute'); }
 
@@ -52,7 +54,7 @@ for (const id of ids.filter((x) => x !== 'kontroll')) { const a = walkRouteAny(p
    assert.ok(a.ok && b.ok, `${id}: ruta krever ikke veggsprang`); }
 
 // 5) rutevisning
-{ const L = lv('barnerom2'), r = botSolve(path('barnerom2'), { level: L }), p = r.plans[0].streng, t = routeText(L, p), svg = routeSvg(L, p);
+{ const L = lv('kjokken'); applyRequired(L, false); const r = botSolve(path('kjokken'), { level: L }), p = r.plans[0].streng, t = routeText(L, p), svg = routeSvg(L, p);
   assert.ok(t.split('\n').length === p.nodes.length && /klatre\/hopp opp/.test(t) && /start/.test(t), 'rutetekst: ett trinn per linje');
   assert.ok(svg.startsWith('<svg') && svg.includes('<polyline') && svg.includes('ruta (streng)'), 'SVG med spor'); }
 // 6) alle brett med rute som verktøyet kjenner til er dekket (nye brett med rute må legges i lista over)

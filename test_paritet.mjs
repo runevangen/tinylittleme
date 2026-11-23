@@ -9,7 +9,7 @@ register('data:text/javascript,' + encodeURIComponent(`export async function res
 const G = await import('./grid_logic.js'), X = await import('./buildux_logic.js'), P = await import('./grid_play.js');
 const lvl = (n) => JSON.parse(fs.readFileSync(new URL(`./levels/${n}.level.json`, import.meta.url), 'utf8'));
 let n = 0;
-for (const name of ['bro', 'kjokkenbro', 'badebro', 'bro2', 'kjokkenbro2', 'bygglab']) {
+for (const name of ['bro', 'kjokkenbro', 'badebro', 'bro2', 'kjokkenbro2', 'barnerom2', 'kjokken2', 'bygglab']) {   // R140: Nivå 5 og 6 har rutenett-bygg med den nyeste byggeskjermen
   const L = lvl(name); P.ensurePlayGrid?.(L.build.sites);
   for (const site of L.build.sites) {
     if (!G.siteHasGrid(site)) continue;

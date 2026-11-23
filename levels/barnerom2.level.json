@@ -1,6 +1,6 @@
 {
  "name": "Nivå 5: Barnerommet, ommøblert",
- "rev": 1,
+ "rev": 2,
  "boxes": [
   {
    "type": "floor",
@@ -602,14 +602,14 @@
   {
    "type": "book",
    "min": [
-    -10,
+    -8,
     12.4,
-    -23.6
+    -24
    ],
    "max": [
     -2.8,
     14.8,
-    -19.2
+    -16.4
    ],
    "id": "nattbok",
    "kind": "box",
@@ -621,14 +621,14 @@
   {
    "type": "wood",
    "min": [
-    -2.8,
-    16,
+    5.2,
+    0,
     -24
    ],
    "max": [
-    11.2,
-    16.6,
-    -21.2
+    11,
+    14.8,
+    -16.4
    ],
    "id": "hylle_a",
    "kind": "chest",
@@ -693,66 +693,6 @@
    "material": "metal",
    "cp": false,
    "soft": false
-  },
-  {
-   "type": "wood",
-   "min": [
-    21,
-    0,
-    10
-   ],
-   "max": [
-    28,
-    5.4,
-    14
-   ],
-   "id": "gele_barn_trinn_1",
-   "kind": "crate",
-   "color": 14264428,
-   "material": "wood",
-   "cp": false,
-   "soft": false,
-   "shortcut": true
-  },
-  {
-   "type": "wood",
-   "min": [
-    21,
-    0,
-    6
-   ],
-   "max": [
-    28,
-    9.2,
-    10
-   ],
-   "id": "gele_barn_trinn_2",
-   "kind": "crate",
-   "color": 13210966,
-   "material": "wood",
-   "cp": false,
-   "soft": false,
-   "shortcut": true
-  },
-  {
-   "type": "wood",
-   "min": [
-    21,
-    0,
-    2
-   ],
-   "max": [
-    28,
-    12.8,
-    6
-   ],
-   "id": "gele_barn_trinn_3",
-   "kind": "crate",
-   "color": 12158022,
-   "material": "wood",
-   "cp": true,
-   "soft": false,
-   "shortcut": true
   }
  ],
  "movables": [
@@ -921,25 +861,6 @@
    ],
    "weight": "medium",
    "breakable": false
-  },
-  {
-   "id": "hargele_barn",
-   "kind": "gel_bottle",
-   "material": "plastic",
-   "color": 9427182,
-   "min": [
-    2.6,
-    0,
-    21.6
-   ],
-   "max": [
-    3.4,
-    2,
-    22.4
-   ],
-   "weight": "light",
-   "breakable": false,
-   "tool": "gel"
   }
  ],
  "decor": [
@@ -1047,23 +968,6 @@
   },
   {
    "shape": "box",
-   "id": "hylle_a_konsoll",
-   "kind": "box",
-   "pos": [
-    4,
-    14,
-    -23.8
-   ],
-   "size": [
-    0.8,
-    4,
-    0.4
-   ],
-   "color": 3816770,
-   "material": "metal"
-  },
-  {
-   "shape": "box",
    "id": "vimpel",
    "kind": "box",
    "pos": [
@@ -1092,7 +996,7 @@
   },
   {
    "id": "nattbord",
-   "text": "Ny vei\nKrakken er borte. Gå opp på bøkene og balanser bortover den smale hylla over lekebøtta. Skyv stikken forsiktig.",
+   "text": "Bygg en bro\nGapet over lekebøtta er for langt, og én planke holder ikke. Trykk BYGG ved kanten, bruk TREKANT for å lage en stiv bro, og trykk PRØV.",
    "pos": [
     -6.6,
     13.3,
@@ -1133,24 +1037,6 @@
     -2,
     4.1,
     -1.4
-   ]
-  },
-  {
-   "id": "hargele_barn",
-   "text": "Hårgelé\nTa flaska (TA), bær den til det høye trinnet foran skrivebordet og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.",
-   "pos": [
-    3,
-    2.9,
-    22
-   ]
-  },
-  {
-   "id": "gele_barn_trinn_1",
-   "text": "Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), klatre opp og gå trappa til skrivebordet. Den lange veien via leke- og bokhyllene går fortsatt.",
-   "pos": [
-    24.5,
-    6.3,
-    12
    ]
   }
  ],
@@ -1398,6 +1284,490 @@
    "z": 23.76
   }
  ],
+ "build": {
+  "sites": [
+   {
+    "id": "barn2",
+    "label": "Gapet over lekebøtta (fagverk)",
+    "x": 1.2,
+    "y": 14.8,
+    "z": -20.2,
+    "w": 20,
+    "h": 14,
+    "anchors": [
+     {
+      "u": -4,
+      "v": 0
+     },
+     {
+      "u": 4,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -4
+     },
+     {
+      "u0": 4,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "d": 4,
+    "need": "truss",
+    "grid": {
+     "step": 2,
+     "stars": {
+      "three": {
+       "cost": 19,
+       "parts": 8
+      },
+      "two": {
+       "cost": 26,
+       "parts": 13
+      }
+     },
+     "stage": {
+      "loads": [
+       "ball",
+       "figure",
+       "robot",
+       "car"
+      ],
+      "massK": 28,
+      "budget": 30
+     }
+    },
+    "ref": {
+     "placed": [],
+     "links": [],
+     "surfaces": [],
+     "grid": {
+      "nodes": [
+       [
+        -2,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        2,
+        0
+       ],
+       [
+        -2,
+        2
+       ],
+       [
+        0,
+        2
+       ],
+       [
+        2,
+        2
+       ]
+      ],
+      "rods": [
+       [
+        0,
+        2,
+        "steel"
+       ],
+       [
+        2,
+        3,
+        "steel"
+       ],
+       [
+        3,
+        4,
+        "steel"
+       ],
+       [
+        4,
+        1,
+        "steel"
+       ],
+       [
+        5,
+        6,
+        "wood"
+       ],
+       [
+        6,
+        7,
+        "wood"
+       ],
+       [
+        0,
+        5,
+        "wood"
+       ],
+       [
+        1,
+        7,
+        "wood"
+       ],
+       [
+        2,
+        5,
+        "rope"
+       ],
+       [
+        3,
+        6,
+        "rope"
+       ],
+       [
+        4,
+        7,
+        "rope"
+       ],
+       [
+        5,
+        3,
+        "wood"
+       ],
+       [
+        7,
+        3,
+        "wood"
+       ]
+      ]
+     },
+     "best": {
+      "nodes": [
+       [
+        -2,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        2,
+        0
+       ],
+       [
+        -2,
+        2
+       ],
+       [
+        0,
+        2
+       ],
+       [
+        2,
+        2
+       ]
+      ],
+      "rods": [
+       [
+        0,
+        2,
+        "steel"
+       ],
+       [
+        2,
+        3,
+        "steel"
+       ],
+       [
+        3,
+        4,
+        "steel"
+       ],
+       [
+        4,
+        1,
+        "steel"
+       ],
+       [
+        1,
+        7,
+        "wood"
+       ],
+       [
+        4,
+        7,
+        "rope"
+       ],
+       [
+        7,
+        3,
+        "wood"
+       ]
+      ]
+     },
+     "route": [
+      "gulv",
+      "bokstav_a",
+      "bokstav_b",
+      "lekekasse",
+      "dyne",
+      "nattbord",
+      "nattbok",
+      "@bro",
+      "hylle_a",
+      "skrivebord",
+      "gardin",
+      "vinduskarm",
+      "vegghylle",
+      "spilleske",
+      "klesskap",
+      "hylle_b",
+      "hylle_c"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "p1",
+    "type": "plank_l",
+    "x": 9,
+    "y": 0.9,
+    "z": -11
+   },
+   {
+    "id": "p2",
+    "type": "plank_s",
+    "x": 3,
+    "y": 0.9,
+    "z": -10.4
+   },
+   {
+    "id": "p3",
+    "type": "block",
+    "x": -8,
+    "y": 0.9,
+    "z": -8
+   },
+   {
+    "id": "p4",
+    "type": "weight",
+    "x": 10,
+    "y": 0.9,
+    "z": 2
+   },
+   {
+    "id": "p5",
+    "type": "plank_s",
+    "x": -7.6,
+    "y": 0.9,
+    "z": 4
+   },
+   {
+    "id": "p6",
+    "type": "pencil",
+    "x": 6,
+    "y": 0.9,
+    "z": 4
+   },
+   {
+    "id": "p7",
+    "type": "lego",
+    "x": 15,
+    "y": 0.9,
+    "z": 17
+   },
+   {
+    "id": "p8",
+    "type": "lego",
+    "x": 21,
+    "y": 0.9,
+    "z": 15
+   }
+  ]
+ },
+ "required": {
+  "site": "barn2",
+  "ease": [
+   {
+    "id": "hylle_a",
+    "min": [
+     -2.8,
+     16,
+     -24
+    ],
+    "max": [
+     11.2,
+     16.6,
+     -21.2
+    ],
+    "route": {
+     "x0": -2.8,
+     "x1": 11.2,
+     "z0": -24,
+     "z1": -21.2,
+     "top": 16.6
+    }
+   },
+   {
+    "id": "nattbok",
+    "min": [
+     -10,
+     12.4,
+     -23.6
+    ],
+    "max": [
+     -2.8,
+     14.8,
+     -19.2
+    ],
+    "route": {
+     "x0": -10,
+     "x1": -2.8,
+     "z0": -23.6,
+     "z1": -19.2,
+     "top": 14.8
+    }
+   }
+  ],
+  "easeHints": {
+   "nattbord": "Ny vei\nKrakken er borte. Gå opp på bøkene og balanser bortover den smale hylla over lekebøtta. Skyv stikken forsiktig."
+  },
+  "restore": {
+   "boxes": [
+    {
+     "type": "wood",
+     "min": [
+      21,
+      0,
+      10
+     ],
+     "max": [
+      28,
+      5.4,
+      14
+     ],
+     "id": "gele_barn_trinn_1",
+     "kind": "crate",
+     "color": 14264428,
+     "material": "wood",
+     "cp": false,
+     "soft": false,
+     "shortcut": true
+    },
+    {
+     "type": "wood",
+     "min": [
+      21,
+      0,
+      6
+     ],
+     "max": [
+      28,
+      9.2,
+      10
+     ],
+     "id": "gele_barn_trinn_2",
+     "kind": "crate",
+     "color": 13210966,
+     "material": "wood",
+     "cp": false,
+     "soft": false,
+     "shortcut": true
+    },
+    {
+     "type": "wood",
+     "min": [
+      21,
+      0,
+      2
+     ],
+     "max": [
+      28,
+      12.8,
+      6
+     ],
+     "id": "gele_barn_trinn_3",
+     "kind": "crate",
+     "color": 12158022,
+     "material": "wood",
+     "cp": true,
+     "soft": false,
+     "shortcut": true
+    }
+   ],
+   "movables": [
+    {
+     "id": "hargele_barn",
+     "kind": "gel_bottle",
+     "material": "plastic",
+     "color": 9427182,
+     "min": [
+      2.6,
+      0,
+      21.6
+     ],
+     "max": [
+      3.4,
+      2,
+      22.4
+     ],
+     "weight": "light",
+     "breakable": false,
+     "tool": "gel"
+    }
+   ],
+   "hints": [
+    {
+     "id": "hargele_barn",
+     "text": "Hårgelé\nTa flaska (TA), bær den til det høye trinnet foran skrivebordet og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.",
+     "pos": [
+      3,
+      2.9,
+      22
+     ]
+    },
+    {
+     "id": "gele_barn_trinn_1",
+     "text": "Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), klatre opp og gå trappa til skrivebordet. Den lange veien via leke- og bokhyllene går fortsatt.",
+     "pos": [
+      24.5,
+      6.3,
+      12
+     ]
+    }
+   ],
+   "shortcuts": [
+    {
+     "id": "gele_barn",
+     "tool": "gel",
+     "item": "hargele_barn",
+     "label": "Smør hårgelé og klatre opp trinnene til skrivebordet",
+     "en": "Smear hair gel and climb the steps to the desk",
+     "stand": [
+      24.5,
+      14.9
+     ],
+     "face": [
+      0,
+      -1
+     ],
+     "steps": [
+      "gele_barn_trinn_1",
+      "gele_barn_trinn_2",
+      "gele_barn_trinn_3"
+     ],
+     "join": "skrivebord"
+    }
+   ]
+  }
+ },
  "goals": [
   {
    "id": "kasse",
@@ -1438,11 +1808,11 @@
    "n": 5
   },
   {
-   "id": "maur",
-   "type": "stomp",
-   "label": "Knus to maur",
-   "en": "Squash two ants",
-   "n": 2
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg en bro av trekanter (BYGG-knappen)",
+   "en": "Build a bridge of triangles (BUILD button)",
+   "flag": "barn2"
   },
   {
    "id": "vegg",
@@ -1457,29 +1827,6 @@
    "z0": -1,
    "z1": 18.4,
    "top": 24.2
-  }
- ],
- "shortcuts": [
-  {
-   "id": "gele_barn",
-   "tool": "gel",
-   "item": "hargele_barn",
-   "label": "Smør hårgelé og klatre opp trinnene til skrivebordet",
-   "en": "Smear hair gel and climb the steps to the desk",
-   "stand": [
-    24.5,
-    14.9
-   ],
-   "face": [
-    0,
-    -1
-   ],
-   "steps": [
-    "gele_barn_trinn_1",
-    "gele_barn_trinn_2",
-    "gele_barn_trinn_3"
-   ],
-   "join": "skrivebord"
   }
  ],
  "ropes": [],
@@ -1534,19 +1881,19 @@
   },
   {
    "id": "nattbok",
-   "x0": -10,
+   "x0": -8,
    "x1": -2.8,
-   "z0": -23.6,
-   "z1": -19.2,
+   "z0": -24,
+   "z1": -16.4,
    "top": 14.8
   },
   {
    "id": "hylle_a",
-   "x0": -2.8,
-   "x1": 11.2,
+   "x0": 5.2,
+   "x1": 11,
    "z0": -24,
-   "z1": -21.2,
-   "top": 16.6
+   "z1": -16.4,
+   "top": 14.8
   },
   {
    "id": "skrivebord",

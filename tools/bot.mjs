@@ -11,7 +11,7 @@
 // menneske må se på det) · FEIL (løs feiler på kort rute).
 // Bruk: node tools/bot.mjs levels/<navn>.level.json [--verbose] [--svg ut.svg] [--json]   (avslutter 0 = ok, 2 = feil, 3 = til gjennomgang)
 import fs from 'node:fs';
-import { walkRoute, builtBase } from './walk_route.mjs';
+import { walkRoute, builtBase, gridBuiltRoute } from './walk_route.mjs';
 import { shortcutsOf, shortcutRoute, gateRoute, toolBoxes } from '../shortcut.js';
 import * as BW from '../build_world.js';
 import * as BP from '../build_phys.js';
@@ -60,11 +60,8 @@ export function plansOf(L) {
   }
   for (const site0 of L.build?.sites || []) {   // R119: rutenett-referanse som fagverk (site.ref.grid, uten klassisk ref.placed): bygges, prøves med oppdragets laster og tunge vekt, så over i verden
     const spec = site0.ref?.grid, stg = stageOf(site0); if (!spec || !stg || !site0.ref.route) continue;
-    const site = JSON.parse(JSON.stringify(site0)), B = createBuild(site, {}, []); B.gridDeck = false; gridSetMode(B, 'grid');
-    const ok = applySpec(B, spec).ok, def = ok && gridSimDefAuto(B).def, bad = !ok ? 'fagverk-referansen kan ikke legges' : stg.loads.map((l) => BP.runSim(def, { load: l, massK: stg.massK }).result).find((r) => r !== 'won');
-    const solids = bad ? [] : BW.buildSolids(site, BP.settledPlaced(gridSimDef(B)), { skip: new Set(gridLoadPass(B)) }), gr = bad ? null : gridRefRoute(site, solids), route = gr && BW.refRoute(L, { ...site, ref: { ...site.ref, ...gr } });   // R119: fagverket ligger nesten flatt: færre, bredere flater
-    if (route) route.forEach((n, i) => { if (n.id.startsWith('@rutenett') && n.top > route[i - 1].top + 0.01) n.hop = true; });
-    plans.push({ id: `bygg:${site.id}:fagverk`, kind: 'bygg', stepUp: MOVE.stepOverMax, route: route || site.ref.route.map(() => null), site, solids, simFail: bad ? `fagverk-referansen består ikke PRØV (${bad})` : route ? '' : 'finner ikke ruta over fagverket' });
+    const g = gridBuiltRoute(L, site0);   // R140: delt med walk_route (også rekkefølgen når figuren går mot venstre, og første trinn opp på bygget)
+    plans.push({ id: `bygg:${site0.id}:fagverk`, kind: 'bygg', route: g.route || site0.ref.route.map(() => null), site: JSON.parse(JSON.stringify(site0)), solids: g.solids, simFail: g.route ? '' : `fagverk-referansen består ikke PRØV eller ruta finnes ikke (${g.why})` });
   }
   for (const site0 of L.build?.sites || []) {   // R82: rutenett-bro (en rett rad av tre) i de vanlige byggebrettene; klassisk referanse og «den harde veien» er uendret
     const g = site0.ref?.route && playGridOf(site0); if (!g) continue;

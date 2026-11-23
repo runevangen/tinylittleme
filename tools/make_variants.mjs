@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import { autoCrumbs } from './place_crumbs.mjs';
 import { applyEasyPatch, scenePatch } from './scene_patch.mjs';
+import { R2 } from '../round2_logic.js';
 const load = (n) => JSON.parse(fs.readFileSync(new URL(`../scenes/${n}.scene.json`, import.meta.url), 'utf8'));
 const save = (n, s) => { s.collectibles = autoCrumbs(s); fs.writeFileSync(new URL(`../scenes/${n}.scene.json`, import.meta.url), JSON.stringify(s, null, 2) + '\n'); };
 const kit = (s) => ({
@@ -88,15 +89,16 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
 // ---------- Nivå 5: Barnerommet, ommøblert. Krakken er borte: balanser på en ny hylle over lekebøtta, og fortsett fra klesskapet bortover nye hyller. ----------
 {
   const s = load('barnerom'), k = kit(s);
-  delete s.required; delete s.build;   // R138: Nivå 2 har et påkrevd byggested; Nivå 5 er uendret (egen krakkløse vei, ingen bygging her)
-  s.name = 'Nivå 5: Barnerommet, ommøblert'; s.rev = 1;
+  delete s.required; delete s.build;   // R138: Nivå 2 har et påkrevd byggested (barn1); Nivå 5 får sitt eget (R140: barn2, fagverk), satt lenger ned
+  s.name = 'Nivå 5: Barnerommet, ommøblert'; s.rev = 2;   // R140: rev 2 (påkrevd bygg: gammel fremgang bortenfor gapet følger ikke med)
   s.source.interpreted_by += '. Ommøblert for nivå 5.';
   k.del('krakk', 'nattlampe');
   k.set('blyantkopp', { box: [270, 280, 74, 88, 100, 110] });                              // flyttet, så du ikke lander på den fra hylla
   k.set('nattbord', { help: 'Ny vei\nKrakken er borte. Gå opp på bøkene og balanser bortover den smale hylla over lekebøtta. Skyv stikken forsiktig.' });
-  k.add('nattbok', 'box', 'book', '#3f7d5a', [100, 136, 62, 74, 22, 44], {});
-  k.add('hylle_a', 'chest', 'wood', '#c79a5e', [136, 206, 80, 83, 20, 34], {});
-  k.add('hylle_a_konsoll', 'box', 'metal', '#3a3d42', [168, 172, 60, 80, 20, 22], { decor: true });
+  // R140: den smale hylla over lekebøtta (nattbok → hylle_a) er byttet med et gap på 40 cm (8 byggeenheter) som bare lar seg bygge med trekanter (fagverk, samme last og samme målte referanse som Badebroen).
+  // Brettet lagres med den VANSKELIGE plasseringen (nattbok i full dybde, hylle_a = en kasse på 74 cm bortenfor gapet); `required.ease` bærer den gamle hylla når valget buildrequired er av.
+  k.add('nattbok', 'box', 'book', '#3f7d5a', [110, 136, 62, 74, 20, 58], {});
+  k.add('hylle_a', 'chest', 'wood', '#c79a5e', [176, 205, 0, 74, 20, 58], {});
   k.set('klesskap', { help: 'Videre fra klesskapet\nMotgiften er flyttet. Gå bortover hylla over døra og hopp over til den siste hylla.' });
   k.add('hylle_b', 'chest', 'wood', '#c79a5e', [110, 240, 147, 150, 266, 280], {});
   k.add('hylle_c', 'chest', 'wood', '#c79a5e', [20, 90, 147, 150, 266, 280], {});
@@ -113,6 +115,15 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
     { id: 'smuler', type: 'crumbs', n: 5, label: 'Samle 5 smuler', en: 'Collect 5 crumbs' },
     { id: 'maur', type: 'stomp', n: 2, label: 'Knus to maur', en: 'Squash two ants' },
     { id: 'vegg', type: 'reach', on: 'vegghylle', gate: true, after: 'kasse', label: 'Nå vegghylla', en: 'Reach the wall shelf' }];                                                         // R23: delmål (goals.js)
+  { const bb = load('badebro').build.sites[0];   // R140: fagverk-oppdraget (laster, tung vekt, budsjett, stjerner og målte referanser) er det samme som Badebroens (test_badebro.mjs), og gapet like langt (40 cm)
+    s.build = { ...(load('barnerom').build || {}), sites: [{ id: 'barn2', label: 'Gapet over lekebøtta (fagverk)', at: [156, 39], y: 74, w: 100, h: 70, d: 20, anchors: [[-20, 0], [20, 0]], deck: [[-47.5, -20], [20, 47.5]], start: [-40, 0], goal: [40, 0],
+      grid: JSON.parse(JSON.stringify(bb.grid)), need: 'truss',
+      ref: { placed: [], links: [], surfaces: [], grid: JSON.parse(JSON.stringify(bb.ref.grid)), best: JSON.parse(JSON.stringify(bb.ref.best)), route: ['gulv', 'bokstav_a', 'bokstav_b', 'lekekasse', 'dyne', 'nattbord', 'nattbok', '@bro', 'hylle_a', 'skrivebord', 'gardin', 'vinduskarm', 'vegghylle', 'spilleske', 'klesskap', 'hylle_b', 'hylle_c'] } }] };
+    s.required = { site: 'barn2', dropShortcut: 'gele_barn', ease: { hylle_a: [136, 206, 80, 83, 20, 34], nattbok: [100, 136, 62, 74, 22, 44] },
+      note: 'R140: gapet over lekebøtta er 40 cm og bare en bro med trekanter (fagverk) bærer. `ease` = den smale hylla som den sto før (balanser bortover), brukt når valget buildrequired er av. `dropShortcut`: hårgelé-trappa til skrivebordet ville gått forbi gapet, så den er tatt ut når bygging er påkrevd.',
+      easeHints: { nattbord: 'Ny vei\nKrakken er borte. Gå opp på bøkene og balanser bortover den smale hylla over lekebøtta. Skyv stikken forsiktig.' } };
+    k.set('nattbord', { help: 'Bygg en bro\nGapet over lekebøtta er for langt, og én planke holder ikke. Trykk BYGG ved kanten, bruk TREKANT for å lage en stiv bro, og trykk PRØV.' });
+    s.goals = s.goals.map((g) => (g.id === 'maur' ? { id: 'bygg', type: 'flag', flag: 'barn2', label: 'Bygg en bro av trekanter (BYGG-knappen)', en: 'Build a bridge of triangles (BUILD button)' } : g)); }
   addShortcut(s, k, { id: 'gele_barn', bottle: 'hargele_barn', bottleAt: [165, 250], stand: [272.5, 214.5], face: [0, -1], join: 'skrivebord', steps: [[255, 290, 190, 210, 27], [255, 290, 170, 190, 46], [255, 290, 150, 170, 64]],
     label: 'Smør hårgelé og klatre opp trinnene til skrivebordet', en: 'Smear hair gel and climb the steps to the desk',
     help: 'Hårgelé\nTa flaska (TA), bær den til det høye trinnet foran skrivebordet og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.',
@@ -124,7 +135,7 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
 {
   const s = applyEasyPatch(load('kjokken'), load('kjokken').required?.easyPatch), k = kit(s);   // R139: Nivå 3 har påkrevd bygg; Nivå 6 lages av den lette scenen (uendret)
   delete s.build;
-  s.name = 'Nivå 6: Kjøkkenet, ryddet om'; s.rev = 1;
+  s.name = 'Nivå 6: Kjøkkenet, ryddet om'; s.rev = 2;   // R140: rev 2 (påkrevd bygg)
   s.source.interpreted_by += '. Ryddet om for nivå 6.';
   const drw = ['skuff_1', 'skuff_2', 'skuff_3', 'skuff_4'].map((id) => k.get(id).drawer);   // R55: samme frontfarger og håndtak som i nivå 3, men lukket (flat front, tydelig fuge)
   for (let i = 1; i <= 4; i++) k.del(`skuff_${i}`);
@@ -157,6 +168,21 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
     { id: 'bro', type: 'puzzle', puzzle: 'bro', label: 'Åpne snarveien med nøkkelen', en: 'Open the shortcut with the key' },
     { id: 'skap', type: 'reach', on: 'overskap', gate: true, label: 'Nå overskapet', en: 'Reach the top cabinet' }];                                                         // R23: delmål (goals.js)
   { const m = s.ants.find((x) => x.id === 'maur_gulv'); if (m) m.to = [250, m.from[1]]; const r = s.ants.find((x) => x.id === 'pillbug_gulv'); if (r) { r.from = [318, r.from[1]]; r.to = [348, r.to[1]]; } }   // R29: trappa til benken står der bærer-mauren og pillbuggen gikk: kortere bane for bæreren, pillbuggen rullet til høyre for trappa
+  // R140 (Nivå 6, materialer): kjøleskapet (målet) er flyttet 30 cm mot veggen og gjort smalere, så det er et gap på 60 cm (12 byggeenheter) fra den lille hylla over vasken (der nøkkelgåtens bro også ender) til kjøleskapet.
+  // Tung last (bil, robot, figur): bare et fagverk i STÅL holder (samme oppdrag og målte referanse som Runde 2 · Hyllebro, `R2.bro2`; tre gir etter, en rett rad gir etter). Figuren går mot venstre i rommet (`walkDir: -1`); prøven i byggeskjermen går som alltid fra venstre mot høyre (fysikken regner bare den veien), og en symmetrisk bro bærer begge veier.
+  // Brettet lagres med den VANSKELIGE plasseringen; `required.ease` (og `easeGoal`) bærer kjøleskapet slik det sto før når valget buildrequired er av.
+  { const c = R2.bro2, bx = (id) => k.get(id).box.slice(), easeBoxes = { kjoleskap: bx('kjoleskap'), kjoleskap_handtak: bx('kjoleskap_handtak'), kjoleskap_fuge: bx('kjoleskap_fuge'), kakeboks: bx('kakeboks') }, easeGoal = [s.goal.x, s.goal.y, s.goal.z];
+    k.set('kjoleskap', { box: [0, 58, 0, 198, 0, 65] }); k.set('kjoleskap_handtak', { box: [49, 52, 70, 150, 65, 68] }); k.set('kjoleskap_fuge', { box: [0, 58, 118, 119, 65, 65.5] }); k.set('kakeboks', { box: [8, 30, 198, 216, 8, 30] });
+    s.goal = { ...s.goal, x: 46, y: 198, z: 44 };
+    s.build = { sites: [{ id: 'kjk6', label: 'Gapet fra hylla til kjøleskapet (stål)', at: [88, 15], y: 198, w: 120, h: 80, d: 20, anchors: [[-30, 0], [30, 0]], deck: [[-57.5, -30], [30, 57.5]], start: [-50, 0], goal: [50, 0], walkDir: -1,
+      grid: { step: 2, stars: JSON.parse(JSON.stringify(c.stars)), stage: JSON.parse(JSON.stringify(c.stage)) }, need: 'material',
+      ref: { placed: [], links: [], surfaces: [], grid: JSON.parse(JSON.stringify(c.ref)), best: JSON.parse(JSON.stringify(c.best)), route: ['gulv', 'kasse', 'komfyrhandkle', 'komfyr_front', 'benk_o', 'brodrister', 'mikro', 'kjokkenhandkle', 'krydderhylle', 'hvitlok', 'overskap', 'hylle_over_vask', '@bro', 'kjoleskap'] } }],
+      parts: [{ id: 'k1', type: 'plank_l', on: 'gulv', at: [320, 255] }, { id: 'k2', type: 'plank_s', on: 'gulv', at: [345, 230] }, { id: 'k3', type: 'block', on: 'gulv', at: [300, 278] }, { id: 'k4', type: 'weight', on: 'gulv', at: [338, 278] }] };
+    s.required = { site: 'kjk6', ease: easeBoxes, easeGoal,
+      note: 'R140: gapet fra hylla til kjøleskapet er 60 cm og bare et fagverk i stål bærer bil, robot og figur. `ease` og `easeGoal` = kjøleskapet slik det sto før (to hopp, 23 cm), brukt når valget buildrequired er av.',
+      easeHints: { kjoleskap: 'Kjøleskapet er flyttet\nOverskapet er kortere nå. Fra enden hopper du til den lille hylla, og derfra til kjøleskapet.' } };
+    k.set('kjoleskap', { help: 'Bygg en bro\nFra den lille hylla er det for langt til kjøleskapet, og tre gir etter. Trykk BYGG ved kanten, bytt til stål med STÅL, lag trekanter og trykk PRØV.' });
+    s.goals = s.goals.map((g) => (g.id === 'smuler' ? { id: 'bygg', type: 'flag', flag: 'kjk6', label: 'Bygg en bro i stål (BYGG-knappen)', en: 'Build a steel bridge (BUILD button)' } : g)); }
   addShortcut(s, k, { id: 'gele_kjokken', bottle: 'hargele_kjokken', bottleAt: [90, 255], stand: [292.5, 146.5], face: [0, -1], join: 'benk_o', steps: [[275, 310, 122, 142, 27], [275, 310, 102, 122, 45], [275, 310, 82, 102, 63], [275, 310, 62, 82, 80]],
     label: 'Smør hårgelé og klatre trappa opp til kjøkkenbenken', en: 'Smear hair gel and climb the stairs up to the counter',
     help: 'Hårgelé\nTa flaska (TA), bær den til det høye trinnet ved benken og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.',

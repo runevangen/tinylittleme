@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.145** – R140: Nivå 5 (fagverk, trekanter over lekebøtta) og Nivå 6 (materialer, stål til kjøleskapet) får nødvendig bygg; valget buildrequired respekteres.
 - **2.144** – R139: Nivå 3 (trapp av klosser) og Nivå 4 (vippe) får nødvendig bygg; valget buildrequired respekteres.
 - **2.143** – Ukentlig gjennomgang: ukesstatus 23. nov i docs/PRIORITERT_BACKLOGG.md (avsnitt 7).
 - **2.142** – Tekst: «Bra! Nå må flere ting over» i stedet for «Flere laster må over».
