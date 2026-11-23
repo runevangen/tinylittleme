@@ -1,6 +1,7 @@
 // R86: lagring og fremdrift. Ren logikk (ingen DOM/three, testes i node: test_storage.mjs). Oversikt over alle nøkler: docs/LAGRING.md.
 // Tre ting: (1) en trygg lagring (createStore) som aldri kaster og aldri sletter andre nøkler ved feil, (2) versjonering og migrering av fremgangen
 // (normProgress m.fl.: leser de to forrige formene), (3) eksport/import av fremgang som tekstkode og beskrivelse av hva som slettes.
+import { tl, DICT_KEYS } from './i18n.js';
 export const STORE_VERSION = 3;      // versjon på lagringsformatet som helhet (tlm.storev). Øk når en struktur endrer form, og legg til migrering under.
 export const PROGRESS_VERSION = 3;   // fremgangsobjektet (tlm.progress.*): v0 {save,auto,stats,clock,fails}, v1 + crumbs/puzzles/goals/goalFlags/build, v2 + gates/dmin, v3 = v2 + v-felt
 export const SAVE_TAG = 'TLMSAVE1';  // starten på eksportkoden
@@ -168,34 +169,9 @@ export function parseProgress(text) {
 export function applyImport(st, parsed) { let n = 0; for (const [k, v] of Object.entries(parsed.data || {})) if (st.set(k, v)) n++; st.set('tlm.storev', STORE_VERSION); return n; }
 
 // ---------- tekster (nb/en; knappene, ikke taster) ----------
-const TXT = {
-  nb: {
-    'sv.newTitle': 'Starte nytt spill?', 'sv.newLose': 'Dette slettes', 'sv.keep': 'Dette beholdes', 'sv.nothing': 'Ingenting er lagret ennå, så ingenting slettes.',
-    'sv.boards': 'Brett med lagret plass og fremgang: {n}', 'sv.cleared': 'Klarte brett: {n}', 'sv.runs': 'Tider og rekorder: {n}', 'sv.badges': 'Merkene dine ({n})', 'sv.keepList': 'klarte brett, merker, tilbehør, innstillinger og tester-kode',
-    'sv.newOk': 'SLETT OG START NYTT', 'sv.cancel': 'AVBRYT', 'sv.back': 'Tilbake',
-    'sv.allTitle': 'Nullstille alt?', 'sv.allLose': 'Dette slettes for godt', 'sv.allSettings': 'Innstillinger og valg: {n}', 'sv.allBadges': 'Merker: {n}', 'sv.allKeep': 'tester-koden',
-    'sv.allOk': 'NULLSTILL ALT', 'sv.allDone': 'Alt er nullstilt', 'sv.allBtn': 'Nullstill alt (fremgang, merker og innstillinger)',
-    'sv.copy': 'KOPIER FREMGANG', 'sv.paste': 'LIM INN FREMGANG', 'sv.copied': 'Fremgangen er kopiert. Lim den inn på den andre enheten med LIM INN FREMGANG.', 'sv.copyFail': 'Kunne ikke kopiere. Prøv igjen.',
-    'sv.err.empty': 'Ingenting å lime inn.', 'sv.err.nocode': 'Fant ingen fremgangskode i teksten. Bruk KOPIER FREMGANG på den andre enheten.', 'sv.err.broken': 'Koden er ødelagt eller avkortet. Kopier den på nytt.', 'sv.err.big': 'Teksten er for stor.', 'sv.err.none': 'Koden inneholdt ingen fremgang.',
-    'sv.pasteAsk': 'Erstatte fremgangen på denne enheten med koden ({boards} brett, {cleared} klarte)? Valgene dine endres ikke.', 'sv.pasteDone': 'Fremgangen er limt inn ({n} deler). Spillet laster på nytt.', 'sv.pastePrompt': 'Lim inn fremgangskoden her:',
-    'sv.fail': 'Kan ikke lagre på denne enheten (privat modus eller full lagring). Fremgangen blir ikke husket når du lukker siden.', 'sv.saved': 'Lagret på denne enheten', 'sv.status': '{boards} brett med fremgang · {cleared} klarte · {badges} merker.',
-    'sv.note': 'Fremgangen ligger i nettleseren på denne enheten. Bruk KOPIER FREMGANG for å flytte den.',
-  },
-  en: {
-    'sv.newTitle': 'Start a new game?', 'sv.newLose': 'This will be deleted', 'sv.keep': 'This is kept', 'sv.nothing': 'Nothing is saved yet, so nothing is deleted.',
-    'sv.boards': 'Levels with saved spot and progress: {n}', 'sv.cleared': 'Cleared levels: {n}', 'sv.runs': 'Times and records: {n}', 'sv.badges': 'Your badges ({n})', 'sv.keepList': 'cleared levels, badges, accessories, settings and tester code',
-    'sv.newOk': 'DELETE AND START NEW', 'sv.cancel': 'CANCEL', 'sv.back': 'Back',
-    'sv.allTitle': 'Reset everything?', 'sv.allLose': 'This is deleted for good', 'sv.allSettings': 'Settings and choices: {n}', 'sv.allBadges': 'Badges: {n}', 'sv.allKeep': 'the tester code',
-    'sv.allOk': 'RESET EVERYTHING', 'sv.allDone': 'Everything is reset', 'sv.allBtn': 'Reset everything (progress, badges and settings)',
-    'sv.copy': 'COPY PROGRESS', 'sv.paste': 'PASTE PROGRESS', 'sv.copied': 'Progress copied. Paste it on the other device with PASTE PROGRESS.', 'sv.copyFail': 'Could not copy. Try again.',
-    'sv.err.empty': 'Nothing to paste.', 'sv.err.nocode': 'No progress code found in the text. Use COPY PROGRESS on the other device.', 'sv.err.broken': 'The code is broken or cut off. Copy it again.', 'sv.err.big': 'The text is too large.', 'sv.err.none': 'The code held no progress.',
-    'sv.pasteAsk': 'Replace the progress on this device with the code ({boards} levels, {cleared} cleared)? Your settings are not changed.', 'sv.pasteDone': 'Progress pasted ({n} parts). The game reloads.', 'sv.pastePrompt': 'Paste the progress code here:',
-    'sv.fail': 'Cannot save on this device (private mode or full storage). Progress will not be remembered when you close the page.', 'sv.saved': 'Saved on this device', 'sv.status': '{boards} levels with progress · {cleared} cleared · {badges} badges.',
-    'sv.note': 'Progress is stored in the browser on this device. Use COPY PROGRESS to move it.',
-  },
-};
-export const sv = (lang, key, vars = {}) => (TXT[lang]?.[key] ?? TXT.nb[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
-export const TEXT_KEYS = { nb: Object.keys(TXT.nb), en: Object.keys(TXT.en) };
+// R148: tekstene ligger i i18n.js (nb og en).
+export const sv = (lang, key, vars = {}) => tl(lang, key, vars);
+export const TEXT_KEYS = { nb: DICT_KEYS.nb.filter((k) => k.startsWith('sv.')), en: DICT_KEYS.en.filter((k) => k.startsWith('sv.')) };
 
 // Kort status for ⚙ og menyen: hva som er lagret akkurat nå.
 export function savedSummary(st, disk) {

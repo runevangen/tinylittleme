@@ -1,6 +1,7 @@
 // R97: første fem minutter (F1). Ren logikk (ingen DOM/three, testes i node: test_firstrun.mjs); visning i firstrun_view.js, hekter i main.js.
 // Fire ting: (1) hovedmenyen første gang (én START), (2) kontroll-hint ett om gangen som forsvinner når knappen brukes,
 // (3) fremdrift og «Bra!» ved delmål, (4) blindgater: stillstand, feil vei og TA på feil sted gir hjelp (R64) innen FR.helpMs.
+import { tl, DICT_KEYS } from './i18n.js';
 export const FR = {
   level: 1,            // Badet: første møte gjelder bare nivå 1
   helpMs: 10000,       // stille så lenge: spilleren får hjelp (ikke over 12 s)
@@ -115,21 +116,6 @@ export function noteWrongTa(s, now) {
 }
 
 // ---------- tekster (nb/en) ----------
-const TXT = {
-  nb: {
-    'fr.start': 'START', 'fr.continue': 'FORTSETT', 'fr.more': 'mer', 'fr.less': 'mindre',
-    'fr.good': 'Bra! Delmål {n} av {total}',
-    'fr.hint.stick': 'Dra stikka for å gå', 'fr.hint.jump': 'Trykk {jump} for å hoppe', 'fr.hint.take': 'Trykk {take} for å ta', 'fr.hint.grab': 'Hold {grab} for å klatre',
-    'fr.help': 'Prøv: {name}. Pilen viser veien.', 'fr.helpShort': 'Her er veien',
-    'fr.backMenu': 'TILBAKE TIL MENY', 'fr.prog': 'Delmål {text}',
-  },
-  en: {
-    'fr.start': 'START', 'fr.continue': 'CONTINUE', 'fr.more': 'more', 'fr.less': 'less',
-    'fr.good': 'Nice! Goal {n} of {total}',
-    'fr.hint.stick': 'Drag the stick to walk', 'fr.hint.jump': 'Tap {jump} to jump', 'fr.hint.take': 'Tap {take} to pick up', 'fr.hint.grab': 'Hold {grab} to climb',
-    'fr.help': 'Try: {name}. The arrow shows the way.', 'fr.helpShort': 'This way',
-    'fr.backMenu': 'BACK TO MENU', 'fr.prog': 'Goals {text}',
-  },
-};
-export const ft = (lang, key, vars = {}) => (TXT[lang]?.[key] ?? TXT.nb[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
-export const TEXT_KEYS = { nb: Object.keys(TXT.nb), en: Object.keys(TXT.en) };
+// R148: tekstene ligger i i18n.js (nb og en).
+export const ft = (lang, key, vars = {}) => tl(lang, key, vars);
+export const TEXT_KEYS = { nb: DICT_KEYS.nb.filter((k) => k.startsWith('fr.')), en: DICT_KEYS.en.filter((k) => k.startsWith('fr.')) };

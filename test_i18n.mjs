@@ -5,7 +5,7 @@ assert.deepEqual([...DICT_KEYS.nb].sort(), [...DICT_KEYS.en].sort(), 'nb og en h
 let lang = 'nb'; const { T, name } = makeT(() => lang);
 assert.equal(T('btn.smear'), 'SMØR'); assert.equal(T('hint.take', { name: 'Nål' }), 'ta Nål');
 lang = 'en'; assert.equal(T('btn.smear'), 'SMEAR'); assert.equal(T('hint.take', { name: 'Needle' }), 'take Needle');
-for (const l of ['nb', 'en']) { lang = l; for (const k of DICT_KEYS[l]) assert.ok(!/\{\w+\}/.test(T(k, { m: 'M', btn: 'X', z: 'Z', g: 'G', name: 'Y', next: 'N', list: 'L', tieTop: 'A', tieEnd: 'B', press: 'P', hang: 'Q', grab: 'C', thread: 'D', smear: 'E', unroll: 'F', drop: 'G', jump: 'H', take: 'I', center: 'J', look: 'K', place: 'L', n: '1', total: '2', rank: '1', stars: 'S', loads: 'La', heavy: 'He', budget: '6', k: '3', cost: '5', parts: '2', of: '3', task: 'T', mat: 'M', len: '3', c: '1', r: '2', i: '1', ax: 'A', max: '6', rod: 'R', id: 'r1', act: 'A', pts: '5' })), `plassholder i ${l}:${k}`); }
+for (const l of ['nb', 'en']) { lang = l; for (const k of DICT_KEYS[l]) { const vars = {}; for (const m of (T(k).matchAll(/\{(\w+)\}/g))) vars[m[1]] = 'v'; assert.ok(!/\{\w+\}/.test(T(k, vars)), `plassholder i ${l}:${k}`); } }
 assert.equal(name('gel_bottle', '?'), 'Hair gel'); lang = 'nb'; assert.equal(name('gel_bottle', '?'), 'Hårgelé'); assert.equal(name('xyz', 'reserve'), 'reserve');
 for (const [k, v] of Object.entries(NAMES)) assert.equal(v.length, 2, k);
 
@@ -58,4 +58,36 @@ for (const bad of ['ville gått', "'Legoklosse'", 'Tåler X', 'SNAP PÅ', "'SLOW
 assert.ok(!fs.readFileSync('storage_logic.js', 'utf8').includes('Bytte fremgangen'));
 // 7. nye moduler i index.html
 const idx = fs.readFileSync('index.html', 'utf8'); for (const f of ['settings_text', 'changes_text', 'fixes_text']) assert.ok(idx.includes(`'${f}'`), `${f} i files`);
+
+// ---------- R148 runde 3: ordbøkene i i18n.js, lydmikser, versjonssjekk, ⚑ Send, index.html ----------
+import { SOUND_LIST } from './audio.js';
+import { cardText, menuLine, upToDateText } from './version_check_logic.js';
+import { reasonText, statsLines } from './feedback_send.js';
+import { dt, TEXT_KEYS as DT_KEYS } from './difficulty.js';
+import { ft } from './firstrun_logic.js';
+import { rt } from './rewards.js';
+import { sv } from './storage_logic.js';
+// 8. de fire egne ordbøkene er flyttet inn i i18n.js og modulene slår opp der
+for (const f of ['difficulty.js', 'firstrun_logic.js', 'rewards.js', 'storage_logic.js']) assert.ok(!/^const TXT = \{/m.test(fs.readFileSync(f, 'utf8')), `${f}: egen ordbok igjen`);
+for (const [fn, key, l] of [[dt, 'df.back', 'Tilbake/Back'], [ft, 'fr.backMenu', 'TILBAKE TIL MENY/BACK TO MENU'], [rt, 'rw.back', 'Tilbake/Back'], [sv, 'sv.cancel', 'AVBRYT/CANCEL']]) { const [a, b] = l.split('/'); assert.equal(fn('nb', key), a); assert.equal(fn('en', key), b); }
+assert.ok(DT_KEYS.nb.length > 10 && DT_KEYS.en.length === DT_KEYS.nb.length);
+// 9. nb og en bruker de samme plassholderne i hver tekst
+const phs = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
+for (const k of DICT_KEYS.nb) { lang = 'nb'; const a = T(k); lang = 'en'; const b = T(k); assert.equal(phs(a), phs(b), `plassholdere ulike i ${k}`); }
+// 10. lydmikser: hver lyd og gruppe har navn på begge språk
+for (const sd of SOUND_LIST) for (const l of ['nb', 'en']) { lang = l; assert.notEqual(T('snd.' + sd.id), 'snd.' + sd.id, `mangler lydnavn ${sd.id} ${l}`); assert.notEqual(T('sndg.' + sd.group), 'sndg.' + sd.group, `mangler lydgruppe ${sd.group}`); }
+lang = 'en'; assert.equal(T('snd.jump'), 'Take-off ("hup")'); lang = 'nb'; assert.equal(T('snd.jump'), SOUND_LIST.find((s) => s.id === 'jump').label);
+for (const sd of SOUND_LIST) { lang = 'nb'; assert.equal(T('snd.' + sd.id), sd.label, `norsk lydnavn avviker: ${sd.id}`); }
+// 11. versjonssjekk og ⚑ Send på begge språk
+assert.equal(cardText('2.5'), 'NY VERSJON v2.5 · TRYKK FOR Å OPPDATERE'); assert.equal(cardText('2.5', 'en'), 'NEW VERSION v2.5 · TAP TO UPDATE');
+assert.equal(menuLine('2.1', 'idle', 'en'), 'Version v2.1 · CHECK NOW'); assert.equal(menuLine('2.1', 'checking'), 'Versjon v2.1 · SJEKKER …'); assert.equal(upToDateText('en'), 'You have the latest version');
+for (const r of ['kode', 'grense', 'nett', 'feil', 'tom', 'ukjent']) { assert.ok(reasonText(r, 'en') && reasonText(r, 'en') !== reasonText(r, 'nb') || r === 'ukjent', r); }
+assert.deepEqual(statsLines({ me: { sent: 3, fixed: 1, working: 1 }, all: { sent: 9, fixed: 4, testers: 3 } }, 'en'), ['You have reported 3 · 1 fixed · 1 in progress', 'Together you have reported 9, and 4 are fixed']);
+assert.match(statsLines({ me: { sent: 0 }, all: { sent: 0 } })[0], /Du har ikke meldt/);
+// 12. index.html og main.js: statisk tekst følger språket (applyIxText), ⚑-boksen bygges av T, ingen hardkodet norsk igjen i mikser/sending
+for (const k of ['ix.help', 'ix.save', 'ix.back', 'ix.ovhint', 'fq.aria']) for (const l of ['nb', 'en']) { lang = l; assert.ok(T(k).length > 2, k); }
+lang = 'en'; assert.ok(/<kbd>Space<\/kbd>/.test(T('ix.help')) && !/Mellomrom/.test(T('ix.help')));
+assert.ok(/function applyIxText/.test(main) && /applyIxText\(\); if \(qpopRebuild\)/.test(main), 'applyLang kaller applyIxText');
+for (const bad of ['Lydmikser:', 'Alle av</button>', 'Skriv hva som skjedde', 'Send til Claude</button>', "'Sendt! Takk", 'Svar fra Claude:', 'Tester-kode (én gang)']) assert.ok(!main.includes(bad), `hardkodet norsk i main.js: ${bad}`);
+assert.ok(!fs.readFileSync('version_check_view.js', 'utf8').includes("'Oppdaterer …'"), 'versjonssjekk har hardkodet tekst');
 console.log('språk-tester grønne');

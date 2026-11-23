@@ -1,6 +1,7 @@
 // R16: belønning som varer. Ren logikk (ingen DOM/three, kan testes i node): beste smuler/tid per nivå, tilbehør som låses opp
 // når alle smulene i et nivå er tatt, og valget (hatt, skjerf, sekk) som huskes. `st` er { get(k, d), set(k, v) } (store i main.js).
 // Nøkler: tlm.best = { nivå-id: { crumbs, total, t } }, tlm.unlocks = [id], tlm.equip = { hat, scarf, pack }.
+import { tl, DICT_KEYS } from './i18n.js';
 import { badgeTotals } from './difficulty.js';
 export const SLOTS = ['hat', 'scarf', 'pack'];
 // n = nivået som gir tilbehøret (alle smuler tatt). color: ny farge for skjerf/sekk.
@@ -21,24 +22,9 @@ export function unlockSchool(st) {
   st.set('tlm.unlocks', [...getUnlocks(st), acc.id]); const e = getEquipped(st); e[acc.slot] = acc.id; st.set('tlm.equip', e); return acc;
 }
 
-const TXT = {
-  nb: {
-    'rw.closet': 'Lekerom', 'rw.title': 'Lekerommet', 'rw.sub': 'Alt du har samlet. Trykk på noe for å ta det på eller av.', 'rw.back': 'Tilbake',
-    'rw.locked': 'Ta alle smulene i nivå {n}', 'rw.on': 'PÅ', 'rw.records': 'Rekorder', 'rw.none': 'ikke spilt', 'rw.new': 'Nytt tilbehør: {name}! Det er på figuren.',
-    'rw.best': '{crumbs}/{total} smuler, {time}', 'rw.newbest': 'Ny beste tid!',
-    'acc.propeller': 'Propelllue', 'acc.redscarf': 'Rødt skjerf', 'acc.bluepack': 'Blå sekk', 'acc.crown': 'Gullkrone', 'acc.party': 'Festhatt', 'acc.cowboy': 'Cowboyhatt', 'acc.hardhat': 'Byggehjelm', 'rw.lockedSchool': 'Bestå alle åtte steder i BYGGESKOLE',
-    'rw.slot.hat': 'Hatt', 'rw.slot.scarf': 'Skjerf', 'rw.slot.pack': 'Sekk', 'rw.count': '{n} av {total} samlet',
-  },
-  en: {
-    'rw.closet': 'Toy room', 'rw.title': 'The toy room', 'rw.sub': 'Everything you have collected. Tap something to put it on or take it off.', 'rw.back': 'Back',
-    'rw.locked': 'Collect all crumbs in level {n}', 'rw.on': 'ON', 'rw.records': 'Records', 'rw.none': 'not played', 'rw.new': 'New accessory: {name}! It is on your hero.',
-    'rw.best': '{crumbs}/{total} crumbs, {time}', 'rw.newbest': 'New best time!',
-    'acc.propeller': 'Propeller cap', 'acc.redscarf': 'Red scarf', 'acc.bluepack': 'Blue backpack', 'acc.crown': 'Gold crown', 'acc.party': 'Party hat', 'acc.cowboy': 'Cowboy hat', 'acc.hardhat': 'Hard hat', 'rw.lockedSchool': 'Pass all eight sites in BUILDING SCHOOL',
-    'rw.slot.hat': 'Hat', 'rw.slot.scarf': 'Scarf', 'rw.slot.pack': 'Pack', 'rw.count': '{n} of {total} collected',
-  },
-};
-export const rt = (lang, key, vars = {}) => (TXT[lang]?.[key] ?? TXT.nb[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
-export const TEXT_KEYS = { nb: Object.keys(TXT.nb), en: Object.keys(TXT.en) };
+// R148: tekstene ligger i i18n.js (nb og en).
+export const rt = (lang, key, vars = {}) => tl(lang, key, vars);
+export const TEXT_KEYS = { nb: DICT_KEYS.nb.filter((k) => k.startsWith('rw.') || k.startsWith('acc.')), en: DICT_KEYS.en.filter((k) => k.startsWith('rw.') || k.startsWith('acc.')) };
 
 // R69: merker per brett og vanskelighet telles med i belønningene (difficulty.js)
 export const badgeCount = (st, levelIds) => badgeTotals(st, levelIds);
