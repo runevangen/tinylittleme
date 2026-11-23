@@ -1,6 +1,7 @@
 // R146: NYTT-menyen på to språk. id (fra changes_data.js) → [kortere norsk tittel eller null (da brukes title i changes_data.js), engelsk tittel, engelsk «slik tester du»].
 // Nye rader i changes_data.js legges også inn her, så de står på begge språk. Knappene skrives som i spillet (store bokstaver).
 export const CHANGES_TEXT = {
+  'r161-auto-maal2': [null, 'Make level from photos always gets a goal: if the photos give no spot, the game puts a small pedestal at the far end of the room.', 'Try MAKE LEVEL FROM PHOTOS again with the photos that gave "Could not find a spot for the goal". The level should now be made, and the goal flag can be moved with ADJUST.'],
   'r160-tapt-svar': [null, 'Make level from photos retries once by itself if the reply from the service cannot be read, using the same photos.', 'Use MAKE LEVEL FROM PHOTOS on a weak network. If no reply arrives, the game tries once more by itself before showing TRY AGAIN.'],
   'r159-behold-bilder': [null, 'If you lose contact while making a level from photos, the photos stay in memory so you do not have to find them again.', 'Pick 2–4 photos in MAKE LEVEL FROM PHOTOS, turn the network off and tap MAKE LEVEL. Turn the network back on and tap TRY AGAIN: the same photos are sent.'],
   'r158-bildetips': [null, 'Better tips for taking good photos when you make a level: light, angle, A4 sheet, where the goal should be, outdoors and clutter.', 'Tap MAKE LEVEL FROM PHOTOS in PICK LEVEL and read "How to take the photos" before you take the first photo.'],

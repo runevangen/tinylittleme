@@ -77,19 +77,18 @@ export function sceneToRoom(scene, name, opts = {}) {
   const helperCount = r.helpers.length;
   return { ok: true, level: v.level, solvable: !!r.solvable, helpers: r.helpers.map((h) => ({ id: h.id, size_cm: h.size_cm, at_cm: h.at_cm })), helperCount, tooMany: helperCount > LED.maxHelpers, things: thingsOf(scene).length };
 }
-// Fant tolkningen ikke et brukbart mål, velger spillet selv: den høyeste faste flata som kan nås (løsbar først), målet midt på den.
-// Gir { scene, on } eller null. Prøver de høyeste flatene først (maks 12).
+// Fant tolkningen ikke et brukbart mål, velger spillet selv: først den høyeste flata brettbyggeren finner (helst en som kan nås), målet midt på.
+// Finnes ingen flate å stå på, settes en liten sokkel inn i motsatt ende av rommet fra starten, og målet legges på den. Gir { scene, on, sokkel? } eller null.
 export function autoGoal(scene) {
-  const objs = ((scene && scene.objects) || []).filter((o) => o && Array.isArray(o.box) && o.box.length === 6 && !o.movable && !o.decor && o.box.every(Number.isFinite) && o.box[3] > o.box[2] + 1 && o.box[1] - o.box[0] >= 6 && o.box[5] - o.box[4] >= 6)
-    .sort((a, b) => b.box[3] - a.box[3]).slice(0, 12);
-  let fallback = null;
-  for (const o of objs) {
-    const s = clone(scene); s.goal = { ...(scene.goal || {}), x: (o.box[0] + o.box[1]) / 2, y: o.box[3], z: (o.box[4] + o.box[5]) / 2, on: o.id };
-    let r; try { r = sceneToLevel(clone(s)); } catch { continue; }
-    if (r.solvable && r.helpers.length <= LED.maxHelpers) return { scene: s, on: o.id };
-    if (!fallback) fallback = { scene: s, on: o.id };
-  }
-  return fallback;
+  let r = null; try { r = sceneToLevel(clone(scene), { autoGoal: true }); } catch { r = null; }
+  if (r && r.autoGoal) { const s = clone(scene); s.goal = { ...(scene.goal || {}), x: r.autoGoal.x, y: r.autoGoal.y, z: r.autoGoal.z, on: r.autoGoal.id }; return { scene: s, on: r.autoGoal.id }; }
+  const R = scene && scene.room, st = scene && scene.start; if (!R || !st || !Array.isArray(scene.objects)) return null;
+  const w = 20, lim = (v, max) => Math.max(0, Math.min(max - w, v));
+  const x = lim(st.x < R.width / 2 ? R.width - w - 10 : 10, R.width), z = lim(st.z < R.depth / 2 ? R.depth - w - 10 : 10, R.depth);
+  const s = clone(scene); let id = 'maalsokkel'; while (s.objects.some((o) => o.id === id)) id += '_';
+  s.objects.push({ id, kind: 'box', material: 'wood', color: '#c9a36b', box: [x, x + w, 0, 20, z, z + w], confidence: 0.1, note: 'lagt inn av spillet som sted for målet' });
+  s.goal = { ...(scene.goal || {}), x: x + w / 2, y: 20, z: z + w / 2, on: id };
+  return { scene: s, on: id, sokkel: true };
 }
 // Kan brettet spilles? Løsbar etter rutegrafen og ikke for mange hjelpeobjekter
 export const canPlay = (room) => !!room && room.ok && room.solvable && !room.tooMany;

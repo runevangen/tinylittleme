@@ -131,6 +131,12 @@ function reachable() {
   return seen;
 }
 const goalIdx = () => nodes.findIndex((n) => n.id !== 'gulv' && goal[0] >= n.x0 - 0.01 && goal[0] <= n.x1 + 0.01 && goal[2] >= n.z0 - 0.01 && goal[2] <= n.z1 + 0.01 && Math.abs(n.top - goal[1]) < 0.05);
+let autoGoalUsed = null;
+if (goalIdx() < 0 && opts.autoGoal) {   // leditor: tolkningen ga ikke et mål spillet kan bruke → velg selv den høyeste flata som kan nås (ellers den høyeste flata), målet midt på
+  const reach = reachable(); let best = -1;
+  nodes.forEach((n, i) => { if (n.id !== 'gulv' && (best < 0 || (reach.has(i) && !reach.has(best)) || (reach.has(i) === reach.has(best) && n.top > nodes[best].top))) best = i; });
+  if (best >= 0) { const n = nodes[best]; goal = [+((n.x0 + n.x1) / 2).toFixed(3), n.top, +((n.z0 + n.z1) / 2).toFixed(3)]; scene.goal = { ...scene.goal, x: goal[0] * U + cx, y: goal[1] * U, z: goal[2] * U + cz, on: n.id }; autoGoalUsed = { id: n.id, x: scene.goal.x, y: scene.goal.y, z: scene.goal.z }; }
+}
 if (goalIdx() < 0) throw new Error('fant ingen flate under målet');
 
 function idealPath() {                                       // Dijkstra over «ideelle» kanter
@@ -465,5 +471,5 @@ if (easyLevel) {   // R139: vanskelig brett (bygget må til) med ruta over de fa
   level.report = { ...easyLevel.report, hard_solvable_by_graph: solvable };
   level.required = { site: reqCfg.site, ...(reqCfg.beyond ? { beyond: { ...(reqCfg.beyond.x ? { x0: ux(reqCfg.beyond.x) } : {}), y0: uy(reqCfg.beyond.y) } } : {}), easy: opts.levelEasy(level, easyLevel), ...(reqCfg.note ? { note: reqCfg.note } : {}) };
 }
-return { level, solvable, helpers, boxes, hazards, holds, decor, movables, noValidate: scene.validate === false };
+return { level, solvable, helpers, boxes, hazards, holds, decor, movables, noValidate: scene.validate === false, ...(autoGoalUsed ? { autoGoal: autoGoalUsed } : {}) };
 }

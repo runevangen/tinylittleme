@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r161-auto-maal2', version: '2.170', date: '2026-11-23', title: 'Lag brett fra bilder får alltid et mål: finner ikke bildene noe sted, setter spillet inn en liten sokkel i den andre enden av rommet.',
+    how: 'Prøv LAG BRETT FRA BILDER igjen med bildene som ga «Fant ikke noe sted for målet». Brettet skal nå lages, og målflagget kan flyttes med JUSTER.', level: '', spot: null },
   { id: 'r160-tapt-svar', version: '2.169', date: '2026-11-23', title: 'Lag brett fra bilder prøver selv én gang til hvis svaret fra tjenesten ikke kan leses, med de samme bildene.',
     how: 'Bruk LAG BRETT FRA BILDER med dårlig nett. Får du ikke svar, prøver spillet én gang til av seg selv før det viser NYTT FORSØK.', level: '', spot: null },
   { id: 'r159-behold-bilder', version: '2.168', date: '2026-11-23', title: 'Mister du kontakten når du lager brett fra bilder, beholdes bildene i minnet, så du slipper å finne dem på nytt.',

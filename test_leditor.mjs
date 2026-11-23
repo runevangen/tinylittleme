@@ -57,7 +57,8 @@ assert.deepEqual(JSON.parse(JSON.stringify(core.level.boxes)), cli.boxes, 'scene
   assert.equal(sceneToRoom(noGoal, undefined, { auto: false }).reason, 'maal', 'uten auto-mål gir et umulig mål feilen maal');
   const fixed = sceneToRoom(noGoal); assert.equal(fixed.ok, true, 'auto-mål: spillet velger selv et sted for målet'); assert.ok(fixed.autoGoal && fixed.scene && fixed.scene.goal.on === fixed.autoGoal);
   assert.ok(fixed.scene.goal.y < 9999 && sceneToRoom(fixed.scene).ok, 'det nye målet gir et gyldig brett'); assert.equal(fixed.solvable, true, 'auto-målet velges så brettet kan vinnes når det går');
-  assert.equal(sceneToRoom({ ...noGoal, objects: [] }).ok, false, 'ingen flater å velge: fortsatt feil'); }
+  const flat = { ...bad, objects: bad.objects.map((o) => ({ ...o, box: [o.box[0], o.box[1], 0, 1, o.box[4], o.box[5]] })), hazards: [], gates: undefined, goals: undefined, goal: { ...bad.goal, y: 9999 } };
+  const pedestal = sceneToRoom(flat); assert.equal(pedestal.ok, true, 'ingen flate å stå på: spillet setter inn en sokkel og legger målet der'); assert.ok(pedestal.scene.objects.some((o) => o.id === pedestal.autoGoal) || pedestal.autoGoal, 'målet er satt'); assert.ok(pedestal.scene.goal.on); }
 assert.equal(sceneToRoom({}).ok, false);
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
