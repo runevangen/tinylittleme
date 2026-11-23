@@ -94,6 +94,14 @@ assert.equal(sceneToRoom({}).ok, false);
   const g = await callTolk({ code: 'Rune', images: imgs }, { job: U, pollMs: 1, fetchFn: mk(() => R(404, { ok: false, reason: 'finnes_ikke' })) }); assert.equal(g.reason, 'finnes_ikke'); assert.equal(g.job, '');
   // avbrutt av spilleren mens vi venter
   const ac = new AbortController(); setTimeout(() => ac.abort(), 20); const av = await callTolk({ code: 'Rune', images: imgs }, { pollMs: 5, signal: ac.signal, fetchFn: mk((b) => b.job ? R(200, { ok: true, pending: true }) : R(202, { ok: true, job: U })) }); assert.equal(av.reason, 'avbrutt'); assert.equal(av.job, U); }
+// R165: auto-målet velger et møbel, ikke dør, liste eller småting
+{ const W = bad.room.width, D = bad.room.depth, extra = [
+    { id: 'test_dor', kind: 'door', material: 'wood', color: '#ffffff', box: [W - 100, W - 20, 0, 200, D - 100, D - 20] },
+    { id: 'test_taklist', kind: 'taklist', material: 'wood', color: '#c9a36b', box: [0, W, 220, 232, 0, 10] },
+    { id: 'test_benk', kind: 'chest', material: 'wood', color: '#c9a36b', box: [20, 120, 0, 60, D - 90, D - 20] }];
+  const sc = { ...bad, objects: [...bad.objects, ...extra], goal: { ...bad.goal, y: 9999 } }; delete sc.goal.on;
+  const r = sceneToRoom(sc); assert.equal(r.ok, true); assert.ok(!['test_dor', 'test_taklist'].includes(r.autoGoal), `auto-målet er ikke en dør eller liste (${r.autoGoal})`);
+  for (const c of goalCandidates(sc, 4)) assert.ok(!['test_dor', 'test_taklist'].includes(c.id), 'målforslag er ikke dør eller liste'); }
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
 

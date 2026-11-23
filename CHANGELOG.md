@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.176** – Lag brett fra bilder: auto-målet og målforslagene velger møbler (fast, 30–160 cm, stor nok, ikke dør, liste, speil, veggskap eller løs ting), helst nåbare (scene2level_core, test_leditor).
 - **2.175** – Feilsøking: «Forslaget ble ikke et riktig brett» logger nå nøyaktig hva som avvises (start, mål, deathY, bokser, innhold) i rapporten (rooms_logic, leditor_logic).
 - **2.174** – Lag brett fra bilder: tjenesten svarer straks med en jobb-id og tolker i bakgrunnen, telefonen spør til brettet er ferdig (tapt nett taper ikke svaret), og NYTT FORSØK henter samme jobb uten nye bilder (leveleditor_logic, leditor_logic/view/text, tlm_le_jobs, tolk-bilder).
 - **2.173** – Lag brett fra bilder: for mørke bilder lysnes automatisk på telefonen (gamma, aldri lagret), med lystips og logg av lysstyrke (leditor_logic/view/text, test_leditor).

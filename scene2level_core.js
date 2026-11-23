@@ -134,7 +134,15 @@ const goalIdx = () => nodes.findIndex((n) => n.id !== 'gulv' && goal[0] >= n.x0 
 let autoGoalUsed = null;
 if (opts.autoGoal && (goalIdx() < 0 || opts.autoGoal === 'force')) {   // leditor: tolkningen ga ikke et mål spillet kan bruke → velg selv den høyeste flata som kan nås (ellers den høyeste flata), målet midt på
   const reach = reachable(); let best = -1;
-  nodes.forEach((n, i) => { if (n.id !== 'gulv' && !(opts.autoGoalSkip || []).includes(n.id) && (best < 0 || (reach.has(i) && !reach.has(best)) || (reach.has(i) === reach.has(best) && n.top > nodes[best].top))) best = i; });
+  // R165: målet skal ligge på et møbel som gir mening, ikke på en dør, liste, vinduskarm, speil eller noe som henger høyt på veggen.
+  const BAD_KINDS = ['door', 'taklist', 'fotlist', 'listverk', 'gerikt', 'sill', 'mirror', 'light_box', 'wall_cabinet', 'tv', 'knob', 'faucet', 'window'];
+  const info = (n) => { const o = scene.objects.find((q) => q.id === n.id); return { kind: o && o.kind, decor: !!(o && o.decor), movable: !!(o && o.movable), small: (n.x1 - n.x0) * (n.z1 - n.z0) * U * U < 600, y0: o && Array.isArray(o.box) ? o.box[2] : 0, top: n.top * U }; };
+  const score = (n, i) => {   // lavere er bedre: [dårlig type, utenfor 30–160 cm, ikke nåbar, lavere topp]
+    const f = info(n), bad = BAD_KINDS.includes(f.kind) || f.decor || f.movable || f.small || f.y0 > 100 ? 1 : 0, off = f.top >= 30 && f.top <= 160 ? 0 : 1;
+    return [bad, off, reach.has(i) ? 0 : 1, -f.top];
+  };
+  const cmp = (a, b) => { for (let k = 0; k < a.length; k++) if (a[k] !== b[k]) return a[k] - b[k]; return 0; };
+  nodes.forEach((n, i) => { if (n.id !== 'gulv' && !(opts.autoGoalSkip || []).includes(n.id) && (best < 0 || cmp(score(n, i), score(nodes[best], best)) < 0)) best = i; });
   if (best >= 0) { const n = nodes[best]; goal = [+((n.x0 + n.x1) / 2).toFixed(3), n.top, +((n.z0 + n.z1) / 2).toFixed(3)]; scene.goal = { ...scene.goal, x: goal[0] * U + cx, y: goal[1] * U, z: goal[2] * U + cz, on: n.id }; autoGoalUsed = { id: n.id, x: scene.goal.x, y: scene.goal.y, z: scene.goal.z }; }
 }
 if (goalIdx() < 0) throw new Error('fant ingen flate under målet');

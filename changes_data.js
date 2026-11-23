@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r165-maal-paa-mobler', version: '2.176', date: '2026-11-23', title: 'Lag brett fra bilder legger målflagget på et møbel som gir mening (ikke dør, liste eller småting), og MÅL 1–4 foreslår bare slike steder.',
+    how: 'Lag et brett fra bilder av et rom. Sjekk at målflagget står på et møbel, og prøv MÅL 1–4 i JUSTER.', level: '', spot: null },
   { id: 'r164-jobb-og-henting', version: '2.174', date: '2026-11-23', title: 'Lag brett fra bilder tåler at nettet faller ut: tolkningen går i bakgrunnen hos tjenesten, og telefonen henter brettet når det er ferdig.',
     how: 'Trykk LAG BRETT og bytt gjerne mellom wifi og mobilnett mens du venter. Brettet kommer når det er ferdig. Ble nettet borte, trykk NYTT FORSØK og LAG BRETT: samme jobb hentes uten nye bilder.', level: '', spot: null },
   { id: 'r163-lysne-bilder', version: '2.173', date: '2026-11-23', title: 'Lag brett fra bilder lysner for mørke bilder automatisk, og gir et lystips hvis bildet er veldig mørkt.',
