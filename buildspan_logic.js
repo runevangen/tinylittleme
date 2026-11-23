@@ -78,3 +78,12 @@ export function spanArrowTarget(site, p, r = SPAN.showR) {
   if (spanInRange(site, p, r)) return null;
   const w = spanOf(site).w.from; return { x: w.x, y: w.y, z: w.z };
 }
+
+// R154: FRA/TIL-etiketten står over ankeret, men skal ikke ligge oppå en knute (kule) som er trukket opp over ankeret: prøv høyere steder til ingen knute (skjermpunkt) treffer etiketten.
+// p = ankerets skjermpunkt, avoid = [{x, y}] knutenes skjermpunkt, tw = etikettbredde, th = høyde. Gir toppkanten y for etiketten (strek ned til ankeret tegnes av kalleren).
+export const TAG_LIFTS = [62, 92, 122, 152, 182];
+export function tagTop(p, avoid = [], tw = 60, th = 20, pad = 12) {
+  const hit = (y) => avoid.some((q) => q.x > p.x - tw / 2 - pad && q.x < p.x + tw / 2 + pad && q.y > y - pad && q.y < y + th + pad);
+  for (const l of TAG_LIFTS) if (!hit(p.y - l)) return p.y - l;
+  return p.y - TAG_LIFTS[0];
+}

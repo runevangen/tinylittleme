@@ -189,14 +189,21 @@ export function gAddRodTo(B, aId, u, v, mat) {
   pushHist(B); const n = { id: 'kn' + G.n++, u: p.u, v: p.v }; G.nodes.push(n); const r = { id: 'st' + G.r++, a: aId, b: n.id, mat }; G.rods.push(r); derive(B);
   return { ok: true, rod: r, node: n, len: c.len, cost: rodPrice(mat, c.len), newNode: true };
 }
+// R154: løse knuter (ikke anker, ikke dekk, ingen stav) som blir igjen når staver fjernes. `ids` = knutene som kan ha mistet siste stav. Skrus av med B.gridPrune === false (⚙ → Spill → «Rydd løse knuter»).
+export const orphanNodes = (G, ids) => (ids || G.nodes.map((n) => n.id)).filter((id) => { const n = nodeOf(G, id); return n && !n.fixed && !n.deck && !G.rods.some((r) => r.a === id || r.b === id); });
+export function pruneOrphans(B, ids) {
+  const G = B.rg; if (!G || B.gridPrune === false) return [];
+  const gone = orphanNodes(G, ids); if (gone.length) G.nodes = G.nodes.filter((n) => !gone.includes(n.id)); return gone;
+}
 export function gRemoveRod(B, id) {
   const G = B.rg, i = G ? G.rods.findIndex((r) => r.id === id) : -1; if (i < 0 || G.rods[i].deck) return false;
-  pushHist(B); G.rods.splice(i, 1);
-  const a = G.rods.length; void a; derive(B); return true;
+  pushHist(B); const { a, b } = G.rods[i]; G.rods.splice(i, 1); B.lastPruned = pruneOrphans(B, [a, b]);   // R154: endeknutene som ikke har flere staver forsvinner også (ellers henger kulene igjen)
+  derive(B); return true;
 }
 export function gRemoveNode(B, id) {
   const G = B.rg, n = G && nodeOf(G, id); if (!n || n.fixed || n.deck) return false;
-  pushHist(B); G.rods = G.rods.filter((r) => r.a !== id && r.b !== id); G.nodes = G.nodes.filter((q) => q.id !== id); derive(B); return true;
+  pushHist(B); const ends = G.rods.filter((r) => r.a === id || r.b === id).flatMap((r) => [r.a, r.b]).filter((x) => x !== id);
+  G.rods = G.rods.filter((r) => r.a !== id && r.b !== id); G.nodes = G.nodes.filter((q) => q.id !== id); B.lastPruned = pruneOrphans(B, ends); derive(B); return true;
 }
 // flytt en knute til nærmeste rutenettpunkt; alle staver på den må fortsatt være lovlige
 export function gMoveNode(B, id, u, v) {
