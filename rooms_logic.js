@@ -58,12 +58,15 @@ function scrub(v, depth = 0) {
 const v3 = (a) => Array.isArray(a) && a.length === 3 && a.every((n) => Number.isFinite(n) && Math.abs(n) < 1000);
 // Sjekker at et brett ser riktig ut og er lite nok. { ok, level (renset), error: 'form'|'stor' }
 export function validateRoom(level) {
-  if (!level || typeof level !== 'object' || Array.isArray(level)) return { ok: false, error: 'form' };
-  let size = 0; try { size = JSON.stringify(level).length; } catch { return { ok: false, error: 'form' }; }
-  if (size > ROOMS.maxBytes) return { ok: false, error: 'stor' };
-  for (const k of ROOMS.topKeys) if (!(k in level)) return { ok: false, error: 'form' };
-  if (!Array.isArray(level.boxes) || !level.boxes.length || level.boxes.length > 600 || !v3(level.start) || !v3(level.goal) || !Number.isFinite(level.deathY)) return { ok: false, error: 'form' };
-  const clean = scrub(level); if (!clean) return { ok: false, error: 'form' };
+  if (!level || typeof level !== 'object' || Array.isArray(level)) return { ok: false, error: 'form', why: 'ikke objekt' };
+  let size = 0; try { size = JSON.stringify(level).length; } catch { return { ok: false, error: 'form', why: 'kan ikke serialiseres' }; }
+  if (size > ROOMS.maxBytes) return { ok: false, error: 'stor', why: `${size} byte` };
+  for (const k of ROOMS.topKeys) if (!(k in level)) return { ok: false, error: 'form', why: `mangler ${k}` };
+  if (!Array.isArray(level.boxes) || !level.boxes.length || level.boxes.length > 600) return { ok: false, error: 'form', why: `${Array.isArray(level.boxes) ? level.boxes.length : '?'} bokser` };
+  if (!v3(level.start)) return { ok: false, error: 'form', why: `start ${JSON.stringify(level.start)}` };
+  if (!v3(level.goal)) return { ok: false, error: 'form', why: `mål ${JSON.stringify(level.goal)}` };
+  if (!Number.isFinite(level.deathY)) return { ok: false, error: 'form', why: `deathY ${level.deathY}` };
+  const clean = scrub(level); if (!clean) return { ok: false, error: 'form', why: 'innhold nektes (farlig nøkkel eller for dypt)' };
   return { ok: true, level: clean };
 }
 

@@ -98,7 +98,7 @@ export function sceneToRoom(scene, name, opts = {}) {
     return { ok: false, reason: noFlat ? 'maal' : 'scene', detail: String(e && e.message || '').slice(0, 120) };
   }
   const level = r.level; if (name) level.name = level.nameEn = safeName(name);
-  const v = validateRoom(level); if (!v.ok) return { ok: false, reason: v.error, detail: `${(level.boxes || []).length} bokser` };
+  const v = validateRoom(level); if (!v.ok) return { ok: false, reason: v.error, detail: String(v.why || '').slice(0, 160) };
   const helperCount = r.helpers.length;
   return { ok: true, level: v.level, solvable: !!r.solvable, helpers: r.helpers.map((h) => ({ id: h.id, size_cm: h.size_cm, at_cm: h.at_cm })), helperCount, tooMany: helperCount > LED.maxHelpers, things: thingsOf(scene).length };
 }
