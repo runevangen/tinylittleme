@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { P, newPlayer, step, applyPreset, initBodies } from './physics.js';
-import { decorReport, decorSolidBoxes, classifyDecor, createDecorSolid, SOLID } from './solid_decor_logic.js';
+import { decorReport, decorSolidBoxes, decorGapBoxes, decorAllBoxes, classifyDecor, createDecorSolid, SOLID } from './solid_decor_logic.js';
 import { auditAll } from './tools/solid_audit.mjs';
 import { walkRoute } from './tools/walk_route.mjs';
 
@@ -69,7 +69,7 @@ for (const f of fs.readdirSync('levels').filter((n) => n.endsWith('.level.json')
 // 5) bryteren: av = gammel oppførsel, på = boksene ligger i LEVEL.boxes
 {
   const L = load('kjokken'), n0 = L.boxes.length, d = createDecorSolid(L);
-  assert.equal(L.boxes.length, n0, 'ikke på før set(true)'); assert.equal(d.set(true), true); assert.equal(L.boxes.length, n0 + 3); assert.equal(d.set(true), false, 'ingen endring = ingen logg');
+  assert.equal(L.boxes.length, n0, 'ikke på før set(true)'); assert.equal(d.set(true), true); assert.equal(L.boxes.length, n0 + 3 + decorGapBoxes(L).length); assert.equal(d.set(true), false, 'ingen endring = ingen logg');
   assert.equal(d.set(false), true); assert.equal(L.boxes.length, n0); assert.equal(d.on, false);
 }
 { const m = fs.readFileSync('main.js', 'utf8'); assert.ok(/'decorsolid', 'admin'/.test(m) && /createDecorSolid\(LEVEL\)/.test(m) && /logEv\('dekor'/.test(m) && /tlm\.decorsolid', true/.test(m), 'decorsolid hekt i main.js (Admin, standard på, logEv)'); }
@@ -81,5 +81,25 @@ for (const f of fs.readdirSync('levels').filter((n) => n.endsWith('.level.json')
   const off = time(false), on = time(true);
   console.log(`simuleringstid kjøkken: ${off.toFixed(3)} → ${on.toFixed(3)} ms/steg (${decorSolidBoxes(L).length} bokser)`);
   assert.ok(on < off + 0.05, 'under 0,05 ms ekstra per steg');
+}
+
+// 7) R156: figuren kommer ikke bak døra/geriktet i Badet (bad og bad2), og ikke bak dørene i barnerom/kjøkken
+{
+  const walkInto = (name, x, withBoxes) => {
+    const L = load(name), W = JSON.parse(JSON.stringify(L)); initBodies(W); if (withBoxes) W.boxes.push(...decorAllBoxes(W));
+    applyPreset('mario'); Object.assign(P, { edgeGuard: false, autoJump: false, airSteady: false, magnet: false, holdGrab: false });
+    const dz = L.decor.find((d) => d.id === 'dor').pos[2], p = newPlayer(x, 0, dz - 3); let maxZ = -Infinity;
+    for (let i = 0; i < 20; i++) step(p, { ...idle }, 1 / 60, W);
+    for (let i = 0; i < 300; i++) { step(p, { ...idle, mx: 0, mz: 1 }, 1 / 60, W); maxZ = Math.max(maxZ, p.z); }
+    return { maxZ, dz };
+  };
+  for (const [n, xs] of [['bad', [-11.1, -14.9, 2.7, -6]], ['bad2', [-11.1, -14.9, 2.7, -6]], ['barnerom', [2, -5]], ['kjokken', [-24, -30]]]) for (const x of xs) {
+    const off = walkInto(n, x, false), on = walkInto(n, x, true);
+    assert.ok(on.maxZ < on.dz - 0.1, `${n} x=${x}: stoppes foran døra (z ${on.maxZ.toFixed(2)} < ${on.dz})`);
+    assert.ok(off.maxZ > on.maxZ, `${n} x=${x}: uten glipefyll kommer figuren lenger (kontroll)`);
+  }
+  // gliper fylles helt til veggen (ingen spalte igjen), og bare smale
+  for (const n of ['bad', 'bad2']) { const g = decorGapBoxes(load(n)); assert.ok(g.some((b) => b.id === 'dekor_dor_glipe' && b.max[2] === 25) && g.some((b) => b.id === 'dekor_dor_gerikt_v_glipe') && g.some((b) => b.id === 'dekor_dor_gerikt_h_glipe'), `${n}: dør og begge gerikt fylles mot veggen`); }
+  assert.deepEqual(decorGapBoxes({ boxes: [{ type: 'wall', min: [0, 0, 5], max: [9, 9, 6] }], decor: [{ id: 'x', kind: 'door', pos: [4, 4, 3], size: [2, 4, 0.4] }] }), [], 'glipe over 0,5 fylles ikke');
 }
 console.log('solid dekor ok');
