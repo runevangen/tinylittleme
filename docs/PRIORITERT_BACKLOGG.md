@@ -125,3 +125,9 @@ Se spørsmålene i samtalen. De viktigste: hva «lansering» betyr, om bygging e
 - Utkast 2 (v2.40): Rune svarte på fire utfordringer (se 0b); F12, F13 og L4 flyttet til C.
 - Utkast 3 (v2.41): fire nye utfordringer besvart (se 0c); F14 flyttet til A; R84 (standard Medium) lagt i veikartet.
 - Utkast 4 (v2.43): runde 3 besvart (0d), seksukersplan (0e), F16 Android-test lagt til, R85 ytelse og testplan lagt inn.
+
+## 7. Ukesstatus 23. nov 2026 (v2.142)
+- **Gjort siden utkast 4 (v2.43, 18. nov):** ca. 100 versjoner (v2.43 → v2.142). Kjernen: ytelse (R85/R94/R135), første fem minutter (R97), mål og vei (R98), lyd (R99), byggeskjerm og Byggeskole (R92–R96, R106–R113, R118–R128), 3D-lab (R129–R131), logo (R134), 2,5D byggevisning (R137) og første nødvendige bygg i Nivå 2 (R138).
+- **Nytt arbeidsspor (Rune, 23. nov):** bygging tidlig og nødvendig, R138–R142 (`docs/PLAN_BYGG_TIDLIG.md`). R138 er ferdig; R139–R142 venter på testrunde hos Rune. Plasseres under F6/L1 (A), ikke som ny lanseringsblokk.
+- **Lanseringskrav:** 30 fps på iPhone 12+ er målt bare i simulert miljø (SwiftShader), ikke på ekte telefon: åpen. Tre nye spillere gjennom nivå 1 uten hjelp: ikke gjort (testplan i `docs/BRUKERTEST.md`). Android (F16): ikke gjort. R27 venter på Rune.
+- **Risiko:** nødvendig bygging (R138+) kan stoppe nye spillere i Nivå 2, og brukertesten er planlagt uke 5, så den bør testes med buildrequired både på og av.

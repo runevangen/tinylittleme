@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.143** – Ukentlig gjennomgang: ukesstatus 23. nov i docs/PRIORITERT_BACKLOGG.md (avsnitt 7).
 - **2.142** – Tekst: «Bra! Nå må flere ting over» i stedet for «Flere laster må over».
 - **2.141** – R138: Nivå 2 får første nødvendige bygg (bro over lekebøtta) + valget buildrequired.
 - **2.140** – R137 (fra Rune): 2,5D-visning i byggeskjermen (lett skråkamera, dybde, kuler, skygge; treff og fysikk uendret; valg buildview25).
