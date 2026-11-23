@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r137-visning-25d', version: '2.139', date: '2026-11-22', title: 'Byggeskjermen vises i lett 3D: staver med tykkelse, kuler i knutene, tykk veiplate og skygge. Du tegner og trykker som før.',
+    how: 'Åpne Bygg · Bro (Hyllebroen) eller et sted i Byggeskolen og legg ut noen staver. Trykk ⚙ → Spill → «2,5D-visning» av og på for å sammenligne.', level: 'bro', spot: null },
   { id: 'r136-neste-last', version: '2.138', date: '2026-11-22', title: 'Neste last velges automatisk etter bestått prøve.',
     how: 'Åpne Nivå 7 · Lekerom (byggeskjerm), la Ball over og trykk STOPP. Kortet sier «Neste last: …»; trykk PRØV.', level: 'leke', spot: null },
   { id: 'r135-sene-shadere', version: '2.135', date: '2026-11-22', title: 'Mindre hakking i Nivå 1 · Bad: flere shadere forvarmes før spillet starter.',

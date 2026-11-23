@@ -36,6 +36,8 @@ import { trussOn } from './grid_truss_help.js';
 import { createSwapUI, swCss, swMarkup } from './grid_swap_view.js';   // R128: BYTT TIL STÅL + pulserende svakeste stav etter feilet prøve
 import { extraOf, layersOf, hasDouble, windFor, wideOf, wideFlag, spacingOf, braceLines, buildSolids25, PLANE_T } from './grid_25d.js';   // R123: dobbel bro (2,5D)
 import { createDoubleView, D25_CSS, d25Markup } from './grid25d_view.js';
+import { setTilt25, tilt25 } from './build_view25.js';   // R137: 2,5D-visning (skråkamera)
+import { plate25, slab25, rodDepth25 } from './build_view25_view.js';
 import { createGridUI, gridCss, gridMarkup } from './grid_view.js';   // R72: rutenett-bygging: knutepunkter og staver
 import { GRID_PX } from './grid_view.js';
 import { ensurePlayGrid, isPlaySite, playLocked, firstPassed, playStore, codeMode, PLAY } from './grid_play.js';   // R82: rutenett i de vanlige byggebrettene
@@ -116,7 +118,7 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#btnBuildSpan{top:max(56px,calc(env(safe-area-inset-top) + 48px));right:250px;max-width:220px}#btnBuildCard{top:max(114px,calc(env(safe-area-inset-top) + 106px));right:12px;width:200px}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ getStars2 = () => true, getDouble = () => true, getCable = () => true, onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getAutoNextLoad = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getSquareTip = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }), getGhostW = () => true, getPartsStart = () => true, getMirror = () => true, getTruss2 = () => ({ mode: 'auto', expert: false }), getSwapSteel = () => true }) {
+export function createBuildMode({ getStars2 = () => true, getView25 = () => false, getDouble = () => true, getCable = () => true, onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getAutoNextLoad = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getSquareTip = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }), getGhostW = () => true, getPartsStart = () => true, getMirror = () => true, getTruss2 = () => ({ mode: 'auto', expert: false }), getSwapSteel = () => true }) {
   initParts(LEVEL);
   const sfor = (s, b) => starsFor(s, b.placed, b.links, getDouble() ? extraOf(b) : undefined);   // R123: kostnad og stjerner inkluderer dobbel bro (planenes kopi og tverrstag)
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
@@ -255,7 +257,7 @@ export function createBuildMode({ getStars2 = () => true, getDouble = () => true
   const dpr = () => Math.min(2, window.devicePixelRatio || 1);
   const gguide = createGridGuide({ root, T, store: gstore, logEv, getOn: () => getGridGuide() && !bux.wanted(), getHint: () => getGridHint(), onClose: () => grid.sync() });   // R75 (R92: den forenklede skjermen har egen hånd-animasjon)
   const grid = createGridUI({   // R72: rutenett-bygging (grid_view.js, grid_logic.js)
-    getDouble: () => getDouble(), root, T, toast, logEv, buzz, audio, onChange, store: gstore, guide: gguide, getGuideOn: () => getGridGuide(), getB: () => (active ? getB(active) : null), site: () => active, view: () => view, toWorld: (x, y) => toWorld(view, W, H, x, y), loc: (e) => loc(e), now: () => tNow, botY: () => H - BOTPX(), isSim: () => !!sim, trayRender: () => trayRender(),
+    getDouble: () => getDouble(), getTilt: () => tilt25(), root, T, toast, logEv, buzz, audio, onChange, store: gstore, guide: gguide, getGuideOn: () => getGridGuide(), getB: () => (active ? getB(active) : null), site: () => active, view: () => view, toWorld: (x, y) => toWorld(view, W, H, x, y), loc: (e) => loc(e), now: () => tNow, botY: () => H - BOTPX(), isSim: () => !!sim, trayRender: () => trayRender(),
     getOn: () => getGrid() && (!playHere() || getPlayGrid()), getHint: () => getGridHint(), getMaxLen: () => getGridMax(), getCable: () => getCable(), getDeck: () => getGridDeck() && !stageHere() && !playHere(), stageOn: () => stageHere() || playHere(), locked: () => stageLockedFor(active) || playLockedFor(active), lockText: () => (stageLockedFor(active) ? stageLockText(sites, active.id, T) : T('gplay.locked')),
     startPan: (e, x, y) => { sel = null; gest = { kind: 'pan', x, y, cu: view.cu, cv: view.cv, t: e.timeStamp || performance.now(), tn: performance.now(), moved: false }; capture(e); },
   });
@@ -420,10 +422,12 @@ export function createBuildMode({ getStars2 = () => true, getDouble = () => true
 
   // ---- tegning ----
   function draw() { drawBoard(); loupeStep(); }   // R106: glasset kopierer det ferdige bildet, så det tegnes sist
+  let lastTilt25 = null;   // R137
   function drawBoard() {
-    if (!active) return; size(); const d = dpr(), B = getB(active), S = active; bux.frame(); cbx.frame(); bn.frame(); blk.frame(); trh.frame(); swp.frame();
+    if (!active) return; size(); const d = dpr(), B = getB(active), S = active; const t25 = !!getView25(); setTilt25(t25); if (t25 !== lastTilt25) { if (lastTilt25 != null) logEv('bygg', `visning 2,5D ${t25 ? 'på' : 'av'}`); lastTilt25 = t25; } bux.frame(); cbx.frame(); bn.frame(); blk.frame(); trh.frame(); swp.frame();
     g2.setTransform(d, 0, 0, d, 0, 0); g2.clearRect(0, 0, W, H);
     const sx = (u, v) => toScreen(view, W, H, u, v);
+    if (t25) plate25(g2, [sx(-S.w / 2, S.h), sx(S.w / 2, S.h), sx(S.w / 2, 0), sx(-S.w / 2, 0)]);   // R137: rolig underlag
     // rutenett
     g2.lineWidth = 1; g2.strokeStyle = 'rgba(255,255,255,.07)';
     const a = sx(-S.w / 2, S.h), b = sx(S.w / 2, 0);
@@ -437,10 +441,14 @@ export function createBuildMode({ getStars2 = () => true, getDouble = () => true
       for (let v = Math.ceil(vB / gs) * gs; v <= vT + 1e-6; v += gs) { const p = sx(-S.w / 2, v), q = sx(S.w / 2, v); g2.moveTo(p.x, p.y); g2.lineTo(q.x, q.y); }
       g2.stroke();
     }
-    g2.strokeStyle = '#ffd23f'; g2.lineWidth = 2; g2.setLineDash([8, 6]); g2.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y); g2.setLineDash([]);
+    g2.strokeStyle = '#ffd23f'; g2.lineWidth = 2; g2.setLineDash([8, 6]); if (t25) { g2.beginPath(); [[-S.w / 2, S.h], [S.w / 2, S.h], [S.w / 2, 0], [-S.w / 2, 0]].forEach(([u, v], i) => { const z = sx(u, v); if (i) g2.lineTo(z.x, z.y); else g2.moveTo(z.x, z.y); }); g2.closePath(); g2.stroke(); } else g2.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y); g2.setLineDash([]);
     // underlaget: stedets to sider (hyller/kanter) som klosser under v = 0
     g2.fillStyle = '#6b5d4a';
-    for (const bx of siteBoxes(S)) { const p = sx(bx.x0, bx.y1), q = sx(bx.x1, bx.y0); g2.fillRect(Math.min(p.x, q.x), Math.min(p.y, q.y), Math.abs(q.x - p.x), Math.abs(q.y - p.y)); }
+    for (const bx of siteBoxes(S)) {
+      const p = sx(bx.x0, bx.y1), q = sx(bx.x1, bx.y0);
+      if (t25) { const c = [sx(bx.x0, bx.y1), sx(bx.x1, bx.y1), sx(bx.x1, bx.y0), sx(bx.x0, bx.y0)]; slab25(g2, c, '#6b5d4a'); g2.fillStyle = '#6b5d4a'; g2.beginPath(); c.forEach((z, i) => (i ? g2.lineTo(z.x, z.y) : g2.moveTo(z.x, z.y))); g2.closePath(); g2.fill(); }   // R137: klossene får topp og side (samme hjørner som før)
+      else g2.fillRect(Math.min(p.x, q.x), Math.min(p.y, q.y), Math.abs(q.x - p.x), Math.abs(q.y - p.y));
+    }
     const gl = siteGoal(S), gp = sx(gl.u, gl.v); g2.fillStyle = '#ffd23f'; g2.fillRect(gp.x - 1.5, gp.y - 38, 3, 38); g2.beginPath(); g2.moveTo(gp.x + 1.5, gp.y - 38); g2.lineTo(gp.x + 22, gp.y - 31); g2.lineTo(gp.x + 1.5, gp.y - 24); g2.fill();   // målflagg
     // festepunkter
     for (const an of (isGrid(B) ? gridAnchors(S) : siteAnchors(S))) { const p = sx(an.u, an.v); g2.beginPath(); g2.arc(p.x, p.y, 7, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); g2.strokeStyle = '#0b1020'; g2.lineWidth = 2; g2.stroke(); }
@@ -605,6 +613,7 @@ export function createBuildMode({ getStars2 = () => true, getDouble = () => true
         for (const seg of p.segs) {
           if (!seg.length) continue; const pts = seg.map((q) => sx(q.u, q.v));
           const gx = gR(p.id), gk = gx ? gWidthK(gx.kind) : 1;   // R73: strekk tynnere, trykk tykkere
+          if (tilt25()) rodDepth25(g2, pts[0], pts[pts.length - 1], t.h * sc * gk, t.color, () => { g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); if (pts.length === 1) g2.lineTo(pts[0].x + 0.1, pts[0].y); });   // R137: dybde og skygge også under prøven og i replay
           for (const [w, col] of [[t.h * sc * gk + 4, '#2a1d10'], [t.h * sc * gk, gx ? gStressCss(gx.r, gamma) : stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : mixCol(t.color, Math.min(1, Math.max(0, (p.stress - 0.35) / 0.65)))]]) {
             g2.lineCap = 'round'; g2.lineJoin = 'round'; g2.lineWidth = w; g2.strokeStyle = col; g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); if (pts.length === 1) g2.lineTo(pts[0].x + 0.1, pts[0].y); g2.stroke();
           }
@@ -648,7 +657,7 @@ export function createBuildMode({ getStars2 = () => true, getDouble = () => true
   }
 
   // ---- dra og trykk ----
-  const loc = (e) => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const loc = (e) => { setTilt25(!!active && getView25()); const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   let bounce = null;
   function trayTap(B, id) {   // R110: trykk på brikke i delebrettet: legg delen ut på et fornuftig sted, velg den og gi et lite sprett
     const type = B.types[id], tp = trayPlace({ B, id, type, view }), p = place(B, id, tp.u, tp.v, tp.rot);

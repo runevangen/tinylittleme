@@ -2,6 +2,7 @@
 // Alt går med trykk: trykk et punkt = knute, trykk en knute og så et punkt (eller en annen knute) = stav i valgt materiale, dra en knute = flytt, FJERN = slett valgt knute/stav.
 // Målene er skjermbaserte (minst ca. 44 px: nærmeste rutenettpunkt innen en halv rute treffes), så en finger treffer også når brettet er zoomet ut (R70).
 import { GRID_MATS, GRID_MAT, CABLE_SAG, rodPrice } from './build_materials.js';
+import { rodDepth25, nodeBall25 } from './build_view25_view.js';   // R137
 import { guideCss } from './grid_guide_view.js';   // R75
 import { shouldTipMode, showHelpBtn, shouldRestoreMode, getMode, setModeMem, KEY_TIP } from './grid_guide_logic.js';
 import { applyExample, hasExample } from './grid_example.js';   // R73
@@ -168,7 +169,7 @@ export function createGridUI(ctx) {
     return { u: n.u, v: n.v, ok: true };
   };
   function draw(sx, tNow, g2) {
-    const S = site(), Gd = G(), sc = scale();
+    const S = site(), Gd = G(), sc = scale(), t25 = !!ctx.getTilt?.();
     // rutenettpunkter (små prikker)
     g2.fillStyle = 'rgba(255,255,255,.28)'; g2.beginPath();
     if (dots) for (const p of latticePoints(S)) { const q = sx(p.u, p.v); g2.moveTo(q.x + 2.5, q.y); g2.arc(q.x, q.y, 2.5, 0, 7); }
@@ -192,6 +193,7 @@ export function createGridUI(ctx) {
       g2.lineCap = 'round';
       if (onRoad(r)) {   // R100: veibanen ser ut som en vei (grå asfalt, lys kant, gul midtstripe) så den ikke blandes med konstruksjonen som bærer den
         const dw = Math.max(w + 6, 13);
+        if (t25) rodDepth25(g2, pa, pb, dw, '#4a505c', () => { g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); }, true);   // R137: tykk plate
         g2.lineCap = 'butt'; g2.strokeStyle = isSel ? '#ffffff' : '#e9eef7'; g2.lineWidth = dw + 4; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
         g2.strokeStyle = '#4a505c'; g2.lineWidth = dw; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke();
         g2.setLineDash([7, 6]); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.setLineDash([]);
@@ -199,6 +201,7 @@ export function createGridUI(ctx) {
       }
       const cab = r.mat === 'cable', cx = (pa.x + pb.x) / 2, cy = (pa.y + pb.y) / 2 + (cab ? CABLE_SAG * 2 * Math.hypot(pb.x - pa.x, pb.y - pa.y) : 0);   // R127: kabel henger litt ned (kvadratisk kurve; bare tegning, fysikken er en rett strekkbinding)
       const seg = () => { g2.beginPath(); g2.moveTo(pa.x, pa.y); if (cab) g2.quadraticCurveTo(cx, cy, pb.x, pb.y); else g2.lineTo(pb.x, pb.y); };
+      if (t25) rodDepth25(g2, pa, pb, w, m.color, seg);   // R137: tykkelse og skygge (samme linje som før)
       g2.strokeStyle = isSel ? '#ffffff' : '#1a1208'; g2.lineWidth = w + (isSel ? 6 : 4); seg(); g2.stroke();
       g2.strokeStyle = m.color; g2.lineWidth = w; seg(); g2.stroke();
       if (cab) { g2.setLineDash([2, 5]); g2.strokeStyle = '#5b6672'; g2.lineWidth = Math.max(1, w * 0.4); seg(); g2.stroke(); g2.setLineDash([]); }
@@ -216,7 +219,9 @@ export function createGridUI(ctx) {
     for (const n of Gd.nodes) {
       const p = p2.get(n.id), q = sx(p.u, p.v), isSel = selNode === n.id, rr = n.fixed ? 8 : 7;
       if (isSel) { g2.beginPath(); g2.arc(q.x, q.y, 13 + 2 * Math.sin(tNow * 6), 0, 7); g2.strokeStyle = '#ffd23f'; g2.lineWidth = 3; g2.stroke(); }
-      g2.beginPath(); g2.arc(q.x, q.y, rr, 0, 7); g2.fillStyle = !p.ok ? '#ff6a5a' : n.fixed ? '#3df0b0' : n.deck ? '#cfd8ff' : '#ffffff'; g2.fill(); g2.strokeStyle = '#0b1020'; g2.lineWidth = 2; g2.stroke();
+      const nf = !p.ok ? '#ff6a5a' : n.fixed ? '#3df0b0' : n.deck ? '#cfd8ff' : '#ffffff';
+      if (t25) nodeBall25(g2, q.x, q.y, rr, nf);   // R137: kule
+      else { g2.beginPath(); g2.arc(q.x, q.y, rr, 0, 7); g2.fillStyle = nf; g2.fill(); g2.strokeStyle = '#0b1020'; g2.lineWidth = 2; g2.stroke(); }
     }
     // mål for flytting: det punktet knuten lander på
     if (gd && gd.moved) { const n = nodeOf(Gd, gd.id), w = ctx.toWorld(gd.x, gd.y), p = n && canMoveTo(B(), gd.id, w.u, w.v); if (p) { const q = sx(p.u, p.v); g2.beginPath(); g2.arc(q.x, q.y, 11, 0, 7); g2.strokeStyle = '#3df0b0'; g2.lineWidth = 3; g2.stroke(); } }

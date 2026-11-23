@@ -4,6 +4,7 @@
 // roteres, angres og nullstilles. Ingen fysikk ennå (R25): her bare plassering.
 
 import { clampZoom } from './build_zoom.js';
+import { tilt25, proj25, unproj25 } from './build_view25.js';   // R137: 2,5D-visning
 import { TOY_TYPES, legoSnap } from './build_toys.js';   // R46: leker som materialer
 import { rodPartType } from './build_materials.js';          // R72: staver i rutenett-modus har egne typer (rod_*)
 
@@ -199,8 +200,16 @@ export function fitView(site, w, h, pad = 24, top = 0, bot = 0) {     // skala (
   return { scale: sc, cu: 0, cv: site.h / 2, oy: (top - bot) / 2 };
 }
 export const clampScale = clampZoom;   // R44: grensene bor i build_zoom.js (maks økt fra 80)
-export const toScreen = (view, w, h, u, v) => ({ x: w / 2 + (u - view.cu) * view.scale, y: h / 2 + (view.oy || 0) - (v - view.cv) * view.scale });
-export const toWorld = (view, w, h, x, y) => ({ u: view.cu + (x - w / 2) / view.scale, v: view.cv - (y - h / 2 - (view.oy || 0)) / view.scale });
+export const toScreen = (view, w, h, u, v) => {
+  const p = (u - view.cu) * view.scale, q = (v - view.cv) * view.scale;
+  if (tilt25()) { const r = proj25(p, q); return { x: w / 2 + r.x, y: h / 2 + (view.oy || 0) - r.y }; }   // R137: 2,5D: homografi, eksakt invers i toWorld
+  return { x: w / 2 + p, y: h / 2 + (view.oy || 0) - q };
+};
+export const toWorld = (view, w, h, x, y) => {
+  const px = x - w / 2, py = -(y - h / 2 - (view.oy || 0));
+  if (tilt25()) { const r = unproj25(px, py); return { u: view.cu + r.p / view.scale, v: view.cv + r.q / view.scale }; }
+  return { u: view.cu + px / view.scale, v: view.cv + py / view.scale };
+};
 
 // ---------- inn og ut av modus ----------
 export const canEnterBuild = ({ play, won, menu, boss, ov, onGround }) => !!play && !won && !menu && !boss && !ov && !!onGround;
