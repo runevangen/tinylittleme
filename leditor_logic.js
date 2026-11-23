@@ -4,7 +4,7 @@
 import { LE, ANSWER_OPTS, normAnswers, REASONS } from './leveleditor_logic.js';
 import { FEEDBACK, validCode, cleanCode } from './feedback_send.js';
 import { sceneToLevel } from './scene2level_core.js';
-import { validateRoom, addRoom, ROOMS, safeName } from './rooms_logic.js';
+import { validateRoom, addRoom, ROOMS, safeName, listRooms, loadRoomScene, saveRoomScene } from './rooms_logic.js';
 
 export const LED = {
   consentKey: 'tlm.leconsent',        // samtykket gis én gang (lagres lokalt)
@@ -235,3 +235,14 @@ export function brightenData(data) {
   if (gamma < 1) { const lut = gammaLut(gamma); for (let i = 0; i < data.length; i += 4) { data[i] = lut[data[i]]; data[i + 1] = lut[data[i + 1]]; data[i + 2] = lut[data[i + 2]]; } after = meanLuma(data); }
   return { mean: Math.round(mean), gamma: +gamma.toFixed(2), after: Math.round(after) };
 }
+
+// ---------- R167: siste brett fra bilder, så editoren er tilgjengelig igjen etter spilling ----------
+export const LED_LAST = 'tlm.led.last';
+export const setLastRoom = (st, id) => { try { st.set(LED_LAST, id || null); } catch { /* ingen lagring */ } };
+// { id, name } for det siste egne brettet som fortsatt finnes med tolkning, ellers null
+export function lastRoom(st) {
+  const id = st.get(LED_LAST, null); if (!id) return null;
+  const r = listRooms(st).find((x) => x.id === id && x.mine); if (!r || !loadRoomScene(st, id)) return null;
+  return { id, name: r.name };
+}
+export { saveRoomScene, loadRoomScene };

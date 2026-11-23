@@ -7,6 +7,8 @@ import { rpc, validCode, cleanCode } from './feedback_send.js';
 export const ROOMS = {
   listKey: 'tlm.rooms',            // [{ id, name, code, mine, at }]
   dataKey: (id) => `tlm.room.${id}`,
+  sceneKey: (id) => `tlm.roomscene.${id}`,   // R167: tolkningen (tall og former, aldri bilder) ligger egen, så DEL bare sender selve brettet
+  sceneMaxBytes: 200000,
   idPrefix: 'mine-',               // brett-id i ?level=
   max: 20,                         // maks antall lagrede brett på enheten
   maxBytes: 150000,                // maks størrelse på ett brett (JSON); et vanlig brett er 10–50 kB
@@ -90,7 +92,18 @@ export function addRoom(st, { name, level, code = '', mine = true, rnd = Math.ra
 }
 export function removeRoom(st, id) {
   const list = listRooms(st); if (!list.some((r) => r.id === id)) return false;
-  st.set(ROOMS.listKey, list.filter((r) => r.id !== id)); st.set(ROOMS.dataKey(id), null); return true;
+  st.set(ROOMS.listKey, list.filter((r) => r.id !== id)); st.set(ROOMS.dataKey(id), null); st.set(ROOMS.sceneKey(id), null); return true;
+}
+// R167: tolkningen (scenen) bak et eget brett, så JUSTER kan åpnes igjen etter spilling. Bare tall og former, aldri bilder. Gir true/false.
+export function saveRoomScene(st, id, scene) {
+  if (!isRoomId(id) || !scene || typeof scene !== 'object' || !scene.room || !Array.isArray(scene.objects)) return false;
+  let n = 0; try { n = JSON.stringify(scene).length; } catch { return false; }
+  if (n > ROOMS.sceneMaxBytes) return false;
+  st.set(ROOMS.sceneKey(id), scene); return true;
+}
+export function loadRoomScene(st, id) {
+  if (!isRoomId(id)) return null; const sc = st.get(ROOMS.sceneKey(id), null);
+  return sc && typeof sc === 'object' && sc.room && Array.isArray(sc.objects) ? sc : null;
 }
 export function setRoomCode(st, id, code) { const list = listRooms(st); const r = list.find((x) => x.id === id); if (!r) return false; r.code = code; st.set(ROOMS.listKey, list); return true; }
 

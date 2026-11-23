@@ -2,9 +2,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { LE, REASONS } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, meanLuma, gammaFor, gammaLut, brightenData, sceneToRoom, goalCandidates, summarizeScene, interpretation, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, meanLuma, gammaFor, gammaLut, brightenData, sceneToRoom, goalCandidates, summarizeScene, interpretation, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
 import { sceneToLevel } from './scene2level_core.js';
-import { listRooms, loadRoom, validateRoom } from './rooms_logic.js';
+import { listRooms, loadRoom, validateRoom, ROOMS, removeRoom } from './rooms_logic.js';
 import { LEDITOR_TEXT, ltx, lerr, lverdict } from './leditor_text.js';
 import { handleTolk } from './leveleditor_logic.js';
 import { validateScene } from './tools/validate_scene.mjs';
@@ -108,6 +108,15 @@ assert.equal(sceneToRoom({}).ok, false);
     objects: [{ id: 'sofa', kind: 'sofa', material: 'fabric', color: '#334455', box: [180, 400, 0, 45, 180, 330] }, { id: 'skrivebord', kind: 'table', material: 'wood', color: '#d2b48c', box: [20, 120, 0, 75, 20, 70] }, { id: 'shelf_tall', kind: 'shelf', material: 'wood', color: '#c9a36b', box: [10, 50, 0, 180, 150, 190] }] }));
   assert.ok(!('rev' in ai), 'tolkningen har ikke rev'); const r = sceneToRoom(ai); assert.equal(r.ok, true, `tolkning uten rev gir et brett (${r.reason} ${r.detail || ''})`); assert.equal(r.level.rev, 1);
   const bad2 = sceneToRoom({ ...ai, goal: { ...ai.goal, y: 9999 } }); assert.equal(bad2.ok, true, 'auto-mål virker også uten rev'); }
+// R167: editoren tilgjengelig igjen etter spilling: tolkningen lagres lokalt med brettet (aldri bilder), siste brett og JUSTER
+{ const st = mem(), sc = JSON.parse(JSON.stringify(bad)), room = sceneToRoom(sc, 'Stuen');
+  const sv = saveRoom(st, { name: 'Stuen', level: room.level }); assert.equal(sv.ok, true);
+  assert.equal(saveRoomScene(st, sv.id, sc), true, 'tolkningen lagres'); assert.equal(loadRoomScene(st, sv.id).objects.length, sc.objects.length);
+  assert.equal(lastRoom(st), null, 'ingen siste brett før det er satt'); setLastRoom(st, sv.id); assert.deepEqual(lastRoom(st), { id: sv.id, name: 'Stuen' });
+  assert.ok(!JSON.stringify(st.m[ROOMS.dataKey(sv.id)]).includes('"objects"'), 'selve brettet (det som deles) har ikke tolkningen');
+  assert.equal(saveRoomScene(st, 'ikke-id', sc), false); assert.equal(saveRoomScene(st, sv.id, { room: {}, objects: 'x' }), false);
+  assert.equal(saveRoomScene(st, sv.id, { ...sc, huge: 'x'.repeat(ROOMS.sceneMaxBytes) }), false, 'for stor tolkning lagres ikke');
+  assert.equal(removeRoom(st, sv.id), true); assert.equal(loadRoomScene(st, sv.id), null, 'slettet brett fjerner også tolkningen'); assert.equal(lastRoom(st), null, 'slettet brett er ikke lenger siste'); }
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
 

@@ -1,8 +1,8 @@
 // R152: «Lag brett fra bilder» (DOM). Bruker startskjermens #start og knappestiler (.mbtn) som VELG BRETT/MINE BRETT. Logikk: leditor_logic.js, tekster: leditor_text.js.
 // Flyt: veiledning + samtykke → 2–4 bilder (nedskalert her, i minnet) → fire spørsmål → LAG BRETT (tjenesten) → forslag med SJEKK, JUSTER, SPILL, DEL, LAGRE. Bilder lagres aldri.
 import { LE } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData } from './leditor_logic.js';
-import { shareRoom, setRoomCode, safeName } from './rooms_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene } from './leditor_logic.js';
+import { shareRoom, setRoomCode, safeName, listRooms } from './rooms_logic.js';
 import { ltx, lerr, lverdict, lsub } from './leditor_text.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CSS = `#start.rml{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:max(26px,env(safe-area-inset-top));padding-bottom:max(18px,env(safe-area-inset-bottom))}
@@ -60,11 +60,13 @@ export function createLeditorView(ctx) {
 
   // ---- 1. veiledning og samtykke ----
   function show() {
-    S = fresh(); logEv?.('leveleditor', 'åpnet');
+    S = fresh(); logEv?.('leveleditor', 'åpnet'); const last = lastRoom(st);   // R167: det siste brettet kan åpnes igjen (JUSTER, MÅL, VIS TOLKNING)
     const el = root();
     el.innerHTML = `<h1>${esc(T('title'))}</h1><div class="ledbox"><b>${esc(T('guideH'))}</b><ul>${T('guide').map((g) => `<li>${esc(g)}</li>`).join('')}</ul></div>`
       + (consented() ? '' : `<div class="ledbox"><b>${esc(T('consentH'))}</b><span>${esc(T('consent'))}</span></div>`)
-      + `<button class="mbtn" id="ledGo">${esc(consented() ? T('next') : T('consentBtn'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
+      + (last ? `<button class="mbtn" id="ledLast">${esc(T('lastBtn', last.name))}</button>` : '')
+      + `<button class="mbtn${last ? ' sec' : ''}" id="ledGo">${esc(consented() ? T('next') : T('consentBtn'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
+    if (last) $('ledLast').onclick = () => resume(last.id);
     $('ledGo').onclick = () => { setConsent(); photos(); };
     $('ledBack').onclick = leave;
   }
@@ -166,7 +168,7 @@ export function createLeditorView(ctx) {
     const save = () => {
       const lvl = S.room.level, res = saveRoom(st, { id: S.savedId, name: nm(), level: lvl });
       if (!res.ok) { msg(lerr(L(), res.reason)); logEv?.('leveleditor', `lagring feilet: ${res.reason}`); return null; }
-      if (!res.again) logSummary('lagret'); S.savedId = res.id; return res.id;
+      if (!res.again) logSummary('lagret'); S.savedId = res.id; saveRoomScene(st, res.id, S.scene); setLastRoom(st, res.id); return res.id;   // R167: tolkningen følger brettet, så JUSTER kan åpnes igjen etter spilling
     };
     $('ledPlay').disabled = false; if (!ok) $('ledPlay').classList.add('sec');
     $('ledPlay').onclick = () => { const id = save(); if (id) { logSummary('spiller'); ctx.onPlay?.(id); } };
@@ -228,16 +230,24 @@ export function createLeditorView(ctx) {
       if (!room.ok && !wasBad) { msg(T('adjFail')); return false; }
       if (!room.ok) { S.undo.push(S.scene); S.scene = next; S.room = room; S.edits++; msg(T('adjStill')); logEv?.('leveleditor', `retting ${S.edits}: ${what} (fortsatt ikke riktig: ${room.reason})`); return true; }
       S.undo.push(S.scene); S.scene = next; S.room = room; S.edits++;
-      if (S.savedId) { saveRoom(st, { id: S.savedId, name: S.name, level: room.level }); if (S.code) { setRoomCode(st, S.savedId, ''); S.code = ''; } }   // rettet brett: den delte versjonen er gammel, DEL gir ny kode
+      if (S.savedId) { saveRoom(st, { id: S.savedId, name: S.name, level: room.level }); saveRoomScene(st, S.savedId, S.scene); if (S.code) { setRoomCode(st, S.savedId, ''); S.code = ''; } }   // rettet brett: den delte versjonen er gammel, DEL gir ny kode
       msg(verdictText()); logEv?.('leveleditor', `retting ${S.edits}: ${what}`); return true;
     };
     cv.onclick = (e) => { const b = cv.getBoundingClientRect(), x = (e.clientX - b.left) / b.width * R.width, z = (e.clientY - b.top) / b.height * R.depth; const t = thingAt(thingsOf(sc()), x, z); S.sel = t ? t.key : ''; draw(); };
     el.querySelectorAll('[data-d]').forEach((b) => { b.onclick = () => { if (!S.sel) { msg(T('adjNone')); return; } const [dx, dz] = b.dataset.d.split(',').map(Number); if (apply(moveThing(sc(), S.sel, dx * LED.step, dz * LED.step), 'flytt')) draw(); }; });
     $('ledDel').onclick = () => { if (!S.sel) { msg(T('adjNone')); return; } const n = deleteThing(sc(), S.sel); if (!n) { msg(T('noGoalDel')); return; } if (apply(n, 'slett')) { S.sel = ''; draw(); } };
-    $('ledUndo').onclick = () => { const p = S.undo.pop(); if (!p) return; S.scene = p; S.room = sceneToRoom(p, S.name); S.edits = Math.max(0, S.edits - 1); if (S.savedId && S.room.ok) saveRoom(st, { id: S.savedId, name: S.name, level: S.room.level }); S.sel = ''; msg(verdictText()); draw(); };
+    $('ledUndo').onclick = () => { const p = S.undo.pop(); if (!p) return; S.scene = p; S.room = sceneToRoom(p, S.name); S.edits = Math.max(0, S.edits - 1); if (S.savedId && S.room.ok) { saveRoom(st, { id: S.savedId, name: S.name, level: S.room.level }); saveRoomScene(st, S.savedId, S.scene); } S.sel = ''; msg(verdictText()); draw(); };
     $('ledDone').onclick = () => { if (S.room && S.room.ok) result(); else { logEv?.('leveleditor', `ferdig uten brett: ${S.room ? S.room.reason : '?'}`); failed(S.room ? S.room.reason : 'scene'); } };
     renderGoals(); if (!S.room || !S.room.ok) msg(T('adjBad')); draw();
   }
-  return { show };
+  // R167: åpner et eget brett på nytt i editoren (resultatskjermen med SPILL, JUSTER, SJEKK, DEL, VIS TOLKNING). Tolkningen er lagret på telefonen, aldri bilder.
+  function resume(id) {
+    const sc = loadRoomScene(st, id), meta = listRooms(st).find((r) => r.id === id);
+    S = fresh(); if (!sc || !meta) { logEv?.('leveleditor', 'fortsett: fant ikke brettet'); show(); return; }
+    S.scene = sc; S.savedId = id; S.name = meta.name; S.code = meta.code || ''; S.room = sceneToRoom(sc, meta.name, { auto: false });
+    logEv?.('leveleditor', `fortsetter brett ${id}${S.room.ok ? '' : ' (' + S.room.reason + ')'}`); setLastRoom(st, id);
+    root(); if (S.room.ok) result(); else failed(S.room.reason);
+  }
+  return { show, resume };
 }
-export const ledBtnHtml = (lang) => `<div class="bgrp" id="dfLed"><button class="mbtn sec" id="mLed">📷 ${esc(ltx(lang, 'btn'))}<small>${esc(ltx(lang, 'btnSub'))}</small></button></div>`;
+export const ledBtnHtml = (lang, last = null) => `<div class="bgrp" id="dfLed"><button class="mbtn sec" id="mLed">📷 ${esc(ltx(lang, 'btn'))}<small>${esc(ltx(lang, 'btnSub'))}</small></button>${last ? `<button class="mbtn sec" id="mLedLast">✏️ ${esc(ltx(lang, 'lastBtn', last.name))}</button>` : ''}</div>`;

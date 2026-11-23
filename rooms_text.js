@@ -3,7 +3,7 @@ const TX = {
   nb: {
     btn: 'MINE BRETT', btnSub: 'Dine egne brett og brett fra en kode', title: 'Mine brett', intro: 'Brett du har laget eller hentet. Trykk SPILL for å spille. DEL gir en kode du kan sende til en annen tester.',
     empty: 'Ingen brett ennå. Lim inn en kode under «SPILL FRA KODE», eller lag et brett fra bilder.',
-    play: 'SPILL', share: 'DEL', del: 'SLETT', report: 'MELD', back: 'TILBAKE', fromCode: 'SPILL FRA KODE', codePh: 'RM-XXXXXXXX', fetch: 'HENT BRETT', codeLabel: 'Lim inn koden du fikk',
+    adjust: 'JUSTER', play: 'SPILL', share: 'DEL', del: 'SLETT', report: 'MELD', back: 'TILBAKE', fromCode: 'SPILL FRA KODE', codePh: 'RM-XXXXXXXX', fetch: 'HENT BRETT', codeLabel: 'Lim inn koden du fikk',
     shared: (c) => `Delt. Koden er ${c}`, codeOf: (c) => `Kode: ${c}`, mineTag: 'laget av meg', otherTag: 'fra kode',
     sharing: 'Deler …', fetching: 'Henter …', copied: 'Koden er kopiert', copyFail: 'Kunne ikke kopiere. Skriv koden av.',
     confirmDel: 'Slette brettet? Trykk SLETT en gang til.', deleted: 'Brettet er slettet', deletedBoth: 'Brettet er slettet, også fra delingen',
@@ -14,7 +14,7 @@ const TX = {
   en: {
     btn: 'MY LEVELS', btnSub: 'Your own levels and levels from a code', title: 'My levels', intro: 'Levels you made or fetched. Tap PLAY to play. SHARE gives a code you can send to another tester.',
     empty: 'No levels yet. Paste a code under «PLAY FROM CODE», or make a level from photos.',
-    play: 'PLAY', share: 'SHARE', del: 'DELETE', report: 'REPORT', back: 'BACK', fromCode: 'PLAY FROM CODE', codePh: 'RM-XXXXXXXX', fetch: 'GET LEVEL', codeLabel: 'Paste the code you got',
+    adjust: 'ADJUST', play: 'PLAY', share: 'SHARE', del: 'DELETE', report: 'REPORT', back: 'BACK', fromCode: 'PLAY FROM CODE', codePh: 'RM-XXXXXXXX', fetch: 'GET LEVEL', codeLabel: 'Paste the code you got',
     shared: (c) => `Shared. The code is ${c}`, codeOf: (c) => `Code: ${c}`, mineTag: 'made by me', otherTag: 'from a code',
     sharing: 'Sharing …', fetching: 'Fetching …', copied: 'Code copied', copyFail: 'Could not copy. Write the code down.',
     confirmDel: 'Delete the level? Tap DELETE once more.', deleted: 'Level deleted', deletedBoth: 'Level deleted, also from sharing',

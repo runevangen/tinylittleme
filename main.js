@@ -35,10 +35,10 @@ import { SCHOOL, schoolProgress, schoolRead, schoolMark, schoolCardShould, schoo
 import { createSchoolView, schoolMenuHtml } from './byggeskole_view.js';
 import { BYGGING, buildingCards, movedNoticeShould } from './bygging_logic.js';   // R133: BYGGESKOLE og 3D-LAB ligger under VELG BRETT → BYGGING
 import { createBuildingView, buildingGroupHtml } from './bygging_view.js';
-import { isRoomId, loadRoom, roomsAvailable, roomLog } from './rooms_logic.js';   // R153: MINE BRETT og deling med kode (rooms_logic.js, rooms_view.js, rooms_text.js)
+import { isRoomId, loadRoom, loadRoomScene, roomsAvailable, roomLog } from './rooms_logic.js';   // R153: MINE BRETT og deling med kode (rooms_logic.js, rooms_view.js, rooms_text.js)
 import { createRoomsView, roomsBtnHtml } from './rooms_view.js';
 import { rtx as roomTx } from './rooms_text.js';
-import { ledAvailable } from './leditor_logic.js';   // R152: LAG BRETT FRA BILDER (leditor_logic.js, leditor_view.js, leditor_text.js)
+import { ledAvailable, lastRoom } from './leditor_logic.js';   // R152: LAG BRETT FRA BILDER (leditor_logic.js, leditor_view.js, leditor_text.js)
 import { createLeditorView, ledBtnHtml } from './leditor_view.js';
 import { ltx as ledTx } from './leditor_text.js';
 import { createLab3dView } from './grid3d_view.js';   // R130: 3D-laben (egen skjerm: bygg fritt i tre dimensjoner)
@@ -3492,18 +3492,17 @@ function buildingPick() {
 let roomsV = null;
 const roomsShow = () => roomsAvailable({ on: roomsOn, code: testerCode(), cinema: CINE.on });
 function openRooms() {
-  roomsV = roomsV || createRoomsView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker });
+  roomsV = roomsV || createRoomsView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onAdjust: (id) => { unlockAudio(); openLeditorResume(id); } });
   roomsV.show();
 }
 let ledV = null;
 const ledShow = () => ledAvailable({ on: ledOn, code: testerCode(), cinema: CINE.on });
-function openLeditor() {
-  ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms });
-  ledV.show();
-}
+const getLed = () => (ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms }));
+function openLeditor() { getLed().show(); }
+function openLeditorResume(id) { getLed().resume(id); }   // R167: det egne brettet åpnes på nytt i editoren (JUSTER, MÅL 1–4, VIS TOLKNING) etter spilling
 function roomsPick(b) {
   const led = ledShow(), rm = roomsShow(); if (!led && !rm) return b;
-  return { html: (b ? b.html : '') + (rm ? roomsBtnHtml(lang) : '') + (led ? ledBtnHtml(lang) : ''), on: { ...(b ? b.on : {}), ...(rm ? { mRooms: () => { unlockAudio(); openRooms(); } } : {}), ...(led ? { mLed: () => { unlockAudio(); openLeditor(); } } : {}) } };
+  return { html: (b ? b.html : '') + (rm ? roomsBtnHtml(lang) : '') + (led ? ledBtnHtml(lang, lastRoom(store)) : ''), on: { ...(b ? b.on : {}), ...(rm ? { mRooms: () => { unlockAudio(); openRooms(); } } : {}), ...(led ? { mLed: () => { unlockAudio(); openLeditor(); }, mLedLast: () => { const l = lastRoom(store); unlockAudio(); if (l) openLeditorResume(l.id); else openLeditor(); } } : {}) } };
 }
 function openPicker() { dv.pickLevel({ levels: levelsShown(), st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, building: roomsPick(buildingPick()) }); }
 function showStart(o = {}) {
@@ -3521,11 +3520,13 @@ function showStart(o = {}) {
     ${menuVisible(testerCode(), validCode) ? `<div class="mrow"><button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()), lang)}</button><button class="mbtn sec" id="mFix">${buttonLabel(uncheckedCount(fixList))}</button></div>` : `<button class="mbtn sec" id="mChg">${chg.buttonLabel(uncheckedCount(chgRows()), lang)}</button>`}
     <button class="mbtn sec" id="mSet">${T('menu.settings')}</button>
     <button class="mbtn sec" id="mQuit">${T('menu.quit')}</button>`;
-  $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${o.saved ? '✓ ' + dft(lang, 'df.saved') : T('menu.tagline')}</p>${saveWarn()}
+  const adjBtn = isRoomId(levelId) && ledShow() && loadRoomScene(store, levelId) ? `<button class="mbtn sec" id="mLedThis">✏️ ${ledTx(lang, 'adjThis')}</button>` : '';   // R167: i et eget brett fra bilder er editoren ett trykk unna
+  $('start').innerHTML = `<h1>tinylittleme</h1><p class="tag">${o.saved ? '✓ ' + dft(lang, 'df.saved') : T('menu.tagline')}</p>${saveWarn()}${adjBtn}
     ${coll ? `${has ? bContinue : bStart}<button class="mmore" id="mMore">${ft(lang, 'fr.more')} ▾</button><div class="mfold" id="mFold">${rest}</div>` : `${bContinue}${rest}`}
     <div class="ver">v${VERSION}</div>`;
   $('start').classList.remove('hide'); document.body.classList.add('instart'); logoUi.menu($('start'));   // R134
   if ($('mCont')) $('mCont').onclick = () => { unlockAudio(); hideStart(); logEv('fortsett'); };
+  if ($('mLedThis')) $('mLedThis').onclick = () => { unlockAudio(); logEv('leveleditor', 'juster fra menyen i eget brett'); openLeditorResume(levelId); };
   if ($('mStart')) $('mStart').onclick = () => { unlockAudio(); logEv('forstekjoring', 'START valgt (ny spiller, ' + DEFAULT_DIFF + ')'); newGame(DEFAULT_DIFF); };   // R97: ingen vanskelighetsvalg første gang (⚙ → Spill → Vanskelighet)
   if ($('mMore')) $('mMore').onclick = () => { const open = $('mFold').classList.toggle('open'); $('mMore').textContent = `${ft(lang, open ? 'fr.less' : 'fr.more')} ${open ? '▴' : '▾'}`; if (open) $('mFold').after($('mMore')); else $('mFold').before($('mMore')); };   // utbrettet: «mindre» under Avslutt; sammenfoldet: «mer» under START
   $('mNew').onclick = () => {

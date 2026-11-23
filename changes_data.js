@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r167-editor-tilbake', version: '2.179', date: '2026-11-23', title: 'Editoren for brett fra bilder er tilgjengelig igjen etter at du har spilt: JUSTER i MINE BRETT, JUSTER SISTE BRETT i VELG BRETT, og JUSTER DETTE BRETTET i menyen.',
+    how: 'Lag et brett fra bilder og trykk SPILL. Åpne menyen og trykk JUSTER DETTE BRETTET, eller gå til VELG BRETT og trykk JUSTER SISTE BRETT. Under MINE BRETT har egne brett knappen JUSTER.', level: '', spot: null },
   { id: 'r166-brett-fra-bilder-rev', version: '2.178', date: '2026-11-23', title: 'Rettet: «Forslaget ble ikke et riktig brett» kom hver gang i Lag brett fra bilder. Brettet lages nå.',
     how: 'Lag et brett fra 2–4 bilder av et rom i LAG BRETT FRA BILDER. Resultatet skal komme med SPILL, JUSTER og DEL, uten feilmelding.', level: '', spot: null },
   { id: 'r165-maal-paa-mobler', version: '2.176', date: '2026-11-23', title: 'Lag brett fra bilder legger målflagget på et møbel som gir mening (ikke dør, liste eller småting), og MÅL 1–4 foreslår bare slike steder.',
