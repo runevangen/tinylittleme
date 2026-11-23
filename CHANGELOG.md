@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.152** – R146 NYTT-rad og R147/R148 (språk runde 2 og 3) i veikartet.
 - **2.151** – R146 runde 1: språkvalget bytter ⚙, NYTT, spillhendelser og stemme; rettet norsk (alvor 3 og 2).
 - **2.150** – R146 (tekster og språk, fra Rune) lagt i veikartet, med kartlegging i docs/TEKSTER.md.
 - **2.149** – R145: målflagget i byggeskjermen tegnes lesbart og alltid innenfor skjermen (2D og 2,5D, også Bygglab).

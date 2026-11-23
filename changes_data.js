@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r146-sprak-runde1', version: '2.151', date: '2026-11-23', title: 'Språkvalget i ⚙ bytter nå ⚙-menyen, NYTT, meldinger i spillet og figurens stemme mellom norsk og engelsk. Flere norskfeil er rettet.',
+    how: 'Åpne ⚙ → Spill → «Språk / Language» og velg English. Se på ⚙-menyen, NYTT og meldingene når du spiller. Velg Norsk for å bytte tilbake.', level: '', spot: null },
   { id: 'r145-flagg', version: '2.149', date: '2026-11-23', title: 'Målflagget i byggeskjermen ser nå riktig ut: lesbart og alltid innenfor skjermen, i både 2D og 3D-visning.',
     how: 'Gå til Hyllebroen (Vippa) eller et Bygglab-sted og trykk BYGG. Se på målflagget, og bytt visning om du vil sammenligne.', level: 'bro', spot: null },
   { id: 'r144-oppdragskort', version: '2.148', date: '2026-11-23', title: 'Oppdragskortet ved BYGG er nå én kort linje som forsvinner av seg selv og ikke vises igjen etter at du har trykket BYGG. Kan skrus av i ⚙.',
