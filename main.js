@@ -1870,7 +1870,7 @@ let qpopRebuild = null;
 function applyIxText() {
   for (const [id, k] of Object.entries(IX_BTN)) { const el = document.getElementById(id); if (el && !el.classList.contains('armed')) el.textContent = T(k); }
   const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
-  set('bLevel', (e) => { e.textContent = `${T('ix.level')}: ${levelLabel}`; }); set('bSound', (e) => { e.textContent = soundMuted ? T('ix.soundOff') : T('ix.sound'); });
+  set('bLevel', (e) => { e.textContent = `${T('ix.level')}: ${levelShown()}`; }); set('bSound', (e) => { e.textContent = soundMuted ? T('ix.soundOff') : T('ix.sound'); });
   set('bMenu', (e) => { e.textContent = dft(lang, 'df.menu'); });
   set('qbtn', (e) => e.setAttribute('aria-label', T('fq.aria'))); set('btnCenter', (e) => e.setAttribute('aria-label', T('ix.center'))); set('btnMap', (e) => e.setAttribute('aria-label', T('ix.map')));
   set('bMore', (e) => e.setAttribute('aria-label', T('ix.more'))); set('bSet', (e) => e.setAttribute('aria-label', T('ix.settings')));
@@ -1888,11 +1888,7 @@ function confirmed(btn, label, cost, fn) {
   };
 }
 confirmed($('bThings'), 'Ting', SCORE.resetThings, () => { resetThings(); closeMore(); });
-<<<<<<< HEAD
-const setBLevel = () => { $('bLevel').textContent = `${lang === 'en' ? 'Level' : 'Brett'}: ${levelShown()}`; }; setBLevel();
-=======
-$('bLevel').textContent = `${T('ix.level')}: ${levelLabel}`;
->>>>>>> road/R148
+const setBLevel = () => { $('bLevel').textContent = `${T('ix.level')}: ${levelShown()}`; }; setBLevel();
 $('bLevel').onclick = () => { const vl = levelsShown(), i = vl.findIndex((l) => l.id === levelId), n = vl[(i + 1) % vl.length].id; store.set('tlm.level', n); location.search = `?level=${n}`; };
 $('bSound').onclick = toggleSound; $('bSound').textContent = soundMuted ? T('ix.soundOff') : T('ix.sound'); $('bSound').classList.toggle('on', !soundMuted);
 confirmed($('bSave'), 'Lagre', SCORE.save, () => { doSave(); closeMore(); }); confirmed($('bBack'), 'Tilbake', SCORE.respawn, goBack);
@@ -2427,11 +2423,7 @@ function buildPanel() {
   const groupHtml = (g, title) => {
     const items = SETTINGS.filter((d) => d.group === g && visible(d));
     let extra = '';
-<<<<<<< HEAD
-    if (g === 'spill') extra = `<label>${PT('level')}</label><select id="levelSel">${(() => { const sp = splitLevels(LEVELS, round2On || isRound2(levelId)), op = (l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`; return sp.main.map(op).join('') + (sp.round2.length ? `<optgroup label="${lang === 'en' ? 'Round 2: harder build levels' : 'Runde 2: vanskeligere byggebrett'}">${sp.round2.map(op).join('')}</optgroup>` : ''); })()}</select><div class="row"><button id="pRestart">${PT('restart')}</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div><small id="saveNote"></small><div class="row"><button id="bSaveCopy">${sv(lang, 'sv.copy')}</button><button id="bSavePaste">${sv(lang, 'sv.paste')}</button></div>`;
-=======
     if (g === 'spill') extra = `<label>${PT('level')}</label><select id="levelSel">${(() => { const sp = splitLevels(LEVELS, round2On || isRound2(levelId)), op = (l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`; return sp.main.map(op).join('') + (sp.round2.length ? `<optgroup label="${T('tp.round2')}">${sp.round2.map(op).join('')}</optgroup>` : ''); })()}</select><div class="row"><button id="pRestart">${PT('restart')}</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div><small id="saveNote"></small><div class="row"><button id="bSaveCopy">${sv(lang, 'sv.copy')}</button><button id="bSavePaste">${sv(lang, 'sv.paste')}</button></div>`;
->>>>>>> road/R148
     if (g === 'test') extra = `
       <label>${T('tp.wrong')}</label><input type="text" id="markText" placeholder="${T('tp.wrongPh')}">
       <div class="row"><button id="bMark">${T('tp.mark')}</button></div>
@@ -3292,11 +3284,7 @@ function updateCarryButton() {
   if (sig === taPrev) return; taPrev = sig;
   const tb = $('btnCarry'); tb.textContent = label; tb.className = `tbtn ${s.tone} ${s.ready ? 'ready' : 'dim'}${label.length > 6 ? ' long' : ''}`;
 }
-<<<<<<< HEAD
-function applyLang() { if (typeof pickVoice === 'function') pickVoice(); if (typeof refreshLevelLang === 'function') refreshLevelLang(); GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); }
-=======
-function applyLang() { if (typeof pickVoice === 'function') pickVoice(); GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); applyIxText(); if (qpopRebuild) qpopRebuild(); }
->>>>>>> road/R148
+function applyLang() { if (typeof pickVoice === 'function') pickVoice(); if (typeof refreshLevelLang === 'function') refreshLevelLang(); GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); applyIxText(); if (qpopRebuild) qpopRebuild(); }
 // navn på ting: fra kind (norsk/engelsk), ellers lappen eller id-en
 const nameOfId = (id) => kindName(LEVEL.bodies?.find((b) => b.id === id)?.kind ?? LEVEL.boxes.find((b) => b.id === id)?.kind, nice(id));
 const nameOfObj = (o) => kindName(o?.kind, nice(o?.id));
