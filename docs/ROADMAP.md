@@ -74,11 +74,6 @@ Fra Rune (rapport v2.143, `vippe1`): oppdragsteksten (R132) kan fjernes eller de
 Krav: (1) oppdragskortet vises kort og forsvinner av seg selv eller dempes til én linje, og vises ikke igjen når spilleren allerede har trykket BYGG på stedet; (2) valg i `SETTINGS` (gruppe Spill) for å skru av helt, med `logEv`; (3) gjelder også Byggeskolen (R101).
 Ferdig når: skjermen ved byggestedet er ryddig, valget virker, og tester og boot er grønne.
 
-### [ ] R143 · Fra tester: Rune · Tynne streker i verdenen ved Vippa som ikke skal være der
-Fra Rune (rapport v2.143, `vippe1`, merket «Styring»): flere tynne streker som ikke skal være der, sett fra figuren ved sjekkpunktet. Ligner R112 (rester fra bygging) og R90/R91.
-Krav: (1) gjenskap ved Vippa (stående mobil, ca. 56 s inn i en runde etter spøkelsesbro og fra/til-markør vises) og finn kilden (rester av spøkelsesbro, fra/til-markør eller hjelpelinjer); (2) fjern eller skjul dem når de ikke hører til; (3) test.
-Ferdig når: ingen løse tynne streker er synlige ved Vippa og i et Bygglab-sted, og tester og boot er grønne.
-
 ### [ ] R142 · Sikkerhetsnett og belønning for nødvendig bygging (deler R138–R141)
 Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) etter 3 feilforsøk på et nødvendig bygg: hint («Prøv en trekant her», spøkelsesbro uthevet); etter 5: knappen VIS MEG som legger ut en ferdig løsning (koster ingen stjerner, logges); (2) bygget beholdes i rommet etter bestått og figuren går over i en liten sekvens (kamera følger over bygget); (3) ekstra stjerne for billig eller lett bygg også i Nivå 2–9; (4) `logEv('bygg', 'påkrevd bygg: bestått etter N forsøk')` og `logEv('bygg', 'hjelp: …')`; (5) test og NYTT-rad.
 Ferdig når: ingen spiller kan sette seg fast på et nødvendig bygg, bygget gir en merkbar belønning, og tester og boot er grønne.
@@ -92,6 +87,8 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R143 · Fra tester: Rune · ingen løse 1 px-streker i verdenen ved byggesteder (spøkelsesbro, FRA-TIL-bue, stedsramme) (v2.147)
 
 ### [x] R140 · Nivå 5 (fagverk) og Nivå 6 (materialer) med nødvendig bygg (deler R138) (v2.145)
 Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) Nivå 5: den smale hylla over lekebøtta byttes med et gap som bare lar seg bygge med trekanter (fagverk); R122-hjelpen (TREKANT, DIAGONAL) skal være synlig første gang; (2) Nivå 6: en bro mellom overskapene med tyngre last, der materialvalget (tre, tau, kabel, stål, R127/R128 bytt til stål) avgjør; (3) endres i `scenes/` og `tools/make_variants.mjs` (kjør på nytt), alle nivåer går `walk_route` og bot med bygg; (4) valg `buildrequired` respekteres; (5) test, NYTT-rader. **Start ikke før Rune har svart etter R138-testen.**
