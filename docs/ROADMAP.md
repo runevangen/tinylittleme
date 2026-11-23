@@ -82,11 +82,6 @@ Fra Rune (skjermbilde v2.156, Nivå 5, 2,5D-visning, materialene TRE/STÅL/TAU, 
 Krav: (1) gjenskap med Playwright `devices['iPhone 14']` i Nivå 5 og i et Bygglab-sted: legg stenger og kuler, fjern dem (angre, slett, trykk to ganger), bytt materiale, og se om rester blir hengende i 2D og 2,5D; (2) etter fjerning er modellen og tegningen like: ingen spøkelsesstenger, kuler eller etiketter; (3) ⚑, ←, ⋯ og PRØV svarer alltid (finn hva som stjeler trykkene: usynlig lag, overlay som ikke fjernes, feil i hendelseshåndtering), også etter mange rydde-handlinger; (4) oppdragsteksten ligger ikke igjen når byggingen har startet, og TIL/FRA-etiketter flytter seg bort fra knuter; (5) test som rydder mange ganger og sjekker at knappene fortsatt svarer; (6) gjelder også Byggeskolen (R101).
 Ferdig når: feilen er gjenskapt og rettet i Nivå 5 og et Bygglab-sted, og tester og boot er grønne.
 
-### [ ] R156 · Fra tester: Rune · Mulig å gå bak veggen i Nivå 4 · Bad
-Fra Rune (rapport v2.156, merket «Styring», figuren ved (−11.1, 0, 24.7)): det går an å gå bak veggen ved vaskeområdet. Loggen viser kollisjon mot `dekor_dor_gerikt_v` rett før.
-Krav: (1) gjenskap med boten eller Playwright ved posisjonen i Nivå 4 · Bad (`bad2`); (2) finn åpningen (glipe mellom vegg og dekor, gerikt/dørkarm uten solid kollisjon) og tett den, også i Nivå 1 (`bad`) og andre brett med samme dekor; (3) test som sjekker at figuren ikke kan gå bak veggen i Badet og at ruten fortsatt går (`walk_route`).
-Ferdig når: figuren ikke kommer bak veggen, ruten er uendret løsbar, og tester og boot er grønne.
-
 ### [ ] R142 · Sikkerhetsnett og belønning for nødvendig bygging (deler R138–R141)
 Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) etter 3 feilforsøk på et nødvendig bygg: hint («Prøv en trekant her», spøkelsesbro uthevet); etter 5: knappen VIS MEG som legger ut en ferdig løsning (koster ingen stjerner, logges); (2) bygget beholdes i rommet etter bestått og figuren går over i en liten sekvens (kamera følger over bygget); (3) ekstra stjerne for billig eller lett bygg også i Nivå 2–9; (4) `logEv('bygg', 'påkrevd bygg: bestått etter N forsøk')` og `logEv('bygg', 'hjelp: …')`; (5) test og NYTT-rad.
 Ferdig når: ingen spiller kan sette seg fast på et nødvendig bygg, bygget gir en merkbar belønning, og tester og boot er grønne.
@@ -100,6 +95,11 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R156 · Fra tester: Rune · Mulig å gå bak veggen i Nivå 4 · Bad (v2.160)
+Fra Rune (rapport v2.156, merket «Styring», figuren ved (−11.1, 0, 24.7)): det går an å gå bak veggen ved vaskeområdet. Loggen viser kollisjon mot `dekor_dor_gerikt_v` rett før.
+Krav: (1) gjenskap med boten eller Playwright ved posisjonen i Nivå 4 · Bad (`bad2`); (2) finn åpningen (glipe mellom vegg og dekor, gerikt/dørkarm uten solid kollisjon) og tett den, også i Nivå 1 (`bad`) og andre brett med samme dekor; (3) test som sjekker at figuren ikke kan gå bak veggen i Badet og at ruten fortsatt går (`walk_route`).
+Ferdig når: figuren ikke kommer bak veggen, ruten er uendret løsbar, og tester og boot er grønne.
 
 ### [x] R155 · Fra tester: Rune · Telefonens klokke og batteri vises øverst i spillet (Nivå 4 · Bad) (v2.159)
 Fra Rune (rapport v2.156, merket «Styring»): han ser iPhones klokke og batteriindikator øverst i spillet. På skjermbildet av byggeskjermen ligger statuslinjen som en beige stripe over spillet. Må avklares om det er ønsket (sikker sone) eller om spillet skal gå helt ut til kanten, og om fargen på stripen skal passe til spillet.
