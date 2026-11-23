@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.150** – R146 (tekster og språk, fra Rune) lagt i veikartet, med kartlegging i docs/TEKSTER.md.
 - **2.149** – R145: målflagget i byggeskjermen tegnes lesbart og alltid innenfor skjermen (2D og 2,5D, også Bygglab).
 - **2.148** – R144: oppdragskortet ved BYGG er én linje, forsvinner av seg selv og vises ikke etter BYGG; valg «Oppdragskort ved BYGG».
 - **2.147** – R143: ingen løse tynne streker i verdenen ved byggesteder (spøkelsesbro, FRA-TIL-bue, stedsramme).
