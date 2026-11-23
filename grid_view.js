@@ -58,7 +58,7 @@ export function createGridUI(ctx) {
     root.classList.toggle('gguidebtn', showHelpBtn({ enabled: enabledHere(), hint: !!ctx.getHint() }));   // R75: ?-knapp og MODUS-hint følger hjelpenivået
     root.classList.toggle('gmodetip', tipOn());
     const gb = root.querySelector('[data-a="gguide"]'); if (gb) gb.textContent = T('gguide.btn');
-    if (s && B()) { B().gridMaxLen = ctx.getMaxLen(); B().gridCable = ctx.getCable ? ctx.getCable() !== false : true; }
+    if (s && B()) { B().gridMaxLen = ctx.getMaxLen(); B().gridCable = ctx.getCable ? ctx.getCable() !== false : true; B().gridPrune = ctx.getPrune ? ctx.getPrune() !== false : true; }
     const mb = root.querySelector('[data-a="mode"]'); if (mb) mb.textContent = !on() && enabledHere() && ctx.locked?.() ? T('grid.modeLocked') : T('grid.modeBtn', { m: T(on() ? 'grid.mode.grid' : 'grid.mode.classic') });
     const okMats = s ? allowedMats(s, ctx.getCable ? ctx.getCable() !== false : true) : GRID_MATS;   // R127: kabel bare på steder som har den (og når valget er på); site.grid.mats kan snevre inn
     if (on() && !okMats.includes(mat)) mat = okMats[0] || 'wood';
@@ -157,9 +157,10 @@ export function createGridUI(ctx) {
     const r = gAddNode(B(), near.u, near.v);
     if (r.ok) { selNode = r.node.id; selRod = null; logEv('bygg', `knute ${r.node.id} ${logPt(r.node)}`); buzz?.(8); ctx.trayRender(); onChange?.(); } else fail(r);
   }
+  const pruned = () => { const n = B().lastPruned?.length || 0; if (n) logEv('bygg', `R154: ryddet ${n} løse knuter etter fjerning`); };   // R154: loggføres så rapporten viser at rydding skjedde
   function del() {
-    if (selRod && rodOf(G(), selRod)) { const id = selRod; if (isDeckRod(rodOf(G(), id))) { toast(T('grid.deckFixed')); return false; } gRemoveRod(B(), id); audio?.bpop?.(); selRod = null; logEv('bygg', `fjernet stav ${id}`); ctx.trayRender(); onChange?.(); return true; }
-    if (selNode) { const n = nodeOf(G(), selNode); if (n?.fixed) { toast(T('grid.anchorFixed')); return false; } if (n?.deck) { toast(T('grid.deckFixed')); return false; } if (n && gRemoveNode(B(), selNode)) { logEv('bygg', `fjernet knute ${selNode}`); audio?.bpop?.(); selNode = null; ctx.trayRender(); onChange?.(); return true; } }
+    if (selRod && rodOf(G(), selRod)) { const id = selRod; if (isDeckRod(rodOf(G(), id))) { toast(T('grid.deckFixed')); return false; } gRemoveRod(B(), id); audio?.bpop?.(); selRod = null; logEv('bygg', `fjernet stav ${id}`); pruned(); ctx.trayRender(); onChange?.(); return true; }
+    if (selNode) { const n = nodeOf(G(), selNode); if (n?.fixed) { toast(T('grid.anchorFixed')); return false; } if (n?.deck) { toast(T('grid.deckFixed')); return false; } if (n && gRemoveNode(B(), selNode)) { logEv('bygg', `fjernet knute ${selNode}`); pruned(); audio?.bpop?.(); selNode = null; ctx.trayRender(); onChange?.(); return true; } }
     toast(T('grid.delNone')); return false;
   }
 

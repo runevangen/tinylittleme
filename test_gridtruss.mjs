@@ -46,7 +46,7 @@ assert.equal(allGrid.length, 10, 'R74: ti rutenettsteder i Bygglab'); assert.equ
     const top = G.gAddNode(B, d1.u, st).node; const r = G.gAddRod(B, d1.id, top.id, 'wood'); assert.ok(r.ok, JSON.stringify(r)); assert.equal(B.rg.rods.length, N + 1); assert.ok(G.gRemoveRod(B, r.rod.id)); assert.equal(G.gAddRod(B, d1.id, 'a1', 'wood').ok, false, 'dekket kan ikke dobles');
     assert.equal(G.gridStats(B).rods, 0, 'dekket teller ikke som det du la til'); assert.equal(G.gridStats(B).deck, N);
     // NULLSTILL: dekket står igjen
-    G.gAddRod(B, d1.id, top.id, 'steel'); assert.ok(G.gReset(B)); assert.equal(B.rg.rods.length, N); assert.ok(B.rg.deck); assert.equal(G.gReset(B), false, 'bare dekket: ingenting å nullstille'); assert.ok(G.gUndo(B) && B.rg.rods.length === N + 1, 'ANGRE tar tilbake');
+    assert.equal(G.nodeOf(B.rg, top.id), undefined, 'R154: den løse knuten ble ryddet bort sammen med staven'); const top2 = G.gAddNode(B, d1.u, st).node; G.gAddRod(B, d1.id, top2.id, 'steel'); assert.ok(G.gReset(B)); assert.equal(B.rg.rods.length, N); assert.ok(B.rg.deck); assert.equal(G.gReset(B), false, 'bare dekket: ingenting å nullstille'); assert.ok(G.gUndo(B) && B.rg.rods.length === N + 1, 'ANGRE tar tilbake');
   }
   // steder uten to ankre på samme høyde får ikke dekk, og uten valget (gridDeck) er alt som før
   assert.equal(G.deckPoints({ ...site('bro'), anchors: [{ u: -3.5, v: 0 }, { u: 3.5, v: 1 }] }), null); assert.equal(G.deckPoints({ ...site('bro'), anchors: [{ u: 0, v: 2 }] }), null);
