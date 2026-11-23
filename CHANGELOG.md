@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.155** – R147: brett-tekster og LEVELS på norsk og engelsk (`en`-felt i brett-JSON, levels_lang.js, test_levels_en).
 - **2.154** – Leveleditor: 2–4 bilder, innendørs og utendørs (plan og R151/R152), hemmelighetens navn og R151 åpnet.
 - **2.153** – Plan for leveleditor (docs/PLAN_LEVELEDITOR.md) og R149 (hva som manglet for full score), R151/R152 (leveleditor fase A: AI-test) i veikartet, fra Rune.
 - **2.152** – R146 NYTT-rad og R147/R148 (språk runde 2 og 3) i veikartet.

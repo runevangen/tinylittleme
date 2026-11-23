@@ -68,10 +68,6 @@ Ferdig når: etter bestått Ball i Lekerom bruker neste PRØV automatisk neste l
 Krav: se R146 (3). Flytt `difficulty.js`, `firstrun_logic.js`, `rewards.js`, `storage_logic.js` inn i `i18n.js`; oversett `index.html` (seierskjerm, PC-tastehjelp) og lydmikser-etiketter; utvid `test_i18n.mjs`.
 Ferdig når: alt brukersynlig følger språkvalget, og tester og boot er grønne.
 
-### [ ] R147 · Tekster og språk, runde 2: brett-JSON og LEVELS (deler R146)
-Krav: se R146 (2). Hint, fare-meldinger, byggested- og portnavn i `levels/*.json` og `LEVELS` i `main.js` får `en`-felt som `goals[].en`; `make_variants.mjs` tar feltene med; `walk_route` og `npm test` uendret grønne.
-Ferdig når: brettnavn og alle brett-tekster følger språkvalget, og tester og boot er grønne.
-
 ### [ ] R152 · Fra tester: Rune · Leveleditor fase A, del 2: «Lag brett fra bilder» i spillet (deler R151, se docs/PLAN_LEVELEDITOR.md)
 Krav: (1) valg i `SETTINGS` (gruppe Test, bare synlig for testere med kode): knappen «LAG BRETT FRA BILDER» i VELG BRETT; (2) fangstveiledning (2 bilder som minimum, opptil 4: to motstående hjørner, gjerne ett fra bakke-/gulvhøyde og ett med A4-ark som mål; innendørs og utendørs) og bildeopplasting med `<input type="file" capture>`, nedskalering på enheten før sending, samtykketekst før første bilde, ingen bilder lagres; (3) kall til tjenesten fra R151, vis fremdrift og tydelig feilmelding (tak nådd, av, nett); (4) forslaget vises, spilleren kan flytte og slette ting enkelt (1–2 tap), «Sjekk» kjører validering og bot lokalt eller i tjenesten og viser om det kan vinnes og hjelpeobjekter (maks fem); (5) brettet lagres lokalt på telefonen og kan spilles fra VELG BRETT → MINE BRETT; (6) `logEv`: `leveleditor` med kostnad, tid, antall rettinger og om boten fant en vei; (7) mobil først, tekster nevner knappene; på norsk og engelsk (R146).
 Ferdig når: en tester kan ta bilder, få et forslag, rette det og spille det på mobil, og tester og boot er grønne.
@@ -99,6 +95,10 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R147 · Tekster og språk, runde 2: brett-JSON og LEVELS (deler R146) (v2.155)
+Krav: se R146 (2). Hint, fare-meldinger, byggested- og portnavn i `levels/*.json` og `LEVELS` i `main.js` får `en`-felt som `goals[].en`; `make_variants.mjs` tar feltene med; `walk_route` og `npm test` uendret grønne.
+Ferdig når: brettnavn og alle brett-tekster følger språkvalget, og tester og boot er grønne.
 
 ### [x] R146 · Fra tester: Rune · Tekster og språk: rett norsken, oversett alt til engelsk, språkvalget virker i hele spillet (runde 1: ⚙, NYTT, spillhendelser) (v2.151)
 Fra Rune (bekreftet i samtalen): gå gjennom alle tekster, vurder norsken, lag engelsk oversettelse og la språkvalget i ⚙ (finnes: «Språk / Language», `tlm.lang`) bytte hele spillet. Kartlegging i `docs/TEKSTER.md` (kopier fra scratchpad `tekster/oppsummering.md`, `norsk_vurdering.json`, `i18n_dekning.json`; ca. 756 hardkodede tekster uten en, 86 norskfunn). Del i flere runder, i denne rekkefølgen: (1) ⚙-etiketter (korte, uten R-numre og «PROTOTYPE»), NYTT-menyen (korte titler, `en`-felt), toast/spillhendelser i `main.js` og `voice.js`; (2) brett-JSON (`en`-felt som `goals[].en`) og `LEVELS`; (3) RETTELSER, ⚑ Send, versjonssjekk, `index.html`, lydmikser og de fire egne ordbøkene (`difficulty`, `firstrun_logic`, `rewards`, `storage_logic`) inn i `i18n.js`.
