@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.163** – R151: tjeneste for bildetolkning (edge function, migrasjon, delt logikk, tester med stub).
 - **2.162** – NYTT-rader (nb/en) for R154, R155 og R156.
 - **2.161** – R154: byggeskjermen rydder etter seg: løse knuter ryddes ved fjerning, helt dekkende skjerm, FRA/TIL unngår knuter, hengende berøring ryddes.
 - **2.160** – R156: glipa mellom dør/gerikt og vegg i Badet (og kjøkken/barnerom) er tettet så figuren ikke kommer bak veggen.
