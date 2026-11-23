@@ -1,6 +1,7 @@
 // R77: versjonsjekk i spillet (version_check_logic.js). Ren logikk uten DOM og nett, testes i node (test_vercheck.mjs).
 // Selve hentingen, kortet og oppdateringen bor i version_check_view.js.
 
+import { tl } from './i18n.js';
 export const DEFAULT_INTERVAL_MIN = 5;
 export const MIN_INTERVAL_MIN = 1;
 export const MAX_INTERVAL_MIN = 60;
@@ -42,9 +43,10 @@ export function calmNow({ screen, boss = false, cinema = false, testing = false 
   return true;                                       // menyer, startskjerm, brettvalg, rett etter mål, historie, innstillinger
 }
 // Teksten på kortet og i menyen.
-export const cardText = (v) => `NY VERSJON v${v} · TRYKK FOR Å OPPDATERE`;
-export const menuLine = (running, state) => `Versjon v${running} · ${state === 'checking' ? 'SJEKKER …' : 'SJEKK NÅ'}`;
-export const upToDateText = () => 'Du har nyeste versjon';
+// R148: tekstene ligger i i18n.js (nb/en); lang er valgfri (standard norsk).
+export const cardText = (v, lang = 'nb') => tl(lang, 'vc.card', { v });
+export const menuLine = (running, state, lang = 'nb') => tl(lang, 'vc.menu', { v: running, state: tl(lang, state === 'checking' ? 'vc.checking' : 'vc.checkNow') });
+export const upToDateText = (lang = 'nb') => tl(lang, 'vc.upToDate');
 
 // Tilstandsmaskin uten tid og nett. Kall check(fetchText, opts) som returnerer { status: 'ny'|'nyeste'|'feil', remote }.
 // Alle feil (nett, 404, uleselig svar) gir 'feil' og kaster aldri.

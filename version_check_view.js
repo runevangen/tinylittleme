@@ -1,9 +1,10 @@
 // R77: versjonsjekk i spillet (version_check_view.js). Henter version.js uten mellomlager, viser kortet «NY VERSJON … TRYKK FOR Å OPPDATERE»
 // når en høyere versjon ligger ute, og laster siden på nytt (ny spørringsstreng, tømt mellomlager) uten å røre lagrede data (tlm.*).
 // Logikken (tolking, sammenligning, intervall, rolig tilstand) ligger i version_check_logic.js og testes i node.
+import { tl } from './i18n.js';
 import { runCheck, dueNow, intervalMs, calmNow, cardText, menuLine, upToDateText, reloadUrl } from './version_check_logic.js';
 
-export function createVersionCheck({ version, $, logEv, toast, getScreen, getClock, isBoss, isCinema, isTesting, isOn, getIntervalMin, beforeUpdate, store, doc = document, win = window, now = () => Date.now() }) {
+export function createVersionCheck({ version, $, logEv, toast, getScreen, getClock, isBoss, isCinema, isTesting, isOn, getIntervalMin, beforeUpdate, store, lang = () => 'nb', doc = document, win = window, now = () => Date.now() }) {
   const st = { remote: null, last: 0, lastStatus: 'ikke sjekket', checking: false, updating: false, manual: false };
   const style = doc.createElement('style');
   style.textContent = `#vercard{position:fixed;left:max(10px,env(safe-area-inset-left));right:max(58px,calc(env(safe-area-inset-right) + 54px));top:max(8px,env(safe-area-inset-top));z-index:12;box-sizing:border-box;padding:8px 8px;border-radius:14px;border:2px solid #9fe0c8;background:#10261ff2;color:#eafff6;font:700 12px/1.2 system-ui;text-align:center;white-space:nowrap;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -17,14 +18,14 @@ export function createVersionCheck({ version, $, logEv, toast, getScreen, getClo
   const newer = () => !!st.remote;
   function renderPanel() {
     if (!panelBtn) return;
-    panelBtn.textContent = st.updating ? 'Oppdaterer …' : newer() ? `OPPDATER TIL v${st.remote}` : menuLine(version, st.checking ? 'checking' : 'idle');
+    panelBtn.textContent = st.updating ? tl(lang(), 'vc.updating') : newer() ? tl(lang(), 'vc.updBtn', { v: st.remote }) : menuLine(version, st.checking ? 'checking' : 'idle', lang());
     panelBtn.disabled = st.checking || st.updating;
-    if (panelNote) panelNote.textContent = st.updating ? '' : newer() ? `Ny versjon v${st.remote} ligger ute. Trykk for å laste siden på nytt (fremgangen beholdes).` : st.lastStatus === 'nyeste' ? upToDateText() : st.lastStatus === 'feil' ? 'Fikk ikke kontakt akkurat nå. Prøv igjen senere.' : '';
+    if (panelNote) panelNote.textContent = st.updating ? '' : newer() ? tl(lang(), 'vc.newNote', { v: st.remote }) : st.lastStatus === 'nyeste' ? upToDateText(lang()) : st.lastStatus === 'feil' ? tl(lang(), 'vc.noContactNote') : '';
   }
   function renderCard() {
     const show = isOn() && (newer() || st.updating) && (st.updating || calm()) && getScreen() !== 'innstillinger';   // ⚙-panelet har egen knapp
     card.classList.toggle('hide', !show);
-    card.textContent = st.updating ? 'Oppdaterer …' : newer() ? cardText(st.remote) : '';
+    card.textContent = st.updating ? tl(lang(), 'vc.updating') : newer() ? cardText(st.remote, lang()) : '';
   }
   async function fetchText() {
     const r = await win.fetch(new URL('version.js', win.location.href).toString() + '?t=' + now() + '.' + Math.floor(Math.random() * 1e6), { cache: 'no-store' });
@@ -66,7 +67,7 @@ export function createVersionCheck({ version, $, logEv, toast, getScreen, getClo
       btn.onclick = async () => {
         if (newer()) { update(); return; }
         const s = await check({ force: true, why: 'meny' });
-        toast(s === 'nyeste' ? upToDateText() : s === 'ny' ? `Ny versjon v${st.remote}` : 'Fikk ikke kontakt. Prøv igjen senere', true);
+        toast(s === 'nyeste' ? upToDateText(lang()) : s === 'ny' ? tl(lang(), 'vc.newToast', { v: st.remote }) : tl(lang(), 'vc.noContactToast'), true);
       };
     },
     check, update, render: () => { renderCard(); renderPanel(); }, calm,

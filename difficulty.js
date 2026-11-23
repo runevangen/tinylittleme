@@ -5,6 +5,7 @@
 // Lagring: tlm.difficulty (valgt nivå), tlm.progress.<brett>[.rN][.<nivå>] (fremgang per brett og nivå; Nybegynner bruker den gamle nøkkelen),
 // tlm.badges = { <brett>: { beginner: 1, medium: 1, expert: 1 } } (merke per brett og nivå: bronse, sølv, gull).
 
+import { tl, DICT_KEYS } from './i18n.js';
 export const DIFFS = ['beginner', 'medium', 'expert'];
 export const DEFAULT_DIFF = 'medium';   // R84: nye spillere starter på Medium
 export const LEGACY_KEY_DIFF = 'beginner';   // R84: Nybegynner bruker den gamle fremgangsnøkkelen (uavhengig av standardvalget)
@@ -90,27 +91,6 @@ export const HELP_SETTINGS = { 'tlm.helplevel': 'normal', 'tlm.goalarrow': true,
 export function isCustomHelp(st) { return Object.entries(HELP_SETTINGS).some(([k, def]) => { const v = st.get(k, def); return v !== def; }); }
 
 // ---------- tekster (nb/en) ----------
-const TXT = {
-  nb: {
-    'df.label': 'Vanskelighet', 'df.custom': 'Egendefinert', 'df.title': 'Velg vanskelighet',
-    'df.beginner': 'Nybegynner', 'df.medium': 'Medium', 'df.expert': 'Ekspert',
-    'df.beginner.d': 'All hjelp: piler, kompass, hint, markører og kart.', 'df.medium.d': 'Mindre hjelp: bare neste grep, kort NESTE-linje, færre tips.', 'df.expert.d': 'Ingen piler, kompass, hint eller markører. Bare deg og rommet.',
-    'df.note': 'Bare hjelpen endres. Brettet, fiendene og fallene er like.', 'df.back': 'Tilbake',
-    'df.menu': 'Avslutt til meny', 'df.saved': 'Fremgangen er lagret',
-    'df.pick': 'Velg brett', 'df.pickSub': 'Åpne brett. Trykk på et brett for å spille det fra start. Annen fremgang slettes ikke.', 'df.pickNone': 'Ingen brett er åpne ennå.',
-    'df.go': 'Spill', 'df.fresh': 'fra start', 'df.badges': 'Merker: {n}', 'df.newBadge': '{glyph} Nytt merke: {name}!', 'df.badge.beginner': 'bronse', 'df.badge.medium': 'sølv', 'df.badge.expert': 'gull',
-    'df.again': 'Spill igjen på …', 'df.harder': 'Prøv {name}',
-  },
-  en: {
-    'df.label': 'Difficulty', 'df.custom': 'Custom', 'df.title': 'Choose difficulty',
-    'df.beginner': 'Beginner', 'df.medium': 'Medium', 'df.expert': 'Expert',
-    'df.beginner.d': 'All the help: arrows, compass, hints, markers and map.', 'df.medium.d': 'Less help: only the next grip, a short NEXT line, fewer tips.', 'df.expert.d': 'No arrows, compass, hints or markers. Just you and the room.',
-    'df.note': 'Only the help changes. The level, the enemies and the falls are the same.', 'df.back': 'Back',
-    'df.menu': 'Quit to menu', 'df.saved': 'Progress saved',
-    'df.pick': 'Choose level', 'df.pickSub': 'Unlocked levels. Tap a level to play it from the start. Other progress is kept.', 'df.pickNone': 'No levels unlocked yet.',
-    'df.go': 'Play', 'df.fresh': 'from the start', 'df.badges': 'Badges: {n}', 'df.newBadge': '{glyph} New badge: {name}!', 'df.badge.beginner': 'bronze', 'df.badge.medium': 'silver', 'df.badge.expert': 'gold',
-    'df.again': 'Play again on …', 'df.harder': 'Try {name}',
-  },
-};
-export const dt = (lang, key, vars = {}) => (TXT[lang]?.[key] ?? TXT.nb[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
-export const TEXT_KEYS = { nb: Object.keys(TXT.nb), en: Object.keys(TXT.en) };
+// R148: tekstene ligger i i18n.js (nb og en).
+export const dt = (lang, key, vars = {}) => tl(lang, key, vars);
+export const TEXT_KEYS = { nb: DICT_KEYS.nb.filter((k) => k.startsWith('df.')), en: DICT_KEYS.en.filter((k) => k.startsWith('df.')) };

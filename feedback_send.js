@@ -1,6 +1,7 @@
 // «Send til Claude»: sender tilbakemeldinger direkte fra spillet til tabellen tlm_feedback i Supabase.
 // Ren logikk (ingen DOM) så den kan testes i node. Nøkkelen er den offentlige anon-nøkkelen: den kan KUN sette inn nye rader
 // (RLS), og bare med en gyldig tester-kode; den kan ikke lese noe. Se docs/TILBAKEMELDING.md.
+import { tl } from './i18n.js';
 export const FEEDBACK = {
   url: 'https://pthpjpxfbfvgoqkqxotj.supabase.co',
   key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0aHBqcHhmYmZ2Z29xa3F4b3RqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ0NTY3ODksImV4cCI6MjExMDAzMjc4OX0.rNd7qbcafvq6H9sJSr4NnvbVhnix0GaozGXV5MzbTNc',
@@ -52,6 +53,7 @@ export async function sendFeedback(row, { fetchFn = globalThis.fetch, cfg = FEED
   } finally { if (timer) clearTimeout(timer); }
 }
 
+export const reasonText = (reason, lang = 'nb') => tl(lang, 'fb.r.' + (['kode', 'grense', 'nett', 'feil', 'tom'].includes(reason) ? reason : 'feil'));
 export const REASON_TEXT = {
   kode: 'Koden ble ikke godtatt. Sjekk tester-koden i ⚙ → Test.',
   grense: 'Du har sendt mange meldinger nå. Prøv igjen om en stund.',
@@ -120,14 +122,14 @@ export async function checkChange(code, cid, res, note = '', ver = '', lvl = '',
 export const unreadReplies = (inbox) => (inbox?.replies || []).filter((r) => !r.read);
 
 // Telleren som vises i ⚑-boksen: motiverer ved å vise at meldingene fører til noe. Ingen navn, bare tall.
-export function statsLines(inbox) {
+export function statsLines(inbox, lang = 'nb') {
   if (!inbox) return [];
   const { me, all } = inbox, out = [];
   if (me.sent > 0) {
-    const parts = [`Du har meldt ${me.sent}`, `${me.fixed} rettet`];
-    if (me.working > 0) parts.push(`${me.working} under arbeid`);
+    const parts = [tl(lang, 'fb.st.sent', { n: me.sent }), tl(lang, 'fb.st.fixed', { n: me.fixed })];
+    if (me.working > 0) parts.push(tl(lang, 'fb.st.working', { n: me.working }));
     out.push(parts.join(' · '));
-  } else out.push('Du har ikke meldt noe ennå. Trykk ⚑ → skriv → Send til Claude.');
-  if (all.sent > 0 && all.testers > 1) out.push(`Sammen har dere meldt ${all.sent}, og ${all.fixed} er rettet`);
+  } else out.push(tl(lang, 'fb.st.none'));
+  if (all.sent > 0 && all.testers > 1) out.push(tl(lang, 'fb.st.all', { sent: all.sent, fixed: all.fixed }));
   return out;
 }

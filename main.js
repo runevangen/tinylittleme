@@ -6,7 +6,7 @@ import { ambienceFor, createAmbience, ambientOn, lifecycle } from './audio_fx.js
 import { createSampleBank } from './audio_samples.js';   // R99: valgfrie ekte lydfiler (sounds/)
 import { createMusic, themeFor, moodFor } from './music.js';
 import { VERSION } from './version.js';
-import { buildPayload, sendFeedback, validCode, cleanCode, REASON_TEXT, fetchInbox, markRead, unreadReplies, statsLines, checkReply } from './feedback_send.js';
+import { buildPayload, sendFeedback, validCode, cleanCode, reasonText, fetchInbox, markRead, unreadReplies, statsLines, checkReply } from './feedback_send.js';
 import { fetchChangeChecks, checkChange } from './feedback_send.js';
 import { parseChangeChecks, pendingChecks } from './changes_logic.js';
 import { menuVisible, buttonLabel, uncheckedCount, parseGo, safePlacement, goUrl } from './fixes_logic.js';   // R80: Rettelser-menyen (fixes_logic.js, fixes_view.js)
@@ -386,7 +386,7 @@ function toggleCues() { cuesOn = !cuesOn; store.set('tlm.cues', cuesOn); toast(T
 function toggleSound() {
   soundMuted = !soundMuted; store.set('tlm.muted', soundMuted);
   audio?.setMuted(soundMuted);
-  const b = document.getElementById('bSound'); if (b) { b.textContent = soundMuted ? 'Lyd av' : 'Lyd'; b.classList.toggle('on', !soundMuted); }
+  const b = document.getElementById('bSound'); if (b) { b.textContent = soundMuted ? T('ix.soundOff') : T('ix.sound'); b.classList.toggle('on', !soundMuted); }
 }
 
 // ---------- poeng ----------
@@ -1859,20 +1859,33 @@ function aimInput(fx, fz, rx, rz) {
   let wx = fx * uy + rx * -ux, wz = fz * uy + rz * -ux; const wl = Math.hypot(wx, wz) || 1;
   return { dx: wx / wl, dz: wz / wl, k: Math.min(1, (len - 22) / 110) };
 }
+// R148: statisk tekst i index.html følger språkvalget (applyLang → applyIxText)
+const IX_BTN = { bSave: 'ix.save', bThings: 'ix.things', bPlan: 'ix.plan', bFly: 'ix.fly', bBack: 'ix.back' };
+let qpopRebuild = null;
+function applyIxText() {
+  for (const [id, k] of Object.entries(IX_BTN)) { const el = document.getElementById(id); if (el && !el.classList.contains('armed')) el.textContent = T(k); }
+  const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+  set('bLevel', (e) => { e.textContent = `${T('ix.level')}: ${levelLabel}`; }); set('bSound', (e) => { e.textContent = soundMuted ? T('ix.soundOff') : T('ix.sound'); });
+  set('bMenu', (e) => { e.textContent = dft(lang, 'df.menu'); });
+  set('qbtn', (e) => e.setAttribute('aria-label', T('fq.aria'))); set('btnCenter', (e) => e.setAttribute('aria-label', T('ix.center'))); set('btnMap', (e) => e.setAttribute('aria-label', T('ix.map')));
+  set('bMore', (e) => e.setAttribute('aria-label', T('ix.more'))); set('bSet', (e) => e.setAttribute('aria-label', T('ix.settings')));
+  set('ovhint', (e) => { e.textContent = T('ix.ovhint'); }); set('help', (e) => { e.innerHTML = T('ix.help'); });
+  document.documentElement.lang = lang === 'en' ? 'en' : 'nb';
+}
 // knapper som koster poeng må trykkes to ganger (første trykk «armerer» i 2,5 s), så de ikke utløses ved et uhell
 function confirmed(btn, label, cost, fn) {
-  let t = null; const orig = btn.textContent;
+  let t = null; const orig0 = btn.textContent, orig = () => (IX_BTN[btn.id] ? T(IX_BTN[btn.id]) : orig0);
   btn.onclick = () => {
     if (!confirm2On) { fn(); return; }
-    if (t) { clearTimeout(t); t = null; btn.classList.remove('armed'); btn.textContent = orig; fn(); return; }
-    btn.classList.add('armed'); btn.textContent = cost ? `Sikker? −${cost}` : 'Trykk igjen';
-    t = setTimeout(() => { t = null; btn.classList.remove('armed'); btn.textContent = orig; }, 2500);
+    if (t) { clearTimeout(t); t = null; btn.classList.remove('armed'); btn.textContent = orig(); fn(); return; }
+    btn.classList.add('armed'); btn.textContent = cost ? T('ix.sure', { n: cost }) : T('ix.again2');
+    t = setTimeout(() => { t = null; btn.classList.remove('armed'); btn.textContent = orig(); }, 2500);
   };
 }
 confirmed($('bThings'), 'Ting', SCORE.resetThings, () => { resetThings(); closeMore(); });
-$('bLevel').textContent = `Brett: ${levelLabel}`;
+$('bLevel').textContent = `${T('ix.level')}: ${levelLabel}`;
 $('bLevel').onclick = () => { const vl = levelsShown(), i = vl.findIndex((l) => l.id === levelId), n = vl[(i + 1) % vl.length].id; store.set('tlm.level', n); location.search = `?level=${n}`; };
-$('bSound').onclick = toggleSound; $('bSound').textContent = soundMuted ? 'Lyd av' : 'Lyd'; $('bSound').classList.toggle('on', !soundMuted);
+$('bSound').onclick = toggleSound; $('bSound').textContent = soundMuted ? T('ix.soundOff') : T('ix.sound'); $('bSound').classList.toggle('on', !soundMuted);
 confirmed($('bSave'), 'Lagre', SCORE.save, () => { doSave(); closeMore(); }); confirmed($('bBack'), 'Tilbake', SCORE.respawn, goBack);
 // ⋯-menyen (v0.75): Lagre, Ting ↺ (og på PC Brett, Plan, Fly, Lyd) ligger skjult, så bunnlinjen bare er Tilbake · ⋯ · ⚙
 function closeMore() { $('more').classList.add('hide'); $('bMore').classList.remove('open'); }
@@ -1917,10 +1930,10 @@ reapplyKnobs();
 function mixerHtml() {
   const groups = {};
   for (const sd of SOUND_LIST) (groups[sd.group] ||= []).push(sd);
-  return Object.entries(groups).map(([g, items]) => `<div class="mixg">${g}</div>` + items.map((sd) =>
-    `<div class="mixrow"><div class="mixh"><span>${sd.label}</span><span><b data-val="${sd.id}"></b> <button class="pl" data-play="${sd.id}">▶</button></span></div><input type="range" data-mix="${sd.id}" min="0" max="2" step="0.05"></div>`).join('')).join('');
+  return Object.entries(groups).map(([g, items]) => `<div class="mixg">${T('sndg.' + g)}</div>` + items.map((sd) =>
+    `<div class="mixrow"><div class="mixh"><span>${T('snd.' + sd.id)}</span><span><b data-val="${sd.id}"></b> <button class="pl" data-play="${sd.id}">▶</button></span></div><input type="range" data-mix="${sd.id}" min="0" max="2" step="0.05"></div>`).join('')).join('');
 }
-const mixText = (v) => (v <= 0 ? 'av' : `${Math.round(v * 100)} %`);
+const mixText = (v) => (v <= 0 ? T('mix.off') : `${Math.round(v * 100)} %`);
 function wireMixer() {
   const mix = store.get('tlm.mix2', {});
   const setOne = (id, v, save = true) => {
@@ -2282,19 +2295,21 @@ const marks = [];
 // rask vurdering mens du spiller: ⚑ → velg tema → 👍 / 😐 / 😫 (havner i testrapporten med posisjon og innstillinger)
 {
   let tag = store.get('tlm.qtag', 'Styring'); const pop = $('qpop'), tags = ['Styring', 'Kamera', 'Hopp', 'Gange', 'Annet'];
-  const draw = () => { syncPrivNotes(); const qc = $('qcode'); if (qc) qc.style.display = validCode(store.get('tlm.tcode', '')) ? 'none' : 'block'; const qk = $('qsave'); if (qk) qk.style.display = qc ? qc.style.display : 'none'; const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = `📋 Kopier tilbakemeldinger${n ? ` (${n})` : ''}`; } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
-  pop.innerHTML = `<div id="qinbox"></div><input type="text" id="qtext" placeholder="Skriv hva som skjedde" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">⚑ Meld feil</button><button data-backlog="1" class="qb">💡 Legg til backloggen</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${t}</button>`).join('')}</div><div class="qr"><button data-r="bra">👍 Bra</button><button data-r="ok">😐 OK</button><button data-r="vanskelig">😫 Vanskelig</button></div><small>Tema og vurdering er valgfritt</small><input type="text" id="qcode" placeholder="Tester-kode (én gang), f.eks. testbruker1" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-savecode="1" class="qk" id="qsave">🔑 LAGRE KODE</button><button data-send="1" class="qs">📤 Send til Claude</button><button data-copy="1" class="qc">📋 Kopier tilbakemeldinger</button><div id="qprivhost"></div>`;
+  const qpopHtml = () => `<div id="qinbox"></div><input type="text" id="qtext" placeholder="${T('fq.ph')}" enterkeyhint="send" autocomplete="off"><div class="qa"><button data-mark="1" class="qm">${T('fq.mark')}</button><button data-backlog="1" class="qb">${T('fq.backlog')}</button></div><div class="qt">${tags.map((t) => `<button data-tag="${t}">${T('fq.tag.' + t)}</button>`).join('')}</div><div class="qr"><button data-r="bra">${T('fq.r.bra')}</button><button data-r="ok">${T('fq.r.ok')}</button><button data-r="vanskelig">${T('fq.r.vanskelig')}</button></div><small>${T('fq.opt')}</small><input type="text" id="qcode" placeholder="${T('fq.codePh')}" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-savecode="1" class="qk" id="qsave">${T('fq.saveCode')}</button><button data-send="1" class="qs">${T('fq.send')}</button><button data-copy="1" class="qc">${T('fq.copy')}</button><div id="qprivhost"></div>`;
+  qpopRebuild = () => { const txt = $('qtext')?.value || ''; pop.innerHTML = qpopHtml(); addPrivNote($('qprivhost'), '⚑'); if ($('qtext')) $('qtext').value = txt; draw(); renderInbox(); };
+  const draw = () => { syncPrivNotes(); const qc = $('qcode'); if (qc) qc.style.display = validCode(store.get('tlm.tcode', '')) ? 'none' : 'block'; const qk = $('qsave'); if (qk) qk.style.display = qc ? qc.style.display : 'none'; const cb = pop.querySelector('.qc'); if (cb) { const n = unsent('MARKERT') + unsent('BACKLOGG'); cb.textContent = n ? T('fq.copyN', { n }) : T('fq.copy'); } pop.querySelectorAll('[data-tag]').forEach((b) => b.classList.toggle('on', b.dataset.tag === tag)); };
+  pop.innerHTML = qpopHtml();
   addPrivNote($('qprivhost'), '⚑');
   const qtext = () => { const el = $('qtext'), v = el.value.trim(); el.value = ''; return v; };
   pop.addEventListener('click', (e) => {
     e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tag) { tag = b.dataset.tag; store.set('tlm.qtag', tag); draw(); return; }
-    if (b.dataset.savecode) { const c = $('qcode'), v = cleanCode(c ? c.value : ''); if (!validCode(v)) { toast('Koden ser feil ut (4–24 tegn: bokstaver, tall, - og _)'); return; } store.set('tlm.tcode', v); c.value = ''; toast(`Kode lagret ✓ (${v}). Nå kan du trykke Send til Claude`); logEv('kode', 'tester-kode lagret'); draw(); return; }
+    if (b.dataset.savecode) { const c = $('qcode'), v = cleanCode(c ? c.value : ''); if (!validCode(v)) { toast(T('fq.badCode')); return; } store.set('tlm.tcode', v); c.value = ''; toast(T('fq.codeSaved', { v })); logEv('kode', 'tester-kode lagret'); draw(); return; }
     if (b.dataset.send) { const c = $('qcode'); if (c && c.value.trim()) { store.set('tlm.tcode', cleanCode(c.value)); c.value = ''; } const tx = qtext(); sendToClaude(tx ? `${tag}: ${tx}` : '').then((r) => { if (r === 'ok') pop.classList.add('hide'); draw(); }); return; }
-    if (b.dataset.copy) { doShare(true).then((r) => { toast(r === 'kopiert' ? 'Tilbakemeldingene er kopiert. Lim dem inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis tilbakemeldingene'); if (r === 'kopiert') pop.classList.add('hide'); }); return; }
+    if (b.dataset.copy) { doShare(true).then((r) => { toast(r === 'kopiert' ? T('fq.copied') : T('fq.copyFail')); if (r === 'kopiert') pop.classList.add('hide'); }); return; }
     if (b.dataset.mark) { markHere(`${tag}: ${qtext()}`.replace(/: $/, '')); pop.classList.add('hide'); return; }
-    if (b.dataset.backlog) { const tx = qtext(); if (!tx) { toast('Skriv hva som skal i backloggen først'); $('qtext').focus(); return; } logEv('BACKLOGG', tx); updateMarkBadge(); toast(`Lagt til backloggen (${unsent('BACKLOGG')} ny)`); pop.classList.add('hide'); return; }
-    if (b.dataset.r) { const tx = qtext(); logEv('vurdering', `${b.dataset.r} · ${tag}${tx ? ' · ' + tx : ''}`); pop.classList.add('hide'); toast(`Takk! Registrert: ${b.textContent} (${tag})`); }
+    if (b.dataset.backlog) { const tx = qtext(); if (!tx) { toast(T('fq.backlogEmpty')); $('qtext').focus(); return; } logEv('BACKLOGG', tx); updateMarkBadge(); toast(T('fq.backlogAdded', { n: unsent('BACKLOGG') })); pop.classList.add('hide'); return; }
+    if (b.dataset.r) { const tx = qtext(); logEv('vurdering', `${b.dataset.r} · ${tag}${tx ? ' · ' + tx : ''}`); pop.classList.add('hide'); toast(T('fq.thanks', { r: b.textContent, tag: T('fq.tag.' + tag) })); }
   });
   pop.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'qtext') { e.preventDefault(); pop.querySelector('[data-mark]').click(); } });
   $('qbtn').addEventListener('click', (e) => { e.stopPropagation(); pop.classList.toggle('hide'); logEv('flagg', `${pop.classList.contains('hide') ? 'lukket' : 'åpnet'} på ${currentScreen().id}`); draw(); if (!pop.classList.contains('hide')) refreshInbox(true); if (!pop.classList.contains('hide')) setTimeout(() => $('qtext').focus(), 30); });
@@ -2303,7 +2318,7 @@ const marks = [];
 // R71: hvilken skjerm er oppe (flag_logic.js): styrer den flytende ⚑ og står i rapporten
 const hidden = (id) => $(id).classList.contains('hide'), bodyHas = (c) => document.body.classList.contains(c);
 const currentScreen = () => screenOf({ panel: !hidden('panel'), building: bld.active, buildSite: bld.siteId, ov: bodyHas('ovview'), story: !hidden('story'), start: !hidden('start'), pick: !!$('start').querySelector('#dfBack'), win: !hidden('win'), intro: !hidden('introsw'), more: !hidden('more') });
-verView = createVersionCheck({ version: VERSION, $, logEv, toast, store, getScreen: () => currentScreen().id, getClock: () => clock, isBoss: () => bossFighting(), isCinema: () => CINE.on || bodyHas('cinema'), isTesting: () => bld.active, isOn: () => verCheckOn, getIntervalMin: () => verCheckMin, beforeUpdate: () => saveProgress() });   // R77
+verView = createVersionCheck({ version: VERSION, $, logEv, toast, store, getScreen: () => currentScreen().id, getClock: () => clock, isBoss: () => bossFighting(), isCinema: () => CINE.on || bodyHas('cinema'), isTesting: () => bld.active, isOn: () => verCheckOn, lang: () => lang, getIntervalMin: () => verCheckMin, beforeUpdate: () => saveProgress() });   // R77
 let flagScr = '';
 function syncFlagScreen() {
   const scr = currentScreen(), on = floatOn(scr.id, { qbtnOn, tbOn: tbandOn, cinema: bodyHas('cinema') });
@@ -2313,8 +2328,8 @@ function syncFlagScreen() {
 setInterval(syncFlagScreen, 250);
 const unsent = (type) => evLog.filter((e) => e.type === type && !e.sent).length, markCount = () => unsent('MARKERT');
 function updateMarkBadge() { const n = markCount() + unsent('BACKLOGG'), el = $('qcnt'); el.textContent = n; el.style.display = n ? 'flex' : 'none'; const h = $('repHead'); if (h) h.innerHTML = repHeadHtml(); }
-function repHeadHtml() { const f = markCount(), b = unsent('BACKLOGG'); return f || b ? `<b>${f} feil meldt${b ? ` · ${b} i backloggen` : ''}</b><br>Send til Claude: <button id="hSend">📤 Send direkte</button> <button id="hShare">Del tilbakemeldinger</button> <button id="hCopy">Kopier tilbakemeldinger</button>` : ''; }
-function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); updateMarkBadge(); toast(`Feil meldt (${markCount()} totalt). Husk å sende rapporten etterpå.`); }
+function repHeadHtml() { const f = markCount(), b = unsent('BACKLOGG'); return f || b ? `<b>${T('fq.head', { f })}${b ? T('fq.headBl', { b }) : ''}</b><br>${T('fq.headSend')} <button id="hSend">${T('fq.hSend')}</button> <button id="hShare">${T('fq.hShare')}</button> <button id="hCopy">${T('fq.hCopy')}</button>` : ''; }
+function markHere(text) { logEv('MARKERT', text || ''); marks.push(evLog[evLog.length - 1]); updateMarkBadge(); toast(T('fq.marked', { n: markCount() })); }
 function markSent() { for (const e of evLog) if (e.type === 'MARKERT' || e.type === 'BACKLOGG') e.sent = true; updateMarkBadge(); }
 const doShare = async (copyOnly) => { const t = reportText(); { const rb = $('reportBox'); if (rb) rb.value = t; } let r; if (copyOnly) { try { await navigator.clipboard.writeText(t); r = 'kopiert'; } catch { r = 'vis'; } } else r = await shareText(t, `tinylittleme v${VERSION} testrapport`); if (r === 'delt' || r === 'kopiert') markSent(); return r; };
 // Svar fra Claude og tellere (R36): hentes når spillet starter og når ⚑ åpnes; ⚑ lyser grønt når det er et ulest svar.
@@ -2325,7 +2340,7 @@ function renderInbox() {
   const unread = inbox ? inbox.replies.filter((r) => r.fresh).length : 0;
   btn.classList.toggle('hasreply', repliesOn && unread > 0);
   if (!repliesOn || !inbox) { el.style.display = 'none'; el.innerHTML = ''; return; }
-  const lines = statsLines(inbox), rs = inbox.replies.slice(0, 3);
+  const lines = statsLines(inbox, lang), rs = inbox.replies.slice(0, 3);
   el.style.display = 'block';
   el.innerHTML = lines.map((l) => `<div class="qs1">${escH(l)}</div>`).join('') + rs.map((r) => `<div class="qrep${r.fresh ? ' new' : ''}">✉ ${r.version ? 'v' + escH(r.version) + ': ' : ''}${escH(r.message)}</div>`).join('');
 }
@@ -2337,7 +2352,7 @@ async function refreshInbox(opened) {
   got.replies.forEach((r) => { r.fresh = !r.read && !seen.has(r.id); });
   inbox = got; renderInbox();
   const fresh = inbox.replies.filter((r) => r.fresh);
-  if (fresh.length && !inboxToast && !opened) { inboxToast = true; bandSay('reply', PRIO.reply, `✉ Svar fra Claude: ${fresh[0].message}`, 9, 'reply'); logEv('svar', `${fresh.length} nytt`); }
+  if (fresh.length && !inboxToast && !opened) { inboxToast = true; bandSay('reply', PRIO.reply, `✉ ${T('fb.reply', { msg: fresh[0].message })}`, 9, 'reply'); logEv('svar', `${fresh.length} nytt`); }
   if (fresh.length && opened) { markRead(code, fresh.map((r) => r.id)); fresh.forEach((r) => { r.read = true; }); $('qbtn').classList.remove('hasreply'); }
 }
 setTimeout(() => refreshInbox(false), 4000);
@@ -2347,17 +2362,17 @@ let sending = false, sendState = '';
 async function sendToClaude(body) {
   if (sending) return 'opptatt';
   const code = store.get('tlm.tcode', '');
-  if (!validCode(code)) { toast('Skriv tester-koden din først (feltet i ⚑-boksen, eller ⚙ → Test)'); return 'kode'; }
+  if (!validCode(code)) { toast(T('fq.needCode')); return 'kode'; }
   const built = buildPayload({ code, version: VERSION, level: levelLabel, kind: 'rapport', body, report: reportText(), ua: shortDevice(navigator.userAgent) });
-  if (built.error) { toast(REASON_TEXT[built.error] || REASON_TEXT.feil); return built.error; }
+  if (built.error) { toast(reasonText(built.error, lang)); return built.error; }
   sending = true; sendState = T('tb.sending'); bandSay('send', PRIO.reply, T('tb.sending'), 0, 'reply');
   const res = await sendFeedback(built.row);
   sending = false; tb.clear('send');
-  if (res.ok) { markSent(); if (!store.get(NOTE_KEY, false)) { store.set(NOTE_KEY, true); syncPrivNotes(); } logEv('sendt', `til Claude (${built.row.report.length} tegn)`); sendState = T('tb.sent'); bandSay('send', PRIO.reply, 'Sendt! Takk, Claude ser den.', 5, 'reply'); refreshInbox(true); return 'ok'; }
+  if (res.ok) { markSent(); if (!store.get(NOTE_KEY, false)) { store.set(NOTE_KEY, true); syncPrivNotes(); } logEv('sendt', `til Claude (${built.row.report.length} tegn)`); sendState = T('tb.sent'); bandSay('send', PRIO.reply, T('fq.sent'), 5, 'reply'); refreshInbox(true); return 'ok'; }
   logEv('sendfeil', `${res.reason} ${res.status ?? ''}`);
-  sendState = REASON_TEXT[res.reason] || REASON_TEXT.feil; bandSay('send', PRIO.reply, sendState, 6, 'reply'); return res.reason;
+  sendState = reasonText(res.reason, lang); bandSay('send', PRIO.reply, sendState, 6, 'reply'); return res.reason;
 }
-$('panel').addEventListener('click', (e) => { if (e.target.id === 'hSend') sendToClaude(''); if (e.target.id === 'hShare') doShare(false).then((r) => toast(r === 'delt' ? 'Delt' : r === 'kopiert' ? 'Tilbakemeldingene er kopiert' : r === 'vis' ? 'Åpne ⚙ → Test → Vis rapporten og kopier' : 'Avbrutt')); if (e.target.id === 'hCopy') doShare(true).then((r) => toast(r === 'kopiert' ? 'Rapporten er kopiert. Lim inn til Claude' : 'Kunne ikke kopiere: åpne ⚙ → Test → Vis rapporten')); });
+$('panel').addEventListener('click', (e) => { if (e.target.id === 'hSend') sendToClaude(''); if (e.target.id === 'hShare') doShare(false).then((r) => toast(r === 'delt' ? T('fq.shared') : r === 'kopiert' ? T('fq.sharedCopied') : r === 'vis' ? T('fq.shareShow') : T('fq.cancelled'))); if (e.target.id === 'hCopy') doShare(true).then((r) => toast(r === 'kopiert' ? T('fq.repCopied') : T('fq.repCopyFail'))); });
 updateMarkBadge();
 function buildReportInfo() {
   const t = nextTarget();
@@ -2403,22 +2418,22 @@ function buildPanel() {
   const groupHtml = (g, title) => {
     const items = SETTINGS.filter((d) => d.group === g && visible(d));
     let extra = '';
-    if (g === 'spill') extra = `<label>${PT('level')}</label><select id="levelSel">${(() => { const sp = splitLevels(LEVELS, round2On || isRound2(levelId)), op = (l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`; return sp.main.map(op).join('') + (sp.round2.length ? `<optgroup label="Runde 2: vanskeligere byggebrett">${sp.round2.map(op).join('')}</optgroup>` : ''); })()}</select><div class="row"><button id="pRestart">${PT('restart')}</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div><small id="saveNote"></small><div class="row"><button id="bSaveCopy">${sv(lang, 'sv.copy')}</button><button id="bSavePaste">${sv(lang, 'sv.paste')}</button></div>`;
+    if (g === 'spill') extra = `<label>${PT('level')}</label><select id="levelSel">${(() => { const sp = splitLevels(LEVELS, round2On || isRound2(levelId)), op = (l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`; return sp.main.map(op).join('') + (sp.round2.length ? `<optgroup label="${T('tp.round2')}">${sp.round2.map(op).join('')}</optgroup>` : ''); })()}</select><div class="row"><button id="pRestart">${PT('restart')}</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div><small id="saveNote"></small><div class="row"><button id="bSaveCopy">${sv(lang, 'sv.copy')}</button><button id="bSavePaste">${sv(lang, 'sv.paste')}</button></div>`;
     if (g === 'test') extra = `
-      <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
-      <div class="row"><button id="bMark">⚑ Marker her</button></div>
-      <label>Tester-kode (får du av Rune)</label><input type="text" id="testerCode" placeholder="f.eks. testbruker1" autocomplete="off" autocapitalize="off" spellcheck="false">
-      <div class="row"><button id="bSaveCode">🔑 LAGRE KODE</button></div>
-      <div class="row"><button id="bSend">📤 Send til Claude</button></div><div id="privHost"></div>
-      <div class="row"><button id="bReport">Del tilbakemeldinger</button><button id="bCopyRep">Kopier tilbakemeldinger</button></div>
-      <details><summary>Vis tilbakemeldingene (rapporten)</summary><textarea id="reportBox" readonly rows="9"></textarea></details>
-      <small>Bare innstillingene (ikke tilbakemeldinger):</small><div class="row"><button id="bExport">Kopier innstillinger</button><button id="bImport">Lim inn innstillinger</button></div>
-      <div class="row"><button id="bResetAll">Alt til standard</button></div>
-      <small>Rapporten har versjon, enhet, endrede innstillinger, markeringer og siste hendelser. Send den som melding.</small>`;
-    if (g === 'lyd') extra = `<div class="row"><button id="bHearBreath">Hør pust</button><button id="bHearStep">Hør skritt</button><button id="bHearJump">Hør hopp</button></div><small id="voiceNote"></small>`;
+      <label>${T('tp.wrong')}</label><input type="text" id="markText" placeholder="${T('tp.wrongPh')}">
+      <div class="row"><button id="bMark">${T('tp.mark')}</button></div>
+      <label>${T('tp.code')}</label><input type="text" id="testerCode" placeholder="${T('tp.codePh')}" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="row"><button id="bSaveCode">${T('fq.saveCode')}</button></div>
+      <div class="row"><button id="bSend">${T('fq.send')}</button></div><div id="privHost"></div>
+      <div class="row"><button id="bReport">${T('fq.hShare')}</button><button id="bCopyRep">${T('fq.hCopy')}</button></div>
+      <details><summary>${T('tp.show')}</summary><textarea id="reportBox" readonly rows="9"></textarea></details>
+      <small>${T('tp.onlySettings')}</small><div class="row"><button id="bExport">${T('tp.exp')}</button><button id="bImport">${T('tp.imp')}</button></div>
+      <div class="row"><button id="bResetAll">${T('tp.resetAll')}</button></div>
+      <small>${T('tp.note')}</small>`;
+    if (g === 'lyd') extra = `<div class="row"><button id="bHearBreath">${T('tp.hearBreath')}</button><button id="bHearStep">${T('tp.hearStep')}</button><button id="bHearJump">${T('tp.hearJump')}</button></div><small id="voiceNote"></small>`;
     if (g === 'admin') extra = `<div class="row"><button id="bWipeAll">${sv(lang, 'sv.allBtn')}</button></div><div class="row"><button id="pPlan">Plan</button><button id="pFly">Fly (ugyldig resultat)</button></div>
-      <details><summary>Lydmikser: volum for hver lyd (0 = av, ▶ spiller den)</summary><label>Etterklang (rom) <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">${mixerHtml()}
-        <div class="row"><button id="mixAll100">Alle 100 %</button><button id="mixAllOff">Alle av</button><button id="mixReset">Nullstill lyd</button></div></details>
+      <details><summary>${T('mix.title')}</summary><label>${T('mix.reverb')} <span id="v_rev"></span></label><input type="range" id="s_rev" min="0" max="0.8" step="0.02">${mixerHtml()}
+        <div class="row"><button id="mixAll100">${T('mix.all100')}</button><button id="mixAllOff">${T('mix.allOff')}</button><button id="mixReset">${T('mix.reset')}</button></div></details>
       ${helperCount ? `<label class="chk"><input type="checkbox" id="chkHelpers"> Merk ${helperCount} hjelpeobjekter (lagt inn av brettlageren)</label><small>${(LEVEL.report?.helpers || []).map((h) => `${h.id}: ${h.size_cm.join('×')} cm, topp ${h.top_cm} cm ved (${h.at_cm.join(', ')})`).join('<br>')}</small>` : ''}
       <small><b>Prince:</b> vekt og treghet: du bygger opp fart, snur ikke på stedet, hopp har forberedelse, landing etter fall tar tid og å hive seg opp tar tid. ${TOUCH ? 'Skyv stikken forsiktig for å gå forsiktig.' : 'Hold C for å gå forsiktig.'}<br><b>Klassisk:</b> raskt, dobbelthopp, kanten grips av seg selv.<br><b>Spenning:</b> tyngre og tregere hopp, ingen dobbelthopp. Du må trykke ${GREP}${key('Shift/E')} i riktig øyeblikk for å gripe kant eller tau.</small>
       <div class="row"><button id="lockAdmin">Lås admin</button></div>`;
@@ -3264,7 +3279,7 @@ function updateCarryButton() {
   if (sig === taPrev) return; taPrev = sig;
   const tb = $('btnCarry'); tb.textContent = label; tb.className = `tbtn ${s.tone} ${s.ready ? 'ready' : 'dim'}${label.length > 6 ? ' long' : ''}`;
 }
-function applyLang() { if (typeof pickVoice === 'function') pickVoice(); GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); }
+function applyLang() { if (typeof pickVoice === 'function') pickVoice(); GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); applyIxText(); if (qpopRebuild) qpopRebuild(); }
 // navn på ting: fra kind (norsk/engelsk), ellers lappen eller id-en
 const nameOfId = (id) => kindName(LEVEL.bodies?.find((b) => b.id === id)?.kind ?? LEVEL.boxes.find((b) => b.id === id)?.kind, nice(id));
 const nameOfObj = (o) => kindName(o?.kind, nice(o?.id));
