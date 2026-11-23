@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.172** – Veikart: R157 (roller i byggeren: gulv, bjelke og tau, så figuren ikke går på bærebjelker; bygger videre på veilinje-regelen fra R108/R119).
 - **2.171** – Lag brett fra bilder: aldri blindgate. Feil gir JUSTER og VIS TOLKNING, målforslag MÅL 1–4, ekte feilårsak og tolkningsoppsummering i rapporten (leditor_logic/view/text, scene2level_core, test_leditor).
 - **2.170** – Lag brett fra bilder: auto-målet bruker brettbyggerens egne flater, og setter inn en sokkel i rommet hvis stedet ikke har noen flate å stå på (scene2level_core, leditor_logic, test_leditor).
 - **2.169** – Lag brett fra bilder: svar som kommer fram men ikke kan leses gir ett automatisk nytt forsøk med samme bilder, og feillogger viser statuskode og tid (leditor_logic/view, test_leditor).
