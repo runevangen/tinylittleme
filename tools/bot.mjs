@@ -11,7 +11,7 @@
 // menneske må se på det) · FEIL (løs feiler på kort rute).
 // Bruk: node tools/bot.mjs levels/<navn>.level.json [--verbose] [--svg ut.svg] [--json]   (avslutter 0 = ok, 2 = feil, 3 = til gjennomgang)
 import fs from 'node:fs';
-import { walkRoute } from './walk_route.mjs';
+import { walkRoute, builtBase } from './walk_route.mjs';
 import { shortcutsOf, shortcutRoute, gateRoute, toolBoxes } from '../shortcut.js';
 import * as BW from '../build_world.js';
 import * as BP from '../build_phys.js';
@@ -40,7 +40,7 @@ export function runPlan(L, levelPath, plan, mode, extra = {}) {   // extra: f.ek
     if (!gate || !plan.route || !tb.boxes.length) r = { ok: false, why: tb.why || 'finner ikke trinnene eller flata genveien ender på', secs: 0, steps: (plan.route || []).length - 1 };
     else {
       const noTool = walkRoute(levelPath, { ...MODES[mode], level: L, route: gate });
-      r = walkRoute(levelPath, { ...base, route: plan.route, extraBoxes: tb.boxes });
+      r = walkRoute(levelPath, { ...base, route: plan.route, extraBoxes: [...tb.boxes, ...(plan.solids || [])] });
       if (r.ok && noTool.ok) r = { ...r, ok: false, why: 'første trinn kan nås uten verktøyet (for lavt)' };
     }
   } else r = walkRoute(null, { ...base, route: plan.route, extraBoxes: plan.solids });
@@ -50,7 +50,8 @@ export function runPlan(L, levelPath, plan, mode, extra = {}) {   // extra: f.ek
 // Alle veiene i et brett (ruta, genveier, byggesnarveier). `extra` = hvilke rutetyper som er med.
 export function plansOf(L) {
   const plans = needsBuild(L, true) ? [] : [{ id: 'ruta', kind: 'ruta', route: L.route }];   // R138: påkrevd bygg: ruta uten bygg går ikke (bevist i test_buildreq.mjs); byggeplanen under er ruta
-  for (const sc of shortcutsOf(L)) plans.push({ id: `genvei:${sc.id}`, kind: 'genvei', sc, route: shortcutRoute(L, sc) });
+  const bb = builtBase(L);   // R139: påkrevd bygg: genveien ender på ruta over det ferdige bygget
+  for (const sc of shortcutsOf(L)) plans.push({ id: `genvei:${sc.id}`, kind: 'genvei', sc, route: shortcutRoute(L, sc, bb && bb.route), ...(bb ? { solids: bb.solids } : {}) });
   for (const a of L.alts || []) plans.push({ id: `hard:${a.id}`, kind: 'hard', route: a.route });                       // R42: harde veier uten klatring
   for (const site of L.build?.sites || []) {
     if (!site.ref?.placed?.length || !site.ref.route) continue;

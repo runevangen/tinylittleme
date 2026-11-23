@@ -102,22 +102,29 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario', level 
 
 // R138: brett med påkrevd bygg (L.required): ruta må gås over det ferdige referansebygget (planken ligger over gapet); uten bygg stopper den ved gapet (se test_buildreq.mjs).
 // Brett uten påkrevd bygg går som vanlig. Gir { ok, why, secs, steps, built: true } for påkrevd bygg.
-export function walkRouteAny(levelPath, opts = {}) {
-  const L = opts.level || JSON.parse(fs.readFileSync(levelPath, 'utf8')), req = requiredOf(L);
-  if (!req || req.eased) return walkRoute(levelPath, { ...opts, level: L });
+// Referansebygget og ruta over det for et brett med påkrevd bygg (null for andre brett og når valget er av).
+export function builtBase(L) {
+  const req = requiredOf(L); if (!req || req.eased) return null;
   const site = (L.build?.sites || []).find((s) => s.id === req.site), route = site && refRoute(L, site);
-  if (!route) return { ok: false, why: `påkrevd bygg ${req.site}: finner ikke referansebygget eller ruta`, secs: 0, steps: 0 };
-  return { ...walkRoute(levelPath, { ...opts, level: L, route, extraBoxes: buildSolids(site, settledPlaced({ site, placed: site.ref.placed, links: site.ref.links || [] })) }), built: true };
+  if (!route) return { site, route: null, solids: [] };
+  return { site, route, solids: buildSolids(site, settledPlaced({ site, placed: site.ref.placed, links: site.ref.links || [] })) };
+}
+export function walkRouteAny(levelPath, opts = {}) {
+  const L = opts.level || JSON.parse(fs.readFileSync(levelPath, 'utf8')), req = requiredOf(L), bb = builtBase(L);
+  if (!bb) return walkRoute(levelPath, { ...opts, level: L });
+  if (!bb.route) return { ok: false, why: `påkrevd bygg ${req.site}: finner ikke referansebygget eller ruta`, secs: 0, steps: 0 };
+  return { ...walkRoute(levelPath, { ...opts, level: L, route: bb.route, extraBoxes: bb.solids }), built: true };
 }
 
 // R29: verktøy-genveier. Bevis at (1) første trinn ikke kan nås uten verktøyet, (2) målet nås via genveien med verktøyet (gelfeltet lages av den ekte fysikken),
 // og (3) den vanlige ruta uten verktøy også når målet, og er lengre (secs) enn genveien.
 export function walkShortcut(levelPath, sc, { level = null, ...opts } = {}) {   // R32: opts (helpers, only, wallJump, trace) går videre til walkRoute
+  // R139: påkrevd bygg: genveien og den vanlige ruta går over det ferdige bygget
   const L = level || JSON.parse(fs.readFileSync(levelPath, 'utf8')), out = { id: sc.id, ok: false, why: '' };
-  const gate = gateRoute(L, sc), route = shortcutRoute(L, sc); if (!gate || !route) return { ...out, why: 'finner ikke trinnene eller flata genveien ender på' };
-  const plain = walkRoute(levelPath, { ...opts, level: L }), noTool = walkRoute(levelPath, { ...opts, level: L, route: gate }), tb = toolBoxes(L, sc);
+  const bb = builtBase(L), gate = gateRoute(L, sc), route = shortcutRoute(L, sc, bb && bb.route); if (!gate || !route) return { ...out, why: 'finner ikke trinnene eller flata genveien ender på' };
+  const plain = walkRouteAny(levelPath, { ...opts, level: L }), noTool = walkRoute(levelPath, { ...opts, level: L, route: gate }), tb = toolBoxes(L, sc);
   if (!tb.boxes.length) return { ...out, why: tb.why };
-  const withTool = walkRoute(levelPath, { ...opts, level: L, route, extraBoxes: tb.boxes });
+  const withTool = walkRoute(levelPath, { ...opts, level: L, route, extraBoxes: [...tb.boxes, ...(bb ? bb.solids : [])] });
   Object.assign(out, { plain, noTool, withTool, gel: tb.boxes.length });
   if (!plain.ok) out.why = `den vanlige ruta går ikke: ${plain.why}`;
   else if (noTool.ok) out.why = 'første trinn kan nås uten verktøyet (for lavt)';

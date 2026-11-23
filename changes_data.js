@@ -2,6 +2,10 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r139-bygg-nivaa3', version: '2.143', date: '2026-11-23', title: 'Nivå 3 · Kjøkkenet: krydderhylla er for høy å hoppe til, du må bygge en trapp av klosser ved mikrobølgeovnen.',
+    how: 'Start Nivå 3, gå opp på benken og mikroen, og trykk BYGG. Legg klosser som en trapp og trykk PRØV, og gå så opp på krydderhylla.', level: 'kjokken', spot: { x: 20, y: 24.4, z: -25 } },
+  { id: 'r139-bygg-nivaa4', version: '2.143', date: '2026-11-23', title: 'Nivå 4 · Badet: gapet til dusjhylla er for langt å hoppe, du må bygge en vippe over åpningen i panelveggen.',
+    how: 'Start Nivå 4, klatre til den nye hylla og trykk BYGG ved kanten. Legg vippa i gapet og trykk PRØV, og gå så over til dusjhylla.', level: 'bad2', spot: { x: 15.75, y: 32.6, z: 17 } },
   { id: 'tekst-flere-ting', version: '2.142', date: '2026-11-23', title: 'Resultatkortet i bygging sier nå «Bra! Nå må flere ting over».',
     how: 'Åpne Byggeskolen, bygg en bro som holder første last, og les resultatkortet etter PRØV.', level: 'bygglab', spot: null },
   { id: 'r138-bygg-nivaa2', version: '2.140', date: '2026-11-23', title: 'Nivå 2 · Barnerommet: gapet over lekebøtta er for langt å hoppe, du må bygge en bro med planken som ligger klar. Valget «Påkrevd bygg» (⚙ → Admin) kan skrus av.',

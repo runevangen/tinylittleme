@@ -18,8 +18,8 @@ export const nodeOf = (L, id) => {
   return { id: b.id, x0: b.min[0], x1: b.max[0], z0: b.min[2], z1: b.max[2], top: b.max[1] };
 };
 // Ruta via genveien: fra gulvet opp trinnene og videre langs den vanlige ruta fra `join` (siste forekomst av flata) til målet.
-export function shortcutRoute(L, sc) {
-  const R = L.route || [], start = R[0], ji = R.map((r) => r.id).lastIndexOf(sc.join);
+export function shortcutRoute(L, sc, R0 = null) {   // R139: R0 = ruta over det ferdige bygget i brett med påkrevd bygg (tools/walk_route.mjs builtBase)
+  const R = R0 || L.route || [], start = R[0], ji = R.map((r) => r.id).lastIndexOf(sc.join);
   if (ji < 0) return null;
   const nodes = [start, ...sc.steps.map((id) => nodeOf(L, id))];
   if (nodes.some((n) => !n)) return null;

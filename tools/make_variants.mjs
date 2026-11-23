@@ -2,6 +2,7 @@
 // Leser grunnscenene og skriver variantene. Bruk: node tools/make_variants.mjs   (deretter scene2level + walk_route for hver)
 import fs from 'node:fs';
 import { autoCrumbs } from './place_crumbs.mjs';
+import { applyEasyPatch, scenePatch } from './scene_patch.mjs';
 const load = (n) => JSON.parse(fs.readFileSync(new URL(`../scenes/${n}.scene.json`, import.meta.url), 'utf8'));
 const save = (n, s) => { s.collectibles = autoCrumbs(s); fs.writeFileSync(new URL(`../scenes/${n}.scene.json`, import.meta.url), JSON.stringify(s, null, 2) + '\n'); };
 const kit = (s) => ({
@@ -54,6 +55,33 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
     label: 'Smør hårgelé og klatre opp trinnene til vaskekurven', en: 'Smear hair gel and climb the steps to the laundry basket',
     help: 'Hårgelé\nTa flaska (TA), bær den til det høye trinnet ved vaskekurven og trykk SMØR. Legg den fra deg (SLIPP) og klatre i gelen (GREP). Våt i 20 s: sklir.',
     stepHelp: 'Høyt trinn\nFor høyt å hoppe på. Smør hårgelé på trinnet (TA med flaska), så klatrer du opp og går videre til vaskekurven. Den lange veien går fortsatt.' });
+  // ---------- R139: Nivå 4 får nødvendig bygg: den øverste hylla (199 cm) og håndkleet opp til den er borte. Panelveggen får en åpning ved ny hylle, og bak den står en ny dusjhylle over karet, 10 cm høyere
+  // og 35 cm unna (gapet er for langt å hoppe): bygg en vippe (BYGG, PRØV). Samme mål som Nivå 3-vippa (`vippe`). `required.easyPatch` gir dagens Nivå 4 når valget buildrequired er av (Nivå 6 hører ikke til dette).
+  s.collectibles = autoCrumbs(s);
+  const easy = JSON.parse(JSON.stringify(s));   // dagens Nivå 4 (før de vanskelige endringene)
+  const wall = k.get('skillevegg'), wallBox = wall.box.slice(), wallNote = wall.note;
+  k.del('skillevegg', 'hylle', 'handkle_ny_2');
+  k.add('skillevegg', wall.kind, wall.material, wall.color, [185, 195, 0, 240, 138, 190], { note: wallNote });   // nord for åpningen
+  k.add('skillevegg_under', wall.kind, wall.material, wall.color, [185, 195, 0, 160, 190, 236], {});             // under åpningen (hylla ligger i åpningen)
+  k.add('skillevegg_over', wall.kind, wall.material, wall.color, [185, 195, 210, 240, 190, 236], {});            // over åpningen
+  k.add('skillevegg_sor', wall.kind, wall.material, wall.color, [185, 195, 0, 240, 236, 250], {});               // sør for åpningen
+  k.set('ny_hylle', { box: [138, 195, 160, 163, 190, 232], help: 'Ny hylle\nHvil her til kreftene er fulle. Gapet inn til dusjhylla er for langt å hoppe: trykk BYGG ved kanten og bygg en vippe.' });
+  k.add('hylle_ost', 'chest', 'wood', '#c79a5e', [227.5, 265, 170, 173, 190, 226], { cp: true, help: 'Dusjhylla\nMotgiften står her. Vippa du bygger må ta deg over gapet fra den nye hylla.' });
+  s.goal = { x: 246, y: 173, z: 208, on: 'hylle_ost', note: 'R139: motgift-bit på dusjhylla over karet. Veien: kurven, badekåpa, knaggrekka, ny hylle, så en vippe gjennom åpningen i panelveggen.' };
+  s.goals = [{ id: 'kurv', type: 'reach', on: 'vaskekurv', gate: true, also: ['knaggrekke', 'ny_hylle', 'medisinskap'], label: 'Klatre opp på vaskekurven', en: 'Climb the laundry basket' },
+    { id: 'bygg', type: 'flag', flag: 'bad1', label: 'Bygg en vippe til dusjhylla (BYGG-knappen)', en: 'Build a seesaw to the shower shelf (BUILD button)', after: 'kurv' },
+    { id: 'smuler', type: 'crumbs', n: 5, label: 'Samle 5 smuler', en: 'Collect 5 crumbs' },
+    { id: 'vokter', type: 'stomp', n: 1, label: 'Knus en vokter', en: 'Squash a guard' }];
+  delete s.alts;   // den harde veien (eskene, over medisinskapet, til den øverste hylla) finnes ikke lenger: hylla er borte
+  s.build = { sites: [{ id: 'bad1', label: 'Gapet til dusjhylla (vippe)', at: [211.25, 210], y: 163, w: 100, h: 60, d: 20, drop: 163, stars: { three: { cost: 5, parts: 2 }, two: { cost: 8, parts: 4 } },
+    anchors: [[0, 6.25]], deck: [[-47.5, -16.25], [16.25, 47.5, 10]], start: [-40, 0], goal: [40, 10],
+    ref: { placed: [{ id: 'v1', type: 'seesaw', u: 0, v: 1.25, rot: 0.2618 }], links: [], surfaces: [], route: ['gulv', 'vaskekurv', 'badekape_bla', 'knaggrekke', 'handkle_ny_1', 'ny_hylle', 'hylle_ost'] } }],
+    parts: [{ id: 'v1', type: 'seesaw', on: 'gulv', at: [15, 80] }, { id: 'v2', type: 'plank_s', on: 'gulv', at: [35, 100] }, { id: 'v3', type: 'block', on: 'gulv', at: [15, 120] }, { id: 'v4', type: 'weight', on: 'gulv', at: [55, 90] }, { id: 'v5', type: 'plank_s', on: 'gulv', at: [35, 125] }] };
+  s.rev = 2;
+  s.required = { site: 'bad1', note: 'R139: gapet fra ny hylle til dusjhylla (32,5 cm, 10 cm opp) er for langt å hoppe: bygg en vippe. `easyPatch` = dagens Nivå 4 (øverste hylle med håndkle, den harde veien) når valget buildrequired er av.',
+    routeDrop: ['handkle_ny_2', 'hylle'], routeAdd: ['hylle_ost'], beyond: { x: 200, y: 160 }, easyPatch: scenePatch(s, easy) };
+  s.collectibles = autoCrumbs(s); s.required.easyPatch = scenePatch(s, easy);   // smulene regnes i det vanskelige brettet (ruta via routeAdd); det lette har sine egne
+  void wallBox;
   save('bad2', s);
 }
 
@@ -94,7 +122,8 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
 
 // ---------- Nivå 6: Kjøkkenet, ryddet om. Skuffene er lukket: opp via kassa og håndkleet på komfyren. Overskapet er kortere og kjøleskapet flyttet: to hopp i høyden. ----------
 {
-  const s = load('kjokken'), k = kit(s);
+  const s = applyEasyPatch(load('kjokken'), load('kjokken').required?.easyPatch), k = kit(s);   // R139: Nivå 3 har påkrevd bygg; Nivå 6 lages av den lette scenen (uendret)
+  delete s.build;
   s.name = 'Nivå 6: Kjøkkenet, ryddet om'; s.rev = 1;
   s.source.interpreted_by += '. Ryddet om for nivå 6.';
   const drw = ['skuff_1', 'skuff_2', 'skuff_3', 'skuff_4'].map((id) => k.get(id).drawer);   // R55: samme frontfarger og håndtak som i nivå 3, men lukket (flat front, tydelig fuge)

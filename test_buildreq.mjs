@@ -62,7 +62,7 @@ const L = lv('barnerom'), site = L.build.sites[0];
   assert.ok(/Hopp over lekebøtta/.test(B.hints.find((h) => h.id === 'nattbord').text), 'gammel tekst tilbake');
   const w = walkRoute(null, { level: B }); assert.ok(w.ok, `uten påkrevd bygg går ruta uten å bygge: ${w.why}`);
   assert.equal(applyRequired({ boxes: [] }, false), null, 'brett uten påkrevd bygg: ingen endring');
-  for (const id of ['bad', 'kjokken', 'bad2', 'barnerom2', 'kjokken2', 'leke', 'stue', 'verksted', 'bro']) assert.equal(requiredOf(lv(id)), null, `${id}: ingen påkrevd bygg`);
+  for (const id of ['bad', 'barnerom2', 'kjokken2', 'leke', 'stue', 'verksted', 'bro']) assert.equal(requiredOf(lv(id)), null, `${id}: ingen påkrevd bygg`);   // R139: Nivå 3 og 4 har det nå (test_buildreq2.mjs)
 }
 // 6) Nivå 5 (barnerom2) er uendret: ingen bygg, ingen krakk, samme scene som før (make_variants gir de samme filene)
 {

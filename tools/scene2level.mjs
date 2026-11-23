@@ -7,6 +7,11 @@
 //  3. Beste rute start → mål. Der en kant er for stor legges det inn hjelpeobjekter (bro / trappetrinn).
 //  4. Skriver brettet + en rapport. Bekreft etterpå med fysikk-boten: node tools/solve.mjs spenning --level=<fil>
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { applyEasyPatch, levelEasy } from './scene_patch.mjs';
 import { CRUMB } from '../collect.js';
 import { ROUND_KINDS } from '../toys_live.js';
 
@@ -16,6 +21,14 @@ const scene = JSON.parse(fs.readFileSync(inPath, 'utf8'));
 // R138: påkrevd bygg. `required: { site, ease: { <id>: [boks i cm] }, easeHints? }`: tingene i `objects` har den VANSKELIGE (påkrevde) plasseringen, `ease` er den gamle lette plasseringen.
 // Rutegrafen og ruta regnes på den lette plasseringen (ellers legger verktøyet inn en hjelpebro); brettet skrives med den vanskelige, og `required` får den lette tilbake til valget buildrequired = av (buildreq_logic.js).
 const reqCfg = scene.required || null, hardBox = {};
+// R139: `required.easyPatch` (se tools/scene_patch.mjs): det lette brettet lages først (ruta, grafen og rapporten kommer derfra), det vanskelige skrives med `required.easy` = forskjellen
+let easyLevel = null;
+if (reqCfg && reqCfg.easyPatch) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'easy-')), ei = path.join(dir, 'e.scene.json'), eo = path.join(dir, 'e.level.json');
+  fs.writeFileSync(ei, JSON.stringify(applyEasyPatch(scene, reqCfg.easyPatch)));
+  execFileSync(process.execPath, [fileURLToPath(import.meta.url), ei, eo], { stdio: 'pipe' });
+  easyLevel = JSON.parse(fs.readFileSync(eo, 'utf8')); scene.validate = false;   // det vanskelige brettet har ingen vei uten bygg: ingen hjelpebroer fra verktøyet
+}
 if (reqCfg) for (const [id, eb] of Object.entries(reqCfg.ease || {})) { const o = scene.objects.find((q) => q.id === id); if (!o) throw new Error(`required.ease: fant ikke ${id}`); hardBox[id] = o.box; o.box = eb; }
 
 const U = 5;                                    // cm per enhet
@@ -421,7 +434,7 @@ const finalSeen = reachable();
 const solvable = finalSeen.has(goalIdx());
 
 // ---- 4. skriv ---------------------------------------------------------------
-const level = {
+let level = {
   name: scene.name, ...(scene.rev ? { rev: scene.rev } : {}),
   boxes, movables, decor, hints, hazards, holds, windows, sun, look: scene.look, audio: scene.audio,
   ants,
@@ -444,6 +457,13 @@ const level = {
   room: { x0, x1, z0, z1, height: H, floor: R.floor, walls: R.walls, ceiling: R.ceiling, ...(R.fdetMax ? { fdetMax: R.fdetMax } : {}) },
   report: { source: scene.source, solvable_by_graph: solvable, helpers, nodes: nodes.length, reachable: finalSeen.size },
 };
+if (easyLevel) {   // R139: vanskelig brett (bygget må til) med ruta over de faste flatene; det lette brettet ligger i required.easy
+  // ruta: det lette brettets rute (grep-flater som de er), uten `routeDrop`, flater som er flyttet hentes fra det vanskelige brettet, `routeAdd` (id-er på flater) legges til sist
+  const drop = new Set(reqCfg.routeDrop || []), add = (reqCfg.routeAdd || []).map((id) => { const b = boxes.find((q) => q.id === id); if (!b) throw new Error(`required.routeAdd: fant ikke ${id}`); const n = fromBox(b); return { id: n.id, x0: round(n.x0), x1: round(n.x1), z0: round(n.z0), z1: round(n.z1), top: round(n.top) }; });
+  level.route = [...easyLevel.route.filter((n) => !drop.has(n.id)).map((n) => { const b = !n.grip && n.id !== 'gulv' && boxes.find((q) => q.id === n.id); if (!b) return n; const m = fromBox(b); return { ...n, x0: round(m.x0), x1: round(m.x1), z0: round(m.z0), z1: round(m.z1), top: round(m.top) }; }), ...add];
+  level.report = { ...easyLevel.report, hard_solvable_by_graph: solvable };
+  level.required = { site: reqCfg.site, ...(reqCfg.beyond ? { beyond: { ...(reqCfg.beyond.x ? { x0: ux(reqCfg.beyond.x) } : {}), y0: uy(reqCfg.beyond.y) } } : {}), easy: levelEasy(level, easyLevel), ...(reqCfg.note ? { note: reqCfg.note } : {}) };
+}
 fs.mkdirSync(outPath.replace(/[^/]+$/, '') || '.', { recursive: true });
 fs.writeFileSync(outPath, JSON.stringify(level, null, 1));
 console.log(`${scene.name}: ${boxes.length} bokser, ${hazards.length} farer, ${holds.length} klatretak (ennå ubrukt), ${decor.length} dekor`);

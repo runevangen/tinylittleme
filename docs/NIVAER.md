@@ -8,7 +8,7 @@ Seks nivåer med stigende vanskelighetsgrad: tre rom (nivå 1–3), og de samme 
 | Kilde | tolket fra fire bilder | oppdiktet for spillet | oppdiktet for spillet |
 | Steg i ruta | 5 | 12 | 16 |
 | Klatringer | 1 (vaskekurv, 60 cm) | 1 (gardin, 34 cm) | 2 (kjøkkenhåndkle 34 cm, hvitløksflette 48 cm: tar nesten alle kreftene) |
-| Hopp over gap | ingen | 1 (35 cm over lekebøtta: for langt å hoppe, **bygg en bro** med planken som ligger klar, R138; ⚙ → Admin «Påkrevd bygg» av gir 25 cm som før) | 1 (25 cm, fra overskap til kjøleskap, 2 m over gulvet) |
+| Hopp over gap | ingen | 1 (35 cm over lekebøtta: for langt å hoppe, **bygg en bro** med planken som ligger klar, R138; ⚙ → Admin «Påkrevd bygg» av gir 25 cm som før) | 1 (25 cm, fra overskap til kjøleskap, 2 m over gulvet), og krydderhylla er 30 cm over mikroen: **bygg en trapp av klosser** (R139) |
 | Farer på ruta | ingen (kar og do ligger utenfor) | lekebøtta under hoppet | oppvaskkum og kokeplater med smal kant forbi, glatt gulv |
 | Høyeste punkt | 96 cm | 148 cm | 200 cm |
 | Fall som sender deg tilbake | nei | fra hylle og skap | fra hylle, overskap og kjøleskap |
@@ -18,7 +18,7 @@ Seks nivåer med stigende vanskelighetsgrad: tre rom (nivå 1–3), og de samme 
 ## Rutene
 - **Nivå 1:** gulv → vaskekurv (klatre) → sisterne → vask → tannglass.
 - **Nivå 2:** gulv → to klosser → lekekasse → seng → nattbord → bygg bro over lekebøtta (R138: BYGG, planken, PRØV) → krakk → skrivebord → gardin (klatre) → vinduskarm → vegghylle → spilleske → klesskap.
-- **Nivå 3:** gulv → fire skuffer som trapp → benk → smal kant foran vasken → benk → smal kant foran kokeplatene → benk → brødrister → mikrobølgeovn → kjøkkenhåndkle (klatre) → krydderhylle → hvitløksflette (klatre) → overskap → hopp til kjøleskapet.
+- **Nivå 3:** gulv → fire skuffer som trapp → benk → smal kant foran vasken → benk → smal kant foran kokeplatene → benk → brødrister → mikrobølgeovn → **bygg en trapp av klosser (R139: BYGG, PRØV; i dag er håndkleet ikke et grep lenger, mikroen er 4 cm høyere, og med «Påkrevd bygg» av er det som før: klatre i kjøkkenhåndkleet)** → krydderhylle → hvitløksflette (klatre) → overskap → hopp til kjøleskapet.
 
 Skuffene i nivå 3 (åpne) og nivå 6 (lukkede fronter) er `kind: "drawer"` med `drawer: { open, front, handle, style }` i scenen (R55, `drawers.js`); tilstanden leses av tegningen, kollisjon og rute er uendret.
 
@@ -30,7 +30,7 @@ Laget av grunnscenene med `tools/make_variants.mjs` (flytter møbler, legger til
 | Fil | `scenes/bad2.scene.json` | `scenes/barnerom2.scene.json` | `scenes/kjokken2.scene.json` |
 | Hva er endret | Vaskekurven står under knaggene, buksa er tatt ned, ny hylle og to nye håndklær, den lille kurven står på gulvet | Krakken er borte, ny smal hylle over lekebøtta, bok på nattbordet, to nye hyller over døra | Skuffene er lukket, kasse og håndkle foran komfyren, overskapet er kortere, kjøleskapet flyttet, liten hylle over vasken |
 | Ny løsning | Fire klatringer rett opp panelveggen: kurv → badekåpe → knaggrekke → håndkle → ny hylle → håndkle → øverste hylle | Balanser på hylla over lekebøtta i stedet for å hoppe, og fortsett fra klesskapet bortover hyllene over døra med et hopp til siste hylle | Opp via kassa og håndkleet på komfyren (rett inn mellom kokeplatene og kanten), og to hopp i høyden: overskap → liten hylle → kjøleskap |
-| Mål | øverste hylle, 199 cm | hylla i hjørnet, 150 cm | kjøleskapet, 190 cm |
+| Mål | dusjhylla over karet, 173 cm (R139: **bygg en vippe** fra den nye hylla gjennom åpningen i panelveggen; den øverste hylla (199 cm) og den harde veien finnes bare når ⚙ → Admin «Påkrevd bygg» er av) | hylla i hjørnet, 150 cm | kjøleskapet, 190 cm |
 | Steg | 8 (4 klatringer) | 15 | 12 (3 klatringer) |
 | Det vanskelige | krefter: du må hvile mellom klatringene, og alt over kurven er for høyt å falle fra | smal hylle over en fare, og 1,5 m fallhøyde på slutten | varme plater rett bak deg når du kommer opp, og to hopp 2 m over gulvet |
 | Gått av verktøyet | 43 s | 54 s | 56 s |

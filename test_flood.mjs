@@ -10,8 +10,10 @@ import { FG, isWet, floodPct, goalOpen, refuge, pickGoal, dropIntoWater, drownAl
 import { statusParts } from './topband_logic.js';
 import { makeT, DICT_KEYS } from './i18n.js';
 import { botSolve } from './tools/bot.mjs';
+import { applyRequired } from './buildreq_logic.js';
 
-const load = () => { const L = JSON.parse(fs.readFileSync('levels/bad2.level.json', 'utf8')); initGoals(L); initCollect(L); initAnts(L); return L; };
+const load = () => { const L = JSON.parse(fs.readFileSync('levels/bad2.level.json', 'utf8')); applyRequired(L, false); initGoals(L);   // R139: flomreglene testes mot dagens Nivå 4 (valget «Påkrevd bygg» av); med påkrevd bygg er flommen sjekket i test_badet.mjs
+   initCollect(L); initAnts(L); return L; };
 const L = load(), twist = L.variant.twist, floorY = 0, ctx0 = { crumbs: 0, stomps: 0 };
 const START = { x: L.start[0], y: L.start[1], z: L.start[2], onGround: true, fx: 0, fz: -1 };
 
@@ -97,7 +99,7 @@ for (const lang of ['nb', 'en']) {
 assert.equal(makeT(() => 'nb').T('water.below'), 'Vann under deg · ikke hopp ned');
 // ---- bot (R32): ruta i Nivå 4 med stigende vann i rolig og vanlig ----
 {
-  const r = botSolve('levels/bad2.level.json'), tr = r.plans.find((p) => p.id === 'ruta').streng.trace;
+  const r = botSolve('levels/bad2.level.json', { level: (() => { const E = JSON.parse(fs.readFileSync('levels/bad2.level.json', 'utf8')); applyRequired(E, false); return E; })() }), tr = r.plans.find((p) => p.id === 'ruta').streng.trace;
   assert.ok(r.verdict === 'BESTÅR_STRENG' && tr.length > 100, 'ruta går uten vann (uendret)');
   const floor = L.antList.find((a) => a.id === 'edderkopp_dusj'), walk = Math.hypot(floor.x - START.x, floor.z - START.z) / P.speed;
   for (const mode of ['rolig', 'vanlig']) {

@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import { P } from './physics.js';
 import { MODES, LONG, isLong, verdictOf, plansOf, botSolve, routeText, routeSvg } from './tools/bot.mjs';
 import { walkRoute, walkRouteAny } from './tools/walk_route.mjs';
+import { applyRequired } from './buildreq_logic.js';
 
 const path = (id) => `levels/${id}.level.json`, lv = (id) => JSON.parse(fs.readFileSync(path(id), 'utf8'));
 const ok = (len = 50, steps = 3) => ({ ok: true, len, steps, why: '' }), bad = (len = 50, steps = 3) => ({ ok: false, len, steps, why: 'x' });
@@ -28,7 +29,9 @@ for (const id of ids) {
   for (const p of r.plans) { kinds.add(p.kind); assert.ok(p.streng.ok && p.løs.ok, `${id}/${p.id}`); assert.ok(p.streng.trace.length > 10, 'sporet er tatt opp'); }
 }
 assert.deepEqual([...kinds].sort(), ['bygg', 'genvei', 'hard', 'ruta'], 'boten går ruta, verktøy-genveier, byggesnarveier og harde veier uten klatring (R42)');
-assert.deepEqual(botSolve(path('bad2')).plans.map((p) => p.id), ['ruta', 'genvei:gele_bad', 'hard:trapp_bad']);
+assert.deepEqual(botSolve(path('bad2')).plans.map((p) => p.id), ['genvei:gele_bad', 'bygg:bad1'], 'R139: Nivå 4 har påkrevd bygg: ruta uten bygg og den harde veien finnes ikke, genveien og bygget går');
+{ const E = lv('bad2'); applyRequired(E, false); assert.deepEqual(botSolve(path('bad2'), { level: E }).plans.map((p) => p.id), ['ruta', 'genvei:gele_bad', 'hard:trapp_bad'], 'valget av: dagens Nivå 4'); }
+assert.deepEqual(botSolve(path('kjokken')).plans.map((p) => p.id), ['bygg:kjokk1'], 'R139: Nivå 3: bare veien via trappa av klosser');
 assert.deepEqual(botSolve(path('bro')).plans.map((p) => p.id), ['ruta', 'bygg:bro1', 'bygg:bro1:rutenett']);
 assert.ok(lv('kontroll').route.length >= 6, 'Kontroll har en ekte rute (trinn og plattformer), ikke bare gulv → mål');
 

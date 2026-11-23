@@ -2,16 +2,18 @@
 // en hard vei uten klatring (eskene), delmål, og stigende vann (variant.js: floodCfg/floodLevel/floodStep) som kan slås på og avgjøres (rømme eller drukne).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { walkRoute } from './tools/walk_route.mjs';
+import { walkRoute, walkRouteAny } from './tools/walk_route.mjs';
+import { applyRequired, needsBuild } from './buildreq_logic.js';
 import { botSolve } from './tools/bot.mjs';
 import { checkGoals } from './goals.js';
 import { FLOOD, FLOOD_MODES, floodCfg, floodLevel, floodPhase, floodStep, checkVariant } from './variant.js';
 
-const lv = (id) => JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), sc = (id) => JSON.parse(fs.readFileSync(`scenes/${id}.scene.json`, 'utf8'));
+const lv = (id) => JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), lvE = (id) => { const L = lv(id); applyRequired(L, false); return L; };   // R139: lvE = dagens brett (valget «Påkrevd bygg» av); Nivå 4 har ellers påkrevd bygg (se nederst)
+const sc = (id) => JSON.parse(fs.readFileSync(`scenes/${id}.scene.json`, 'utf8'));
 
 // 1) begge bad-nivåene: motgiften høyt oppe, klatrevei fra knaggrekka, og en hard vei uten klatring
 for (const id of ['bad', 'bad2']) {
-  const L = lv(id), ids = L.route.map((n) => n.id), at = ids.indexOf('knaggrekke');
+  const L = lvE(id), ids = L.route.map((n) => n.id), at = ids.indexOf('knaggrekke');
   assert.ok(L.goal[1] >= 38, `${id}: motgiften ligger minst 190 cm opp (${L.goal[1] * 5} cm)`);
   assert.ok(at > 0 && L.route.slice(0, at).some((n) => n.grip), `${id}: ruta klatrer opp til knaggrekka`);
   assert.ok(L.route.slice(at).some((n) => n.grip), `${id}: fra knaggrekka klatres det videre mot motgiften`);
@@ -25,15 +27,15 @@ for (const id of ['bad', 'bad2']) {
     const r = walkRoute(null, { level: L, ...mode }); assert.ok(r.ok, `${id}: klatreruta går: ${r.why}`);
     const h = walkRoute(null, { level: L, route: alt.route, ...mode }); assert.ok(h.ok, `${id}: den harde veien går (uten klatring): ${h.why}`);
   }
-  const bot = botSolve(`levels/${id}.level.json`); assert.equal(bot.verdict, 'BESTÅR_STRENG', `${id}: boten`); assert.ok(bot.plans.some((p) => p.kind === 'hard' && p.verdict === 'BESTÅR_STRENG'), `${id}: boten går den harde veien`);
+  const bot = botSolve(`levels/${id}.level.json`, { level: L }); assert.equal(bot.verdict, 'BESTÅR_STRENG', `${id}: boten`); assert.ok(bot.plans.some((p) => p.kind === 'hard' && p.verdict === 'BESTÅR_STRENG'), `${id}: boten går den harde veien`);
   // scenen og brettet er à jour
-  assert.equal(sc(id).alts.length, L.alts.length);
+  assert.equal((sc(id).alts || sc(id).required.easyPatch.top.alts).length, L.alts.length);
 }
 // nivå 1: målet står på medisinskapet; nivå 4: på den øverste hylla (og den harde veien går via medisinskapet)
-assert.equal(lv('bad').route.at(-1).id, 'medisinskap'); assert.equal(lv('bad2').route.at(-1).id, 'hylle');
-assert.deepEqual(lv('bad2').alts[0].route.slice(-2).map((n) => n.id), ['medisinskap', 'hylle']);
+assert.equal(lv('bad').route.at(-1).id, 'medisinskap'); assert.equal(lvE('bad2').route.at(-1).id, 'hylle');
+assert.deepEqual(lvE('bad2').alts[0].route.slice(-2).map((n) => n.id), ['medisinskap', 'hylle']);
 // nivå 1 og 4 har ulike ruter
-assert.notDeepEqual(lv('bad').route.map((n) => n.id), lv('bad2').route.map((n) => n.id));
+assert.notDeepEqual(lv('bad').route.map((n) => n.id), lvE('bad2').route.map((n) => n.id));
 // uten klatring i veien: å fjerne eskene (alt-trinnene) rører ikke klatreruta
 { const L = lv('bad'), gone = new Set(L.alts[0].route.slice(1, -1).map((n) => n.id)); L.boxes = L.boxes.filter((b) => !gone.has(b.id)); assert.ok(walkRoute(null, { level: L }).ok, 'klatreruta trenger ikke eskene'); }
 // hindringer: uten eskene kan ikke den harde veien gås
@@ -42,7 +44,7 @@ assert.notDeepEqual(lv('bad').route.map((n) => n.id), lv('bad2').route.map((n) =
 // 2) stigende vann: rene funksjoner
 assert.equal(floodCfg('av'), null); assert.equal(floodCfg('finnes_ikke'), null);
 assert.deepEqual(FLOOD_MODES, ['av', 'rolig', 'vanlig', 'rask']);
-const V = lv('bad2').variant; assert.deepEqual(checkVariant(V), []); assert.equal(V.twist.flood.max, 14, 'flomhøyde i enheter (70 cm)');
+const V = lvE('bad2').variant; assert.deepEqual(checkVariant(V), []); assert.equal(V.twist.flood.max, 14, 'flomhøyde i enheter (70 cm)');
 for (const m of ['rolig', 'vanlig', 'rask']) {
   const c = floodCfg(m, V.twist); assert.ok(c.rate > 0 && c.delay > 0 && c.max === 14);
   assert.equal(floodLevel(0, c), 0); assert.equal(floodLevel(c.delay - 1, c), 0); assert.ok(floodLevel(c.delay + 5, c) > 0);
@@ -62,7 +64,7 @@ assert.ok(FLOOD.rask.rate > FLOOD.vanlig.rate && FLOOD.vanlig.rate > FLOOD.rolig
 
 // 3) rømme eller tape: både klatreruta og den harde veien klarer seg i alle tre farter (boten er raskere enn en nybegynner, men den er også bevis på at tiden holder)
 for (const m of ['rolig', 'vanlig', 'rask']) {
-  const c = floodCfg(m, V.twist), L = lv('bad2');
+  const c = floodCfg(m, V.twist), L = lvE('bad2');
   for (const [name, route] of [['klatreruta', null], ['den harde veien', L.alts[0].route]]) {
     const trace = [], r = walkRoute(null, { level: L, ...(route ? { route } : {}), trace }); assert.ok(r.ok, `${m}/${name}: går`);
     let under = 0; for (const [t, , y] of trace) { const s = floodStep(under, 0.1, y, 0, floodLevel(t, c), c); under = s.under; assert.ok(!s.drowned, `${m}/${name}: boten druknet ved ${t} s (y=${y})`); }
@@ -81,4 +83,16 @@ for (const m of ['rolig', 'vanlig', 'rask']) {
   assert.ok(!/\b(trykk|tast)\s+(på\s+)?(mellomrom|space|E|F)\b/i.test(i18n.match(/'flood\.[^\n]+/g).join(' ')), 'ingen taster');
 }
 for (const id of ['bad', 'barnerom2', 'kjokken2']) assert.ok(!(lv(id).variant?.twist?.flood), `${id}: bare nivå 4 har stigende vann`);
+// 5) R139: Nivå 4 med påkrevd bygg: motgiften på dusjhylla (173 cm, bak åpningen i panelveggen), klatreruta fram til ny hylle, så en vippe; uten bygg og uten den harde veien finnes ingen vei
+{
+  const L = lv('bad2'); assert.ok(needsBuild(L, true)); assert.equal(L.route.at(-1).id, 'hylle_ost'); assert.ok(L.goal[1] * 5 >= 170, `motgiften ligger høyt (${L.goal[1] * 5} cm)`);
+  assert.ok(!L.alts && !L.boxes.some((b) => b.id === 'hylle' || b.id === 'handkle_ny_2'), 'den øverste hylla og den harde veien er borte');
+  assert.equal(L.report.hard_solvable_by_graph, false, 'rutegrafen finner ingen vei uten bygg (ingen rest-vei)');
+  const r = walkRouteAny(null, { level: L }); assert.ok(r.ok && r.built, `via vippa: ${r.why}`);
+  assert.ok(!walkRoute(null, { level: L }).ok, 'uten bygg stopper ruta ved gapet');
+  for (const m of ['rolig', 'vanlig', 'rask']) {   // vannet stiger mens du bygger: boten (ferdig bygg) rekker målet i alle tre farter
+    const c = floodCfg(m, L.variant.twist), trace = [], w = walkRouteAny(null, { level: L, trace }); assert.ok(w.ok);
+    let under = 0; for (const [t, , y] of trace) { const q = floodStep(under, 0.1, y, 0, floodLevel(t, c), c); under = q.under; assert.ok(!q.drowned, `${m}: druknet ved ${t} s (y=${y})`); }
+  }
+}
 console.log('badet (R42): ok');

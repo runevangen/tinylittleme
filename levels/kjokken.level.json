@@ -1,6 +1,6 @@
 {
  "name": "Nivå 3: Kjøkkenet",
- "rev": 1,
+ "rev": 2,
  "boxes": [
   {
    "type": "floor",
@@ -496,7 +496,7 @@
    ],
    "max": [
     24.8,
-    23.6,
+    24.4,
     -22
    ],
    "id": "mikro",
@@ -528,12 +528,12 @@
   {
    "type": "fabric",
    "min": [
-    18,
-    23.6,
+    26.4,
+    22,
     -27
    ],
    "max": [
-    22.4,
+    30,
     30.4,
     -26.6
    ],
@@ -542,10 +542,7 @@
    "color": 14242639,
    "material": "fabric",
    "cp": false,
-   "soft": false,
-   "grip": true,
-   "onto": "krydderhylle",
-   "gripDrain": -0.3
+   "soft": false
   },
   {
    "type": "wood",
@@ -1162,7 +1159,7 @@
    "kind": "box",
    "pos": [
     19.8,
-    20.8,
+    21.6,
     -21.94
    ],
    "size": [
@@ -1348,12 +1345,12 @@
    ]
   },
   {
-   "id": "kjokkenhandkle",
-   "text": "Kjøkkenhåndkle\nKlatre: stå på mikrobølgeovnen, gå inntil håndkleet og hold GREP. Øverst hiver du deg opp på krydderhylla.",
+   "id": "mikro",
+   "text": "Høy hylle\nKrydderhylla er for høy å hoppe til. Trykk BYGG ved mikroen, legg ut en trapp av klosser og trykk PRØV, så kommer du opp.",
    "pos": [
-    20.2,
-    31.3,
-    -26.8
+    20.6,
+    25.3,
+    -25.8
    ]
   },
   {
@@ -1588,6 +1585,538 @@
    "z": 0.76
   }
  ],
+ "build": {
+  "sites": [
+   {
+    "id": "kjokk1",
+    "label": "Foran krydderhylla (trapp)",
+    "x": 20,
+    "y": 24.4,
+    "z": -25,
+    "w": 11.2,
+    "h": 10,
+    "anchors": [],
+    "deck": [
+     {
+      "u0": -3.6,
+      "u1": 4.25
+     },
+     {
+      "u0": 4.25,
+      "u1": 8,
+      "top": 6
+     }
+    ],
+    "start": {
+     "u": -2.8,
+     "v": 0
+    },
+    "goal": {
+     "u": 6.4,
+     "v": 6
+    },
+    "d": 4,
+    "stars": {
+     "three": {
+      "cost": 6,
+      "parts": 6
+     },
+     "two": {
+      "cost": 10,
+      "parts": 10
+     }
+    },
+    "ref": {
+     "placed": [
+      {
+       "id": "k1",
+       "type": "block",
+       "u": 0,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k2",
+       "type": "block",
+       "u": 1.5,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k3",
+       "type": "block",
+       "u": 1.5,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k4",
+       "type": "block",
+       "u": 3,
+       "v": 0.75,
+       "rot": 0
+      },
+      {
+       "id": "k5",
+       "type": "block",
+       "u": 3,
+       "v": 2.25,
+       "rot": 0
+      },
+      {
+       "id": "k6",
+       "type": "block",
+       "u": 3,
+       "v": 3.75,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@t1",
+       "u0": -0.75,
+       "u1": 0.75,
+       "top": 1.5
+      },
+      {
+       "id": "@t2",
+       "u0": 0.75,
+       "u1": 2.25,
+       "top": 3
+      },
+      {
+       "id": "@t3",
+       "u0": 2.25,
+       "u1": 3.75,
+       "top": 4.5
+      }
+     ],
+     "route": [
+      "gulv",
+      "skuff_1",
+      "skuff_2",
+      "skuff_3",
+      "skuff_4",
+      "benk_v",
+      "benk_vask_foran",
+      "benk_m",
+      "komfyr_front",
+      "benk_o",
+      "brodrister",
+      "mikro",
+      "@t1",
+      "@t2",
+      "@t3",
+      "krydderhylle",
+      "hvitlok",
+      "overskap",
+      "kjoleskap"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "k1",
+    "type": "block",
+    "x": -16,
+    "y": 0.9,
+    "z": 21
+   },
+   {
+    "id": "k2",
+    "type": "block",
+    "x": -13,
+    "y": 0.9,
+    "z": 27
+   },
+   {
+    "id": "k3",
+    "type": "block",
+    "x": 7,
+    "y": 0.9,
+    "z": 25
+   },
+   {
+    "id": "k4",
+    "type": "block",
+    "x": 11,
+    "y": 0.9,
+    "z": 21
+   },
+   {
+    "id": "k5",
+    "type": "block",
+    "x": 14,
+    "y": 0.9,
+    "z": 27
+   },
+   {
+    "id": "k6",
+    "type": "block",
+    "x": 21,
+    "y": 0.9,
+    "z": 21.6
+   },
+   {
+    "id": "k7",
+    "type": "plank_l",
+    "x": 25,
+    "y": 0.9,
+    "z": 26.4
+   },
+   {
+    "id": "k8",
+    "type": "weight",
+    "x": 29,
+    "y": 0.9,
+    "z": 21.6
+   }
+  ]
+ },
+ "required": {
+  "site": "kjokk1",
+  "beyond": {
+   "y0": 30
+  },
+  "easy": {
+   "boxes": {
+    "del": [
+     {
+      "type": "metal",
+      "min": [
+       16.4,
+       18,
+       -29.6
+      ],
+      "max": [
+       24.8,
+       24.4,
+       -22
+      ],
+      "id": "mikro",
+      "kind": "box",
+      "color": 3882564,
+      "material": "metal",
+      "cp": false,
+      "soft": false
+     },
+     {
+      "type": "fabric",
+      "min": [
+       26.4,
+       22,
+       -27
+      ],
+      "max": [
+       30,
+       30.4,
+       -26.6
+      ],
+      "id": "kjokkenhandkle",
+      "kind": "towel_hang",
+      "color": 14242639,
+      "material": "fabric",
+      "cp": false,
+      "soft": false
+     }
+    ],
+    "add": [
+     {
+      "type": "metal",
+      "min": [
+       16.4,
+       18,
+       -29.6
+      ],
+      "max": [
+       24.8,
+       23.6,
+       -22
+      ],
+      "id": "mikro",
+      "kind": "box",
+      "color": 3882564,
+      "material": "metal",
+      "cp": false,
+      "soft": false
+     },
+     {
+      "type": "fabric",
+      "min": [
+       18,
+       23.6,
+       -27
+      ],
+      "max": [
+       22.4,
+       30.4,
+       -26.6
+      ],
+      "id": "kjokkenhandkle",
+      "kind": "towel_hang",
+      "color": 14242639,
+      "material": "fabric",
+      "cp": false,
+      "soft": false,
+      "grip": true,
+      "onto": "krydderhylle",
+      "gripDrain": -0.3
+     }
+    ]
+   },
+   "decor": {
+    "del": [
+     {
+      "shape": "box",
+      "id": "mikro_dor",
+      "kind": "box",
+      "pos": [
+       19.8,
+       21.6,
+       -21.94
+      ],
+      "size": [
+       5.2,
+       4,
+       0.12
+      ],
+      "color": 1053206,
+      "material": "glass"
+     }
+    ],
+    "add": [
+     {
+      "shape": "box",
+      "id": "mikro_dor",
+      "kind": "box",
+      "pos": [
+       19.8,
+       20.8,
+       -21.94
+      ],
+      "size": [
+       5.2,
+       4,
+       0.12
+      ],
+      "color": 1053206,
+      "material": "glass"
+     }
+    ]
+   },
+   "hints": {
+    "del": [
+     {
+      "id": "mikro",
+      "text": "Høy hylle\nKrydderhylla er for høy å hoppe til. Trykk BYGG ved mikroen, legg ut en trapp av klosser og trykk PRØV, så kommer du opp.",
+      "pos": [
+       20.6,
+       25.3,
+       -25.8
+      ]
+     }
+    ],
+    "add": [
+     {
+      "id": "kjokkenhandkle",
+      "text": "Kjøkkenhåndkle\nKlatre: stå på mikrobølgeovnen, gå inntil håndkleet og hold GREP. Øverst hiver du deg opp på krydderhylla.",
+      "pos": [
+       20.2,
+       31.3,
+       -26.8
+      ]
+     }
+    ]
+   },
+   "build": null,
+   "goals": [
+    {
+     "id": "benk",
+     "type": "reach",
+     "label": "Kom opp på kjøkkenbenken",
+     "en": "Get up on the counter",
+     "gate": true,
+     "on": "benk_v",
+     "x0": -23,
+     "x1": -12,
+     "z0": -30,
+     "z1": -17.6,
+     "top": 18
+    },
+    {
+     "id": "bro",
+     "type": "puzzle",
+     "label": "Åpne snarveien med nøkkelen",
+     "en": "Open the shortcut with the key",
+     "puzzle": "bro"
+    },
+    {
+     "id": "smuler",
+     "type": "crumbs",
+     "label": "Samle 6 smuler",
+     "en": "Collect 6 crumbs",
+     "n": 6
+    },
+    {
+     "id": "skap",
+     "type": "reach",
+     "label": "Nå overskapet",
+     "en": "Reach the top cabinet",
+     "gate": true,
+     "after": "benk",
+     "on": "overskap",
+     "x0": -18,
+     "x1": 15.6,
+     "z0": -30,
+     "z1": -23,
+     "top": 40
+    }
+   ],
+   "route": [
+    {
+     "id": "gulv",
+     "x0": -36,
+     "x1": 36,
+     "z0": -30,
+     "z1": 30,
+     "top": 0
+    },
+    {
+     "id": "skuff_1",
+     "x0": -22,
+     "x1": -13,
+     "z0": -10.2,
+     "z1": -7.6,
+     "top": 4
+    },
+    {
+     "id": "skuff_2",
+     "x0": -22,
+     "x1": -13,
+     "z0": -12.8,
+     "z1": -10.2,
+     "top": 8
+    },
+    {
+     "id": "skuff_3",
+     "x0": -22,
+     "x1": -13,
+     "z0": -18,
+     "z1": -12.8,
+     "top": 12
+    },
+    {
+     "id": "skuff_4",
+     "x0": -22,
+     "x1": -13,
+     "z0": -18,
+     "z1": -15.4,
+     "top": 15.6
+    },
+    {
+     "id": "benk_v",
+     "x0": -23,
+     "x1": -12,
+     "z0": -30,
+     "z1": -17.6,
+     "top": 18
+    },
+    {
+     "id": "benk_vask_foran",
+     "x0": -12,
+     "x1": -3,
+     "z0": -20.4,
+     "z1": -17.6,
+     "top": 18
+    },
+    {
+     "id": "benk_m",
+     "x0": -3,
+     "x1": 4,
+     "z0": -30,
+     "z1": -17.6,
+     "top": 18
+    },
+    {
+     "id": "komfyr_front",
+     "x0": 4,
+     "x1": 16,
+     "z0": -20.4,
+     "z1": -17.6,
+     "top": 18
+    },
+    {
+     "id": "benk_o",
+     "x0": 16,
+     "x1": 30.4,
+     "z0": -30,
+     "z1": -17.6,
+     "top": 18
+    },
+    {
+     "id": "brodrister",
+     "x0": 25.2,
+     "x1": 30,
+     "z0": -23.2,
+     "z1": -18.4,
+     "top": 21.2
+    },
+    {
+     "id": "mikro",
+     "x0": 16.4,
+     "x1": 24.8,
+     "z0": -29.6,
+     "z1": -22,
+     "top": 23.6
+    },
+    {
+     "id": "kjokkenhandkle",
+     "x0": 18,
+     "x1": 22.4,
+     "z0": -27,
+     "z1": -26.6,
+     "top": 23.6,
+     "grip": true
+    },
+    {
+     "id": "krydderhylle",
+     "x0": 16.4,
+     "x1": 30.4,
+     "z0": -30,
+     "z1": -27,
+     "top": 30.4
+    },
+    {
+     "id": "hvitlok",
+     "x0": 15.6,
+     "x1": 16.2,
+     "z0": -29.4,
+     "z1": -27.4,
+     "top": 30.4,
+     "grip": true
+    },
+    {
+     "id": "overskap",
+     "x0": -18,
+     "x1": 15.6,
+     "z0": -30,
+     "z1": -23,
+     "top": 40
+    },
+    {
+     "id": "kjoleskap",
+     "x0": -36,
+     "x1": -23,
+     "z0": -30,
+     "z1": -17,
+     "top": 38
+    }
+   ]
+  },
+  "note": "R139: krydderhylla er 30 cm over mikroen (6 enheter): bygg en trapp av klosser (BYGG). `easyPatch` = dagens brett (håndkleet på mikroen er et grep, ingen bygg) når valget buildrequired er av."
+ },
  "puzzles": [
   {
    "id": "bro",
@@ -1623,17 +2152,11 @@
  ],
  "goals": [
   {
-   "id": "benk",
-   "type": "reach",
-   "label": "Kom opp på kjøkkenbenken",
-   "en": "Get up on the counter",
-   "gate": true,
-   "on": "benk_v",
-   "x0": -23,
-   "x1": -12,
-   "z0": -30,
-   "z1": -17.6,
-   "top": 18
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg en trapp av klosser til krydderhylla (BYGG-knappen)",
+   "en": "Build a block staircase to the spice shelf (BUILD button)",
+   "flag": "kjokk1"
   },
   {
    "id": "bro",
@@ -1655,7 +2178,6 @@
    "label": "Nå overskapet",
    "en": "Reach the top cabinet",
    "gate": true,
-   "after": "benk",
    "on": "overskap",
    "x0": -18,
    "x1": 15.6,
@@ -1678,7 +2200,7 @@
    "id": "skuff_1",
    "x0": -22,
    "x1": -13,
-   "z0": -10.2,
+   "z0": -18,
    "z1": -7.6,
    "top": 4
   },
@@ -1686,7 +2208,7 @@
    "id": "skuff_2",
    "x0": -22,
    "x1": -13,
-   "z0": -12.8,
+   "z0": -18,
    "z1": -10.2,
    "top": 8
   },
@@ -1760,16 +2282,7 @@
    "x1": 24.8,
    "z0": -29.6,
    "z1": -22,
-   "top": 23.6
-  },
-  {
-   "id": "kjokkenhandkle",
-   "x0": 18,
-   "x1": 22.4,
-   "z0": -27,
-   "z1": -26.6,
-   "top": 23.6,
-   "grip": true
+   "top": 24.4
   },
   {
    "id": "krydderhylle",
@@ -1853,6 +2366,7 @@
   "solvable_by_graph": true,
   "helpers": [],
   "nodes": 26,
-  "reachable": 22
+  "reachable": 22,
+  "hard_solvable_by_graph": false
  }
 }

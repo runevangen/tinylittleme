@@ -1,7 +1,7 @@
 {
   "name": "Nivå 3: Kjøkkenet",
   "units": "cm",
-  "rev": 1,
+  "rev": 2,
   "frame": "Origo i nordvestre hjørne (kjøleskapet). x mot øst, z mot sør (døra), y opp. Kjøkkenbenken står langs nordveggen.",
   "source": {
     "photos": 0,
@@ -570,12 +570,13 @@
         262,
         304,
         90,
-        118,
+        122,
         2,
         40
       ],
       "confidence": 1,
-      "photos": []
+      "photos": [],
+      "help": "Høy hylle\nKrydderhylla er for høy å hoppe til. Trykk BYGG ved mikroen, legg ut en trapp av klosser og trykk PRØV, så kommer du opp."
     },
     {
       "id": "mikro_dor",
@@ -585,8 +586,8 @@
       "box": [
         266,
         292,
-        94,
-        114,
+        98,
+        118,
         40,
         40.6
       ],
@@ -616,19 +617,15 @@
       "material": "fabric",
       "color": "#d9534f",
       "box": [
-        270,
-        292,
-        118,
+        312,
+        330,
+        110,
         152,
         15,
         17
       ],
       "confidence": 1,
-      "photos": [],
-      "grip": true,
-      "onto": "krydderhylle",
-      "grip_drain": -0.3,
-      "help": "Kjøkkenhåndkle\nKlatre: stå på mikrobølgeovnen, gå inntil håndkleet og hold GREP. Øverst hiver du deg opp på krydderhylla."
+      "photos": []
     },
     {
       "id": "krydder_1",
@@ -1382,12 +1379,11 @@
   ],
   "goals": [
     {
-      "id": "benk",
-      "type": "reach",
-      "label": "Kom opp på kjøkkenbenken",
-      "en": "Get up on the counter",
-      "on": "benk_v",
-      "gate": true
+      "id": "bygg",
+      "type": "flag",
+      "flag": "kjokk1",
+      "label": "Bygg en trapp av klosser til krydderhylla (BYGG-knappen)",
+      "en": "Build a block staircase to the spice shelf (BUILD button)"
     },
     {
       "id": "bro",
@@ -1409,8 +1405,302 @@
       "label": "Nå overskapet",
       "en": "Reach the top cabinet",
       "on": "overskap",
-      "gate": true,
-      "after": "benk"
+      "gate": true
     }
-  ]
+  ],
+  "required": {
+    "site": "kjokk1",
+    "note": "R139: krydderhylla er 30 cm over mikroen (6 enheter): bygg en trapp av klosser (BYGG). `easyPatch` = dagens brett (håndkleet på mikroen er et grep, ingen bygg) når valget buildrequired er av.",
+    "beyond": {
+      "y": 150
+    },
+    "easyPatch": {
+      "objects": {
+        "set": {
+          "mikro": {
+            "box": [
+              262,
+              304,
+              90,
+              118,
+              2,
+              40
+            ],
+            "help": null
+          },
+          "mikro_dor": {
+            "box": [
+              266,
+              292,
+              94,
+              114,
+              40,
+              40.6
+            ]
+          },
+          "kjokkenhandkle": {
+            "box": [
+              270,
+              292,
+              118,
+              152,
+              15,
+              17
+            ],
+            "grip": true,
+            "onto": "krydderhylle",
+            "grip_drain": -0.3,
+            "help": "Kjøkkenhåndkle\nKlatre: stå på mikrobølgeovnen, gå inntil håndkleet og hold GREP. Øverst hiver du deg opp på krydderhylla."
+          }
+        }
+      },
+      "top": {
+        "goals": [
+          {
+            "id": "benk",
+            "type": "reach",
+            "label": "Kom opp på kjøkkenbenken",
+            "en": "Get up on the counter",
+            "on": "benk_v",
+            "gate": true
+          },
+          {
+            "id": "bro",
+            "type": "puzzle",
+            "label": "Åpne snarveien med nøkkelen",
+            "en": "Open the shortcut with the key",
+            "puzzle": "bro"
+          },
+          {
+            "id": "smuler",
+            "type": "crumbs",
+            "label": "Samle 6 smuler",
+            "en": "Collect 6 crumbs",
+            "n": 6
+          },
+          {
+            "id": "skap",
+            "type": "reach",
+            "label": "Nå overskapet",
+            "en": "Reach the top cabinet",
+            "on": "overskap",
+            "gate": true,
+            "after": "benk"
+          }
+        ],
+        "build": null
+      }
+    },
+    "routeDrop": [
+      "kjokkenhandkle"
+    ]
+  },
+  "build": {
+    "sites": [
+      {
+        "id": "kjokk1",
+        "label": "Foran krydderhylla (trapp)",
+        "at": [
+          280,
+          25
+        ],
+        "y": 122,
+        "w": 56,
+        "h": 50,
+        "d": 20,
+        "stars": {
+          "three": {
+            "cost": 6,
+            "parts": 6
+          },
+          "two": {
+            "cost": 10,
+            "parts": 10
+          }
+        },
+        "anchors": [],
+        "deck": [
+          [
+            -18,
+            21.25
+          ],
+          [
+            21.25,
+            40,
+            30
+          ]
+        ],
+        "start": [
+          -14,
+          0
+        ],
+        "goal": [
+          32,
+          30
+        ],
+        "ref": {
+          "placed": [
+            {
+              "id": "k1",
+              "type": "block",
+              "u": 0,
+              "v": 0.75,
+              "rot": 0
+            },
+            {
+              "id": "k2",
+              "type": "block",
+              "u": 1.5,
+              "v": 0.75,
+              "rot": 0
+            },
+            {
+              "id": "k3",
+              "type": "block",
+              "u": 1.5,
+              "v": 2.25,
+              "rot": 0
+            },
+            {
+              "id": "k4",
+              "type": "block",
+              "u": 3,
+              "v": 0.75,
+              "rot": 0
+            },
+            {
+              "id": "k5",
+              "type": "block",
+              "u": 3,
+              "v": 2.25,
+              "rot": 0
+            },
+            {
+              "id": "k6",
+              "type": "block",
+              "u": 3,
+              "v": 3.75,
+              "rot": 0
+            }
+          ],
+          "links": [],
+          "surfaces": [
+            {
+              "id": "@t1",
+              "u0": -0.75,
+              "u1": 0.75,
+              "top": 1.5
+            },
+            {
+              "id": "@t2",
+              "u0": 0.75,
+              "u1": 2.25,
+              "top": 3
+            },
+            {
+              "id": "@t3",
+              "u0": 2.25,
+              "u1": 3.75,
+              "top": 4.5
+            }
+          ],
+          "route": [
+            "gulv",
+            "skuff_1",
+            "skuff_2",
+            "skuff_3",
+            "skuff_4",
+            "benk_v",
+            "benk_vask_foran",
+            "benk_m",
+            "komfyr_front",
+            "benk_o",
+            "brodrister",
+            "mikro",
+            "@t1",
+            "@t2",
+            "@t3",
+            "krydderhylle",
+            "hvitlok",
+            "overskap",
+            "kjoleskap"
+          ]
+        }
+      }
+    ],
+    "parts": [
+      {
+        "id": "k1",
+        "type": "block",
+        "on": "gulv",
+        "at": [
+          100,
+          255
+        ]
+      },
+      {
+        "id": "k2",
+        "type": "block",
+        "on": "gulv",
+        "at": [
+          115,
+          285
+        ]
+      },
+      {
+        "id": "k3",
+        "type": "block",
+        "on": "gulv",
+        "at": [
+          215,
+          275
+        ]
+      },
+      {
+        "id": "k4",
+        "type": "block",
+        "on": "gulv",
+        "at": [
+          235,
+          255
+        ]
+      },
+      {
+        "id": "k5",
+        "type": "block",
+        "on": "gulv",
+        "at": [
+          250,
+          285
+        ]
+      },
+      {
+        "id": "k6",
+        "type": "block",
+        "on": "gulv",
+        "at": [
+          285,
+          258
+        ]
+      },
+      {
+        "id": "k7",
+        "type": "plank_l",
+        "on": "gulv",
+        "at": [
+          305,
+          282
+        ]
+      },
+      {
+        "id": "k8",
+        "type": "weight",
+        "on": "gulv",
+        "at": [
+          325,
+          258
+        ]
+      }
+    ]
+  }
 }

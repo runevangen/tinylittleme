@@ -28,7 +28,7 @@ import { initPuzzles, resetPuzzles, restorePuzzles, stepPuzzles, puzzleOpenIds, 
 import { buildPuzzleViews } from './puzzle_view.js';
 import { GATE, initGates, resetGates, restoreGates, gatesSave, stepGates, nearSwitch, toggleSwitch, doorById, hasGates, gatesBudget } from './plates_logic.js';   // R60: trykkplate, dør, vindebro og bryter
 import { buildGateViews } from './plates_view.js';
-import { REQ, requiredOf, needsBuild, applyRequired, safeResume, reqCardShould, createTryCounter, solvedLine } from './buildreq_logic.js';   // R138: påkrevd bygg i Nivå 2
+import { REQ, cardKeyOf, requiredOf, needsBuild, applyRequired, safeResume, reqCardShould, createTryCounter, solvedLine } from './buildreq_logic.js';   // R138: påkrevd bygg i Nivå 2; R139: Nivå 3 (trapp) og 4 (vippe)
 import { SCHOOL, schoolProgress, schoolRead, schoolMark, schoolCardShould, schoolDoneShould, schoolUrl } from './byggeskole_logic.js';   // R95: Byggeskolen i menyen
 import { createSchoolView, schoolMenuHtml } from './byggeskole_view.js';
 import { BYGGING, buildingCards, movedNoticeShould } from './bygging_logic.js';   // R133: BYGGESKOLE og 3D-LAB ligger under VELG BRETT → BYGGING
@@ -2036,7 +2036,7 @@ const SETTINGS = [
   rg('build3dwind', 'admin', '3D-oppdrag (R131): styrke på sidevinden i oppdraget «Bred bro i sidevind» (1 = vanlig; mer = hardere vind)', 1, 0.5, 1.5, 0.05, () => build3dWind, kp('tlm.build3dwind', (v) => { build3dWind = v; }), { digits: 2 }),
   rg('build3dslow', 'admin', '3D-lab (R130): tempo i SLOW under prøven (1 = vanlig fart)', 0.3, 0.1, 0.8, 0.05, () => build3dSlow, kp('tlm.build3dslow', (v) => { build3dSlow = v; }), { digits: 2 }),
   rg('build3dpick', 'admin', '3D-lab (R130): trykkradius for knuter (piksler; større = lettere å treffe med tykk finger)', 26, 14, 48, 2, () => build3dPick, kp('tlm.build3dpick', (v) => { build3dPick = v; })),
-  fl('buildrequired', 'admin', 'Påkrevd bygg (R138, laster siden på nytt): Nivå 2 · Barnerommet har et gap over lekebøtta (35 cm) som er for langt å hoppe, så du må bygge en bro med BYGG. Av = som før (gapet er 25 cm, bygging er bare en snarvei)', true, () => buildRequiredOn, (v) => { if (v === buildRequiredOn) return; store.set('tlm.buildrequired', v); logEv('bygg', `påkrevd bygg ${v ? 'på' : 'av'} (valg)`); setTimeout(() => location.reload(), 150); }),
+  fl('buildrequired', 'admin', 'Påkrevd bygg (R138/R139, laster siden på nytt): Nivå 2 (bro over lekebøtta, 35 cm), Nivå 3 (trapp av klosser opp til krydderhylla) og Nivå 4 (vippe til dusjhylla) kan bare fullføres ved å bygge med BYGG. Av = som før (bygging er bare en snarvei)', true, () => buildRequiredOn, (v) => { if (v === buildRequiredOn) return; store.set('tlm.buildrequired', v); logEv('bygg', `påkrevd bygg ${v ? 'på' : 'av'} (valg)`); setTimeout(() => location.reload(), 150); }),
   fl('buildview25', 'spill', '2,5D-visning i byggeskjermen (R137): byggeflaten vises med et lett skråkamera og dybde (staver med tykkelse, kuler i knutene, tykk veiplate, skygge). Du tegner og trykker nøyaktig som før; bare utseendet endres. Av = dagens flate tegning', true, () => buildView25, kp('tlm.buildview25', (v) => { buildView25 = v; logEv('bygg', `visning 2,5D ${v ? 'på' : 'av'} (valg)`); })),
   fl('build25d', 'spill', 'Dobbel bro (2,5D, R123): i Rutenett kan du trykke ⋯ → DOBBEL BRO for å kopiere bygget til et parallelt plan med tverrstag (smal, middels eller bred; X-form eller rett). Broen blir bred og står som to fagverk med dekk mellom i rommet, og tåler vind fra siden (Byggeskolen: Bred bro; Kjøkkenbroen: valgfritt delmål). Kostnaden teller mot budsjettet. Av = ingen knapp og alle bygg er som før', true, () => build25d, kp('tlm.build25d', (v) => { build25d = v; logEv('bygg', `dobbel bro (2,5D) ${v ? 'på' : 'av'}`); })),
   fl('showlogo', 'spill', 'Logo (R134): «Liten på stor kloss» på hovedmenyen og på lasteskjermen når spillet starter. Skru av for å sammenligne med bare tekst (gjelder fra neste gang menyen vises og neste oppstart)', true, () => showLogo, kp('tlm.showlogo', (v) => { showLogo = v; logEv('logo', v ? 'logo på' : 'logo av'); })),
@@ -3391,9 +3391,9 @@ function openSchool(from) {
 }
 function schoolOnBuildOpen(id) {
   if (CINE.on) return;
-  if (reqCardShould({ L: LEVEL, level: levelId, on: buildRequiredOn, cinema: CINE.on, seen: store.get(REQ.cardKey, false) })) {   // R138: første gang i et brett med påkrevd bygg: ett kort med én setning
-    store.set(REQ.cardKey, true); logEv('bygg', `påkrevd bygg: kort vist (${levelId})`);
-    schoolV.showReq({ onHow: () => { logEv('bygg', 'påkrevd bygg: kort, SÅ SLIK til Byggeskolen'); openSchool('kort'); }, onOk: () => logEv('bygg', 'påkrevd bygg: kort, forstått') });
+  if (reqCardShould({ L: LEVEL, level: levelId, on: buildRequiredOn, cinema: CINE.on, seen: store.get(cardKeyOf(levelId), false) })) {   // R138: første gang i et brett med påkrevd bygg: ett kort med én setning
+    store.set(cardKeyOf(levelId), true); logEv('bygg', `påkrevd bygg: kort vist (${levelId})`);
+    schoolV.showReq({ level: levelId, onHow: () => { logEv('bygg', 'påkrevd bygg: kort, SÅ SLIK til Byggeskolen'); openSchool('kort'); }, onOk: () => logEv('bygg', 'påkrevd bygg: kort, forstått') });
     return;
   }
   if (levelId === SCHOOL.levelId) { if (!schoolRead(store).opened) { schoolMark(store, { opened: true }); logEv('byggeskole', 'byggeskjermen åpnet i skolen'); } return; }
