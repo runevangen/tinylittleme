@@ -73,11 +73,6 @@ Rune har lagt nøkkelen inn og godkjent at bilder sendes til tjenesten. Bygg og 
 Krav: (0) hemmeligheten heter `tinylittleme_Claude_API_KEY` (lagt inn av Rune i Supabase); stedet kan være et rom innendørs eller et lite avgrenset område utendørs, med 2–4 bilder; instruksen (`tools/make_prompt.mjs`) og tinglisten (`kinds.js`) utvides med utendørs ting (stein, gress, benk, trapp, hekk, bord, lekeapparat, grus, vann) og farer (kantstein, vann, glatt underlag), og `make_prompt --check` holdes grønn; (1) Supabase edge function tar 2–4 nedskalerte bilder, kaller Claude med bildeforståelse med instruksen fra `docs/VISJON_PROMPT.md` (generert av `tools/make_prompt.mjs`), og returnerer en scene etter `docs/scene.schema.json` (strukturert utdata); (2) nøkkelen finnes bare på serveren; (3) kun gyldig tester-kode (`tlm_testers`), kvote per kode og månedstak 200 tolkninger i `tlm_*`-tabell som stopper automatisk, av-bryter (rad i tabell), logg av kostnad og tid uten å lagre bilder; (4) bilder slettes straks, ingen lagring, personer og ansikter gjengis ikke i scenen; (5) serveren kjører `validate_scene` og `scene2level` og svarer med scene, advarsler og om boten fant en vei; (6) migrasjon med RLS og tester med stub.
 Ferdig når: tjenesten svarer riktig med stub og med ekte nøkkel (etter at Rune har lagt den inn), kvote og av-bryter virker, og tester og boot er grønne.
 
-### [ ] R149 · Fra tester: Rune · Oppsummeringen forteller hva som manglet for full score (stjerner og merker per brett)
-Fra Rune, bekreftet: når et brett er ferdig skal spilleren få vite hva som manglet for full score, målt i stjerner og merker per brett (stjerner, delmål, tid). Kommer etter språkjobben.
-Krav: (1) oppsummeringsskjermen viser 1–3 korte linjer om hva som manglet («Mangler: 2 av 10 stjerner», «Bronse: tid under 3 min»), basert på det som allerede måles; (2) ingen linje når alt er oppnådd; (3) nb og en (R146), mobil først, nevn knappene; (4) valg i `SETTINGS`, `logEv`; (5) gjelder alle brett og Byggeskolen (R101).
-Ferdig når: oppsummeringen viser hva som manglet i minst ett brett i hver brett-type, og tester og boot er grønne.
-
 ### [ ] R153 · Fra tester: Rune · Leveleditor: del brettet med kode (fase 4 fremskyndet, hører til ett-trykk-løsningen R152; se docs/PLAN_LEVELEDITOR.md)
 Krav: (1) tabell `tlm_rooms` (brettet som JSON, eier, kode, tidspunkt) med RLS; privat som standard; (2) etter «LAG BRETT» gir «Del» en kode som andre limer inn under VELG BRETT → MINE BRETT → «Spill fra kode»; (3) slett mitt brett, melde-knapp, navnefilter; (4) kun testere i første omgang; åpnes for kreative spillere i trinn etter vurdering av personvern, kostnad og moderering; (5) nb og en, mobil først, `logEv`.
 Ferdig når: en tester kan dele et brett med en kode og en annen kan spille det, og tester og boot er grønne.
@@ -110,6 +105,11 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R149 · Fra tester: Rune · Oppsummeringen forteller hva som manglet for full score (stjerner og merker per brett) (v2.158)
+Fra Rune, bekreftet: når et brett er ferdig skal spilleren få vite hva som manglet for full score, målt i stjerner og merker per brett (stjerner, delmål, tid). Kommer etter språkjobben.
+Krav: (1) oppsummeringsskjermen viser 1–3 korte linjer om hva som manglet («Mangler: 2 av 10 stjerner», «Bronse: tid under 3 min»), basert på det som allerede måles; (2) ingen linje når alt er oppnådd; (3) nb og en (R146), mobil først, nevn knappene; (4) valg i `SETTINGS`, `logEv`; (5) gjelder alle brett og Byggeskolen (R101).
+Ferdig når: oppsummeringen viser hva som manglet i minst ett brett i hver brett-type, og tester og boot er grønne.
 
 ### [x] R148 · Tekster og språk, runde 3: RETTELSER, ⚑ Send, versjonssjekk, index.html, lydmikser og de fire egne ordbøkene (deler R146) (v2.156)
 Krav: se R146 (3). Flytt `difficulty.js`, `firstrun_logic.js`, `rewards.js`, `storage_logic.js` inn i `i18n.js`; oversett `index.html` (seierskjerm, PC-tastehjelp) og lydmikser-etiketter; utvid `test_i18n.mjs`.

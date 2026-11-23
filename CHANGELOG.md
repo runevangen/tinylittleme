@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.158** – R149: oppsummeringen (målskjermen og resultatkortet i byggeren) forteller hva som manglet for full score.
 - **2.157** – Fra Rune: R154 (byggeskjermen: ting henger igjen, knapper virker ikke), R155 (statuslinjen øverst) og R156 (gå bak veggen i Nivå 4) i veikartet.
 - **2.156** – R148: tekster og språk, runde 3 (RETTELSER, Send, versjonssjekk, index.html, lydmikser og ordbøker samlet i i18n.js).
 - **2.155** – Leveleditor: ett-trykk-løsning med spørsmål fra spillet (R152) og deling med kode (R153) i veikartet.

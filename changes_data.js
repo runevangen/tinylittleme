@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r149-mangler-full-score', version: '2.158', date: '2026-11-23', title: 'Resultatkortet i byggeren sier nå hva som manglet for full score (stjerner og merker). Ingen linje når alt er oppnådd.',
+    how: 'Gå til Hyllebroen eller et Bygglab-sted, bygg og fullfør. Les «Mangler»-linjene på resultatkortet.', level: 'bro', spot: null },
   { id: 'r146-sprak-runde1', version: '2.151', date: '2026-11-23', title: 'Språkvalget i ⚙ bytter nå ⚙-menyen, NYTT, meldinger i spillet og figurens stemme mellom norsk og engelsk. Flere norskfeil er rettet.',
     how: 'Åpne ⚙ → Spill → «Språk / Language» og velg English. Se på ⚙-menyen, NYTT og meldingene når du spiller. Velg Norsk for å bytte tilbake.', level: '', spot: null },
   { id: 'r145-flagg', version: '2.149', date: '2026-11-23', title: 'Målflagget i byggeskjermen ser nå riktig ut: lesbart og alltid innenfor skjermen, i både 2D og 3D-visning.',
