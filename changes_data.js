@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r160-tapt-svar', version: '2.169', date: '2026-11-23', title: 'Lag brett fra bilder prøver selv én gang til hvis svaret fra tjenesten ikke kan leses, med de samme bildene.',
+    how: 'Bruk LAG BRETT FRA BILDER med dårlig nett. Får du ikke svar, prøver spillet én gang til av seg selv før det viser NYTT FORSØK.', level: '', spot: null },
   { id: 'r159-behold-bilder', version: '2.168', date: '2026-11-23', title: 'Mister du kontakten når du lager brett fra bilder, beholdes bildene i minnet, så du slipper å finne dem på nytt.',
     how: 'Velg 2–4 bilder i LAG BRETT FRA BILDER, slå av nettet og trykk LAG BRETT. Slå nettet på igjen og trykk NYTT FORSØK, så sendes de samme bildene.', level: '', spot: null },
   { id: 'r158-bildetips', version: '2.167', date: '2026-11-23', title: 'Bedre tips for å ta gode bilder når du lager brett: lys, vinkel, A4-ark, hvor målet skal ligge, utendørs og rot.',

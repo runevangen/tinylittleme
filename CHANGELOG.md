@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.169** – Lag brett fra bilder: svar som kommer fram men ikke kan leses gir ett automatisk nytt forsøk med samme bilder, og feillogger viser statuskode og tid (leditor_logic/view, test_leditor).
 - **2.168** – Lag brett fra bilder: bildene beholdes i minnet (aldri lagret) når tjenesten ikke svarer, så NYTT FORSØK ikke krever nye bilder (leditor_view).
 - **2.167** – Bedre bildetips i «Lag brett fra bilder»: ti konkrete råd (lys, vinkel, A4-ark, mål, utendørs, rot).
 - **2.166** – Lag brett fra bilder: finner ikke tolkningen et sted for målet, velger spillet selv det høyeste stedet du kan nå (leditor_logic/view/text, test_leditor).

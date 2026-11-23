@@ -120,10 +120,14 @@ export function createLeditorView(ctx) {
     $('ledCancel').onclick = () => abort?.abort();
     tick = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); const e = $('ledEl'); if (e) e.textContent = T('elapsed', s); const k = s < 4 ? 0 : s < 25 ? 1 : 2; if (k !== step) { step = k; const st2 = $('ledStep'); if (st2) st2.textContent = T('working')[k]; } }, 500);
     logEv?.('leveleditor', `sender ${S.photos.length} bilder`);
-    const res = await callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers }, { signal: abort?.signal });
+    let res = await callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers }, { signal: abort?.signal });
+    if (!res.ok && res.unreadable && S.photos.length && !abort?.signal?.aborted) {   // svaret kom, men kunne ikke leses: ett nytt forsøk av seg selv med de samme bildene
+      logEv?.('leveleditor', `svar ${res.status} kunne ikke leses etter ${res.ms} ms: prøver én gang til`);
+      res = await callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers }, { signal: abort?.signal });
+    }
     stopTick(); busy = false; abort = null;
     // Bildene lagres aldri, bare i minnet. Ved nett- og tjenestefeil beholdes de så du slipper å velge dem på nytt (NYTT FORSØK); ellers slippes de straks.
-    if (!res.ok) { const keep = KEEP_PHOTOS.includes(res.reason) && S.photos.length; if (!keep) S.photos.length = 0; logEv?.('leveleditor', `feilet: ${res.reason} (${Date.now() - t0} ms)${keep ? ' · bildene beholdt for nytt forsøk' : ''}`); failed(res.reason); return; }
+    if (!res.ok) { const keep = KEEP_PHOTOS.includes(res.reason) && S.photos.length; if (!keep) S.photos.length = 0; logEv?.('leveleditor', `feilet: ${res.reason} · status ${res.status ?? '?'}${res.unreadable ? ' (svar kunne ikke leses)' : ''} (${Date.now() - t0} ms)${keep ? ' · bildene beholdt for nytt forsøk' : ''}`); failed(res.reason); return; }
     S.photos.length = 0;
     S.scene = res.scene; S.usage = res.usage || { cost_usd: 0, ms: 0 }; S.name = defaultName(res.scene);
     const room = sceneToRoom(res.scene); S.room = room; if (room.scene) S.scene = room.scene;

@@ -43,6 +43,7 @@ const REASON_KEYS = Object.keys(REASONS);
 export async function callTolk({ code, images, answers }, { fetchFn = globalThis.fetch, cfg = FEEDBACK, timeoutMs = LED.timeoutMs, signal } = {}) {
   if (!validCode(code)) return { ok: false, reason: 'kode_mangler' };
   if (!photoCountOk((images || []).length)) return { ok: false, reason: 'bilder_mangler' };
+  const t0 = Date.now();
   const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
   const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
   if (signal && ctl) signal.addEventListener?.('abort', () => ctl.abort());
@@ -51,12 +52,14 @@ export async function callTolk({ code, images, answers }, { fetchFn = globalThis
       method: 'POST', headers: { apikey: cfg.key, Authorization: `Bearer ${cfg.key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(buildBody(code, images, answers)), signal: ctl?.signal,
     });
-    let d = null; try { d = await res.json(); } catch { /* ikke json */ }
+    let d = null, parsed = true; try { d = await res.json(); } catch { parsed = false; /* ikke json */ }
     if (res.ok && d && d.ok === true && d.scene && typeof d.scene === 'object') return { ok: true, scene: d.scene, warnings: Array.isArray(d.warnings) ? d.warnings : [], check: d.check || { ran: false }, usage: d.usage || { cost_usd: 0, ms: 0 }, left: d.left || null };
-    const r = d && REASON_KEYS.includes(d.reason) ? d.reason : (res.status === 401 || res.status === 403 ? 'kode' : 'feil');
-    return { ok: false, reason: r };
+    // Tjenesten svarte 200, men svaret kunne ikke leses (nettet falt ut underveis): regnes som nettfeil og kan prøves igjen
+    const unreadable = !!res.ok && !parsed;
+    const r = unreadable ? 'nett' : d && REASON_KEYS.includes(d.reason) ? d.reason : (res.status === 401 || res.status === 403 ? 'kode' : 'feil');
+    return { ok: false, reason: r, status: res.status, unreadable, ms: Date.now() - t0 };
   } catch (e) {
-    return { ok: false, reason: signal && signal.aborted ? 'avbrutt' : 'nett' };
+    return { ok: false, reason: signal && signal.aborted ? 'avbrutt' : 'nett', status: 0, ms: Date.now() - t0 };
   } finally { if (timer) clearTimeout(timer); }
 }
 

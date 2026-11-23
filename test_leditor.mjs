@@ -42,6 +42,9 @@ assert.equal((await callTolk({ code: 'Rune', images: [img()] }, { fetchFn: stubS
 assert.equal((await callTolk({ code: 'Rune', images: [img(), img()] }, { fetchFn: async () => { throw new Error('offline'); } })).reason, 'nett');
 for (const r of ['av', 'tak', 'kvote', 'kode']) assert.equal((await callTolk({ code: 'Rune', images: [img(), img()] }, { fetchFn: async () => ({ ok: false, status: REASONS[r].status, json: async () => ({ ok: false, reason: r }) }) })).reason, r);
 assert.equal((await callTolk({ code: 'Rune', images: [img(), img()] }, { fetchFn: async () => ({ ok: false, status: 403, json: async () => { throw new Error('x'); } }) })).reason, 'kode');
+{ const u = await callTolk({ code: 'Rune', images: [img(), img()] }, { fetchFn: async () => ({ ok: true, status: 200, json: async () => { throw new Error('avbrutt'); } }) });
+  assert.equal(u.ok, false); assert.equal(u.reason, 'nett', 'svar 200 som ikke kan leses = nettfeil'); assert.equal(u.unreadable, true); assert.equal(u.status, 200); assert.ok(u.ms >= 0);
+  assert.equal((await callTolk({ code: 'Rune', images: [img(), img()] }, { fetchFn: async () => ({ ok: false, status: 500, json: async () => { throw new Error('x'); } }) })).unreadable, false, 'feilsvar uten json er ikke «kunne ikke leses»'); }
 assert.equal((await callTolk({ code: 'Rune', images: [img(), img()] }, { fetchFn: async () => ({ ok: true, status: 200, json: async () => ({ ok: true }) }) })).reason, 'feil');   // svar uten scene er ikke lov
 
 // scene → brett (omregningen i telefonen = verktøyet i node)
