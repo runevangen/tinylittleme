@@ -13,6 +13,10 @@ import { ROUND_KINDS } from '../toys_live.js';
 const [, , inPath, outPath] = process.argv;
 if (!inPath || !outPath) { console.error('bruk: scene2level.mjs <scene.json> <level.json>'); process.exit(1); }
 const scene = JSON.parse(fs.readFileSync(inPath, 'utf8'));
+// R138: påkrevd bygg. `required: { site, ease: { <id>: [boks i cm] }, easeHints? }`: tingene i `objects` har den VANSKELIGE (påkrevde) plasseringen, `ease` er den gamle lette plasseringen.
+// Rutegrafen og ruta regnes på den lette plasseringen (ellers legger verktøyet inn en hjelpebro); brettet skrives med den vanskelige, og `required` får den lette tilbake til valget buildrequired = av (buildreq_logic.js).
+const reqCfg = scene.required || null, hardBox = {};
+if (reqCfg) for (const [id, eb] of Object.entries(reqCfg.ease || {})) { const o = scene.objects.find((q) => q.id === id); if (!o) throw new Error(`required.ease: fant ikke ${id}`); hardBox[id] = o.box; o.box = eb; }
 
 const U = 5;                                    // cm per enhet
 const R = scene.room;
@@ -289,6 +293,20 @@ const route = (() => {
   });
   return out;
 })();
+// R138: bytt til den påkrevde (vanskelige) plasseringen; den lette ligger igjen i `required` så valget buildrequired = av gir dagens brett
+let required;
+if (reqCfg) {
+  const ease = [];
+  for (const [id, hb] of Object.entries(hardBox)) {
+    const b = boxes.find((q) => q.id === id), o = scene.objects.find((q) => q.id === id), r = route.find((q) => q.id === id);
+    if (!b) throw new Error(`required: ${id} er ikke en fast boks`);
+    const e = { id, min: [...b.min], max: [...b.max] };
+    b.min = [ux(hb[0]), uy(hb[2]), uz(hb[4])]; b.max = [ux(hb[1]), uy(hb[3]), uz(hb[5])]; o.box = hb;
+    if (r) { e.route = { x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1, top: r.top }; Object.assign(r, { x0: round(b.min[0]), x1: round(b.max[0]), z0: round(b.min[2]), z1: round(b.max[2]), top: round(b.max[1]) }); }
+    ease.push(e);
+  }
+  required = { site: reqCfg.site, ease, ...(reqCfg.easeHints ? { easeHints: reqCfg.easeHints } : {}) };
+}
 // maur: patruljer i scenen oppgis i cm: { id, on: «gulv» eller id på en ting (flaten de går på), from: [x, z], to: [x, z], speed?, type?: 'ant' | 'spider' | 'carrier' | 'roller' | 'dangler' | 'wasp', alt? (veps: flyhøyde i cm over flata) }
 const ants = (scene.ants || []).map((a) => {
   const on = a.on && a.on !== 'gulv' ? scene.objects.find((o) => o.id === a.on) : null;
@@ -412,6 +430,7 @@ const level = {
   ...(boss ? { boss } : {}),
   collectibles,
   ...(build ? { build } : {}),
+  ...(required ? { required } : {}),                         // R138: påkrevd bygg (buildreq_logic.js)
   ...(scene.lab ? { lab: scene.lab } : {}),                   // R67: Bygglab (prøverommet som starter i byggemodus)
   ...(puzzles.length ? { puzzles } : {}),
   ...(gates ? { gates } : {}),

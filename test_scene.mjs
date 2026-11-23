@@ -31,7 +31,7 @@ assert.ok(r.errors.some((e) => /color/.test(e)) && r.errors.some((e) => /min < m
 }
 // nivåene: ruta skal kunne gås med ekte fysikk (tools/walk_route.mjs), uten hjelpetrinn, og nivå 1–3 er hvert lengre enn det forrige
 {
-  const { walkRoute } = await import('./tools/walk_route.mjs');
+  const { walkRouteAny: walkRoute } = await import('./tools/walk_route.mjs');   // R138: nivå 2 har påkrevd bygg: ruta gås over det ferdige bygget
   let prev = 0;
   for (const id of ['bad', 'barnerom', 'kjokken', 'bad2', 'barnerom2', 'kjokken2']) {
     const L = JSON.parse(fs.readFileSync(`levels/${id}.level.json`, 'utf8')), r = walkRoute(`levels/${id}.level.json`);

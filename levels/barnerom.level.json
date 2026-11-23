@@ -1,6 +1,6 @@
 {
  "name": "Nivå 2: Barnerommet",
- "rev": 1,
+ "rev": 2,
  "boxes": [
   {
    "type": "floor",
@@ -314,13 +314,13 @@
   {
    "type": "fabric",
    "min": [
-    2.4,
+    4.4,
     0,
     -24
    ],
    "max": [
-    10,
-    11.2,
+    11,
+    12.4,
     -16.4
    ],
    "id": "krakk",
@@ -922,7 +922,7 @@
   },
   {
    "id": "nattbord",
-   "text": "Hopp over lekebøtta\nLøp mot kanten med stikken helt ut, så hopper du over til krakken. Faller du nedi bøtta, må du tilbake til lagringspunktet.",
+   "text": "Gapet over lekebøtta\nFor langt å hoppe. Trykk BYGG, legg planken fra nattbordet over til krakken, og trykk PRØV.",
    "pos": [
     -6.6,
     13.3,
@@ -1099,7 +1099,7 @@
   {
    "id": "smule_5",
    "x": 8.26,
-   "y": 12,
+   "y": 13.2,
    "z": -22.74
   },
   {
@@ -1133,6 +1133,184 @@
    "z": 25.26
   }
  ],
+ "build": {
+  "sites": [
+   {
+    "id": "barn1",
+    "label": "Gapet over lekebøtta",
+    "x": 0.9,
+    "y": 12.4,
+    "z": -20.2,
+    "w": 20,
+    "h": 12,
+    "anchors": [
+     {
+      "u": -3.5,
+      "v": 0
+     },
+     {
+      "u": 3.5,
+      "v": 0
+     }
+    ],
+    "deck": [
+     {
+      "u0": -9.5,
+      "u1": -3.5
+     },
+     {
+      "u0": 3.5,
+      "u1": 9.5
+     }
+    ],
+    "start": {
+     "u": -8,
+     "v": 0
+    },
+    "goal": {
+     "u": 8,
+     "v": 0
+    },
+    "loads": [
+     "ball",
+     "car"
+    ],
+    "d": 4,
+    "stars": {
+     "three": {
+      "cost": 3,
+      "parts": 2
+     },
+     "two": {
+      "cost": 6,
+      "parts": 4
+     }
+    },
+    "ref": {
+     "placed": [
+      {
+       "id": "p1",
+       "type": "plank_l",
+       "u": 0,
+       "v": 0.25,
+       "rot": 0
+      }
+     ],
+     "links": [],
+     "surfaces": [
+      {
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
+      }
+     ],
+     "route": [
+      "gulv",
+      "bokstav_a",
+      "bokstav_b",
+      "lekekasse",
+      "dyne",
+      "nattbord",
+      "@bro",
+      "krakk",
+      "skrivebord",
+      "gardin",
+      "vinduskarm",
+      "vegghylle",
+      "spilleske",
+      "klesskap"
+     ]
+    }
+   }
+  ],
+  "parts": [
+   {
+    "id": "p1",
+    "type": "plank_l",
+    "x": 9,
+    "y": 0.9,
+    "z": -11
+   },
+   {
+    "id": "p2",
+    "type": "plank_s",
+    "x": 3,
+    "y": 0.9,
+    "z": -10.4
+   },
+   {
+    "id": "p3",
+    "type": "block",
+    "x": -8,
+    "y": 0.9,
+    "z": -8
+   },
+   {
+    "id": "p4",
+    "type": "weight",
+    "x": 10,
+    "y": 0.9,
+    "z": 2
+   },
+   {
+    "id": "p5",
+    "type": "plank_s",
+    "x": -7.6,
+    "y": 0.9,
+    "z": 4
+   },
+   {
+    "id": "p6",
+    "type": "pencil",
+    "x": 6,
+    "y": 0.9,
+    "z": 4
+   },
+   {
+    "id": "p7",
+    "type": "lego",
+    "x": 15,
+    "y": 0.9,
+    "z": 17
+   },
+   {
+    "id": "p8",
+    "type": "lego",
+    "x": 21,
+    "y": 0.9,
+    "z": 15
+   }
+  ]
+ },
+ "required": {
+  "site": "barn1",
+  "ease": [
+   {
+    "id": "krakk",
+    "min": [
+     2.4,
+     0,
+     -24
+    ],
+    "max": [
+     10,
+     12.4,
+     -16.4
+    ],
+    "route": {
+     "x0": 2.4,
+     "x1": 10,
+     "z0": -24,
+     "z1": -16.4,
+     "top": 12.4
+    }
+   }
+  ],
+  "easeHints": {
+   "nattbord": "Hopp over lekebøtta\nLøp mot kanten med stikken helt ut, så hopper du over til krakken. Faller du nedi bøtta, må du tilbake til lagringspunktet."
+  }
+ },
  "goals": [
   {
    "id": "kasse",
@@ -1148,18 +1326,18 @@
    "top": 9.2
   },
   {
+   "id": "bygg",
+   "type": "flag",
+   "label": "Bygg en bro over lekebøtta (BYGG-knappen)",
+   "en": "Build a bridge over the toy bin (BUILD button)",
+   "flag": "barn1"
+  },
+  {
    "id": "smuler",
    "type": "crumbs",
    "label": "Samle 5 smuler",
    "en": "Collect 5 crumbs",
    "n": 5
-  },
-  {
-   "id": "maur",
-   "type": "stomp",
-   "label": "Knus en maur",
-   "en": "Squash an ant",
-   "n": 1
   },
   {
    "id": "pult",
@@ -1228,11 +1406,11 @@
   },
   {
    "id": "krakk",
-   "x0": 2.4,
-   "x1": 10,
+   "x0": 4.4,
+   "x1": 11,
    "z0": -24,
    "z1": -16.4,
-   "top": 11.2
+   "top": 12.4
   },
   {
    "id": "skrivebord",

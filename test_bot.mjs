@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { P } from './physics.js';
 import { MODES, LONG, isLong, verdictOf, plansOf, botSolve, routeText, routeSvg } from './tools/bot.mjs';
-import { walkRoute } from './tools/walk_route.mjs';
+import { walkRoute, walkRouteAny } from './tools/walk_route.mjs';
 
 const path = (id) => `levels/${id}.level.json`, lv = (id) => JSON.parse(fs.readFileSync(path(id), 'utf8'));
 const ok = (len = 50, steps = 3) => ({ ok: true, len, steps, why: '' }), bad = (len = 50, steps = 3) => ({ ok: false, len, steps, why: 'x' });
@@ -45,7 +45,8 @@ walkRoute(path('bad'), { ...MODES.streng }); assert.equal(P.wallKick, 0); assert
 assert.equal(P.autoJump, true); assert.equal(P.holdGrab, true, 'HOPP og GREP holdt riktig regnes som menneskelig');
 walkRoute(path('bad'), { ...MODES.løs }); assert.ok(P.wallKick > 0 && P.edgeGuard && P.magnet && P.airSteady, 'løs modus: alle hjelpemidler og veggsprang på');
 // uten sikte-hjelp og uten veggsprang er beviset det samme som før for ruta: ingen rute i spillet krever veggsprang
-for (const id of ids.filter((x) => x !== 'kontroll')) { const a = walkRoute(path(id), { wallJump: true }), b = walkRoute(path(id), { wallJump: false }); assert.ok(a.ok && b.ok, `${id}: ruta krever ikke veggsprang`); }
+for (const id of ids.filter((x) => x !== 'kontroll')) { const a = walkRouteAny(path(id), { wallJump: true }), b = walkRouteAny(path(id), { wallJump: false });   // R138: Nivå 2 går over det ferdige bygget
+   assert.ok(a.ok && b.ok, `${id}: ruta krever ikke veggsprang`); }
 
 // 5) rutevisning
 { const L = lv('barnerom2'), r = botSolve(path('barnerom2'), { level: L }), p = r.plans[0].streng, t = routeText(L, p), svg = routeSvg(L, p);

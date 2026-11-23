@@ -20,6 +20,7 @@ import { playGridOf, rowSpec, applySpec, gridRefRoute } from '../grid_play.js';
 import { simDef as gridSimDef, simDefAuto as gridSimDefAuto, loadPass as gridLoadPass, setMode as gridSetMode } from '../grid_logic.js';
 import { stageOf } from '../grid_stage.js';
 import { MOVE } from '../hero_move.js';
+import { needsBuild } from '../buildreq_logic.js';
 
 export const MODES = {
   streng: { helpers: false, only: ['autoJump', 'holdGrab'], wallJump: false },     // autoJump/holdGrab = knappene HOPP og GREP holdt riktig
@@ -48,7 +49,7 @@ export function runPlan(L, levelPath, plan, mode, extra = {}) {   // extra: f.ek
 
 // Alle veiene i et brett (ruta, genveier, byggesnarveier). `extra` = hvilke rutetyper som er med.
 export function plansOf(L) {
-  const plans = [{ id: 'ruta', kind: 'ruta', route: L.route }];
+  const plans = needsBuild(L, true) ? [] : [{ id: 'ruta', kind: 'ruta', route: L.route }];   // R138: påkrevd bygg: ruta uten bygg går ikke (bevist i test_buildreq.mjs); byggeplanen under er ruta
   for (const sc of shortcutsOf(L)) plans.push({ id: `genvei:${sc.id}`, kind: 'genvei', sc, route: shortcutRoute(L, sc) });
   for (const a of L.alts || []) plans.push({ id: `hard:${a.id}`, kind: 'hard', route: a.route });                       // R42: harde veier uten klatring
   for (const site of L.build?.sites || []) {

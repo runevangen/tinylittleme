@@ -1,7 +1,7 @@
 {
   "name": "Nivå 2: Barnerommet",
   "units": "cm",
-  "rev": 1,
+  "rev": 2,
   "frame": "Origo i nordvestre hjørne. x mot øst (vinduet), z mot sør (døra), y opp.",
   "source": {
     "photos": 0,
@@ -189,7 +189,7 @@
       "confidence": 1,
       "photos": [],
       "cp": true,
-      "help": "Hopp over lekebøtta\nLøp mot kanten med stikken helt ut, så hopper du over til krakken. Faller du nedi bøtta, må du tilbake til lagringspunktet."
+      "help": "Gapet over lekebøtta\nFor langt å hoppe. Trykk BYGG, legg planken fra nattbordet over til krakken, og trykk PRØV."
     },
     {
       "id": "nattlampe",
@@ -277,10 +277,10 @@
       "material": "fabric",
       "color": "#e07b39",
       "box": [
-        162,
-        200,
+        172,
+        205,
         0,
-        56,
+        62,
         20,
         58
       ],
@@ -959,18 +959,18 @@
       "gate": true
     },
     {
+      "id": "bygg",
+      "type": "flag",
+      "flag": "barn1",
+      "label": "Bygg en bro over lekebøtta (BYGG-knappen)",
+      "en": "Build a bridge over the toy bin (BUILD button)"
+    },
+    {
       "id": "smuler",
       "type": "crumbs",
       "label": "Samle 5 smuler",
       "en": "Collect 5 crumbs",
       "n": 5
-    },
-    {
-      "id": "maur",
-      "type": "stomp",
-      "label": "Knus en maur",
-      "en": "Squash an ant",
-      "n": 1
     },
     {
       "id": "pult",
@@ -981,5 +981,190 @@
       "gate": true,
       "after": "kasse"
     }
-  ]
+  ],
+  "required": {
+    "site": "barn1",
+    "ease": {
+      "krakk": [
+        162,
+        200,
+        0,
+        62,
+        20,
+        58
+      ]
+    },
+    "note": "R138: gapet over lekebøtta er 35 cm (bygg en bro). `ease` = krakken som den sto før (gap 25 cm), brukt når valget buildrequired er av.",
+    "easeHints": {
+      "nattbord": "Hopp over lekebøtta\nLøp mot kanten med stikken helt ut, så hopper du over til krakken. Faller du nedi bøtta, må du tilbake til lagringspunktet."
+    }
+  },
+  "build": {
+    "sites": [
+      {
+        "id": "barn1",
+        "label": "Gapet over lekebøtta",
+        "at": [
+          154.5,
+          39
+        ],
+        "y": 62,
+        "w": 100,
+        "h": 60,
+        "d": 20,
+        "stars": {
+          "three": {
+            "cost": 3,
+            "parts": 2
+          },
+          "two": {
+            "cost": 6,
+            "parts": 4
+          }
+        },
+        "anchors": [
+          [
+            -17.5,
+            0
+          ],
+          [
+            17.5,
+            0
+          ]
+        ],
+        "deck": [
+          [
+            -47.5,
+            -17.5
+          ],
+          [
+            17.5,
+            47.5
+          ]
+        ],
+        "start": [
+          -40,
+          0
+        ],
+        "goal": [
+          40,
+          0
+        ],
+        "loads": [
+          "ball",
+          "car"
+        ],
+        "ref": {
+          "placed": [
+            {
+              "id": "p1",
+              "type": "plank_l",
+              "u": 0,
+              "v": 0.25,
+              "rot": 0
+            }
+          ],
+          "links": [],
+          "surfaces": [
+            {
+              "id": "@bro",
+              "u0": -4,
+              "u1": 4,
+              "top": 0.5
+            }
+          ],
+          "route": [
+            "gulv",
+            "bokstav_a",
+            "bokstav_b",
+            "lekekasse",
+            "dyne",
+            "nattbord",
+            "@bro",
+            "krakk",
+            "skrivebord",
+            "gardin",
+            "vinduskarm",
+            "vegghylle",
+            "spilleske",
+            "klesskap"
+          ]
+        }
+      }
+    ],
+    "parts": [
+      {
+        "id": "p1",
+        "type": "plank_l",
+        "on": "gulv",
+        "at": [
+          195,
+          85
+        ]
+      },
+      {
+        "id": "p2",
+        "type": "plank_s",
+        "on": "gulv",
+        "at": [
+          165,
+          88
+        ]
+      },
+      {
+        "id": "p3",
+        "type": "block",
+        "on": "gulv",
+        "at": [
+          110,
+          100
+        ]
+      },
+      {
+        "id": "p4",
+        "type": "weight",
+        "on": "gulv",
+        "at": [
+          200,
+          150
+        ]
+      },
+      {
+        "id": "p5",
+        "type": "plank_s",
+        "on": "gulv",
+        "at": [
+          112,
+          160
+        ]
+      },
+      {
+        "id": "p6",
+        "type": "pencil",
+        "on": "gulv",
+        "at": [
+          180,
+          160
+        ]
+      },
+      {
+        "id": "p7",
+        "type": "lego",
+        "on": "gulv",
+        "at": [
+          225,
+          225
+        ]
+      },
+      {
+        "id": "p8",
+        "type": "lego",
+        "on": "gulv",
+        "at": [
+          255,
+          215
+        ]
+      }
+    ]
+  }
 }

@@ -8,7 +8,7 @@ Seks nivåer med stigende vanskelighetsgrad: tre rom (nivå 1–3), og de samme 
 | Kilde | tolket fra fire bilder | oppdiktet for spillet | oppdiktet for spillet |
 | Steg i ruta | 5 | 12 | 16 |
 | Klatringer | 1 (vaskekurv, 60 cm) | 1 (gardin, 34 cm) | 2 (kjøkkenhåndkle 34 cm, hvitløksflette 48 cm: tar nesten alle kreftene) |
-| Hopp over gap | ingen | 1 (25 cm, over lekebøtta) | 1 (25 cm, fra overskap til kjøleskap, 2 m over gulvet) |
+| Hopp over gap | ingen | 1 (35 cm over lekebøtta: for langt å hoppe, **bygg en bro** med planken som ligger klar, R138; ⚙ → Admin «Påkrevd bygg» av gir 25 cm som før) | 1 (25 cm, fra overskap til kjøleskap, 2 m over gulvet) |
 | Farer på ruta | ingen (kar og do ligger utenfor) | lekebøtta under hoppet | oppvaskkum og kokeplater med smal kant forbi, glatt gulv |
 | Høyeste punkt | 96 cm | 148 cm | 200 cm |
 | Fall som sender deg tilbake | nei | fra hylle og skap | fra hylle, overskap og kjøleskap |
@@ -17,7 +17,7 @@ Seks nivåer med stigende vanskelighetsgrad: tre rom (nivå 1–3), og de samme 
 
 ## Rutene
 - **Nivå 1:** gulv → vaskekurv (klatre) → sisterne → vask → tannglass.
-- **Nivå 2:** gulv → to klosser → lekekasse → seng → nattbord → hopp over lekebøtta → krakk → skrivebord → gardin (klatre) → vinduskarm → vegghylle → spilleske → klesskap.
+- **Nivå 2:** gulv → to klosser → lekekasse → seng → nattbord → bygg bro over lekebøtta (R138: BYGG, planken, PRØV) → krakk → skrivebord → gardin (klatre) → vinduskarm → vegghylle → spilleske → klesskap.
 - **Nivå 3:** gulv → fire skuffer som trapp → benk → smal kant foran vasken → benk → smal kant foran kokeplatene → benk → brødrister → mikrobølgeovn → kjøkkenhåndkle (klatre) → krydderhylle → hvitløksflette (klatre) → overskap → hopp til kjøleskapet.
 
 Skuffene i nivå 3 (åpne) og nivå 6 (lukkede fronter) er `kind: "drawer"` med `drawer: { open, front, handle, style }` i scenen (R55, `drawers.js`); tilstanden leses av tegningen, kollisjon og rute er uendret.

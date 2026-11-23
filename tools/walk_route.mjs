@@ -7,6 +7,9 @@ import { P, newPlayer, step, applyPreset, initBodies, inHazard } from '../physic
 import { initGates, openAllGates } from '../plates_logic.js';
 import { decorSolidBoxes } from '../solid_decor_logic.js';
 import { shortcutsOf, shortcutRoute, gateRoute, toolBoxes } from '../shortcut.js';
+import { refRoute, buildSolids } from '../build_world.js';
+import { settledPlaced } from '../build_phys.js';
+import { requiredOf } from '../buildreq_logic.js';
 
 export function walkRoute(levelPath, { verbose = false, preset = 'mario', level = null, route = null, extraBoxes = [], helpers = true, only = null, wallJump = true, trace = null, traceEvery = 6, closedGates = false, solidDecor = true, stepUp = null } = {}) {   // R26: level/route/extraBoxes = gå en annen rute i et brett med et bygg (se test_buildworld.mjs)
   applyPreset(preset); Object.assign(P, { edgeGuard: helpers, autoJump: helpers, airSteady: helpers, magnet: helpers, holdGrab: helpers, shimmy: helpers, rollOn: helpers, carefulOn: helpers, ropeHeavy: helpers }); if (only) for (const k of only) P[k] = true;   // R32: helpers=false = streng modus (ingen sikte-hjelp)
@@ -97,6 +100,16 @@ export function walkRoute(levelPath, { verbose = false, preset = 'mario', level 
   return { ok, why: fail || (ok ? '' : `sto ikke ved målet (avstand ${Math.hypot(p.x - g[0], p.z - g[2]).toFixed(1)}, høyde ${p.y.toFixed(1)} mot ${g[1]})`), secs: +(t / 60).toFixed(1), steps: R.length - 1 };
 }
 
+// R138: brett med påkrevd bygg (L.required): ruta må gås over det ferdige referansebygget (planken ligger over gapet); uten bygg stopper den ved gapet (se test_buildreq.mjs).
+// Brett uten påkrevd bygg går som vanlig. Gir { ok, why, secs, steps, built: true } for påkrevd bygg.
+export function walkRouteAny(levelPath, opts = {}) {
+  const L = opts.level || JSON.parse(fs.readFileSync(levelPath, 'utf8')), req = requiredOf(L);
+  if (!req || req.eased) return walkRoute(levelPath, { ...opts, level: L });
+  const site = (L.build?.sites || []).find((s) => s.id === req.site), route = site && refRoute(L, site);
+  if (!route) return { ok: false, why: `påkrevd bygg ${req.site}: finner ikke referansebygget eller ruta`, secs: 0, steps: 0 };
+  return { ...walkRoute(levelPath, { ...opts, level: L, route, extraBoxes: buildSolids(site, settledPlaced({ site, placed: site.ref.placed, links: site.ref.links || [] })) }), built: true };
+}
+
 // R29: verktøy-genveier. Bevis at (1) første trinn ikke kan nås uten verktøyet, (2) målet nås via genveien med verktøyet (gelfeltet lages av den ekte fysikken),
 // og (3) den vanlige ruta uten verktøy også når målet, og er lengre (secs) enn genveien.
 export function walkShortcut(levelPath, sc, { level = null, ...opts } = {}) {   // R32: opts (helpers, only, wallJump, trace) går videre til walkRoute
@@ -116,9 +129,10 @@ export function walkShortcut(levelPath, sc, { level = null, ...opts } = {}) {   
 
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) (async () => {   // (async: Bygglab-beviset importerer denne filen, så en top-level await ville låst seg)
   const file = process.argv[2]; if (!file) { console.error('bruk: walk_route.mjs <level.json> [--verbose]'); process.exit(1); }
-  const r = walkRoute(file, { verbose: process.argv.includes('--verbose') });
-  console.log(r.ok ? `RUTA GÅR: ${r.steps} steg på ${r.secs} s` : `RUTA GÅR IKKE: ${r.why}`);
+  const r = walkRouteAny(file, { verbose: process.argv.includes('--verbose') });
+  console.log(r.ok ? `RUTA GÅR${r.built ? ' (over det ferdige bygget, påkrevd bygg R138)' : ''}: ${r.steps} steg på ${r.secs} s` : `RUTA GÅR IKKE: ${r.why}`);
   let bad = !r.ok;
+  if (r.built) { const w0 = walkRoute(file, {}); console.log(w0.ok ? 'PÅKREVD BYGG FEILER: ruta går også uten bygg' : `PÅKREVD BYGG: uten bygg stopper ruta ved gapet (${w0.why})`); if (w0.ok) bad = true; }
   for (const sc of shortcutsOf(JSON.parse(fs.readFileSync(file, 'utf8')))) {
     const w = walkShortcut(file, sc);
     console.log(w.ok ? `GENVEI ${sc.id}: uten verktøy kommer du ikke opp på første trinn; med ${sc.tool} går ruta på ${w.withTool.secs} s; den vanlige veien tar ${w.plain.secs} s` : `GENVEI ${sc.id} FEILER: ${w.why}`);

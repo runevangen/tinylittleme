@@ -60,6 +60,7 @@ const addShortcut = (s, k, { id, bottle, bottleAt, steps, stand, face, join, lab
 // ---------- Nivå 5: Barnerommet, ommøblert. Krakken er borte: balanser på en ny hylle over lekebøtta, og fortsett fra klesskapet bortover nye hyller. ----------
 {
   const s = load('barnerom'), k = kit(s);
+  delete s.required; delete s.build;   // R138: Nivå 2 har et påkrevd byggested; Nivå 5 er uendret (egen krakkløse vei, ingen bygging her)
   s.name = 'Nivå 5: Barnerommet, ommøblert'; s.rev = 1;
   s.source.interpreted_by += '. Ommøblert for nivå 5.';
   k.del('krakk', 'nattlampe');
