@@ -18,6 +18,9 @@ Spilleren tar 2–4 bilder av sitt eget rom eller et lite avgrenset område ute 
 - Ytelse: tak på antall bokser, 30 fps.
 - Upassende innhold: delte brett er tall og former; navnefilter, melde-knapp, ingen offentlig liste før moderering.
 
+## Ett trykk og kreative spillere (Runes ønske 2026-11-23)
+Verktøyet skal være for kreative spillere, med en «ett trykk»-løsning: spilleren velger 2–4 bilder, svarer på 2–4 korte spørsmål fra spillet (mål, vanskelighet, stemning og tema, fiender og farer på/av), trykker «LAG BRETT», og får et ferdig, spillbart brett som kan justeres for hånd etterpå og deles med en kode. Første versjon er for testere (fase A, R152, R153). Åpning for flere kreative spillere skjer i trinn etter vurdering av personvern, kostnad og moderering.
+
 ## Sted: inne og ute
 Begge deler er lov, 2–4 bilder. Utendørs trenger egne ting i `kinds.js` og i instruksen til tolkningen (stein, gress, benk, trapp, hekk, bord, lekeapparat, grus, vann) og egne farer (kantstein, vann, glatt underlag). Alle ting må få mål og materiale slik at fysikken virker.
 
