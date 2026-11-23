@@ -404,7 +404,8 @@
       "topp1",
       "topp2"
      ]
-    }
+    },
+    "en": "The gap between the counter and the fridge"
    }
   ],
   "parts": [
@@ -600,5 +601,6 @@
   "helpers": [],
   "nodes": 11,
   "reachable": 11
- }
+ },
+ "nameEn": "Bridge to the fridge"
 }

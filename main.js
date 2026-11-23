@@ -101,6 +101,7 @@ import { vaultPose, isVaulting } from './vault_anim.js';   // R41: stavhopp-anim
 import { KICK, tryKick, tickKick } from './toy_kick.js';   // R34: sprettboksen kaster figuren   // R18: leker som lever og reagerer
 import { animateToy } from './toys_view.js';
 import { makeT, LANGS } from './i18n.js';
+import { localizeLevels, setLevelLang } from './levels_lang.js';   // R147: brettnavn og brett-tekster følger språkvalget
 import { stepOffset, createReact, hangSway, fpsWatch, createAutoQ } from './polish.js';
 import { MOVE, createTurnSteps, createStepOver, gripPose, effectiveStepUp } from './hero_move.js';
 import { createMarkerView } from './readable_view.js';
@@ -175,6 +176,7 @@ const LEVELS = [
   { id: 'bygglab', label: 'Byggeskole (Bygglab): lær å bygge, åtte byggesteder med rutenett, tre, stål og tau. Valgfri, men anbefalt', short: 'Byggeskole' },   // R67
   { id: 'kontroll', label: 'Kontrollbanen (test av styring og kamera)', short: 'Kontroll' },
 ];
+localizeLevels(LEVELS, () => lang);   // R147: label/short følger språkvalget (norsk original i l.nb)
 const levelParam = new URLSearchParams(location.search).get('level');
 let levelId = levelParam === '' ? 'soverom' : (levelParam ?? store.get('tlm.level', 'bad'));
 let LEVEL = null, levelName = '';
@@ -194,7 +196,7 @@ const lab3dMis = lab3dVisit ? new URLSearchParams(location.search).get('m') : nu
 const schoolVisit = levelParam === SCHOOL.levelId && (lab3dVisit || new URLSearchParams(location.search).get('skole') === '1');   // R95: åpnet fra BYGGESKOLE: «sist spilte brett» beholdes
 if (!schoolVisit) store.set('tlm.level', levelId);
 if (schoolVisit) { try { const u = new URL(location.href); u.searchParams.delete('skole'); u.searchParams.delete('lab3d'); u.searchParams.delete('m'); history.replaceState(null, '', u.pathname + u.search); } catch { /* ingen historikk */ } }
-const levelInfo = LEVELS.find((l) => l.id === levelId), levelLabel = levelInfo?.short || levelId;
+const levelInfo = LEVELS.find((l) => l.id === levelId), levelLabel = levelInfo?.nb?.short || levelId, levelShown = () => levelInfo?.short || levelId;   // levelLabel (norsk) går i rapporter; levelShown() følger språket
 const nextLevel = levelInfo?.n ? nextLevelOf(LEVELS, levelInfo.n) : null;   // R63: lavest n over dette nivået (et hull i nummereringen stopper ikke spillet)
 const goLevel = (id) => { store.set('tlm.level', id); location.search = `?level=${id}`; };
 const SUN = LEVEL.sun || [28, 60, -24];
@@ -524,7 +526,10 @@ infoBody.addEventListener('click', (e) => {
   if (lk) { e.stopPropagation(); if (lk.dataset.i === 'manual') openInfo(null, true); else openInfo(labels.filter((l) => l.d < 13).sort((a, b) => a.d - b.d)[0] || null, true); return; }
   closeInfo();
 });
-for (const h of LEVEL.hints || []) { const sp = makeBadge(); sp.position.set(...h.pos); scene.add(sp); const [title, ...rest] = h.text.split('\n'); labels.push({ sp, pos: h.pos, title, body: rest.join(' ') }); }
+setLevelLang(LEVEL, lang);   // R147: hint-lapper, byggesteder og løsningsnavn på valgt språk (en-felt i brettet)
+const labelText = (h) => { const [title, ...rest] = h.text.split('\n'); return { title, body: rest.join(' ') }; };
+for (const h of LEVEL.hints || []) { const sp = makeBadge(); sp.position.set(...h.pos); scene.add(sp); labels.push({ sp, pos: h.pos, h, ...labelText(h) }); }
+const refreshLevelLang = () => { const n = setLevelLang(LEVEL, lang); for (const l of labels) Object.assign(l, labelText(l.h)); if (typeof setBLevel === 'function') setBLevel(); return n; };   // R147: ved språkbytte, også en åpen lapp
 const cardSeen = (add) => { const k = `tlm.cardseen.${levelId}`; let a = store.get(k, []); if (!Array.isArray(a)) a = []; if (add !== undefined && !a.includes(add)) { a.push(add); store.set(k, a); } return a; };
 let infoPrev = performance.now();
 function updateLabels() {
@@ -1542,7 +1547,7 @@ function bandCtx() {
   const act = activeGoal(LEVEL), total = goalTotal(LEVEL), st = { crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0 };
   const play = mode === 'play' && !won;
   const fwn = play ? floodNow() : null;
-  const c = { water: fwn ? levelBadge(fwn.level, fwn.cfg) : '', version: VERSION, noArrow: DIF.nextLine !== 'full', levelLabel: DIF.subgoalText ? levelLabel : '', nextText: play ? compState.text : null, nextHint: play ? compState.hint : '', nextAction: play ? compState.action : '', nextAng: compState.ang, goalHead: !DIF.subgoalText ? '' : play && act ? goalLine(LEVEL, act, lang, st) : (total > 0 && goalDone(LEVEL) === total ? T('goal.all') : ''),
+  const c = { water: fwn ? levelBadge(fwn.level, fwn.cfg) : '', version: VERSION, noArrow: DIF.nextLine !== 'full', levelLabel: DIF.subgoalText ? levelShown() : '', nextText: play ? compState.text : null, nextHint: play ? compState.hint : '', nextAction: play ? compState.action : '', nextAng: compState.ang, goalHead: !DIF.subgoalText ? '' : play && act ? goalLine(LEVEL, act, lang, st) : (total > 0 && goalDone(LEVEL) === total ? T('goal.all') : ''),
     goalDone: goalDone(LEVEL), goalTotal: total, crumbs: crumbsOn && crumbTotal(LEVEL) ? { n: crumbCount(LEVEL), total: crumbTotal(LEVEL) } : null,
     infoOn: infoCard.style.display !== 'none', flagOn: qbtnOn, unread: $('qbtn').classList.contains('hasreply'), badge: markCount() + unsent('BACKLOGG') };
   if (tb.isOpen()) {
@@ -1870,7 +1875,7 @@ function confirmed(btn, label, cost, fn) {
   };
 }
 confirmed($('bThings'), 'Ting', SCORE.resetThings, () => { resetThings(); closeMore(); });
-$('bLevel').textContent = `Brett: ${levelLabel}`;
+const setBLevel = () => { $('bLevel').textContent = `${lang === 'en' ? 'Level' : 'Brett'}: ${levelShown()}`; }; setBLevel();
 $('bLevel').onclick = () => { const vl = levelsShown(), i = vl.findIndex((l) => l.id === levelId), n = vl[(i + 1) % vl.length].id; store.set('tlm.level', n); location.search = `?level=${n}`; };
 $('bSound').onclick = toggleSound; $('bSound').textContent = soundMuted ? 'Lyd av' : 'Lyd'; $('bSound').classList.toggle('on', !soundMuted);
 confirmed($('bSave'), 'Lagre', SCORE.save, () => { doSave(); closeMore(); }); confirmed($('bBack'), 'Tilbake', SCORE.respawn, goBack);
@@ -2403,7 +2408,7 @@ function buildPanel() {
   const groupHtml = (g, title) => {
     const items = SETTINGS.filter((d) => d.group === g && visible(d));
     let extra = '';
-    if (g === 'spill') extra = `<label>${PT('level')}</label><select id="levelSel">${(() => { const sp = splitLevels(LEVELS, round2On || isRound2(levelId)), op = (l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`; return sp.main.map(op).join('') + (sp.round2.length ? `<optgroup label="Runde 2: vanskeligere byggebrett">${sp.round2.map(op).join('')}</optgroup>` : ''); })()}</select><div class="row"><button id="pRestart">${PT('restart')}</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div><small id="saveNote"></small><div class="row"><button id="bSaveCopy">${sv(lang, 'sv.copy')}</button><button id="bSavePaste">${sv(lang, 'sv.paste')}</button></div>`;
+    if (g === 'spill') extra = `<label>${PT('level')}</label><select id="levelSel">${(() => { const sp = splitLevels(LEVELS, round2On || isRound2(levelId)), op = (l) => `<option value="${l.id}">${l.label}${store.get('tlm.cleared', {})[l.id] ? ' ✓' : ''}</option>`; return sp.main.map(op).join('') + (sp.round2.length ? `<optgroup label="${lang === 'en' ? 'Round 2: harder build levels' : 'Runde 2: vanskeligere byggebrett'}">${sp.round2.map(op).join('')}</optgroup>` : ''); })()}</select><div class="row"><button id="pRestart">${PT('restart')}</button><button id="pMenu">${dft(lang, 'df.menu')}</button></div><small id="saveNote"></small><div class="row"><button id="bSaveCopy">${sv(lang, 'sv.copy')}</button><button id="bSavePaste">${sv(lang, 'sv.paste')}</button></div>`;
     if (g === 'test') extra = `
       <label>Noe galt her? (valgfri tekst)</label><input type="text" id="markText" placeholder="f.eks. «kom ikke opp på hylla»">
       <div class="row"><button id="bMark">⚑ Marker her</button></div>
@@ -3179,8 +3184,8 @@ function render(now, dt) {
   goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
   if (tb.isOn()) tb.update(bandCtx(), now);
   const crumbHud = crumbsOn && crumbTotal(LEVEL) ? ` · ★ ${crumbCount(LEVEL)}/${crumbTotal(LEVEL)}` : '';
-  $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelLabel}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
-    `v${VERSION} · ${levelLabel} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
+  $('hud').textContent = !(hudTech || hudOpen) ? `v${VERSION} · ${levelShown()}${crumbHud}${player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}` :
+    `v${VERSION} · ${levelShown()} · ${mode === 'plan' ? 'PLAN' : mode === 'fly' ? 'FLY' : player.state}${player.sliding ? ' (glir)' : ''}${player.reach > 0 ? ' · GREPER' : ''}\n` +
     `høyde ${player.y.toFixed(1)}  tid ${clock.toFixed(0)}s${player.state === 'climb' || player.stam < P.stamina - 0.05 ? '  grep ' + '▮'.repeat(Math.max(0, Math.round(10 * player.stam / P.stamina))) + '▯'.repeat(10 - Math.max(0, Math.round(10 * player.stam / P.stamina))) : ''}\nlagret ${stats.saves} · tilbake ${stats.respawns}${crumbHud} · poeng ${points()}${renderer.getPixelRatio() < basePr - 0.01 ? `\noppløsning ${renderer.getPixelRatio().toFixed(2)}× (⚙ → Test)` : ''}`;
 }
 
@@ -3264,7 +3269,7 @@ function updateCarryButton() {
   if (sig === taPrev) return; taPrev = sig;
   const tb = $('btnCarry'); tb.textContent = label; tb.className = `tbtn ${s.tone} ${s.ready ? 'ready' : 'dim'}${label.length > 6 ? ' long' : ''}`;
 }
-function applyLang() { if (typeof pickVoice === 'function') pickVoice(); GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); }
+function applyLang() { if (typeof pickVoice === 'function') pickVoice(); if (typeof refreshLevelLang === 'function') refreshLevelLang(); GREP = TOUCH ? T('btn.grab') : 'Shift/E'; $('btnGrab').textContent = T('btn.grab'); $('btnJump').textContent = T('btn.jump'); taPrev = ''; if (typeof player !== 'undefined') updateCarryButton(); }
 // navn på ting: fra kind (norsk/engelsk), ellers lappen eller id-en
 const nameOfId = (id) => kindName(LEVEL.bodies?.find((b) => b.id === id)?.kind ?? LEVEL.boxes.find((b) => b.id === id)?.kind, nice(id));
 const nameOfObj = (o) => kindName(o?.kind, nice(o?.id));
@@ -3452,7 +3457,7 @@ function showStart(o = {}) {
   const has = hasProgress(), bl = badgeLine(), dn = dft(lang, 'df.' + difficulty);
   $('start').classList.remove('dfl', 'fxl');
   const plan = menuPlan({ has, firstRun: isFirstRun(normCleared(store.get('tlm.cleared', {}))), on: firstRunOn }), coll = plan.collapse;   // R97: første gang: én tydelig START, resten under «mer»
-  const resume = has ? resumeLine({ label: levelLabel, diff: dn, clock: clock > 4 ? clock : (normProgress(store.get(progKey, null))?.clock || 0) }) : T('menu.nosave');
+  const resume = has ? resumeLine({ label: levelShown(), diff: dn, clock: clock > 4 ? clock : (normProgress(store.get(progKey, null))?.clock || 0) }) : T('menu.nosave');
   const bContinue = `<button class="mbtn ${coll ? 'big' : ''}" id="mCont" ${has ? '' : 'disabled'}>${coll ? ft(lang, 'fr.continue') : T('menu.continue')}<small>${resume}</small></button>`;
   const bStart = `<button class="mbtn big" id="mStart">${ft(lang, 'fr.start')}</button>`;
   const rest = `<button class="mbtn ${has ? 'sec' : ''}" id="mNew">${T('menu.new')}</button>

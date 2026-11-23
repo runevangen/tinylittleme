@@ -513,7 +513,8 @@
     -24,
     6.5,
     6
-   ]
+   ],
+   "en": "Shelf, 28 cm\nToo high for a normal jump. Use the cotton swab."
   },
   {
    "id": "orepinne",
@@ -522,7 +523,8 @@
     -23.25,
     1.04,
     22.47
-   ]
+   ],
+   "en": "Cotton swab (pole)\nTake it (TAKE), run and press JUMP: pole vault. The more speed, the higher."
   },
   {
    "id": "tarn",
@@ -531,7 +533,8 @@
     8,
     18.9,
     -4
-   ]
+   ],
+   "en": "Tower, 90 cm\nA fall from here onto the floor is too hard. Land on something soft."
   },
   {
    "id": "trinn_1",
@@ -540,7 +543,8 @@
     37.6,
     3.9,
     -4
-   ]
+   ],
+   "en": "Stairs\nThe usual way up to the tower."
   },
   {
    "id": "dopapirhaug",
@@ -549,7 +553,8 @@
     -6.5,
     2.9,
     -4
-   ]
+   ],
+   "en": "Toilet paper pile\nSoft landing: jump down onto it from the tower."
   },
   {
    "id": "svamp",
@@ -558,7 +563,8 @@
     27.2,
     1.7,
     11.2
-   ]
+   ],
+   "en": "Sponge\nSoft. Carry it (TAKE) and put it down (DROP) where you will land."
   },
   {
    "id": "handkle_nede",
@@ -567,7 +573,8 @@
     -0.4,
     9.9,
     -4
-   ]
+   ],
+   "en": "Towel\nWalk up to it, press GRAB and steer up. Stamina (grip ▮▮▮) drains."
   },
   {
    "id": "sims",
@@ -576,7 +583,8 @@
     -1,
     9.9,
     4
-   ]
+   ],
+   "en": "Rest shelf\nStand here to refill your stamina."
   },
   {
    "id": "handkle_oppe",
@@ -585,7 +593,8 @@
     -0.4,
     18.9,
     4
-   ]
+   ],
+   "en": "Upper towel\nWalk in under it, jump towards it and press GRAB in mid-jump."
   },
   {
    "id": "skap_hoyt",
@@ -594,7 +603,8 @@
     -25,
     12.5,
     -3
-   ]
+   ],
+   "en": "High cupboard\nSmear gel on the wall from the shelf, and climb up."
   },
   {
    "id": "haargele",
@@ -603,7 +613,8 @@
     -27.6,
     2.9,
     17.4
-   ]
+   ],
+   "en": "Hair gel\nThrow it up onto the shelf (hold the button and drag down). Take it (TAKE), walk up to the wall and press SMEAR, put it down (DROP), climb (GRAB). Wet for 20 s: slippery."
   },
   {
    "id": "nal",
@@ -612,7 +623,8 @@
     -19.3,
     1.04,
     22.47
-   ]
+   ],
+   "en": "Needle\nTake it (TAKE). If you stand by the spool of thread, press THREAD: the needle gets threaded. Then you can make a zip line (TIE UP, TIE DOWN, GRAB)."
   },
   {
    "id": "trad",
@@ -621,7 +633,8 @@
     -17.2,
     1.6,
     22
-   ]
+   ],
+   "en": "Spool of thread\nCarry the needle here and press THREAD: the needle is threaded. (You can also take the spool and press THREAD by the needle.)"
   },
   {
    "id": "dopapirrull",
@@ -630,7 +643,8 @@
     7,
     20.9,
     -7
-   ]
+   ],
+   "en": "Toilet paper roll\nCarry it (TAKE) to an edge and press UNROLL: a ribbon rolls down. Climb it, but it tears after about 7 s."
   },
   {
    "id": "papirhaug_hoy",
@@ -639,7 +653,8 @@
     -30,
     6.5,
     14.2
-   ]
+   ],
+   "en": "Paper pile, 28 cm\nToo high to jump onto. Carry something heavy (a wet sponge) here and press PRESS: the pile becomes a low step."
   },
   {
    "id": "vannskal",
@@ -648,7 +663,8 @@
     33,
     2.5,
     18.4
-   ]
+   ],
+   "en": "Water bowl\nCarry the sponge here and press SOAK: it soaks up water and gets heavy and soft."
   },
   {
    "id": "handkle_k1",
@@ -657,7 +673,8 @@
     9.4,
     19.7,
     -1
-   ]
+   ],
+   "en": "Towels\nCarry one (TAKE) over to the other and press KNOT. Go to the edge and press HANG ROPE: you climb down instead of falling."
   }
  ],
  "hazards": [],
@@ -791,5 +808,6 @@
   "helpers": [],
   "nodes": 15,
   "reachable": 14
- }
+ },
+ "nameEn": "Test room: climbing aids"
 }

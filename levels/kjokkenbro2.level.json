@@ -302,7 +302,8 @@
     -14.5,
     8.9,
     -4
-   ]
+   ],
+   "en": "Round 2: a big gap\nThe gap is 16 build units. Wood alone will not hold: press BUILD at the edge and build a steel truss. Or take the hard way around."
   },
   {
    "id": "skap_lav",
@@ -311,7 +312,8 @@
     17,
     6.9,
     9.3
-   ]
+   ],
+   "en": "The low goal\nThis shelf counts as a goal too: it is lower than the flag and can only be reached from the fridge."
   }
  ],
  "hazards": [],
@@ -807,7 +809,8 @@
       "topp1",
       "topp2"
      ]
-    }
+    },
+    "en": "The big gap between the counter and the fridge (round 2)"
    }
   ],
   "parts": [
@@ -1013,5 +1016,6 @@
   "helpers": [],
   "nodes": 12,
   "reachable": 12
- }
+ },
+ "nameEn": "Bridge to the fridge · Round 2"
 }

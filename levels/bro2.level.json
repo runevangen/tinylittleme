@@ -302,7 +302,8 @@
     -9,
     8.9,
     -4
-   ]
+   ],
+   "en": "Round 2: a big gap\nThe gap is 12 build units. Wood alone will not hold: press BUILD at the edge and build a steel truss. Or take the hard way around."
   },
   {
    "id": "balkong",
@@ -311,7 +312,8 @@
     19,
     6.9,
     9.3
-   ]
+   ],
+   "en": "The low goal\nThis shelf counts as a goal too: it is lower than the flag and can only be reached from the shelf after the bridge."
   }
  ],
  "hazards": [],
@@ -708,7 +710,8 @@
       "s1",
       "s2"
      ]
-    }
+    },
+    "en": "The big gap between the shelves (round 2)"
    }
   ],
   "parts": [
@@ -905,5 +908,6 @@
   "helpers": [],
   "nodes": 12,
   "reachable": 12
- }
+ },
+ "nameEn": "The shelf bridge · Round 2"
 }

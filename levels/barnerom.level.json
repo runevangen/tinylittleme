@@ -918,7 +918,8 @@
     -20.5,
     10.9,
     -5
-   ]
+   ],
+   "en": "Bed\nSoft to land on. From here the way goes up onto the nightstand at the head end."
   },
   {
    "id": "nattbord",
@@ -927,7 +928,8 @@
     -6.6,
     13.3,
     -20.2
-   ]
+   ],
+   "en": "The gap over the toy bin\nToo far to jump. Press BUILD, lay the plank from the nightstand across to the stool, and press TRY."
   },
   {
    "id": "gardin",
@@ -936,7 +938,8 @@
     26.9,
     22.5,
     -5.2
-   ]
+   ],
+   "en": "Curtain\nClimb: walk up to the curtain and hold GRAB, steer towards it. At the top you pull yourself onto the window sill."
   },
   {
    "id": "klesskap",
@@ -945,7 +948,8 @@
     24,
     30.5,
     23.5
-   ]
+   ],
+   "en": "The wardrobe\nThe antidote is on top. A fall from here is too far: you go back to the save point."
   },
   {
    "id": "leke_bil",
@@ -954,7 +958,8 @@
     -2.6,
     3.1,
     -13.6
-   ]
+   ],
+   "en": "Living toys\nNudge the car with the stick, and it rolls and honks. Jump onto it (JUMP) to honk."
   },
   {
    "id": "leke_hest",
@@ -963,7 +968,8 @@
     -2,
     4.1,
     -1.4
-   ]
+   ],
+   "en": "Rocking horse\nJump onto the horse (JUMP) and it rocks. TAKE the wind-up robot and drop it, and it walks."
   }
  ],
  "hazards": [
@@ -1221,7 +1227,8 @@
       "spilleske",
       "klesskap"
      ]
-    }
+    },
+    "en": "The gap over the toy bin"
    }
   ],
   "parts": [
@@ -1508,5 +1515,6 @@
   "helpers": [],
   "nodes": 20,
   "reachable": 19
- }
+ },
+ "nameEn": "Level 2: The nursery"
 }

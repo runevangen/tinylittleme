@@ -150,7 +150,8 @@
     22,
     9.9,
     -2
-   ]
+   ],
+   "en": "High shelf\nThis shelf is too high for an ordinary staircase. Press BUILD: set up a tower of three blocks and lay two long planks as ramps, one up to the tower and one up onto the shelf. Or take the hard way behind the shelf."
   }
  ],
  "hazards": [],
@@ -290,7 +291,8 @@
       "@r1",
       "hylle"
      ]
-    }
+    },
+    "en": "In front of the high shelf (tower and ramps)"
    }
   ],
   "parts": [
@@ -455,5 +457,6 @@
   "helpers": [],
   "nodes": 4,
   "reachable": 4
- }
+ },
+ "nameEn": "The block stairs, round 2"
 }

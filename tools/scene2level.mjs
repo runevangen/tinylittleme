@@ -6,6 +6,7 @@
 //  2. Overflatekart: hver topp-flate er en node. Kanter finnes der hopp + rekk ut rekker (samme budsjett som «Spenning»).
 //  3. Beste rute start → mål. Der en kant er for stor legges det inn hjelpeobjekter (bro / trappetrinn).
 //  4. Skriver brettet + en rapport. Bekreft etterpå med fysikk-boten: node tools/solve.mjs spenning --level=<fil>
+import { applyLevelEn } from './add_levels_en.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -26,7 +27,7 @@ let easyLevel = null;
 if (reqCfg && reqCfg.easyPatch) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'easy-')), ei = path.join(dir, 'e.scene.json'), eo = path.join(dir, 'e.level.json');
   fs.writeFileSync(ei, JSON.stringify(applyEasyPatch(scene, reqCfg.easyPatch)));
-  execFileSync(process.execPath, [fileURLToPath(import.meta.url), ei, eo], { stdio: 'pipe' });
+  execFileSync(process.execPath, [fileURLToPath(import.meta.url), ei, eo], { stdio: 'pipe', env: { ...process.env, SCENE2LEVEL_NO_EN: '1' } });   // R147: det lette brettet uten en-felt (de legges på til slutt, over hele brettet)
   easyLevel = JSON.parse(fs.readFileSync(eo, 'utf8')); scene.validate = false;   // det vanskelige brettet har ingen vei uten bygg: ingen hjelpebroer fra verktøyet
 }
 if (reqCfg) for (const [id, eb] of Object.entries(reqCfg.ease || {})) { const o = scene.objects.find((q) => q.id === id); if (!o) throw new Error(`required.ease: fant ikke ${id}`); hardBox[id] = o.box; o.box = eb; }
@@ -479,6 +480,7 @@ if (easyLevel) {   // R139: vanskelig brett (bygget må til) med ruta over de fa
   level.report = { ...easyLevel.report, hard_solvable_by_graph: solvable };
   level.required = { site: reqCfg.site, ...(reqCfg.beyond ? { beyond: { ...(reqCfg.beyond.x ? { x0: ux(reqCfg.beyond.x) } : {}), y0: uy(reqCfg.beyond.y) } } : {}), easy: levelEasy(level, easyLevel), ...(reqCfg.note ? { note: reqCfg.note } : {}) };
 }
+if (!process.env.SCENE2LEVEL_NO_EN) applyLevelEn(level);   // R147: engelske tekster (en-felt) fra tools/levels_en_data.mjs
 fs.mkdirSync(outPath.replace(/[^/]+$/, '') || '.', { recursive: true });
 fs.writeFileSync(outPath, JSON.stringify(level, null, 1));
 console.log(`${scene.name}: ${boxes.length} bokser, ${hazards.length} farer, ${holds.length} klatretak (ennå ubrukt), ${decor.length} dekor`);

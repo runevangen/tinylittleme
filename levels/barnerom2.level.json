@@ -992,7 +992,8 @@
     -20.5,
     10.9,
     -5
-   ]
+   ],
+   "en": "Bed\nSoft to land on. From here the way goes up onto the nightstand at the head end."
   },
   {
    "id": "nattbord",
@@ -1001,7 +1002,8 @@
     -6.6,
     13.3,
     -20.2
-   ]
+   ],
+   "en": "Build a bridge\nThe gap over the toy bin is too wide, and one plank is not enough. Press BUILD at the edge, use TRIANGLE to make a stiff bridge, and press TRY."
   },
   {
    "id": "gardin",
@@ -1010,7 +1012,8 @@
     26.9,
     22.5,
     -5.2
-   ]
+   ],
+   "en": "Curtain\nClimb: walk up to the curtain and hold GRAB, steer towards it. At the top you pull yourself onto the window sill."
   },
   {
    "id": "klesskap",
@@ -1019,7 +1022,8 @@
     24,
     30.5,
     23.5
-   ]
+   ],
+   "en": "On from the wardrobe\nThe antidote has moved. Walk along the shelf over the door and jump across to the last shelf."
   },
   {
    "id": "leke_bil",
@@ -1028,7 +1032,8 @@
     -2.6,
     3.1,
     -13.6
-   ]
+   ],
+   "en": "Living toys\nNudge the car with the stick, and it rolls and honks. Jump onto it (JUMP) to honk."
   },
   {
    "id": "leke_hest",
@@ -1037,7 +1042,8 @@
     -2,
     4.1,
     -1.4
-   ]
+   ],
+   "en": "Rocking horse\nJump onto the horse (JUMP) and it rocks. TAKE the wind-up robot and drop it, and it walks."
   }
  ],
  "hazards": [
@@ -1530,7 +1536,8 @@
       "hylle_b",
       "hylle_c"
      ]
-    }
+    },
+    "en": "The gap over the toy bin (truss)"
    }
   ],
   "parts": [
@@ -1731,7 +1738,8 @@
       3,
       2.9,
       22
-     ]
+     ],
+     "en": "Hair gel\nTake the bottle (TAKE), carry it to the high step in front of the desk and press SMEAR. Put it down (DROP) and climb the gel (GRAB). Wet for 20 s: slippery."
     },
     {
      "id": "gele_barn_trinn_1",
@@ -1740,7 +1748,8 @@
       24.5,
       6.3,
       12
-     ]
+     ],
+     "en": "High step\nToo high to jump onto. Smear hair gel on the step (TAKE with the bottle), climb up and walk the stairs to the desk. The long way via the toy and book shelves still works."
     }
    ],
    "shortcuts": [
@@ -2007,5 +2016,6 @@
   "helpers": [],
   "nodes": 23,
   "reachable": 22
- }
+ },
+ "nameEn": "Level 5: The nursery, rearranged"
 }

@@ -283,7 +283,8 @@
     11.75,
     12.9,
     -4
-   ]
+   ],
+   "en": "High shelf\nThe shelf on the other side is higher. Press BUILD and turn the seesaw with ↺ ↻ until it slopes, so the load gets up. If it lies flat, the load tips into the gap. Or take the hard way."
   }
  ],
  "hazards": [],
@@ -399,7 +400,8 @@
       "s1",
       "s2"
      ]
-    }
+    },
+    "en": "The gap in front of the highest shelf (tilted seesaw)"
    }
   ],
   "parts": [
@@ -544,5 +546,6 @@
   "helpers": [],
   "nodes": 11,
   "reachable": 11
- }
+ },
+ "nameEn": "The seesaw, round 2"
 }

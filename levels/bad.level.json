@@ -1868,7 +1868,8 @@
     -21.5,
     12.9,
     -16.8
-   ]
+   ],
+   "en": "Laundry basket\nWoven, so you can climb: walk up and press GRAB, steer towards the basket to climb up. From the lid you jump across to the cistern and on to the sink."
   },
   {
    "id": "badekape_bla",
@@ -1877,7 +1878,8 @@
     9.6,
     27.9,
     5.2
-   ]
+   ],
+   "en": "Bathrobe\nClimb up to the hook rail (hold GRAB). It is a long climb: start with full strength."
   },
   {
    "id": "kurv_knagg",
@@ -1886,7 +1888,8 @@
     5.7,
     12.9,
     7.4
-   ]
+   ],
+   "en": "New way to the antidote\nThe antidote is now on top of the medicine cabinet. Climb up the basket (GRAB) and on up the bathrobe to the hook rail."
   },
   {
    "id": "knagg_hylle",
@@ -1895,7 +1898,8 @@
     6.5,
     27.9,
     10.4
-   ]
+   ],
+   "en": "Shelf by the hooks\nRest here. The towel hangs down from the medicine cabinet: walk around it, hold GRAB and climb up."
   },
   {
    "id": "trapp_bad_1",
@@ -1904,7 +1908,8 @@
     -10.5,
     4.7,
     0.6
-   ]
+   ],
+   "en": "The hard way\nBoxes as stairs: jump (JUMP) up step by step to the medicine cabinet. No climbing, but it takes precise jumps."
   }
  ],
  "hazards": [
@@ -2496,5 +2501,6 @@
   "helpers": [],
   "nodes": 43,
   "reachable": 37
- }
+ },
+ "nameEn": "Bathroom (read from 4 photos)"
 }

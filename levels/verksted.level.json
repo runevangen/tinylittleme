@@ -462,7 +462,8 @@
     -45.5,
     1.3,
     0.5
-   ]
+   ],
+   "en": "Oil spill\nSlippery! Without grip you slide. Go around, or use the speed: the stick steers, but the brakes hardly work."
   },
   {
    "id": "dekk_1",
@@ -471,7 +472,8 @@
     -60.6,
     3.7,
     18.4
-   ]
+   ],
+   "en": "Bike tyre\nNudge it with the stick and it rolls. It can also be carried with TAKE."
   },
   {
    "id": "verktoykasse",
@@ -480,7 +482,8 @@
     -13.3,
     7.3,
     -1
-   ]
+   ],
+   "en": "Toolbox\nThe lid is oily and slippery. Walk up to the rag and hold GRAB to climb onto the workbench."
   },
   {
    "id": "fille",
@@ -489,7 +492,8 @@
     -5.2,
     12.1,
     0
-   ]
+   ],
+   "en": "Oily rag\nHold GRAB towards the rag and climb up onto the workbench. It is not slippery."
   },
   {
    "id": "skrustikke",
@@ -498,7 +502,8 @@
     0.2,
     15.3,
     -20
-   ]
+   ],
+   "en": "Vise\nHeavy and fixed. Jump onto it with JUMP, or go around."
   },
   {
    "id": "mutter_1",
@@ -507,7 +512,8 @@
     0.4,
     13.7,
     -13.6
-   ]
+   ],
+   "en": "Nuts\nCarry a nut with TAKE and put it on a pressure plate (TAKE again). The heavy plate needs three, the light one two."
   },
   {
    "id": "vegg_v",
@@ -516,7 +522,8 @@
     18.5,
     22.1,
     -13.6
-   ]
+   ],
+   "en": "Tool wall\nPegboard with hooks: hold GRAB towards the wall and climb up onto the shelf. Here you can build a bridge to the next shelf."
   },
   {
    "id": "vegg_o",
@@ -525,7 +532,8 @@
     64,
     22.1,
     -13.6
-   ]
+   ],
+   "en": "Tool wall\nHold GRAB towards the pegboard and climb up onto the shelf. Then walk back along the shelf: the goal is the toolbox at the top."
   }
  ],
  "hazards": [],
@@ -759,7 +767,8 @@
       "hylle_o",
       "maal"
      ]
-    }
+    },
+    "en": "The gap over the gate"
    }
   ],
   "parts": [
@@ -1040,5 +1049,6 @@
   "helpers": [],
   "nodes": 12,
   "reachable": 12
- }
+ },
+ "nameEn": "Level 9: The workshop"
 }

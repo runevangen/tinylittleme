@@ -478,7 +478,8 @@
     -16,
     8.9,
     -16
-   ]
+   ],
+   "en": "The gap\nThe bridge is missing here. Press BUILD and build a bridge over the gap, or take the long way along the floor."
   },
   {
    "id": "hargele_leke",
@@ -487,7 +488,8 @@
     8,
     2.9,
     24.4
-   ]
+   ],
+   "en": "Hair gel\nTake the bottle (TAKE), carry it to the high step and press SMEAR. Put it down (DROP) and climb the gel (GRAB). Wet for 20 s: slippery."
   },
   {
    "id": "gele_leke_trinn_1",
@@ -496,7 +498,8 @@
     39,
     6.3,
     -1.5
-   ]
+   ],
+   "en": "High step\nToo high to jump onto. Smear hair gel on the step (TAKE with the bottle), climb up and walk the stairs along the wall. The long way still works."
   }
  ],
  "hazards": [],
@@ -740,7 +743,8 @@
       "n2",
       "maal"
      ]
-    }
+    },
+    "en": "The gap between the plate and the tower"
    }
   ],
   "parts": [
@@ -999,5 +1003,6 @@
   "helpers": [],
   "nodes": 17,
   "reachable": 17
- }
+ },
+ "nameEn": "Level 7: The playroom"
 }
