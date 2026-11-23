@@ -161,10 +161,11 @@ export { ANSWER_OPTS };
 // Målforslag: opptil n ulike flater til målflagget (høyeste, helst nåbare først). Hvert forslag er { id, scene } med målet flyttet dit. Aldri tom hvis rommet finnes (da en sokkel).
 export function goalCandidates(scene, n = 4) {
   const out = [], skip = [];
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n * 4 && out.length < n; i++) {   // flere runder enn forslag: de som ligger tett på et valgt sted (under 40 cm) hoppes over, så forslagene sprer seg
     let r = null; try { r = sceneToLevel(clone(scene), { autoGoal: 'force', autoGoalSkip: skip }); } catch { r = null; }
     if (!r || !r.autoGoal) break;
     skip.push(r.autoGoal.id);
+    if (out.some((c) => Math.hypot(c.x - r.autoGoal.x, c.z - r.autoGoal.z) < 40)) continue;
     const s = clone(scene); s.goal = { ...(scene.goal || {}), x: r.autoGoal.x, y: r.autoGoal.y, z: r.autoGoal.z, on: r.autoGoal.id };
     out.push({ id: r.autoGoal.id, x: s.goal.x, z: s.goal.z, scene: s });
   }
