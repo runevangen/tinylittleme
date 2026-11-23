@@ -2,6 +2,12 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r154-bygg-rydder', version: '2.161', date: '2026-11-23', title: 'Byggeskjermen rydder etter seg: stenger og kuler du fjerner blir borte, knappene (⚑, tilbake, PRØV) svarer alltid, og FRA/TIL-etiketten legger seg ikke over knuter.',
+    how: 'Åpne Nivå 5 og trykk BYGG. Legg noen stenger, fjern dem igjen og bytt materiale. Sjekk at ingenting blir hengende og at ⚑ og PRØV fortsatt virker.', level: 'barnerom2', spot: null },
+  { id: 'r155-statuslinje', version: '2.159', date: '2026-11-23', title: 'Telefonens klokke og batteri øverst passer nå til spillet, og knapper og tekst ligger innenfor den sikre sonen.',
+    how: 'Åpne spillet på mobil og se på toppen av skjermen, både i spillet og i byggeskjermen.', level: '', spot: null },
+  { id: 'r156-vegg-bad', version: '2.160', date: '2026-11-23', title: 'Glipa ved dørkarmen i Badet er tettet, så figuren ikke kommer bak veggen.',
+    how: 'Start Nivå 4 · Badet og gå mot veggen ved vaskekurven og dørkarmen. Prøv å komme bak veggen: det skal ikke gå.', level: 'bad2', spot: null },
   { id: 'r149-mangler-full-score', version: '2.158', date: '2026-11-23', title: 'Resultatkortet i byggeren sier nå hva som manglet for full score (stjerner og merker). Ingen linje når alt er oppnådd.',
     how: 'Gå til Hyllebroen eller et Bygglab-sted, bygg og fullfør. Les «Mangler»-linjene på resultatkortet.', level: 'bro', spot: null },
   { id: 'r146-sprak-runde1', version: '2.151', date: '2026-11-23', title: 'Språkvalget i ⚙ bytter nå ⚙-menyen, NYTT, meldinger i spillet og figurens stemme mellom norsk og engelsk. Flere norskfeil er rettet.',
