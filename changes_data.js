@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r158-bildetips', version: '2.167', date: '2026-11-23', title: 'Bedre tips for å ta gode bilder når du lager brett: lys, vinkel, A4-ark, hvor målet skal ligge, utendørs og rot.',
+    how: 'Trykk LAG BRETT FRA BILDER i VELG BRETT og les «Slik tar du bildene» før du tar de første bildene.', level: '', spot: null },
   { id: 'r157-auto-maal', version: '2.166', date: '2026-11-23', title: 'Lag brett fra bilder: finner ikke bildene et sted for målet, legger spillet målflagget selv på det høyeste stedet du kan nå.',
     how: 'Trykk LAG BRETT FRA BILDER i VELG BRETT, ta 2–4 bilder og trykk LAG BRETT. Står målet på et uvanlig sted, kan du flytte det med JUSTER.', level: '', spot: null },
   { id: 'r154-bygg-rydder', version: '2.161', date: '2026-11-23', title: 'Byggeskjermen rydder etter seg: stenger og kuler du fjerner blir borte, knappene (⚑, tilbake, PRØV) svarer alltid, og FRA/TIL-etiketten legger seg ikke over knuter.',

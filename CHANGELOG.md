@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.167** – Bedre bildetips i «Lag brett fra bilder»: ti konkrete råd (lys, vinkel, A4-ark, mål, utendørs, rot).
 - **2.166** – Lag brett fra bilder: finner ikke tolkningen et sted for målet, velger spillet selv det høyeste stedet du kan nå (leditor_logic/view/text, test_leditor).
 - **2.165** – R152: lag brett fra bilder i spillet (leditor_logic/text/view, scene2level_core, test_leditor).
 - **2.164** – R153: del brett med kode (tlm_rooms, rooms_logic/text/view, test_rooms).
