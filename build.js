@@ -36,7 +36,9 @@ import { trussOn } from './grid_truss_help.js';
 import { createSwapUI, swCss, swMarkup } from './grid_swap_view.js';   // R128: BYTT TIL STÅL + pulserende svakeste stav etter feilet prøve
 import { extraOf, layersOf, hasDouble, windFor, wideOf, wideFlag, spacingOf, braceLines, buildSolids25, PLANE_T } from './grid_25d.js';   // R123: dobbel bro (2,5D)
 import { createDoubleView, D25_CSS, d25Markup } from './grid25d_view.js';
-import { setTilt25, tilt25 } from './build_view25.js';   // R137: 2,5D-visning (skråkamera)
+import { setTilt25, tilt25, depthVec } from './build_view25.js';
+import { flagPlan, FLAGV } from './build_flag_logic.js';   // R145: målflagget i byggeskjermen
+import { drawGoalFlag } from './build_flag_view.js';   // R137: 2,5D-visning (skråkamera)
 import { plate25, slab25, rodDepth25 } from './build_view25_view.js';
 import { createGridUI, gridCss, gridMarkup } from './grid_view.js';   // R72: rutenett-bygging: knutepunkter og staver
 import { GRID_PX } from './grid_view.js';
@@ -67,6 +69,7 @@ import { roadRodIds, gridAnchors, gridStep, isGrid, simDef as gridSimDef, simDef
 const css = `
 #bld{position:fixed;inset:0;z-index:7;display:none;background:linear-gradient(#26324bfa,#141a2cff);touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;font:600 14px system-ui}
 body.building #bld{display:block}
+body.building #guideEdge{display:none!important}   /* R145: veiledningspila i verden skinner ikke gjennom byggeskjermen (så ut som et ekstra, blekt flagg) */
 body.building #panel{z-index:10}
 #bld canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 #bld .bt{position:absolute;left:0;right:0;display:flex;flex-wrap:nowrap;gap:6px;justify-content:center;padding:0 8px;pointer-events:none}
@@ -429,6 +432,8 @@ export function createBuildMode({ getStars2 = () => true, getView25 = () => fals
   // ---- tegning ----
   function draw() { drawBoard(); loupeStep(); }   // R106: glasset kopierer det ferdige bildet, så det tegnes sist
   let lastTilt25 = null;   // R137
+  let flagPinned = false;   // R145
+  const goalFlagPlan = (S, sx, t25) => { const gl = siteGoal(S); return flagPlan(sx(gl.u, gl.v), W, H, view.scale, t25 ? depthVec(FLAGV.depthTop) : undefined); };   // R145: delt av tegningen og lupa-avstanden
   function drawBoard() {
     if (!active) return; size(); const d = dpr(), B = getB(active), S = active; const t25 = !!getView25(); setTilt25(t25); if (t25 !== lastTilt25) { if (lastTilt25 != null) logEv('bygg', `visning 2,5D ${t25 ? 'på' : 'av'}`); lastTilt25 = t25; } bux.frame(); cbx.frame(); bn.frame(); blk.frame(); trh.frame(); swp.frame();
     g2.setTransform(d, 0, 0, d, 0, 0); g2.clearRect(0, 0, W, H);
@@ -455,7 +460,7 @@ export function createBuildMode({ getStars2 = () => true, getView25 = () => fals
       if (t25) { const c = [sx(bx.x0, bx.y1), sx(bx.x1, bx.y1), sx(bx.x1, bx.y0), sx(bx.x0, bx.y0)]; slab25(g2, c, '#6b5d4a'); g2.fillStyle = '#6b5d4a'; g2.beginPath(); c.forEach((z, i) => (i ? g2.lineTo(z.x, z.y) : g2.moveTo(z.x, z.y))); g2.closePath(); g2.fill(); }   // R137: klossene får topp og side (samme hjørner som før)
       else g2.fillRect(Math.min(p.x, q.x), Math.min(p.y, q.y), Math.abs(q.x - p.x), Math.abs(q.y - p.y));
     }
-    const gl = siteGoal(S), gp = sx(gl.u, gl.v); g2.fillStyle = '#ffd23f'; g2.fillRect(gp.x - 1.5, gp.y - 38, 3, 38); g2.beginPath(); g2.moveTo(gp.x + 1.5, gp.y - 38); g2.lineTo(gp.x + 22, gp.y - 31); g2.lineTo(gp.x + 1.5, gp.y - 24); g2.fill();   // målflagg
+    { const fp = goalFlagPlan(S, sx, t25); drawGoalFlag(g2, fp, tNow, { t25 }); if (fp.pinned !== flagPinned) { flagPinned = fp.pinned; if (fp.pinned) logEv('bygg', `R145: målflagget festet til skjermkanten (${S.id}, side ${fp.side}/${fp.vside})`); } }   // R145: målflagg med kant, størrelse etter zoom, alltid innenfor skjermen
     // festepunkter
     for (const an of (isGrid(B) ? gridAnchors(S) : siteAnchors(S))) { const p = sx(an.u, an.v); g2.beginPath(); g2.arc(p.x, p.y, 7, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); g2.strokeStyle = '#0b1020'; g2.lineWidth = 2; g2.stroke(); }
     if (getSpan().on) drawSpanTags(S, sx);
@@ -518,7 +523,7 @@ export function createBuildMode({ getStars2 = () => true, getView25 = () => fals
     if (!ok && !loupe.visible) return;
     const sd = cbx.on() ? cbx.insets() : bux.on() ? bux.insets() : null;
     LAY.W = W; LAY.H = H; LAY.top = TOPPX(); LAY.bottom = H - BOTPX(); LAY.insetL = sd ? sd.l : 0; LAY.insetR = sd ? sd.r : 0;
-    const gl = siteGoal(active), gp = toScreen(view, W, H, gl.u, gl.v), fg = LAV[0]; fg.x = gp.x - 8; fg.y = gp.y - 42; fg.w = 34; fg.h = 46;   // målflagget
+    const fp = goalFlagPlan(active, (u, v) => toScreen(view, W, H, u, v), tilt25()), fg = LAV[0]; fg.x = fp.x - 8; fg.y = fp.y - fp.h - 6; fg.w = fp.len + 16; fg.h = fp.h + 10;   // målflagget (R145: samme plassering som tegningen)
     if (!loupe.visible) {   // knappene (og ⚑) som glasset ikke skal dekke: leses én gang når glasset skal vises (zoomknapper, delingsrad, lastknapper i gamle skjermen)
       let n = 1; const q = (e) => { if (!e || !e.offsetWidth) return; const r = e.getBoundingClientRect(); const o = LAV[n] || (LAV[n] = { x: 0, y: 0, w: 0, h: 0 }); o.x = r.left; o.y = r.top; o.w = r.width; o.h = r.height; n++; };
       for (const e of root.querySelectorAll('button')) q(e); q(document.getElementById('qbtn')); LAV.length = n;

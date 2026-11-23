@@ -64,11 +64,6 @@ Fra Rune (rapport v2.135, Nivå 7 · Lekerom, byggeskjermen `leke1`, merket «St
 Krav: (1) når en last er bestått og stedet har flere laster som ikke er bestått, velger PRØV IGJEN (og NESTE PRØV) automatisk neste ubestått last i rekkefølge; ved feil beholdes samme last; (2) resultatkortet sier hvilken last som kommer («Neste last: Kloss») og teller (1/2, 2/2); spilleren kan fortsatt velge last selv (valg for hånd overstyrer og huskes til neste bestått); (3) når alle laster er bestått, vises stedet som ferdig (som i dag) og PRØV IGJEN bruker siste valgte last; (4) lasten som velges automatisk logges med `logEv('bygg', 'neste last: …')`; (5) valg `autonextload` i ⚙ → Spill (standard på); (6) test (node, uten DOM der det går) og NYTT-rad; sjekk i Playwright `devices['iPhone 14']` på Lekerom (`leke1`) og et Byggeskole-sted med to laster, stående.
 Ferdig når: etter bestått Ball i Lekerom bruker neste PRØV automatisk neste last, kortet viser det, valg for hånd virker, og tester og boot er grønne.
 
-### [ ] R145 · Fra tester: Rune · Flagget ser veldig rart ut i byggeskjermen (Bygg · Vippe)
-Fra Rune (rapport v2.143, byggeskjermen `vippe1`, merket «Styring»): flagget (mål-/sjekkpunktmarkøren) ser merkelig ut i byggeskjermen. Må ses i bilde: kan komme fra 2,5D-visningen (R137) eller markørene (R118/R132).
-Krav: (1) gjenskap med Playwright `devices['iPhone 14']` i Vippa og minst ett Bygglab-sted og finn årsaken; (2) flagget tegnes lesbart og riktig plassert i begge visninger (2D og 2,5D), også i Byggeskolen (R101); (3) test som fanger feilen der det går.
-Ferdig når: flagget ser riktig ut i Vippa og i et Bygglab-sted, og tester og boot er grønne.
-
 ### [ ] R142 · Sikkerhetsnett og belønning for nødvendig bygging (deler R138–R141)
 Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) etter 3 feilforsøk på et nødvendig bygg: hint («Prøv en trekant her», spøkelsesbro uthevet); etter 5: knappen VIS MEG som legger ut en ferdig løsning (koster ingen stjerner, logges); (2) bygget beholdes i rommet etter bestått og figuren går over i en liten sekvens (kamera følger over bygget); (3) ekstra stjerne for billig eller lett bygg også i Nivå 2–9; (4) `logEv('bygg', 'påkrevd bygg: bestått etter N forsøk')` og `logEv('bygg', 'hjelp: …')`; (5) test og NYTT-rad.
 Ferdig når: ingen spiller kan sette seg fast på et nødvendig bygg, bygget gir en merkbar belønning, og tester og boot er grønne.
@@ -82,6 +77,11 @@ Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
 
 ## Ferdige punkter
+
+### [x] R145 · Fra tester: Rune · Flagget ser veldig rart ut i byggeskjermen (Bygg · Vippe) (v2.149)
+Fra Rune (rapport v2.143, byggeskjermen `vippe1`, merket «Styring»): flagget (mål-/sjekkpunktmarkøren) ser merkelig ut i byggeskjermen. Må ses i bilde: kan komme fra 2,5D-visningen (R137) eller markørene (R118/R132).
+Krav: (1) gjenskap med Playwright `devices['iPhone 14']` i Vippa og minst ett Bygglab-sted og finn årsaken; (2) flagget tegnes lesbart og riktig plassert i begge visninger (2D og 2,5D), også i Byggeskolen (R101); (3) test som fanger feilen der det går.
+Ferdig når: flagget ser riktig ut i Vippa og i et Bygglab-sted, og tester og boot er grønne.
 
 ### [x] R144 · Fra tester: Rune · Oppdragsteksten ved BYGG-knappen lager rot på skjermen (v2.148)
 Fra Rune (rapport v2.143, `vippe1`): oppdragsteksten (R132) kan fjernes eller dempes, det er mye rot på skjermen, og BYGG-knappen forstås uten den. Ønske.
