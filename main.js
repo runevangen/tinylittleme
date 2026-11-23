@@ -35,6 +35,9 @@ import { SCHOOL, schoolProgress, schoolRead, schoolMark, schoolCardShould, schoo
 import { createSchoolView, schoolMenuHtml } from './byggeskole_view.js';
 import { BYGGING, buildingCards, movedNoticeShould } from './bygging_logic.js';   // R133: BYGGESKOLE og 3D-LAB ligger under VELG BRETT → BYGGING
 import { createBuildingView, buildingGroupHtml } from './bygging_view.js';
+import { isRoomId, loadRoom, roomsAvailable, roomLog } from './rooms_logic.js';   // R153: MINE BRETT og deling med kode (rooms_logic.js, rooms_view.js, rooms_text.js)
+import { createRoomsView, roomsBtnHtml } from './rooms_view.js';
+import { rtx as roomTx } from './rooms_text.js';
 import { createLab3dView } from './grid3d_view.js';   // R130: 3D-laben (egen skjerm: bygg fritt i tre dimensjoner)
 import { LAB3D, WORLD3 } from './grid3d_site.js';
 import { MISSIONS } from './grid3d_missions.js';   // R131: tre 3D-oppdrag (tårn, tripod, bred bro i sidevind)
@@ -181,7 +184,8 @@ localizeLevels(LEVELS, () => lang);   // R147: label/short følger språkvalget 
 const levelParam = new URLSearchParams(location.search).get('level');
 let levelId = levelParam === '' ? 'soverom' : (levelParam ?? store.get('tlm.level', 'bad'));
 let LEVEL = null, levelName = '';
-if (levelId && levelId !== 'soverom') {
+if (isRoomId(levelId)) { LEVEL = loadRoom(store, levelId); levelName = levelId; }   // R153: eget eller hentet brett fra «Mine brett» (lagret på enheten)
+else if (levelId && levelId !== 'soverom') {
   try {
     const r = await fetch(`./levels/${encodeURIComponent(levelId)}.level.json?v=${encodeURIComponent(window.__assetV || VERSION)}`);       // brettet følger versjonen, så et ombygd brett ikke hentes fra mellomlageret
     if (!r.ok) throw new Error(r.status);
@@ -262,6 +266,7 @@ P.slickAccel = +store.get('tlm.slickaccel', P.slickAccel) || P.slickAccel;
 let gatesOn = store.get('tlm.gates', true), gateCamOn = store.get('tlm.gatecam', true);   // gåteverktøy (R60)
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
+let roomsOn = store.get('tlm.roomson', true);   // R153: MINE BRETT i VELG BRETT (bare med tester-kode)
 let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
 let shaderWarm = store.get('tlm.shaderwarm', true);   // R35: full tegning av alt under forvarmingen (admin)
@@ -2116,6 +2121,7 @@ const SETTINGS = [
   fl('crumbs', 'spill', 'Smuler (gylne smuler å samle, gir poeng)', true, () => crumbsOn, kp('tlm.crumbs', (v) => { crumbsOn = v; })),
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, opptrekksrobot og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
+  fl('roomson', 'test', roomTx('nb', 'setting'), true, () => roomsOn, kp('tlm.roomson', (v) => { roomsOn = v; logEv('mine brett', roomLog(v ? 'på' : 'av')); })),
   fl('replies', 'test', 'Vis svar og tellere fra Claude (⚑-boksen)', true, () => repliesOn, kp('tlm.replies', (v) => { repliesOn = v; if (v) refreshInbox(false); else renderInbox(); })),
   fl('combo', 'spill', 'Kombinasjoner: svamp + vann, håndkle + håndkle, tung ting + papirhaug (TA ved siden av)', true, () => COMBO.on, kp('tlm.combo', (v) => { COMBO.on = v; logEv('kombo', v ? 'kombinasjoner på' : 'kombinasjoner av'); })),
   fl('vaultanim', 'spill', 'Stavhopp: egen animasjon (figuren svinger over staven)', true, () => COMBO.vaultAnim, kp('tlm.vaultanim', (v) => { COMBO.vaultAnim = v; logEv('kombo', v ? 'stavhopp-animasjon på' : 'stavhopp-animasjon av'); })),
@@ -3478,7 +3484,14 @@ function buildingPick() {
   const items = cards.map((c) => c === 'school' ? { html: schoolMenuHtml(T, schoolProg(), r2Summary()) } : { html: `<button class="mbtn sec" id="mLab3d">🧊 ${T('lab3d.menu')}<small>${T('lab3d.menu.sub')}</small></button>` });
   return { html: buildingGroupHtml(T('bygging.group'), items), on: { mSchool: () => { unlockAudio(); openSchool('velg brett'); }, mLab3d: () => { unlockAudio(); openLab3d('velg brett'); } } };
 }
-function openPicker() { dv.pickLevel({ levels: levelsShown(), st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, building: buildingPick() }); }
+let roomsV = null;
+const roomsShow = () => roomsAvailable({ on: roomsOn, code: testerCode(), cinema: CINE.on });
+function openRooms() {
+  roomsV = roomsV || createRoomsView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker });
+  roomsV.show();
+}
+function roomsPick(b) { if (!roomsShow()) return b; return { html: (b ? b.html : '') + roomsBtnHtml(lang), on: { ...(b ? b.on : {}), mRooms: () => { unlockAudio(); openRooms(); } } }; }
+function openPicker() { dv.pickLevel({ levels: levelsShown(), st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, building: roomsPick(buildingPick()) }); }
 function showStart(o = {}) {
   menuOpen = true; keys.clear(); touch.x = touch.y = 0; touch.jump = touch.grab = touch.carry = false; saveProgress();
   if (document.pointerLockElement) document.exitPointerLock();

@@ -1,0 +1,30 @@
+// R153: MINE BRETT i nettleser (Playwright, iPhone 14, falsk Supabase): hent fra kode, spill, del, slett. Kjør: NODE_PATH=$(npm root -g) node tools/live_rooms.cjs [skjermbildemappe]
+const { chromium, devices } = require('playwright');
+const http = require('http'), fs = require('fs'), path = require('path');
+const root = path.resolve(__dirname, '..'), out = process.argv[2] || '/tmp';
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.webmanifest': 'application/json' };
+const srv = http.createServer((q, r) => { const f = path.join(root, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); const p = fs.existsSync(f) && fs.statSync(f).isDirectory() ? path.join(f, 'index.html') : f;
+  if (!p.startsWith(root) || !fs.existsSync(p)) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': MIME[path.extname(p)] || 'application/octet-stream', 'Cache-Control': 'no-store' }); fs.createReadStream(p).pipe(r); });
+(async () => {
+  await new Promise((ok) => srv.listen(0, ok)); const port = srv.address().port;
+  const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+  const pg = await (await b.newContext({ ...devices['iPhone 14'] })).newPage(); const errs = [], calls = [];
+  pg.on('pageerror', (e) => errs.push(e.message)); pg.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
+  const lvl = JSON.parse(fs.readFileSync(path.join(root, 'levels/bad.level.json'), 'utf8'));
+  await pg.route('**/rest/v1/rpc/**', async (rt) => { const n = rt.request().url().split('/').pop(); calls.push(n); const j = (o) => rt.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(o) });
+    if (n === 'tlm_get_room') return j({ ok: true, name: 'Badet til Anki', level: lvl }); if (n === 'tlm_share_room') return j({ ok: true, code: JSON.parse(rt.request().postData()).rc }); if (n === 'tlm_delete_room' || n === 'tlm_report_room') return j({ ok: true }); return j({ ok: false }); });
+  await pg.addInitScript(() => { try { localStorage.setItem('tlm.bygging.moved', 'true'); localStorage.setItem('tlm.cleared', JSON.stringify({ 1: 100 })); if (!localStorage.getItem('tlm.tcode')) localStorage.setItem('tlm.tcode', JSON.stringify('rune')); } catch {} });
+  await pg.goto(`http://localhost:${port}/`); await pg.waitForSelector('#mLevels', { timeout: 120000 });
+  await pg.click('#mLevels', { noWaitAfter: true, timeout: 90000 }); await pg.waitForSelector('#mRooms'); await pg.click('#mRooms', { noWaitAfter: true, timeout: 90000 }); await pg.waitForSelector('#rmCode');
+  await pg.screenshot({ path: `${out}/rooms_empty.png` });
+  await pg.fill('#rmCode', 'rm-abcd efgh'); await pg.click('#rmFetch', { noWaitAfter: true, timeout: 90000 }); await pg.waitForSelector('.rmcard');
+  await pg.click('.rmcard button[data-a="share"]', { noWaitAfter: true, timeout: 90000 }); await pg.waitForFunction(() => /RM-ABCDEFGH/.test(document.body.innerText));
+  await pg.screenshot({ path: `${out}/rooms_list.png` });
+  const id = await pg.evaluate(() => JSON.parse(localStorage.getItem('tlm.rooms'))[0].id); console.log('id', id, 'kall', calls.join(','));
+  await pg.click('.rmcard button[data-a="play"]', { noWaitAfter: true, timeout: 90000 }); await pg.waitForFunction(() => window.__game && window.__game.LEVEL && location.search.includes('mine-'), null, { timeout: 120000 });
+  console.log('spiller', await pg.evaluate(() => location.search + ' · ' + window.__game.LEVEL.name)); await pg.waitForTimeout(3000); await pg.screenshot({ path: `${out}/rooms_play.png` });
+  await pg.goto(`http://localhost:${port}/`); await pg.waitForSelector('#mLevels'); await pg.click('#mLevels', { noWaitAfter: true, timeout: 90000 }); await pg.click('#mRooms', { noWaitAfter: true, timeout: 90000 }); await pg.waitForSelector('.rmcard');
+  await pg.evaluate(() => { const b = () => document.querySelector('.rmcard button[data-a="del"]'); b().click(); b().click(); });   // to trykk raskt (armering varer 4 s) await pg.waitForFunction(() => document.querySelector('#rmEmpty'), null, { timeout: 8000 }).catch(async () => { console.log('DEL-DEBUG', await pg.evaluate(() => document.querySelector('#rmMsg').textContent + ' | ' + localStorage.getItem('tlm.rooms'))); await pg.screenshot({ path: out + '/rooms_dbg.png' }); throw new Error('sletting'); });
+  const left = await pg.evaluate(() => [localStorage.getItem('tlm.rooms'), Object.keys(localStorage).filter((k) => k.startsWith('tlm.room.') && localStorage.getItem(k) !== 'null')]); console.log('etter sletting', JSON.stringify(left), 'kall', calls.join(','));
+  console.log(errs.length ? 'FEIL: ' + errs.slice(0, 3).join(' | ') : 'ingen konsollfeil'); await b.close(); srv.close(); process.exit(errs.length ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(1); });
