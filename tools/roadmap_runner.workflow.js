@@ -3,10 +3,11 @@ export const meta = {
   description: 'Veikart-runner: bygg punkter (args.items) parallelt i worktrees, kritiker, integrasjon til main ett om gangen',
   phases: [{ title: 'Rydd' }, { title: 'Bygg' }, { title: 'Kritiker' }, { title: 'Integrer' }],
 }
-// Veikart-runner (tinylittleme). Start med Workflow({ scriptPath: 'tools/roadmap_runner.workflow.js', args: { items: [{ id: 'R39', deps: [] }] } }).
+// Veikart-runner (tinylittleme). Start med Workflow({ scriptPath: 'tools/roadmap_runner.workflow.js', args: { items: [{ id: 'R39', deps: [] }], branch: '<øktas arbeidsgren>' } }).
 // Se docs/TILBAKEMELDING.md («Løpende behandling») og CLAUDE.md. Hver id må finnes som «### [ ] <id> · …» i docs/ROADMAP.md.
 const ROUNDS = 6, PER_ROUND = 12, MAX_TRIES = 2
 const REPO = '/home/user/tinylittleme'
+const BRANCH = String(args?.branch || 'claude/intelligent-curie-4w2bti')   // arbeidsgrenen til økta som kjører runneren (args.branch); integrasjonen pusher til main og til denne
 // args.items = [{ id: 'R39', deps: [] }, …] i prioritert rekkefølge (tester-saker først). Maks 5 per kjøring anbefales.
 const ITEMS = (Array.isArray(args?.items) ? args.items : []).map((i) => ({ id: String(i.id), deps: Array.isArray(i.deps) ? i.deps.map(String) : [] }))
 if (!ITEMS.length) throw new Error('args.items mangler')
@@ -44,7 +45,7 @@ for (let round = 1; round <= ROUNDS; round++) {
       }
       if (!v || !v.approve) return { it, ok: false, why: v ? v.issues.join('; ') : 'kritiker feilet' }
       return await enqueue(async () => {
-        const m = await agent(`Integrer road/${it.id} i primærsjekken ${REPO} (branch claude/intelligent-curie-4w2bti). Først \`git fetch origin main\` og slå sammen origin/main (en annen økt pusher også til main). Så \`git merge road/${it.id}\`, løs konflikter (behold begge sider). Sett VERSION i version.js til høyeste versjon på main + 0.01 (ikke gjenbruk et nummer), legg linje øverst i CHANGELOG.md, flytt ${it.id} til «Ferdige punkter» med versjon i docs/ROADMAP.md ([x]). npm test må være grønn OG oppstartstesten må være grønn: kjør NODE_PATH=$(npm root -g) npm run boot (åpner spillet i en ekte nettleser; fanger feil som npm test ikke ser, f.eks. tom version.js eller manglende eksport). Sjekk også at version.js inneholder export const VERSION. Ellers abort og merged=false. Commit med attribusjonslinjene fra system-reminder, så \`git push origin HEAD:main\` (hent og slå sammen på nytt hvis avvist) og \`git push -u origin claude/intelligent-curie-4w2bti\`. Fjern worktree ${wt} og branch road/${it.id}.`, { label: `integrer ${it.id}`, phase: 'Integrer', schema: MERGE })
+        const m = await agent(`Integrer road/${it.id} i primærsjekken ${REPO} (branch ${BRANCH}). Først \`git fetch origin main\` og slå sammen origin/main (en annen økt pusher også til main). Så \`git merge road/${it.id}\`, løs konflikter (behold begge sider). Sett VERSION i version.js til høyeste versjon på main + 0.01 (ikke gjenbruk et nummer), legg linje øverst i CHANGELOG.md, flytt ${it.id} til «Ferdige punkter» med versjon i docs/ROADMAP.md ([x]). npm test må være grønn OG oppstartstesten må være grønn: kjør NODE_PATH=$(npm root -g) npm run boot (åpner spillet i en ekte nettleser; fanger feil som npm test ikke ser, f.eks. tom version.js eller manglende eksport). Sjekk også at version.js inneholder export const VERSION. Ellers abort og merged=false. Commit med attribusjonslinjene fra system-reminder, så \`git push origin HEAD:main\` (hent og slå sammen på nytt hvis avvist) og \`git push -u origin ${BRANCH}\`. Fjern worktree ${wt} og branch road/${it.id}.`, { label: `integrer ${it.id}`, phase: 'Integrer', schema: MERGE })
         return { it, ok: !!(m && m.merged), why: m ? m.note : 'integrasjon feilet', version: m && m.version }
       })
     })
