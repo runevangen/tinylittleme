@@ -11,6 +11,17 @@ export function promptText() {
 Du får 2–4 vanlige mobilbilder av ett sted: et rom innendørs, eller et lite avgrenset område utendørs (terrasse, hjørne av hagen, liten lekeplass). Lag en **scene** (JSON som følger \`docs/scene.schema.json\`) som spillet gjør om til et 3D-brett.
 Svar bare med JSON. **Personer, ansikter og dyr skal aldri med i scenen** (ikke som ting, navn eller notater); hopp over dem, og beskriv aldri hvem som bor eller er der. Kontroller resultatet med \`node tools/validate_scene.mjs\` før det brukes.
 
+## Gjør rommet gjenkjennelig (viktigst)
+Spilleren skal kjenne igjen sitt eget rom. Ta det på alvor: et brett som bare er noen bokser kastet inn, mislykkes.
+- **Skallet først.** \`room.floor\`, \`room.walls\` og \`room.ceiling\` får materiale og farge slik de faktisk ser ut (veggfarge, gulvbelegg, tak). Er veggene ulike (en panelvegg, en malt vegg), legg tynne \`decor: true\`-bokser (1–2 cm) langs veggen i riktig farge. Legg inn **hvert vindu** i \`windows\` med riktig vegg, plassering og størrelse, og **hver dør** som en tynn boks (4–8 cm tykk, ca. 200 cm høy, bredde ca. 80–90 cm), aldri med en stor grunnflate.
+- **Lister er tynne striper.** Taklist, fotlist og gerikt er 2–10 cm brede striper langs vegg, tak eller dør. De dekker aldri hele gulvflaten.
+- **Store møbler, så middels, så småting.** Ta med alle store møbler (sofa, seng, skrivebord, TV-benk, hyller, bord) med riktige mål, deretter middels ting (kofferter, krakker, strykebrett, lamper) og til slutt tydelige småting som står oppå (maks ca. 60 ting totalt). Det er rotet og møblene som gjør rommet gjenkjennelig.
+- **Plassér riktig.** Det som står mot en vegg, har boksen helt inntil veggen (f.eks. \`x0: 0\`). Det som står på gulvet har \`y0: 0\`. Det som står oppå et møbel har \`y0\` lik møbelets topp. Typiske høyder: sofa- og sengesete 40–50 cm, skrivebord 72–76 cm, spisebord 74 cm, sidebord 40–55 cm, TV-benk 50–90 cm, bokhylle 150–200 cm.
+- **Fargene er tingenes ekte farger.** Mobilbilder inne er ofte varme og mørke. Velg fargen tingen ville hatt i dagslys, ikke bildets fargestikk.
+- **Ikke finn på.** Bare ting som sees på bildene. Er du usikker, sett \`confidence\` under 0,5. Bilder, rammer og plakater er pyntebokser (\`decor: true\`, tynne, 2 cm), og du gjengir aldri hva som er avbildet (ingen personer).
+- **Oppgitte mål er fasit.** Oppgir spilleren romets bredde, dybde eller høyde, bruker du dem nøyaktig som \`room.width\`, \`room.depth\` og \`room.height\`, og skalerer alt annet etter dem.
+- **Målet** (\`goal\`) legges på et fast møbel mellom 40 og 160 cm over gulvet, aldri på en dør, en liste eller en løs småting.
+
 ## Mål og koordinater
 - Alle mål i **cm**. Origo i stedets nordvestre hjørne (utendørs: avgrens stedet med usynlige vegger rundt det du ser; hekker, gjerder og murer er egne ting): x mot øst, z mot sør (mot døra), y opp fra gulvet.
 - Finn skala fra kjente gjenstander: toalettrull ≈ 10 × 10 cm, flis ≈ 20 × 20 cm, do-sete ≈ 40 cm over gulvet, dør ≈ 200 cm.

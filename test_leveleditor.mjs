@@ -1,7 +1,7 @@
 // node test_leveleditor.mjs (R151): tjenesten for bildetolkning, med stub i stedet for Claude (ingen nett, ingen nøkkel).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { LE, REASONS, validateRequest, normAnswers, buildClaudeRequest, parseClaudeResponse, costOf, scrubScene, handleTolk, userText, startTolk, pollTolk, handleJobRequest, JOB } from './leveleditor_logic.js';
+import { LE, REASONS, validateRequest, normAnswers, buildClaudeRequest, parseClaudeResponse, costOf, scrubScene, handleTolk, userText, normMeasures, parseMeasure, fitToMeasures, startTolk, pollTolk, handleJobRequest, JOB } from './leveleditor_logic.js';
 import { validateScene } from './tools/validate_scene.mjs';
 import { promptText } from './tools/make_prompt.mjs';
 import { checkScene } from './tools/scene_pipeline.mjs';
@@ -33,7 +33,7 @@ assert.equal(validateRequest(req({ images: [img(), img(), img(), img(), img()] }
 assert.equal(validateRequest(req({ code: 'x' })).reason, 'kode');
 assert.equal(validateRequest(req({ images: [img(), { media_type: 'image/gif', data: 'A'.repeat(400) }] })).reason, 'bilder');
 assert.equal(validateRequest(req({ images: [img(), { media_type: 'image/png', data: 'A'.repeat(LE.maxImageB64 + 1) }] })).reason, 'for_stor');
-assert.deepEqual(normAnswers({ goal: 'x', difficulty: 'hard', theme: '<b>hei</b>\n`x`' }), { goal: 'top', difficulty: 'hard', theme: 'b hei /b x', foes: true, outdoor: false });
+assert.deepEqual(normAnswers({ goal: 'x', difficulty: 'hard', theme: '<b>hei</b>\n`x`' }), { goal: 'top', difficulty: 'hard', theme: 'b hei /b x', foes: true, outdoor: false, measures: null });
 // Claude-kallet: bilder + strukturert utdata, ingen $schema i input_schema
 const cb = buildClaudeRequest({ system: P, images: validateRequest(req()).images, answers: req().answers, schema });
 assert.equal(cb.messages[0].content.filter((c) => c.type === 'image').length, 2);
@@ -100,4 +100,30 @@ assert.ok(!/create policy/i.test(sql) && !/bytea|image|data text/i.test(sql), 'i
   // krasj i selve tolkningen gir feil i jobben
   jobs.clear(); bg = []; const dk = jd(); dk.tolk.callClaude = async () => { throw new Error('x'); }; dk.tolk.reserve = async () => ({ ok: true, id: 'u9' }); await handleJobRequest(req(), dk); await Promise.all(bg);
   assert.equal((await handleJobRequest({ code: 'rune', job: U }, dk)).body.ok, false); }
+// R168: romtall, selvretting og modellbytte
+{ assert.deepEqual(normMeasures({ w: '3,5', d: '4.2', h: '240' }), { w: 350, d: 420, h: 240 }); assert.equal(normMeasures({ w: 'abc' }), null); assert.equal(normMeasures(null), null);
+  assert.equal(parseMeasure('50', 100, 1500), null, 'for lite'); assert.equal(parseMeasure('99999', 100, 1500), null, 'for stort'); assert.equal(parseMeasure('4', 100, 1500), 400, 'små tall regnes som meter');
+  assert.deepEqual(normAnswers({ measures: { w: '3.5' } }).measures, { w: 350, d: null, h: null });
+  assert.ok(/bredde 350 cm/.test(userText({ measures: { w: 350, d: null, h: 250 } }, 3)) && /takhøyde 250 cm/.test(userText({ measures: { w: 350, h: 250 } }, 3)), 'romtall står i spørsmålet til modellen');
+  assert.ok(!/Spilleren har målt/.test(userText({}, 3)), 'ingen romtall: ingen målelinje');
+  // skalering: rommet får de oppgitte målene, og tingene følger med
+  const sc = JSON.parse(JSON.stringify(bad)), W = sc.room.width, D = sc.room.depth, o0 = sc.objects[0].box.slice();
+  const f = fitToMeasures(sc, { w: W * 2, d: D, h: null }); assert.equal(f.room.width, W * 2); assert.equal(f.room.depth, D); assert.equal(f.objects[0].box[1], Math.round(o0[1] * 2 * 10) / 10); assert.equal(f.objects[0].box[4], o0[4], 'dybden uendret');
+  assert.equal(fitToMeasures(sc, { w: W, d: D, h: null }), sc, 'ingen endring når målene stemmer'); assert.equal(sc.room.width, W, 'originalen røres ikke');
+  assert.equal(validateScene(f).errors.length, validateScene(sc).errors.length, 'skalert scene er like gyldig');
+  // handleTolk bruker romtallene på det modellen svarer
+  const dm = mkDeps(); const out = await handleTolk(req({ answers: { measures: { w: W + 100 } } }), dm); assert.equal(out.body.ok, true); assert.equal(out.body.scene.room.width, W + 100, 'romtallet er fasit');
+  // modell: standard fra LE, kan overstyres, og fallback hvis den nye modellen avvises
+  assert.equal(dm.log.body.model, LE.model); const d2 = mkDeps({ model: 'claude-test-1' }); await handleTolk(req(), d2); assert.equal(d2.log.body.model, 'claude-test-1');
+  const seen = []; const d3 = mkDeps({ callClaude: async (b) => { seen.push(b.model); if (b.model === LE.model) throw new Error('claude 404 model not found'); return stubClaude()(b); } });
+  const o3 = await handleTolk(req(), d3); assert.equal(o3.body.ok, true); assert.deepEqual(seen, [LE.model, LE.fallbackModel], 'avvist modell: prøver fallback én gang'); assert.equal(o3.body.usage.model, LE.fallbackModel);
+  // selvretting: første svar har en feil (ugyldig farge), andre svar er rettet; feilene sendes tilbake, kostnaden teller begge
+  const broken = JSON.parse(JSON.stringify(bad)); broken.objects[0].color = 'rød'; let n = 0, second = null;
+  const d4 = mkDeps({ callClaude: async (b) => { n++; if (n === 1) return { content: [{ type: 'tool_use', id: 'tu1', name: 'lever_scene', input: broken }], usage: { input_tokens: 5000, output_tokens: 3000 } }; second = b; return stubClaude()(b); } });
+  const o4 = await handleTolk(req(), d4); assert.equal(o4.body.ok, true, 'selvretting gir en gyldig scene'); assert.equal(n, 2); assert.equal(o4.body.usage.repaired, 1);
+  const last = second.messages[second.messages.length - 1]; assert.equal(last.role, 'user'); assert.equal(last.content[0].type, 'tool_result'); assert.equal(last.content[0].tool_use_id, 'tu1'); assert.ok(/color må være/.test(last.content[0].content), 'feilen står i svaret til modellen');
+  assert.ok(o4.body.usage.cost_usd > costOf({ in: 5000, out: 3000 }), 'begge kallene teller i kostnaden');
+  // ...men bare ett nytt forsøk: er den fortsatt ugyldig, gis feil (ikke evig løkke)
+  let m = 0; const d5 = mkDeps({ callClaude: async () => { m++; return { content: [{ type: 'tool_use', id: 'x', name: 'lever_scene', input: broken }], usage: { input_tokens: 10, output_tokens: 10 } }; } });
+  const o5 = await handleTolk(req(), d5); assert.equal(o5.body.ok, false); assert.equal(m, 2, 'maks ett nytt forsøk'); assert.equal(d5.log.finish[0].ok, false); }
 console.log('leveleditor-tjenesten ok');

@@ -15,6 +15,7 @@ const CSS = `#start.rml{justify-content:flex-start;overflow-y:auto;-webkit-overf
 #start .ledmsg{min-height:20px;max-width:min(340px,88vw);font:600 14px/1.3 system-ui;color:#ffd9a0;text-align:center}
 #start .ledin{width:min(320px,84vw);box-sizing:border-box;font:700 17px system-ui;text-align:center;padding:12px;border-radius:10px;border:2px solid #ffffff55;background:#0b1226;color:#fff}
 #start canvas.ledmap{position:static;inset:auto;display:block;width:min(340px,88vw);border-radius:10px;background:#0b1226;touch-action:manipulation}
+#start .ledmeas{display:flex;flex-direction:column;gap:4px;font-size:13px;opacity:.9;flex:1;min-width:0}#start .ledmeas .ledin{width:100%;box-sizing:border-box;text-align:center}
 #start .ledarrows{display:grid;grid-template-columns:repeat(3,56px);gap:6px;justify-content:center}#start .ledarrows .mbtn{width:auto;min-width:0;padding:0;height:52px;font-size:22px}`;
 
 // Skalerer et bilde (File/Blob) til lengste side LE.maxDim og JPEG. Gir { media_type, data, url } eller null. Bildet ligger bare i minnet.
@@ -50,7 +51,7 @@ export function createLeditorView(ctx) {
   let S = null, busy = false, abort = null, tick = null;
   const T = (k, ...a) => ltx(L(), k, ...a);
   const css = () => { if (!document.getElementById('ledcss')) { const s = document.createElement('style'); s.id = 'ledcss'; s.textContent = CSS; document.head.appendChild(s); } };
-  const fresh = () => ({ photos: [], answers: { goal: 'top', difficulty: 'medium', theme: '', foes: true }, scene: null, room: null, savedId: '', name: '', usage: { cost_usd: 0, ms: 0 }, edits: 0, undo: undoStack(), sel: '', code: '', job: '' });
+  const fresh = () => ({ photos: [], answers: { goal: 'top', difficulty: 'medium', theme: '', foes: true, measures: { w: '', d: '', h: '' } }, scene: null, room: null, savedId: '', name: '', usage: { cost_usd: 0, ms: 0 }, edits: 0, undo: undoStack(), sel: '', code: '', job: '' });
   const root = () => { css(); const el = $('start'); el.classList.add('rml'); return el; };
   const msg = (t) => { const m = $('ledMsg'); if (m) m.textContent = t || ''; };
   const consented = () => { try { return localStorage.getItem(LED.consentKey) === '1'; } catch { return false; } };
@@ -108,10 +109,13 @@ export function createLeditorView(ctx) {
       + grp('qDiff', 'difficulty', ['easy', 'medium', 'hard'].map((v) => ({ v, t: lsub(L(), 'diff', v) })))
       + grp('qTheme', 'theme', LED.themes.map((v) => ({ v, t: lsub(L(), 'theme', v) })))
       + grp('qFoes', 'foes', [{ v: true, t: lsub(L(), 'foes', 'on') }, { v: false, t: lsub(L(), 'foes', 'off') }])
+      + `<p class="tag">${esc(T('measuresH'))}</p><p class="tag" style="max-width:320px;margin-top:-4px">${esc(T('measuresHelp'))}</p>`
+      + `<div class="ledrow" id="ledMeas">${['w', 'd', 'h'].map((k) => `<label class="ledmeas">${esc(T('meas_' + k))}<input class="ledin" data-m="${k}" inputmode="decimal" autocomplete="off" placeholder="${esc(T('measPh'))}" value="${esc((A.measures || {})[k] || '')}"></label>`).join('')}</div>`
       + `<div class="ledmsg" id="ledMsg"></div><button class="mbtn" id="ledMake">${esc(T('make'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
     el.querySelectorAll('.ledrow[data-k]').forEach((row) => row.querySelectorAll('button').forEach((b) => {
       b.onclick = () => { const k = row.dataset.k; A[k] = k === 'foes' ? b.dataset.v === 'true' : b.dataset.v; row.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
     }));
+    el.querySelectorAll('#ledMeas input').forEach((i) => { i.oninput = () => { A.measures = A.measures || {}; A.measures[i.dataset.m] = i.value; }; });
     $('ledMake').onclick = make; $('ledBack').onclick = photos;
   }
 
@@ -123,7 +127,7 @@ export function createLeditorView(ctx) {
     el.innerHTML = `<h1>${esc(T('title'))}</h1><p class="tag" id="ledStep">${esc(T('working')[0])}</p><p class="tag" id="ledEl"></p><p class="tag" style="max-width:300px">${esc(T('workingNote'))}</p><button class="mbtn sec" id="ledCancel">${esc(T('cancel'))}</button>`;
     $('ledCancel').onclick = () => abort?.abort();
     tick = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); const e = $('ledEl'); if (e) e.textContent = T('elapsed', s); const k = s < 4 ? 0 : s < 25 ? 1 : 2; if (k !== step) { step = k; const st2 = $('ledStep'); if (st2) st2.textContent = T('working')[k]; } }, 500);
-    logEv?.('leveleditor', `sender ${S.photos.length} bilder`);
+    logEv?.('leveleditor', `sender ${S.photos.length} bilder${S.answers.measures && (S.answers.measures.w || S.answers.measures.d || S.answers.measures.h) ? ' (med romtall)' : ''}`);
     const tolk = (job) => callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers }, { signal: abort?.signal, job, onJob: (id) => { S.job = id; logEv?.('leveleditor', `jobb startet ${String(id).slice(0, 8)}`); } });
     if (S.job) logEv?.('leveleditor', `henter jobb ${String(S.job).slice(0, 8)} på nytt (uten å sende bildene)`);
     let res = await tolk(S.job || '');
