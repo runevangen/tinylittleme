@@ -92,7 +92,7 @@ export function validateRequest(body) {
   return { ok: true, code, images: imgs.map((i) => ({ media_type: i.media_type, data: i.data })), answers: normAnswers(body.answers) };
 }
 
-export function userText(answers, n) {
+export function userText(answers, n, compact = false) {
   const a = normAnswers(answers);
   return [
     `Her er ${n} mobilbilder av samme sted (${a.outdoor ? 'utendørs' : 'innendørs eller utendørs: avgjør selv'}). Bilde 1–${n} har nummer 0–${n - 1} i \`photos\`.`,
@@ -101,12 +101,13 @@ export function userText(answers, n) {
     a.foes ? 'Fiender og farer er på: bruk farer (hazards) der bildene viser dem.' : 'Ingen fiender og så få farer som mulig (ingen hazards uten at stedet krever dem).',
     a.measures ? `Spilleren har målt rommet: ${[a.measures.w ? `bredde ${a.measures.w} cm` : '', a.measures.d ? `dybde ${a.measures.d} cm` : '', a.measures.h ? `takhøyde ${a.measures.h} cm` : ''].filter(Boolean).join(', ')}. Bruk dem nøyaktig som room.width/depth/height og skaler alt annet etter dem.` : '',
     'Gjør rommet gjenkjennelig (se instruksen): skall, alle vinduer og dører, store møbler og tydelige småting med riktige mål og plassering.',
+    compact ? 'VIKTIG: forrige forsøk ble for langt og ble kuttet. Lever en KORT scene: maks 35 ting, id-er på maks 12 tegn, ingen note, ingen photos, ingen confidence, og start med units, name og room. Slå sammen like småting.' : '',
     'Ikke ta med personer, ansikter eller dyr. Svar ved å kalle verktøyet «lever_scene».',
   ].filter(Boolean).join('\n');
 }
 
 // Claude-kallet med bilder og strukturert utdata (tvunget verktøykall med scene-skjemaet).
-export function buildClaudeRequest({ system, images, answers, schema, model = LE.model }) {
+export function buildClaudeRequest({ system, images, answers, schema, model = LE.model, compact = false }) {
   const { $schema, $id, ...inputSchema } = schema || {};
   return {
     model, max_tokens: LE.maxTokens, system,
@@ -114,7 +115,7 @@ export function buildClaudeRequest({ system, images, answers, schema, model = LE
     tool_choice: { type: 'tool', name: 'lever_scene' },
     messages: [{ role: 'user', content: [
       ...images.map((im) => ({ type: 'image', source: { type: 'base64', media_type: im.media_type, data: im.data } })),
-      { type: 'text', text: userText(answers, images.length) },
+      { type: 'text', text: userText(answers, images.length, compact) },
     ] }],
   };
 }
@@ -122,8 +123,9 @@ export function buildClaudeRequest({ system, images, answers, schema, model = LE
 export function parseClaudeResponse(resp) {
   const block = (resp && Array.isArray(resp.content) ? resp.content : []).find((b) => b && b.type === 'tool_use' && b.name === 'lever_scene');
   const usage = resp && resp.usage ? { in: resp.usage.input_tokens || 0, out: resp.usage.output_tokens || 0 } : { in: 0, out: 0 };
-  if (!block || !block.input || typeof block.input !== 'object') return { ok: false, reason: 'tolkning', usage };
-  return { ok: true, scene: block.input, usage };
+  const stop = resp && typeof resp.stop_reason === 'string' ? resp.stop_reason : '';
+  if (!block || !block.input || typeof block.input !== 'object') return { ok: false, reason: 'tolkning', usage, stop };
+  return { ok: true, scene: block.input, usage, stop };
 }
 export const costOf = (u, p = LE.price) => +(((u.in || 0) * p.inPerM + (u.out || 0) * p.outPerM) / 1e6).toFixed(4);
 
@@ -170,11 +172,20 @@ export async function handleTolk(body, deps) {
   let resp;
   try { resp = await call(req); }
   catch { await done(false, { reason: 'nett' }); return { status: REASONS.nett.status, body: { ok: false, reason: 'nett', message: REASONS.nett.text } }; }
-  let p = parseClaudeResponse(resp), usage = p.usage;
+  let p = parseClaudeResponse(resp), usage = p.usage, truncated = 0;
+  // R170: kuttet svar (max_tokens): scenen er ufullstendig. Selvretting hjelper ikke; be i stedet om en KORT scene i et nytt kall (kostnaden teller begge)
+  const incomplete = (pp) => !pp.ok || pp.stop === 'max_tokens' || !pp.scene || typeof pp.scene !== 'object' || !pp.scene.room || pp.scene.units === undefined;
+  if (incomplete(p) && p.stop === 'max_tokens') {
+    truncated = 1;
+    try {
+      const rc = await call(buildClaudeRequest({ system: deps.system, images: v.images, answers: v.answers, schema: deps.schema, model: usedModel, compact: true }));
+      const pc = parseClaudeResponse(rc); usage = sumUsage(usage, pc.usage); resp = rc; p = pc;
+    } catch { /* beholder det første svaret (ugyldig) */ }
+  }
   const prep = (pp) => { const sc = scrubScene(pp.scene).scene; const fit = v.answers.measures ? fitToMeasures(sc, v.answers.measures) : sc; return { scene: fit, val: deps.validate(fit) }; };
   let out = p.ok ? prep(p) : null;
   // selvretting: send feilene tilbake (bildene ligger fortsatt i forespørselen) og be om en rettet scene, én gang
-  if (p.ok && out.val.errors.length) {
+  if (p.ok && p.stop !== 'max_tokens' && out.val.errors.length) {
     const block = (resp.content || []).find((b) => b && b.type === 'tool_use' && b.name === 'lever_scene');
     const fix = { ...req, model: usedModel, messages: [...req.messages,
       { role: 'assistant', content: resp.content },
@@ -183,14 +194,14 @@ export async function handleTolk(body, deps) {
   }
   v.images.length = 0; body.images = null;   // slipp bildene straks (R151 krav 4)
   const cost = costOf(usage);
-  if (!p.ok || !out) { await done(false, { cost, reason: 'tolkning' }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text } }; }
+  if (!p.ok || !out || p.stop === 'max_tokens') { await done(false, { cost, reason: 'tolkning' }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, diag: { stop: p.stop || '', tokens_out: usage.out || 0, truncated } } }; }
   const { scene, val } = out;
-  if (val.errors.length) { await done(false, { cost, reason: 'tolkning', warnings: val.warns.length }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, errors: val.errors.slice(0, 8) } }; }
+  if (val.errors.length) { await done(false, { cost, reason: 'tolkning', warnings: val.warns.length }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, errors: val.errors.slice(0, 8), diag: { stop: p.stop || '', tokens_out: usage.out || 0, truncated, repaired } } }; }
   let check = { ran: false };
   try { check = (await deps.check(scene)) || check; } catch { check = { ran: false, why: 'feil' }; }
   const ms = (deps.now ? deps.now() : Date.now()) - t0, bot = check.ran ? (check.solvable ? 'vei' : 'ingen_vei') : 'ikke_kjort';
   await done(true, { cost, ms, warnings: val.warns.length, bot });
-  return { status: 200, body: { ok: true, scene, warnings: val.warns, check, usage: { cost_usd: cost, ms, model: usedModel, repaired }, left: { month: rsv.left_month, code: rsv.left_code } } };
+  return { status: 200, body: { ok: true, scene, warnings: val.warns, check, usage: { cost_usd: cost, ms, model: usedModel, repaired, truncated, tokens_out: usage.out || 0 }, left: { month: rsv.left_month, code: rsv.left_code } } };
 }
 
 // ---------- R164: svar raskt, hent resultatet etterpå ----------

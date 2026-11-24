@@ -20,6 +20,7 @@ Spilleren skal kjenne igjen sitt eget rom. Ta det på alvor: et brett som bare e
 - **Fargene er tingenes ekte farger.** Mobilbilder inne er ofte varme og mørke. Velg fargen tingen ville hatt i dagslys, ikke bildets fargestikk.
 - **Ikke finn på.** Bare ting som sees på bildene. Er du usikker, sett \`confidence\` under 0,5. Bilder, rammer og plakater er pyntebokser (\`decor: true\`, tynne, 2 cm), og du gjengir aldri hva som er avbildet (ingen personer).
 - **Oppgitte mål er fasit.** Oppgir spilleren romets bredde, dybde eller høyde, bruker du dem nøyaktig som \`room.width\`, \`room.depth\` og \`room.height\`, og skalerer alt annet etter dem.
+- **Hold svaret kort.** Svaret kuttes hvis det blir for langt. Maks 45 ting (slå sammen like småting til én boks), id-er på maks 14 tegn, ingen \`note\`, ingen \`photos\`, \`confidence\` bare når den er under 0,5, ingen forklaringer. Start med \`units\`, \`name\` og \`room\`.
 - **Målet** (\`goal\`) legges på et fast møbel mellom 40 og 160 cm over gulvet, aldri på en dør, en liste eller en løs småting.
 
 ## Mål og koordinater

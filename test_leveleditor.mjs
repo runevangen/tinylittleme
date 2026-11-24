@@ -126,4 +126,11 @@ assert.ok(!/create policy/i.test(sql) && !/bytea|image|data text/i.test(sql), 'i
   // ...men bare ett nytt forsøk: er den fortsatt ugyldig, gis feil (ikke evig løkke)
   let m = 0; const d5 = mkDeps({ callClaude: async () => { m++; return { content: [{ type: 'tool_use', id: 'x', name: 'lever_scene', input: broken }], usage: { input_tokens: 10, output_tokens: 10 } }; } });
   const o5 = await handleTolk(req(), d5); assert.equal(o5.body.ok, false); assert.equal(m, 2, 'maks ett nytt forsøk'); assert.equal(d5.log.finish[0].ok, false); }
+// R170: kuttet svar (stop_reason max_tokens) gir ett nytt, KORT kall i stedet for selvretting; fortsatt kuttet gir feil med diagnose (uten innhold)
+{ const cut = { content: [{ type: 'tool_use', id: 'c1', name: 'lever_scene', input: { name: 'delvis' } }], stop_reason: 'max_tokens', usage: { input_tokens: 5000, output_tokens: 16000 } };
+  let n = 0, last = null; const d6 = mkDeps({ callClaude: async (b) => { n++; last = b; if (n === 1) return cut; return { ...(await stubClaude()(b)), stop_reason: 'tool_use' }; } });
+  const o6 = await handleTolk(req(), d6); assert.equal(o6.body.ok, true, 'kort nytt forsøk gir en scene'); assert.equal(n, 2); assert.equal(o6.body.usage.truncated, 1); assert.equal(o6.body.usage.repaired, 0, 'ikke selvretting av en kuttet scene');
+  assert.ok(/KORT scene/.test(last.messages[0].content.find((c) => c.type === 'text').text), 'det andre kallet ber om en kort scene'); assert.ok(o6.body.usage.cost_usd > costOf({ in: 5000, out: 16000 }), 'begge kallene teller');
+  let m = 0; const d7 = mkDeps({ callClaude: async () => { m++; return cut; } }); const o7 = await handleTolk(req(), d7);
+  assert.equal(o7.body.ok, false); assert.equal(m, 2, 'maks ett kort nytt forsøk'); assert.equal(o7.body.diag.stop, 'max_tokens'); assert.equal(o7.body.diag.truncated, 1); assert.ok(!JSON.stringify(o7.body).includes('delvis'), 'diagnosen har ikke innhold fra bildene'); }
 console.log('leveleditor-tjenesten ok');

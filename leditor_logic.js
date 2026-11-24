@@ -61,7 +61,7 @@ export async function callTolk({ code, images, answers }, { fetchFn = globalThis
   const failOf = (r, extra = {}) => {
     const unreadable = !!r.res.ok && !r.parsed;   // svar 200 som ikke kunne leses (nettet falt ut underveis): regnes som nettfeil og kan prøves igjen
     const reason = unreadable ? 'nett' : r.d && REASON_KEYS.includes(r.d.reason) ? r.d.reason : (r.res.status === 401 || r.res.status === 403 ? 'kode' : 'feil');
-    return { ok: false, reason, status: r.res.status, unreadable, ms: ms(), ...extra };
+    return { ok: false, reason, status: r.res.status, unreadable, ms: ms(), ...(r.d && r.d.diag ? { diag: r.d.diag } : {}), ...extra };
   };
   try {
     let jobId = job;

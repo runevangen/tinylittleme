@@ -118,6 +118,15 @@ Fra Rune (skjermbilde v2.156, Nivå 5, 2,5D-visning, materialene TRE/STÅL/TAU, 
 Krav: (1) gjenskap med Playwright `devices['iPhone 14']` i Nivå 5 og i et Bygglab-sted: legg stenger og kuler, fjern dem (angre, slett, trykk to ganger), bytt materiale, og se om rester blir hengende i 2D og 2,5D; (2) etter fjerning er modellen og tegningen like: ingen spøkelsesstenger, kuler eller etiketter; (3) ⚑, ←, ⋯ og PRØV svarer alltid (finn hva som stjeler trykkene: usynlig lag, overlay som ikke fjernes, feil i hendelseshåndtering), også etter mange rydde-handlinger; (4) oppdragsteksten ligger ikke igjen når byggingen har startet, og TIL/FRA-etiketter flytter seg bort fra knuter; (5) test som rydder mange ganger og sjekker at knappene fortsatt svarer; (6) gjelder også Byggeskolen (R101).
 Ferdig når: feilen er gjenskapt og rettet i Nivå 5 og et Bygglab-sted, og tester og boot er grønne.
 
+### [x] R170 · Fra tester: Rune · Tolkningen ga ingen brett: svaret ble kuttet (v2.182)
+Rapport: «Tolkningen gav ingen brett» to ganger (kostet 0,49 USD). Årsak (jobbresultatet): scenen manglet `units` og `room`; kostnaden (ca. 0,24 per kall) viser at svaret traff taket på 16 000 tokens og ble kuttet. Rettet: kuttet svar (stop_reason max_tokens) gir ett nytt KORT kall (maks 35 ting, ingen note/photos/confidence) i stedet for selvretting; instruksen ber om kort svar (maks 45 ting, korte id-er, ingen note); feillogg og jobbresultat har diagnose (stoppårsak, tokens, om det ble kuttet, aldri innhold).
+
+### [ ] R171 · Fra tester: Rune · Møbler (typenavn) på norsk i VIS TOLKNING og JUSTER
+Ønske: «Oversett møbler til norsk også». Typenavnene (kind) vises i dag på engelsk (chest, wall_cabinet, taklist …). Lag en liste kind → norsk (og engelsk) i leditor_text.js, bruk den i VIS TOLKNING og JUSTER (valgt: …); id-er fra tolkningen vises bare som ekstra. Test at alle kinds i kinds.js har navn på begge språk.
+
+### [ ] R172 · Fra tester: Rune · Lettere å flytte ting i JUSTER
+Utledet av loggen: 196 rettinger med pilene i én økt. Forslag: dra tingen med fingeren på kartet, og velg stegstørrelse (10, 25, 50 cm). Må bekreftes med Rune før bygging.
+
 ### [x] R168 · Fra tester: Rune · Bedre tolkning av bilder: rommet skal ligne og kunne kjennes igjen (v2.180)
 Kritikk fra Rune: brettet så ut som ting kastet inn, rommet kjentes ikke igjen. Gjort: nyere modell (claude-sonnet-5-5, byttes i tlm_le_settings.model), den fulle instruksen hentes fra repoet (docs/VISJON_PROMPT.md, 5 min cache, reserve innebygd) med regler for skall/vinduer/dører/mål/farger, selvretting når kontrollen avviser scenen, og romtall fra spilleren som fasit. Gjenstår (valgt bort for nå): utforskmodus uten hjelpeobjekter, skall-først med bekreftelse, testpakke med fasit-scene (bildene skal ikke inn i repoet), bildene som tekstur på telefonen (krever godkjenning).
 
