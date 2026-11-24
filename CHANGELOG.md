@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.181** – Veikart: R169 LiDAR-skanning inne i spillet (langt fram i tid; krever innebygd iOS-app, Mac og utviklerkonto).
 - **2.180** – Bedre tolkning av bilder: nyere modell (claude-sonnet-5-5, kan byttes i databasen), full instruks hentes fra repoet og har egne regler for å gjøre rommet gjenkjennelig (skall, vinduer, dører, store møbler, riktige mål), selvretting når kontrollen avviser scenen, og romtall (bredde, dybde, høyde) du kan oppgi som fasit (leveleditor_logic, tools/make_prompt, leditor_view/text, tolk-bilder, test_leveleditor).
 - **2.179** – Editoren tilgjengelig igjen etter spilling: tolkningen lagres lokalt med brettet (aldri bilder), JUSTER-knapp i MINE BRETT, «JUSTER SISTE BRETT» i VELG BRETT og i editoren, og «JUSTER DETTE BRETTET» i menyen i et eget brett (rooms_logic/view/text, leditor_logic/view/text, main, test_leditor, tools/live_leditor_resume.cjs).
 - **2.178** – RETTET: brett fra bilder ble alltid avvist som «Forslaget ble ikke et riktig brett» fordi tolkningen mangler feltet `rev`; får nå rev 1. Feillogg viser årsaken også etter auto-mål (leditor_logic, test_leditor).

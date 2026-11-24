@@ -87,6 +87,13 @@ Ferdig når: ingen spiller kan sette seg fast på et nødvendig bygg, bygget gir
 Fra planen `docs/PLAN_BYGG_TIDLIG.md` (godkjent av Rune): bygging tidlig og nødvendig. Les planen først. Krav: (1) byggestedene i Nivå 7, 8 og 9 blir nødvendige på hovedruta når `buildrequired` er på (gap utvides eller veien rundt fjernes); (2) «den harde veien» beholdes som alternativ i Ekspert og når valget er av; (3) bruk byggepoengene fra Nivå 2–6 i kombinasjon (ball og bil, to materialer); (4) bot og `walk_route` beviser både veien via bygg og at dagens hovedvei er stengt når kravet er på; (5) test og NYTT-rad.
 Ferdig når: Nivå 7–9 krever bygging (unntatt Ekspert og valg av), alle kan vinnes, og tester og boot er grønne.
 
+### [ ] R169 · Fra Rune (samtale) · LiDAR-skanning av rommet inne i spillet (langt fram i tid)
+Rune vil at LiDAR skal ligge i selve spillet, uten andre apper (ikke Polycam eller Scaniverse), og har bedt om at det settes lenger fram i tid. Ikke start uten at Rune sier fra.
+**Hvorfor det er stort:** Safari på iPhone har ikke tilgang til LiDAR (ingen WebXR med dybde). «Alt i appen» betyr derfor en innebygd iOS-app: spillet pakkes (f.eks. Capacitor/WKWebView) og får en RoomPlan/ARKit-plugin som skanner rommet og gir vegger, dører, vinduer og møbler med mål. Dette mappes til scenen (`docs/scene.schema.json`) og går gjennom `scene2level_core` som i dag (bokser; vegger og dører er tynne bokser).
+**Forutsetninger (krever Rune):** en Mac med Xcode, Apple Developer-konto (TestFlight for testere), iPhone Pro med LiDAR (12 Pro eller nyere). Jeg kan ikke kompilere eller teste iOS her; Rune må bygge og kjøre. Sensorfilene blir på telefonen (aldri sendt videre).
+**Forslag til rekkefølge:** (1) mellomløsning som allerede finnes: mål rommet med Apples Målebånd og skriv bredde/dybde/høyde i «Rommets mål» (v2.180). (2) Når Mac og konto er på plass: liten iOS-innpakning som åpner spillet og tillater «SKANN ROMMET». (3) RoomPlan-resultat → scene (vegger, dører, vinduer, møbler med mål), så JUSTER/VIS TOLKNING som nå. (4) Valgfritt: kombiner med bilder for navn og farger.
+**Avklar først:** iPhone-modell (LiDAR?), tilgang til Mac, om testere også skal kunne skanne (TestFlight), og personvern (skannedata lagres bare lokalt).
+
 ### [ ] R27 · Spilletest-runde og justering (venter på brukerens testrapporter)
 Gå gjennom testrapportene fra iPhone (byggeskjerm R24–R26, delmål R23, intro R22, gulvdetaljer R13: flimmer og FPS) og juster verdier: kanthjelp (80 %), sikte-hjelp (bredde 0,7, fart 2), «Spenning» mot «Klassisk», straffenivå. Kan ikke kjøres av agentene uten rapporter; tas i samtale.
 Ferdig når: rapportene er gjennomgått, verdiene justert i `SETTINGS`, og backloggens «trenger spilletest» er krysset av eller oppdatert.
