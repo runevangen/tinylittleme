@@ -23,7 +23,7 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
     localStorage.setItem('tlm.roomscene.mine-abc123', JSON.stringify(fx.scene)); localStorage.setItem('tlm.led.last', JSON.stringify('mine-abc123')); } catch (e) { /* */ } }, [fx]);
   await pg.goto(`http://localhost:${port}/`); await pg.waitForSelector('#mLevels', { timeout: 180000 }); await pg.click('#mLevels', { noWaitAfter: true }); await pg.waitForSelector('#mLedLast');
   await pg.click('#mLedLast', { noWaitAfter: true }); await pg.waitForSelector('#ledAdj'); await pg.click('#ledAdj', { noWaitAfter: true }); await pg.waitForSelector('#ledMap');
-  const at = async (q) => { const bx = await pg.locator('#ledMap').boundingBox(); return { x: bx.x + (q.cx / R.width) * bx.width, y: bx.y + (q.cz / R.depth) * bx.height, bx }; };
+  const at = async (q) => { await pg.locator('#ledMap').scrollIntoViewIfNeeded(); const bx = await pg.locator('#ledMap').boundingBox(); return { x: bx.x + (q.cx / R.width) * bx.width, y: bx.y + (q.cz / R.depth) * bx.height, bx }; };
   const val = async () => ({ x: +(await pg.inputValue('#ledPx')), z: +(await pg.inputValue('#ledPz')), sel: await pg.textContent('#ledSel') });
   const A = pick[0], B = pick[1]; const thingInfoOf = (q) => L.thingInfo(fx.scene, q.t.key); let ok = true; const check = (n, c, d) => { console.log((c ? '✓ ' : '✗ ') + n + (d ? ' · ' + d : '')); if (!c) ok = false; };
   await pg.locator('#ledMap').scrollIntoViewIfNeeded();
@@ -44,7 +44,7 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   await pg.click('#ledUndo', { noWaitAfter: true }); await pg.waitForTimeout(200); check('ANGRE virker', (await val()).sel.length > 0);
   // 6) VELG FLERE: tilbake til utgangspunktet først (tingene er flyttet av trinnene over), så to ting, og dra flytter begge
   for (let i = 0; i < 8; i++) { await pg.click('#ledUndo', { noWaitAfter: true }); await pg.waitForTimeout(80); }
-  await pg.click('#ledMulti', { noWaitAfter: true }); p = await at(A); await pg.mouse.move(p.x, p.y); await pg.mouse.down(); await pg.mouse.up(); const pB = await at(B); await pg.mouse.move(pB.x, pB.y); await pg.mouse.down(); await pg.mouse.up();
+  await pg.click('#ledMulti', { noWaitAfter: true }); await pg.waitForTimeout(150); p = await at(A); await pg.mouse.move(p.x, p.y); await pg.mouse.down(); await pg.mouse.up(); const pB = await at(B); await pg.mouse.move(pB.x, pB.y); await pg.mouse.down(); await pg.mouse.up();
   v = await val(); check('VELG FLERE: to ting valgt', /2/.test(v.sel), v.sel); await pg.screenshot({ path: `${out}/led_multi.png`, fullPage: true });
   // dra begge: begge flyttes like mye
   const iA = thingInfoOf(A), iB = thingInfoOf(B); await pg.mouse.move(pB.x, pB.y); await pg.mouse.down(); await pg.mouse.move(pB.x + 20, pB.y + 12, { steps: 5 }); await pg.mouse.up(); await pg.waitForTimeout(300);
