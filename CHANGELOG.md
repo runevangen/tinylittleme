@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.185** – R174: flymodus lett tilgjengelig: stor FLY-knapp i egne brett (mobil og PC), FLY RUNDT på resultatskjermen som åpner brettet i flymodus, og TA gir fart i flymodus på mobil (index.html, main, i18n, leditor_view/text, tools/live_fly.cjs).
 - **2.184** – R173: TILBAKE fra resultatet og JUSTER går til lag-brett-menyen (lagrer brettet først), og menyen har MINE BRETT (leditor_view, tools/live_leditor_drag.cjs).
 - **2.183** – R172: lettere å flytte ting i JUSTER: dra med fingeren, stegstørrelse 5/10/25/50 cm (huskes), VELG FLERE, og X/Z i cm (leditor_logic/view/text, test_leditor, tools/live_leditor_drag.cjs).
 - **2.182** – RETTET: tolkning av bilder feilet når svaret ble kuttet (for langt). Kuttet svar gir nå ett nytt KORT kall, instruksen ber om kort svar, og feillogg viser diagnose uten innhold (leveleditor_logic, make_prompt, leditor_logic/view, test_leveleditor).

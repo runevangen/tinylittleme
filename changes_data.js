@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r174-flymodus-lett', version: '2.185', date: '2026-11-24', title: 'Flymodus er lett tilgjengelig i egne brett: en stor FLY-knapp i brettet og FLY RUNDT på resultatskjermen. På mobil gir TA fart mens du flyr.',
+    how: 'Lag et brett fra bilder og trykk FLY RUNDT, eller trykk SPILL og så FLY-knappen på høyre side. Pinnen styrer, HOPP opp, GREP ned, TA gir fart. Trykk FLY igjen for å lande.', level: '', spot: null },
   { id: 'r173-tilbake-til-meny', version: '2.184', date: '2026-11-24', title: 'TILBAKE fra resultatet og fra JUSTER går nå til menyen for brett fra bilder, der du også har JUSTER SISTE BRETT og MINE BRETT.',
     how: 'Åpne et brett fra bilder og trykk JUSTER, så TILBAKE. Du kommer til menyen med LAG BRETT, JUSTER SISTE BRETT og MINE BRETT. Samme gjelder TILBAKE på resultatskjermen.', level: '', spot: null },
   { id: 'r172-lettere-flytte', version: '2.183', date: '2026-11-24', title: 'JUSTER i brett fra bilder er lettere å bruke: dra tingen med fingeren, velg stegstørrelse (5, 10, 25 eller 50 cm), VELG FLERE og skriv inn plassering i cm.',
