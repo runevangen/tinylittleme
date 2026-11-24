@@ -121,6 +121,9 @@ Ferdig når: feilen er gjenskapt og rettet i Nivå 5 og et Bygglab-sted, og test
 ### [x] R170 · Fra tester: Rune · Tolkningen ga ingen brett: svaret ble kuttet (v2.182)
 Rapport: «Tolkningen gav ingen brett» to ganger (kostet 0,49 USD). Årsak (jobbresultatet): scenen manglet `units` og `room`; kostnaden (ca. 0,24 per kall) viser at svaret traff taket på 16 000 tokens og ble kuttet. Rettet: kuttet svar (stop_reason max_tokens) gir ett nytt KORT kall (maks 35 ting, ingen note/photos/confidence) i stedet for selvretting; instruksen ber om kort svar (maks 45 ting, korte id-er, ingen note); feillogg og jobbresultat har diagnose (stoppårsak, tokens, om det ble kuttet, aldri innhold).
 
+### [x] R173 · Fra tester: Rune · Tilbake til lag-brett-menyen (v2.184)
+Spørsmål fra Rune: «Tilbake til lage rom menyen?». TILBAKE fra resultatet og JUSTER går til menyen (LAG BRETT, JUSTER SISTE BRETT, MINE BRETT); et ulagret brett lagres først.
+
 ### [ ] R171 · Fra tester: Rune · Møbler (typenavn) på norsk i VIS TOLKNING og JUSTER
 Ønske: «Oversett møbler til norsk også». Typenavnene (kind) vises i dag på engelsk (chest, wall_cabinet, taklist …). Lag en liste kind → norsk (og engelsk) i leditor_text.js, bruk den i VIS TOLKNING og JUSTER (valgt: …); id-er fra tolkningen vises bare som ekstra. Test at alle kinds i kinds.js har navn på begge språk.
 

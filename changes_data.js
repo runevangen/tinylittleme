@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r173-tilbake-til-meny', version: '2.184', date: '2026-11-24', title: 'TILBAKE fra resultatet og fra JUSTER går nå til menyen for brett fra bilder, der du også har JUSTER SISTE BRETT og MINE BRETT.',
+    how: 'Åpne et brett fra bilder og trykk JUSTER, så TILBAKE. Du kommer til menyen med LAG BRETT, JUSTER SISTE BRETT og MINE BRETT. Samme gjelder TILBAKE på resultatskjermen.', level: '', spot: null },
   { id: 'r172-lettere-flytte', version: '2.183', date: '2026-11-24', title: 'JUSTER i brett fra bilder er lettere å bruke: dra tingen med fingeren, velg stegstørrelse (5, 10, 25 eller 50 cm), VELG FLERE og skriv inn plassering i cm.',
     how: 'Lag eller åpne et brett fra bilder og trykk JUSTER. Dra en ting på kartet. Trykk et tall under «Steg» og bruk pilene. Trykk VELG FLERE og trykk flere ting, så flytter du dem sammen. Skriv X og Z i cm for å plassere nøyaktig.', level: '', spot: null },
   { id: 'r168-bedre-tolkning', version: '2.180', date: '2026-11-24', title: 'Bedre tolkning av bilder: nyere modell, mer gjenkjennelig rom (vegger, vinduer, dører, møbler) og selvretting. Du kan oppgi romtall for riktig størrelse.',

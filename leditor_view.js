@@ -56,6 +56,14 @@ export function createLeditorView(ctx) {
   const msg = (t) => { const m = $('ledMsg'); if (m) m.textContent = t || ''; };
   const consented = () => { try { return localStorage.getItem(LED.consentKey) === '1'; } catch { return false; } };
   const setConsent = () => { try { localStorage.setItem(LED.consentKey, '1'); } catch { /* uten lagring spør vi igjen */ } };
+  // R173: TILBAKE fra resultat og JUSTER går til lag-brett-menyen. Et brett som ikke er lagret ennå, lagres først (ellers mistes tolkningen).
+  const autosave = () => {
+    if (!S || !S.room || !S.room.ok) return;
+    if (S.savedId) { saveRoom(st, { id: S.savedId, name: S.name, level: S.room.level }); saveRoomScene(st, S.savedId, S.scene); return; }
+    const res = saveRoom(st, { id: '', name: S.name || 'Mitt brett', level: S.room.level });
+    if (res.ok) { S.savedId = res.id; saveRoomScene(st, res.id, S.scene); setLastRoom(st, res.id); logEv?.('leveleditor', 'lagret ved tilbake'); }
+  };
+  const backToMenu = () => { autosave(); show(); };
   const leave = () => { stopTick(); abort?.abort(); if (S) S.photos.length = 0; S = null; const el = $('start'); el.classList.remove('rml'); ctx.onBack?.(); };
   const stopTick = () => { if (tick) { clearInterval(tick); tick = null; } };
 
@@ -66,8 +74,10 @@ export function createLeditorView(ctx) {
     el.innerHTML = `<h1>${esc(T('title'))}</h1><div class="ledbox"><b>${esc(T('guideH'))}</b><ul>${T('guide').map((g) => `<li>${esc(g)}</li>`).join('')}</ul></div>`
       + (consented() ? '' : `<div class="ledbox"><b>${esc(T('consentH'))}</b><span>${esc(T('consent'))}</span></div>`)
       + (last ? `<button class="mbtn" id="ledLast">${esc(T('lastBtn', last.name))}</button>` : '')
+      + (ctx.onMine && listRooms(st).length ? `<button class="mbtn sec" id="ledMine">${esc(T('mine'))}</button>` : '')
       + `<button class="mbtn${last ? ' sec' : ''}" id="ledGo">${esc(consented() ? T('next') : T('consentBtn'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
     if (last) $('ledLast').onclick = () => resume(last.id);
+    if ($('ledMine')) $('ledMine').onclick = () => { const el2 = $('start'); el2.classList.remove('rml'); ctx.onMine?.(); };
     $('ledGo').onclick = () => { setConsent(); photos(); };
     $('ledBack').onclick = leave;
   }
@@ -156,7 +166,7 @@ export function createLeditorView(ctx) {
       + `<button class="mbtn${hasScene ? ' sec' : ''}" id="ledAgain">${esc(T('again'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
     if (hasScene) { $('ledFixAdj').onclick = () => { logEv?.('leveleditor', `juster etter feil: ${reason}`); adjust(); }; $('ledFixInt').onclick = () => interp(); }
     $('ledAgain').onclick = () => { S.photos.length ? questions() : (logEv?.('leveleditor', 'nytt forsøk: velg bilder på nytt'), photos()); };
-    $('ledBack').onclick = leave;
+    $('ledBack').onclick = show;
   }
 
   // ---- 5. forslaget ----
@@ -179,7 +189,7 @@ export function createLeditorView(ctx) {
     $('ledAdj').onclick = adjust; $('ledInt').onclick = () => interp();
     $('ledChk').onclick = () => { S.room = sceneToRoom(S.scene, S.name); if (S.room.scene) S.scene = S.room.scene; logSummary('sjekk'); result(); };
     $('ledSave').onclick = () => { if (S.savedId) { ctx.onMine?.(); return; } const id = save(); if (id) { result(T('saved')); } };
-    $('ledBack').onclick = leave;
+    $('ledBack').onclick = backToMenu;
     $('ledShare').onclick = async () => {
       if (busy) return; const id = save(); if (!id) return;
       let code = S.code; busy = true;
@@ -214,7 +224,7 @@ export function createLeditorView(ctx) {
       + `<p class="tag" style="margin-bottom:0">${esc(T('stepH'))}</p><div class="ledrow" id="ledSteps">${STEPS.map((v) => `<button class="mbtn sec" data-s="${v}">${v}</button>`).join('')}</div>`
       + `<div class="ledarrows"><span></span><button class="mbtn sec" data-d="0,-1">▲</button><span></span><button class="mbtn sec" data-d="-1,0">◀</button><button class="mbtn sec" id="ledDel" style="font-size:13px">${esc(T('del'))}</button><button class="mbtn sec" data-d="1,0">▶</button><span></span><button class="mbtn sec" data-d="0,1">▼</button><span></span></div>`
       + `<p class="tag">${esc(T('goalH'))}</p><div class="ledrow" id="ledGoals"></div>`
-      + `<div class="ledmsg" id="ledMsg"></div><div class="ledrow"><button class="mbtn sec" id="ledUndo">${esc(T('undo'))}</button><button class="mbtn" id="ledDone">${esc(T('done'))}</button></div>`;
+      + `<div class="ledmsg" id="ledMsg"></div><div class="ledrow"><button class="mbtn sec" id="ledUndo">${esc(T('undo'))}</button><button class="mbtn" id="ledDone">${esc(T('done'))}</button></div><button class="mbtn sec" id="ledAdjBack">${esc(T('back'))}</button>`;
     const cv = $('ledMap'), R = sc().room, W = 340, Hh = Math.round(W * R.depth / R.width); cv.width = W * 2; cv.height = Hh * 2; cv.style.height = `${Hh}px`; cv.style.touchAction = 'none';   // dra på kartet skal ikke rulle siden
     const k = (W * 2) / R.width;
     let drag = null;   // { p0:{x,z}, keys, dx, dz, moved, toggle }
@@ -280,6 +290,7 @@ export function createLeditorView(ctx) {
     $('ledDel').onclick = () => { if (!S.sels.length) { msg(T('adjNone')); return; } const n = deleteThings(sc(), S.sels); if (!n) { msg(T('noGoalDel')); return; } if (apply(n, S.sels.length > 1 ? `slett ${S.sels.length}` : 'slett')) { S.sels = []; draw(); } };
     $('ledUndo').onclick = () => { const p = S.undo.pop(); if (!p) return; S.scene = p; S.room = sceneToRoom(p, S.name); S.edits = Math.max(0, S.edits - 1); if (S.savedId && S.room.ok) { saveRoom(st, { id: S.savedId, name: S.name, level: S.room.level }); saveRoomScene(st, S.savedId, S.scene); } S.sels = []; msg(verdictText()); draw(); };
     $('ledDone').onclick = () => { if (S.room && S.room.ok) result(); else { logEv?.('leveleditor', `ferdig uten brett: ${S.room ? S.room.reason : '?'}`); failed(S.room ? S.room.reason : 'scene'); } };
+    $('ledAdjBack').onclick = backToMenu;
     renderGoals(); renderSteps(); if (!S.room || !S.room.ok) msg(T('adjBad')); draw();
   }
   // R167: åpner et eget brett på nytt i editoren (resultatskjermen med SPILL, JUSTER, SJEKK, DEL, VIS TOLKNING). Tolkningen er lagret på telefonen, aldri bilder.

@@ -49,5 +49,8 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   // dra begge: begge flyttes like mye
   const iA = thingInfoOf(A), iB = thingInfoOf(B); await pg.mouse.move(pB.x, pB.y); await pg.mouse.down(); await pg.mouse.move(pB.x + 20, pB.y + 12, { steps: 5 }); await pg.mouse.up(); await pg.waitForTimeout(300);
   await pg.screenshot({ path: `${out}/led_multi_drag.png`, fullPage: true }); check('VELG FLERE: dra flytter begge (tilbakemelding vises)', /2/.test((await val()).sel));
+  // R173: TILBAKE fra JUSTER og fra resultatet går til lag-brett-menyen
+  await pg.locator('#ledAdjBack').scrollIntoViewIfNeeded(); await pg.click('#ledAdjBack', { noWaitAfter: true }); await pg.waitForSelector('#ledGo', { timeout: 20000 }); check('TILBAKE fra JUSTER går til lag-brett-menyen', !!(await pg.$('#ledLast')) && !!(await pg.$('#ledMine')), 'JUSTER SISTE BRETT og MINE BRETT finnes');
+  await pg.click('#ledLast', { noWaitAfter: true }); await pg.waitForSelector('#ledPlay', { timeout: 20000 }); await pg.locator('#ledBack').scrollIntoViewIfNeeded(); await pg.click('#ledBack', { noWaitAfter: true }); await pg.waitForSelector('#ledGo', { timeout: 20000 }); check('TILBAKE fra resultatet går til lag-brett-menyen', true); await pg.screenshot({ path: `${out}/led_menu.png`, fullPage: true });
   console.log(errs.length ? 'FEIL: ' + errs.slice(0, 3).join(' | ') : 'ingen konsollfeil'); await b.close(); srv.close(); process.exit(errs.length || !ok ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
