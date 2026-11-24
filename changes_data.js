@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r172-lettere-flytte', version: '2.183', date: '2026-11-24', title: 'JUSTER i brett fra bilder er lettere å bruke: dra tingen med fingeren, velg stegstørrelse (5, 10, 25 eller 50 cm), VELG FLERE og skriv inn plassering i cm.',
+    how: 'Lag eller åpne et brett fra bilder og trykk JUSTER. Dra en ting på kartet. Trykk et tall under «Steg» og bruk pilene. Trykk VELG FLERE og trykk flere ting, så flytter du dem sammen. Skriv X og Z i cm for å plassere nøyaktig.', level: '', spot: null },
   { id: 'r168-bedre-tolkning', version: '2.180', date: '2026-11-24', title: 'Bedre tolkning av bilder: nyere modell, mer gjenkjennelig rom (vegger, vinduer, dører, møbler) og selvretting. Du kan oppgi romtall for riktig størrelse.',
     how: 'Trykk LAG BRETT FRA BILDER, ta bildene og fyll inn Rommets mål (bredde, dybde, høyde i meter) hvis du har målt. Trykk LAG BRETT og sjekk om brettet ligner rommet ditt. Prøv VIS TOLKNING og JUSTER.', level: '', spot: null },
   { id: 'r167-editor-tilbake', version: '2.179', date: '2026-11-23', title: 'Editoren for brett fra bilder er tilgjengelig igjen etter at du har spilt: JUSTER i MINE BRETT, JUSTER SISTE BRETT i VELG BRETT, og JUSTER DETTE BRETTET i menyen.',

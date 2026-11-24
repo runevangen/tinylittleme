@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { LE, REASONS } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, meanLuma, gammaFor, gammaLut, brightenData, sceneToRoom, goalCandidates, summarizeScene, interpretation, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, meanLuma, gammaFor, gammaLut, brightenData, sceneToRoom, goalCandidates, summarizeScene, interpretation, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
 import { sceneToLevel } from './scene2level_core.js';
 import { listRooms, loadRoom, validateRoom, ROOMS, removeRoom } from './rooms_logic.js';
 import { LEDITOR_TEXT, ltx, lerr, lverdict } from './leditor_text.js';
@@ -117,6 +117,21 @@ assert.equal(sceneToRoom({}).ok, false);
   assert.equal(saveRoomScene(st, 'ikke-id', sc), false); assert.equal(saveRoomScene(st, sv.id, { room: {}, objects: 'x' }), false);
   assert.equal(saveRoomScene(st, sv.id, { ...sc, huge: 'x'.repeat(ROOMS.sceneMaxBytes) }), false, 'for stor tolkning lagres ikke');
   assert.equal(removeRoom(st, sv.id), true); assert.equal(loadRoomScene(st, sv.id), null, 'slettet brett fjerner også tolkningen'); assert.equal(lastRoom(st), null, 'slettet brett er ikke lenger siste'); }
+// R172: lettere å flytte i JUSTER: flere ting, tall, stegstørrelse
+{ const th = thingsOf(bad), a = th.find((t) => t.key !== 'o:' + bad.goal.on && t.rect.x1 - t.rect.x0 < 80), b = th.find((t) => t !== a && t.key !== 'o:' + bad.goal.on && t.rect.x1 - t.rect.x0 < 80);
+  const info = thingInfo(bad, a.key); assert.equal(info.x, Math.round(a.rect.x0)); assert.equal(info.w, Math.round(a.rect.x1 - a.rect.x0)); assert.equal(thingInfo(bad, 'finnes-ikke'), null);
+  // flere ting flyttes like mye og beholder avstanden
+  const ia = thingInfo(bad, a.key), ib = thingInfo(bad, b.key), m = moveThings(bad, [a.key, b.key], 4, 0);
+  if (m) { const ja = thingInfo(m, a.key), jb = thingInfo(m, b.key); assert.equal(ja.x - ia.x, jb.x - ib.x, 'begge flyttes like mye'); assert.equal(ja.z, ia.z); }
+  // grensene gjelder alle: flyttingen stoppes når den første når veggen
+  const far = moveThings(bad, [a.key, b.key], 100000, 0); if (far) { const ja = thingInfo(far, a.key), jb = thingInfo(far, b.key); assert.equal(ja.x - ia.x, jb.x - ib.x, 'avstanden holdes ved veggen'); assert.ok(ja.x + ja.w <= bad.room.width + 1 && jb.x + jb.w <= bad.room.width + 1, 'inne i rommet'); }
+  assert.equal(moveThings(bad, [], 5, 5), null); assert.equal(moveThings(bad, ['x'], 5, 5), null); assert.equal(bad.objects.length > 0 && thingInfo(bad, a.key).x, ia.x, 'originalen røres ikke');
+  // flytt til tall
+  const to = moveThingTo(bad, a.key, ia.x + 12, ia.z); if (to) assert.equal(thingInfo(to, a.key).x, ia.x + 12, 'flyttet til oppgitt X'); assert.equal(moveThingTo(bad, a.key, 'abc', 5), null); assert.equal(moveThingTo(bad, a.key, ia.x, ia.z), null, 'ingen endring: null');
+  // slett flere; målets ting kan ikke slettes
+  const del = deleteThings(bad, [a.key, b.key]); assert.ok(del && !thingsOf(del).some((t) => t.key === a.key || t.key === b.key), 'begge slettet'); assert.equal(deleteThings(bad, [a.key, 'o:' + bad.goal.on]), null, 'målet kan ikke slettes: ingenting skjer'); assert.equal(deleteThings(bad, []), null);
+  // stegstørrelse huskes, ugyldig ignoreres
+  const st2 = mem(); assert.equal(stepNow(st2), LED.step); setStep(st2, 25); assert.equal(stepNow(st2), 25); setStep(st2, 7); assert.equal(stepNow(st2), 25, 'ugyldig steg ignoreres'); assert.deepEqual(STEPS, [5, 10, 25, 50]); }
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
 

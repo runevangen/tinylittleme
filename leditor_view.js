@@ -1,7 +1,7 @@
 // R152: «Lag brett fra bilder» (DOM). Bruker startskjermens #start og knappestiler (.mbtn) som VELG BRETT/MINE BRETT. Logikk: leditor_logic.js, tekster: leditor_text.js.
 // Flyt: veiledning + samtykke → 2–4 bilder (nedskalert her, i minnet) → fire spørsmål → LAG BRETT (tjenesten) → forslag med SJEKK, JUSTER, SPILL, DEL, LAGRE. Bilder lagres aldri.
 import { LE } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo } from './leditor_logic.js';
 import { shareRoom, setRoomCode, safeName, listRooms } from './rooms_logic.js';
 import { ltx, lerr, lverdict, lsub } from './leditor_text.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -51,7 +51,7 @@ export function createLeditorView(ctx) {
   let S = null, busy = false, abort = null, tick = null;
   const T = (k, ...a) => ltx(L(), k, ...a);
   const css = () => { if (!document.getElementById('ledcss')) { const s = document.createElement('style'); s.id = 'ledcss'; s.textContent = CSS; document.head.appendChild(s); } };
-  const fresh = () => ({ photos: [], answers: { goal: 'top', difficulty: 'medium', theme: '', foes: true, measures: { w: '', d: '', h: '' } }, scene: null, room: null, savedId: '', name: '', usage: { cost_usd: 0, ms: 0 }, edits: 0, undo: undoStack(), sel: '', code: '', job: '' });
+  const fresh = () => ({ photos: [], answers: { goal: 'top', difficulty: 'medium', theme: '', foes: true, measures: { w: '', d: '', h: '' } }, scene: null, room: null, savedId: '', name: '', usage: { cost_usd: 0, ms: 0 }, edits: 0, undo: undoStack(), sels: [], multi: false, code: '', job: '' });
   const root = () => { css(); const el = $('start'); el.classList.add('rml'); return el; };
   const msg = (t) => { const m = $('ledMsg'); if (m) m.textContent = t || ''; };
   const consented = () => { try { return localStorage.getItem(LED.consentKey) === '1'; } catch { return false; } };
@@ -209,24 +209,37 @@ export function createLeditorView(ctx) {
     const el = root(), sc = () => S.scene;
     el.innerHTML = `<h1>${esc(T('adjH'))}</h1><p class="tag" style="max-width:320px">${esc(T('adjIntro'))}</p><canvas class="ledmap" id="ledMap"></canvas>`
       + `<p class="tag" id="ledSel">${esc(T('adjNone'))}</p>`
-      + `<p class="tag">${esc(T('goalH'))}</p><div class="ledrow" id="ledGoals"></div>`
+      + `<div class="ledrow"><button class="mbtn sec" id="ledMulti">${esc(T('multiBtn'))}</button></div>`
+      + `<div class="ledrow" id="ledPos"><label class="ledmeas">${esc(T('posX'))}<input class="ledin" id="ledPx" inputmode="numeric" autocomplete="off"></label><label class="ledmeas">${esc(T('posZ'))}<input class="ledin" id="ledPz" inputmode="numeric" autocomplete="off"></label></div>`
+      + `<p class="tag" style="margin-bottom:0">${esc(T('stepH'))}</p><div class="ledrow" id="ledSteps">${STEPS.map((v) => `<button class="mbtn sec" data-s="${v}">${v}</button>`).join('')}</div>`
       + `<div class="ledarrows"><span></span><button class="mbtn sec" data-d="0,-1">▲</button><span></span><button class="mbtn sec" data-d="-1,0">◀</button><button class="mbtn sec" id="ledDel" style="font-size:13px">${esc(T('del'))}</button><button class="mbtn sec" data-d="1,0">▶</button><span></span><button class="mbtn sec" data-d="0,1">▼</button><span></span></div>`
+      + `<p class="tag">${esc(T('goalH'))}</p><div class="ledrow" id="ledGoals"></div>`
       + `<div class="ledmsg" id="ledMsg"></div><div class="ledrow"><button class="mbtn sec" id="ledUndo">${esc(T('undo'))}</button><button class="mbtn" id="ledDone">${esc(T('done'))}</button></div>`;
-    const cv = $('ledMap'), R = sc().room, W = 340, Hh = Math.round(W * R.depth / R.width); cv.width = W * 2; cv.height = Hh * 2; cv.style.height = `${Hh}px`;
+    const cv = $('ledMap'), R = sc().room, W = 340, Hh = Math.round(W * R.depth / R.width); cv.width = W * 2; cv.height = Hh * 2; cv.style.height = `${Hh}px`; cv.style.touchAction = 'none';   // dra på kartet skal ikke rulle siden
     const k = (W * 2) / R.width;
+    let drag = null;   // { p0:{x,z}, keys, dx, dz, moved, toggle }
     let cands = goalCandidates(S.scene, 4);   // målforslag: de høyeste flatene (helst nåbare), nummerert på kartet
     const renderGoals = () => { const g = $('ledGoals'); g.innerHTML = cands.map((c, i) => `<button class="mbtn sec" data-g="${i}">${esc(T('goalN', i + 1))}</button>`).join(''); g.querySelectorAll('[data-g]').forEach((b) => { b.onclick = () => { const i = +b.dataset.g; if (apply(cands[i].scene, `mål ${i + 1}`)) { msg(T('goalSet', i + 1)); cands = goalCandidates(S.scene, 4); renderGoals(); draw(); } }; }); };
+    const renderSteps = () => { const now = stepNow(st); el.querySelectorAll('#ledSteps [data-s]').forEach((b) => b.classList.toggle('on', +b.dataset.s === now)); };
     const draw = () => {
       const g = cv.getContext('2d'), s = sc(); g.clearRect(0, 0, cv.width, cv.height); g.strokeStyle = '#ffffff66'; g.lineWidth = 3; g.strokeRect(1, 1, cv.width - 2, cv.height - 2);
       const th = thingsOf(s).sort((a, b) => a.top - b.top), mx = Math.max(1, ...th.map((t) => t.top));
       for (const t of th) {
-        const sel = t.key === S.sel; g.fillStyle = `hsl(${210 - 160 * (t.top / mx)} 55% ${sel ? 62 : 42}% / ${sel ? 1 : 0.8})`; g.strokeStyle = sel ? '#fff' : '#0b1226'; g.lineWidth = sel ? 5 : 2;
-        g.fillRect(t.rect.x0 * k, t.rect.z0 * k, (t.rect.x1 - t.rect.x0) * k, (t.rect.z1 - t.rect.z0) * k); g.strokeRect(t.rect.x0 * k, t.rect.z0 * k, (t.rect.x1 - t.rect.x0) * k, (t.rect.z1 - t.rect.z0) * k);
+        const sel = S.sels.includes(t.key), off = drag && drag.moved && sel ? [drag.dx, drag.dz] : [0, 0];   // mens du drar, vises tingen der den havner
+        g.fillStyle = `hsl(${210 - 160 * (t.top / mx)} 55% ${sel ? 62 : 42}% / ${sel ? 1 : 0.8})`; g.strokeStyle = sel ? '#fff' : '#0b1226'; g.lineWidth = sel ? 5 : 2;
+        const rx = (t.rect.x0 + off[0]) * k, rz = (t.rect.z0 + off[1]) * k, rw = (t.rect.x1 - t.rect.x0) * k, rh = (t.rect.z1 - t.rect.z0) * k;
+        g.fillRect(rx, rz, rw, rh); g.strokeRect(rx, rz, rw, rh);
       }
       cands.forEach((c, i) => { g.beginPath(); g.arc(c.x * k, c.z * k, 12, 0, 7); g.fillStyle = '#ffd24a55'; g.fill(); g.lineWidth = 3; g.strokeStyle = '#ffd24a'; g.stroke(); g.fillStyle = '#fff'; g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.fillText(String(i + 1), c.x * k, c.z * k + 7); });
       const ring = (x, z, c) => { g.beginPath(); g.arc(x * k, z * k, 14, 0, 7); g.lineWidth = 6; g.strokeStyle = c; g.stroke(); };
       if (s.start) ring(s.start.x, s.start.z, '#59e07a'); if (s.goal) ring(s.goal.x, s.goal.z, '#ffd24a');
-      const t = th.find((q) => q.key === S.sel); $('ledSel').textContent = t ? T('adjSel', t.label) : T('adjNone');
+      info();
+    };
+    const info = () => {
+      const one = S.sels.length === 1 ? thingInfo(sc(), S.sels[0]) : null;
+      $('ledSel').textContent = S.sels.length > 1 ? T('selN', S.sels.length) : one ? T('infoOne', one) : T('adjNone');
+      const px = $('ledPx'), pz = $('ledPz'); px.disabled = pz.disabled = !one; px.value = one ? one.x : ''; pz.value = one ? one.z : '';
+      $('ledMulti').classList.toggle('on', S.multi); $('ledMulti').textContent = T(S.multi ? 'multiOn' : 'multiBtn');
     };
     const apply = (next, what) => {
       if (!next) return false; const room = sceneToRoom(next, S.name, { auto: false });   // ved justering skjules ingenting: ødelegger flyttingen brettet, angres den
@@ -237,12 +250,37 @@ export function createLeditorView(ctx) {
       if (S.savedId) { saveRoom(st, { id: S.savedId, name: S.name, level: room.level }); saveRoomScene(st, S.savedId, S.scene); if (S.code) { setRoomCode(st, S.savedId, ''); S.code = ''; } }   // rettet brett: den delte versjonen er gammel, DEL gir ny kode
       msg(verdictText()); logEv?.('leveleditor', `retting ${S.edits}: ${what}`); return true;
     };
-    cv.onclick = (e) => { const b = cv.getBoundingClientRect(), x = (e.clientX - b.left) / b.width * R.width, z = (e.clientY - b.top) / b.height * R.depth; const t = thingAt(thingsOf(sc()), x, z); S.sel = t ? t.key : ''; draw(); };
-    el.querySelectorAll('[data-d]').forEach((b) => { b.onclick = () => { if (!S.sel) { msg(T('adjNone')); return; } const [dx, dz] = b.dataset.d.split(',').map(Number); if (apply(moveThing(sc(), S.sel, dx * LED.step, dz * LED.step), 'flytt')) draw(); }; });
-    $('ledDel').onclick = () => { if (!S.sel) { msg(T('adjNone')); return; } const n = deleteThing(sc(), S.sel); if (!n) { msg(T('noGoalDel')); return; } if (apply(n, 'slett')) { S.sel = ''; draw(); } };
-    $('ledUndo').onclick = () => { const p = S.undo.pop(); if (!p) return; S.scene = p; S.room = sceneToRoom(p, S.name); S.edits = Math.max(0, S.edits - 1); if (S.savedId && S.room.ok) { saveRoom(st, { id: S.savedId, name: S.name, level: S.room.level }); saveRoomScene(st, S.savedId, S.scene); } S.sel = ''; msg(verdictText()); draw(); };
+    // trykk velger (flere om VELG FLERE er på), dra flytter alle valgte, slipp legger tingen der (ett ANGRE-steg)
+    const pt = (e) => { const b = cv.getBoundingClientRect(); return { x: (e.clientX - b.left) / b.width * R.width, z: (e.clientY - b.top) / b.height * R.depth }; };
+    cv.onpointerdown = (e) => {
+      const p = pt(e), t = thingAt(thingsOf(sc()), p.x, p.z);
+      if (!t) { if (!S.multi) S.sels = []; drag = null; draw(); return; }
+      let toggle = false;
+      if (S.multi) { if (S.sels.includes(t.key)) toggle = true; else S.sels.push(t.key); } else if (!S.sels.includes(t.key) || S.sels.length > 1) S.sels = [t.key];
+      drag = { p0: p, keys: S.sels.slice(), dx: 0, dz: 0, moved: false, toggle, tap: t.key }; try { cv.setPointerCapture(e.pointerId); } catch { /* ok */ }
+      e.preventDefault(); draw();
+    };
+    cv.onpointermove = (e) => {
+      if (!drag) return; const p = pt(e); drag.dx = p.x - drag.p0.x; drag.dz = p.z - drag.p0.z;
+      if (!drag.moved && Math.hypot(drag.dx, drag.dz) > 6) drag.moved = true;   // under ca. 6 cm er det et trykk, ikke en dra
+      if (drag.moved) draw();
+    };
+    const end = () => {
+      const d = drag; drag = null; if (!d) return;
+      if (d.moved) { const dx = Math.round(d.dx), dz = Math.round(d.dz); if (apply(moveThings(sc(), d.keys, dx, dz), `dra ${d.keys.length}`)) { /* flyttet */ } }
+      else if (d.toggle) S.sels = S.sels.filter((q) => q !== d.tap);   // trykk på en valgt ting i VELG FLERE tar den ut igjen
+      draw();
+    };
+    cv.onpointerup = end; cv.onpointercancel = () => { drag = null; draw(); };
+    $('ledMulti').onclick = () => { S.multi = !S.multi; if (!S.multi && S.sels.length > 1) S.sels = [S.sels[0]]; msg(S.multi ? T('multiHelp') : ''); draw(); };
+    const move = () => { const px = $('ledPx'), pz = $('ledPz'); if (S.sels.length !== 1) return; if (apply(moveThingTo(sc(), S.sels[0], px.value, pz.value), 'tall')) draw(); else info(); };
+    $('ledPx').onchange = move; $('ledPz').onchange = move;
+    el.querySelectorAll('#ledSteps [data-s]').forEach((b) => { b.onclick = () => { setStep(st, +b.dataset.s); renderSteps(); }; });
+    el.querySelectorAll('[data-d]').forEach((b) => { b.onclick = () => { if (!S.sels.length) { msg(T('adjNone')); return; } const [dx, dz] = b.dataset.d.split(',').map(Number), stp = stepNow(st); if (apply(moveThings(sc(), S.sels, dx * stp, dz * stp), 'flytt')) draw(); }; });
+    $('ledDel').onclick = () => { if (!S.sels.length) { msg(T('adjNone')); return; } const n = deleteThings(sc(), S.sels); if (!n) { msg(T('noGoalDel')); return; } if (apply(n, S.sels.length > 1 ? `slett ${S.sels.length}` : 'slett')) { S.sels = []; draw(); } };
+    $('ledUndo').onclick = () => { const p = S.undo.pop(); if (!p) return; S.scene = p; S.room = sceneToRoom(p, S.name); S.edits = Math.max(0, S.edits - 1); if (S.savedId && S.room.ok) { saveRoom(st, { id: S.savedId, name: S.name, level: S.room.level }); saveRoomScene(st, S.savedId, S.scene); } S.sels = []; msg(verdictText()); draw(); };
     $('ledDone').onclick = () => { if (S.room && S.room.ok) result(); else { logEv?.('leveleditor', `ferdig uten brett: ${S.room ? S.room.reason : '?'}`); failed(S.room ? S.room.reason : 'scene'); } };
-    renderGoals(); if (!S.room || !S.room.ok) msg(T('adjBad')); draw();
+    renderGoals(); renderSteps(); if (!S.room || !S.room.ok) msg(T('adjBad')); draw();
   }
   // R167: åpner et eget brett på nytt i editoren (resultatskjermen med SPILL, JUSTER, SJEKK, DEL, VIS TOLKNING). Tolkningen er lagret på telefonen, aldri bilder.
   function resume(id) {

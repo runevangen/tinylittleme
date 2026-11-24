@@ -124,7 +124,7 @@ Rapport: «Tolkningen gav ingen brett» to ganger (kostet 0,49 USD). Årsak (job
 ### [ ] R171 · Fra tester: Rune · Møbler (typenavn) på norsk i VIS TOLKNING og JUSTER
 Ønske: «Oversett møbler til norsk også». Typenavnene (kind) vises i dag på engelsk (chest, wall_cabinet, taklist …). Lag en liste kind → norsk (og engelsk) i leditor_text.js, bruk den i VIS TOLKNING og JUSTER (valgt: …); id-er fra tolkningen vises bare som ekstra. Test at alle kinds i kinds.js har navn på begge språk.
 
-### [ ] R172 · Fra tester: Rune · Lettere å flytte ting i JUSTER
+### [x] R172 · Fra tester: Rune · Lettere å flytte ting i JUSTER (v2.183: dra, steg, velg flere, tall)
 Utledet av loggen: 196 rettinger med pilene i én økt. Forslag: dra tingen med fingeren på kartet, og velg stegstørrelse (10, 25, 50 cm). Må bekreftes med Rune før bygging.
 
 ### [x] R168 · Fra tester: Rune · Bedre tolkning av bilder: rommet skal ligne og kunne kjennes igjen (v2.180)

@@ -246,3 +246,33 @@ export function lastRoom(st) {
   return { id, name: r.name };
 }
 export { saveRoomScene, loadRoomScene };
+
+// ---------- R172: lettere å flytte i JUSTER (flere ting, tall, steg) ----------
+export const STEPS = [5, 10, 25, 50];   // cm per trykk på pilene
+export const LED_STEP = 'tlm.led.step';
+export const stepNow = (st) => { const v = +st.get(LED_STEP, LED.step); return STEPS.includes(v) ? v : LED.step; };
+export const setStep = (st, v) => { if (STEPS.includes(+v)) { try { st.set(LED_STEP, +v); } catch { /* ingen lagring */ } } };
+// Flytter flere ting like mye (dx, dz i cm). Grensene gjelder alle: flyttingen stoppes når den første tingen når veggen, så de beholder avstanden til hverandre. Gir ny scene eller null.
+export function moveThings(scene, keys, dx, dz) {
+  const th = thingsOf(scene), sel = (keys || []).map((k) => th.find((t) => t.key === k)).filter(Boolean); if (!sel.length) return null;
+  const R = scene.room || { width: 0, depth: 0 };
+  dx = Math.max(Math.max(...sel.map((t) => -t.rect.x0)), Math.min(Math.min(...sel.map((t) => R.width - t.rect.x1)), dx));
+  dz = Math.max(Math.max(...sel.map((t) => -t.rect.z0)), Math.min(Math.min(...sel.map((t) => R.depth - t.rect.z1)), dz));
+  if (!dx && !dz) return null;
+  let s = scene; for (const t of sel) { const n = moveThing(s, t.key, dx, dz); if (!n) return null; s = n; }
+  return s;
+}
+// Flytter en ting så venstre/øvre kant (x, z i cm) havner på de oppgitte tallene
+export function moveThingTo(scene, key, x, z) {
+  const t = thingsOf(scene).find((q) => q.key === key); if (!t || !Number.isFinite(+x) || !Number.isFinite(+z)) return null;
+  return moveThings(scene, [key], +x - t.rect.x0, +z - t.rect.z0);
+}
+// Sletter flere. Tingen med målet kan ikke slettes: da gjøres ingenting (null).
+export function deleteThings(scene, keys) {
+  let s = scene; for (const k of keys || []) { s = deleteThing(s, k); if (!s) return null; } return keys && keys.length ? s : null;
+}
+// Det som vises om en ting: navn, type, posisjon (venstre/øvre kant) og størrelse i cm
+export function thingInfo(scene, key) {
+  const t = thingsOf(scene).find((q) => q.key === key); if (!t) return null;
+  return { key, label: t.label, kind: t.kind, x: Math.round(t.rect.x0), z: Math.round(t.rect.z0), w: Math.round(t.rect.x1 - t.rect.x0), d: Math.round(t.rect.z1 - t.rect.z0), h: Math.round(t.top) };
+}

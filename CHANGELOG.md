@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.183** – R172: lettere å flytte ting i JUSTER: dra med fingeren, stegstørrelse 5/10/25/50 cm (huskes), VELG FLERE, og X/Z i cm (leditor_logic/view/text, test_leditor, tools/live_leditor_drag.cjs).
 - **2.182** – RETTET: tolkning av bilder feilet når svaret ble kuttet (for langt). Kuttet svar gir nå ett nytt KORT kall, instruksen ber om kort svar, og feillogg viser diagnose uten innhold (leveleditor_logic, make_prompt, leditor_logic/view, test_leveleditor).
 - **2.181** – Veikart: R169 LiDAR-skanning inne i spillet (langt fram i tid; krever innebygd iOS-app, Mac og utviklerkonto).
 - **2.180** – Bedre tolkning av bilder: nyere modell (claude-sonnet-5-5, kan byttes i databasen), full instruks hentes fra repoet og har egne regler for å gjøre rommet gjenkjennelig (skall, vinduer, dører, store møbler, riktige mål), selvretting når kontrollen avviser scenen, og romtall (bredde, dybde, høyde) du kan oppgi som fasit (leveleditor_logic, tools/make_prompt, leditor_view/text, tolk-bilder, test_leveleditor).
