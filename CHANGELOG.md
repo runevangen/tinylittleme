@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.187** – R175/R171: HØYDE i JUSTER (OPP, NED, PÅ GULVET og Y i cm), navnelapper (NAVN) over ting i flymodus i egne brett, og norske navn på tingtyper i VIS TOLKNING og JUSTER (kindnames, leditor_logic/view/text, main, index.html, test_leditor).
 - **2.186** – Verktøy: veikart-runneren tar arbeidsgrenen som `args.branch`, så den kan kjøres fra andre økter enn den den ble skrevet i. Ingen endring i spillet.
 - **2.185** – R174: flymodus lett tilgjengelig: stor FLY-knapp i egne brett (mobil og PC), FLY RUNDT på resultatskjermen som åpner brettet i flymodus, og TA gir fart i flymodus på mobil (index.html, main, i18n, leditor_view/text, tools/live_fly.cjs).
 - **2.184** – R173: TILBAKE fra resultatet og JUSTER går til lag-brett-menyen (lagrer brettet først), og menyen har MINE BRETT (leditor_view, tools/live_leditor_drag.cjs).

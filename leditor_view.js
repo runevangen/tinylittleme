@@ -1,8 +1,9 @@
 // R152: «Lag brett fra bilder» (DOM). Bruker startskjermens #start og knappestiler (.mbtn) som VELG BRETT/MINE BRETT. Logikk: leditor_logic.js, tekster: leditor_text.js.
 // Flyt: veiledning + samtykke → 2–4 bilder (nedskalert her, i minnet) → fire spørsmål → LAG BRETT (tjenesten) → forslag med SJEKK, JUSTER, SPILL, DEL, LAGRE. Bilder lagres aldri.
 import { LE } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo, moveThingsY, setThingsY } from './leditor_logic.js';
 import { shareRoom, setRoomCode, safeName, listRooms } from './rooms_logic.js';
+import { thingName } from './kindnames.js';
 import { ltx, lerr, lverdict, lsub } from './leditor_text.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CSS = `#start.rml{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:max(26px,env(safe-area-inset-top));padding-bottom:max(18px,env(safe-area-inset-bottom))}
@@ -208,7 +209,7 @@ export function createLeditorView(ctx) {
   function interp() {
     const el = root(), I = interpretation(S.scene, S.room), ok = !!(S.room && S.room.ok);
     el.innerHTML = `<h1>${esc(T('interpH'))}</h1><p class="tag" style="max-width:320px">${esc(T('interpIntro', I.things.length))}</p>`
-      + `<div class="ledbox" style="text-align:left;max-height:46vh;overflow-y:auto">${I.things.length ? '<ul>' + I.things.map((t) => `<li>${esc(T('interpRow', t))}</li>`).join('') + '</ul>' : esc(T('interpNone'))}</div>`
+      + `<div class="ledbox" style="text-align:left;max-height:46vh;overflow-y:auto">${I.things.length ? '<ul>' + I.things.map((t) => `<li>${esc(T('interpRow', { ...t, name: thingName(t.kind, t.label, L()) }))}</li>`).join('') + '</ul>' : esc(T('interpNone'))}</div>`
       + (I.goalAuto ? `<p class="tag">${esc(T('interpAuto'))}</p>` : '') + (I.helpers.length ? `<p class="tag">${esc(T('interpHelpers', I.helpers.length))}</p>` : '')
       + (I.uncertainty ? `<p class="tag" style="max-width:320px">${esc(T('interpUnc'))} ${esc(I.uncertainty)}</p>` : '')
       + `<button class="mbtn" id="ledIntBack">${esc(T('back'))}</button>`;
@@ -221,7 +222,8 @@ export function createLeditorView(ctx) {
     el.innerHTML = `<h1>${esc(T('adjH'))}</h1><p class="tag" style="max-width:320px">${esc(T('adjIntro'))}</p><canvas class="ledmap" id="ledMap"></canvas>`
       + `<p class="tag" id="ledSel">${esc(T('adjNone'))}</p>`
       + `<div class="ledrow"><button class="mbtn sec" id="ledMulti">${esc(T('multiBtn'))}</button></div>`
-      + `<div class="ledrow" id="ledPos"><label class="ledmeas">${esc(T('posX'))}<input class="ledin" id="ledPx" inputmode="numeric" autocomplete="off"></label><label class="ledmeas">${esc(T('posZ'))}<input class="ledin" id="ledPz" inputmode="numeric" autocomplete="off"></label></div>`
+      + `<div class="ledrow" id="ledPos"><label class="ledmeas">${esc(T('posX'))}<input class="ledin" id="ledPx" inputmode="numeric" autocomplete="off"></label><label class="ledmeas">${esc(T('posZ'))}<input class="ledin" id="ledPz" inputmode="numeric" autocomplete="off"></label><label class="ledmeas">${esc(T('posY'))}<input class="ledin" id="ledPy" inputmode="numeric" autocomplete="off"></label></div>`
+      + `<div class="ledrow" id="ledHt"><button class="mbtn sec" id="ledUp">${esc(T('hUp'))}</button><button class="mbtn sec" id="ledDown">${esc(T('hDown'))}</button><button class="mbtn sec" id="ledFloor">${esc(T('hFloor'))}</button></div>`
       + `<p class="tag" style="margin-bottom:0">${esc(T('stepH'))}</p><div class="ledrow" id="ledSteps">${STEPS.map((v) => `<button class="mbtn sec" data-s="${v}">${v}</button>`).join('')}</div>`
       + `<div class="ledarrows"><span></span><button class="mbtn sec" data-d="0,-1">▲</button><span></span><button class="mbtn sec" data-d="-1,0">◀</button><button class="mbtn sec" id="ledDel" style="font-size:13px">${esc(T('del'))}</button><button class="mbtn sec" data-d="1,0">▶</button><span></span><button class="mbtn sec" data-d="0,1">▼</button><span></span></div>`
       + `<p class="tag">${esc(T('goalH'))}</p><div class="ledrow" id="ledGoals"></div>`
@@ -248,8 +250,9 @@ export function createLeditorView(ctx) {
     };
     const info = () => {
       const one = S.sels.length === 1 ? thingInfo(sc(), S.sels[0]) : null;
-      $('ledSel').textContent = S.sels.length > 1 ? T('selN', S.sels.length) : one ? T('infoOne', one) : T('adjNone');
-      const px = $('ledPx'), pz = $('ledPz'); px.disabled = pz.disabled = !one; px.value = one ? one.x : ''; pz.value = one ? one.z : '';
+      $('ledSel').textContent = S.sels.length > 1 ? T('selN', S.sels.length) : one ? T('infoOne', { ...one, name: thingName(one.kind, one.label, L()) }) : T('adjNone');
+      const px = $('ledPx'), pz = $('ledPz'), py = $('ledPy'); px.disabled = pz.disabled = py.disabled = !one; px.value = one ? one.x : ''; pz.value = one ? one.z : ''; py.value = one ? one.y : '';
+      ['ledUp', 'ledDown', 'ledFloor'].forEach((id) => { $(id).disabled = !S.sels.length; });
       $('ledMulti').classList.toggle('on', S.multi); $('ledMulti').textContent = T(S.multi ? 'multiOn' : 'multiBtn');
     };
     const apply = (next, what) => {
@@ -286,6 +289,11 @@ export function createLeditorView(ctx) {
     $('ledMulti').onclick = () => { S.multi = !S.multi; if (!S.multi && S.sels.length > 1) S.sels = [S.sels[0]]; msg(S.multi ? T('multiHelp') : ''); draw(); };
     const move = () => { const px = $('ledPx'), pz = $('ledPz'); if (S.sels.length !== 1) return; if (apply(moveThingTo(sc(), S.sels[0], px.value, pz.value), 'tall')) draw(); else info(); };
     $('ledPx').onchange = move; $('ledPz').onchange = move;
+    const moveY = (next, what) => { if (apply(next, what)) draw(); else info(); };
+    $('ledPy').onchange = () => { if (S.sels.length === 1) moveY(setThingsY(sc(), S.sels, $('ledPy').value), 'høyde tall'); };
+    $('ledUp').onclick = () => { if (S.sels.length) moveY(moveThingsY(sc(), S.sels, stepNow(st)), 'høyde opp'); };
+    $('ledDown').onclick = () => { if (S.sels.length) moveY(moveThingsY(sc(), S.sels, -stepNow(st)), 'høyde ned'); };
+    $('ledFloor').onclick = () => { if (S.sels.length) moveY(setThingsY(sc(), S.sels, 0), 'på gulvet'); };
     el.querySelectorAll('#ledSteps [data-s]').forEach((b) => { b.onclick = () => { setStep(st, +b.dataset.s); renderSteps(); }; });
     el.querySelectorAll('[data-d]').forEach((b) => { b.onclick = () => { if (!S.sels.length) { msg(T('adjNone')); return; } const [dx, dz] = b.dataset.d.split(',').map(Number), stp = stepNow(st); if (apply(moveThings(sc(), S.sels, dx * stp, dz * stp), 'flytt')) draw(); }; });
     $('ledDel').onclick = () => { if (!S.sels.length) { msg(T('adjNone')); return; } const n = deleteThings(sc(), S.sels); if (!n) { msg(T('noGoalDel')); return; } if (apply(n, S.sels.length > 1 ? `slett ${S.sels.length}` : 'slett')) { S.sels = []; draw(); } };

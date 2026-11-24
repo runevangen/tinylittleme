@@ -274,5 +274,27 @@ export function deleteThings(scene, keys) {
 // Det som vises om en ting: navn, type, posisjon (venstre/øvre kant) og størrelse i cm
 export function thingInfo(scene, key) {
   const t = thingsOf(scene).find((q) => q.key === key); if (!t) return null;
-  return { key, label: t.label, kind: t.kind, x: Math.round(t.rect.x0), z: Math.round(t.rect.z0), w: Math.round(t.rect.x1 - t.rect.x0), d: Math.round(t.rect.z1 - t.rect.z0), h: Math.round(t.top) };
+  const ys = (scene.objects || []).filter((o) => o && t.ids.includes(o.id) && Array.isArray(o.box)).map((o) => o.box[2]);
+  return { key, label: t.label, kind: t.kind, x: Math.round(t.rect.x0), z: Math.round(t.rect.z0), y: Math.round(ys.length ? Math.min(...ys) : 0), w: Math.round(t.rect.x1 - t.rect.x0), d: Math.round(t.rect.z1 - t.rect.z0), h: Math.round(t.top) };
+}
+
+// R175: høyden på ting. Flytter alle boksene til de valgte tingene opp eller ned (dy i cm); holdes mellom gulv og tak. Gir ny scene eller null.
+export function moveThingsY(scene, keys, dy) {
+  const th = thingsOf(scene), sel = (keys || []).map((k) => th.find((t) => t.key === k)).filter(Boolean); if (!sel.length || !Number.isFinite(+dy)) return null;
+  const H = (scene.room && scene.room.height) || 240, ids = new Set(sel.flatMap((t) => t.ids));
+  const boxes = (scene.objects || []).filter((o) => o && ids.has(o.id) && Array.isArray(o.box) && o.box.length === 6);
+  if (!boxes.length) return null;
+  const lo = Math.min(...boxes.map((o) => o.box[2])), hi = Math.max(...boxes.map((o) => o.box[3]));
+  dy = Math.max(-lo, Math.min(H - hi, +dy)); dy = Math.round(dy * 10) / 10; if (!dy) return null;
+  const s = clone(scene);
+  for (const o of s.objects) if (ids.has(o.id) && Array.isArray(o.box)) { o.box = [o.box[0], o.box[1], Math.round((o.box[2] + dy) * 10) / 10, Math.round((o.box[3] + dy) * 10) / 10, o.box[4], o.box[5]]; }
+  if (s.goal && ids.has(s.goal.on)) s.goal.y = Math.round((s.goal.y + dy) * 10) / 10;   // målet følger tingen
+  for (const c of s.collectibles || []) if (ids.has(c.on) && Array.isArray(c.at)) { /* smuler ligger på tingen (x, z): høyden følger flata */ }
+  return s;
+}
+// Setter undersiden av tingene (laveste boks) til y cm
+export function setThingsY(scene, keys, y) {
+  const th = thingsOf(scene), sel = (keys || []).map((k) => th.find((t) => t.key === k)).filter(Boolean); if (!sel.length || !Number.isFinite(+y)) return null;
+  const ids = new Set(sel.flatMap((t) => t.ids)), lo = Math.min(...(scene.objects || []).filter((o) => o && ids.has(o.id) && Array.isArray(o.box)).map((o) => o.box[2]));
+  return Number.isFinite(lo) ? moveThingsY(scene, keys, +y - lo) : null;
 }

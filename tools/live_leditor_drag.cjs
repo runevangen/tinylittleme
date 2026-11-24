@@ -34,6 +34,10 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   const x0 = v.x, z0 = v.z; p = await at(A); await pg.mouse.move(p.x, p.y); await pg.mouse.down(); await pg.mouse.move(p.x - 30, p.y - 10, { steps: 6 }); await pg.mouse.up(); await pg.waitForTimeout(300); v = await val();
   const dragged = v.x !== x0 || v.z !== z0; check('dra flytter tingen', dragged, `fra ${x0},${z0} til ${v.x},${v.z}`);
   await pg.screenshot({ path: `${out}/led_drag.png`, fullPage: true });
+  // 2b) høyde (R175): Y-feltet vises, OPP løfter, PÅ GULVET setter undersiden til 0
+  const y0v = +(await pg.inputValue('#ledPy')); check('høydefelt (Y) vises', Number.isFinite(y0v), `y ${y0v}`);
+  await pg.click('#ledUp', { noWaitAfter: true }); await pg.waitForTimeout(200); const y1v = +(await pg.inputValue('#ledPy')); check('OPP løfter tingen', y1v > y0v || y0v >= R.height - 1, `${y0v} → ${y1v}`);
+  await pg.click('#ledFloor', { noWaitAfter: true }); await pg.waitForTimeout(200); check('PÅ GULVET setter undersiden til 0', +(await pg.inputValue('#ledPy')) === 0);
   // 3) stegstørrelse: 50 cm gir større sprang enn 5 cm
   const stepMove = async (s) => { await pg.click(`#ledSteps [data-s="${s}"]`, { noWaitAfter: true }); const before = (await val()).x; await pg.click('[data-d="1,0"]', { noWaitAfter: true }); await pg.waitForTimeout(150); return Math.abs((await val()).x - before); };
   const s5 = await stepMove(5), s50 = await stepMove(50); check('stegstørrelse 5 og 50 cm', s5 === 5 || s5 === 0, `5 gir ${s5} cm, 50 gir ${s50} cm`); check('50 cm flytter mer enn 5 cm (eller stoppes av veggen)', s50 >= s5);

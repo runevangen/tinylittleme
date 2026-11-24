@@ -22,8 +22,13 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   // 2) eget brett: FLY-knappen er synlig, trykk slår på, trykk igjen lander
   await pg.goto(`http://localhost:${port}/?level=mine-abc123&fresh=1`); await pg.waitForSelector('#btnFly', { state: 'attached', timeout: 180000 }); await pg.waitForTimeout(4000);
   check('eget brett: FLY-knappen er synlig', await pg.locator('#btnFly').isVisible()); await pg.screenshot({ path: `${out}/fly_button.png` });
+  check('eget brett: NAVN-knappen er synlig', await pg.locator('#btnTags').isVisible());
   await pg.dispatchEvent('#btnFly', 'pointerdown'); await pg.waitForTimeout(400); check('trykk slår på flymodus', await pg.evaluate(() => document.getElementById('btnFly').classList.contains('on')));
+  await pg.waitForTimeout(800); const tags = await pg.evaluate(() => [...document.querySelectorAll('#tags span')].filter((e) => e.style.display === 'block').map((e) => e.textContent));
+  check('navnelapper vises i flymodus (norske navn)', tags.length > 0 && tags.every((t) => t.length > 0 && !/^[a-z]+_[a-z_]+$/.test(t)), tags.slice(0, 8).join(', '));
   await pg.screenshot({ path: `${out}/fly_on.png` });
+  await pg.dispatchEvent('#btnTags', 'pointerdown'); await pg.waitForTimeout(400); const off = await pg.evaluate(() => [...document.querySelectorAll('#tags span')].filter((e) => e.style.display === 'block').length); check('NAVN slår lappene av', off === 0, `${off} synlige`);
+  await pg.dispatchEvent('#btnTags', 'pointerdown'); await pg.waitForTimeout(500); const on2 = await pg.evaluate(() => [...document.querySelectorAll('#tags span')].filter((e) => e.style.display === 'block').length); check('NAVN slår lappene på igjen', on2 > 0, `${on2} synlige`);
   await pg.dispatchEvent('#btnFly', 'pointerdown'); await pg.waitForTimeout(400); check('trykk igjen lander', !(await pg.evaluate(() => document.getElementById('btnFly').classList.contains('on'))));
   console.log(errs.length ? 'FEIL: ' + errs.slice(0, 3).join(' | ') : 'ingen konsollfeil'); await b.close(); srv.close(); process.exit(errs.length || !ok ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

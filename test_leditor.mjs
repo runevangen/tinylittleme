@@ -2,8 +2,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { LE, REASONS } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, meanLuma, gammaFor, gammaLut, brightenData, sceneToRoom, goalCandidates, summarizeScene, interpretation, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, toleUrl, buildBody, callTolk, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo, moveThingsY, setThingsY, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, meanLuma, gammaFor, gammaLut, brightenData, sceneToRoom, goalCandidates, summarizeScene, interpretation, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, ledAvailable } from './leditor_logic.js';
 import { sceneToLevel } from './scene2level_core.js';
+import { KIND_NAMES, kindName, thingName } from './kindnames.js';
+import { KINDS } from './kinds.js';
 import { listRooms, loadRoom, validateRoom, ROOMS, removeRoom } from './rooms_logic.js';
 import { LEDITOR_TEXT, ltx, lerr, lverdict } from './leditor_text.js';
 import { handleTolk } from './leveleditor_logic.js';
@@ -132,6 +134,23 @@ assert.equal(sceneToRoom({}).ok, false);
   const del = deleteThings(bad, [a.key, b.key]); assert.ok(del && !thingsOf(del).some((t) => t.key === a.key || t.key === b.key), 'begge slettet'); assert.equal(deleteThings(bad, [a.key, 'o:' + bad.goal.on]), null, 'målet kan ikke slettes: ingenting skjer'); assert.equal(deleteThings(bad, []), null);
   // stegstørrelse huskes, ugyldig ignoreres
   const st2 = mem(); assert.equal(stepNow(st2), LED.step); setStep(st2, 25); assert.equal(stepNow(st2), 25); setStep(st2, 7); assert.equal(stepNow(st2), 25, 'ugyldig steg ignoreres'); assert.deepEqual(STEPS, [5, 10, 25, 50]); }
+// R175: høyde i JUSTER (senga i taket): opp/ned, på gulvet, tall; holdes mellom gulv og tak; målet følger tingen
+{ const H = bad.room.height, hi = JSON.parse(JSON.stringify(bad)), ob = hi.objects.find((o) => !o.decor && !o.movable && o.box[3] - o.box[2] > 10 && o.box[3] < H - 80 && o.id !== bad.goal.on && !o.group), key = 'o:' + ob.id;
+  // løft tingen opp mot taket, slik senga så ut
+  const up = moveThingsY(hi, [key], H); assert.ok(up, 'kan løftes'); const iu = thingInfo(up, key); assert.ok(iu.y + (ob.box[3] - ob.box[2]) <= H + 0.5 && iu.y > ob.box[2], 'opp, men ikke over taket');
+  // PÅ GULVET: undersiden til 0, høyden beholdes
+  const down = setThingsY(up, [key], 0); const id = thingInfo(down, key); assert.equal(id.y, 0, 'undersiden er på gulvet'); assert.equal(id.h, Math.round(ob.box[3] - ob.box[2]), 'høyden på tingen beholdes');
+  assert.equal(moveThingsY(down, [key], -50), null, 'ikke under gulvet'); assert.equal(moveThingsY(hi, [key], 0), null, 'ingen endring: null'); assert.equal(moveThingsY(hi, [], 5), null); assert.equal(moveThingsY(hi, [key], 'x'), null);
+  const t = setThingsY(hi, [key], 40); assert.equal(thingInfo(t, key).y, 40, 'tall: undersiden på 40 cm'); assert.equal(hi.objects.find((o) => o.id === ob.id).box[2], ob.box[2], 'originalen røres ikke');
+  // målets ting: målet følger med
+  const g = bad.goal.on, gk = 'o:' + g, gb = bad.objects.find((o) => o.id === g); const mg = moveThingsY(bad, [gk], -Math.min(5, gb.box[2] + 5)); if (mg && gb.box[2] >= 1) assert.equal(mg.goal.y, Math.round((bad.goal.y - Math.min(gb.box[2], 5)) * 10) / 10, 'målet følger tingen');
+  assert.ok(thingInfo(bad, key).y >= 0 && Number.isFinite(thingInfo(bad, key).y), 'thingInfo har y'); }
+// R171/R175: norske og engelske navn på tingtyper
+{ for (const k of Object.keys(KINDS)) { assert.ok(KIND_NAMES.nb[k] && KIND_NAMES.en[k], `${k} har norsk og engelsk navn`); }
+  assert.equal(kindName('wall_cabinet', 'nb'), 'veggskap'); assert.equal(kindName('wall_cabinet', 'en'), 'wall cabinet'); assert.equal(kindName('bed', 'nb'), 'seng', 'kjent ekstra type'); assert.equal(kindName('bed', 'en'), 'bed');
+  assert.equal(kindName('weird_thing2', 'nb'), 'weird thing', 'ukjent type: pent id-navn'); assert.equal(kindName('', 'nb'), 'ting'); assert.equal(kindName(undefined, 'en'), 'thing');
+  assert.equal(thingName('chest', 'skrivebord', 'nb'), 'kommode', 'kjent type vinner'); assert.equal(thingName('box', 'skrivebord', 'nb'), 'skrivebord', 'box: id-en sier mer'); assert.equal(thingName('unknown_kind', 'seng1', 'nb'), 'seng', 'ukjent type: kjent id-navn på norsk');
+  assert.equal(thingName('table', 'x', 'en'), 'table'); }
 assert.equal(checkVerdict({ ok: true, solvable: false }), 'novei'); assert.equal(checkVerdict({ ok: true, solvable: true, tooMany: true }), 'mange'); assert.equal(checkVerdict({ ok: false }), 'bad');
 assert.equal(defaultName(bad), 'Bad'); assert.equal(defaultName({ name: 'fuck' }), 'Mitt brett'); assert.equal(defaultName(null), 'Mitt brett');
 
@@ -172,7 +191,7 @@ assert.match(ltx('nb', 'consent'), /slettes/); assert.match(ltx('nb', 'consent')
 
 // innhekting: moduler i files, valg i SETTINGS (test), hekter i main.js, logEv
 const idx = fs.readFileSync('index.html', 'utf8'), mainJs = fs.readFileSync('main.js', 'utf8');
-for (const f of ['scene2level_core', 'leditor_logic', 'leditor_text', 'leditor_view']) assert.ok(idx.includes(`'${f}'`), `${f} i files i index.html`);
+for (const f of ['scene2level_core', 'leditor_logic', 'leditor_text', 'leditor_view', 'kindnames']) assert.ok(idx.includes(`'${f}'`), `${f} i files i index.html`);
 assert.match(mainJs, /fl\('ledon', 'test'/); assert.match(mainJs, /mLed: \(\) =>/); assert.match(mainJs, /ledAvailable/);
 const view = fs.readFileSync('leditor_view.js', 'utf8'); assert.match(view, /logEv\?\.\('leveleditor'/); assert.match(view, /capture="environment"/); assert.match(view, /S\.photos\.length = 0/);
 assert.doesNotMatch(view, /localStorage\.setItem\([^)]*(data|url)/, 'bilder lagres aldri');

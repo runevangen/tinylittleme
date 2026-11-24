@@ -41,6 +41,7 @@ import { rtx as roomTx } from './rooms_text.js';
 import { ledAvailable, lastRoom } from './leditor_logic.js';   // R152: LAG BRETT FRA BILDER (leditor_logic.js, leditor_view.js, leditor_text.js)
 import { createLeditorView, ledBtnHtml } from './leditor_view.js';
 import { ltx as ledTx } from './leditor_text.js';
+import { thingName } from './kindnames.js';   // R175: navnelapper (norsk/engelsk) over ting i egne brett
 import { createLab3dView } from './grid3d_view.js';   // R130: 3D-laben (egen skjerm: bygg fritt i tre dimensjoner)
 import { LAB3D, WORLD3 } from './grid3d_site.js';
 import { MISSIONS } from './grid3d_missions.js';   // R131: tre 3D-oppdrag (tårn, tripod, bred bro i sidevind)
@@ -1419,10 +1420,46 @@ function setMode(m) {
   }
   mode = m;
   if (m === 'plan') planCam.pivot.set(player.x, player.y + 4, player.z);
+  if (m === 'fly' && isRoomId(levelId) && !tagsAuto) { tagsAuto = true; setTags(true, 'auto i flymodus'); }   // R175: første gang du flyr i eget brett, vises navnelappene (NAVN slår dem av)
   if (m === 'fly') { stats.flew = true; toast(T(isRoomId(levelId) ? (TOUCH ? 'toast.fly.room.touch' : 'toast.fly.room') : 'toast.fly')); }
   $('bPlan').classList.toggle('on', m === 'plan'); $('bFly').classList.toggle('on', m === 'fly'); $('btnFly').classList.toggle('on', m === 'fly');
   if (m === 'plan') toast(T(TOUCH ? 'toast.plan.touch' : 'toast.plan.pc'));
 }
+
+// ---------- R175: navnelapper over ting i egne brett (fra bilder). Teksten kommer fra tingtypen (norsk/engelsk), aldri fra bilder. ----------
+let tagsOn = false, tagsAuto = false, tagList = null;
+const tagsEl = () => $('tags');
+const buildTags = () => {   // én lapp per ting (grupper slås sammen), midt på toppen
+  const groups = new Map(), out = [];
+  for (const b of LEVEL.boxes || []) {
+    if (!b || b.type === 'floor' || b.type === 'wall' || !b.min || !b.max) continue;
+    if (/^(vegg|gulv|tak)/.test(String(b.id || ''))) continue;
+    const size = Math.max(b.max[0] - b.min[0], b.max[2] - b.min[2]); if (size < 2.4 && b.max[1] - b.min[1] < 2.4) continue;   // ikke småtegn (under ca. 12 cm)
+    const key = b.group ? 'g:' + b.group : 'o:' + b.id;
+    let g = groups.get(key); if (!g) { g = { name: thingName(b.kind, b.group || b.id, lang), min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] }; groups.set(key, g); out.push(g); }
+    for (let i = 0; i < 3; i++) { g.min[i] = Math.min(g.min[i], b.min[i]); g.max[i] = Math.max(g.max[i], b.max[i]); }
+  }
+  return out.map((g) => ({ name: g.name, pos: new THREE.Vector3((g.min[0] + g.max[0]) / 2, g.max[1] + 0.35, (g.min[2] + g.max[2]) / 2), span: null }));
+};
+const setTags = (on, why) => {
+  tagsOn = on; $('btnTags').classList.toggle('on', on); if (!on && tagsEl()) for (const sp of tagsEl().children) sp.style.display = 'none';
+  if (on && !tagList) tagList = buildTags();
+  if (why) logEv('navnelapper', `${on ? 'på' : 'av'} (${why})${on && tagList ? ' · ' + tagList.length + ' ting' : ''}`);
+};
+const TAG_MAX = 16, TAG_RANGE = 70;
+const updateTags = () => {   // kalles hver bilderute når lappene er på: de nærmeste (opptil 16) som er foran kameraet
+  if (!tagsOn || !tagList || !tagsEl()) return;
+  const host = tagsEl(), W = innerWidth, H = innerHeight, near = [];
+  for (const t of tagList) { const dx = t.pos.x - camera.position.x, dy = t.pos.y - camera.position.y, dz = t.pos.z - camera.position.z, d2 = dx * dx + dy * dy + dz * dz; if (d2 < TAG_RANGE * TAG_RANGE) near.push([d2, t]); }
+  near.sort((a, b) => a[0] - b[0]); let shown = 0; const used = new Set();
+  for (const [, t] of near) {
+    if (shown >= TAG_MAX) break;
+    _v3.copy(t.pos).project(camera); if (_v3.z > 1 || _v3.z < -1 || Math.abs(_v3.x) > 1.05 || Math.abs(_v3.y) > 1.05) continue;
+    if (!t.span) { t.span = document.createElement('span'); t.span.textContent = t.name; host.appendChild(t.span); }
+    t.span.style.display = 'block'; t.span.style.transform = `translate(${((_v3.x * 0.5 + 0.5) * W).toFixed(1)}px,${((-_v3.y * 0.5 + 0.5) * H).toFixed(1)}px) translate(-50%,-100%)`; used.add(t); shown++;
+  }
+  for (const t of tagList) if (t.span && !used.has(t)) t.span.style.display = 'none';
+};
 
 // ---------- input ----------
 const keys = new Set();
@@ -1912,6 +1949,7 @@ document.addEventListener('pointerdown', (e) => { if (!$('more').classList.conta
 for (const id of ['bLevel', 'bPlan', 'bFly', 'bSound']) $(id).addEventListener('click', closeMore);
 $('hud').addEventListener('pointerdown', (e) => { e.stopPropagation(); hudOpen = !hudOpen; logEv('hud', hudOpen ? 'utvidet' : 'kort'); });
 $('bPlan').onclick = () => setMode('plan'); $('bFly').onclick = () => setMode('fly');
+$('btnTags').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); tagsAuto = true; setTags(!tagsOn, 'knapp'); });   // R175
 $('btnFly').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); setMode('fly'); logEv('flymodus', mode === 'fly' ? 'på (knapp)' : 'av (knapp)'); });   // R174
 $('again').onclick = playAgain;   // R69: «Spill igjen» spør om vanskelighet først
 $('winMenu').onclick = () => quitToMenu('målskjerm'); $('winMenu').textContent = ft(lang, 'fr.backMenu');
@@ -3221,6 +3259,7 @@ function render(now, dt) {
   stepShadows(now);   // R94: skyggekartet tegnes bare når tempoet sier det
   cine.applyCam();   // R68: fritt kamera (setCam) overstyrer følgekameraet per bilde
   renderer.render(scene, camera);
+  updateTags();
   if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const ds = drawerSummary(LEVEL); if (ds.total) logEv('skuffer', `${ds.open} åpne, ${ds.closed} lukkede, ${ds.fronts} frontfarger, tydelige ${drawerCue() ? 'på' : 'av'}`); const rc = roomCaps(levelId), w = overBudget(st, { ...BUDGET, ...rc }).concat(memOver(st, texLow || lowOn, rc.texMB ? { ...MEM_BUDGET, texMB: Math.min(MEM_BUDGET.texMB, rc.texMB) } : MEM_BUDGET)); /* R85: tak per rom */ logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
   goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
   if (tb.isOn()) tb.update(bandCtx(), now);

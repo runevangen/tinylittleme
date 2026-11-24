@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r175-hoyde-og-navn', version: '2.187', date: '2026-11-24', title: 'Rett høyden på ting i JUSTER (senga som satt i taket), se navnelapper over tingene i flymodus, og norske navn på ting i VIS TOLKNING og JUSTER.',
+    how: 'I JUSTER: velg en ting og trykk NED eller PÅ GULVET, eller skriv Høyde (cm). Trykk FLY RUNDT: navnelapper vises over tingene (NAVN slår dem av og på). VIS TOLKNING viser tingene med norske navn.', level: '', spot: null },
   { id: 'r174-flymodus-lett', version: '2.185', date: '2026-11-24', title: 'Flymodus er lett tilgjengelig i egne brett: en stor FLY-knapp i brettet og FLY RUNDT på resultatskjermen. På mobil gir TA fart mens du flyr.',
     how: 'Lag et brett fra bilder og trykk FLY RUNDT, eller trykk SPILL og så FLY-knappen på høyre side. Pinnen styrer, HOPP opp, GREP ned, TA gir fart. Trykk FLY igjen for å lande.', level: '', spot: null },
   { id: 'r173-tilbake-til-meny', version: '2.184', date: '2026-11-24', title: 'TILBAKE fra resultatet og fra JUSTER går nå til menyen for brett fra bilder, der du også har JUSTER SISTE BRETT og MINE BRETT.',

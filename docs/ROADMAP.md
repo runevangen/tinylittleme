@@ -127,7 +127,10 @@ Spørsmål fra Rune: «Tilbake til lage rom menyen?». TILBAKE fra resultatet og
 ### [x] R174 · Fra tester: Rune · Flymodus lett tilgjengelig på «lage brett» (v2.185)
 Ønske: «På lage brett så bør flymodus være lett tilgjengelig». På mobil var Plan og Fly skjult i ⋯-menyen. Gjort: stor FLY-knapp i egne brett, FLY RUNDT på resultatskjermen (åpner brettet i flymodus), TA gir fart i flymodus på mobil.
 
-### [ ] R171 · Fra tester: Rune · Møbler (typenavn) på norsk i VIS TOLKNING og JUSTER
+### [x] R175 · Fra tester: Rune · Senga er i taket: høyde i JUSTER, og navnelapper i flymodus (v2.187)
+To meldinger: «Senga er i taket. Hvordan justere høyden» og «I flymodus kan navnelapper komme fram». Gjort: OPP, NED, PÅ GULVET og Y (cm) i JUSTER (målet følger tingen), navnelapper (knappen NAVN, auto på første gang du flyr i eget brett), og norske navn på tingtyper (R171).
+
+### [x] R171 · Fra tester: Rune · Møbler (typenavn) på norsk i VIS TOLKNING og JUSTER (v2.187: kindnames.js)
 Ønske: «Oversett møbler til norsk også». Typenavnene (kind) vises i dag på engelsk (chest, wall_cabinet, taklist …). Lag en liste kind → norsk (og engelsk) i leditor_text.js, bruk den i VIS TOLKNING og JUSTER (valgt: …); id-er fra tolkningen vises bare som ekstra. Test at alle kinds i kinds.js har navn på begge språk.
 
 ### [x] R172 · Fra tester: Rune · Lettere å flytte ting i JUSTER (v2.183: dra, steg, velg flere, tall)
