@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.188** – R157: roller i byggeren. Hver stav og del er GULV, BJELKE eller TAU; bare gulv kan gås på og stopper figuren og lasten, bjelker og tau bærer som før. Knappen GULV / BJELKE ved valgt stav eller del i alle byggeskjermer (også Byggeskolen), varsler før PRØV, rollen følger med i lagring og delekoder (build_roles, build_roles_view, build, build_logic, grid_logic, grid_view, i18n, main, bygglab, test_roles).
 - **2.187** – R175/R171: HØYDE i JUSTER (OPP, NED, PÅ GULVET og Y i cm), navnelapper (NAVN) over ting i flymodus i egne brett, og norske navn på tingtyper i VIS TOLKNING og JUSTER (kindnames, leditor_logic/view/text, main, index.html, test_leditor).
 - **2.186** – Verktøy: veikart-runneren tar arbeidsgrenen som `args.branch`, så den kan kjøres fra andre økter enn den den ble skrevet i. Ingen endring i spillet.
 - **2.185** – R174: flymodus lett tilgjengelig: stor FLY-knapp i egne brett (mobil og PC), FLY RUNDT på resultatskjermen som åpner brettet i flymodus, og TA gir fart i flymodus på mobil (index.html, main, i18n, leditor_view/text, tools/live_fly.cjs).

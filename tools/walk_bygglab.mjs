@@ -5,6 +5,7 @@
 // (3) hele banen på sokkelen med alle referansebyggene stående: fra første sokkel til siste flagg uten å gå ned på gulvet.
 // Uten bygg stopper den samme ruta ved gapet (ellers er stedet ikke en byggeoppgave).
 import fs from 'node:fs';
+import { classicDef, classicSkip } from '../build_roles.js';   // R157
 import * as BW from '../build_world.js';
 import * as BP from '../build_phys.js';
 import { walkRoute } from './walk_route.mjs';
@@ -34,7 +35,7 @@ export function builtIds(L, site, sol) {
 }
 export function allSolids(L, pick = (s) => s.lab.solutions[0]) {
   const out = [];
-  for (const s of labSites(L)) { const sol = pick(s); out.push(...BW.buildSolids(s, BP.settledPlaced({ site: s, placed: sol.placed, links: sol.links }))); }
+  for (const s of labSites(L)) { const sol = pick(s); out.push(...BW.buildSolids(s, BP.settledPlaced(classicDef(s, sol.placed, sol.links)), { skip: classicSkip(sol.placed) })); /* R157: bare gulv er faste flater */ }
   return out;
 }
 
@@ -46,7 +47,7 @@ export function walkLab(L, { verbose = false } = {}) {
     res.hard.push({ k, ok: hard.ok, why: hard.why, secs: hard.secs }); say(`sted ${k} uten bygging: ${hard.ok ? 'går, ' + hard.secs + ' s' : 'FEIL ' + hard.why}`);
     // alle byggene står samtidig (ett sted skal ikke stenge et annet), men uten å bygge går ikke ruta over gapet
     for (const [i, sol] of s.lab.solutions.entries()) {
-      const sim = BP.runSim({ site: s, placed: sol.placed, links: sol.links }, s.loads?.length ? { load: s.loads[0] } : {});
+      const sim = BP.runSim(classicDef(s, sol.placed, sol.links), s.loads?.length ? { load: s.loads[0] } : {});   // R157: med rollene (lasten går forbi bjelker)
       const m = nodeMap(L, s, sol), r = route(m, builtIds(L, s, sol)), solids = allSolids(L, (q) => (q === s ? sol : q.lab.solutions[0]));
       const w = walkRoute(null, { level: G, route: r, extraBoxes: solids });
       res.built.push({ k, i, name: sol.name, sim: sim.result, ok: sim.result === 'won' && w.ok, why: sim.result !== 'won' ? `prøven: ${sim.reason}` : w.why, secs: w.secs }); say(`sted ${k} «${sol.name}»: prøve ${sim.result}, ruta over bygget ${w.ok ? 'går, ' + w.secs + ' s' : 'FEIL ' + w.why}`);

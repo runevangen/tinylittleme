@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r157-roller-i-byggeren', version: '2.188', date: '2026-11-24', title: 'Roller i byggeren: velg om en stav eller del er GULV (kan gås på) eller BJELKE (bærer, men figuren og lasten går forbi). Tau er alltid tau.',
+    how: 'Gå til Hyllebroen eller et Bygglab-sted og trykk BYGG. Legg en skrå støtte og trykk på den: knappen GULV / BJELKE vises øverst. Bytt rolle og trykk PRØV: bare gulv bærer figuren og lasten.', level: 'bro', spot: null },
   { id: 'r175-hoyde-og-navn', version: '2.187', date: '2026-11-24', title: 'Rett høyden på ting i JUSTER (senga som satt i taket), se navnelapper over tingene i flymodus, og norske navn på ting i VIS TOLKNING og JUSTER.',
     how: 'I JUSTER: velg en ting og trykk NED eller PÅ GULVET, eller skriv Høyde (cm). Trykk FLY RUNDT: navnelapper vises over tingene (NAVN slår dem av og på). VIS TOLKNING viser tingene med norske navn.', level: '', spot: null },
   { id: 'r174-flymodus-lett', version: '2.185', date: '2026-11-24', title: 'Flymodus er lett tilgjengelig i egne brett: en stor FLY-knapp i brettet og FLY RUNDT på resultatskjermen. På mobil gir TA fart mens du flyr.',

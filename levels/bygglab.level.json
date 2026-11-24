@@ -1715,10 +1715,10 @@
      ],
      "surfaces": [
       {
-       "id": "@topp",
-       "u0": -0.6,
-       "u1": 0.6,
-       "top": 3.29
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
       }
      ]
     },
@@ -1803,16 +1803,16 @@
        ],
        "surfaces": [
         {
-         "id": "@topp",
-         "u0": -0.6,
-         "u1": 0.6,
-         "top": 3.29
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 0.5
         }
        ],
        "route": [
         "gulv",
         "ped_a4",
-        "@topp",
+        "@bro",
         "ped_b4"
        ],
        "en": "triangle, low (4 long rafters, 3 out)"
@@ -1888,16 +1888,16 @@
        ],
        "surfaces": [
         {
-         "id": "@topp",
-         "u0": -0.6,
-         "u1": 0.6,
-         "top": 4.04
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 0.5
         }
        ],
        "route": [
         "gulv",
         "ped_a4",
-        "@topp",
+        "@bro",
         "ped_b4"
        ],
        "en": "triangle, tall (4 long rafters, 2 out)"
@@ -2519,10 +2519,10 @@
      ],
      "surfaces": [
       {
-       "id": "@topp",
-       "u0": -0.6,
-       "u1": 0.6,
-       "top": 3.29
+       "id": "@bro",
+       "u0": -4,
+       "u1": 4,
+       "top": 0.5
       }
      ]
     },
@@ -2608,16 +2608,16 @@
        ],
        "surfaces": [
         {
-         "id": "@topp",
-         "u0": -0.6,
-         "u1": 0.6,
-         "top": 3.29
+         "id": "@bro",
+         "u0": -4,
+         "u1": 4,
+         "top": 0.5
         }
        ],
        "route": [
         "gulv",
         "ped_a7",
-        "@topp",
+        "@bro",
         "ped_b7"
        ],
        "en": "triangle (truss)"

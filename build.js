@@ -65,6 +65,11 @@ import { createGhostWorldView } from './buildghostw_view.js';   // R132: spøkel
 import { ghostWorldVisible, ghostCard, cardCompact, cardMark, cardShow, cardOpacity, GHOST } from './buildghostw_logic.js';
 import { squareTipShould } from './badebro_logic.js';   // R119: firkant uten diagonal
 import { stageScaled, stageSite, stageOf, hasStage, overBudget, stagesOf, stagePrev, stageLocked, stageLockText, stageLines, passRead, passRecord, passClear } from './grid_stage.js';   // R74: rutenett-oppdrag: mål, budsjett, tung last, låsing
+import { ROLEOPT, ROLE_FLOOR, ROLE_BEAM, partRole, partCanSwitch, classicDef, roleLine, roleWarnings } from './build_roles.js';   // R157: roller (gulv / bjelke / tau)
+import { createRoleUI, roleCss, roleMarkup, darken, darkenInt, narrowQuad, drawFloorEdge, drawGap, BEAM_NARROW } from './build_roles_view.js';
+import { setRole } from './build_logic.js';
+import { meshBounds as partBounds } from './build_world.js';
+import { rodRole, rodCanSwitch, gSetRole, passAny, roleOfId, roleStats, floorRodIds, nodeOf as gNodeOf } from './grid_logic.js';
 import { roadRodIds, gridAnchors, gridStep, isGrid, simDef as gridSimDef, simDefAuto as gridSimDefAuto, loadPass as gridLoadPass, gUndo, gReset, wipe as gridWipe, exportAny, importAny, gApplyImport, gridSave, gridLoad, gridStats } from './grid_logic.js';
 
 const css = `
@@ -129,7 +134,7 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
   const enabled = sites.length > 0;
   if (!isLab(LEVEL)) { const pg = ensurePlayGrid(sites); if (pg.length) logEv('bygg', `rutenett åpent i vanlige brett: ${pg.join(', ')}`); }   // R82: steder med to ankre og dekk får MODUS-knappen (brettfilene er uendret)
   const labSites = isLab(LEVEL) ? labSitesOf(LEVEL) : [], lab = labSites.length ? { reached: new Set(), moved: false, home: null } : null;   // R67: Bygglab (bygglab_logic.js): stedene på rad, ◀ ▶, ubegrenset mengde, målflagg
-  const st = document.createElement('style'); st.textContent = css + gridCss() + trhCss() + swCss() + buxCss() + cbxCss() + loupeCss() + bnCss() + blkCss() + D25_CSS + (lab ? labCss() : ''); document.head.appendChild(st);
+  const st = document.createElement('style'); st.textContent = css + roleCss() + gridCss() + trhCss() + swCss() + buxCss() + cbxCss() + loupeCss() + bnCss() + blkCss() + D25_CSS + (lab ? labCss() : ''); document.head.appendChild(st);
   const types = { ...partTypes(LEVEL), ...bonusTypes() };   // R47: ekstradelene (smulebudsjett) har egne id-er og bor i samme tabell
   const mem = new Map(), st0 = store || { get: (k, d) => (mem.has(k) ? mem.get(k) : d), set: (k, v) => mem.set(k, v) };   // uten lagring (tester) holdes alt i minnet
   const bonusOpen = () => (getBonus() ? [...new Set([...unlockedBonus(getCrumbs(), getBonusStep()).map((b) => b.id), ...getBonusUnlocks(st0, levelId, Object.keys(bonusTypes()))])] : []);
@@ -176,15 +181,22 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
   const worldPlaced = new Map();             // stedets id -> delene slik de ligger etter at de har satt seg
   const worldDbl = new Map();                // R123: dobbel bro i verden: stedets id -> { sp, road: Set, lines }
   const worldMeshes = new Map();             // stedets id -> three-gruppe med de ferdige delene
+  const worldRoles = new Map();              // R157: stedets id -> Map(del-id -> rolle) slik bygget står i verdenen (bare gulv er faste flater)
+  const cdef = (B) => classicDef(B.site, B.placed, B.links);   // R157: klassisk bygg til fysikken, med rollene (lasten går forbi bjelker)
   const sigOf = (B) => JSON.stringify(serialize(B).placed) + (isGrid(B) && B.rg.dbl ? JSON.stringify(B.rg.dbl) : '');   // R123: dobbel bro hører med til signaturen
   let btex = null;   // R117: delte teksturer/materialer for bygde deler (lages første gang de trengs)
   const worldTex = () => btex || (btex = createBuildTex(THREE, { make: (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }, low: !!getTexLow?.() }));
   function showWorld(site) {                 // tegn bygget i verdenen (nedbøyning er bare faket: delene står i designposen)
     hideWorld(site.id); const g = new THREE.Group(), hd = worldMeshDepth(site), tx = getBuildTex?.() !== false ? worldTex() : null;   // R112: litt smalere enn sokkelen (ingen z-fighting)
     const dress = (m) => { if (tx) { m.castShadow = true; m.receiveShadow = true; } return m; };   // R117: som møblene (skyggebudsjettet i main.js begrenser kasterne)
-    const D = worldDbl.get(site.id);
+    const D = worldDbl.get(site.id), WR = worldRoles.get(site.id);
     for (const p of worldPlaced.get(site.id) || []) {
-      const t = partType(p.type), m = dress(tx ? new THREE.Mesh(tx.geometry(p.type, t.w, t.h, hd, p.id), tx.material(p.type, t.color))
+      const t = partType(p.type);
+      if (!D && WR && WR.get(p.id) === ROLE_BEAM) {   // R157: bjelke i rommet: mørkere, smalere og litt bak veibanen (ingen kollisjon, kan ikke gripes). Samme antall tegnekall som før.
+        const bd = hd * 0.36, bm = dress(tx ? new THREE.Mesh(tx.geometry(p.type, t.w, t.h * BEAM_NARROW, bd, p.id + 'b'), tx.material(p.type, darken(t.color))) : new THREE.Mesh(new THREE.BoxGeometry(t.w, t.h * BEAM_NARROW, bd), new THREE.MeshStandardMaterial({ color: darkenInt(parseInt(String(t.color).slice(1), 16) || 0xc98a45), roughness: 0.75 })));
+        bm.position.set(site.x + p.u, site.y + p.v, site.z + (hd - bd) / 2 - 0.04); bm.rotation.z = p.rot || 0; bm.userData.role = ROLE_BEAM; g.add(bm); continue;
+      }
+      const m = dress(tx ? new THREE.Mesh(tx.geometry(p.type, t.w, t.h, hd, p.id), tx.material(p.type, t.color))
         : new THREE.Mesh(new THREE.BoxGeometry(t.w, t.h, hd), new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.65, metalness: p.type === 'weight' ? 0.5 : 0 })));
       m.position.set(site.x + p.u, site.y + p.v, site.z); m.rotation.z = p.rot || 0;
       if (D) {   // R123: dobbel bro: to plan (foran og bak) og dekk mellom dem; tverrstagene tegnes under
@@ -205,14 +217,15 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
   function hideWorld(id) { const g = worldMeshes.get(id); if (g) { scene.remove(g); g.traverse?.((o) => { o.geometry?.dispose?.(); if (!worldTex_shared(o.material)) o.material?.dispose?.(); }); worldMeshes.delete(id); } }
   function commitWorld(site, why) {          // R26: flytt bygget ut i verdenen som solid
     if (!getWorld() || !LEVEL.boxes) return 0; const B = getB(site);
-    const wp = settledPlaced(isGrid(B) ? gridSimDef(B) : { site, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength() }); worldPlaced.set(site.id, wp);   // delene der de ender opp (klosser har falt på plass)
+    const wp = settledPlaced(isGrid(B) ? gridSimDef(B) : cdef(B), { strength: getStrength() }); worldPlaced.set(site.id, wp);
+    const pass = passAny(B); worldRoles.set(site.id, new Map(B.placed.map((p) => [p.id, ROLEOPT.pass ? roleOfId(B, p.id) : ROLE_FLOOR])));   // R157: bare gulv blir faste flater; bjelker og tau tegnes uten kollisjon   // delene der de ender opp (klosser har falt på plass)
     const dbl = isGrid(B) && getDouble() && hasDouble(B); let n;
-    if (dbl) { const sp = spacingOf(B.rg.dbl), road = roadRodIds(B) || new Set(); worldDbl.set(site.id, { sp, road, lines: braceLines(site, B) }); clearBuilt(LEVEL, site.id); const bx = buildSolids25(site, wp, road, sp); for (const b of bx) LEVEL.boxes.push(b); n = bx.length; logEv('bygg', `dobbel bro står i verdenen: ${site.id}, to plan ${sp} fra hverandre, ${worldDbl.get(site.id).lines.length} tverrstag, ${n} flater`); }
-    else { worldDbl.delete(site.id); n = applyBuilt(LEVEL, site, wp, { skip: isGrid(B) ? new Set(gridLoadPass(B)) : null }); }   // R119: bare veien er fast i verdenen
+    if (dbl) { const sp = spacingOf(B.rg.dbl), road = ROLEOPT.pass ? floorRodIds(B) : (roadRodIds(B) || new Set()); worldDbl.set(site.id, { sp, road, lines: braceLines(site, B) }); clearBuilt(LEVEL, site.id); const bx = buildSolids25(site, wp, road, sp); for (const b of bx) LEVEL.boxes.push(b); n = bx.length; logEv('bygg', `dobbel bro står i verdenen: ${site.id}, to plan ${sp} fra hverandre, ${worldDbl.get(site.id).lines.length} tverrstag, ${n} flater`); }
+    else { worldDbl.delete(site.id); n = applyBuilt(LEVEL, site, wp, { skip: pass.length ? new Set(pass) : null }); }   // R119/R157: bare gulvet er fast i verdenen (begge byggere)
     committed.set(site.id, sigOf(B)); if (liftOut(LEVEL, player, site.id)) logEv('bygg', 'figuren løftet ut av bygget'); showWorld(site);
-    logEv('bygg', `bygget står i verdenen (${why}): ${site.id}, ${B.placed.length} deler, ${n} flater`); return n;
+    logEv('bygg', `bygget står i verdenen (${why}): ${site.id}, ${B.placed.length} deler, ${n} flater, roller ${roleLine(roleStats(B))}`); return n;
   }
-  function uncommitWorld(site, why) { if (!committed.has(site.id)) return; clearBuilt(LEVEL, site.id); hideWorld(site.id); committed.delete(site.id); worldPlaced.delete(site.id); worldDbl.delete(site.id); logEv('bygg', `bygget fjernet fra verden (${why}): ${site.id}`); }
+  function uncommitWorld(site, why) { if (!committed.has(site.id)) return; clearBuilt(LEVEL, site.id); hideWorld(site.id); committed.delete(site.id); worldPlaced.delete(site.id); worldDbl.delete(site.id); worldRoles.delete(site.id); logEv('bygg', `bygget fjernet fra verden (${why}): ${site.id}`); }
   const ptrs = new Map(); let gest = null;
   // R109: pointer capture settes bare på lerretet og frigis alltid (slipp, avbrudd, mistet capture, blur); drag/gest/ptrs nullstilles ved avbrutt berøring
   const capIds = new Set(), wc = createWriteCounter(), wcache = new WeakMap();
@@ -252,7 +265,7 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
   const ghostCardEl = document.createElement('div'); ghostCardEl.id = 'btnBuildCard'; document.body.appendChild(ghostCardEl);   // R132: oppdragskort ved BYGG-knappen
   const root = document.createElement('div'); root.id = 'bld';
   root.innerHTML = `<canvas></canvas><div class="bt top"><button data-a="menu"></button><button data-a="back"></button><button data-a="undo"></button><button data-a="reset"></button><button data-a="try" class="go"></button></div>
-  ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-a="mode" class="bmode"></button><button data-a="gguide" class="bguide"></button><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>${gridMarkup()}${guideMarkup()}${trhMarkup()}${swMarkup()}${buxMarkup()}${cbxMarkup()}${loupeMarkup()}${bnMarkup()}${blkMarkup()}${d25Markup()}`;   // R72: modusknapp og materialvalg (rutenett)
+  ${lab ? labMarkup() : ''}<div class="hint"></div><div class="zoom"><button data-z="in" aria-label="+">+</button><button data-z="out" aria-label="−">−</button><button data-z="fit" aria-label="⤢">⤢</button></div><div class="tools"><button data-t="tape"></button><button data-t="hinge"></button><button data-t="rope"></button><button data-t="band"></button></div><div class="loads"></div><div class="share"><button data-a="mode" class="bmode"></button><button data-a="gguide" class="bguide"></button><button data-s="replay"></button><button data-s="copy"></button><button data-s="paste"></button><button data-s="best"></button></div><div class="modal"><div class="box"><div class="mt"></div><textarea spellcheck="false" autocapitalize="off" autocomplete="off"></textarea><div class="list"></div><div class="mb"><button data-m="use"></button><button data-m="close"></button></div></div></div><div class="tray"></div><div class="bt bot"><button data-a="rotl">↺</button><button data-a="rotr">↻</button><button data-a="snap"></button><button data-a="del"></button></div>${gridMarkup()}${guideMarkup()}${trhMarkup()}${swMarkup()}${buxMarkup()}${cbxMarkup()}${loupeMarkup()}${bnMarkup()}${blkMarkup()}${d25Markup()}${roleMarkup()}`;   // R72: modusknapp og materialvalg (rutenett)
   if (lab) root.classList.add('lab');
   document.body.appendChild(root);
   const cv = root.querySelector('canvas'), g2 = cv.getContext('2d'), tray = root.querySelector('.tray'), loadsEl = root.querySelector('.loads'), hintEl = root.querySelector('.hint'), modal = root.querySelector('.modal'), mTitle = modal.querySelector('.mt'), mText = modal.querySelector('textarea'), mList = modal.querySelector('.list'), sBtn = (k) => root.querySelector(`[data-s="${k}"]`);
@@ -468,8 +481,8 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
     if (getSpan().on) drawSpanTags(S, sx);
     if (sim) { drawSim(S, sx); drawBudget(B); cbx.draw(sx, tNow, g2); return; }
     if (grid.on()) {   // R72: rutenett-modus: prikker, knuter og staver i stedet for deler fra brettet
-      grid.draw(sx, tNow, g2); if (bux.on()) bux.draw(sx, tNow, g2); else drawBudget(B); trh.draw(sx, tNow, g2); swp.draw(sx, tNow, g2);
-      setHint((zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || (bux.on() ? bux.hint() : grid.hint()));
+      grid.draw(sx, tNow, g2); if (!grid.moving) drawRoleGaps(B, S, sx); if (bux.on()) bux.draw(sx, tNow, g2); else drawBudget(B); trh.draw(sx, tNow, g2); swp.draw(sx, tNow, g2);
+      setHint((zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || ((bux.on() ? bux.hint() : grid.hint()) + (grid.selRod && roleUI.shown ? ' ' + T('role.hint') : '')));   // R157: knappen GULV / BJELKE nevnes når en stav er valgt
       setDis(btn('del'), !(grid.selNode || grid.selRod)); setDis(btn('undo'), !B.history.length); setDis(btn('reset'), !gridStats(B).rods); return;
     }
     // deler
@@ -477,15 +490,19 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
     const linkOk = linkFrom && tool ? new Set(linkTargets(B, tool, linkFrom).parts) : null;   // R113
     for (const p of all) {
       const t = partType(p.type), pts = corners(p).map((c) => sx(c.u, c.v));
-      g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath();
-      g2.globalAlpha = p === (drag && drag.part) ? 0.8 : 1; g2.fillStyle = t.color; g2.fill(); g2.lineWidth = sel === p.id || linkFrom === p.id ? 4 : 2; g2.strokeStyle = sel === p.id || linkFrom === p.id ? '#fff' : '#2a1d10'; g2.stroke(); g2.globalAlpha = 1;
-      drawToyDetail(g2, p, sx, view.scale);
+      const beam = ROLEOPT.pass && partRole(p) !== ROLE_FLOOR, dp = beam ? narrowQuad(pts, t.w >= t.h * 2 || t.h >= t.w * 2 ? BEAM_NARROW : 1) : pts;   // R157: bjelke = mørkere og smalere, uten lys kant
+      g2.beginPath(); dp.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath();
+      g2.globalAlpha = p === (drag && drag.part) ? 0.8 : 1; g2.fillStyle = beam ? darken(t.color) : t.color; g2.fill(); g2.lineWidth = sel === p.id || linkFrom === p.id ? 4 : 2; g2.strokeStyle = sel === p.id || linkFrom === p.id ? '#fff' : '#2a1d10'; g2.stroke(); g2.globalAlpha = 1;
+      if (!beam) drawToyDetail(g2, p, sx, view.scale);
+      if (beam) { g2.save(); g2.strokeStyle = 'rgba(0,0,0,.35)'; g2.lineWidth = 1.5; g2.setLineDash([2, 5]); g2.beginPath(); g2.moveTo((dp[0].x + dp[3].x) / 2, (dp[0].y + dp[3].y) / 2); g2.lineTo((dp[1].x + dp[2].x) / 2, (dp[1].y + dp[2].y) / 2); g2.stroke(); g2.restore(); }   // prikket midtlinje: synes også uten farger
+      else if (ROLEOPT.pass) drawFloorEdge(g2, pts, sel === p.id ? 4 : 3);   // R157: gulv = lys kant på oversiden (der føttene står)
       if (t.pivot) drawPivot(p, sx);
       if (p.anchored) { const c = sx(p.u, p.v); g2.beginPath(); g2.arc(c.x, c.y, 4, 0, 7); g2.fillStyle = '#3df0b0'; g2.fill(); }
       if (linkOk && linkOk.has(p.id)) { g2.save(); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath(); g2.globalAlpha = 0.55 + 0.4 * Math.sin(tNow * 6); g2.lineWidth = 5; g2.strokeStyle = '#3df0b0'; g2.setLineDash([9, 6]); g2.stroke(); g2.restore(); }   // R113: delene første del kan festes til
     }
     if (bounce) { const q = (tNow - bounce.t) / TAP.bounceSecs, p0 = B.placed.find((z) => z.id === bounce.id); if (q >= 1 || q < 0 || !p0) bounce = null; else { const c = sx(p0.u, p0.v); g2.beginPath(); g2.arc(c.x, c.y, 16 + 36 * q, 0, 7); g2.strokeStyle = `rgba(255,233,168,${(1 - q).toFixed(2)})`; g2.lineWidth = 4; g2.stroke(); } }   // R110: sprett etter trykk-ut
     drawLinks(B, sx);
+    if (!drag) drawRoleGaps(B, S, sx);   // R157: hull i gulvet
     if (!drag) drawHelp(helpOf(B), sx);
     cbx.draw(sx, tNow, g2);   // R96: første del markert, spøkelseslinje, hånd-hjelp, verktøylinje ved valgt del
     // snapforhåndsvisning
@@ -494,10 +511,43 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
     if (drag && drag.part) { const r = tray.getBoundingClientRect(); if (drag.y > r.top) { g2.fillStyle = 'rgba(255,80,80,.18)'; g2.fillRect(0, r.top, W, r.height); } }
     drawBudget(B);
     const left = inTray(B).length;
-    setHint((zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || hint || cbx.hint() || (cbx.on() ? '' : grid.modeTip()) || (requiredLoads(lsite()).length && B.placed.length ? T('build.loadNeed', { list: requiredLoads(lsite()).filter((i) => !passedOf(active).includes(i)).map((i) => T('build.load.' + i)).join(', ') || T('build.loadAllDone') }) : '') || (linkFrom ? T(tool && linkTargets(B, tool, linkFrom).parts.length ? 'build.hint.link2' : 'build.hint.link2none') : tool ? T('build.hint.link1') : cbx.on() && sel ? T('cbx.sel') : cbx.on() && selLink ? T('cbx.selLink') : lab ? labLine() : B.placed.length ? T(cbx.on() ? 'cbx.hintPlaced' : 'build.hintPlaced') : left ? T(cbx.on() ? 'cbx.hintEmpty' : 'build.hintEmpty') : B.have.length ? T('build.allUsed') : ''));
+    setHint((zoomMsg && tNow < zoomMsgT ? zoomMsg : '') || hint || cbx.hint() || (cbx.on() ? '' : grid.modeTip()) || (requiredLoads(lsite()).length && B.placed.length ? T('build.loadNeed', { list: requiredLoads(lsite()).filter((i) => !passedOf(active).includes(i)).map((i) => T('build.load.' + i)).join(', ') || T('build.loadAllDone') }) : '') || (linkFrom ? T(tool && linkTargets(B, tool, linkFrom).parts.length ? 'build.hint.link2' : 'build.hint.link2none') : tool ? T('build.hint.link1') : cbx.on() && sel ? T('cbx.sel') + (roleUI.shown ? ' ' + T('role.hint') : '') : !cbx.on() && sel && roleUI.shown ? T('role.hint') : cbx.on() && selLink ? T('cbx.selLink') : lab ? labLine() : B.placed.length ? T(cbx.on() ? 'cbx.hintPlaced' : 'build.hintPlaced') : left ? T(cbx.on() ? 'cbx.hintEmpty' : 'build.hintEmpty') : B.have.length ? T('build.allUsed') : ''));
     setDis(btn('del'), !sel && !selLink); setDis(btn('rotl'), !sel); setDis(btn('rotr'), !sel); setDis(btn('undo'), !B.history.length); setDis(btn('reset'), !B.placed.length);
   }
 
+
+  // ---- R157: roller: GULV / BJELKE-knappen ved det valgte, og varsler før prøven (build_roles.js, build_roles_view.js). Felles for broene, Byggeskolen og de gamle skjermene ----
+  const roleUI = createRoleUI({ root, T });
+  function roleSel() {   // det valgte som kan bytte rolle: { id, u, v, role }, ellers null
+    if (!active || sim || !ROLEOPT.pass || modal.classList.contains('open') || root.classList.contains('bxopen') || root.classList.contains('cxopen') || blk.on()) return null; const B = getB(active);
+    if (isGrid(B)) { const r = grid.on() && grid.selRod ? B.rg.rods.find((q) => q.id === grid.selRod) : null; if (!r || !rodCanSwitch(r)) return null; const a = gNodeOf(B.rg, r.a), b = gNodeOf(B.rg, r.b); return a && b ? { id: r.id, u: (a.u + b.u) / 2, v: (a.v + b.v) / 2, role: rodRole(B, r) } : null; }
+    if (drag || tool) return null; const p = sel ? B.placed.find((q) => q.id === sel) : null; return p && partCanSwitch(p) ? { id: p.id, u: p.u, v: p.v, role: partRole(p) } : null;
+  }
+  const ROLE_AREA = { W: 0, top: 0, bottom: 0, insetL: 0, insetR: 0, center: true }, ROLE_AT = { role: '' };
+  function roleStep() {
+    const s = active && view ? roleSel() : null; if (!s) { roleUI.frame(null); return; }
+    const skin = cbx.on() || bux.on(), sd = cbx.on() ? cbx.insets() : bux.on() ? bux.insets() : null;   // fast plass øverst i byggeområdet: dekker aldri ✕, KOPIER, BYTT TIL STÅL eller TREKANT ved det valgte
+    ROLE_AT.role = s.role; ROLE_AREA.W = W; ROLE_AREA.top = Math.max(TOPPX(), hintBottom()); ROLE_AREA.bottom = H - BOTPX(); ROLE_AREA.insetL = sd ? sd.l : 0; ROLE_AREA.insetR = sd ? sd.r : 0; ROLE_AREA.center = skin; roleUI.frame(ROLE_AT, ROLE_AREA);
+  }
+  function roleToggle(to) {   // ett trykk: gulv <-> bjelke for det valgte. Kan angres med ANGRE, og NULLSTILL tar det bort.
+    const s = roleSel(); if (!s) return false; const B = getB(active), r = isGrid(B) ? gSetRole(B, s.id, to) : setRole(B, s.id, to); if (!r) return false;
+    logEv('bygg', `rolle ${s.id} (${isGrid(B) ? 'stav ' + r.mat : 'del ' + r.type}): ${s.role} -> ${r.role}, sted ${active.id}, nå ${roleLine(roleStats(B))}`);
+    toast(T('role.set.' + r.role)); buzz?.(8); audio?.bpop?.(); trayRender(); onChange?.(); return true;
+  }
+  // gulvdelenes utstrekning bortover, og hullene mellom start og mål (bufret per bygg: regnes bare om når noe er endret)
+  let simPass = new Set();   // delene lasten går forbi i prøven som kjører
+  let roleWarnKey = '', roleWarnRes = { none: false, gaps: [] };
+  function roleWarn(B, S = B.site) {
+    let sum = 0; for (const p of B.placed) sum += p.u * 1.37 + p.v * 3.11 + (p.rot || 0) * 7.3 + (p.role === ROLE_BEAM ? 0.5 : p.role === ROLE_FLOOR ? 0.25 : 0);
+    const key = `${S.id}|${isGrid(B) ? 'g' : 'k'}|${B.history.length}|${B.placed.length}|${ROLEOPT.pass}|${ROLEOPT.gap}|${sum.toFixed(4)}`; if (key === roleWarnKey) return roleWarnRes; roleWarnKey = key;
+    const pass = new Set(passAny(B)), spans = B.placed.filter((p) => !pass.has(p.id)).map((p) => partBounds(p));
+    return (roleWarnRes = roleWarnings({ parts: B.placed.length, floorSpans: spans, ground: siteBoxes(S).map((b) => ({ u0: b.x0, u1: b.x1 })), from: siteStart(S).u, to: siteGoal(S).u }));
+  }
+  function drawRoleGaps(B, S, sx) {
+    if (!ROLEOPT.pass || !B.placed.length) return; const w = roleWarn(B, S); if (!w.gaps.length) return;
+    const a = siteStart(S), b = siteGoal(S), vAt = (u) => a.v + (b.v - a.v) * (Math.abs(b.u - a.u) < 1e-6 ? 0 : (u - a.u) / (b.u - a.u));
+    for (const g of w.gaps) drawGap(g2, sx(g.u0, vAt(g.u0)), sx(g.u1, vAt(g.u1)), T('role.gap'));
+  }
 
   // ---- R106: hjørneglass: hva fingeren gjør akkurat nå (info) og hvor glasset kan stå (layout). Gjenbrukte objekter: ingen allokering per bilde ----
   const LI = { placing: false, fingers: 0, x: 0, y: 0, tx: null, ty: null, ok: true, text: '', kind: '' }, LT = { x: 0, y: 0, tu: null, tv: null, ok: true, text: '', kind: '' };
@@ -627,14 +677,15 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
           if (!seg.length) continue; const pts = seg.map((q) => sx(q.u, q.v));
           const gx = gR(p.id), gk = gx ? gWidthK(gx.kind) : 1;   // R73: strekk tynnere, trykk tykkere
           if (tilt25()) rodDepth25(g2, pts[0], pts[pts.length - 1], t.h * sc * gk, t.color, () => { g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); if (pts.length === 1) g2.lineTo(pts[0].x + 0.1, pts[0].y); });   // R137: dybde og skygge også under prøven og i replay
+          if (simPass.has(p.id)) g2.globalAlpha = 0.62;   // R157: bjelker og tau ligger bak veibanen: lasten går foran dem
           for (const [w, col] of [[t.h * sc * gk + 4, '#2a1d10'], [t.h * sc * gk, gx ? gStressCss(gx.r, gamma) : stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : mixCol(t.color, Math.min(1, Math.max(0, (p.stress - 0.35) / 0.65)))]]) {
             g2.lineCap = 'round'; g2.lineJoin = 'round'; g2.lineWidth = w; g2.strokeStyle = col; g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); if (pts.length === 1) g2.lineTo(pts[0].x + 0.1, pts[0].y); g2.stroke();
           }
           if (gx && gDanger(gx.r, gamma)) { g2.save(); g2.setLineDash([6, 6]); g2.lineDashOffset = -tNow * 18; g2.strokeStyle = 'rgba(255,255,255,.9)'; g2.lineWidth = Math.max(2, t.h * sc * gk * 0.22); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.stroke(); g2.restore(); }   // varselstrek (også uten farger)
-          drawToyChain(g2, p.type, pts, sc);
+          g2.globalAlpha = 1; drawToyChain(g2, p.type, pts, sc);
         }
       } else {
-        const pts = corners(p).map((c) => sx(c.u, c.v)); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath(); if (p.broken) g2.globalAlpha = 0.35; g2.fillStyle = stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : t.color; g2.fill(); g2.lineWidth = 2; g2.strokeStyle = '#2a1d10'; g2.stroke(); g2.globalAlpha = 1;   // R49a2: knust del vises svakt
+        const pts = corners(p).map((c) => sx(c.u, c.v)); g2.beginPath(); pts.forEach((q, i) => (i ? g2.lineTo(q.x, q.y) : g2.moveTo(q.x, q.y))); g2.closePath(); if (p.broken) g2.globalAlpha = 0.35; else if (simPass.has(p.id)) g2.globalAlpha = 0.62; g2.fillStyle = stressOn ? tint(t.color, lm.parts.get(p.id), 0.8) : t.color; g2.fill(); g2.lineWidth = 2; g2.strokeStyle = '#2a1d10'; g2.stroke(); g2.globalAlpha = 1;   // R49a2: knust del vises svakt
         drawToyDetail(g2, p, sx, sc);
         if (p.type === 'weight') { const c = sx(p.u, p.v); g2.fillStyle = '#fff'; g2.font = `700 ${Math.max(9, sc * 0.5)}px system-ui`; g2.textAlign = 'center'; g2.fillText('kg', c.x, c.y + sc * 0.18); }
       }
@@ -847,6 +898,7 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
     undo: () => { const B = getB(active); if (gUndo(B)) { grid.clearSel(); logEv('bygg', 'angre'); audio?.bpop?.(); cbx.act('angre'); sel = null; trayRender(); onChange?.(); } },
     reset: () => { const B = getB(active); if (isGrid(B) ? gReset(B) : reset(B)) { grid.clearSel(); logEv('bygg', 'nullstill'); audio?.bpop?.(); cbx.act('nullstill'); sel = null; trayRender(); onChange?.(); } },
     try: () => (sim ? stopSim('stopp') : startSim()),
+    role: () => roleToggle(),   // R157: GULV / BJELKE for det valgte
     rotl: () => rot(ROT_STEP), rotr: () => rot(-ROT_STEP),   // R30: ↺ dreier mot klokka (positiv vinkel i sideriss med v oppover), ↻ med klokka
     snap: () => { setSnap(!getSnap()); const B = getB(active); B.snap = getSnap(); labels(); logEv('bygg', `snapping ${getSnap() ? 'på' : 'av'}`); },
     del: () => { const B = getB(active); if (isGrid(B)) { grid.del(); return; } if (selLink && removeLink(B, selLink)) { logEv('bygg', `fjernet ${selLink}`); audio?.bpop?.(); cbx.act('fjern feste'); selLink = null; onChange?.(); } else if (sel && remove(B, sel)) { logEv('bygg', `tilbake i brettet ${sel}`); audio?.bpop?.(); cbx.act('fjern del'); sel = null; trayRender(); onChange?.(); } },
@@ -869,14 +921,15 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
   function startSim() {
     if (blk.on()) return false;   // R111: ingen PRØV mens stedet er låst
     const B = getB(active); if (!B.placed.length) { toast(T('build.tryEmpty')); return false; }
+    if (ROLEOPT.pass) { const rw = roleWarn(B, active); if (rw.none) { toast(T('role.none')); buzz?.(12); logEv('bygg', `prøv stoppet ${active.id}: ingen gulvdel (${roleLine(roleStats(B))})`); return false; } if (rw.gaps.length) { toast(T('role.gapHint')); logEv('bygg', `varsel før prøven ${active.id}: ${rw.gaps.length} hull i gulvet, lengste ${Math.max(...rw.gaps.map((g) => g.len)).toFixed(1)}`); } }   // R157: varsler før prøven
     const so = { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(stageNow() ? { massK: stageNow().massK } : {}) };
     resetRunState('ny prøve'); let gdef = null; if (isGrid(B)) { const a = gridSimDefAuto(B); gdef = a.def; if (a.passed && !startSim.logged) { startSim.logged = true; logEv('bygg', 'lasten kjører bare på veien: støttestaver stopper den ikke'); } }
     const lay = isGrid(B) && getDouble() ? layersOf(B) : null, wind = isGrid(B) && getDouble() ? windFor(B, stageNow()) : 0; if (lay) gdef = { ...gdef, layers: lay };   // R123: to-lags bygg og sidekraft (build_phys.js createSim2)
-    sim = createSim(isGrid(B) ? gdef : { site: active, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links }, { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(wind ? { wind } : {}), ...(stageNow() ? { massK: stageNow().massK } : {}) });
+    simPass = new Set(passAny(B)); sim = createSim(isGrid(B) ? gdef : cdef(B), { strength: getStrength(), load: curLoad(), axial: getAxial(), ...(wind ? { wind } : {}), ...(stageNow() ? { massK: stageNow().massK } : {}) });
     if (lay || wind) logEv('bygg', `dobbel bro prøve ${active.id}: ${lay ? `to plan (${B.rg.dbl.w}, ${B.rg.dbl.brace}), ${lay.braces.length} tverrstag` : 'ett plan'}, vind ${wind || 0}`);
     simLoad = curLoad(); winOver = false; loadMore = null; replaying = false; winSolved = false; winR2 = null; { const gc = getGhost() ? ghostChoice(recs.get(active.id), sim.pose()) : { rec: null, why: 'av' }; ghostRec = gc.rec; if (gc.why === 'endret') logEv('bygg', 'spøkelse skjult: delene er endret siden forrige prøve'); } recorder = createRecorder(sim, { load: simLoad }); simAcc = 0; simMarks = []; simBreaks = []; simWhy = null; simHelp = null; breakAt = -9; simDone = false; simT0 = tNow; confetti = []; sel = null; selLink = null; linkFrom = null; drag = null; gest = null; ptrs.clear();
     gPeaks = isGrid(B) ? createPeaks() : null; gSum = null; gSpeed = 'play'; grid.simSync('play', false); bux.onTry(); cbx.onTry(); swp.onTry();
-    audio?.bstart?.(); root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}, modus ${isGrid(B) ? 'rutenett' : 'klassisk'}${ghostRec ? ', med spøkelse' : ''}, glass ${loupe.takeShown()} visninger, resultatknapper ${bn.takeUsed()} trykk`); return true;
+    audio?.bstart?.(); root.classList.add('sim'); labels(); logEv('bygg', `prøv ${active.id}: ${B.placed.length} deler, ${B.links.length} koblinger, last ${simLoad}, modus ${isGrid(B) ? 'rutenett' : 'klassisk'}${ghostRec ? ', med spøkelse' : ''}, glass ${loupe.takeShown()} visninger, resultatknapper ${bn.takeUsed()} trykk, roller ${roleLine(roleStats(B))}`); return true;
   }
   const loadThe = (id) => T('build.loadThe.' + id);
   function simText() {   // R48: teksten nevner lasten som prøves (testfiguren har egne, eldre tekster)
@@ -1089,7 +1142,7 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
       logEv('bygg', `plukket ${ev.id} ${ev.n}/${ev.total}`); audio?.crumb?.(ev.n, ev.total); buzz?.(15);
       toast(T(getPartsStart() ? 'build.got2' : 'build.got', { name: T('build.p.' + ev.kind), n: ev.n, total: ev.total })); for (const b of builds.values()) addPart(b, ev.id); partsGoalCheck(); onChange?.();
     }
-    if (active) { stepSim(dt); draw(); }
+    if (active) { stepSim(dt); draw(); roleStep(); }   // R157: GULV / BJELKE-knappen følger det valgte
   }
 
   return {
@@ -1118,6 +1171,13 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'), resetBuild: () => !!active && act.reset(),   // R74: til tester
     stage: { markPassed: (id) => { const r = passRecord(st0, levelId, id); gPassCache = null; return r.first; }, get now() { return stageNow(); }, locked: (id) => stageLockedFor(sites.find((q) => q.id === id)), get passed() { return [...gPass()]; }, get over() { return winOver; }, lines: () => (active && stageState(getB(active)) ? stageLines(stageState(getB(active)), T) : []), get state() { return active ? stageState(getB(active)) : null; } },   // R74
+    roles: {   // R157: til tester og rapport
+      get on() { return ROLEOPT.pass; }, stats: (id) => { const s = id ? sites.find((q) => q.id === id) : active; return s ? roleStats(getB(s)) : null; }, of: (id) => (active ? roleOfId(getB(active), id) : null), toggle: () => !!active && roleToggle(), set: (role) => !!active && roleToggle(role),
+      select: (id) => { if (!active || sim) return false; const B = getB(active); if (isGrid(B)) { grid.select(null, id); return !!grid.selRod; } sel = B.placed.some((p) => p.id === id) ? id : null; selLink = null; return !!sel; },
+      warn: () => (active ? roleWarn(getB(active), active) : null), get btn() { const r = roleUI.shown ? roleUI.el.getBoundingClientRect() : null; return { shown: roleUI.shown, role: roleUI.role, rect: r ? { x: r.left, y: r.top, w: r.width, h: r.height } : null }; },
+      world: (id) => { const m = worldRoles.get(id); return m ? Object.fromEntries(m) : null; },
+      text: () => [...builds].filter(([, b]) => b.placed.length).map(([k, b]) => `${k} (${isGrid(b) ? 'rutenett' : 'klassisk'}): ${roleLine(roleStats(b))}`).join(' · ') + (ROLEOPT.pass ? '' : ' · ordningen er av (alle deler faste)'),
+    },
     bux, bn, trh, swp, d25: { open: () => d25.open(), close: () => d25.close(), isOpen: () => d25.isOpen(), pick: (w, b) => d25.pick(w, b), apply: () => d25.apply(), remove: () => d25.remove() }, get double() { return !!active && hasDouble(getB(active)); }, get cost() { return active ? sfor(active, getB(active)) : null; },   // R92: til tester (R107: bn; R122: trh; R123: d25)
     cap: { get shown() { return capOn(); }, get runs() { return capStats.runs; }, get ms() { return capStats.ms; }, get last() { return capStats.last; }, reset: () => capStats.reset() },   // R110: til tester: «Tåler»-beregninger
     cbx,   // R96: til tester

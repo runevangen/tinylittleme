@@ -8,6 +8,7 @@
 // Bygget ligger som `B.rg = { step, nodes, rods }` og speiles til vanlige `B.placed` / `B.links` (derive), så PRØV, kostnad, stjerner, verden, lagring og deling bruker det som før.
 import { siteAnchors, partType, pushHist, undo, toB64, fromB64, fnv, CODE_MAX, CODE_PREFIX, CODE_MAX_PARTS, CODE_MAX_LINKS, normRot } from './build_logic.js';
 import { GRID_MATS, GRID_MAT, rodType, parseRod, rodPrice } from './build_materials.js';
+import { ROLEOPT, ROLE_FLOOR, ROLE_BEAM, ROLE_ROPE, isChoice, roleCode, roleFromCode, tiltRole, nextRole, classicPass, partRole, roleCount } from './build_roles.js';   // R157: gulv / bjelke / tau
 
 export const GRID_STEP = 2;            // standard trinn (enheter) når stedet ikke sier noe annet
 export const MIN_LEN = 1.2;            // kortere staver gir ingen mening (og kan ikke brekke)
@@ -113,7 +114,7 @@ export function derive(B) {
   for (const r of G.rods) {
     const a = nodeOf(G, r.a), b = nodeOf(G, r.b); if (!a || !b) continue;
     const L = Math.hypot(a.u - b.u, a.v - b.v);
-    placed.push({ id: r.id, type: rodType(r.mat, L), u: (a.u + b.u) / 2, v: (a.v + b.v) / 2, rot: normRot(Math.atan2(b.v - a.v, b.u - a.u)), anchored: false, snapTo: null, _a: r.a, _b: r.b });
+    placed.push({ id: r.id, type: rodType(r.mat, L), u: (a.u + b.u) / 2, v: (a.v + b.v) / 2, rot: normRot(Math.atan2(b.v - a.v, b.u - a.u)), anchored: false, snapTo: null, _a: r.a, _b: r.b, ...(isChoice(r.role) && !r.deck && !GRID_MAT[r.mat]?.rope ? { role: r.role } : {}) });   // R157: valgt rolle følger med (signatur og lagring)
   }
   const local = (r, nid) => { const L = rodLen(G, r); return { x: nid === r.a ? -L / 2 : L / 2, y: 0 }; };
   const jk = (r) => GRID_MAT[r.mat].joint || 1;   // leddets styrke følger det svakeste materialet i knuten
@@ -135,12 +136,38 @@ export function noCollide(B) {
 // R102/R108: lasten (kula, bilen, roboten, figuren) kjører bare på veien. Veien = stavene som ligger på veilinjen (begge ender innenfor halvt rutenettsteg fra ankernivået, se roadLevel); alle andre staver er konstruksjon som bærer veien,
 // og stopper ikke lasten (i en 2D-bro står trekanten «ved siden av» veien). Lasten kan da verken stoppes av støttene eller klatre opp på taket av en trekant. GRIDOPT.pass = ⚙-valget (admin); av = alle staver er faste som før.
 // Steder uten to like høye ankre (ingen veilinje) er uendret.
-export const GRIDOPT = { pass: true };
+export const GRIDOPT = ROLEOPT;   // R157: samme bryter for rutenett og klassisk bygger (build_roles.js)
 export function roadRodIds(B) {
   const G = B.rg, rv = roadLevel(B.site); if (!G || rv == null) return null; const tol = 0.5 * gridStep(B.site);
   return new Set(G.rods.filter((r) => { const a = nodeOf(G, r.a), b = nodeOf(G, r.b); return !!a && !!b && (r.deck || (Math.abs(a.v - rv) <= tol && Math.abs(b.v - rv) <= tol)); }).map((r) => r.id));
 }
-export function loadPass(B) { const road = GRIDOPT.pass ? roadRodIds(B) : null; return road ? B.rg.rods.filter((r) => !road.has(r.id)).map((r) => r.id) : []; }
+// R157: rollen til en stav. Standard: kjøredekket er alltid gulv, tau og kabel alltid tau. Sted med veilinje: på veilinjen = gulv, ellers bjelke (som R108).
+// Sted uten veilinje (ankre i ulik høyde): flatere enn 30° = gulv, brattere = bjelke. Har spilleren valgt selv (`r.role`), står valget fast.
+// Unntak (så alt som virket før R157 virker): tau eller kabel som ligger PÅ veilinjen er veibane som i R108 (et hengende dekk av kabel bærer lasten); det er fast gulv og kan ikke byttes.
+const isRope = (r) => !!GRID_MAT[r.mat]?.rope;
+export const rodFixedRole = (r, road) => (r.deck ? ROLE_FLOOR : isRope(r) ? (road && road.has(r.id) ? ROLE_FLOOR : ROLE_ROPE) : null);
+export function rodDefaultRole(B, r, road = roadRodIds(B)) {
+  const fx = rodFixedRole(r, road); if (fx) return fx;
+  if (road) return road.has(r.id) ? ROLE_FLOOR : ROLE_BEAM;
+  const a = nodeOf(B.rg, r.a), b = nodeOf(B.rg, r.b); return a && b ? tiltRole(Math.atan2(b.v - a.v, b.u - a.u)) : ROLE_BEAM;
+}
+export const rodRole = (B, r, road = roadRodIds(B)) => rodFixedRole(r, road) || (isChoice(r.role) ? r.role : rodDefaultRole(B, r, road));
+export const rodCanSwitch = (r) => !!r && !r.deck && !isRope(r);
+// alle stavenes roller på én gang: Map id -> rolle
+export function rodRoles(B) { const out = new Map(), G = B.rg; if (!G) return out; const road = roadRodIds(B); for (const r of G.rods) out.set(r.id, rodRole(B, r, road)); return out; }
+export const floorRodIds = (B) => new Set([...rodRoles(B)].filter(([, v]) => v === ROLE_FLOOR).map(([k]) => k));
+// bytt rolle på en stav (gulv <-> bjelke); kan angres
+export function gSetRole(B, id, role) {
+  const G = B.rg, r = G && rodOf(G, id); if (!r || !rodCanSwitch(r)) return null;
+  const to = isChoice(role) ? role : nextRole(rodRole(B, r)); if (r.role === to) return null;
+  pushHist(B); r.role = to; derive(B); return r;
+}
+// stavene lasten og figuren går forbi (alt som ikke er gulv). Tom når ordningen er slått av (⚙ → Admin).
+export function loadPass(B) { if (!GRIDOPT.pass || !B.rg) return []; const roles = rodRoles(B); return B.rg.rods.filter((r) => roles.get(r.id) !== ROLE_FLOOR).map((r) => r.id); }
+// R157: felles for begge byggere: id-ene som ikke er gulv, rollen til en del, og rollefordelingen (til logg og rapport)
+export const passAny = (B) => (isGrid(B) ? loadPass(B) : classicPass(B.placed));
+export const roleOfId = (B, id) => { if (isGrid(B)) { const r = rodOf(B.rg, id); return r ? rodRole(B, r) : null; } const p = B.placed.find((q) => q.id === id); return p ? partRole(p) : null; };
+export const roleStats = (B) => roleCount(isGrid(B) ? B.rg.rods.filter((r) => !r.deck).map((r) => ({ role: rodRole(B, r), chosen: rodCanSwitch(r) && isChoice(r.role) })) : B.placed.map((p) => ({ role: partRole(p), chosen: isChoice(p.role) })));
 export const simDef = (B) => ({ site: B.site, placed: B.placed.map((p) => ({ id: p.id, type: p.type, u: p.u, v: p.v, rot: p.rot })), links: B.links, noCollide: noCollide(B) });
 // sendes til createSim/runSim; `run` brukes ikke lenger (beholdt så kallene er like). Returnerer { def, passed }: passed = at noen staver slipper lasten forbi
 export function simDefAuto(B) { const def = simDef(B), pass = loadPass(B); return pass.length ? { def: { ...def, loadPass: pass }, passed: true } : { def, passed: false }; }
@@ -245,7 +272,7 @@ export function hitRod(G, u, v, scale, px = ROD_HIT_PX) {
 
 // ---------- lagring ----------
 const cleanMat = (m) => (GRID_MATS.includes(m) ? m : null);
-export function gridSnapshot(G) { return { ...(G.deck ? { deck: true } : {}), ...(G.dbl ? { dbl: { w: G.dbl.w, brace: G.dbl.brace } } : {}), nodes: userNodes(G).map((n) => [n.id, r3(n.u), r3(n.v)]), rods: userRods(G).map((r) => [r.id, r.a, r.b, r.mat]) }; }
+export function gridSnapshot(G) { return { ...(G.deck ? { deck: true } : {}), ...(G.dbl ? { dbl: { w: G.dbl.w, brace: G.dbl.brace } } : {}), nodes: userNodes(G).map((n) => [n.id, r3(n.u), r3(n.v)]), rods: userRods(G).map((r) => [r.id, r.a, r.b, r.mat, ...(isChoice(r.role) ? [r.role] : [])]) }; }   // R157: femte felt = valgt rolle
 // tilbake fra lagring: ukjente eller ulovlige staver kastes. Returnerer et nytt rutenett.
 export function gridFromSnapshot(site, d, maxLen = MAX_LEN) {
   const G = createGrid(site, !!d?.deck), ok = (x) => Number.isFinite(x), pts = latticePoints(site);
@@ -256,7 +283,7 @@ export function gridFromSnapshot(site, d, maxLen = MAX_LEN) {
   }
   for (const q of Array.isArray(d?.rods) ? d.rods : []) {
     if (!Array.isArray(q) || typeof q[0] !== 'string' || !/^st\d{1,4}$/.test(q[0]) || !cleanMat(q[3]) || rodOf(G, q[0])) continue;
-    if (!rodCheck(G, q[1], q[2], maxLen).ok) continue; G.rods.push({ id: q[0], a: q[1], b: q[2], mat: q[3] });
+    if (!rodCheck(G, q[1], q[2], maxLen).ok) continue; G.rods.push({ id: q[0], a: q[1], b: q[2], mat: q[3], ...(isChoice(q[4]) ? { role: q[4] } : {}) });
   }
   G.n = 1 + G.nodes.reduce((m, n) => Math.max(m, +n.id.slice(2) || 0), 0); G.r = 1 + G.rods.reduce((m, r) => Math.max(m, +r.id.slice(2) || 0), 0);
   const dbl = cleanDbl(d?.dbl); if (dbl) G.dbl = dbl;   // R123: dobbel bro huskes i lagringen
@@ -270,7 +297,7 @@ export function gridExport(B) {
   const G = B.rg; if (!G) return null;
   const order = [...G.nodes.filter((n) => n.fixed), ...G.nodes.filter((n) => n.deck), ...userNodes(G)], ix = new Map(order.map((n, i) => [n.id, i]));   // ankre, dekk, så det du la til
   const nodes = userNodes(G).map((n) => [Math.round(n.u * 1000), Math.round(n.v * 1000)]);
-  const rods = userRods(G).map((r) => [ix.get(r.a), ix.get(r.b), GRID_MATS.indexOf(r.mat)]);
+  const rods = userRods(G).map((r) => [ix.get(r.a), ix.get(r.b), GRID_MATS.indexOf(r.mat), ...(roleCode(r.role) ? [roleCode(r.role)] : [])]);   // R157: fjerde tall = valgt rolle (1 gulv, 2 bjelke); gamle koder har tre
   const body = toB64(JSON.stringify([G.deck ? CODE_GRID_DECK : CODE_GRID, B.site.id, nodes, rods])), code = `${CODE_PREFIX}${body}.${fnv(body)}`;
   return code.length <= CODE_MAX ? code : null;
 }
@@ -295,10 +322,11 @@ export function gridImport(code, B) {
     G.nodes.push({ id: 'kn' + G.n++, u: p.u, v: p.v });
   }
   for (const q of j[3]) {
-    if (!Array.isArray(q) || q.length !== 3 || !q.every((x) => Number.isInteger(x))) return bad('format');
+    if (!Array.isArray(q) || (q.length !== 3 && q.length !== 4) || !q.every((x) => Number.isInteger(x))) return bad('format');
+    if (q.length === 4 && !roleFromCode(q[3])) return bad('verdi');
     const a = G.nodes[q[0]], b = G.nodes[q[1]], mat = GRID_MATS[q[2]]; if (!a || !b || !mat || q[0] < 0 || q[1] < 0) return bad('verdi');
     const c = rodCheck(G, a.id, b.id, maxLenOf(B)); if (!c.ok) return bad('verdi');
-    G.rods.push({ id: 'st' + G.r++, a: a.id, b: b.id, mat });
+    G.rods.push({ id: 'st' + G.r++, a: a.id, b: b.id, mat, ...(q.length === 4 ? { role: roleFromCode(q[3]) } : {}) });
   }
   void anchors; return { ok: true, grid: G };
 }

@@ -7,6 +7,7 @@ import { clampZoom } from './build_zoom.js';
 import { tilt25, proj25, unproj25 } from './build_view25.js';   // R137: 2,5D-visning
 import { TOY_TYPES, legoSnap } from './build_toys.js';   // R46: leker som materialer
 import { rodPartType } from './build_materials.js';          // R72: staver i rutenett-modus har egne typer (rod_*)
+import { isChoice, roleCode, roleFromCode, partRole, partCanSwitch, nextRole } from './build_roles.js';   // R157: gulv / bjelke
 
 export const GRID = 0.5;                 // rutenett (enheter)
 export const ROT_STEP = Math.PI / 12;    // rotasjonstrinn: 15 grader
@@ -109,6 +110,12 @@ export function remove(B, id) {          // tilbake i brettet
   const i = B.placed.findIndex((p) => p.id === id); if (i < 0) return false;
   pushHist(B); B.placed.splice(i, 1); B.links = B.links.filter((l) => l.a !== id && l.b !== id); return true;
 }
+// R157: bytt rolle på en plassert del (gulv <-> bjelke). Valget står fast til delen legges tilbake i brettet. Kan angres.
+export function setRole(B, id, role) {
+  const p = placedOf(B, id); if (!p || !partCanSwitch(p)) return null;
+  const to = isChoice(role) ? role : nextRole(partRole(p)); if (p.role === to) return null;
+  pushHist(B); p.role = to; return p;
+}
 export function undo(B) { const h = B.history.pop(); if (!h) return false; B.placed = h.placed; B.links = h.links; if (h.grid) B.rg = h.grid; return true; }   // R72: rutenett-modus lagrer også knutene
 export function reset(B) { if (!B.placed.length && !B.links.length) return false; pushHist(B); B.placed = []; B.links = []; return true; }
 
@@ -176,14 +183,14 @@ export function raise(B, id) { const i = B.placed.findIndex((p) => p.id === id);
 // lagring: kun det som må overleve («Fortsett»)
 const r3 = (x) => +x.toFixed(3);
 export const serialize = (B) => ({
-  have: [...B.have], placed: B.placed.map((p) => ({ id: p.id, u: +p.u.toFixed(3), v: +p.v.toFixed(3), rot: +p.rot.toFixed(4) })),
+  have: [...B.have], placed: B.placed.map((p) => ({ id: p.id, u: +p.u.toFixed(3), v: +p.v.toFixed(3), rot: +p.rot.toFixed(4), ...(isChoice(p.role) ? { role: p.role } : {}) })),   // R157: rollen bare når spilleren har valgt selv
   links: B.links.map((l) => ({ id: l.id, kind: l.kind, a: l.a, la: { x: r3(l.la.x), y: r3(l.la.y) }, b: l.b, lb: l.lb && { x: r3(l.lb.x), y: r3(l.lb.y) }, g: l.g && { u: r3(l.g.u), v: r3(l.g.v) } })),
 });
 export function restore(B, data) {
   const known = new Set(Object.keys(B.types));
   B.have = (Array.isArray(data?.have) ? data.have : []).filter((id) => known.has(id));
   B.placed = (Array.isArray(data?.placed) ? data.placed : []).filter((p) => B.have.includes(p?.id) && Number.isFinite(p.u) && Number.isFinite(p.v))
-    .map((p) => { const c = clampToSite(B.site, p.u, p.v); return { id: p.id, type: B.types[p.id], u: c.u, v: c.v, rot: Number.isFinite(p.rot) ? normRot(p.rot) : 0, anchored: false }; });
+    .map((p) => { const c = clampToSite(B.site, p.u, p.v); return { id: p.id, type: B.types[p.id], u: c.u, v: c.v, rot: Number.isFinite(p.rot) ? normRot(p.rot) : 0, anchored: false, ...(isChoice(p.role) ? { role: p.role } : {}) }; });
   const ok = (q) => Number.isFinite(q?.x) && Number.isFinite(q?.y);
   B.links = (Array.isArray(data?.links) ? data.links : []).filter((l) => LINK_KINDS.includes(l?.kind) && B.placed.some((p) => p.id === l.a) && ok(l.la)
     && (l.b ? B.placed.some((p) => p.id === l.b) && ok(l.lb) : Number.isFinite(l.g?.u) && Number.isFinite(l.g?.v)))
@@ -249,7 +256,7 @@ export const fromB64 = (t) => { const bin = atob(t.replace(/-/g, '+').replace(/_
 const ik = (x, k) => Math.round(x * k);
 export function exportCode(B) {
   const d = serialize(B);
-  const placed = d.placed.map((p) => [p.id, ik(p.u, 1000), ik(p.v, 1000), ik(p.rot, 10000)]);
+  const placed = d.placed.map((p) => [p.id, ik(p.u, 1000), ik(p.v, 1000), ik(p.rot, 10000), ...(roleCode(p.role) ? [roleCode(p.role)] : [])]);   // R157: femte tall = valgt rolle (1 gulv, 2 bjelke); gamle koder har fire
   const links = d.links.map((l) => [l.id, CODE_KINDS.indexOf(l.kind), l.a, ik(l.la.x, 1000), ik(l.la.y, 1000), l.b, ...(l.b ? [ik(l.lb.x, 1000), ik(l.lb.y, 1000)] : [ik(l.g.u, 1000), ik(l.g.v, 1000)])]);
   const body = toB64(JSON.stringify([1, B.site.id, placed, links])), code = `${CODE_PREFIX}${body}.${fnv(body)}`;
   return code.length <= CODE_MAX ? code : null;
@@ -271,14 +278,15 @@ export function importCode(code, B) {
   const num = (x, lim) => typeof x === 'number' && Number.isInteger(x) && Math.abs(x) <= lim, S = B.site, E = 2;
   const placed = [], seen = new Set(); let missing = 0;
   for (const p of j[2]) {
-    if (!Array.isArray(p) || p.length !== 4 || typeof p[0] !== 'string') return bad('format');
+    if (!Array.isArray(p) || (p.length !== 4 && p.length !== 5) || typeof p[0] !== 'string') return bad('format');
+    if (p.length === 5 && !roleFromCode(p[4])) return bad('verdi');
     if (!Object.hasOwn(B.types, p[0])) return bad('del');
     if (seen.has(p[0])) return bad('verdi'); seen.add(p[0]);
     if (!num(p[1], 1e6) || !num(p[2], 1e6) || !num(p[3], 40000)) return bad('verdi');
     const u = p[1] / 1000, v = p[2] / 1000, rot = p[3] / 10000;
     if (u < -S.w / 2 - E / 1000 || u > S.w / 2 + E / 1000 || v < -E / 1000 || v > S.h + E / 1000 || Math.abs(rot) > Math.PI + 0.001) return bad('verdi');
     if (!B.have.includes(p[0])) missing++;
-    placed.push({ id: p[0], u, v, rot });
+    placed.push({ id: p[0], u, v, rot, ...(p.length === 5 ? { role: roleFromCode(p[4]) } : {}) });
   }
   if (missing) return bad('mangler', { missing });
   const links = [], ids = new Set();

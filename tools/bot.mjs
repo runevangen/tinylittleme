@@ -17,6 +17,7 @@ import * as BW from '../build_world.js';
 import * as BP from '../build_phys.js';
 import { createBuild } from '../build_logic.js';
 import { playGridOf, rowSpec, applySpec, gridRefRoute } from '../grid_play.js';
+import { classicDef, classicSkip } from '../build_roles.js';   // R157
 import { simDef as gridSimDef, simDefAuto as gridSimDefAuto, loadPass as gridLoadPass, setMode as gridSetMode } from '../grid_logic.js';
 import { stageOf } from '../grid_stage.js';
 import { MOVE } from '../hero_move.js';
@@ -55,8 +56,8 @@ export function plansOf(L) {
   for (const a of L.alts || []) plans.push({ id: `hard:${a.id}`, kind: 'hard', route: a.route });                       // R42: harde veier uten klatring
   for (const site of L.build?.sites || []) {
     if (!site.ref?.placed?.length || !site.ref.route) continue;
-    const route = BW.refRoute(L, site), sim = BP.runSim({ site, placed: site.ref.placed, links: site.ref.links });
-    plans.push({ id: `bygg:${site.id}`, kind: 'bygg', route, site, solids: sim.result === 'won' ? BW.buildSolids(site, BP.settledPlaced({ site, placed: site.ref.placed, links: site.ref.links })) : [], simFail: sim.result === 'won' ? '' : `referansebygget består ikke PRØV (${sim.reason})` });
+    const route = BW.refRoute(L, site), rdef = classicDef(site, site.ref.placed, site.ref.links), sim = BP.runSim(rdef);   // R157: med rollene
+    plans.push({ id: `bygg:${site.id}`, kind: 'bygg', route, site, solids: sim.result === 'won' ? BW.buildSolids(site, BP.settledPlaced(rdef), { skip: classicSkip(site.ref.placed) }) : [], simFail: sim.result === 'won' ? '' : `referansebygget består ikke PRØV (${sim.reason})` });
   }
   for (const site0 of L.build?.sites || []) {   // R119: rutenett-referanse som fagverk (site.ref.grid, uten klassisk ref.placed): bygges, prøves med oppdragets laster og tunge vekt, så over i verden
     const spec = site0.ref?.grid, stg = stageOf(site0); if (!spec || !stg || !site0.ref.route) continue;
@@ -68,7 +69,7 @@ export function plansOf(L) {
     const site = { ...JSON.parse(JSON.stringify(site0)), grid: g }, B = createBuild(site, {}, []); B.gridDeck = false;
     const ok = applySpec(B, rowSpec(site)).ok, def = ok && gridSimDef(B), loads = ['figure', ...(site.loads || [])];
     const bad = !ok ? 'rutenett-referansen kan ikke legges' : loads.map((l) => BP.runSim(def, { load: l }).result).find((r) => r !== 'won');
-    const solids = bad ? [] : BW.buildSolids(site, BP.settledPlaced(def)), gr = gridRefRoute(site, solids), route = gr && BW.refRoute(L, { ...site, ref: { ...site.ref, ...gr } });
+    const solids = bad ? [] : BW.buildSolids(site, BP.settledPlaced(def), { skip: new Set(gridLoadPass(B)) }), gr = gridRefRoute(site, solids), route = gr && BW.refRoute(L, { ...site, ref: { ...site.ref, ...gr } });
     if (route) route.forEach((n, i) => { if (n.id.startsWith('@rutenett') && n.top > route[i - 1].top + 0.01) n.hop = true; });   // stavene danner små trinn (en hengebro): oppover hopper figuren (HOPP) fra trinn til trinn
     plans.push({ id: `bygg:${site.id}:rutenett`, kind: 'bygg', route: route || site.ref.route.map(() => null), site, solids,  simFail: bad ? `rutenett-referansen består ikke PRØV (${bad})` : route ? '' : 'finner ikke ruta over rutenett-bygget' });
   }

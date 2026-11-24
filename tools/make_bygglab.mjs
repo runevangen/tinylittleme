@@ -14,7 +14,7 @@ const gnd = (id, kind, a, u, v) => ({ id, kind, a, la: { x: 0, y: 0 }, b: null, 
 const o = (id, kind, material, color, box, extra = {}) => ({ id, kind, material, color, box, confidence: 1, photos: [], ...extra });
 
 const TOP = 15, ZA = 60, ZB = 140, ZC = 100, STEP = 150, XC = (k) => STEP * k, W = STEP * 10 + 100;
-const TOPP = (top) => ({ id: '@topp', u0: -0.6, u1: 0.6, top });   // fagverk i verden: figuren klatrer opp sperren og over mønet
+// R157: sperrene i fagverket er bjelker (brattere enn 30°): figuren går på bunnplanken (gulv) og forbi sperrene, ikke over mønet. @topp brukes ikke lenger.
 const BRO = (id = '@bro', u0 = -4, u1 = 4, top = 0.5) => ({ id, u0, u1, top });
 const triangle = (rt = 'plank_s', L = 4, hs = 3) => {   // tre planker og tre ledd: base over gapet og to sperrer som møtes i toppen (fagverk, R49a2)
   const rise = Math.sqrt(L * L - hs * hs), th = Math.atan2(rise, hs);
@@ -39,8 +39,8 @@ const SITES = [
     { name: 'skrå lang planke', placed: [P('p1', 'plank_l', 0, 2, 0.5236)], links: [], surfaces: [] },
   ] },
   { key: 'fagverk', gap: 5, h: 14, solutions: [
-    { name: 'trekant, lav (sperrer 4 lange, 3 ut)', ...tri1, surfaces: [TOPP(3.29)] },
-    { name: 'trekant, høy (sperrer 4 lange, 2 ut)', ...tri2, surfaces: [TOPP(4.04)] },
+    { name: 'trekant, lav (sperrer 4 lange, 3 ut)', ...tri1, surfaces: [BRO()] },
+    { name: 'trekant, høy (sperrer 4 lange, 2 ut)', ...tri2, surfaces: [BRO()] },
   ] },
   { key: 'tau', gap: 7, h: 12, solutions: [
     { name: 'to korte planker, tape og tau', placed: [P('a', 'plank_s', -2, 0.25), P('b', 'plank_s', 2, 0.25)], links: [tape('t1', 'a', 2, 0, 'b', -2, 0), gnd('r1', 'rope', 'a', 0, 6)], surfaces: [BRO('@bro', -4, 4, 0.5)] },
@@ -52,7 +52,7 @@ const SITES = [
     { name: 'linjal', placed: [P('p1', 'ruler', 0, 0.2)], links: [], surfaces: [BRO('@bro', -5, 5, 0.4)] },
   ] },
   { key: 'taaler', gap: 5, h: 14, cap: 10, solutions: [
-    { name: 'trekant (fagverk)', ...tri1, surfaces: [TOPP(3.29)] },
+    { name: 'trekant (fagverk)', ...tri1, surfaces: [BRO()] },
     { name: 'to lange planker med tape', placed: [P('a', 'plank_l', 0, 0.25), P('b', 'plank_l', 0, 0.75)], links: [tape('t1', 'a', 0, 0.25, 'b', 0, -0.25)], surfaces: [BRO('@bro', -4, 4, 1)] },
     { name: 'høykant-planke', placed: [P('p1', 'plank_t', 0, 0.6)], links: [], surfaces: [BRO('@bro', -4, 4, 1.2)] },
   ] },
