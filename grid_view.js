@@ -6,6 +6,8 @@ import { rodDepth25, nodeBall25 } from './build_view25_view.js';   // R137
 import { guideCss } from './grid_guide_view.js';   // R75
 import { shouldTipMode, showHelpBtn, shouldRestoreMode, getMode, setModeMem, KEY_TIP } from './grid_guide_logic.js';
 import { applyExample, hasExample } from './grid_example.js';   // R73
+import { darken, BEAM_NARROW } from './build_roles_view.js';   // R157: bjelker tegnes mørkere og smalere
+import { GRIDOPT, rodRoles } from './grid_logic.js';
 import { allowedMats, gridAnchors, roadLevel, isGrid, setMode, isDeckRod, gridStep, siteHasGrid, latticePoints, nearestPoint, nodeOf, rodOf, nodeAt, rodLen, hitNode, hitRod, gAddNode, gAddRod, gAddRodTo, gRemoveNode, gRemoveRod, gMoveNode, canMoveTo, maxLenOf } from './grid_logic.js';
 
 export const GRID_PX = 44;   // minste avstand (px) mellom rutenettpunkter i standardvisningen
@@ -188,9 +190,10 @@ export function createGridUI(ctx) {
     for (const lo of an2) for (const hi of an2) if (hi !== lo && Math.abs(hi.u - lo.u) < 1e-6 && hi.v > lo.v + 1e-6) {   // R127: tårn (ankre rett over hverandre) tegnes som en stolpe, så Hengebro leses som to tårn
       const pa = sx(lo.u, lo.v), pb = sx(hi.u, hi.v); g2.lineCap = 'butt'; g2.strokeStyle = '#1a1208'; g2.lineWidth = 12; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.strokeStyle = '#7a6a58'; g2.lineWidth = 8; g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.lineCap = 'round';
     }
-    const onRoad = (r) => { if (r.deck) return true; if (roadV == null || r.mat === 'rope' || r.mat === 'cable') return false; const a = p2.get(r.a), b = p2.get(r.b); return !!a && !!b && Math.abs(a.v - roadV) < 1e-6 && Math.abs(b.v - roadV) < 1e-6; };
+    const roles = GRIDOPT.pass ? rodRoles(B()) : null;   // R157: rollen styrer tegningen: gulv = veibane (lys kant), bjelke = mørkere og smalere, tau som før. Av (⚙ → Admin) = som før (veilinjen)
+    const onRoad = (r) => { if (roles) return roles.get(r.id) === 'gulv' && r.mat !== 'rope' && r.mat !== 'cable'; if (r.deck) return true; if (roadV == null || r.mat === 'rope' || r.mat === 'cable') return false; const a = p2.get(r.a), b = p2.get(r.b); return !!a && !!b && Math.abs(a.v - roadV) < 1e-6 && Math.abs(b.v - roadV) < 1e-6; };
     for (const r of Gd.rods) {
-      const a = p2.get(r.a), b = p2.get(r.b); if (!a || !b) continue; const m = GRID_MAT[r.mat], pa = sx(a.u, a.v), pb = sx(b.u, b.v), w = Math.max(r.mat === 'rope' ? 3 : 5, m.h * sc), isSel = selRod === r.id;
+      const a = p2.get(r.a), b = p2.get(r.b); if (!a || !b) continue; const m = GRID_MAT[r.mat], pa = sx(a.u, a.v), pb = sx(b.u, b.v), beam = !!roles && roles.get(r.id) === 'bjelke', w = Math.max(r.mat === 'rope' ? 3 : beam ? 4 : 5, m.h * sc * (beam ? BEAM_NARROW : 1)), isSel = selRod === r.id, mcol = beam ? darken(m.color, 0.28) : m.color;
       g2.lineCap = 'round';
       if (onRoad(r)) {   // R100: veibanen ser ut som en vei (grå asfalt, lys kant, gul midtstripe) så den ikke blandes med konstruksjonen som bærer den
         const dw = Math.max(w + 6, 13);
@@ -202,11 +205,11 @@ export function createGridUI(ctx) {
       }
       const cab = r.mat === 'cable', cx = (pa.x + pb.x) / 2, cy = (pa.y + pb.y) / 2 + (cab ? CABLE_SAG * 2 * Math.hypot(pb.x - pa.x, pb.y - pa.y) : 0);   // R127: kabel henger litt ned (kvadratisk kurve; bare tegning, fysikken er en rett strekkbinding)
       const seg = () => { g2.beginPath(); g2.moveTo(pa.x, pa.y); if (cab) g2.quadraticCurveTo(cx, cy, pb.x, pb.y); else g2.lineTo(pb.x, pb.y); };
-      if (t25) rodDepth25(g2, pa, pb, w, m.color, seg);   // R137: tykkelse og skygge (samme linje som før)
-      g2.strokeStyle = isSel ? '#ffffff' : '#1a1208'; g2.lineWidth = w + (isSel ? 6 : 4); seg(); g2.stroke();
-      g2.strokeStyle = m.color; g2.lineWidth = w; seg(); g2.stroke();
+      if (t25) rodDepth25(g2, pa, pb, w, mcol, seg);   // R137: tykkelse og skygge (samme linje som før)
+      g2.strokeStyle = isSel ? '#ffffff' : '#1a1208'; g2.lineWidth = w + (isSel ? 6 : beam ? 3 : 4); seg(); g2.stroke();
+      g2.strokeStyle = mcol; g2.lineWidth = w; seg(); g2.stroke();
       if (cab) { g2.setLineDash([2, 5]); g2.strokeStyle = '#5b6672'; g2.lineWidth = Math.max(1, w * 0.4); seg(); g2.stroke(); g2.setLineDash([]); }
-      if (r.mat === 'steel') { g2.strokeStyle = 'rgba(255,255,255,.55)'; g2.lineWidth = Math.max(1.5, w * 0.25); g2.beginPath(); g2.moveTo(pa.x, pa.y - w * 0.18); g2.lineTo(pb.x, pb.y - w * 0.18); g2.stroke(); }
+      if (r.mat === 'steel') { g2.strokeStyle = beam ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.55)'; g2.lineWidth = Math.max(1.5, w * 0.25); const oy = beam ? 0 : w * 0.18; g2.beginPath(); g2.moveTo(pa.x, pa.y - oy); g2.lineTo(pb.x, pb.y - oy); g2.stroke(); }   // R157: bjelker har ingen lys kant på oversiden (glansen ligger midt i)
       if (r.mat === 'rope') { g2.setLineDash([4, 4]); g2.strokeStyle = '#6b4a1a'; g2.lineWidth = Math.max(1.5, w * 0.5); g2.beginPath(); g2.moveTo(pa.x, pa.y); g2.lineTo(pb.x, pb.y); g2.stroke(); g2.setLineDash([]); }
     }
     if (Gd.dbl && (ctx.getDouble ? ctx.getDouble() : true)) {   // R123: dobbel bro: planet bak vises svakt, litt forskjøvet, med stiplede tverrstag fra hver knute
@@ -227,7 +230,7 @@ export function createGridUI(ctx) {
     // mål for flytting: det punktet knuten lander på
     if (gd && gd.moved) { const n = nodeOf(Gd, gd.id), w = ctx.toWorld(gd.x, gd.y), p = n && canMoveTo(B(), gd.id, w.u, w.v); if (p) { const q = sx(p.u, p.v); g2.beginPath(); g2.arc(q.x, q.y, 11, 0, 7); g2.strokeStyle = '#3df0b0'; g2.lineWidth = 3; g2.stroke(); } }
     // opplysning om valgt stav
-    if (selRod) { const r = rodOf(Gd, selRod); if (r) { const a = nodeOf(Gd, r.a), b = nodeOf(Gd, r.b), q = sx((a.u + b.u) / 2, (a.v + b.v) / 2); tag(g2, T('grid.rodInfo', { mat: T('grid.mat.' + r.mat), len: COMMA(rodLen(Gd, r)), cost: rodPrice(r.mat, rodLen(Gd, r)) }), q.x, q.y - 22); } }
+    if (selRod) { const r = rodOf(Gd, selRod); if (r) { const a = nodeOf(Gd, r.a), b = nodeOf(Gd, r.b), q = sx((a.u + b.u) / 2, (a.v + b.v) / 2); tag(g2, T('grid.rodInfo', { mat: T('grid.mat.' + r.mat), len: COMMA(rodLen(Gd, r)), cost: rodPrice(r.mat, rodLen(Gd, r)) }) + (roles ? ' · ' + T('role.' + roles.get(r.id)) : ''), q.x, q.y - 22); } }   // R157: rollen står i klartekst ved valgt stav
     // koordinater ved berøring (hjørnet nede til venstre) og ved punktet
     if (cursor && (cursor.down || ctx.now() - cursor.t0 < 1.6)) {
       const q = sx(cursor.u, cursor.v), c = colRow(S, cursor); g2.beginPath(); g2.arc(q.x, q.y, 11, 0, 7); g2.strokeStyle = '#ffffffcc'; g2.lineWidth = 2; g2.stroke();

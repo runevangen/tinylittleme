@@ -12,6 +12,7 @@ import * as BP from '../build_phys.js';
 import { settledPlaced } from '../build_phys.js';
 import { createBuild } from '../build_logic.js';
 import { applySpec, gridRefRoute } from '../grid_play.js';
+import { classicDef, classicSkip } from '../build_roles.js';   // R157
 import { simDef as gridSimDef, simDefAuto as gridSimDefAuto, loadPass as gridLoadPass, setMode as gridSetMode } from '../grid_logic.js';
 import { stageOf } from '../grid_stage.js';
 import { MOVE } from '../hero_move.js';
@@ -118,7 +119,7 @@ export function builtBase(L) {
   if (site && site.ref?.grid && !(site.ref.placed || []).length) { const g = gridBuiltRoute(L, site); return { site, route: g.route, solids: g.solids, why: g.why, grid: true }; }
   const route = site && refRoute(L, site);
   if (!route) return { site, route: null, solids: [], why: 'finner ikke referansebygget eller ruta' };
-  return { site, route, solids: buildSolids(site, settledPlaced({ site, placed: site.ref.placed, links: site.ref.links || [] })) };
+  return { site, route, solids: buildSolids(site, settledPlaced(classicDef(site, site.ref.placed, site.ref.links || [])), { skip: classicSkip(site.ref.placed) }) };   // R157: bare gulv er faste flater
 }
 export const builtContext = builtBase;   // R140: samme (boten og verktøy-genveier)
 export function walkRouteAny(levelPath, opts = {}) {

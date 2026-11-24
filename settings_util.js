@@ -46,6 +46,7 @@ export function formatReport(info) {
   if (info.difficulty) L.push(`Vanskelighet: ${info.difficulty}`);
   if (info.where) L.push(`Skjerm oppe: ${info.where}`);
   if (info.buildCode) L.push(`Bygg (kode, kan limes inn med LIM INN): ${info.buildCode}`);
+  if (info.buildRoles) L.push(`Bygg (roller): ${info.buildRoles}`);   // R157
   if (info.verCheck) L.push(`Versjonsjekk: ${info.verCheck}`);
   L.push(`Skjerm ${info.screen} · ${info.platform || (info.touch ? 'touch' : 'tastatur/mus')} · ${info.fps}`);
   L.push(`Hoppvalg: ${info.preset} · tid ${info.clock} s · poeng ${info.points}`);

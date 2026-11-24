@@ -125,6 +125,7 @@ import { createShadowCull, createShadowPacer, movedBy, planWarm, chunkByKey, run
 import { programCount, programKeys, warmRender, warmFades, setSunShadowLow, createShaderWatch } from './shaderwarm.js';   // R35: forvarming av alle shadervarianter, Lav profil uten ny kompilering
 import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, sceneStats, overBudget, statsLine, createLowProfile, memLine, memOver, roomCaps, BUDGET, MEM_BUDGET } from './perf_budget.js';   // R15: tegnekall-budsjett, sammenslåing av statiske meshes, Lav profil
 import { GRIDOPT } from './grid_logic.js';
+import { ROLE_GAP } from './build_roles.js';   // R157
 import { normZoom, normSizePct } from './build_loupe_logic.js';   // R106   // R102
 import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
 import { SETTING_TEXT, panelText, settingLabel as settingLabelOf } from './settings_text.js';   // R146: ⚙-etiketter på norsk og engelsk
@@ -279,7 +280,7 @@ let round2On = store.get('tlm.buildround2', true);   // R125: runde 2-brettene v
 const levelsShown = () => visibleLevels(LEVELS, round2On);
 let squareTipOn = store.get('tlm.squaretip', true), fagverkCardOn = store.get('tlm.fagverkcard', true);   // R119: firkant-hint i byggeren, og «Prøv Byggeskolen · Fagverk først» på Badebro
 let labStart = store.get('tlm.labstart', true), labFree = store.get('tlm.labfree', true), labAuto = { done: false };   // R67: Bygglab: åpne byggeskjermen ved start, ubegrenset mengde av alle deler
-GRIDOPT.pass = store.get('tlm.buildgridpass', true) !== false;
+GRIDOPT.pass = store.get('tlm.buildgridpass', true) !== false; { const g = +store.get('tlm.buildrolegap', ROLE_GAP); GRIDOPT.gap = Number.isFinite(g) && g >= 0.5 && g <= 6 ? g : ROLE_GAP; }   // R157: samme bryter styrer rollene (gulv / bjelke / tau) i begge byggere
 let buildPause3d = store.get('tlm.buildpause3d', true), pause3dLogged = false;   // R109: 3D-verdenen tegnes ikke mens byggeskjermen dekker hele skjermen
 let buildLoupe = store.get('tlm.buildloupe', true), buildLoupeZoom = normZoom(store.get('tlm.buildloupezoom', 3.75)), buildLoupeSize = normSizePct(store.get('tlm.buildloupesize', 100));   // R106: hjørneglass i byggeskjermen
 let buildSwapSteel = store.get('tlm.buildswapsteel', true);   // R128: BYTT TIL STÅL + pulserende svakeste stav etter en feilet prøve (Rutenett)
@@ -2087,7 +2088,8 @@ const SETTINGS = [
   rg('buildgridmax', 'admin', 'Byggeskjerm: lengste stav i rutenett-modus (enheter à 5 cm; staven må være minst 1,2)', 6.5, 2, 10, 0.5, () => buildGridMax, kp('tlm.buildgridmax', (v) => { buildGridMax = v; }), { digits: 1 }),
   fl('buildgridstress', 'spill', 'Byggeskjerm (rutenett, R73): stavene farges grønn, gul, oransje og rød etter belastning under og etter prøven (strekk tegnes tynnere enn trykk). Av = vanlig utseende', true, () => buildGridStress, kp('tlm.buildgridstress', (v) => { buildGridStress = v; })),
   fl('buildgridpeak', 'spill', 'Byggeskjerm (rutenett, R73): «største belastning» etter prøven: viser staven som brakk først, ellers den som var nærmest brudd', true, () => buildGridPeak, kp('tlm.buildgridpeak', (v) => { buildGridPeak = v; })),
-  fl('buildgridpass', 'admin', 'Byggeskjerm (rutenett, R108): lasten kjører bare på veien (stavene på veilinjen mellom ankrene). Alle andre staver er konstruksjon som bærer veien: de stopper ikke lasten, og lasten kan ikke klatre opp på dem. Av = alle staver er faste som før', true, () => GRIDOPT.pass, kp('tlm.buildgridpass', (v) => { GRIDOPT.pass = v; logEv('bygg', v ? 'lasten kjører bare på veien' : 'alle staver stopper lasten'); })),
+  fl('buildgridpass', 'admin', 'Byggeskjerm (R108/R157): roller. Lasten og figuren går bare på GULV (veien i rutenett, flate planker, klosser); BJELKER og TAU bærer, men stopper ingenting, og de blir ikke faste flater i rommet. Velg en stav eller del og trykk GULV / BJELKE for å bytte. Av = alle staver og deler er faste som før, og knappen er borte', true, () => GRIDOPT.pass, kp('tlm.buildgridpass', (v) => { GRIDOPT.pass = v; logEv('bygg', v ? 'lasten kjører bare på veien' : 'alle staver stopper lasten'); })),
+  rg('buildrolegap', 'admin', 'Byggeskjerm (R157): hopplengde for varselet «Hull i gulvet» (enheter). Lengre hull mellom gulvdeler markeres før prøven', ROLE_GAP, 0.5, 6, 0.1, () => GRIDOPT.gap, kp('tlm.buildrolegap', (v) => { GRIDOPT.gap = v; logEv('bygg', `hopplengde for gulvvarsel ${v}`); })),
   fl('buildgriddeck', 'admin', 'Byggeskjerm (rutenett, R73): nytt bygg i rutenett-modus starter med kjøredekk mellom de to ankrene (rett kjede som ikke kan slettes). Av = tomt rutenett som før', true, () => buildGridDeck, kp('tlm.buildgriddeck', (v) => { buildGridDeck = v; })),
   rg('buildgridgamma', 'admin', 'Byggeskjerm (rutenett, R73): fargekurve for belastning (visning = belastning ^ dette; 0,5 gjør små laster synlige, 1 = rett fram)', 0.5, 0.25, 1, 0.05, () => buildGridGamma, kp('tlm.buildgridgamma', (v) => { buildGridGamma = v; }), { digits: 2 }),
   rg('buildloupezoom', 'spill', 'Glass i byggeskjermen: forstørrelse (ganger, 1,5 til 6; standard 3,75 = 25 % mer enn før)', 3.75, 1.5, 6, 0.25, () => buildLoupeZoom, kp('tlm.buildloupezoom', (v) => { buildLoupeZoom = normZoom(v); logEv('bygg', `glass forstørrelse ${buildLoupeZoom}`); })),
@@ -2400,6 +2402,7 @@ function buildReportInfo() {
   return {
     version: VERSION, level: levelLabel, difficulty: `${difficulty}${isCustomHelp(store) ? ' (egendefinert hjelp)' : ''} · hjelp av: ${offElements(difficulty).join(', ') || 'ingen'} · merker ${badgeLine() || 'ingen'}`, when: new Date().toLocaleString('nb-NO'), device: shortDevice(navigator.userAgent),
     verCheck: verView ? verView.info() : '',
+    buildRoles: (() => { try { return bld.roles?.text?.() || ''; } catch (e) { return ''; } })(),   // R157: rollefordelingen (gulv / bjelke / tau) per byggested
     buildCode: (() => { try { const c = bld.exportText?.(); return c && c.length <= 1500 ? c : ''; } catch (e) { return ''; } })(),   // R103: byggekoden følger rapporten når byggeskjermen er oppe, så bygget kan gjenskapes
     where: currentScreen().label, screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, touch: TOUCH, platform: `${TOUCH ? 'mobil' : 'PC'} (${platform.pref === 'auto' ? 'automatisk' : 'valgt'}; berøring ${platform.coarse ? 'hovedpeker' : 'nei'}, mus ${platform.fine ? 'ja' : 'nei'}, berøringspunkter ${platform.touchPoints})`, preset: PRESETS[presetName].label, clock: Math.round(clock), points: points(),
     perf: perfLine + ' · shadere ' + shw.line(),
