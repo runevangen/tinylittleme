@@ -124,6 +124,9 @@ Rapport: «Tolkningen gav ingen brett» to ganger (kostet 0,49 USD). Årsak (job
 ### [x] R173 · Fra tester: Rune · Tilbake til lag-brett-menyen (v2.184)
 Spørsmål fra Rune: «Tilbake til lage rom menyen?». TILBAKE fra resultatet og JUSTER går til menyen (LAG BRETT, JUSTER SISTE BRETT, MINE BRETT); et ulagret brett lagres først.
 
+### [x] R174 · Fra tester: Rune · Flymodus lett tilgjengelig på «lage brett» (v2.185)
+Ønske: «På lage brett så bør flymodus være lett tilgjengelig». På mobil var Plan og Fly skjult i ⋯-menyen. Gjort: stor FLY-knapp i egne brett, FLY RUNDT på resultatskjermen (åpner brettet i flymodus), TA gir fart i flymodus på mobil.
+
 ### [ ] R171 · Fra tester: Rune · Møbler (typenavn) på norsk i VIS TOLKNING og JUSTER
 Ønske: «Oversett møbler til norsk også». Typenavnene (kind) vises i dag på engelsk (chest, wall_cabinet, taklist …). Lag en liste kind → norsk (og engelsk) i leditor_text.js, bruk den i VIS TOLKNING og JUSTER (valgt: …); id-er fra tolkningen vises bare som ekstra. Test at alle kinds i kinds.js har navn på begge språk.
 

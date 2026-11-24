@@ -176,7 +176,7 @@ export function createLeditorView(ctx) {
     const el = root(), r = S.room, ok = canPlay(r);
     el.innerHTML = `<h1>${esc(T('resultH'))}</h1><div class="ledbox"><b>${esc(S.name)}</b><span>${esc(T('things', r.things))}</span><span id="ledVerdict">${esc(verdictText())}</span></div>`
       + `<p class="tag">${esc(T('nameLabel'))}</p><input class="ledin" id="ledName" maxlength="30" value="${esc(S.name)}" autocomplete="off">`
-      + `<div class="ledrow"><button class="mbtn" id="ledPlay">${esc(T('play'))}</button><button class="mbtn sec" id="ledAdj">${esc(T('adjust'))}</button><button class="mbtn sec" id="ledChk">${esc(T('check'))}</button><button class="mbtn sec" id="ledShare">${esc(T('share'))}</button><button class="mbtn sec" id="ledInt">${esc(T('interp'))}</button></div>`
+      + `<div class="ledrow"><button class="mbtn" id="ledPlay">${esc(T('play'))}</button><button class="mbtn sec" id="ledAdj">${esc(T('adjust'))}</button><button class="mbtn sec" id="ledChk">${esc(T('check'))}</button><button class="mbtn sec" id="ledShare">${esc(T('share'))}</button><button class="mbtn sec" id="ledInt">${esc(T('interp'))}</button><button class="mbtn sec" id="ledFly">${esc(T('fly'))}</button></div>`
       + `<div class="ledmsg" id="ledMsg">${esc(note)}</div><button class="mbtn sec" id="ledSave">${esc(S.savedId ? T('mine') : T('save'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
     const nm = () => { S.name = safeName($('ledName').value, S.name || 'Mitt brett'); return S.name; };
     const save = () => {
@@ -187,6 +187,7 @@ export function createLeditorView(ctx) {
     $('ledPlay').disabled = false; if (!ok) $('ledPlay').classList.add('sec');
     $('ledPlay').onclick = () => { const id = save(); if (id) { logSummary('spiller'); ctx.onPlay?.(id); } };
     $('ledAdj').onclick = adjust; $('ledInt').onclick = () => interp();
+    $('ledFly').onclick = () => { const id = save(); if (id) { logSummary('flyr'); ctx.onFly ? ctx.onFly(id) : ctx.onPlay?.(id); } };   // R174: åpner brettet i flymodus
     $('ledChk').onclick = () => { S.room = sceneToRoom(S.scene, S.name); if (S.room.scene) S.scene = S.room.scene; logSummary('sjekk'); result(); };
     $('ledSave').onclick = () => { if (S.savedId) { ctx.onMine?.(); return; } const id = save(); if (id) { result(T('saved')); } };
     $('ledBack').onclick = backToMenu;

@@ -196,6 +196,7 @@ else if (levelId && levelId !== 'soverom') {
   } catch { LEVEL = null; }
 }
 if (!LEVEL) { LEVEL = (await import('./level.js')).LEVEL; levelId = 'soverom'; }
+document.body.classList.toggle('myroom', isRoomId(levelId));   // R174: eget brett (fra bilder eller delt): stor FLY-knapp
 let buildRequiredOn = store.get('tlm.buildrequired', true);   // R138: påkrevd bygg (⚙ → Admin). Av = brettet som før, bygging er bare en snarvei
 applyRequired(LEVEL, buildRequiredOn);
 const reqTries = createTryCounter(), reqLogged = new Set();
@@ -1418,8 +1419,8 @@ function setMode(m) {
   }
   mode = m;
   if (m === 'plan') planCam.pivot.set(player.x, player.y + 4, player.z);
-  if (m === 'fly') { stats.flew = true; toast(T('toast.fly')); }
-  $('bPlan').classList.toggle('on', m === 'plan'); $('bFly').classList.toggle('on', m === 'fly');
+  if (m === 'fly') { stats.flew = true; toast(T(isRoomId(levelId) ? (TOUCH ? 'toast.fly.room.touch' : 'toast.fly.room') : 'toast.fly')); }
+  $('bPlan').classList.toggle('on', m === 'plan'); $('bFly').classList.toggle('on', m === 'fly'); $('btnFly').classList.toggle('on', m === 'fly');
   if (m === 'plan') toast(T(TOUCH ? 'toast.plan.touch' : 'toast.plan.pc'));
 }
 
@@ -1911,6 +1912,7 @@ document.addEventListener('pointerdown', (e) => { if (!$('more').classList.conta
 for (const id of ['bLevel', 'bPlan', 'bFly', 'bSound']) $(id).addEventListener('click', closeMore);
 $('hud').addEventListener('pointerdown', (e) => { e.stopPropagation(); hudOpen = !hudOpen; logEv('hud', hudOpen ? 'utvidet' : 'kort'); });
 $('bPlan').onclick = () => setMode('plan'); $('bFly').onclick = () => setMode('fly');
+$('btnFly').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); setMode('fly'); logEv('flymodus', mode === 'fly' ? 'på (knapp)' : 'av (knapp)'); });   // R174
 $('again').onclick = playAgain;   // R69: «Spill igjen» spør om vanskelighet først
 $('winMenu').onclick = () => quitToMenu('målskjerm'); $('winMenu').textContent = ft(lang, 'fr.backMenu');
 $('bMenu').onclick = () => { closeMore(); quitToMenu('⋯'); }; $('bMenu').textContent = dft(lang, 'df.menu');
@@ -2561,7 +2563,7 @@ function axes() {
 }
 const upKey = () => held('Space') || touch.jump;
 const downKey = () => held('KeyC', 'ControlLeft', 'ControlRight') || touch.grab;
-const boost = () => held('ShiftLeft', 'ShiftRight');
+const boost = () => held('ShiftLeft', 'ShiftRight') || (mode === 'fly' && touch.carry);   // R174: på mobil gir TA fart i flymodus
 
 // maur: hopp på ryggen = knus og sprett; ellers støt tilbake (v0.77)
 // R19: pillbug (roller) og tråd-edderkopp (dangler): varsel, støt, knus. Alle hendelser logges som «fiende».
@@ -3497,7 +3499,7 @@ function openRooms() {
 }
 let ledV = null;
 const ledShow = () => ledAvailable({ on: ledOn, code: testerCode(), cinema: CINE.on });
-const getLed = () => (ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms }));
+const getLed = () => (ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms, onFly: (id) => { unlockAudio(); store.set('tlm.flystart', id); playFresh(id, difficulty); } }));
 function openLeditor() { getLed().show(); }
 function openLeditorResume(id) { getLed().resume(id); }   // R167: det egne brettet åpnes på nytt i editoren (JUSTER, MÅL 1–4, VIS TOLKNING) etter spilling
 function roomsPick(b) {
@@ -3562,6 +3564,7 @@ function showStart(o = {}) {
   }
 }
 if (startWanted) showStart(); else { statsLevelStart(); showIntro(); }
+if (!startWanted && isRoomId(levelId) && store.get('tlm.flystart', null) === levelId) { store.set('tlm.flystart', null); setTimeout(() => { if (mode === 'play') setMode('fly'); }, 1500); }   // R174: «FLY RUNDT» fra editoren åpner brettet i flymodus
 
 applyLang();
 logEv('plattform', `${platform.kind} (auto: ${platform.auto}, coarse=${platform.coarse}, fine=${platform.fine}, hover=${platform.hover}, touch=${platform.touchPoints})`);
