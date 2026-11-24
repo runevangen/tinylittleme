@@ -142,6 +142,27 @@ export function scrubScene(scene) {
   return { scene: s, removed };
 }
 
+// R178: modellen leverer av og til en scene uten `units` og `room` (eller pakket inn i et ytre objekt). I stedet for å avvise: pakk ut, og fyll inn det som mangler
+// (units cm, rommets mål fra tingene, standard flater, start og mål). Er scenen komplett, endres ingenting. Gir en ny scene.
+const numOr = (v, d) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : d);
+export function normalizeScene(inp) {
+  let s = inp && typeof inp === 'object' ? inp : {};
+  for (const k of ['scene', 'result', 'data', 'output', 'level', 'room_scene']) if (!Array.isArray(s.objects) && s[k] && typeof s[k] === 'object' && Array.isArray(s[k].objects)) { s = s[k]; break; }
+  s = JSON.parse(JSON.stringify(s));
+  if (!Array.isArray(s.objects)) return s;   // ingen ting å bygge på: la kontrollen avvise
+  if (s.units === undefined || /^(cm|centimeters?|centimetres?)$/i.test(String(s.units))) s.units = 'cm';
+  const boxes = s.objects.filter((o) => o && Array.isArray(o.box) && o.box.length === 6 && o.box.every((n) => Number.isFinite(n)));
+  const ext = boxes.reduce((e, o) => ({ x: Math.max(e.x, o.box[1]), y: Math.max(e.y, o.box[3]), z: Math.max(e.z, o.box[5]) }), { x: 0, y: 0, z: 0 });
+  const R = s.room && typeof s.room === 'object' ? s.room : (s.room = {});
+  R.width = numOr(R.width, numOr(ext.x, 400)); R.depth = numOr(R.depth, numOr(ext.z, 350)); R.height = numOr(R.height, Math.max(240, Math.ceil(ext.y)));
+  const surf = (v, material, color) => (v && typeof v === 'object' && v.material ? v : { material, color });
+  R.floor = surf(R.floor, 'plastic', '#d8c8b0'); R.walls = surf(R.walls, 'plaster', '#d0d6e0'); R.ceiling = surf(R.ceiling, 'plaster', '#f0f0f0');
+  if (typeof s.name !== 'string' || !s.name.trim()) s.name = 'Mitt rom';
+  const inRoom = (p) => p && Number.isFinite(p.x) && Number.isFinite(p.z) && p.x >= 0 && p.x <= R.width && p.z >= 0 && p.z <= R.depth;
+  if (!inRoom(s.start)) s.start = { x: Math.round(R.width / 2), z: Math.max(0, R.depth - 25) };
+  if (!inRoom(s.goal) || !Number.isFinite(s.goal.y)) { const top = boxes.slice().sort((a, b) => b.box[3] - a.box[3]).find((o) => o.box[3] <= 160 && !o.decor && !o.movable) || boxes[0]; s.goal = top ? { x: Math.round((top.box[0] + top.box[1]) / 2), y: top.box[3], z: Math.round((top.box[4] + top.box[5]) / 2), on: top.id } : { x: Math.round(R.width / 2), y: 0, z: Math.round(R.depth / 2) }; }
+  return s;
+}
 const rpcData = (r) => (r && r.data !== undefined ? r.data : r);
 const sumUsage = (a, b) => ({ in: (a.in || 0) + (b.in || 0), out: (a.out || 0) + (b.out || 0) });
 // Hele kjeden, med avhengigheter inn så den kan testes uten nett:
@@ -182,7 +203,7 @@ export async function handleTolk(body, deps) {
       const pc = parseClaudeResponse(rc); usage = sumUsage(usage, pc.usage); resp = rc; p = pc;
     } catch { /* beholder det første svaret (ugyldig) */ }
   }
-  const prep = (pp) => { const sc = scrubScene(pp.scene).scene; const fit = v.answers.measures ? fitToMeasures(sc, v.answers.measures) : sc; return { scene: fit, val: deps.validate(fit) }; };
+  const prep = (pp) => { const sc = normalizeScene(scrubScene(pp.scene).scene); const fit = v.answers.measures ? fitToMeasures(sc, v.answers.measures) : sc; return { scene: fit, val: deps.validate(fit) }; };
   let out = p.ok ? prep(p) : null;
   // selvretting: send feilene tilbake (bildene ligger fortsatt i forespørselen) og be om en rettet scene, én gang
   if (p.ok && p.stop !== 'max_tokens' && out.val.errors.length) {
@@ -196,7 +217,7 @@ export async function handleTolk(body, deps) {
   const cost = costOf(usage);
   if (!p.ok || !out || p.stop === 'max_tokens') { await done(false, { cost, reason: 'tolkning' }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, diag: { stop: p.stop || '', tokens_out: usage.out || 0, truncated } } }; }
   const { scene, val } = out;
-  if (val.errors.length) { await done(false, { cost, reason: 'tolkning', warnings: val.warns.length }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, errors: val.errors.slice(0, 8), diag: { stop: p.stop || '', tokens_out: usage.out || 0, truncated, repaired } } }; }
+  if (val.errors.length) { await done(false, { cost, reason: 'tolkning', warnings: val.warns.length }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, errors: val.errors.slice(0, 8), diag: { stop: p.stop || '', tokens_out: usage.out || 0, truncated, repaired, keys: Object.keys(p.scene || {}).slice(0, 14), objects: Array.isArray(p.scene && p.scene.objects) ? p.scene.objects.length : -1 } } }; }
   let check = { ran: false };
   try { check = (await deps.check(scene)) || check; } catch { check = { ran: false, why: 'feil' }; }
   const ms = (deps.now ? deps.now() : Date.now()) - t0, bot = check.ran ? (check.solvable ? 'vei' : 'ingen_vei') : 'ikke_kjort';

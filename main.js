@@ -1455,7 +1455,9 @@ const updateTags = () => {   // kalles hver bilderute når lappene er på: de n�
   near.sort((a, b) => (a[1] === hiThing ? -1 : 0) - (b[1] === hiThing ? -1 : 0) || a[0] - b[0]); let shown = 0; const used = new Set();   // den markerte tingen får alltid lapp
   for (const [, t] of near) {
     if (shown >= TAG_MAX) break;
-    _v3.copy(t.pos).project(camera); if (_v3.z > 1 || _v3.z < -1 || Math.abs(_v3.x) > 1.05 || Math.abs(_v3.y) > 1.05) continue;
+    _v3.copy(t.pos).project(camera);
+    if (t === hiThing) { if (_v3.z > 1) { _v3.x = -_v3.x; _v3.y = -_v3.y; } _v3.x = Math.max(-0.82, Math.min(0.82, _v3.x)); _v3.y = Math.max(-0.7, Math.min(0.7, _v3.y)); _v3.z = 0; }   // den markerte lappen ligger i skjermkanten i riktig retning når tingen ikke er i bildet
+    else if (_v3.z > 1 || _v3.z < -1 || Math.abs(_v3.x) > 1.05 || Math.abs(_v3.y) > 1.05) continue;
     if (!t.span) { t.span = document.createElement('span'); t.span.textContent = t.name; host.appendChild(t.span); }
     t.span.classList.toggle('hi', t === hiThing); t.span.style.display = 'block'; t.span.style.transform = `translate(${((_v3.x * 0.5 + 0.5) * W).toFixed(1)}px,${((-_v3.y * 0.5 + 0.5) * H).toFixed(1)}px) translate(-50%,-100%)`; used.add(t); shown++;
   }

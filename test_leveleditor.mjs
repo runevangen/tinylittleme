@@ -1,7 +1,7 @@
 // node test_leveleditor.mjs (R151): tjenesten for bildetolkning, med stub i stedet for Claude (ingen nett, ingen nøkkel).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { LE, REASONS, validateRequest, normAnswers, buildClaudeRequest, parseClaudeResponse, costOf, scrubScene, handleTolk, userText, normMeasures, parseMeasure, fitToMeasures, startTolk, pollTolk, handleJobRequest, JOB } from './leveleditor_logic.js';
+import { LE, REASONS, validateRequest, normAnswers, buildClaudeRequest, parseClaudeResponse, costOf, scrubScene, handleTolk, userText, normalizeScene, normMeasures, parseMeasure, fitToMeasures, startTolk, pollTolk, handleJobRequest, JOB } from './leveleditor_logic.js';
 import { validateScene } from './tools/validate_scene.mjs';
 import { promptText } from './tools/make_prompt.mjs';
 import { checkScene } from './tools/scene_pipeline.mjs';
@@ -133,4 +133,19 @@ assert.ok(!/create policy/i.test(sql) && !/bytea|image|data text/i.test(sql), 'i
   assert.ok(/KORT scene/.test(last.messages[0].content.find((c) => c.type === 'text').text), 'det andre kallet ber om en kort scene'); assert.ok(o6.body.usage.cost_usd > costOf({ in: 5000, out: 16000 }), 'begge kallene teller');
   let m = 0; const d7 = mkDeps({ callClaude: async () => { m++; return cut; } }); const o7 = await handleTolk(req(), d7);
   assert.equal(o7.body.ok, false); assert.equal(m, 2, 'maks ett kort nytt forsøk'); assert.equal(o7.body.diag.stop, 'max_tokens'); assert.equal(o7.body.diag.truncated, 1); assert.ok(!JSON.stringify(o7.body).includes('delvis'), 'diagnosen har ikke innhold fra bildene'); }
+// R178: scene uten units/room (eller pakket inn) normaliseres i stedet for å avvises; en komplett scene endres ikke
+{ const objs = bad.objects.slice(0, 12);
+  const naked = { objects: objs, start: bad.start, goal: bad.goal };   // ingen units, room, name
+  const n1 = normalizeScene(naked); assert.equal(n1.units, 'cm'); assert.ok(n1.room.width > 0 && n1.room.depth > 0 && n1.room.height >= 240, 'rommet regnes ut fra tingene'); assert.ok(n1.room.floor.material && n1.room.walls.material && n1.room.ceiling.material, 'standard flater');
+  assert.equal(validateScene(normalizeScene({ ...bad, units: undefined, room: undefined })).errors.length, 0, 'uten units og room blir scenen gyldig'); assert.equal(naked.units, undefined, 'originalen røres ikke');
+  const wrapped = normalizeScene({ scene: JSON.parse(JSON.stringify(bad)) }); assert.equal(wrapped.units, 'cm'); assert.ok(Array.isArray(wrapped.objects) && wrapped.objects.length === bad.objects.length, 'innpakket scene pakkes ut');
+  assert.deepEqual(normalizeScene(bad), JSON.parse(JSON.stringify(bad)), 'en komplett scene endres ikke');
+  const noStart = normalizeScene({ ...bad, start: undefined, goal: { x: -5000, y: 0, z: 0 } }); assert.ok(noStart.start.x >= 0 && noStart.start.x <= noStart.room.width, 'start settes inn i rommet'); assert.ok(noStart.goal.x >= 0 && noStart.goal.x <= noStart.room.width, 'mål utenfor rommet settes på en ting');
+  assert.equal(normalizeScene({ foo: 1 }).foo, 1, 'uten objects: la kontrollen avvise'); assert.equal(normalizeScene(null).objects, undefined);
+  // hele tjenesten: modellen svarer uten units/room, og brettet blir likevel laget (uten selvretting)
+  let calls = 0; const d8 = mkDeps({ callClaude: async () => { calls++; return { content: [{ type: 'tool_use', id: 'n', name: 'lever_scene', input: { name: 'x', objects: bad.objects, start: bad.start, goal: bad.goal } }], stop_reason: 'tool_use', usage: { input_tokens: 5000, output_tokens: 3000 } }; } });
+  const o8 = await handleTolk(req(), d8); assert.equal(o8.body.ok, true, 'normalisert scene gir et brett'); assert.equal(calls, 1, 'ingen ekstra kall nødvendig'); assert.equal(o8.body.scene.units, 'cm');
+  // diagnosen ved en scene som ikke lar seg redde: nøkkelnavn og antall ting, aldri innhold
+  const d9 = mkDeps({ callClaude: async () => ({ content: [{ type: 'tool_use', id: 'n', name: 'lever_scene', input: { rom: { b: 1 }, ting: [{ x: 1 }] } }], stop_reason: 'tool_use', usage: { input_tokens: 10, output_tokens: 10 } }) });
+  const o9 = await handleTolk(req(), d9); assert.equal(o9.body.ok, false); assert.deepEqual(o9.body.diag.keys, ['rom', 'ting']); assert.equal(o9.body.diag.objects, -1); }
 console.log('leveleditor-tjenesten ok');

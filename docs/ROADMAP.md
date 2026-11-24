@@ -127,6 +127,9 @@ Spørsmål fra Rune: «Tilbake til lage rom menyen?». TILBAKE fra resultatet og
 ### [x] R174 · Fra tester: Rune · Flymodus lett tilgjengelig på «lage brett» (v2.185)
 Ønske: «På lage brett så bør flymodus være lett tilgjengelig». På mobil var Plan og Fly skjult i ⋯-menyen. Gjort: stor FLY-knapp i egne brett, FLY RUNDT på resultatskjermen (åpner brettet i flymodus), TA gir fart i flymodus på mobil.
 
+### [x] R178 · Fra tester: Rune · Mange feilmeldinger på de samme eksempelbildene (v2.190)
+Melding: bildene gir flere feilmeldinger. Årsak: etter v2.180 (ny modell og lang instruks) leverer modellen ofte scenen uten units og room (jobbdiagnosen: stop tool_use, repaired 1, tokens 6599), og selvrettingen hjelper ikke. Bildene er ikke dårlige. Rettet: normalizeScene (pakker ut, fyller inn units cm, rommets mål ut fra tingene, flater, start og mål), instruksen ber om scenen på toppnivå, diagnose med feltnavn.
+
 ### [x] R176 · Fra tester: Rune · Finner ikke exit fra flymodus (v2.189)
 Melding: «Finner ikke exit fra fly modus». Rettet: mens du flyr i eget brett heter FLY-knappen LAND (større, oransje), og en lapp øverst sier «Du flyr. Trykk LAND for å gå ut av flymodus.»
 
