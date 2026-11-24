@@ -1423,7 +1423,7 @@ function setMode(m) {
   if (m === 'plan') planCam.pivot.set(player.x, player.y + 4, player.z);
   if (m === 'fly' && isRoomId(levelId) && !tagsAuto) { tagsAuto = true; setTags(true, 'auto i flymodus'); }   // R175: første gang du flyr i eget brett, vises navnelappene (NAVN slår dem av)
   if (m === 'fly') { stats.flew = true; toast(T(isRoomId(levelId) ? (TOUCH ? 'toast.fly.room.touch' : 'toast.fly.room') : 'toast.fly')); }
-  $('bPlan').classList.toggle('on', m === 'plan'); $('bFly').classList.toggle('on', m === 'fly'); $('btnFly').classList.toggle('on', m === 'fly');
+  $('bPlan').classList.toggle('on', m === 'plan'); $('bFly').classList.toggle('on', m === 'fly'); $('btnFly').classList.toggle('on', m === 'fly'); { const f = $('btnFly'); f.textContent = T(m === 'fly' ? 'fly.land' : 'fly.btn'); f.classList.toggle('flying', m === 'fly'); const h = $('flyHint'); h.textContent = T(TOUCH ? 'fly.hint.touch' : 'fly.hint.pc'); h.classList.toggle('hide', !(m === 'fly' && isRoomId(levelId))); }   // R176: tydelig LAND-knapp og lapp mens du flyr
   if (m === 'plan') toast(T(TOUCH ? 'toast.plan.touch' : 'toast.plan.pc'));
 }
 
@@ -1440,7 +1440,7 @@ const buildTags = () => {   // én lapp per ting (grupper slås sammen), midt p�
     let g = groups.get(key); if (!g) { g = { name: thingName(b.kind, b.group || b.id, lang), min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] }; groups.set(key, g); out.push(g); }
     for (let i = 0; i < 3; i++) { g.min[i] = Math.min(g.min[i], b.min[i]); g.max[i] = Math.max(g.max[i], b.max[i]); }
   }
-  return out.map((g) => ({ name: g.name, pos: new THREE.Vector3((g.min[0] + g.max[0]) / 2, g.max[1] + 0.35, (g.min[2] + g.max[2]) / 2), span: null }));
+  return out.map((g) => ({ name: g.name, min: g.min, max: g.max, pos: new THREE.Vector3((g.min[0] + g.max[0]) / 2, g.max[1] + 0.35, (g.min[2] + g.max[2]) / 2), span: null }));
 };
 const setTags = (on, why) => {
   tagsOn = on; $('btnTags').classList.toggle('on', on); if (!on && tagsEl()) for (const sp of tagsEl().children) sp.style.display = 'none';
@@ -1452,14 +1452,52 @@ const updateTags = () => {   // kalles hver bilderute når lappene er på: de n�
   if (!tagsOn || !tagList || !tagsEl()) return;
   const host = tagsEl(), W = innerWidth, H = innerHeight, near = [];
   for (const t of tagList) { const dx = t.pos.x - camera.position.x, dy = t.pos.y - camera.position.y, dz = t.pos.z - camera.position.z, d2 = dx * dx + dy * dy + dz * dz; if (d2 < TAG_RANGE * TAG_RANGE) near.push([d2, t]); }
-  near.sort((a, b) => a[0] - b[0]); let shown = 0; const used = new Set();
+  near.sort((a, b) => (a[1] === hiThing ? -1 : 0) - (b[1] === hiThing ? -1 : 0) || a[0] - b[0]); let shown = 0; const used = new Set();   // den markerte tingen får alltid lapp
   for (const [, t] of near) {
     if (shown >= TAG_MAX) break;
     _v3.copy(t.pos).project(camera); if (_v3.z > 1 || _v3.z < -1 || Math.abs(_v3.x) > 1.05 || Math.abs(_v3.y) > 1.05) continue;
     if (!t.span) { t.span = document.createElement('span'); t.span.textContent = t.name; host.appendChild(t.span); }
-    t.span.style.display = 'block'; t.span.style.transform = `translate(${((_v3.x * 0.5 + 0.5) * W).toFixed(1)}px,${((-_v3.y * 0.5 + 0.5) * H).toFixed(1)}px) translate(-50%,-100%)`; used.add(t); shown++;
+    t.span.classList.toggle('hi', t === hiThing); t.span.style.display = 'block'; t.span.style.transform = `translate(${((_v3.x * 0.5 + 0.5) * W).toFixed(1)}px,${((-_v3.y * 0.5 + 0.5) * H).toFixed(1)}px) translate(-50%,-100%)`; used.add(t); shown++;
   }
   for (const t of tagList) if (t.span && !used.has(t)) t.span.style.display = 'none';
+};
+
+// R177: liste over tingene (trykk markerer tingen i rommet med en gul ramme som synes gjennom ting, og en uthevet lapp)
+let hiThing = null, hiMesh = null, hiUntil = 0, hiTurn = null, hiLast = 0;
+const clearHi = () => { hiThing = null; hiUntil = 0; hiTurn = null; if (hiMesh) hiMesh.visible = false; };
+const highlightThing = (t) => {
+  if (!hiMesh) {
+    hiMesh = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: 0xffd23f, depthTest: false, transparent: true }));
+    hiMesh.renderOrder = 999; hiMesh.frustumCulled = false; scene.add(hiMesh);
+  }
+  hiThing = t; hiUntil = performance.now() + 9000;
+  const sx = t.max[0] - t.min[0] + 0.5, sy = t.max[1] - t.min[1] + 0.5, sz = t.max[2] - t.min[2] + 0.5;
+  hiMesh.scale.set(sx, sy, sz); hiMesh.position.set((t.min[0] + t.max[0]) / 2, (t.min[1] + t.max[1]) / 2, (t.min[2] + t.max[2]) / 2); hiMesh.visible = true;
+  hiTurn = Math.atan2(-((t.min[0] + t.max[0]) / 2 - player.x), -((t.min[2] + t.max[2]) / 2 - player.z)); hiLast = performance.now();   // kameraet dreies mot tingen (også når den er bak deg)
+  if (!tagsOn) setTags(true, 'markering'); logEv('navnelapper', `markerte «${t.name}»`);
+};
+const updateHighlight = (now) => {
+  if (hiTurn !== null) {   // dreier kameraet mykt mot den markerte tingen
+    const dt = Math.min(0.1, Math.max(0, (now - hiLast) / 1000)); hiLast = now;
+    let d = hiTurn - cam.yaw; d = ((d + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+    cam.yaw += d * Math.min(1, dt * 6); if (Math.abs(d) < 0.03) hiTurn = null;
+  }
+  if (!hiMesh || !hiThing) return;
+  if (now > hiUntil) { clearHi(); return; }
+  hiMesh.material.opacity = 0.55 + 0.45 * Math.sin(now / 160);
+};
+const openThingList = () => {
+  if (!tagList) tagList = buildTags();
+  const body = $('thingListBody'), dist = (t) => Math.hypot(t.pos.x - player.x, t.pos.z - player.z);
+  $('thingListTitle').textContent = T('things.title', { n: tagList.length });
+  body.innerHTML = '';
+  for (const t of [...tagList].sort((a, b) => dist(a) - dist(b))) {
+    const b = document.createElement('button'), m = Math.round(dist(t) * 5) / 100;   // 1 enhet = 5 cm
+    b.innerHTML = `<span></span><small></small>`; b.firstChild.textContent = t.name; b.lastChild.textContent = `${m.toFixed(1).replace('.', ',')} m`;
+    b.onclick = () => { $('thingList').classList.add('hide'); highlightThing(t); };
+    body.appendChild(b);
+  }
+  $('thingList').classList.remove('hide'); logEv('navnelapper', `liste åpnet (${tagList.length} ting)`);
 };
 
 // ---------- input ----------
@@ -1950,6 +1988,8 @@ document.addEventListener('pointerdown', (e) => { if (!$('more').classList.conta
 for (const id of ['bLevel', 'bPlan', 'bFly', 'bSound']) $(id).addEventListener('click', closeMore);
 $('hud').addEventListener('pointerdown', (e) => { e.stopPropagation(); hudOpen = !hudOpen; logEv('hud', hudOpen ? 'utvidet' : 'kort'); });
 $('bPlan').onclick = () => setMode('plan'); $('bFly').onclick = () => setMode('fly');
+$('btnList').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); if ($('thingList').classList.contains('hide')) openThingList(); else $('thingList').classList.add('hide'); });   // R177
+$('thingListClose').onclick = () => $('thingList').classList.add('hide');
 $('btnTags').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); tagsAuto = true; setTags(!tagsOn, 'knapp'); });   // R175
 $('btnFly').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); setMode('fly'); logEv('flymodus', mode === 'fly' ? 'på (knapp)' : 'av (knapp)'); });   // R174
 $('again').onclick = playAgain;   // R69: «Spill igjen» spør om vanskelighet først
@@ -3262,7 +3302,7 @@ function render(now, dt) {
   stepShadows(now);   // R94: skyggekartet tegnes bare når tempoet sier det
   cine.applyCam();   // R68: fritt kamera (setCam) overstyrer følgekameraet per bilde
   renderer.render(scene, camera);
-  updateTags();
+  updateTags(); updateHighlight(now);
   if (perfPending && ++perfFrames >= 30) { perfPending = false; const st = sceneStats(renderer, scene); perfLine = statsLine(st, perfMerge) + ' · ' + memLine(st) + (texLow ? ' · små teksturer' : '') + (lowOn ? ' · lav profil' : ''); const ds = drawerSummary(LEVEL); if (ds.total) logEv('skuffer', `${ds.open} åpne, ${ds.closed} lukkede, ${ds.fronts} frontfarger, tydelige ${drawerCue() ? 'på' : 'av'}`); const rc = roomCaps(levelId), w = overBudget(st, { ...BUDGET, ...rc }).concat(memOver(st, texLow || lowOn, rc.texMB ? { ...MEM_BUDGET, texMB: Math.min(MEM_BUDGET.texMB, rc.texMB) } : MEM_BUDGET)); /* R85: tak per rom */ logEv('budsjett', perfLine + (w.length && !lowOn ? ` · OVER BUDSJETT: ${w.join(', ')}` : '')); }
   goalView?.update({ crumbs: crumbCount(LEVEL), stomps: stats.squashed || 0, stars: buildBudget && bld.enabled ? bld.starsMap() : null, show: mode === 'play' && !won && !menuOpen }, now);
   if (tb.isOn()) tb.update(bandCtx(), now);

@@ -127,6 +127,12 @@ Spørsmål fra Rune: «Tilbake til lage rom menyen?». TILBAKE fra resultatet og
 ### [x] R174 · Fra tester: Rune · Flymodus lett tilgjengelig på «lage brett» (v2.185)
 Ønske: «På lage brett så bør flymodus være lett tilgjengelig». På mobil var Plan og Fly skjult i ⋯-menyen. Gjort: stor FLY-knapp i egne brett, FLY RUNDT på resultatskjermen (åpner brettet i flymodus), TA gir fart i flymodus på mobil.
 
+### [x] R176 · Fra tester: Rune · Finner ikke exit fra flymodus (v2.189)
+Melding: «Finner ikke exit fra fly modus». Rettet: mens du flyr i eget brett heter FLY-knappen LAND (større, oransje), og en lapp øverst sier «Du flyr. Trykk LAND for å gå ut av flymodus.»
+
+### [x] R177 · Fra tester: Rune · Navn på ting som liste, og trykk markerer i rommet (v2.189)
+Ønske: «Navnene på ting bør listes opp i dette bildet. Og når jeg trykker på det så markeres det i rommet.» Gjort: LISTE-knapp i eget brett viser tingene med norsk navn og avstand (nærmest først); trykk lukker listen og markerer tingen med gul ramme (synes gjennom ting) og uthevet lapp i ca. 9 sekunder. Ikke gjort: markering fra VIS TOLKNING (kartet i editoren).
+
 ### [x] R175 · Fra tester: Rune · Senga er i taket: høyde i JUSTER, og navnelapper i flymodus (v2.187)
 To meldinger: «Senga er i taket. Hvordan justere høyden» og «I flymodus kan navnelapper komme fram». Gjort: OPP, NED, PÅ GULVET og Y (cm) i JUSTER (målet følger tingen), navnelapper (knappen NAVN, auto på første gang du flyr i eget brett), og norske navn på tingtyper (R171).
 
