@@ -5,6 +5,7 @@ import { letterStack, letterTopY, studLayout, STUD_H, carWheel } from './toys.js
 import { TOY_BUILDERS } from './toys_view.js';          // R18: levende leker (tennisball, vippehest, wind-up, sprettboks)
 import { shrinkCanvas } from './perf_budget.js';
 import { antQ, antSeg } from './perf2_logic.js';   // R94
+import { buildFurniture } from './furniture.js';   // R182: møbelmaler (sofa, seng, skrivebord, bord, hylleenhet, lampe, puff, koffert)
 import { drawerParts, drawerSpec, partsBuffers, drawerCue } from './drawers.js';   // R55
 
 const porcelain = (color = 0xf1eee6) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.06 });
@@ -555,6 +556,8 @@ const SINGLE = {
 };
 // ting fra scene: bruk det vi har (kind, ellers materialet). Returnerer en gruppe sentrert i boksen, eller null.
 export function buildSingle(kind, size, opts = {}) {
+  const fu = buildFurniture(kind, size[0], size[1], size[2], { color: opts.color, material: opts.material, id: opts.id || '' }, opts.face);   // R182: ekte møbelform hvis boksen er et helt møbel
+  if (fu) return fu;
   const fn = SINGLE[kind] || TOY_BUILDERS[kind]; if (!fn) return null;
   const [sx, sy, sz] = size, o = { color: opts.color ?? 0xcccccc, id: opts.id || '', material: opts.material, drawer: opts.drawer };
   const g = fn(sx, sy, sz, o); return g;

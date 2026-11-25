@@ -1,7 +1,7 @@
 // R171/R175: norske og engelske navn på tingtyper (kind), til VIS TOLKNING, JUSTER og navnelappene i flymodus.
 // Alle typene i kinds.js har navn på begge språk (test_leditor). Ukjent type (modellen finner på egne): kjente engelske navn under, ellers «pent» id-navn.
 const NB = {
-  tub: 'badekar', toilet_tank: 'do-sisterne', toilet_bowl: 'do', toilet_lid: 'dolokk', vanity: 'vaskeskap', vanity_top: 'servant', chest: 'kommode', table: 'bord', box: 'eske', crate: 'kasse', vase: 'vase',
+  tub: 'badekar', toilet_tank: 'do-sisterne', toilet_bowl: 'do', toilet_lid: 'dolokk', vanity: 'vaskeskap', vanity_top: 'servant', chest: 'kommode', table: 'bord', bed: 'seng', desk: 'skrivebord', shelf_unit: 'hylleenhet', lamp: 'lampe', pouffe: 'puff', suitcase: 'koffert', box: 'eske', crate: 'kasse', vase: 'vase',
   wall_cabinet: 'veggskap', door: 'dør', sill: 'vinduskarm', shelf: 'hylle', mirror: 'speil', light_box: 'lampe', bottle: 'flaske', tube: 'tube', faucet: 'kran', shaver: 'føner', roll: 'toalettrull',
   cup: 'glass', toothbrush: 'tannbørste', drawer: 'skuff', knob: 'knott', towel: 'håndkle', towel_hang: 'hengende håndkle', mat: 'matte', basket: 'kurv', hamper: 'kurv med lokk', toyblock: 'trekloss',
   letterblock: 'bokstavkloss', legoblock: 'legokloss', toycar: 'leketøysbil', tennisball: 'tennisball', rockinghorse: 'vippehest', windup: 'opptrekksrobot', jackbox: 'sprettboks', ball: 'ball', bag: 'pose',
@@ -10,7 +10,7 @@ const NB = {
   vise: 'skrustikke', nut: 'mutter', tire: 'dekk', stone: 'stein', grass: 'gress', gravel: 'grus', bench: 'benk', stairs: 'trapp', hedge: 'hekk', playground: 'lekeapparat', water: 'vann', curb: 'kantstein',
 };
 const EN = {
-  tub: 'bathtub', toilet_tank: 'toilet tank', toilet_bowl: 'toilet', toilet_lid: 'toilet lid', vanity: 'vanity', vanity_top: 'sink top', chest: 'chest', table: 'table', box: 'box', crate: 'crate', vase: 'vase',
+  tub: 'bathtub', toilet_tank: 'toilet tank', toilet_bowl: 'toilet', toilet_lid: 'toilet lid', vanity: 'vanity', vanity_top: 'sink top', chest: 'chest', table: 'table', bed: 'bed', desk: 'desk', shelf_unit: 'shelf unit', lamp: 'lamp', pouffe: 'pouffe', suitcase: 'suitcase', box: 'box', crate: 'crate', vase: 'vase',
   wall_cabinet: 'wall cabinet', door: 'door', sill: 'window sill', shelf: 'shelf', mirror: 'mirror', light_box: 'light', bottle: 'bottle', tube: 'tube', faucet: 'tap', shaver: 'hair dryer', roll: 'toilet roll',
   cup: 'cup', toothbrush: 'toothbrush', drawer: 'drawer', knob: 'knob', towel: 'towel', towel_hang: 'hanging towel', mat: 'mat', basket: 'basket', hamper: 'hamper', toyblock: 'toy block',
   letterblock: 'letter block', legoblock: 'Lego block', toycar: 'toy car', tennisball: 'tennis ball', rockinghorse: 'rocking horse', windup: 'wind-up robot', jackbox: 'jack-in-the-box', ball: 'ball', bag: 'bag',

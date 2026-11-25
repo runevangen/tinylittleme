@@ -20,6 +20,7 @@ import * as chg from './changes_logic.js';
 import { changeText } from './changes_text.js';
 import { fx as fxText } from './fixes_text.js';
 import { setDrawerCue, drawerCue, drawerSummary } from './drawers.js';
+import { setFurnitureOn, furnitureCount } from './furniture.js';   // R182
 import { buildGroup, buildSingle, roundedBoxGeo, setAniso, setTexLow, setAntDetail, buildAnt, buildCrumb, buildSpider, buildCarrier, buildDropCrumb } from './props.js';
 import { initAnts, resetAnts, stepAnts } from './ants.js';
 import { TUNE as CREATURE_TUNE, DANGLER } from './creatures.js';
@@ -600,12 +601,13 @@ const drawn = new Set(); let hasToilet = false;
 }
 const csHolder = new THREE.Group(); scene.add(csHolder);   // kontaktskygger samles her så de kan slås sammen til noen få tegnekall (R15)
 const pressViews = [];   // R41: papirhauger som kan presses sammen (tegnes om i høyden)
+let furnitureShapes = store.get('tlm.furniture', true); setFurnitureOn(furnitureShapes);   // R182: møbelmaler (sofa, seng, …); admin-valg, gjelder fra neste brett/omlasting
 let bookN = 0; const col0 = (b) => b.color ?? 0xcccccc;
 for (const b of LEVEL.boxes) {
   if (drawn.has(b)) continue;
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
-  const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material, drawer: b.drawer }) : null;
+  const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material, drawer: b.drawer, face: b.face }) : null;
   if (b.grip) gripMark(b);
   if (shaped && b.compress) { const w = new THREE.Group(); w.position.set(cx, cy, cz); w.add(shaped); scene.add(w); regFade(shaped, [b]); pressViews.push({ b, mesh: w, h0: sy }); continue; }   // R41: egen innpakning som skaleres i høyden (kan ikke slås sammen med resten)
   if (shaped) { shaped.position.set(cx, cy, cz); scene.add(shaped); regFade(shaped, [b]); continue; }
@@ -682,7 +684,7 @@ for (const b of LEVEL.boxes) {
 function hexNum(h) { return typeof h === 'number' ? h : parseInt(String(h).replace('#', ''), 16); }
 
 for (const d of LEVEL.decor || []) {
-  const sg = d.kind && buildSingle(d.kind, d.size, { color: d.color, id: d.id, material: d.material, drawer: d.drawer });
+  const sg = d.kind && buildSingle(d.kind, d.size, { color: d.color, id: d.id, material: d.material, drawer: d.drawer, face: d.face });
   if (sg) { sg.position.set(...d.pos); scene.add(sg); continue; }
   const geo = d.shape === 'sphere' ? new THREE.SphereGeometry(d.size[0], 16, 12) : new THREE.BoxGeometry(...d.size);
   const mat = d.emissive !== undefined || d.metal !== undefined
@@ -1203,7 +1205,7 @@ function animateHero(p, now, dt) {
 initBodies(LEVEL); initAnts(LEVEL); initBoss(LEVEL); initCollect(LEVEL); initPuzzles(LEVEL); initGoals(LEVEL); if (!isLab(LEVEL)) addPartsGoal(LEVEL); GATE.hero = +store.get('tlm.gatehero', GATE.hero) || GATE.hero; GATE.needScale = +store.get('tlm.gateneed', 1) || 1; GATE.dur = +store.get('tlm.gatedur', GATE.dur) || GATE.dur; initGates(LEVEL);
 const bodyMeshes = LEVEL.bodies.map((b) => {
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
-  const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material, drawer: b.drawer })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
+  const mesh = (b.kind && buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material, drawer: b.drawer, face: b.face })) || new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material({ type: b.type, material: b.material, color: b.color }));
   mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); if (!gfxLow) look.detailize(mesh);
   return { b, mesh, size: [sx, sy, sz] };
 });
@@ -1245,7 +1247,7 @@ function syncMade() {
   for (const b of alive) {
     if (!madeMeshes.has(b)) {
       const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
-      const g = buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material });
+      const g = buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material, face: b.face });
       if (!g) continue;
       g.position.set(b.min[0] + sx / 2, b.min[1] + sy / 2, b.min[2] + sz / 2); scene.add(g); madeMeshes.set(b, { g, dry: false, mark: b.grip ? gripMark(b) : null });
     }
@@ -1268,6 +1270,7 @@ const save = { pos: [...LEVEL.start] };
 const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
+{ const nf = furnitureCount(LEVEL.boxes); if (nf) logEv('møbler', `${nf} møbler tegnes med ekte form (${furnitureShapes ? 'på' : 'av'})`); }   // R182
 if (hasGates(LEVEL)) { const gb = gatesBudget(LEVEL); logEv('gåte', `${gateViews.count} deler, ${gb.calls} tegnekall, ${gb.tris} trekanter`); }
 let buildSndLogged = false;   // R99: logg første bygglyd
 const buildSnd = (n) => (...a) => { if (!buildSndLogged && audio) { buildSndLogged = true; logEv('lyd', `første bygglyd: ${n}`); } return audio?.[n]?.(...a); };
@@ -2243,6 +2246,7 @@ const SETTINGS = [
     fl('rays', 'spill', 'Lysstråler fra vinduet (Detaljert grafikk)', true, () => raysOn, kp('tlm.rays', (v) => { raysOn = v; logEv('lysstraaler', v ? 'på' : 'av'); })),
     fl('ao', 'spill', 'Mørkere hjørner og kontaktskygger (Detaljert grafikk)', true, () => aoOn, kp('tlm.ao', (v) => { aoOn = v; logEv('hjorner', v ? 'på' : 'av'); })),
     fl('softlight', 'spill', 'Myke skygger og lysflekk: mørke hjørner og under møbler, varm flekk fra vinduet (Detaljert grafikk, ikke Lav profil)', true, () => softOn, kp('tlm.softlight', (v) => { softOn = v; logEv('myke skygger', v ? 'på' : 'av'); })),
+    fl('furniture', 'admin', 'Møbler med ekte form (sofa, seng, skrivebord, bord, hylle, lampe, puff, koffert); gjelder etter ny lasting av brettet', true, () => furnitureShapes, kp('tlm.furniture', (v) => { furnitureShapes = v; setFurnitureOn(v); logEv('møbler', v ? 'ekte form på (laster brettet på nytt for å se det)' : 'ekte form av'); })),
     fl('floordetail', 'spill', 'Gulvdetaljer: blyantstumper, perler, flekker og skitt i fugene for målestokk (Detaljert grafikk)', true, () => floorDetailOn, kp('tlm.floordetail', (v) => { floorDetailOn = v; logEv('gulvdetaljer', v ? 'på' : 'av'); })),
     fl('beadsolid', 'spill', 'Perler på gulvet er solide: du stoppes av dem og kan stå på dem (Detaljert grafikk)', true, () => beadSolidOn, kp('tlm.beadsolid', (v) => { beadSolidOn = v; logEv('perler', v ? 'solide' : 'gjennomtrengelige'); })),
     fl('decorsolid', 'admin', 'Dekor på hyller og lignende (glass, krydderbokser) er solid: du stoppes av dem, kan hoppe over og stå på dem', true, () => decorSolidOn, kp('tlm.decorsolid', (v) => { decorSolidOn = v; logEv('dekor', v ? 'solid' : 'gjennomtrengelig'); })),

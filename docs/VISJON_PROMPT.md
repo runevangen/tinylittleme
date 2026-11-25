@@ -8,6 +8,7 @@ Spilleren skal kjenne igjen sitt eget rom. Ta det på alvor: et brett som bare e
 - **Skallet først.** `room.floor`, `room.walls` og `room.ceiling` får materiale og farge slik de faktisk ser ut (veggfarge, gulvbelegg, tak). Er veggene ulike (en panelvegg, en malt vegg), legg tynne `decor: true`-bokser (1–2 cm) langs veggen i riktig farge. Legg inn **hvert vindu** i `windows` med riktig vegg, plassering og størrelse, og **hver dør** som en tynn boks (4–8 cm tykk, ca. 200 cm høy, bredde ca. 80–90 cm), aldri med en stor grunnflate.
 - **Lister er tynne striper.** Taklist, fotlist og gerikt er 2–10 cm brede striper langs vegg, tak eller dør. De dekker aldri hele gulvflaten.
 - **Store møbler, så middels, så småting.** Ta med alle store møbler (sofa, seng, skrivebord, TV-benk, hyller, bord) med riktige mål, deretter middels ting (kofferter, krakker, strykebrett, lamper) og til slutt tydelige småting som står oppå (maks ca. 60 ting totalt). Det er rotet og møblene som gjør rommet gjenkjennelig.
+- **Møbler leveres som ÉN boks med hele ytre mål.** Sofa, seng, skrivebord, bord, bokhylle (`shelf_unit`), lampe, puff og koffert er egne typer (`sofa`, `bed`, `desk`, `table`, `shelf_unit`, `lamp`, `pouffe`, `suitcase`): en boks per møbel, ikke sete, rygg og ben som egne bokser. Spillet bygger formen. Sett `face` til veggen ryggen, hodegavlen eller baksiden står mot (`N`, `S`, `E` eller `W`; `N` hvis ukjent).
 - **Plassér riktig.** Det som står mot en vegg, har boksen helt inntil veggen (f.eks. `x0: 0`). Det som står på gulvet har `y0: 0`. Det som står oppå et møbel har `y0` lik møbelets topp. Typiske høyder: sofa- og sengesete 40–50 cm, skrivebord 72–76 cm, spisebord 74 cm, sidebord 40–55 cm, TV-benk 50–90 cm, bokhylle 150–200 cm.
 - **Fargene er tingenes ekte farger.** Mobilbilder inne er ofte varme og mørke. Velg fargen tingen ville hatt i dagslys, ikke bildets fargestikk.
 - **Ikke finn på.** Bare ting som sees på bildene. Er du usikker, sett `confidence` under 0,5. Bilder, rammer og plakater er pyntebokser (`decor: true`, tynne, 2 cm), og du gjengir aldri hva som er avbildet (ingen personer).
@@ -34,7 +35,14 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `vanity` | ja | vaskeskap (tre) med dører |
 | `vanity_top` | ja | benkeplate/vask (porselen), flat topp; sluk og vann tegnes automatisk |
 | `chest` | boks | kommode, benk, hylle, kasse av tre (vanlig boks) |
-| `table` | boks | bord (vanlig boks) |
+| `sofa` | ja | sofa (R182): én boks for hele sofaen (ca. 160–240 × 75–90 høy × 80–100 cm); tegnes med sete, rygg, to armlener og lave ben; face = veggen ryggen står mot. Ligger den i flere bokser (sete, rygg, arm) tegnes de som vanlige bokser |
+| `bed` | ja | seng (R182): én boks for hele sengen (ca. 90–180 × 200 cm, høyde til toppen av hodegavlen ca. 80–110 cm); madrass, hodegavl, to puter, ramme med ben; color = dynefarge; face = veggen hodegavlen står mot |
+| `desk` | ja | skrivebord (R182): én boks for hele bordet (høyde 72–76 cm); plate, ben og skuffeblokk til høyre; face = veggen baksiden står mot |
+| `table` | ja | bord (R182): én boks for hele bordet (spisebord 74 cm, sofabord 35–45 cm høyt); plate og fire ben; tynn plate under 20 cm høyde tegnes som vanlig boks (benk, hylleplate) |
+| `shelf_unit` | ja | bokhylle / hylleenhet (R182): én boks for hele hylla (høyde 90–200 cm); to sider, topp, bunn og 2–4 hyller, åpen mot fronten; face = veggen ryggen står mot |
+| `lamp` | ja | lampe (R182): én boks for hele lampen (gulvlampe ca. 30 × 150 × 30 cm, bordlampe ca. 25 × 40 × 25); sokkel, stang og konisk skjerm med svak glød; color = skjermfargen |
+| `pouffe` | ja | puff (R182): rundet pute på gulvet (ca. 40 × 40 × 40 cm) med sømmer; color = stoffet |
+| `suitcase` | ja | koffert (R182): én boks (ca. 45 × 65 × 25 cm stående); hardt skall med hjul, håndtak og ribber; face = veggen baksiden står mot |
 | `box` | boks | eske / enkel boks |
 | `crate` | boks | kasse (tre) |
 | `vase` | boks | vase / skjør pynteting (breakable: true) |
@@ -82,7 +90,6 @@ Bruk et kind fra tabellen når det passer; ellers et kort engelsk navn (tegnes s
 | `spool` | ja | trådsnelle: movable light + tool: "spool" + thread: true |
 | `key` | ja | nøkkel (R7): movable light, ca. 14×3×6 cm; brukes i en gåte (`puzzles` i scenen) og legges på en plate for å rulle ut en bro |
 | `rug` | boks | teppe (R62): lav dekorboks på gulvet med lesbare soner (ramme, stripe, midte); decor: true |
-| `sofa` | boks | sofa (R62): sete, rygg og arm som vanlige bokser av stoff |
 | `cushion` | boks | sofapute (R62): myk boks (soft: true) som tar av for fall |
 | `tv` | boks | TV (R62): flat dekorboks på veggen |
 | `remote` | boks | fjernkontroll (R62): movable light, ca. 16×5×8 cm; bæres (TA) til en trykkplate (R60) |
