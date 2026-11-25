@@ -4,6 +4,8 @@
 export const CHANGES = [
   { id: 'r193-favoritter-innstillinger', version: '2.206', date: '2026-11-25', title: 'Merk innstillinger som favoritt med en stjerne: de står øverst i ⚙, over Topp 10, så du slipper å lete fram og tilbake når du tester.',
     how: 'Trykk ⚙. Trykk ☆ ved en innstilling: den kommer i «★ Favoritter» øverst. Trykk ★ igjen for å fjerne den.', level: '', spot: null },
+  { id: 'r49b-live-vekt', version: '2.207', date: '2026-11-25', title: 'Live-vekt i verdenen (valgfritt, standard av): et bestått bygg bøyer seg ned under figuren og brister hvis det blir for tungt.',
+    how: 'Trykk ⚙ → Bygging og Byggeskolen og slå på «Live-vekt i verdenen». Gå på en bestått bro og se den bøye seg. Bær noe på broen for å få den til å briste, og trykk BYGG og NULLSTILL for å bygge på nytt.', level: 'bro', spot: null },
   { id: 'r192-sticky-feilbanner', version: '2.205', date: '2026-11-25', title: 'Feiler en tolkning i bakgrunnen, står det et rødt banner med NYTT FORSØK til du har sett det, også etter at du har lukket og åpnet appen.',
     how: 'Start en tolkning, trykk ANDRE TING og gå til spillet. Feiler den, står det rødt banner øverst. Trykk NYTT FORSØK eller SENERE.', level: '', spot: null },
   { id: 'r191-sticky-brett-ferdig', version: '2.204', date: '2026-11-25', title: 'Beskjeden «brettet er ferdig» blir stående som et banner til du åpner brettet, også om du går ut av appen og inn igjen, og knappen LAG BRETT FRA BILDER får et FERDIG-merke.',

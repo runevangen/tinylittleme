@@ -7,7 +7,8 @@ import {
   addLink, linkTargets, removeLink, topLink, linkEnds, LINK_KINDS, twistRot, fitView, clampScale, toScreen, toWorld, canEnterBuild, nearestSite, initParts, partTypes, gotPartIds, stepParts, restoreParts, snapPoint, siteAnchors, ROT_STEP,
 } from './build_logic.js';
 import { ZOOM_STEP, gridForScale, anchorRadius, zoomAbout, zoomStep, freeCenter, isDoubleTap, dblTapView, zoomLabel } from './build_zoom.js';   // R44
-import { capacity } from './build_capacity.js';   // R49a1: «Tåler X»-måler
+import { capacity } from './build_capacity.js';
+import { liveState, liveStep, liveLimit, FIG_LOAD, CARRY_LOAD, stiffOf } from './build_live_logic.js';   // R49b: live-vekt i verdenen   // R49a1: «Tåler X»-måler
 import { trussHelp, helpKey } from './build_truss.js';   // R49a2: ledd som kan svinge og slanke deler
 import { createSim2 as createSim, runSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
 import { stressCss, tint, loadMap, whyBroke, breakTempo, ringAt } from './build_stress.js';   // R45: lesbar svikt
@@ -127,7 +128,7 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#btnBuildSpan{top:max(56px,calc(env(safe-area-inset-top) + 48px));right:250px;max-width:220px}#btnBuildCard{top:max(114px,calc(env(safe-area-inset-top) + 106px));right:12px;width:200px}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ getStars2 = () => true, getMissing = () => true, getView25 = () => false, getDouble = () => true, getCable = () => true, getPrune = () => true, onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getAutoNextLoad = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getSquareTip = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }), getGhostW = () => true, getCard = () => true, getPartsStart = () => true, getMirror = () => true, getTruss2 = () => ({ mode: 'auto', expert: false }), getSwapSteel = () => true }) {
+export function createBuildMode({ getStars2 = () => true, getMissing = () => true, getView25 = () => false, getDouble = () => true, getCable = () => true, getPrune = () => true, onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getAutoNextLoad = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getSquareTip = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }), getGhostW = () => true, getCard = () => true, getPartsStart = () => true, getMirror = () => true, getTruss2 = () => ({ mode: 'auto', expert: false }), getSwapSteel = () => true, getLive = () => false, getLiveStiff = () => 1 }) {
   initParts(LEVEL);
   const sfor = (s, b) => starsFor(s, b.placed, b.links, getDouble() ? extraOf(b) : undefined);   // R123: kostnad og stjerner inkluderer dobbel bro (planenes kopi og tverrstag)
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
@@ -187,7 +188,7 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
   let btex = null;   // R117: delte teksturer/materialer for bygde deler (lages første gang de trengs)
   const worldTex = () => btex || (btex = createBuildTex(THREE, { make: (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }, low: !!getTexLow?.() }));
   function showWorld(site) {                 // tegn bygget i verdenen (nedbøyning er bare faket: delene står i designposen)
-    hideWorld(site.id); const g = new THREE.Group(), hd = worldMeshDepth(site), tx = getBuildTex?.() !== false ? worldTex() : null;   // R112: litt smalere enn sokkelen (ingen z-fighting)
+    liveRestore(site); hideWorld(site.id); const g = new THREE.Group(), hd = worldMeshDepth(site), tx = getBuildTex?.() !== false ? worldTex() : null;   // R112: litt smalere enn sokkelen (ingen z-fighting)
     const dress = (m) => { if (tx) { m.castShadow = true; m.receiveShadow = true; } return m; };   // R117: som møblene (skyggebudsjettet i main.js begrenser kasterne)
     const D = worldDbl.get(site.id), WR = worldRoles.get(site.id);
     for (const p of worldPlaced.get(site.id) || []) {
@@ -198,7 +199,7 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
       }
       const m = dress(tx ? new THREE.Mesh(tx.geometry(p.type, t.w, t.h, hd, p.id), tx.material(p.type, t.color))
         : new THREE.Mesh(new THREE.BoxGeometry(t.w, t.h, hd), new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.65, metalness: p.type === 'weight' ? 0.5 : 0 })));
-      m.position.set(site.x + p.u, site.y + p.v, site.z); m.rotation.z = p.rot || 0;
+      m.position.set(site.x + p.u, site.y + p.v, site.z); m.rotation.z = p.rot || 0; m.userData.partId = p.id;   // R49b
       if (D) {   // R123: dobbel bro: to plan (foran og bak) og dekk mellom dem; tverrstagene tegnes under
         const pd = PLANE_T - 0.04, mk = (dep, dz) => { const q = dress(tx ? new THREE.Mesh(tx.geometry(p.type, t.w, t.h, dep, p.id + dz), tx.material(p.type, t.color)) : new THREE.Mesh(new THREE.BoxGeometry(t.w, t.h, dep), new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.65 }))); q.position.set(site.x + p.u, site.y + p.v, site.z + dz); q.rotation.z = p.rot || 0; g.add(q); };
         mk(pd, -D.sp / 2); mk(pd, D.sp / 2); if (D.road.has(p.id)) mk(D.sp - PLANE_T - 0.04, 0);
@@ -215,17 +216,71 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
   const redrawWorld = () => { for (const id of [...worldMeshes.keys()]) { const s = sites.find((q) => q.id === id); if (s) showWorld(s); } };   // R117: ⚙-valget slått av/på midt i spillet
   const worldTex_shared = (m) => !!m?.userData?.buildTex;   // R117: delte materialer disponeres ikke per del
   function hideWorld(id) { const g = worldMeshes.get(id); if (g) { scene.remove(g); g.traverse?.((o) => { o.geometry?.dispose?.(); if (!worldTex_shared(o.material)) o.material?.dispose?.(); }); worldMeshes.delete(id); } }
+  // R49b: live-vekt i verdenen (build_live_logic.js). Av som standard: da gjør ingenting her noe.
+  const liveSt = new Map();                  // stedets id -> { st, cap, key, parts: Map(del-id -> { boxes, mesh, applied }), still }
+  function liveSite(site) {
+    let e = liveSt.get(site.id); if (e) return e;
+    const g = worldMeshes.get(site.id), parts = new Map(), pre = `bygg_${site.id}_`;
+    for (const b of LEVEL.boxes || []) if (b.built === site.id && b.id.startsWith(pre)) { const id = b.id.slice(pre.length); (parts.get(id) || parts.set(id, { boxes: [], mesh: null, applied: 0 }).get(id)).boxes.push(b); }
+    g?.children.forEach((m) => { const q = parts.get(m.userData.partId); if (q && !q.mesh) q.mesh = m; });
+    e = { st: liveState(), cap: null, parts, still: 0, falling: [], lastOn: false }; liveSt.set(site.id, e); return e;
+  }
+  function liveCap(site, e) {
+    if (e.cap) return e.cap; const B = getB(site);
+    try { e.cap = capacity(isGrid(B) ? gridSimDef(B) : cdef(B), { strength: getStrength() }); } catch { e.cap = { n: 0, max: 0 }; }
+    logEv('bygg', `live-vekt: grense ${site.id} tåler ca. ${e.cap.n} klosser (stivhet ${stiffOf(getLiveStiff())})`); return e.cap;
+  }
+  function liveMove(e, id, d) {              // flytt boksene og meshen til en del til nedbøyning d (enheter)
+    const q = e.parts.get(id); if (!q) return; const dd = d - q.applied; if (Math.abs(dd) < 1e-6) return;
+    const gb = player.groundBox, on = gb && q.boxes.includes(gb);
+    for (const b of q.boxes) { b.min[1] -= dd; b.max[1] -= dd; }
+    if (q.mesh) q.mesh.position.y -= dd; if (on) player.y -= dd;
+    q.applied = d;
+  }
+  function liveRestore(site) {               // alt tilbake til designposen (valget slått av, eller bygget fjernet)
+    const e = liveSt.get(site.id); if (!e) return; for (const id of e.parts.keys()) liveMove(e, id, 0);
+    for (const f of e.falling) f.m.visible = false; liveSt.delete(site.id);
+  }
+  function liveUpdate(dt, playing) {
+    const on = !!getLive() && !!playing && !active && getWorld();
+    for (const [sid, e] of [...liveSt]) if (!on || !committed.has(sid)) { const s = sites.find((q) => q.id === sid); if (s) liveRestore(s); else liveSt.delete(sid); }
+    for (const e of liveSt.values()) for (const f of e.falling) { f.vy -= 30 * dt; f.m.position.y += f.vy * dt; f.m.rotation.z += f.w * dt; f.t += dt; if (f.t > 2.5) f.m.visible = false; }
+    if (!on) return;
+    for (const site of sites) {
+      if (!committed.has(site.id) || worldDbl.has(site.id)) continue;
+      const wp = worldPlaced.get(site.id); if (!wp?.length) continue;
+      const gb = player.onGround ? player.groundBox : null, pre = `bygg_${site.id}_`;
+      let e = liveSt.get(site.id);
+      const part = gb && gb.built === site.id && gb.id.startsWith(pre) ? gb.id.slice(pre.length) : null;
+      if (!e && !part) continue;
+      e = e || liveSite(site); const standing = [];
+      if (part) { e.still = 0.2; e.part = part; } else e.still = Math.max(0, e.still - dt);     // kort pause uten bakkekontakt (hopp, kant) holder lasten
+      if (e.still > 0 && e.part) standing.push({ part: e.part, u: player.x - site.x, v: player.y - site.y, load: FIG_LOAD + (player.carry ? CARRY_LOAD : 0) });
+      if (!standing.length && !e.st.defl.size) continue;
+      const cap = liveLimit(liveCap(site, e), getLiveStiff()), r = liveStep(e.st, wp, standing, cap, dt);
+      for (const id of e.st.defl.keys()) liveMove(e, id, e.st.defl.get(id));
+      for (const id of r.broke) {
+        const q = e.parts.get(id); if (!q) continue;
+        for (const b of q.boxes) { const i = LEVEL.boxes.indexOf(b); if (i >= 0) LEVEL.boxes.splice(i, 1); }
+        if (q.mesh) e.falling.push({ m: q.mesh, vy: 0, w: (id.length % 2 ? 1 : -1) * 1.5, t: 0 });
+        player.onGround = false; player.groundBox = null; e.part = null;
+        audio?.bbreak?.(); buzz?.([60, 30, 60]); toast(T('build.live.break'));
+        logEv('bygg', `live-vekt: brudd ${site.id}/${id}, last ${standing[0]?.load ?? '?'} over grensen ${cap.toFixed(2)}, nedbøyning ${e.st.max.toFixed(2)}`);
+      }
+      if (r.maxDefl > 0.05 && !e.lastOn) { e.lastOn = true; logEv('bygg', `live-vekt: nedbøyning ${site.id}, største ${r.maxDefl.toFixed(2)} enheter`); } else if (r.maxDefl < 0.01) e.lastOn = false;
+    }
+  }
   function commitWorld(site, why) {          // R26: flytt bygget ut i verdenen som solid
-    if (!getWorld() || !LEVEL.boxes) return 0; const B = getB(site);
+    if (!getWorld() || !LEVEL.boxes) return 0; const B = getB(site); liveRestore(site);
     const wp = settledPlaced(isGrid(B) ? gridSimDef(B) : cdef(B), { strength: getStrength() }); worldPlaced.set(site.id, wp);
     const pass = passAny(B); worldRoles.set(site.id, new Map(B.placed.map((p) => [p.id, ROLEOPT.pass ? roleOfId(B, p.id) : ROLE_FLOOR])));   // R157: bare gulv blir faste flater; bjelker og tau tegnes uten kollisjon   // delene der de ender opp (klosser har falt på plass)
     const dbl = isGrid(B) && getDouble() && hasDouble(B); let n;
     if (dbl) { const sp = spacingOf(B.rg.dbl), road = ROLEOPT.pass ? floorRodIds(B) : (roadRodIds(B) || new Set()); worldDbl.set(site.id, { sp, road, lines: braceLines(site, B) }); clearBuilt(LEVEL, site.id); const bx = buildSolids25(site, wp, road, sp); for (const b of bx) LEVEL.boxes.push(b); n = bx.length; logEv('bygg', `dobbel bro står i verdenen: ${site.id}, to plan ${sp} fra hverandre, ${worldDbl.get(site.id).lines.length} tverrstag, ${n} flater`); }
     else { worldDbl.delete(site.id); n = applyBuilt(LEVEL, site, wp, { skip: pass.length ? new Set(pass) : null }); }   // R119/R157: bare gulvet er fast i verdenen (begge byggere)
-    committed.set(site.id, sigOf(B)); if (liftOut(LEVEL, player, site.id)) logEv('bygg', 'figuren løftet ut av bygget'); showWorld(site);
+    liveSt.delete(site.id); committed.set(site.id, sigOf(B)); if (liftOut(LEVEL, player, site.id)) logEv('bygg', 'figuren løftet ut av bygget'); showWorld(site);
     logEv('bygg', `bygget står i verdenen (${why}): ${site.id}, ${B.placed.length} deler, ${n} flater, roller ${roleLine(roleStats(B))}`); return n;
   }
-  function uncommitWorld(site, why) { if (!committed.has(site.id)) return; clearBuilt(LEVEL, site.id); hideWorld(site.id); committed.delete(site.id); worldPlaced.delete(site.id); worldDbl.delete(site.id); worldRoles.delete(site.id); logEv('bygg', `bygget fjernet fra verden (${why}): ${site.id}`); }
+  function uncommitWorld(site, why) { if (!committed.has(site.id)) return; liveRestore(site); clearBuilt(LEVEL, site.id); hideWorld(site.id); committed.delete(site.id); worldPlaced.delete(site.id); worldDbl.delete(site.id); worldRoles.delete(site.id); logEv('bygg', `bygget fjernet fra verden (${why}): ${site.id}`); }
   const ptrs = new Map(); let gest = null;
   // R109: pointer capture settes bare på lerretet og frigis alltid (slipp, avbrudd, mistet capture, blur); drag/gest/ptrs nullstilles ved avbrutt berøring
   const capIds = new Set(), wc = createWriteCounter(), wcache = new WeakMap();
@@ -1112,7 +1167,7 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
   // ---- hver ramme ----
   let tNow = 0;
   function update(dt, playing) {
-    tNow += dt;
+    tNow += dt; liveUpdate(dt, playing);
     near = enabled && playing && !active ? nearestSite(sites, player) : null;
     const show = !!near && canEnterBuild({ play: isPlay(), won: isWon(), menu: isMenu(), boss: isBoss(), ov: isOv(), onGround: player.onGround || player.state === 'ground' });
     enterBtn.style.display = show ? 'block' : 'none';
@@ -1167,6 +1222,7 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
     resetAll() { if (passClear(st0, levelId)) logEv('bygg', 'oppdrag nullstilt (start på nytt)'); gPassCache = null; if (lab) { lab.reached.clear(); lab.moved = false; } for (const s of sites) uncommitWorld(s, 'start på nytt'); for (const q of parts) q.got = false; builds.clear(); solved.clear(); passedL.clear(); loadSel.clear(); recs.clear(); resetRunState('start på nytt'); winRes = null; lastBonusKey = ''; lastCrumbs = -1; },
     screenPos: (u, v) => (active && view ? toScreen(view, W, H, u, v) : null),   // til tester på mobil (Playwright)
     starsMap, bonusOpen, get lastResult() { return winRes; }, get round2() { return winR2; }, get cap() { return capRes; },
+    live: { state: (id) => { const e = liveSt.get(id); return e ? { cap: e.cap, defl: [...e.st.defl], broken: [...e.st.broken], max: e.st.max, part: e.part || null } : null; } },   // R49b: til tester
     world: { redraw: redrawWorld, texStats: () => (btex ? btex.stats() : null), commit: (id) => { const s = sites.find((q) => q.id === id); return s ? commitWorld(s, 'kode') : 0; }, uncommit: (id) => { const s = sites.find((q) => q.id === id); if (s) uncommitWorld(s, 'kode'); }, info: (id) => { const g = worldMeshes.get(id), bx = (LEVEL.boxes || []).filter((q) => q.built === id).map((q) => ({ id: q.id, min: q.min, max: q.max })), ms = []; g?.updateMatrixWorld?.(true); g?.children.forEach((m) => { const bb = new THREE.Box3().setFromObject(m); ms.push({ min: bb.min.toArray(), max: bb.max.toArray() }); }); return { boxes: bx, meshes: ms, placed: worldPlaced.get(id) || [] }; } },   // R116: til tester
     isSolved: (id) => solved.has(id), inWorld: (id) => committed.has(id), worldCount: (id) => builtCount(LEVEL, id), get running() { return !!sim && !simDone; }, get result() { return sim ? { state: sim.state.state, reason: sim.state.reason, t: sim.t, marks: simMarks.length, why: simWhy ? { kind: simWhy.kind, id: simWhy.id } : null, hint: hintEl.textContent } : null; },
     startTry: () => !!active && startSim(), stopTry: () => stopSim('kode'), resetBuild: () => !!active && act.reset(),   // R74: til tester
