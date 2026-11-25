@@ -87,6 +87,14 @@ export function formatReport(info) {
 // ---------- gruppering av innstillingspanelet ----------
 // Rekkefølgen her er det spilleren ser. En streng er én innstilling (id i SETTINGS i main.js); {sub, ids} er en sammenfoldet undermeny i gruppa.
 // Nye innstillinger som ikke står her havner sist i sin egen `group` (fra SETTINGS), så det er trygt å glemme dem, men legg dem gjerne inn her.
+ // R188: «Topp 10»: de innstillingene du endrer oftest (telles i tlm.setuse), fylt opp med en fast startliste
+export const TOP = { n: 10, key: 'tlm.setuse', defaults: ['difficulty', 'lang', 'vol', 'music', 'camsens', 'btnscale', 'fov', 'gfx', 'minimap', 'help'] };
+export const bumpUse = (use, id) => ({ ...(use && typeof use === 'object' ? use : {}), [id]: ((use && +use[id]) || 0) + 1 });
+export function topIds(use, avail, defaults = TOP.defaults, n = TOP.n) {
+  const ok = new Set(avail), u = use && typeof use === 'object' ? use : {};
+  const used = Object.keys(u).filter((id) => ok.has(id) && +u[id] > 0).sort((a, b) => u[b] - u[a] || avail.indexOf(a) - avail.indexOf(b));
+  return [...new Set([...used, ...defaults.filter((id) => ok.has(id))])].slice(0, n);
+}
 export const GROUPS = [
   ['spill', 'Spill'], ['innhold', 'Innhold og utfordring'], ['styring', 'Styring'], ['figur', 'Figuren'], ['kamera', 'Kamera'],
   ['grafikk', 'Grafikk og ytelse'], ['hjelp', 'Hjelp og veiledning'], ['lyd', 'Lyd og stemme'], ['test', 'Test og tilbakemelding'], ['admin', 'Admin'],

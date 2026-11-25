@@ -1,7 +1,7 @@
 // node test_settings.mjs: endrede innstillinger, eksport/import og testrapport
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, LAYOUT, layoutIds, applyLayout } from './settings_util.js';
+import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, LAYOUT, layoutIds, applyLayout, TOP, bumpUse, topIds } from './settings_util.js';
 
 let a = true, b = 0.5, c = 'both';
 const defs = [
@@ -46,4 +46,15 @@ console.log('innstillings-tester grønne');
   assert.equal(by.lang.group, 'spill'); assert.equal(by.vol.group, 'lyd'); assert.equal(by.buildsnap.group, 'innhold'); assert.equal(by.buildsnap.sub, 'Byggeskjerm');
   assert.equal(by.zzz_ny.group, 'spill', 'ukjent innstilling beholder sin gruppe'); assert.equal(by.buildstrength.group, 'admin', 'admin røres ikke');
   console.log('gruppering: ok');
+}
+
+{ // R188: Topp 10 etter bruk
+  const avail = ['a', 'b', 'c', 'd', 'e', 'difficulty', 'lang', 'vol'];
+  assert.deepEqual(topIds({}, avail, ['lang', 'vol', 'zzz'], 10), ['lang', 'vol'], 'uten bruk: startlista (ukjente hoppes over)');
+  let u = {}; u = bumpUse(u, 'c'); u = bumpUse(u, 'c'); u = bumpUse(u, 'b'); assert.equal(u.c, 2);
+  assert.deepEqual(topIds(u, avail, ['lang', 'vol'], 10), ['c', 'b', 'lang', 'vol'], 'mest brukt først, så startlista');
+  assert.equal(topIds(u, avail, ['lang', 'vol'], 3).length, 3, 'maks n'); assert.deepEqual(topIds({ gone: 5 }, avail, ['lang'], 10), ['lang'], 'ukjent/skjult innstilling vises ikke');
+  assert.equal(TOP.n, 10); assert.deepEqual(bumpUse(null, 'x'), { x: 1 });
+  const src = fs.readFileSync('main.js', 'utf8'); assert.match(src, /data-g="top"/); assert.match(src, /pOpenAll/); assert.match(src, /bumpUse\(store\.get\(TOP\.key/);
+  console.log('topp 10: ok');
 }

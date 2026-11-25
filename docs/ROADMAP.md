@@ -136,6 +136,9 @@ Kvalitet går foran ventetid. ANDRE TING lar deg gjøre annet mens tolkningen jo
 ### [x] R186 · Fra tester: Rune · Lys i flymodus, lysnivå i trinn, navneliste i JUSTER (v2.198)
 LYSERE/MØRKERE i flymodus i eget brett (lagres i brettet), «Lysnivå (0 = standard)» i stedet for prosent, klikkbar liste over alle ting i JUSTER.
 
+### [x] R188 · Fra Rune · Rydde i innstillinger: Topp 10 etter bruk og utvid/skjul (v2.200)
+«★ Topp 10 (mest brukt)» øverst i ⚙ (teller endringer i `tlm.setuse`, startliste til det finnes data, admin holdes utenfor) og ÅPNE ALLE / LUKK ALLE. Gruppene var allerede `<details>` med husket tilstand og søk.
+
 ### [x] R187 · Fra tester: Rune · Direkte tilbake til skjermen du kom fra etter «Test tur»/SPILL i eget brett (meldt to ganger, v2.193 og v2.196)
 Fra eget brett skal TILBAKE gå rett til JUSTER eller resultatet du kom fra (med valg og posisjon bevart), og MINE BRETT skal være ett trykk unna. Gjort i v2.199: knappene REDIGER og MINE BRETT øverst til venstre i eget brett.
 

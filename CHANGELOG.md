@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.200** – R188 (fra Rune): rydding i ⚙ Innstillinger: «★ Topp 10 (mest brukt)» øverst (telles automatisk av hva du endrer, fylt opp med en fast startliste), og knappene ÅPNE ALLE / LUKK ALLE for gruppene (settings_util TOP/bumpUse/topIds, settings_text, main buildPanel, test_settings).
 - **2.199** – R187 (fra tester: Rune): knappene REDIGER og MINE BRETT direkte i eget brett (øverst til venstre): REDIGER åpner resultatet/JUSTER du kom fra, MINE BRETT åpner lista med egne brett, uten å gå via menyen (index.html, main, tools/live_fly.cjs).
 - **2.198** – R186 (fra tester: Rune): lysnivå også i flymodus i eget brett (knappene LYSERE/MØRKERE, lagres i brettet), lysnivået i JUSTER vises i trinn (0 = standard) i stedet for prosent, og en klikkbar navneliste over alle tingene i JUSTER som velger tingen på kartet (leditor_logic lightLabel, leditor_view, main nudgeLight, index.html).
 - **2.197** – Backlogg ryddet mot kode og changelog: R68, R69 og dato på brett krysset av; personvern og fangstprotokoll merket delvis gjort (BACKLOG.md, ingen kodeendring).

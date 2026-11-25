@@ -129,7 +129,7 @@ import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, scen
 import { GRIDOPT } from './grid_logic.js';
 import { ROLE_GAP } from './build_roles.js';   // R157
 import { normZoom, normSizePct } from './build_loupe_logic.js';   // R106   // R102
-import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout } from './settings_util.js';
+import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout, TOP, bumpUse, topIds } from './settings_util.js';
 import { SETTING_TEXT, panelText, settingLabel as settingLabelOf } from './settings_text.js';   // R146: ⚙-etiketter på norsk og engelsk
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
@@ -2567,25 +2567,34 @@ function buildPanel() {
     const n = changedSettings(items).length;
     return `<details data-g="${g}" ${open[g] ? 'open' : ''}${g === 'admin' ? ' class="adm"' : ''}><summary>${title}${n ? ` <em>${n} ${PT('changedTag')}</em>` : ''}</summary>${items.filter((d) => !d.sub).map(row).join('')}${[...new Set(items.filter((d) => d.sub).map((d) => d.sub))].map((sb) => { const si = items.filter((d) => d.sub === sb), sn = changedSettings(si).length; return `<details class="sub" data-sub="${g}:${sb}"><summary>${panelText('sub.' + sb, lang, sb)}${sn ? ` <em>${sn} ${PT('changedTag')}</em>` : ''}</summary>${si.map(row).join('')}</details>`; }).join('')}${extra}</details>`;
   };
+  const topList = topIds(store.get(TOP.key, {}), SETTINGS.filter((d) => visible(d) && d.group !== 'admin').map((d) => d.id)).map((id) => SETTINGS.find((d) => d.id === id)).filter(Boolean);   // R188
+  const topHtml = topList.length ? `<details data-g="top" ${open.top !== false ? 'open' : ''}><summary>${PT('g.top')}</summary><small>${PT('topNote')}</small>${topList.map(row).join('')}</details>` : '';
   p.innerHTML = `<div class="phead"><button id="pCloseTop" class="pclose" aria-label="${PT('close')}">${PT('closeTop')}</button><button id="pFlag" aria-label="Meld og vurder">⚑</button><h3 id="pTitle">${PT('title')}</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
     <div id="repHead" class="rhead">${repHeadHtml()}</div>
     <div class="row"><button id="bVerCheck"></button><button id="bPriv">${T('priv.btn')}</button></div><small id="verNote"></small>
     <input type="search" id="pSearch" placeholder="${PT('search')}" autocomplete="off" enterkeyhint="search">
     ${nChanged ? `<div class="pchg">${nChanged} ${PT(nChanged > 1 ? 'changedN' : 'changed1')}</div>` : ''}
+    <div class="row"><button id="pOpenAll">${PT('openAll')}</button><button id="pCloseAll">${PT('closeAll')}</button></div>
+    ${topHtml}
     ${GROUPS.filter(([g]) => g !== 'admin' || adminOn).map(([g, t]) => groupHtml(g, PT('g.' + g))).join('')}
     <div class="row"><button id="closePanel">${PT('close')}</button></div>`;
 
   // koble hver rad til registeret
-  const refresh = (d) => { const v = d.get(), el = p.querySelector(`[data-s="${d.id}"]`); if (!el) return; if (d.type === 'bool') el.checked = !!v; else el.value = v; const lab = p.querySelector(`[data-v="${d.id}"]`); if (lab) lab.textContent = fmtVal(d, v); };
+  const refresh = (d) => { const v = d.get(); p.querySelectorAll(`[data-s="${d.id}"]`).forEach((el) => { if (d.type === 'bool') el.checked = !!v; else el.value = v; }); p.querySelectorAll(`[data-v="${d.id}"]`).forEach((lab) => { lab.textContent = fmtVal(d, v); }); };
   for (const d of SETTINGS.filter(visible)) {
-    const el = p.querySelector(`[data-s="${d.id}"]`); if (!el) continue;
+    const els = p.querySelectorAll(`[data-s="${d.id}"]`); if (!els.length) continue;
     refresh(d);
-    el.oninput = el.onchange = (e) => {
-      const v = d.type === 'bool' ? e.target.checked : d.type === 'range' ? +e.target.value : e.target.value;
-      d.set(v); refresh(d); logEv('innstilling', `${d.id}=${v}`);
-      if (d.id === 'preset' || d.id === 'lang') buildPanel();   // R146: språkbytte tegner panelet på nytt
-    };
+    els.forEach((el) => {
+      el.oninput = el.onchange = (e) => {
+        const v = d.type === 'bool' ? e.target.checked : d.type === 'range' ? +e.target.value : e.target.value;
+        d.set(v); refresh(d); logEv('innstilling', `${d.id}=${v}`);
+        if (e.type === 'change' && d.group !== 'admin') store.set(TOP.key, bumpUse(store.get(TOP.key, {}), d.id));   // R188: telles til Topp 10
+        if (d.id === 'preset' || d.id === 'lang') buildPanel();   // R146: språkbytte tegner panelet på nytt
+      };
+    });
   }
+  const allOpen = (v) => { p.querySelectorAll('details[data-g]').forEach((el) => { if (el.style.display === 'none') return; el._prog = el.open !== v; el.open = v; open[el.dataset.g] = v; }); store.set('tlm.panelopen', open); };   // R188
+  $('pOpenAll').onclick = () => allOpen(true); $('pCloseAll').onclick = () => allOpen(false);
   const subOpen = store.get('tlm.subopen', {});
   p.querySelectorAll('details[data-g]').forEach((el) => el.addEventListener('toggle', () => { if (el._prog) { el._prog = false; return; } open[el.dataset.g] = el.open; store.set('tlm.panelopen', open); }));
   p.querySelectorAll('details[data-sub]').forEach((el) => { el.open = !!subOpen[el.dataset.sub]; el.addEventListener('toggle', () => { if (el._prog) { el._prog = false; return; } subOpen[el.dataset.sub] = el.open; store.set('tlm.subopen', subOpen); }); });
