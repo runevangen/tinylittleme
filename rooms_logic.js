@@ -95,6 +95,12 @@ export function removeRoom(st, id) {
   st.set(ROOMS.listKey, list.filter((r) => r.id !== id)); st.set(ROOMS.dataKey(id), null); st.set(ROOMS.sceneKey(id), null); return true;
 }
 // R167: tolkningen (scenen) bak et eget brett, så JUSTER kan åpnes igjen etter spilling. Bare tall og former, aldri bilder. Gir true/false.
+// R184: «25.11. 07:42» (med år hvis ikke i år). Ukjent tid (eldre brett) gir tom tekst.
+export function fmtWhen(at, now = Date.now()) {
+  const t = +at; if (!(t > 0)) return '';
+  const d = new Date(t), p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear() === new Date(now).getFullYear() ? '' : ' ' + d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`.replace('.  ', '. ');
+}
 export function saveRoomScene(st, id, scene) {
   if (!isRoomId(id) || !scene || typeof scene !== 'object' || !scene.room || !Array.isArray(scene.objects)) return false;
   let n = 0; try { n = JSON.stringify(scene).length; } catch { return false; }

@@ -2,7 +2,7 @@
 // Flyt: veiledning + samtykke → 2–4 bilder (nedskalert her, i minnet) → fire spørsmål → LAG BRETT (tjenesten) → forslag med SJEKK, JUSTER, SPILL, DEL, LAGRE. Bilder lagres aldri.
 import { LE } from './leveleditor_logic.js';
 import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo, moveThingsY, setThingsY } from './leditor_logic.js';
-import { shareRoom, setRoomCode, safeName, listRooms } from './rooms_logic.js';
+import { shareRoom, setRoomCode, safeName, listRooms, fmtWhen } from './rooms_logic.js';
 import { thingName } from './kindnames.js';
 import { ltx, lerr, lverdict, lsub } from './leditor_text.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -76,7 +76,7 @@ export function createLeditorView(ctx) {
       + (consented() ? '' : `<div class="ledbox"><b>${esc(T('consentH'))}</b><span>${esc(T('consent'))}</span></div>`)
       + (getK(DONE_KEY) ? `<button class="mbtn" id="ledDone">${esc(T('bgOpen'))}</button>` : '')
       + (busy && !getK(DONE_KEY) ? `<p class="tag">${esc(T('bgRunning'))}</p>` : (getK(BG_KEY) && !getK(DONE_KEY) ? `<button class="mbtn" id="ledBgGet">${esc(T('bgGet'))}</button>` : ''))
-      + (last ? `<button class="mbtn" id="ledLast">${esc(T('lastBtn', last.name))}</button>` : '')
+      + (last ? `<button class="mbtn" id="ledLast">${esc(T('lastBtn', last.name, fmtWhen(last.at)))}</button>` : '')
       + (ctx.onMine && listRooms(st).length ? `<button class="mbtn sec" id="ledMine">${esc(T('mine'))}</button>` : '')
       + `<button class="mbtn${last ? ' sec' : ''}" id="ledGo">${esc(consented() ? T('next') : T('consentBtn'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
     if ($('ledDone')) $('ledDone').onclick = () => { const d = getK(DONE_KEY); setK(DONE_KEY, null); if (d && d.scene) { logEv?.('leveleditor', 'åpner ferdig bakgrunnsjobb'); accept({ ok: true, scene: d.scene, usage: d.usage }, Date.now()); } };

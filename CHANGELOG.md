@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.195** – R184 (fra tester: Rune): dato og klokkeslett på egne brett fra bilder: i MINE BRETT og på JUSTER SISTE BRETT (rooms_logic fmtWhen, rooms_view, leditor_view/text/logic).
 - **2.194** – R182: møbelmaler med ekte former (sofa, seng, skrivebord, bord, hylleenhet, lampe, puff, koffert) i furniture.js; modellen velger type og mål, spillet bygger formen.
 - **2.193** – Backlogg: idé fra tester (Rune) om dato og klokkeslett på egne brett (BACKLOG.md, ingen kodeendring).
 - **2.192** – R183: asynkron tolkning uten tidsgrense. Knappen ANDRE TING sender deg ut av ventingen mens tolkningen jobber videre; du får beskjed når den er ferdig, og ÅPNE FERDIG BRETT (eller HENT PÅGÅENDE TOLKNING etter omstart) henter den. Tidsgrensene er fjernet (klient 30 min, jobb 12 min før «feil», tjenestens trinnbudsjett 9 min) (leditor_view, leditor_text, leditor_logic, leveleditor_logic, tolk-bilder).

@@ -244,7 +244,7 @@ export const setLastRoom = (st, id) => { try { st.set(LED_LAST, id || null); } c
 export function lastRoom(st) {
   const id = st.get(LED_LAST, null); if (!id) return null;
   const r = listRooms(st).find((x) => x.id === id && x.mine); if (!r || !loadRoomScene(st, id)) return null;
-  return { id, name: r.name };
+  return { id, name: r.name, at: r.at || 0 };
 }
 export { saveRoomScene, loadRoomScene };
 

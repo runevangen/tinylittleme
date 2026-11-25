@@ -1,5 +1,5 @@
 // R153: MINE BRETT (DOM). Bruker startskjermens #start og knappestiler (.mbtn) som VELG BRETT. Logikk: rooms_logic.js, tekster: rooms_text.js.
-import { ROOMS, listRooms, loadRoom, loadRoomScene, addRoom, removeRoom, setRoomCode, shareRoom, fetchRoom, deleteSharedRoom, reportRoom, cleanRoomCode } from './rooms_logic.js';
+import { ROOMS, fmtWhen, listRooms, loadRoom, loadRoomScene, addRoom, removeRoom, setRoomCode, shareRoom, fetchRoom, deleteSharedRoom, reportRoom, cleanRoomCode } from './rooms_logic.js';
 import { rtx, rerr } from './rooms_text.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CSS = `#start.rml{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:max(26px,env(safe-area-inset-top));padding-bottom:max(18px,env(safe-area-inset-bottom))}
@@ -18,7 +18,7 @@ export function createRoomsView(ctx) {
   function show() {
     css(); const el = $('start'); el.classList.add('rml'); const list = listRooms(st);
     el.innerHTML = `<h1>${esc(rtx(L(), 'title'))}</h1><p class="tag">${esc(rtx(L(), 'intro'))}</p>`
-      + (list.length ? list.map((r) => `<div class="rmcard" data-r="${r.id}"><b>${esc(r.name)}</b><small>${esc(r.mine ? rtx(L(), 'mineTag') : rtx(L(), 'otherTag'))}${r.code ? ' · ' + esc(rtx(L(), 'codeOf', r.code)) : ''}</small>`
+      + (list.length ? list.map((r) => `<div class="rmcard" data-r="${r.id}"><b>${esc(r.name)}</b><small>${esc(r.mine ? rtx(L(), 'mineTag') : rtx(L(), 'otherTag'))}${r.code ? ' · ' + esc(rtx(L(), 'codeOf', r.code)) : ''}${r.at ? ' · ' + esc(fmtWhen(r.at)) : ''}</small>`
         + `<div class="rmrow"><button class="mbtn" data-a="play">${esc(rtx(L(), 'play'))}</button>${r.mine && loadRoomScene(st, r.id) ? `<button class="mbtn sec" data-a="adjust">${esc(rtx(L(), 'adjust'))}</button>` : ''}<button class="mbtn sec" data-a="share">${esc(rtx(L(), 'share'))}</button><button class="mbtn sec" data-a="del">${esc(rtx(L(), 'del'))}</button>${r.mine ? '' : `<button class="mbtn sec" data-a="report">${esc(rtx(L(), 'report'))}</button>`}</div></div>`).join('')
         : `<p class="tag" id="rmEmpty">${esc(rtx(L(), 'empty'))}</p>`)
       + `<p class="tag" style="margin-top:8px">${esc(rtx(L(), 'codeLabel'))}</p><input class="rmin" id="rmCode" placeholder="${esc(rtx(L(), 'codePh'))}" autocomplete="off" autocapitalize="characters" spellcheck="false">`

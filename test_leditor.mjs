@@ -114,7 +114,7 @@ assert.equal(sceneToRoom({}).ok, false);
 { const st = mem(), sc = JSON.parse(JSON.stringify(bad)), room = sceneToRoom(sc, 'Stuen');
   const sv = saveRoom(st, { name: 'Stuen', level: room.level }); assert.equal(sv.ok, true);
   assert.equal(saveRoomScene(st, sv.id, sc), true, 'tolkningen lagres'); assert.equal(loadRoomScene(st, sv.id).objects.length, sc.objects.length);
-  assert.equal(lastRoom(st), null, 'ingen siste brett før det er satt'); setLastRoom(st, sv.id); assert.deepEqual(lastRoom(st), { id: sv.id, name: 'Stuen' });
+  assert.equal(lastRoom(st), null, 'ingen siste brett før det er satt'); setLastRoom(st, sv.id); { const lr = lastRoom(st); assert.equal(lr.id, sv.id); assert.equal(lr.name, 'Stuen'); assert.ok(lr.at > 0, 'siste brett har tidspunkt (R184)'); }
   assert.ok(!JSON.stringify(st.m[ROOMS.dataKey(sv.id)]).includes('"objects"'), 'selve brettet (det som deles) har ikke tolkningen');
   assert.equal(saveRoomScene(st, 'ikke-id', sc), false); assert.equal(saveRoomScene(st, sv.id, { room: {}, objects: 'x' }), false);
   assert.equal(saveRoomScene(st, sv.id, { ...sc, huge: 'x'.repeat(ROOMS.sceneMaxBytes) }), false, 'for stor tolkning lagres ikke');

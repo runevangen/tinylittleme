@@ -1,7 +1,7 @@
 // node test_rooms.mjs: R153, Mine brett og deling med kode (rooms_logic.js, rooms_text.js, rooms_view.js, migrasjon). Ingen ekte nettkall.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { ROOMS, isRoomId, newCode, cleanRoomCode, nameClean, nameOk, safeName, validateRoom, listRooms, loadRoom, addRoom, removeRoom, setRoomCode, shareRoom, fetchRoom, deleteSharedRoom, reportRoom, roomsAvailable } from './rooms_logic.js';
+import { ROOMS, isRoomId, newCode, cleanRoomCode, nameClean, nameOk, safeName, validateRoom, listRooms, loadRoom, addRoom, removeRoom, setRoomCode, shareRoom, fetchRoom, deleteSharedRoom, reportRoom, roomsAvailable, fmtWhen } from './rooms_logic.js';
 import { rtx, rerr, ROOMS_TEXT } from './rooms_text.js';
 const bad = JSON.parse(fs.readFileSync('levels/bad.level.json', 'utf8'));
 const mem = () => { const m = {}; return { get: (k, d) => (k in m && m[k] !== null ? m[k] : d), set: (k, v) => { m[k] = v === undefined ? null : JSON.parse(JSON.stringify(v)); }, m }; };
@@ -78,4 +78,6 @@ for (const f of ['rooms_logic', 'rooms_text', 'rooms_view']) assert.ok(idx.inclu
 assert.match(sql, /enable row level security/); assert.match(sql, /revoke all on public\.tlm_rooms from anon/); assert.ok(!/create policy/.test(sql), 'ingen direkte tilgang');
 for (const f of ['tlm_share_room', 'tlm_get_room', 'tlm_delete_room', 'tlm_report_room']) assert.ok(sql.includes(`function public.${f}(`) && sql.includes('is_tester'), f);
 assert.ok(/owner = k/.test(sql), 'bare eier sletter'); assert.ok(!/'owner', r\.owner/.test(sql), 'eier gis aldri ut');
+// R184: dato og klokkeslett på egne brett
+const at1 = new Date(2026, 10, 25, 7, 42).getTime(); assert.equal(fmtWhen(at1, at1), '25.11. 07:42'); assert.equal(fmtWhen(new Date(2025, 0, 5, 18, 5).getTime(), at1), '05.01. 2025 18:05'); assert.equal(fmtWhen(0), ''); assert.equal(fmtWhen(undefined), '');
 console.log('test_rooms: ok');
