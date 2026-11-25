@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r189-rydd-spill-innstillinger', version: '2.202', date: '2026-11-25', title: 'Gruppen «Spill» i innstillinger er ryddet: egen gruppe «Bygging og Byggeskolen» med undergrupper, og de andre innstillingene ligger der de hører hjemme.',
+    how: 'Trykk ⚙ og trykk LUKK ALLE. Åpne «Bygging og Byggeskolen» og se undergruppene. «Spill» har nå bare noen få valg.', level: '', spot: null },
   { id: 'r188-topp10-innstillinger', version: '2.200', date: '2026-11-25', title: 'Innstillinger har en «Topp 10» øverst med de du bruker mest (endrer seg av seg selv), og knappene ÅPNE ALLE / LUKK ALLE.',
     how: 'Trykk ⚙. Øverst står «★ Topp 10 (mest brukt)». Endre noen innstillinger, åpne ⚙ igjen og se at de du bruker kommer øverst. ÅPNE ALLE og LUKK ALLE åpner og lukker gruppene.', level: '', spot: null },
   { id: 'r187-redigere-og-mine-brett-i-spillet', version: '2.199', date: '2026-11-25', title: 'I eget brett kommer du direkte tilbake til redigering (REDIGER) eller til MINE BRETT med knapper i spillet, uten å gå via menyen.',

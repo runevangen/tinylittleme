@@ -96,21 +96,26 @@ export function topIds(use, avail, defaults = TOP.defaults, n = TOP.n) {
   return [...new Set([...used, ...defaults.filter((id) => ok.has(id))])].slice(0, n);
 }
 export const GROUPS = [
-  ['spill', 'Spill'], ['innhold', 'Innhold og utfordring'], ['styring', 'Styring'], ['figur', 'Figuren'], ['kamera', 'Kamera'],
+  ['spill', 'Spill'], ['innhold', 'Innhold og utfordring'], ['bygging', 'Bygging og Byggeskolen'], ['styring', 'Styring'], ['figur', 'Figuren'], ['kamera', 'Kamera'],
   ['grafikk', 'Grafikk og ytelse'], ['hjelp', 'Hjelp og veiledning'], ['lyd', 'Lyd og stemme'], ['test', 'Test og tilbakemelding'], ['admin', 'Admin'],
 ];
 export const LAYOUT = {
-  spill: ['lang', 'autosave', 'startscreen', 'confirm2', 'lostreturn'],
-  innhold: ['puzzles', 'gates', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'wasp', 'wasplevel', 'toys', 'varmood', 'vartwist', { sub: 'Byggeskjerm', ids: ['buildstars2', 'build25d', 'buildview25', 'buildcable', 'buildsnap', 'buildslow', 'buildbudget', 'buildbonus', 'labstart'] }],
+  spill: ['lang', 'autosave', 'startscreen', 'confirm2', 'lostreturn', 'showlogo', 'firstrun'],
+  innhold: ['puzzles', 'gates', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'wasp', 'wasplevel', 'toys', 'varmood', 'vartwist', 'combo', 'kick', 'flood', 'beadsolid', 'lego'],
+  bygging: [{ sub: 'Byggeskjerm', ids: ['buildux', 'builduxland', 'buildcap', 'buildstress', 'buildbreakfx', 'buildfine', 'builddbl', 'buildloupe', 'buildloupezoom', 'buildloupesize', 'buildtex', 'buildlego', 'buildghost', 'buildloads', 'buildshare', 'buildprune', 'buildtruss', 'buildsee', 'squaretip', 'buildcard', 'buildfromto', 'partsfromstart', 'autonextload', 'buildnext'] },
+    { sub: 'Rutenett (broene og Byggeskolen)', ids: ['buildgrid', 'gridguide', 'buildgridstress', 'buildgridpeak', 'buildmirror', 'buildswapsteel', 'buildtruss2', 'gridplay', 'gridplaylock', 'missing'] },
+    { sub: 'Byggeskolen og Bygglab', ids: ['schoolcard', 'gridstage', 'gridlock', 'buildround2', 'fagverkcard', 'buildmoved'] },
+    { sub: '3D-lab', ids: ['build3d', 'build3dlock', 'buildghostworld'] },
+    { sub: 'Visning og regler', ids: ['buildstars2', 'build25d', 'buildview25', 'buildcable', 'buildsnap', 'buildslow', 'buildbudget', 'buildbonus', 'labstart'] }],
   styring: ['preset', 'help', 'stickfloat', 'stickcurve', 'stickdead', 'btnscale', 'speedscale', 'inertia', 'autograb', 'magnet', 'aimthrow', 'dbltap', 'showcenter', 'showmapbtn', 'vib',
     { sub: 'Mus og tastatur (PC)', ids: ['pcbtns', 'mousesens', 'mouselook'] }],
-  figur: ['stepadapt', 'reactanim', 'idlewink', 'shimmy', 'roll', 'careful', 'ropeheavy'],
-  kamera: ['followstr', 'camdist', 'fov', 'pitchbase', 'lookahead', 'camassist', 'fade', 'fadeop', 'camsens', 'camrelay', 'blob', 'view',
+  figur: ['stepadapt', 'reactanim', 'idlewink', 'shimmy', 'roll', 'careful', 'ropeheavy', 'turnsteps', 'stepover', 'climbfeel', 'gripposes', 'vaultanim'],
+  kamera: ['followstr', 'camdist', 'fov', 'pitchbase', 'lookahead', 'camassist', 'fade', 'fadeop', 'camsens', 'camrelay', 'blob', 'view', 'fovauto',
     { sub: 'Skulderkamera', ids: ['shdist', 'shoff', 'shside', 'xhair'] }],
   grafikk: ['gfx', 'grade', 'gradefilter', 'softlight', 'ao', 'rays', 'dust', 'floordetail', 'clutter', 'resq', 'texsmall', 'lowprofile', 'fps'],
-  hjelp: ['difficulty', 'tband', 'tbsize', 'guide', 'goalarrow', 'shortcuthint', 'compassmode', 'beacon', 'minimap', 'markers', 'markrank', 'drawercue', 'griphi', 'failhint', 'bubbles', 'hudtech', 'puzcam', 'gatecam', { sub: 'Nivåstart', ids: ['introsweep', 'intromark', 'introhint'] }],
+  hjelp: ['difficulty', 'tband', 'tbsize', 'guide', 'goalarrow', 'shortcuthint', 'compassmode', 'beacon', 'minimap', 'markers', 'markrank', 'drawercue', 'griphi', 'failhint', 'bubbles', 'hudtech', 'puzcam', 'gatecam', 'questline', 'waypeek', 'slickhint', 'keyhelp', 'stuehint', 'floodwarn', 'landwarn', { sub: 'Nivåstart', ids: ['introsweep', 'intromark', 'introhint'] }],
   lyd: ['sound', 'vol', 'music', 'musicvol', 'voice', 'voicevol', { sub: 'Pust og lydnivåer', ids: ['restbreath', 'mix_breath', 'mix_steps', 'mix_move', 'mix_things', 'mix_toys', 'mix_room'] }],
-  test: ['qbtn'],
+  test: ['qbtn', 'stats', 'replies'],
 };
 export const layoutIds = () => Object.values(LAYOUT).flatMap((l) => l.flatMap((e) => (typeof e === 'string' ? [e] : e.ids)));
 // Setter group/sub på hver innstilling og sorterer lista etter oppsettet (ukjente id-er beholder sin gruppe og står sist). Admin røres ikke.

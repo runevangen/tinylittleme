@@ -136,6 +136,9 @@ Kvalitet går foran ventetid. ANDRE TING lar deg gjøre annet mens tolkningen jo
 ### [x] R186 · Fra tester: Rune · Lys i flymodus, lysnivå i trinn, navneliste i JUSTER (v2.198)
 LYSERE/MØRKERE i flymodus i eget brett (lagres i brettet), «Lysnivå (0 = standard)» i stedet for prosent, klikkbar liste over alle ting i JUSTER.
 
+### [x] R189 · Fra Rune · Rydde gruppen «Spill» i innstillinger (v2.202)
+Ny gruppe «Bygging og Byggeskolen» med undergrupper; ca. 65 uplasserte innstillinger flyttet til figur, hjelp, innhold, kamera, test og bygging.
+
 ### [x] R188 · Fra Rune · Rydde i innstillinger: Topp 10 etter bruk og utvid/skjul (v2.200)
 «★ Topp 10 (mest brukt)» øverst i ⚙ (teller endringer i `tlm.setuse`, startliste til det finnes data, admin holdes utenfor) og ÅPNE ALLE / LUKK ALLE. Gruppene var allerede `<details>` med husket tilstand og søk.
 

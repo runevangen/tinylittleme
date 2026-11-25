@@ -43,7 +43,7 @@ console.log('innstillings-tester grønne');
   applyLayout(list);
   assert.deepEqual(list.map((d) => d.id), ['lang', 'buildsnap', 'vol', 'zzz_ny', 'buildstrength'], 'sortert etter oppsettet, ukjente sist');
   const by = Object.fromEntries(list.map((d) => [d.id, d]));
-  assert.equal(by.lang.group, 'spill'); assert.equal(by.vol.group, 'lyd'); assert.equal(by.buildsnap.group, 'innhold'); assert.equal(by.buildsnap.sub, 'Byggeskjerm');
+  assert.equal(by.lang.group, 'spill'); assert.equal(by.vol.group, 'lyd'); assert.equal(by.buildsnap.group, 'bygging'); assert.equal(by.buildsnap.sub, 'Visning og regler');
   assert.equal(by.zzz_ny.group, 'spill', 'ukjent innstilling beholder sin gruppe'); assert.equal(by.buildstrength.group, 'admin', 'admin røres ikke');
   console.log('gruppering: ok');
 }

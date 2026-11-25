@@ -1,6 +1,8 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.202** – R189 (fra Rune): rydding av gruppen «Spill» i innstillinger: ny gruppe «Bygging og Byggeskolen» med undergrupper (Byggeskjerm, Rutenett, Byggeskolen og Bygglab, 3D-lab, Visning og regler), og ca. 30 spredte innstillinger flyttet til riktig gruppe (figur, hjelp, innhold, kamera, test) (settings_util LAYOUT/GROUPS, settings_text, test_settings).
+- **2.201** – Arbeidsregel (fra Rune): foreslå neste skritt fra backlog som klikkbare valg etter hver Status (CLAUDE.md, ingen kodeendring).
 - **2.200** – R188 (fra Rune): rydding i ⚙ Innstillinger: «★ Topp 10 (mest brukt)» øverst (telles automatisk av hva du endrer, fylt opp med en fast startliste), og knappene ÅPNE ALLE / LUKK ALLE for gruppene (settings_util TOP/bumpUse/topIds, settings_text, main buildPanel, test_settings).
 - **2.199** – R187 (fra tester: Rune): knappene REDIGER og MINE BRETT direkte i eget brett (øverst til venstre): REDIGER åpner resultatet/JUSTER du kom fra, MINE BRETT åpner lista med egne brett, uten å gå via menyen (index.html, main, tools/live_fly.cjs).
 - **2.198** – R186 (fra tester: Rune): lysnivå også i flymodus i eget brett (knappene LYSERE/MØRKERE, lagres i brettet), lysnivået i JUSTER vises i trinn (0 = standard) i stedet for prosent, og en klikkbar navneliste over alle tingene i JUSTER som velger tingen på kartet (leditor_logic lightLabel, leditor_view, main nudgeLight, index.html).
