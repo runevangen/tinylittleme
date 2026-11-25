@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.209** – R49c (fra Rune): live-vekt trinn 2, maur som last på bygget (valgfritt, standard av, ⚙ → Bygging): maur som står på et bygg belaster det i tillegg til figuren (build_live_logic.js, SETTINGS «Maur belaster bygg» og admin «vekt per maur»).
 - **2.208** – De sju prosjekt-skillene gjennomgått mot koden og oppdatert (utlegging, edge-utlegging, tilbakemelding, runner, brett/mobiltest, ny funksjon, bildetolkning-kvalitet): worktree-løp, nye nettleserskript, statuser og svarkolonner, banner/favoritter/Topp 10, lys og fangst; `tolk-bilder/index.ts` i repoet i takt med den utlagte (.claude/skills, supabase/functions).
 - **2.207** – R49b (fra Rune): live-vekt i verdenen (valgfritt, standard av, ⚙ → Bygging og Byggeskolen): et bestått bygg bøyer seg ned under figuren og brister over grensen (build_live_logic.js, liveUpdate i build.js, SETTINGS tlm.buildlive).
 - **2.206** – R193 (fra Rune): favoritter i innstillinger: stjerne (☆/★) på hver innstilling; favorittene står i en egen liste «★ Favoritter» øverst, over Topp 10, og huskes (settings_util FAV/toggleFav/favIds, settings_text, main buildPanel, index.html, test_settings, tools/live_settings).

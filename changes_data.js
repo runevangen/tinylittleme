@@ -2,7 +2,7 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
-  { id: 'r49c-live-vekt-maur', version: '2.208', date: '2026-11-25', title: 'Maur kan belaste bygget (valgfritt, standard av): med live-vekt på bøyer et bygg seg mer når maur går på det, og kan briste av mange maur og figuren.',
+  { id: 'r49c-live-vekt-maur', version: '2.209', date: '2026-11-25', title: 'Maur kan belaste bygget (valgfritt, standard av): med live-vekt på bøyer et bygg seg mer når maur går på det, og kan briste av mange maur og figuren.',
     how: 'Trykk ⚙ → Bygging og Byggeskolen og slå på «Live-vekt i verdenen» og «Maur belaster bygg». La maur gå over en bestått bro og se den bøye seg mer. Trykk BYGG og NULLSTILL om den brister.', level: 'bro', spot: null },
   { id: 'r193-favoritter-innstillinger', version: '2.206', date: '2026-11-25', title: 'Merk innstillinger som favoritt med en stjerne: de står øverst i ⚙, over Topp 10, så du slipper å lete fram og tilbake når du tester.',
     how: 'Trykk ⚙. Trykk ☆ ved en innstilling: den kommer i «★ Favoritter» øverst. Trykk ★ igjen for å fjerne den.', level: '', spot: null },
