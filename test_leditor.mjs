@@ -229,4 +229,10 @@ assert.doesNotMatch(view, /localStorage\.setItem\([^)]*(data|url)/, 'bilder lagr
   const { ltx } = await import('./leditor_text.js'); for (const lg of ['nb', 'en']) for (const k of ['bannerTxt', 'bannerOpen', 'bannerLater', 'bgBadge']) assert.ok(ltx(lg, k).length > 2, k + ' ' + lg);
   const { ledBtnHtml } = await import('./leditor_view.js'); assert.match(ledBtnHtml('nb', null, true), /FERDIG/); assert.doesNotMatch(ledBtnHtml('nb', null, false), /FERDIG/);
 }
+// R192: sticky feilbanner for bakgrunnstolkning
+{
+  const mj = fs.readFileSync('main.js', 'utf8'), v = fs.readFileSync('leditor_view.js', 'utf8');
+  assert.match(v, /FAIL_KEY/); assert.match(v, /function openFail/); assert.match(mj, /tlm\.led\.fail/); assert.match(fs.readFileSync('index.html', 'utf8'), /#ledBanner\.fail/);
+  const { ltx } = await import('./leditor_text.js'); for (const lg of ['nb', 'en']) { assert.match(ltx(lg, 'bannerFail', 'x'), /x/); assert.ok(ltx(lg, 'bannerRetry').length > 3); }
+}
 console.log('test_leditor: ok');

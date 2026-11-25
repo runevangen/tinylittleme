@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r192-sticky-feilbanner', version: '2.205', date: '2026-11-25', title: 'Feiler en tolkning i bakgrunnen, står det et rødt banner med NYTT FORSØK til du har sett det, også etter at du har lukket og åpnet appen.',
+    how: 'Start en tolkning, trykk ANDRE TING og gå til spillet. Feiler den, står det rødt banner øverst. Trykk NYTT FORSØK eller SENERE.', level: '', spot: null },
   { id: 'r191-sticky-brett-ferdig', version: '2.204', date: '2026-11-25', title: 'Beskjeden «brettet er ferdig» blir stående som et banner til du åpner brettet, også om du går ut av appen og inn igjen, og knappen LAG BRETT FRA BILDER får et FERDIG-merke.',
     how: 'Start en tolkning og trykk ANDRE TING. Lukk gjerne appen. Når brettet er ferdig står banneret øverst: trykk ÅPNE for å se det, eller SENERE (det kommer tilbake neste gang du åpner appen).', level: '', spot: null },
   { id: 'r190-fotosjekk', version: '2.203', date: '2026-11-25', title: 'Bedre bilder gir bedre mål: en fotosjekk med fire steg (to hjørner, gulvbilde, A4-ark eller mobil på gulvet), og tolkningen bruker A4-arket som målestokk.',

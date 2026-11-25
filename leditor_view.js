@@ -138,17 +138,17 @@ export function createLeditorView(ctx) {
   }
 
   // ---- 4. kall til tjenesten ----
-  const BG_KEY = 'tlm.led.bg', DONE_KEY = 'tlm.led.done';
+  const BG_KEY = 'tlm.led.bg', DONE_KEY = 'tlm.led.done', FAIL_KEY = 'tlm.led.fail';
   const getK = (k) => { try { return st.get(k, null); } catch { return null; } };
   const setK = (k, v) => { try { st.set(k, v); } catch { /* uten lagring */ } };
   function finishDetached(run, res, t0) {
     stopTick(); busy = false; abort = null;
-    if (res.ok) { setK(DONE_KEY, { scene: res.scene, usage: res.usage || { cost_usd: 0, ms: 0 }, at: Date.now() }); setK(BG_KEY, null); logEv?.('leveleditor', `bakgrunnsjobb ferdig etter ${Math.round((Date.now() - t0) / 1000)} s`); ctx.toast?.(T('bgDone')); ctx.onDone?.(); }
-    else { setK(BG_KEY, res.job ? { job: res.job, at: Date.now(), answers: run.answers } : null); logEv?.('leveleditor', `bakgrunnsjobb feilet: ${res.reason}`); ctx.toast?.(T('bgFail', lerr(L(), res.reason))); }
+    if (res.ok) { setK(FAIL_KEY, null); setK(DONE_KEY, { scene: res.scene, usage: res.usage || { cost_usd: 0, ms: 0 }, at: Date.now() }); setK(BG_KEY, null); logEv?.('leveleditor', `bakgrunnsjobb ferdig etter ${Math.round((Date.now() - t0) / 1000)} s`); ctx.toast?.(T('bgDone')); ctx.onDone?.(); }
+    else { setK(BG_KEY, res.job ? { job: res.job, at: Date.now(), answers: run.answers } : null); logEv?.('leveleditor', `bakgrunnsjobb feilet: ${res.reason}`); ctx.toast?.(T('bgFail', lerr(L(), res.reason))); setK(FAIL_KEY, { reason: res.reason, at: Date.now() }); ctx.onDone?.(); }
   }
   const KEEP_PHOTOS = ['nett', 'feil', 'tolkning', 'avbrutt'];
   async function make() {
-    if (busy) return; busy = true; const run = S; const t0 = Date.now(); abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    if (busy) return; busy = true; setK(FAIL_KEY, null); const run = S; const t0 = Date.now(); abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const el = root(); let step = 0;
     el.innerHTML = `<h1>${esc(T('title'))}</h1><p class="tag" id="ledStep">${esc(T('working')[0])}</p><p class="tag" id="ledEl"></p><p class="tag" style="max-width:300px">${esc(T('workingNote'))}</p><button class="mbtn" id="ledBg" style="display:none">${esc(T('bgBtn'))}</button><button class="mbtn sec" id="ledCancel">${esc(T('cancel'))}</button>`;
     $('ledCancel').onclick = () => abort?.abort();
@@ -172,7 +172,7 @@ export function createLeditorView(ctx) {
   }
   // R183: resten av tolkningen (felles for «venter her» og «hentet fra bakgrunnen»)
   function accept(res, t0) {
-    setK(BG_KEY, null);
+    setK(BG_KEY, null); setK(FAIL_KEY, null);
     S.photos.length = 0;
     S.scene = res.scene; S.usage = res.usage || { cost_usd: 0, ms: 0 }; logEv?.('leveleditor', `tolket: ${S.usage.model || '?'} · ${S.usage.mode || '?'} · trinn ${(S.usage.stages || []).join('+') || '?'} · ${S.usage.cost_usd ?? '?'} USD · ${Math.round((S.usage.ms || 0) / 1000)} s`); S.name = defaultName(res.scene);
     const room = sceneToRoom(res.scene); S.room = room; if (room.scene) S.scene = room.scene;
@@ -348,6 +348,8 @@ export function createLeditorView(ctx) {
     const d = getK(DONE_KEY); S = fresh(); if (!d || !d.scene) { show(); return; }
     setK(DONE_KEY, null); ctx.onDone?.(); logEv?.('leveleditor', 'åpner ferdig bakgrunnsjobb (banner)'); root(); accept({ ok: true, scene: d.scene, usage: d.usage }, Date.now());
   }
-  return { show, resume, openDone };
+  // R192: feilet bakgrunnstolkning: banneret NYTT FORSØK åpner menyen (HENT PÅGÅENDE TOLKNING hvis jobben finnes, ellers velg bilder på nytt)
+  function openFail() { setK(FAIL_KEY, null); ctx.onDone?.(); logEv?.('leveleditor', 'banner: nytt forsøk etter feilet bakgrunnsjobb'); show(); }
+  return { show, resume, openDone, openFail };
 }
 export const ledBtnHtml = (lang, last = null, done = false) => `<div class="bgrp" id="dfLed"><button class="mbtn${done ? '' : ' sec'}" id="mLed">📷 ${done ? '● ' + esc(ltx(lang, 'bgBadge')) + ' · ' : ''}${esc(ltx(lang, 'btn'))}<small>${esc(ltx(lang, 'btnSub'))}</small></button>${last ? `<button class="mbtn sec" id="mLedLast">✏️ ${esc(ltx(lang, 'lastBtn', last.name))}</button>` : ''}</div>`;

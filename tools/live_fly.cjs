@@ -66,5 +66,11 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   await pg.dispatchEvent('#ledBannerOpen', 'click'); await pg.waitForSelector('#ledPlay', { timeout: 15000 }).catch(() => {});
   check('ÅPNE viser det ferdige brettet (SPILL/JUSTER)', (await pg.locator('#ledPlay').count()) > 0 && (await pg.locator('#ledAdj').count()) > 0);
   check('ferdig brett er fjernet når det er åpnet', (await pg.evaluate(() => localStorage.getItem('tlm.led.done'))) === 'null' || (await pg.evaluate(() => localStorage.getItem('tlm.led.done'))) === null);
+  // R192: sticky feilbanner for bakgrunnstolkning
+  await pg.evaluate(() => { localStorage.removeItem('tlm.led.done'); localStorage.setItem('tlm.led.fail', JSON.stringify({ reason: 'tolkning', at: Date.now() })); });
+  await pg.goto(`http://localhost:${port}/?level=bad&start=0`); await pg.waitForSelector('#ledBanner', { state: 'attached', timeout: 180000 }); await pg.waitForTimeout(6000);
+  check('feilbanneret vises (rødt) med NYTT FORSØK', (await pg.locator('#ledBanner.show.fail').count()) === 1 && /NYTT FORSØK/.test(await pg.textContent('#ledBannerOpen')), await pg.textContent('#ledBannerTxt'));
+  await pg.dispatchEvent('#ledBannerOpen', 'click'); await pg.waitForTimeout(800);
+  check('NYTT FORSØK åpner editoren og fjerner feilen', (await pg.evaluate(() => localStorage.getItem('tlm.led.fail'))) === 'null' && (await pg.locator('#ledGo').count()) > 0);
   console.log(errs.length ? 'FEIL: ' + errs.slice(0, 3).join(' | ') : 'ingen konsollfeil'); await b.close(); srv.close(); process.exit(errs.length || !ok ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

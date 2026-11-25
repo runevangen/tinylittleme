@@ -41,7 +41,7 @@ import { createRoomsView, roomsBtnHtml } from './rooms_view.js';
 import { rtx as roomTx } from './rooms_text.js';
 import { ledAvailable, lastRoom, stepLight, lightLabel, sceneToRoom as ledSceneToRoom, saveRoom as ledSaveRoom } from './leditor_logic.js';   // R152: LAG BRETT FRA BILDER (leditor_logic.js, leditor_view.js, leditor_text.js)
 import { createLeditorView, ledBtnHtml } from './leditor_view.js';
-import { ltx as ledTx } from './leditor_text.js';
+import { ltx as ledTx, lerr as ledErr } from './leditor_text.js';
 import { thingName } from './kindnames.js';   // R175: navnelapper (norsk/engelsk) over ting i egne brett
 import { createLab3dView } from './grid3d_view.js';   // R130: 3D-laben (egen skjerm: bygg fritt i tre dimensjoner)
 import { LAB3D, WORLD3 } from './grid3d_site.js';
@@ -3616,11 +3616,12 @@ const ledShow = () => ledAvailable({ on: ledOn, code: testerCode(), cinema: CINE
 // R191: «brett ferdig» er sticky: banneret står til du åpner brettet (SENERE skjuler det bare i denne økta), og kommer tilbake når appen åpnes igjen
 let ledBannerHidden = false;
 function refreshLedBanner() {
-  const b = $('ledBanner'); if (!b) return; const done = !!store.get('tlm.led.done', null);
-  $('ledBannerTxt').textContent = ledTx(lang, 'bannerTxt'); $('ledBannerOpen').textContent = ledTx(lang, 'bannerOpen'); $('ledBannerLater').textContent = ledTx(lang, 'bannerLater');
-  b.classList.toggle('show', done && !ledBannerHidden && !$('start').classList.contains('rml'));
+  const b = $('ledBanner'); if (!b) return; const done = !!store.get('tlm.led.done', null), fail = !done && store.get('tlm.led.fail', null);
+  $('ledBannerTxt').textContent = done ? ledTx(lang, 'bannerTxt') : fail ? ledTx(lang, 'bannerFail', ledErr(lang, fail.reason)) : ''; $('ledBannerOpen').textContent = ledTx(lang, done ? 'bannerOpen' : 'bannerRetry'); $('ledBannerLater').textContent = ledTx(lang, 'bannerLater');
+  b.classList.toggle('fail', !done && !!fail);
+  b.classList.toggle('show', (done || !!fail) && !ledBannerHidden && !$('start').classList.contains('rml'));
 }
-$('ledBannerOpen').onclick = () => { unlockAudio(); logEv('leveleditor', 'banner: åpne ferdig brett'); saveProgress(); showStart(); getLed().openDone(); refreshLedBanner(); };
+$('ledBannerOpen').onclick = () => { unlockAudio(); const failed = !store.get('tlm.led.done', null) && !!store.get('tlm.led.fail', null); logEv('leveleditor', failed ? 'banner: nytt forsøk' : 'banner: åpne ferdig brett'); saveProgress(); showStart(); if (failed) getLed().openFail(); else getLed().openDone(); refreshLedBanner(); };
 $('ledBannerLater').onclick = () => { ledBannerHidden = true; refreshLedBanner(); };
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { ledBannerHidden = false; refreshLedBanner(); } });
 setTimeout(refreshLedBanner, 1200); setInterval(refreshLedBanner, 4000);

@@ -54,7 +54,7 @@
   body.myroom.flymode #btnLightUp,body.myroom.flymode #btnLightDn{display:flex!important}body.bossfight #btnLightUp,body.bossfight #btnLightDn{display:none!important}
   @media (orientation:landscape) and (max-height:520px){#btnLightUp,body.mobile #btnLightUp{right:max(318px,calc(env(safe-area-inset-right) + 318px));bottom:246px}#btnLightDn,body.mobile #btnLightDn{right:max(318px,calc(env(safe-area-inset-right) + 318px));bottom:182px}}
   #ledBanner{display:none;position:fixed;left:50%;transform:translateX(-50%);top:max(10px,env(safe-area-inset-top));z-index:30;width:min(420px,94vw);box-sizing:border-box;padding:10px 12px;border-radius:16px;background:#2a7f62;border:2px solid #fff;color:#fff;font:700 14px system-ui,sans-serif;box-shadow:0 6px 22px #0009;align-items:center;gap:8px}
-  #ledBanner.show{display:flex}#ledBanner span{flex:1}#ledBanner button{border:0;border-radius:12px;padding:9px 14px;font:800 13px system-ui,sans-serif;background:#fff;color:#1d2433}#ledBanner button.later{background:#ffffff33;color:#fff}
+  #ledBanner.fail{background:#9b2c2c}#ledBanner.show{display:flex}#ledBanner span{flex:1}#ledBanner button{border:0;border-radius:12px;padding:9px 14px;font:800 13px system-ui,sans-serif;background:#fff;color:#1d2433}#ledBanner button.later{background:#ffffff33;color:#fff}
   #ledNav{display:none;position:fixed;left:max(10px,env(safe-area-inset-left));top:max(120px,calc(env(safe-area-inset-top) + 112px));z-index:6;gap:6px;flex-wrap:wrap;max-width:60vw}
   #ledNav button{border:1px solid #ffffff55;background:#1d2433c0;color:#fff;border-radius:16px;padding:7px 11px;font:700 12px system-ui,sans-serif;display:none}
   body.ledback #btnLedBack,body.myroom #btnLedMine{display:block}body.myroom #ledNav{display:flex}

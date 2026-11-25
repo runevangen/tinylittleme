@@ -136,6 +136,9 @@ Kvalitet går foran ventetid. ANDRE TING lar deg gjøre annet mens tolkningen jo
 ### [x] R186 · Fra tester: Rune · Lys i flymodus, lysnivå i trinn, navneliste i JUSTER (v2.198)
 LYSERE/MØRKERE i flymodus i eget brett (lagres i brettet), «Lysnivå (0 = standard)» i stedet for prosent, klikkbar liste over alle ting i JUSTER.
 
+### [x] R192 · Backlogg · Sticky feilbanner for bakgrunnstolkning (v2.205)
+Rødt banner med NYTT FORSØK/SENERE når en bakgrunnstolkning feiler (`tlm.led.fail`), og feilen fjernes når du åpner editoren.
+
 ### [x] R191 · Fra Rune · Sticky «brett ferdig» (v2.204)
 Banner med ÅPNE/SENERE som overlever at appen lukkes og åpnes (tilstand i `tlm.led.done`), FERDIG-merke på LAG BRETT FRA BILDER, og beskjed når en bakgrunnsjobb blir ferdig. SENERE skjuler bare i denne økta.
 
