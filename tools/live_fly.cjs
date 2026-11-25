@@ -47,5 +47,14 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   check('tingen markeres i rommet (uthevet lapp)', hi.includes(firstName), `${firstName} → ${hi.join(', ')}`); await pg.screenshot({ path: `${out}/fly_highlight.png` });
   await pg.dispatchEvent('#btnFly', 'pointerdown'); await pg.waitForTimeout(400); check('trykk igjen lander', !(await pg.evaluate(() => document.getElementById('btnFly').classList.contains('on'))));
   check('etter landing heter knappen FLY og lappen er borte', (await pg.textContent('#btnFly')).trim() === 'FLY' && !(await pg.locator('#flyHint').isVisible()));
+  // R187: REDIGER og MINE BRETT direkte i eget brett; ikke i vanlige brett
+  check('REDIGER og MINE BRETT er synlige i eget brett', (await pg.locator('#btnLedBack').isVisible()) && (await pg.locator('#btnLedMine').isVisible())); await pg.screenshot({ path: `${out}/led_nav.png` });
+  await pg.dispatchEvent('#btnLedBack', 'pointerdown'); await pg.waitForSelector('#ledPlay', { timeout: 15000 }).catch(() => {});
+  check('REDIGER åpner resultatet (SPILL/JUSTER) direkte', (await pg.locator('#ledPlay').count()) > 0 && (await pg.locator('#ledAdj').count()) > 0);
+  await pg.goto(`http://localhost:${port}/?level=mine-abc123&fresh=1`); await pg.waitForSelector('#btnLedMine', { state: 'attached', timeout: 180000 }); await pg.waitForTimeout(3000);
+  await pg.dispatchEvent('#btnLedMine', 'pointerdown'); await pg.waitForSelector('.rmcard', { timeout: 15000 }).catch(() => {});
+  check('MINE BRETT åpner lista med egne brett', (await pg.locator('.rmcard').count()) > 0);
+  await pg.goto(`http://localhost:${port}/?level=bad&start=0`); await pg.waitForSelector('#btnFly', { state: 'attached', timeout: 180000 }); await pg.waitForTimeout(2500);
+  check('vanlig brett: ingen REDIGER/MINE BRETT', !(await pg.locator('#btnLedBack').isVisible()) && !(await pg.locator('#btnLedMine').isVisible()));
   console.log(errs.length ? 'FEIL: ' + errs.slice(0, 3).join(' | ') : 'ingen konsollfeil'); await b.close(); srv.close(); process.exit(errs.length || !ok ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

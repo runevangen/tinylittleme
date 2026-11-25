@@ -199,7 +199,7 @@ else if (levelId && levelId !== 'soverom') {
   } catch { LEVEL = null; }
 }
 if (!LEVEL) { LEVEL = (await import('./level.js')).LEVEL; levelId = 'soverom'; }
-document.body.classList.toggle('myroom', isRoomId(levelId));   // R174: eget brett (fra bilder eller delt): stor FLY-knapp
+document.body.classList.toggle('myroom', isRoomId(levelId)); document.body.classList.toggle('ledback', isRoomId(levelId) && !!loadRoomScene(store, levelId));   // R187: REDIGER og MINE BRETT direkte i eget brett   // R174: eget brett (fra bilder eller delt): stor FLY-knapp
 let buildRequiredOn = store.get('tlm.buildrequired', true);   // R138: påkrevd bygg (⚙ → Admin). Av = brettet som før, bygging er bare en snarvei
 applyRequired(LEVEL, buildRequiredOn);
 const reqTries = createTryCounter(), reqLogged = new Set();
@@ -1503,6 +1503,9 @@ function nudgeLight(dir) {
 }
 $('btnLightUp').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); nudgeLight(1); });
 $('btnLightDn').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); nudgeLight(-1); });
+// R187: direkte tilbake til skjermen du kom fra (resultatet/JUSTER) og til MINE BRETT, uten å gå via menyen
+$('btnLedBack').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); if (!isRoomId(levelId) || !loadRoomScene(store, levelId)) return; logEv('leveleditor', 'tilbake til redigering fra spillet'); saveProgress(); unlockAudio(); showStart(); openLeditorResume(levelId); });
+$('btnLedMine').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); logEv('mine brett', 'tilbake til MINE BRETT fra spillet'); saveProgress(); unlockAudio(); showStart(); openRooms(); });
 const openThingList = () => {
   if (!tagList) tagList = buildTags();
   const body = $('thingListBody'), dist = (t) => Math.hypot(t.pos.x - player.x, t.pos.z - player.z);

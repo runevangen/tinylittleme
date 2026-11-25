@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.199** – R187 (fra tester: Rune): knappene REDIGER og MINE BRETT direkte i eget brett (øverst til venstre): REDIGER åpner resultatet/JUSTER du kom fra, MINE BRETT åpner lista med egne brett, uten å gå via menyen (index.html, main, tools/live_fly.cjs).
 - **2.198** – R186 (fra tester: Rune): lysnivå også i flymodus i eget brett (knappene LYSERE/MØRKERE, lagres i brettet), lysnivået i JUSTER vises i trinn (0 = standard) i stedet for prosent, og en klikkbar navneliste over alle tingene i JUSTER som velger tingen på kartet (leditor_logic lightLabel, leditor_view, main nudgeLight, index.html).
 - **2.197** – Backlogg ryddet mot kode og changelog: R68, R69 og dato på brett krysset av; personvern og fangstprotokoll merket delvis gjort (BACKLOG.md, ingen kodeendring).
 - **2.196** – R185 (fra tester: Rune): lysnivå i JUSTER (MØRKERE/LYSERE, lagres med brettet), og brett fra bilder får lysere lys som standard (tolkningen satte ofte for dempet lys): minst exposure 1,2 og sol 3,0 uten eget valg; prompten ber ikke lenger om dempet lys (leditor_logic lightOf/withLight/stepLight, leditor_view/text, tools/make_prompt).

@@ -53,6 +53,10 @@
   #btnLightUp{bottom:564px}#btnLightDn{bottom:628px}body.mobile #btnLightUp{bottom:560px}body.mobile #btnLightDn{bottom:624px}
   body.myroom.flymode #btnLightUp,body.myroom.flymode #btnLightDn{display:flex!important}body.bossfight #btnLightUp,body.bossfight #btnLightDn{display:none!important}
   @media (orientation:landscape) and (max-height:520px){#btnLightUp,body.mobile #btnLightUp{right:max(318px,calc(env(safe-area-inset-right) + 318px));bottom:246px}#btnLightDn,body.mobile #btnLightDn{right:max(318px,calc(env(safe-area-inset-right) + 318px));bottom:182px}}
+  #ledNav{display:none;position:fixed;left:max(10px,env(safe-area-inset-left));top:max(120px,calc(env(safe-area-inset-top) + 112px));z-index:6;gap:6px;flex-wrap:wrap;max-width:60vw}
+  #ledNav button{border:1px solid #ffffff55;background:#1d2433c0;color:#fff;border-radius:16px;padding:7px 11px;font:700 12px system-ui,sans-serif;display:none}
+  body.ledback #btnLedBack,body.myroom #btnLedMine{display:block}body.myroom #ledNav{display:flex}
+  body.instart #ledNav,body.bossfight #ledNav,body.ovview #ledNav{display:none!important}
   #btnTags{display:none!important;right:max(118px,calc(env(safe-area-inset-right) + 118px));bottom:436px;width:54px;height:54px;background:#1d2433b0;font-size:11px;font-weight:700;opacity:.9}
   body.myroom #btnTags{display:flex!important}body.myroom.bossfight #btnTags{display:none!important}body.mobile.myroom #btnTags{bottom:432px}
   #btnTags.on{background:#2a7f62cc}
@@ -316,6 +320,7 @@
 <button class="tbtn" id="btnMap" aria-label="Oversikt"><svg viewBox="-12 -12 24 24" width="28" height="28"><path d="M-9 -6 L-3 -9 L3 -6 L9 -9 L9 6 L3 9 L-3 6 L-9 9 Z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M-3 -9 V6 M3 -6 V9" stroke="#fff" stroke-width="1.4"/><circle cx="5" cy="-1" r="2.2" fill="#3df0b0"/></svg></button>
 <button class="tbtn" id="btnList" aria-label="Liste over ting">LISTE</button>
 <button class="tbtn" id="btnTags" aria-label="Navnelapper">NAVN</button>
+<div id="ledNav"><button id="btnLedBack">✏️ REDIGER</button><button id="btnLedMine">MINE BRETT</button></div>
 <button class="tbtn" id="btnLightUp" aria-label="Lysere">LYSERE</button><button class="tbtn" id="btnLightDn" aria-label="Mørkere">MØRKERE</button>
 <button class="tbtn" id="btnFly" aria-label="Flymodus">FLY</button>
 <button class="tbtn" id="btnJump">HOPP</button>
