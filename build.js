@@ -8,7 +8,7 @@ import {
 } from './build_logic.js';
 import { ZOOM_STEP, gridForScale, anchorRadius, zoomAbout, zoomStep, freeCenter, isDoubleTap, dblTapView, zoomLabel } from './build_zoom.js';   // R44
 import { capacity } from './build_capacity.js';
-import { liveState, liveStep, liveLimit, FIG_LOAD, CARRY_LOAD, stiffOf } from './build_live_logic.js';   // R49b: live-vekt i verdenen   // R49a1: «Tåler X»-måler
+import { liveState, liveStep, liveLimit, liveLoad, antStanding, maxLoad, FIG_LOAD, CARRY_LOAD, DEFL_RATE, stiffOf } from './build_live_logic.js';   // R49b: live-vekt i verdenen   // R49a1: «Tåler X»-måler
 import { trussHelp, helpKey } from './build_truss.js';   // R49a2: ledd som kan svinge og slanke deler
 import { createSim2 as createSim, runSim, DT, siteBoxes, siteGoal, siteStart, FIG_R, settledPlaced } from './build_phys.js';
 import { stressCss, tint, loadMap, whyBroke, breakTempo, ringAt } from './build_stress.js';   // R45: lesbar svikt
@@ -128,7 +128,7 @@ body.flagscr #bld .bt.top{right:max(46px,calc(env(safe-area-inset-right) + 46px)
 @media (orientation:landscape) and (max-height:520px){#bld .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld.hasloads .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 88px)}#bld.sim .share{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .share button{height:34px}#bld .zoom{flex-direction:column;top:max(56px,calc(env(safe-area-inset-top) + 48px));gap:4px}#bld .zoom button{height:34px;width:48px;font-size:20px}#btnBuild{top:max(56px,calc(env(safe-area-inset-top) + 48px))}#btnBuildSpan{top:max(56px,calc(env(safe-area-inset-top) + 48px));right:250px;max-width:220px}#btnBuildCard{top:max(114px,calc(env(safe-area-inset-top) + 106px));right:12px;width:200px}#bld .tray{height:54px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px)}#bld .tools{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px)}#bld .loads{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 48px + 76px + 44px)}#bld .loads button{height:36px}#bld .tools button{height:34px}#bld .chip{height:40px}#bld button{height:40px}}
 `;
 
-export function createBuildMode({ getStars2 = () => true, getMissing = () => true, getView25 = () => false, getDouble = () => true, getCable = () => true, getPrune = () => true, onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getAutoNextLoad = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getSquareTip = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }), getGhostW = () => true, getCard = () => true, getPartsStart = () => true, getMirror = () => true, getTruss2 = () => ({ mode: 'auto', expert: false }), getSwapSteel = () => true, getLive = () => false, getLiveStiff = () => 1 }) {
+export function createBuildMode({ getStars2 = () => true, getMissing = () => true, getView25 = () => false, getDouble = () => true, getCable = () => true, getPrune = () => true, onGoLevel = () => {}, onMenu, onStat = () => {}, onOpen = () => {}, onClose = () => {}, onStagePass = () => {}, menuLabel = () => 'Avslutt til meny', scene, LEVEL, player, $, T, logEv, toast, isPlay, isMenu, isBoss, isWon, isOv, getSnap, setSnap, allParts, audio, buzz, onChange, TOUCH, getSlow = () => false, getStrength = () => 1, onSolved = () => {}, getWorld = () => true, getBuildTex = () => true, getTexLow = () => false, getSeeHint = () => true, getDbl = () => true, getFine = () => true, getStress = () => true, getBreakFx = () => true, getLego = () => true, store = null, levelId = '', getBudget = () => true, getBonus = () => true, getCrumbs = () => 0, getBonusStep = () => 1, getLoads = () => true, getAutoNextLoad = () => true, getShare = () => true, getGhost = () => true, getCap = () => true, getTruss = () => true, getAxial = () => 1, getVersion = () => '', getCode = () => '', netFetch = undefined, copyText = undefined, getLabFree = () => true, getGrid = () => true, getGridHint = () => true, getSquareTip = () => true, getGridGuide = () => true, getGridMax = () => 6.5, getGridStress = () => true, getGridPeak = () => true, getGridDeck = () => true, getGridGamma = () => 0.5, getGridSlow = () => 0.3, getStage = () => ({ on: false }), getPlayGrid = () => true, getPlayLock = () => true, getBuildUx = () => false, getLoupe = () => true, getLoupeZoom = () => 3, getLoupeSize = () => 100, getBuildNext = () => true, getBuxHelp = () => ({ labels: true, suggest: false }), getSpan = () => ({ on: true, expert: false, help: 'normal' }), getGhostW = () => true, getCard = () => true, getPartsStart = () => true, getMirror = () => true, getTruss2 = () => ({ mode: 'auto', expert: false }), getSwapSteel = () => true, getLive = () => false, getLiveStiff = () => 1, getLiveAnts = () => ({ on: false, load: 0.15 }), getAnts = () => [] }) {
   initParts(LEVEL);
   const sfor = (s, b) => starsFor(s, b.placed, b.links, getDouble() ? extraOf(b) : undefined);   // R123: kostnad og stjerner inkluderer dobbel bro (planenes kopi og tverrstag)
   const sites = LEVEL.buildSites, parts = LEVEL.buildParts;
@@ -240,6 +240,24 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
   function liveRestore(site) {               // alt tilbake til designposen (valget slått av, eller bygget fjernet)
     const e = liveSt.get(site.id); if (!e) return; for (const id of e.parts.keys()) liveMove(e, id, 0);
     for (const f of e.falling) f.m.visible = false; liveSt.delete(site.id);
+    if (!liveSt.size) for (const t of getAnts() || []) { t.liveY = 0; t.liveVy = 0; t.livePart = null; t.liveFall = false; }   // R49c: mauras tegne-forskyvning tilbake
+  }
+  // R49c: maur som står på bygget. Bare tegningen flyttes (t.liveY); mauras bevegelse og kollisjon (ants.js) røres ikke.
+  function liveAnts(site, e, dt, cfg) {
+    const ants = getAnts() || [], solids = [];
+    for (const [id, q] of e.parts) if (!e.st.broken.has(id)) for (const b of q.boxes) solids.push({ part: id, min: b.min, max: b.max });
+    const st = cfg ? antStanding(ants, solids, cfg.load) : [];
+    for (const t of ants) if (t.livePart && e.parts.has(t.livePart)) t.livePart = null;
+    for (const s of st) s.ant.livePart = s.part;
+    return st;
+  }
+  function liveAntsAnim(site, e, dt, brokeIds) {   // mauras forskyvning følger delens nedbøyning; på en del som brister faller de med den
+    for (const t of getAnts() || []) {
+      if (t.liveFall) { t.liveVy = (t.liveVy || 0) - 30 * dt; t.liveY = (t.liveY || 0) + t.liveVy * dt; if (t.liveY < -9) { t.liveFall = false; t.liveY = 0; t.liveVy = 0; t.alive = false; t.dead = 25; t.squash = 1; } continue; }
+      if (t.livePart && brokeIds.includes(t.livePart)) { t.liveFall = true; t.liveVy = 0; continue; }
+      const want = t.livePart ? -(e.st.defl.get(t.livePart) || 0) : 0, cur = t.liveY || 0;
+      t.liveY = Math.abs(want - cur) <= DEFL_RATE * dt ? want : cur + Math.sign(want - cur) * DEFL_RATE * dt;
+    }
   }
   function liveUpdate(dt, playing) {
     const on = !!getLive() && !!playing && !active && getWorld();
@@ -249,23 +267,27 @@ export function createBuildMode({ getStars2 = () => true, getMissing = () => tru
     for (const site of sites) {
       if (!committed.has(site.id) || worldDbl.has(site.id)) continue;
       const wp = worldPlaced.get(site.id); if (!wp?.length) continue;
-      const gb = player.onGround ? player.groundBox : null, pre = `bygg_${site.id}_`;
+      const gb = player.onGround ? player.groundBox : null, pre = `bygg_${site.id}_`, antCfg = getLiveAnts(), antsOn = !!antCfg?.on && (getAnts() || []).length > 0;
       let e = liveSt.get(site.id);
       const part = gb && gb.built === site.id && gb.id.startsWith(pre) ? gb.id.slice(pre.length) : null;
-      if (!e && !part) continue;
+      if (!e && !part && !antsOn) continue;
       e = e || liveSite(site); const standing = [];
       if (part) { e.still = 0.2; e.part = part; } else e.still = Math.max(0, e.still - dt);     // kort pause uten bakkekontakt (hopp, kant) holder lasten
       if (e.still > 0 && e.part) standing.push({ part: e.part, u: player.x - site.x, v: player.y - site.y, load: FIG_LOAD + (player.carry ? CARRY_LOAD : 0) });
-      if (!standing.length && !e.st.defl.size) continue;
-      const cap = liveLimit(liveCap(site, e), getLiveStiff()), r = liveStep(e.st, wp, standing, cap, dt);
+      const antSt = antsOn ? liveAnts(site, e, dt, antCfg) : []; for (const a of antSt) standing.push({ part: a.part, u: 0, v: 0, load: a.load });
+      if (!standing.length && !e.st.defl.size && !(getAnts() || []).some((t) => t.liveY || t.liveFall)) continue;
+      const cap = liveLimit(liveCap(site, e), getLiveStiff()), r = liveStep(e.st, wp, standing, cap, dt), brokeIds = r.broke.slice();
       for (const id of e.st.defl.keys()) liveMove(e, id, e.st.defl.get(id));
+      liveAntsAnim(site, e, dt, brokeIds);
+      if (antSt.length) { const ml = maxLoad(liveLoad(wp, standing)); e.antPeak = Math.max(e.antPeak || 0, antSt.length); e.antMax = Math.max(e.antMax || 0, ml); e.antGone = 0; if (!e.antLogged) { e.antLogged = true; logEv('bygg', `live-vekt maur: ${antSt.length} maur på ${site.id}, største last ${ml.toFixed(2)} av grensen ${cap.toFixed(2)}`); } }
+      else if (e.antLogged && (e.antGone = (e.antGone || 0) + dt) > 1) { logEv('bygg', `live-vekt maur: ferdig ${site.id}, flest ${e.antPeak} maur, største last ${e.antMax.toFixed(2)}`); e.antLogged = false; e.antPeak = 0; e.antMax = 0; }
       for (const id of r.broke) {
         const q = e.parts.get(id); if (!q) continue;
         for (const b of q.boxes) { const i = LEVEL.boxes.indexOf(b); if (i >= 0) LEVEL.boxes.splice(i, 1); }
         if (q.mesh) e.falling.push({ m: q.mesh, vy: 0, w: (id.length % 2 ? 1 : -1) * 1.5, t: 0 });
-        player.onGround = false; player.groundBox = null; e.part = null;
+        const figOn = e.part === id; if (figOn) { player.onGround = false; player.groundBox = null; e.part = null; }
         audio?.bbreak?.(); buzz?.([60, 30, 60]); toast(T('build.live.break'));
-        logEv('bygg', `live-vekt: brudd ${site.id}/${id}, last ${standing[0]?.load ?? '?'} over grensen ${cap.toFixed(2)}, nedbøyning ${e.st.max.toFixed(2)}`);
+        logEv('bygg', `live-vekt: brudd ${site.id}/${id}, last ${(liveLoad(wp, standing).get(id) ?? 0).toFixed(2)} over grensen ${cap.toFixed(2)}, maur ${antSt.filter((a) => a.part === id).length}, nedbøyning ${e.st.max.toFixed(2)}`);
       }
       if (r.maxDefl > 0.05 && !e.lastOn) { e.lastOn = true; logEv('bygg', `live-vekt: nedbøyning ${site.id}, største ${r.maxDefl.toFixed(2)} enheter`); } else if (r.maxDefl < 0.01) e.lastOn = false;
     }

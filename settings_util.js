@@ -106,7 +106,7 @@ export const GROUPS = [
 export const LAYOUT = {
   spill: ['lang', 'autosave', 'startscreen', 'confirm2', 'lostreturn', 'showlogo', 'firstrun'],
   innhold: ['puzzles', 'gates', 'goals', 'crumbs', 'rewards', 'story', 'ants', 'boss', 'creatures', 'wasp', 'wasplevel', 'toys', 'varmood', 'vartwist', 'combo', 'kick', 'flood', 'beadsolid', 'lego'],
-  bygging: [{ sub: 'Byggeskjerm', ids: ['buildux', 'builduxland', 'buildcap', 'buildlive', 'buildstress', 'buildbreakfx', 'buildfine', 'builddbl', 'buildloupe', 'buildloupezoom', 'buildloupesize', 'buildtex', 'buildlego', 'buildghost', 'buildloads', 'buildshare', 'buildprune', 'buildtruss', 'buildsee', 'squaretip', 'buildcard', 'buildfromto', 'partsfromstart', 'autonextload', 'buildnext'] },
+  bygging: [{ sub: 'Byggeskjerm', ids: ['buildux', 'builduxland', 'buildcap', 'buildlive', 'buildliveants', 'buildstress', 'buildbreakfx', 'buildfine', 'builddbl', 'buildloupe', 'buildloupezoom', 'buildloupesize', 'buildtex', 'buildlego', 'buildghost', 'buildloads', 'buildshare', 'buildprune', 'buildtruss', 'buildsee', 'squaretip', 'buildcard', 'buildfromto', 'partsfromstart', 'autonextload', 'buildnext'] },
     { sub: 'Rutenett (broene og Byggeskolen)', ids: ['buildgrid', 'gridguide', 'buildgridstress', 'buildgridpeak', 'buildmirror', 'buildswapsteel', 'buildtruss2', 'gridplay', 'gridplaylock', 'missing'] },
     { sub: 'Byggeskolen og Bygglab', ids: ['schoolcard', 'gridstage', 'gridlock', 'buildround2', 'fagverkcard', 'buildmoved'] },
     { sub: '3D-lab', ids: ['build3d', 'build3dlock', 'buildghostworld'] },

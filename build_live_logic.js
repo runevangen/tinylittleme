@@ -2,7 +2,7 @@
 // Et bygg som står i verdenen (build_world.js) gir etter når figuren (eller noe den bærer) står på det, og brister over grensen.
 // Ingen ny fysikkmodell: grensen er `capacity()` (build_capacity.js, «tåler ca. N klosser»), regnet om til figur-enheter.
 //   1 figur = 1 enhet. Bygget tåler minst én figur (det har bestått PRØV med den), altså grense = max(1, N) × stivhet.
-//   Noe figuren bærer teller som en enhet til. Maur er ikke last i dette trinnet.
+//   Noe figuren bærer teller som en enhet til. R49c: maur som står på en del er last (ANT_LOAD hver, en brøkdel av figuren), når valget «Maur belaster bygg» er på.
 // Nedbøyningen er bare visuell og i verdenen: boksene og meshen flyttes ned med samme tall, glatt, og tilbake når lasten er borte.
 import { partSlabs } from './build_world.js';
 import { partType } from './build_logic.js';
@@ -11,10 +11,35 @@ export const DEFL_MAX = 0.35;       // største nedbøyning (enheter à 5 cm)
 export const DEFL_RATE = 1.4;       // hvor fort nedbøyningen følger lasten (enheter per sekund), så figuren aldri «faller» gjennom flaten
 export const FIG_LOAD = 1;          // figuren i figur-enheter
 export const CARRY_LOAD = 1;        // noe figuren bærer
+export const ANT_LOAD = 0.15, ANT_LOAD_MIN = 0.02, ANT_LOAD_MAX = 1, ANT_MAX = 24;   // R49c: last per maur (figur-enheter) og tak på hvor mange som teller
 export const STIFF_MIN = 0.1, STIFF_MAX = 3, STIFF_DEF = 1;
 export const LIVE_TOP_TOL = 0.12;   // hvor mye over/under toppen av en del figurens fot kan være for at delen bærer den
 
 export const stiffOf = (s) => (Number.isFinite(+s) && +s > 0 ? Math.min(STIFF_MAX, Math.max(STIFF_MIN, +s)) : STIFF_DEF);
+
+export const antLoadOf = (v) => (Number.isFinite(+v) && +v > 0 ? Math.min(ANT_LOAD_MAX, Math.max(ANT_LOAD_MIN, +v)) : ANT_LOAD);
+
+// R49c: hvilke maur står på hvilken del? ants: [{ x, y, z, alive?, squash?, type? }] (verdenskoordinater, y = flaten mauren går på),
+// solids: [{ part, min: [x,y,z], max: [x,y,z] }] (delens nåværende bokser, altså med nedbøyning). Bare gående maur teller (ikke veps, edderkopp,
+// skapninger), levende, og høyst `max` stykker. En maur teller på den øverste flaten under føttene (toleranse som figuren, pluss full nedbøyning).
+// Gir [{ part, load, ant }] som kan legges rett i `standing` til liveLoad/liveStep. Ingen maur gir tom liste.
+export function antStanding(ants, solids, perAnt = ANT_LOAD, tol = LIVE_TOP_TOL, max = ANT_MAX) {
+  const out = [], w = antLoadOf(perAnt);
+  for (const a of ants || []) {
+    if (out.length >= max) break;
+    if (!a || a.alive === false || (a.squash || 0) > 0.5 || !(a.type == null || a.type === 'ant' || a.type === 'carrier')) continue;
+    let best = null, bt = -Infinity;
+    for (const s of solids || []) {
+      if (a.x < s.min[0] || a.x > s.max[0] || a.z < s.min[2] || a.z > s.max[2]) continue;
+      const d = a.y - s.max[1]; if (d < -tol || d > DEFL_MAX + tol) continue;
+      if (s.max[1] > bt) { bt = s.max[1]; best = s.part; }
+    }
+    if (best != null) out.push({ part: best, load: w, ant: a });
+  }
+  return out;
+}
+// største last på en enkelt del ut av liveLoad-svaret
+export const maxLoad = (loads) => { let m = 0; for (const v of loads.values()) if (v > m) m = v; return m; };
 
 // grensen (figur-enheter) ut av capacity()-svaret ({n, max, capped}) og stivhet. Uten bygg/kapasitet: minst én figur.
 export const liveLimit = (cap, stiff = STIFF_DEF) => Math.max(1, cap && Number.isFinite(cap.n) ? cap.n : 0) * stiffOf(stiff);
