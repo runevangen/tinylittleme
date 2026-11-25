@@ -1,7 +1,7 @@
 // R152: «Lag brett fra bilder» (DOM). Bruker startskjermens #start og knappestiler (.mbtn) som VELG BRETT/MINE BRETT. Logikk: leditor_logic.js, tekster: leditor_text.js.
 // Flyt: veiledning + samtykke → 2–4 bilder (nedskalert her, i minnet) → fire spørsmål → LAG BRETT (tjenesten) → forslag med SJEKK, JUSTER, SPILL, DEL, LAGRE. Bilder lagres aldri.
 import { LE } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo, moveThingsY, setThingsY } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo, moveThingsY, setThingsY, stepLight, lightPct } from './leditor_logic.js';
 import { shareRoom, setRoomCode, safeName, listRooms, fmtWhen } from './rooms_logic.js';
 import { thingName } from './kindnames.js';
 import { ltx, lerr, lverdict, lsub } from './leditor_text.js';
@@ -246,6 +246,7 @@ export function createLeditorView(ctx) {
       + `<p class="tag" style="margin-bottom:0">${esc(T('stepH'))}</p><div class="ledrow" id="ledSteps">${STEPS.map((v) => `<button class="mbtn sec" data-s="${v}">${v}</button>`).join('')}</div>`
       + `<div class="ledarrows"><span></span><button class="mbtn sec" data-d="0,-1">▲</button><span></span><button class="mbtn sec" data-d="-1,0">◀</button><button class="mbtn sec" id="ledDel" style="font-size:13px">${esc(T('del'))}</button><button class="mbtn sec" data-d="1,0">▶</button><span></span><button class="mbtn sec" data-d="0,1">▼</button><span></span></div>`
       + `<p class="tag">${esc(T('goalH'))}</p><div class="ledrow" id="ledGoals"></div>`
+      + `<p class="tag" id="ledLightV"></p><div class="ledrow"><button class="mbtn sec" id="ledDark">${esc(T('lightDown'))}</button><button class="mbtn sec" id="ledBright">${esc(T('lightUp'))}</button></div>`
       + `<div class="ledmsg" id="ledMsg"></div><div class="ledrow"><button class="mbtn sec" id="ledUndo">${esc(T('undo'))}</button><button class="mbtn" id="ledDone">${esc(T('done'))}</button></div><button class="mbtn sec" id="ledAdjBack">${esc(T('back'))}</button>`;
     const cv = $('ledMap'), R = sc().room, W = 340, Hh = Math.round(W * R.depth / R.width); cv.width = W * 2; cv.height = Hh * 2; cv.style.height = `${Hh}px`; cv.style.touchAction = 'none';   // dra på kartet skal ikke rulle siden
     const k = (W * 2) / R.width;
@@ -310,6 +311,9 @@ export function createLeditorView(ctx) {
     $('ledPx').onchange = move; $('ledPz').onchange = move;
     const moveY = (next, what) => { if (apply(next, what)) draw(); else info(); };
     $('ledPy').onchange = () => { if (S.sels.length === 1) moveY(setThingsY(sc(), S.sels, $('ledPy').value), 'høyde tall'); };
+    const lightTxt = () => { const e = $('ledLightV'); if (e) e.textContent = T('lightNow', lightPct(sc())); };
+    const light = (dir) => { const n = stepLight(sc(), dir); if (!n) { msg(T('lightEnd')); return; } if (apply(n, dir > 0 ? 'lys opp' : 'lys ned')) { lightTxt(); msg(T('lightSet')); } };
+    lightTxt(); $('ledDark').onclick = () => light(-1); $('ledBright').onclick = () => light(1);
     $('ledUp').onclick = () => { if (S.sels.length) moveY(moveThingsY(sc(), S.sels, stepNow(st)), 'høyde opp'); };
     $('ledDown').onclick = () => { if (S.sels.length) moveY(moveThingsY(sc(), S.sels, -stepNow(st)), 'høyde ned'); };
     $('ledFloor').onclick = () => { if (S.sels.length) moveY(setThingsY(sc(), S.sels, 0), 'på gulvet'); };

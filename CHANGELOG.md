@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.196** – R185 (fra tester: Rune): lysnivå i JUSTER (MØRKERE/LYSERE, lagres med brettet), og brett fra bilder får lysere lys som standard (tolkningen satte ofte for dempet lys): minst exposure 1,2 og sol 3,0 uten eget valg; prompten ber ikke lenger om dempet lys (leditor_logic lightOf/withLight/stepLight, leditor_view/text, tools/make_prompt).
 - **2.195** – R184 (fra tester: Rune): dato og klokkeslett på egne brett fra bilder: i MINE BRETT og på JUSTER SISTE BRETT (rooms_logic fmtWhen, rooms_view, leditor_view/text/logic).
 - **2.194** – R182: møbelmaler med ekte former (sofa, seng, skrivebord, bord, hylleenhet, lampe, puff, koffert) i furniture.js; modellen velger type og mål, spillet bygger formen.
 - **2.193** – Backlogg: idé fra tester (Rune) om dato og klokkeslett på egne brett (BACKLOG.md, ingen kodeendring).

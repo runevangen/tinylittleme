@@ -133,6 +133,9 @@ Admin-valg «modell» og «modus» (direkte / tenk / tenk_kritikk) per kall og s
 ### [x] R183 · Fra tester: Rune · Ingen tidsgrense på tolkning, asynkron jobb i bakgrunnen (v2.192)
 Kvalitet går foran ventetid. ANDRE TING lar deg gjøre annet mens tolkningen jobber; beskjed og ÅPNE FERDIG BRETT når den er ferdig; jobben huskes over omstart (HENT PÅGÅENDE TOLKNING). Gjenstår: Supabase har egen tidsgrense på bakgrunnsjobber (150 s gratis, 400 s betalt); ved lengre tolkning må det flyttes til flere kall.
 
+### [x] R185 · Fra tester: Rune · Lysnivå i JUSTER og lysere standard (v2.196)
+MØRKERE/LYSERE i JUSTER (lagres i `scene.look`, `look.user`), standardlyset løftes til minst exposure 1,2 og sol 3,0 for brett fra bilder, prompten ber ikke om dempet lys.
+
 ### [x] R184 · Fra tester: Rune · Dato og klokkeslett på egne brett (v2.195)
 Tid under navnet i MINE BRETT og på JUSTER SISTE BRETT (`fmtWhen` i `rooms_logic.js`). Eldre brett uten tid viser ingenting.
 

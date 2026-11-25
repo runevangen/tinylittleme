@@ -90,9 +90,26 @@ export async function callTolk({ code, images, answers, opts }, { fetchFn = glob
 
 // ---------- scene → brett ----------
 const clone = (o) => JSON.parse(JSON.stringify(o));
+
+// R185: lysnivå. Tolkningen fra bilder satte ofte svært dempet lys (look.exposure ~0,8) fordi bildene er lyse; da ble brettet mørkt.
+// Uten eget valg (look.user) løftes lyset til minst LIGHT.minExp/minSun; JUSTER (MØRKERE/LYSERE) setter eget valg som ikke løftes igjen.
+export const LIGHT = { minExp: 1.2, minSun: 3.0, step: 0.15, lo: 0.7, hi: 2.4, baseExp: 1.2, baseSun: 3.0 };
+export function lightOf(scene) {
+  const lk = (scene && scene.look) || {}, user = lk.user === true;
+  const exposure = Number.isFinite(lk.exposure) ? lk.exposure : 1.05, sun = Number.isFinite(lk.sun) ? lk.sun : 3.0;
+  return user ? { exposure, sun, user } : { exposure: Math.max(exposure, LIGHT.minExp), sun: Math.max(sun, LIGHT.minSun), user };
+}
+export function withLight(scene) { const s = clone(scene), L = lightOf(scene); s.look = { ...(s.look || {}), exposure: +L.exposure.toFixed(2), sun: +L.sun.toFixed(2) }; return s; }
+export const lightPct = (scene) => Math.round((lightOf(scene).exposure / LIGHT.baseExp) * 100);
+export function stepLight(scene, dir) {
+  const L = lightOf(scene), e = Math.min(LIGHT.hi, Math.max(LIGHT.lo, +(L.exposure + dir * LIGHT.step).toFixed(2)));
+  if (e === +L.exposure.toFixed(2)) return null;
+  const s = clone(scene); s.look = { ...(s.look || {}), exposure: e, sun: +Math.min(5, Math.max(1.5, LIGHT.baseSun * e / LIGHT.baseExp)).toFixed(2), user: true }; return s;
+}
 // { ok, level, solvable, helpers, helperCount, tooMany, things } | { ok:false, reason: 'maal' | 'form' | 'stor' | 'scene' }
 export function sceneToRoom(scene, name, opts = {}) {
   let r;
+  scene = withLight(scene);   // R185: ikke for mørkt som standard
   try { r = sceneToLevel(scene); } catch (e) {
     const noFlat = /flate under målet/.test(String(e && e.message));
     if (noFlat && opts.auto !== false) { const g = autoGoal(scene); if (g) { const room = sceneToRoom(g.scene, name, { auto: false }); if (room.ok) return { ...room, scene: g.scene, autoGoal: g.on }; return { ...room, scene: g.scene, detail: `${room.detail || ''} (etter auto-mål)`.trim() }; } }

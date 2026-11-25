@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r185-lysniva-i-juster', version: '2.196', date: '2026-11-25', title: 'Lysnivå kan justeres i JUSTER (MØRKERE / LYSERE), og brett fra bilder er lysere som standard.',
+    how: 'Åpne et brett fra bilder og trykk JUSTER. Trykk LYSERE eller MØRKERE under målknappene, trykk FERDIG og så SPILL for å se lyset.', level: '', spot: null },
   { id: 'r184-dato-paa-brett', version: '2.195', date: '2026-11-25', title: 'Egne brett viser nå når de ble laget (dato og klokkeslett), så du kan skille flere forsøk fra samme rom.',
     how: 'Lag et brett fra bilder og åpne MINE BRETT: tiden står under navnet. Den står også på knappen JUSTER SISTE BRETT. Eldre brett har ingen tid.', level: '', spot: null },
   { id: 'r182-mobelmaler', version: '2.194', date: '2026-11-25', title: 'Brett fra bilder får møbler med ekte former: sofa, seng, skrivebord, bord, hylle, lampe, puff og koffert (ikke bare bokser).',

@@ -40,7 +40,7 @@ ${rows}
 
 ## Felt per ting
 - \`material\`: ${MATERIALS.join(', ')}.
-- \`color\`: hex \`#rrggbb\`. Bildene er ofte nesten hvite: velg farger som skiller tingene (se \`look\`).
+- \`color\`: hex \`#rrggbb\`. Bildene er ofte nesten hvite: velg farger som skiller tingene (ikke demp lyset for å få det til).
 - \`cp: true\` på et par solide flater midtveis (sjekkpunkt). \`soft: true\` på myke flater (matte, håndkle, papirhaug) som demper fall.
 - \`movable\`: ${WEIGHTS.join(' | ')} for løse ting (lett = kan bæres, maks 17 cm). \`breakable: true\` for skjøre.
 - \`grip: true\` på ting man kan klatre i (håndkle som henger, kabel). \`hold: true\` på mulige tak (knotter, kurver).
@@ -50,7 +50,7 @@ ${rows}
 ## Farer og start/mål
 - \`hazards\`: type ${HAZARDS.join(' | ')} (pit = kar/grop man ikke kommer ut av; flush = do-skål). \`box\` i cm og en \`message\`.
 - \`start\`: {x, z} der spilleren kommer inn (ved døra). \`goal\`: {x, y, z} en ting høyt oppe som er et mål.
-- \`windows\`: vegg (N/S/E/W), posisjon langs veggen, y, w, h. \`look\`: lysdempning. \`audio\`: {reverb, ambience: ["drip","fan"]}.
+- \`windows\`: vegg (N/S/E/W), posisjon langs veggen, y, w, h. \`look\`: utelat den, eller bruk exposure 1.2–1.5 og sun 3–3.5 (rommet skal være lyst og lesbart; aldri under 1.1). \`audio\`: {reverb, ambience: ["drip","fan"]}.
 
 ## Utendørs og farer
 - Utendørs bruker du stein, gress, grus, benk, trapp, hekk, bord, lekeapparat, vann og kantstein fra tabellen. Gulvet er bakken (\`room.floor\`); \`room.height\` er hvor høyt brettet skal gå (f.eks. 250 cm), \`ceiling\` settes til en usynlig, lav lysdempning.

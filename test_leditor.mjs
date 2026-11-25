@@ -195,4 +195,16 @@ for (const f of ['scene2level_core', 'leditor_logic', 'leditor_text', 'leditor_v
 assert.match(mainJs, /fl\('ledon', 'test'/); assert.match(mainJs, /mLed: \(\) =>/); assert.match(mainJs, /ledAvailable/);
 const view = fs.readFileSync('leditor_view.js', 'utf8'); assert.match(view, /logEv\?\.\('leveleditor'/); assert.match(view, /capture="environment"/); assert.match(view, /S\.photos\.length = 0/);
 assert.doesNotMatch(view, /localStorage\.setItem\([^)]*(data|url)/, 'bilder lagres aldri');
+// R185: lysnivå
+{
+  const { lightOf, withLight, stepLight, lightPct, sceneToRoom: s2r, LIGHT } = await import('./leditor_logic.js');
+  const dim = JSON.parse(fs.readFileSync('scenes/bad.scene.json', 'utf8')); dim.look = { exposure: 0.78, sun: 2 };
+  assert.ok(lightOf(dim).exposure >= LIGHT.minExp && lightOf(dim).sun >= LIGHT.minSun, 'dempet lys fra tolkningen løftes');
+  const room = s2r(dim, 'Lys'); assert.ok(room.ok, 'brettet går: ' + room.reason); assert.ok(room.level.look.exposure >= LIGHT.minExp, 'brettet får lysere lys');
+  const up = stepLight(dim, 1); assert.ok(up.look.user === true && up.look.exposure > lightOf(dim).exposure, 'LYSERE øker');
+  const dn = stepLight(up, -1); assert.ok(Math.abs(dn.look.exposure - lightOf(dim).exposure) < 0.01, 'MØRKERE tilbake');
+  let m = dim; for (let i = 0; i < 20; i++) m = stepLight(m, -1) || m; assert.ok(m.look.exposure >= LIGHT.lo && lightOf(m).user, 'eget valg løftes ikke igjen');
+  assert.equal(stepLight(m, -1), null, 'bunnen nådd'); assert.equal(lightPct(dim) > 0, true);
+  assert.ok(s2r(m, 'Mørk').level.look.exposure < LIGHT.minExp, 'eget mørkt valg respekteres');
+}
 console.log('test_leditor: ok');
