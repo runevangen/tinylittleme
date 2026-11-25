@@ -98,6 +98,7 @@ Rune bestemte å **ikke** bygge dette nå (dagens oppførsel beholdes), men å l
 - [ ] Åpne spørsmål om motgift-biter: bæres mellom rom? antall? bonusting? (`docs/BADET.md`)
 
 ## Foto → brett
+- [ ] **Fra tester: Rune · Dato og klokkeslett på egne brett:** vis når et brett fra bilder ble laget (i MINE BRETT og ved JUSTER SISTE BRETT), så flere forsøk fra samme rom kan skilles og sammenlignes (nyttig sammen med modell- og modusvalgene i v2.191).
 - [ ] Bedre fangstprotokoll (hjørnebilder, gulvhøyde, A4-referanse). Se `docs/FOTO_TIL_BRETT.md`.
 - [~] Strukturert tolkning: skjema, validator, tingliste og instruks er på plass (v0.24, `docs/VISJON_PROMPT.md`). Gjenstår selve API-kallet (bilder inn, scene ut) og at det kjøres med en nøkkel; i dag gjøres steget fortsatt for hånd i en samtale.
 - [~] Brukergjennomgang: hjelpeobjekter kan merkes og listes i ⚙ (v0.24). Gjenstår: en visning der man kan flytte/fjerne feilplasserte ting før spilling.
