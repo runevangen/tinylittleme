@@ -172,7 +172,7 @@ assert.ok(!/create policy/i.test(sql) && !/bytea|image|data text/i.test(sql), 'i
   const invalid = JSON.parse(JSON.stringify(bad)); invalid.objects[0].color = 'rød'; let r1 = await critique(invalid); assert.equal(r1.body.ok, true); assert.deepEqual(r1.body.usage.stages, ['analyse', 'scene'], 'ugyldig kritikk forkastes');
   const thin = JSON.parse(JSON.stringify(bad)); thin.objects = thin.objects.slice(0, 5); let r2 = await critique(thin); assert.deepEqual(r2.body.usage.stages, ['analyse', 'scene'], 'for mager scene forkastes'); assert.equal(r2.body.scene.objects.length, bad.objects.length);
   let r3 = await critique('throw'); assert.equal(r3.body.ok, true, 'feil i kritikken stopper ikke brettet'); assert.deepEqual(r3.body.usage.stages, ['analyse', 'scene']);
-  let clock = 0; let r4 = await critique(better, { now: () => (clock += 200000) }); assert.deepEqual(r4.body.usage.stages, ['analyse', 'scene'], 'ingen tid igjen: kritikken hoppes over');
+  let clock = 0; let r4 = await critique(better, { now: () => (clock += 600000) }); assert.deepEqual(r4.body.usage.stages, ['analyse', 'scene'], 'ingen tid igjen: kritikken hoppes over');
   // feil i analysen: scenen lages likevel
   const df = mk({ callClaude: async (b) => { if (!b.tools) throw new Error('claude 500'); return { ...(await stubClaude()(b)), stop_reason: 'tool_use' }; } }); const rf = await handleTolk(req({ opts: { mode: 'tenk' } }), df); assert.equal(rf.body.ok, true); assert.deepEqual(rf.body.usage.stages, ['scene']);
   // valgt modell brukes og vises, per-modell pris i kostnaden

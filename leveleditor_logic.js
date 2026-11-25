@@ -12,7 +12,7 @@ export const LE = {
   fallbackModel: 'claude-sonnet-4-5', // brukes hvis den nye modellen avvises (ukjent navn eller utilgjengelig)
   maxTokens: 16000,
   mode: 'direkte',                      // R179–R181: 'direkte' (1 kall), 'tenk' (analyse først, 2 kall), 'tenk_kritikk' (+ kritikkrunde, 3 kall). tlm_le_settings.mode bestemmer standard i tjenesten, og testeren kan velge per kall.
-  budgetMs: 110000,                     // tjenesten stopper nye trinn når så mye tid er brukt (bakgrunnsjobber har en tidsgrense hos Supabase)
+  budgetMs: 540000,                     // tjenesten stopper nye trinn når så mye tid er brukt (bakgrunnsjobber har en tidsgrense hos Supabase)
   analysisTokens: 3500,
   models: ['claude-sonnet-4-5', 'claude-sonnet-5-5', 'claude-opus-5-5', 'claude-fable-5-2'],   // modeller en tester kan velge (alt annet ignoreres)
   modes: ['direkte', 'tenk', 'tenk_kritikk'],
@@ -285,7 +285,7 @@ export async function handleTolk(body, deps) {
 // Selve tolkningen tar 30–50 sekunder, og mobilnettet kan falle ut så lenge. Derfor tar tjenesten imot bildene, svarer straks med en jobb-id,
 // og gjør tolkningen i bakgrunnen (deps.waitUntil). Telefonen spør om jobben til den er ferdig. Det ferdige svaret (scene = tall og former, aldri bilder)
 // ligger i databasen noen minutter (deps.createJob/finishJob/getJob, tabellen tlm_le_jobs) så en telefon som mistet nettet kan hente det igjen uten ny tolkning.
-export const JOB = { staleMs: 4 * 60 * 1000 };
+export const JOB = { staleMs: 12 * 60 * 1000 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const fail = (r, extra = {}) => ({ status: REASONS[r].status, body: { ok: false, reason: r, message: REASONS[r].text, ...extra } });
 //   deps: createJob(code) → id | null, finishJob(id, resultBody), getJob(id, code) → { status, result, age_ms } | null, waitUntil(promise), tolk (deps til handleTolk)

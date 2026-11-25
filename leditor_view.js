@@ -74,9 +74,13 @@ export function createLeditorView(ctx) {
     const el = root();
     el.innerHTML = `<h1>${esc(T('title'))}</h1><div class="ledbox"><b>${esc(T('guideH'))}</b><ul>${T('guide').map((g) => `<li>${esc(g)}</li>`).join('')}</ul></div>`
       + (consented() ? '' : `<div class="ledbox"><b>${esc(T('consentH'))}</b><span>${esc(T('consent'))}</span></div>`)
+      + (getK(DONE_KEY) ? `<button class="mbtn" id="ledDone">${esc(T('bgOpen'))}</button>` : '')
+      + (busy && !getK(DONE_KEY) ? `<p class="tag">${esc(T('bgRunning'))}</p>` : (getK(BG_KEY) && !getK(DONE_KEY) ? `<button class="mbtn" id="ledBgGet">${esc(T('bgGet'))}</button>` : ''))
       + (last ? `<button class="mbtn" id="ledLast">${esc(T('lastBtn', last.name))}</button>` : '')
       + (ctx.onMine && listRooms(st).length ? `<button class="mbtn sec" id="ledMine">${esc(T('mine'))}</button>` : '')
       + `<button class="mbtn${last ? ' sec' : ''}" id="ledGo">${esc(consented() ? T('next') : T('consentBtn'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
+    if ($('ledDone')) $('ledDone').onclick = () => { const d = getK(DONE_KEY); setK(DONE_KEY, null); if (d && d.scene) { logEv?.('leveleditor', 'åpner ferdig bakgrunnsjobb'); accept({ ok: true, scene: d.scene, usage: d.usage }, Date.now()); } };
+    if ($('ledBgGet')) $('ledBgGet').onclick = () => { const b = getK(BG_KEY); if (!b || !b.job) return; S.job = b.job; if (b.answers) S.answers = b.answers; logEv?.('leveleditor', 'henter pågående tolkning'); make(); };
     if (last) $('ledLast').onclick = () => resume(last.id);
     if ($('ledMine')) $('ledMine').onclick = () => { const el2 = $('start'); el2.classList.remove('rml'); ctx.onMine?.(); };
     $('ledGo').onclick = () => { setConsent(); photos(); };
@@ -131,15 +135,24 @@ export function createLeditorView(ctx) {
   }
 
   // ---- 4. kall til tjenesten ----
+  const BG_KEY = 'tlm.led.bg', DONE_KEY = 'tlm.led.done';
+  const getK = (k) => { try { return st.get(k, null); } catch { return null; } };
+  const setK = (k, v) => { try { st.set(k, v); } catch { /* uten lagring */ } };
+  function finishDetached(run, res, t0) {
+    stopTick(); busy = false; abort = null;
+    if (res.ok) { setK(DONE_KEY, { scene: res.scene, usage: res.usage || { cost_usd: 0, ms: 0 }, at: Date.now() }); setK(BG_KEY, null); logEv?.('leveleditor', `bakgrunnsjobb ferdig etter ${Math.round((Date.now() - t0) / 1000)} s`); ctx.toast?.(T('bgDone')); }
+    else { setK(BG_KEY, res.job ? { job: res.job, at: Date.now(), answers: run.answers } : null); logEv?.('leveleditor', `bakgrunnsjobb feilet: ${res.reason}`); ctx.toast?.(T('bgFail', lerr(L(), res.reason))); }
+  }
   const KEEP_PHOTOS = ['nett', 'feil', 'tolkning', 'avbrutt'];
   async function make() {
-    if (busy) return; busy = true; const t0 = Date.now(); abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    if (busy) return; busy = true; const run = S; const t0 = Date.now(); abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const el = root(); let step = 0;
-    el.innerHTML = `<h1>${esc(T('title'))}</h1><p class="tag" id="ledStep">${esc(T('working')[0])}</p><p class="tag" id="ledEl"></p><p class="tag" style="max-width:300px">${esc(T('workingNote'))}</p><button class="mbtn sec" id="ledCancel">${esc(T('cancel'))}</button>`;
+    el.innerHTML = `<h1>${esc(T('title'))}</h1><p class="tag" id="ledStep">${esc(T('working')[0])}</p><p class="tag" id="ledEl"></p><p class="tag" style="max-width:300px">${esc(T('workingNote'))}</p><button class="mbtn" id="ledBg" style="display:none">${esc(T('bgBtn'))}</button><button class="mbtn sec" id="ledCancel">${esc(T('cancel'))}</button>`;
     $('ledCancel').onclick = () => abort?.abort();
+    $('ledBg').onclick = () => { run.detached = true; stopTick(); run.photos.length = 0; logEv?.('leveleditor', 'jobber videre i bakgrunnen'); const e2 = $('start'); e2.classList.remove('rml'); ctx.onBack?.(); };   // R183: den asynkrone jobben fortsetter, bildene slippes
     tick = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); const e = $('ledEl'); if (e) e.textContent = T('elapsed', s); const k = s < 4 ? 0 : s < 25 ? 1 : 2; if (k !== step) { step = k; const st2 = $('ledStep'); if (st2) st2.textContent = T('working')[k]; } }, 500);
     logEv?.('leveleditor', `sender ${S.photos.length} bilder${(() => { const o = ctx.getOpts?.() || {}; return o.model || o.mode ? ' (' + [o.model, o.mode].filter(Boolean).join(', ') + ')' : ''; })()}${S.answers.measures && (S.answers.measures.w || S.answers.measures.d || S.answers.measures.h) ? ' (med romtall)' : ''}`);
-    const tolk = (job) => callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers, opts: ctx.getOpts?.() }, { signal: abort?.signal, job, onJob: (id) => { S.job = id; logEv?.('leveleditor', `jobb startet ${String(id).slice(0, 8)}`); } });
+    const tolk = (job) => callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers, opts: ctx.getOpts?.() }, { signal: abort?.signal, job, onJob: (id) => { S.job = id; try { st.set(BG_KEY, { job: id, at: Date.now(), answers: S.answers }); } catch { /* uten lagring */ } const bb = $('ledBg'); if (bb) bb.style.display = ''; logEv?.('leveleditor', `jobb startet ${String(id).slice(0, 8)}`); } });
     if (S.job) logEv?.('leveleditor', `henter jobb ${String(S.job).slice(0, 8)} på nytt (uten å sende bildene)`);
     let res = await tolk(S.job || '');
     if (!res.ok && res.reason === 'finnes_ikke' && S.job && S.photos.length) { S.job = ''; logEv?.('leveleditor', 'jobben var borte: sender bildene på nytt'); res = await tolk(''); }
@@ -147,10 +160,16 @@ export function createLeditorView(ctx) {
       logEv?.('leveleditor', `svar ${res.status} kunne ikke leses etter ${res.ms} ms: prøver én gang til`);
       res = await tolk('');
     }
+    if (run.detached) { finishDetached(run, res, t0); return; }   // R183: du gjorde andre ting mens den jobbet
     stopTick(); busy = false; abort = null;
     S.job = res.ok ? '' : (res.job || '');   // et tidsavbrudd beholder jobben så NYTT FORSØK henter den samme uten ny tolkning
     // Bildene lagres aldri, bare i minnet. Ved nett- og tjenestefeil beholdes de så du slipper å velge dem på nytt (NYTT FORSØK); ellers slippes de straks.
     if (!res.ok) { const keep = KEEP_PHOTOS.includes(res.reason) && S.photos.length; if (!keep) S.photos.length = 0; logEv?.('leveleditor', `feilet: ${res.reason} · status ${res.status ?? '?'}${res.unreadable ? ' (svar kunne ikke leses)' : ''}${res.diag ? ' · ' + JSON.stringify(res.diag).slice(0, 120) : ''} (${Date.now() - t0} ms)${keep ? ' · bildene beholdt for nytt forsøk' : ''}`); failed(res.reason); return; }
+    accept(res, t0);
+  }
+  // R183: resten av tolkningen (felles for «venter her» og «hentet fra bakgrunnen»)
+  function accept(res, t0) {
+    setK(BG_KEY, null);
     S.photos.length = 0;
     S.scene = res.scene; S.usage = res.usage || { cost_usd: 0, ms: 0 }; logEv?.('leveleditor', `tolket: ${S.usage.model || '?'} · ${S.usage.mode || '?'} · trinn ${(S.usage.stages || []).join('+') || '?'} · ${S.usage.cost_usd ?? '?'} USD · ${Math.round((S.usage.ms || 0) / 1000)} s`); S.name = defaultName(res.scene);
     const room = sceneToRoom(res.scene); S.room = room; if (room.scene) S.scene = room.scene;

@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.192** – R183: asynkron tolkning uten tidsgrense. Knappen ANDRE TING sender deg ut av ventingen mens tolkningen jobber videre; du får beskjed når den er ferdig, og ÅPNE FERDIG BRETT (eller HENT PÅGÅENDE TOLKNING etter omstart) henter den. Tidsgrensene er fjernet (klient 30 min, jobb 12 min før «feil», tjenestens trinnbudsjett 9 min) (leditor_view, leditor_text, leditor_logic, leveleditor_logic, tolk-bilder).
 - **2.191** – R179–R181: bildetolkning kan nå «tenke først» (analyse av stedet, så scenen), og ha en kritikkrunde mot bildene; modell og modus kan velges per kall (⚙ → Admin) og settes som standard i tlm_le_settings; kostnad per modell i loggen (leveleditor_logic, leditor_logic, leditor_view, main, migrasjon, tester).
 - **2.190** – RETTET: tolkning av bilder feilet gjentatte ganger fordi modellen leverte scenen uten `units` og `room`. Tjenesten pakker nå ut og fyller inn det som mangler (normalizeScene), instruksen ber om hele scenen på toppnivå, og diagnosen viser feltnavn og antall ting (leveleditor_logic, make_prompt, tolk-bilder versjon 8, test_leveleditor). Markert ting i LISTE får lapp i skjermkanten (main).
 - **2.189** – R176/R177: LAND-knapp og lapp mens du flyr i eget brett (så du finner veien ut), og LISTE over ting i rommet der trykk markerer tingen med gul ramme og uthevet lapp (index.html, main, i18n, tools/live_fly.cjs).

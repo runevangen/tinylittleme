@@ -8,7 +8,7 @@ import { validateRoom, addRoom, ROOMS, safeName, listRooms, loadRoomScene, saveR
 
 export const LED = {
   consentKey: 'tlm.leconsent',        // samtykket gis én gang (lagres lokalt)
-  fn: 'tolk-bilder', timeoutMs: 180000, pollMs: 3000, pollTimeoutMs: 15000, startTimeoutMs: 90000,   // timeoutMs: hele ventetiden på en jobb; startTimeoutMs: opplasting av bildene
+  fn: 'tolk-bilder', timeoutMs: 1800000, pollMs: 3000, pollTimeoutMs: 15000, startTimeoutMs: 90000,   // timeoutMs: hele ventetiden på en jobb; startTimeoutMs: opplasting av bildene
   quality: 0.8, minQuality: 0.4,
   brightMin: 90, brightTarget: 112, brightGammaMin: 0.6, darkTip: 55,   // lysning (R163): snitt-lysstyrke 0–255 under brightMin lysnes mot brightTarget (gamma, aldri under brightGammaMin); under darkTip vises et lystips
   step: 10,                           // cm per trykk når en ting flyttes
