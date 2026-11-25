@@ -13,3 +13,9 @@ description: Sjekkliste for en ny funksjon eller innstilling i tinylittleme (SET
 7. **Nye filer** i `files`-lista i `index.html`.
 8. Variabler som brukes før de er deklarert i `main.js` gir TDZ-krasj: legg kode etter at `LEVEL` er lastet. Sjekk at det ikke blir dobbel `import`.
 9. Kjør hele utleggingen (tlm-utlegging).
+
+Oppdatert v2.208
+- Gruppe: legg nye innstillinger i `LAYOUT` i `settings_util.js` (ellers blir de stående i «Spill»); byggerelaterte i gruppen «Bygging og Byggeskolen» (undergrupper). ⚙ har «★ Favoritter» (☆/★ på hver rad, `tlm.setfav`) og «★ Topp 10 (mest brukt)» (`tlm.setuse`) øverst; nye innstillinger får stjerne og telles automatisk.
+- Varige beskjeder (som «brett ferdig»): tilstand i `store` (`tlm.led.done`, `tlm.led.fail`, `tlm.led.bg`), vist som banner (`#ledBanner`) og merke på menyknappen, så den overlever at appen lukkes.
+- Sjekk alltid både norsk og engelsk (`ltx`-nøkler, `changes_text.js`) og at ingen tekst nevner taster på mobil.
+- Test med node (ren logikk i egen modul) og et nettleserskript (`tools/live_*.cjs`).

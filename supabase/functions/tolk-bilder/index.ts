@@ -4,9 +4,12 @@
 // Modell og modus kan settes i tlm_le_settings (nøklene «model» og «mode»). Logikken ligger i _shared/leveleditor_logic.js.
 // Utlegging (i dag gjort via Supabase-verktøyet): filene ligger flatt ved siden av index.ts, og kinds/validate/generated er korte kopier.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { handleJobRequest, LE, REASONS } from '../_shared/leveleditor_logic.js';
+import { handleJobRequest, LE, JOB, REASONS } from '../_shared/leveleditor_logic.js';
 import { validateScene } from '../_shared/validate_scene.js';
 import { PROMPT, SCHEMA } from '../_shared/generated.js';
+
+// R183: ingen stram tidsgrense: tjenesten gir seg ikke selv; jobber regnes som døde først etter 12 min
+LE.budgetMs = 540000; JOB.staleMs = 12 * 60 * 1000;
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });

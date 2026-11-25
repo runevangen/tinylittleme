@@ -15,3 +15,11 @@ description: Kjør roadmap-runneren (tools/roadmap_runner.workflow.js) for flere
   5. Push (se tlm-utlegging)
 - Skriver en agent «npm test er ikke kjørt etter rebase»: følg det opp før noe slås sammen.
 - Rapporter til Rune som Status; lenker til PR/issue skrives som `owner/repo#nr`.
+
+Detaljer (oppdatert v2.208)
+- Hvert punkt må ha en seksjon «### [ ] Rnnn · …» i `docs/ROADMAP.md` med **Bakgrunn**, **Krav** (nummerert) og **Ferdig når**; uten den kan ikke agentene bygge. Skriv den før du starter, og skriv inn spesifikasjonen fra Rune i hans ord (omformulert).
+- En kjøring av ett stort punkt tar ca. 1–1,5 time (R182 og R49b). Under integrasjonen ligger endringer uforpliktet i hovedmappa (versjon, CHANGELOG, ROADMAP): ikke commit dem selv, vent på ferdigmeldingen.
+- Etter omstart av containeren: les utdatafila til oppgaven (`…/tasks/<id>.output`) for resultatet; oppgaven kan ha blitt ferdig uten at du fikk meldingen.
+- Konflikter i `changes_data.js`, `changes_text.js` og `docs/INNSTILLINGER.md` løses ved å beholde begge sider; versjonen settes til høyeste + 1.
+- Små tester-saker kan gå utenom runneren i egen worktree (se tlm-utlegging) mens runneren jobber.
+- Roller: **bygger** (egen worktree og gren `road/Rnnn`), **kritiker** (streng, mot «Ferdig når», kjører tester og skjermbilder), **integrator** (slår sammen til hovedgrenen og main én om gangen).

@@ -19,3 +19,10 @@ Sammenligne
 Personvern
 - Bilder av hjem lagres aldri (heller ikke kopieres inn i repoet). Scene-data (tall og former) kan lagres; jobber slettes etter 60 min.
 - Eksempelbilder fra Rune ligger bare i samtalen.
+
+Oppdatert v2.208 (R183–R192)
+- Ingen tidsgrense: tolkningen går som bakgrunnsjobb; ANDRE TING lar deg gjøre annet. Beskjeder er sticky: grønt banner «Brettet fra bildene er ferdig» (ÅPNE/SENERE), rødt banner ved feil (NYTT FORSØK), FERDIG-merke på LAG BRETT FRA BILDER; HENT PÅGÅENDE TOLKNING etter omstart.
+- Lys: tolkningen satte ofte `look.exposure` ~0,8 (mørkt). Nå løftes lyset til minst 1,2/sol 3,0 hvis du ikke har valgt selv; JUSTER har MØRKERE/LYSERE (trinn, 0 = standard) og flymodus har LYSERE/MØRKERE.
+- Fangst: fotosjekk med fire steg (to hjørner, gulvbilde, A4-ark eller mobil på gulvet); prompten bruker A4/mobil som målestokk.
+- Møbler med ekte former (R182), dato og klokkeslett på egne brett (R184), navneliste og lysnivå i JUSTER (R186), REDIGER og MINE BRETT i eget brett (R187).
+- Åpent: alt dette er testet i node og på iPhone-format, men ikke mot ekte bilder over tid; kvaliteten må vurderes av Rune (⚑ med modell og modus fra rapporten).

@@ -21,3 +21,10 @@ Bygging
 Test-fallgruver
 - Scroll elementet inn i view før klikk; bruk romslige tidsavbrudd.
 - Sjekk exit-kode, ikke bare siste linje.
+
+Oppdatert v2.208: faste nettleserskript (iPhone 14, `NODE_PATH=$(npm root -g) node tools/<skript> /tmp`)
+- `tools/live_fly.cjs`: FLY/LAND, NAVN, LISTE, lys i flymodus, REDIGER/MINE BRETT i eget brett, sticky «brett ferdig»-banner og feilbanner (trenger fixture `/tmp/room_fixture.json`).
+- `tools/live_settings.cjs`: ⚙ med Favoritter og Topp 10, ÅPNE ALLE / LUKK ALLE.
+- `tools/live_leditor*.cjs`: editoren (bilder, JUSTER, resume). `tools/live_build*.cjs`: byggeskjermer.
+- Skjermbilder: skjul `#c` (3D-bildet) og løft `#panel` med z-index før du tar bildet, ellers tar det for lang tid eller dekkes av introen. Under tung CPU (runner kjører) kan sidelasting bli treg: kjør på nytt før du antar feil.
+- `npm run boot` (`tools/boot_check.cjs`) fanger krasj ved oppstart og må kjøres før hver push til main.
