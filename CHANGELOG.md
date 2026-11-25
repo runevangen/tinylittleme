@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.191** – R179–R181: bildetolkning kan nå «tenke først» (analyse av stedet, så scenen), og ha en kritikkrunde mot bildene; modell og modus kan velges per kall (⚙ → Admin) og settes som standard i tlm_le_settings; kostnad per modell i loggen (leveleditor_logic, leditor_logic, leditor_view, main, migrasjon, tester).
 - **2.190** – RETTET: tolkning av bilder feilet gjentatte ganger fordi modellen leverte scenen uten `units` og `room`. Tjenesten pakker nå ut og fyller inn det som mangler (normalizeScene), instruksen ber om hele scenen på toppnivå, og diagnosen viser feltnavn og antall ting (leveleditor_logic, make_prompt, tolk-bilder versjon 8, test_leveleditor). Markert ting i LISTE får lapp i skjermkanten (main).
 - **2.189** – R176/R177: LAND-knapp og lapp mens du flyr i eget brett (så du finner veien ut), og LISTE over ting i rommet der trykk markerer tingen med gul ramme og uthevet lapp (index.html, main, i18n, tools/live_fly.cjs).
 - **2.188** – R157: roller i byggeren. Hver stav og del er GULV, BJELKE eller TAU; bare gulv kan gås på og stopper figuren og lasten, bjelker og tau bærer som før. Knappen GULV / BJELKE ved valgt stav eller del i alle byggeskjermer (også Byggeskolen), varsler før PRØV, rollen følger med i lagring og delekoder (build_roles, build_roles_view, build, build_logic, grid_logic, grid_view, i18n, main, bygglab, test_roles).

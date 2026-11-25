@@ -272,7 +272,8 @@ P.slickAccel = +store.get('tlm.slickaccel', P.slickAccel) || P.slickAccel;
 let gatesOn = store.get('tlm.gates', true), gateCamOn = store.get('tlm.gatecam', true);   // gåteverktøy (R60)
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
-let ledOn = store.get('tlm.ledon', true);   // R152: LAG BRETT FRA BILDER i VELG BRETT (bare med tester-kode)
+let ledOn = store.get('tlm.ledon', true);
+let ledModel = store.get('tlm.ledmodel', 'auto'), ledMode = store.get('tlm.ledmode', 'auto');   // R179: bildetolkning: modell og modus per kall (admin). auto = tjenestens standard.   // R152: LAG BRETT FRA BILDER i VELG BRETT (bare med tester-kode)
 let roomsOn = store.get('tlm.roomson', true);   // R153: MINE BRETT i VELG BRETT (bare med tester-kode)
 let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
 let storyOn = store.get('tlm.story', true);   // fortelling i nivåstart og avslutning (R8)
@@ -2210,6 +2211,8 @@ const SETTINGS = [
   fl('ants', 'hjelp', 'Maur (fiender som patruljerer): av = ingen maur i brettene', true, () => antsOn, kp('tlm.ants', (v) => { antsOn = v; })),
   fl('toys', 'spill', 'Levende leker (tennisball, bil, vippehest, opptrekksrobot og sprettboks reagerer med lyd og bevegelse)', true, () => toysOn, kp('tlm.toys', (v) => { toysOn = v; toyLife.on = v; logEv('leke', v ? 'levende leker på' : 'levende leker av'); })),
   fl('roomson', 'test', roomTx('nb', 'setting'), true, () => roomsOn, kp('tlm.roomson', (v) => { roomsOn = v; logEv('mine brett', roomLog(v ? 'på' : 'av')); })),
+  sl('ledmodel', 'admin', 'Bildetolkning: modell (test)', 'auto', [['auto', 'Standard (fra databasen)'], ['claude-sonnet-4-5', 'Sonnet 4.5'], ['claude-sonnet-5-5', 'Sonnet 5.5'], ['claude-opus-5-5', 'Opus 5.5'], ['claude-fable-5-2', 'Fable 5.2']], () => ledModel, kp('tlm.ledmodel', (v) => { ledModel = v; logEv('leveleditor', `modell: ${v}`); })),
+  sl('ledmode', 'admin', 'Bildetolkning: modus (test)', 'auto', [['auto', 'Standard (fra databasen)'], ['direkte', 'Direkte (ett kall, raskest)'], ['tenk', 'Tenk først (analyse, så scene)'], ['tenk_kritikk', 'Tenk først + kritikkrunde (tre kall)']], () => ledMode, kp('tlm.ledmode', (v) => { ledMode = v; logEv('leveleditor', `modus: ${v}`); })),
   fl('ledon', 'test', ledTx('nb', 'setting'), true, () => ledOn, kp('tlm.ledon', (v) => { ledOn = v; logEv('leveleditor', v ? 'på' : 'av'); })),
   fl('replies', 'test', 'Vis svar og tellere fra Claude (⚑-boksen)', true, () => repliesOn, kp('tlm.replies', (v) => { repliesOn = v; if (v) refreshInbox(false); else renderInbox(); })),
   fl('combo', 'spill', 'Kombinasjoner: svamp + vann, håndkle + håndkle, tung ting + papirhaug (TA ved siden av)', true, () => COMBO.on, kp('tlm.combo', (v) => { COMBO.on = v; logEv('kombo', v ? 'kombinasjoner på' : 'kombinasjoner av'); })),
@@ -3583,7 +3586,7 @@ function openRooms() {
 }
 let ledV = null;
 const ledShow = () => ledAvailable({ on: ledOn, code: testerCode(), cinema: CINE.on });
-const getLed = () => (ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms, onFly: (id) => { unlockAudio(); store.set('tlm.flystart', id); playFresh(id, difficulty); } }));
+const getLed = () => (ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, getOpts: () => ({ model: ledModel === 'auto' ? '' : ledModel, mode: ledMode === 'auto' ? '' : ledMode }), logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms, onFly: (id) => { unlockAudio(); store.set('tlm.flystart', id); playFresh(id, difficulty); } }));
 function openLeditor() { getLed().show(); }
 function openLeditorResume(id) { getLed().resume(id); }   // R167: det egne brettet åpnes på nytt i editoren (JUSTER, MÅL 1–4, VIS TOLKNING) etter spilling
 function roomsPick(b) {

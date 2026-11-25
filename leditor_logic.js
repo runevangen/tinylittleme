@@ -1,7 +1,7 @@
 // R152: «Lag brett fra bilder» (leveleditor fase A, del 2). Ren logikk (ingen DOM, ingen three), testes i node: test_leditor.mjs. Visning: leditor_view.js, tekster: leditor_text.js.
 // Kjeden: 2–4 bilder (nedskalert på telefonen, aldri lagret) + 2–4 svar → tjenesten tolk-bilder (R151) → scene → sceneToLevel (scene2level_core.js, i telefonen)
 // → validateRoom (rooms_logic.js) → brett i MINE BRETT (R153). «Juster» flytter/sletter ting i scenen og lager brettet på nytt; «Sjekk» bruker rutegrafen (samme som scene2level).
-import { LE, ANSWER_OPTS, normAnswers, REASONS } from './leveleditor_logic.js';
+import { LE, ANSWER_OPTS, normAnswers, normOpts, REASONS } from './leveleditor_logic.js';
 import { FEEDBACK, validCode, cleanCode } from './feedback_send.js';
 import { sceneToLevel } from './scene2level_core.js';
 import { validateRoom, addRoom, ROOMS, safeName, listRooms, loadRoomScene, saveRoomScene } from './rooms_logic.js';
@@ -36,15 +36,16 @@ export const lowerQuality = (q) => { const n = +(q - 0.15).toFixed(2); return n 
 
 // ---------- kall til tjenesten ----------
 export const toleUrl = (cfg = FEEDBACK) => `${cfg.url}/functions/v1/${LED.fn}`;
-export function buildBody(code, images, answers) {
-  return { code: cleanCode(code), images: images.map((i) => ({ media_type: i.media_type, data: i.data })), answers: normAnswers(answers) };
+export function buildBody(code, images, answers, opts) {
+  const o = normOpts(opts);   // R179: modell og modus (admin-innstillinger); tomme verdier sendes ikke
+  return { code: cleanCode(code), images: images.map((i) => ({ media_type: i.media_type, data: i.data })), answers: normAnswers(answers), ...(o.model || o.mode ? { opts: { ...(o.model ? { model: o.model } : {}), ...(o.mode ? { mode: o.mode } : {}) } } : {}) };
 }
 const REASON_KEYS = Object.keys(REASONS);
 // Svar: { ok:true, scene, warnings, check, usage:{cost_usd,ms}, left } | { ok:false, reason, job? }   (reason: nøkkel fra REASONS, eller 'kode_mangler' | 'bilder_mangler' | 'avbrutt')
 // R164: tjenesten svarer straks med en jobb-id ({ ok:true, job }) og gjør tolkningen i bakgrunnen; telefonen spør hvert pollMs til den er ferdig.
 // Faller nettet ut under spørringen, fortsetter den å spørre. `job` (fra et tidligere forsøk) gjenopptar en jobb uten å sende bildene på nytt. `onJob(id)` får id-en.
 // Ved tidsavbrudd gir svaret { reason:'nett', job } så den samme jobben kan hentes igjen. En gammel tjeneste som svarer med ferdig scene, virker fortsatt.
-export async function callTolk({ code, images, answers }, { fetchFn = globalThis.fetch, cfg = FEEDBACK, timeoutMs = LED.timeoutMs, signal, pollMs = LED.pollMs, job = '', onJob } = {}) {
+export async function callTolk({ code, images, answers, opts }, { fetchFn = globalThis.fetch, cfg = FEEDBACK, timeoutMs = LED.timeoutMs, signal, pollMs = LED.pollMs, job = '', onJob } = {}) {
   if (!validCode(code)) return { ok: false, reason: 'kode_mangler' };
   if (!job && !photoCountOk((images || []).length)) return { ok: false, reason: 'bilder_mangler' };
   const t0 = Date.now(), ms = () => Date.now() - t0, aborted = () => !!(signal && signal.aborted);
@@ -66,7 +67,7 @@ export async function callTolk({ code, images, answers }, { fetchFn = globalThis
   try {
     let jobId = job;
     if (!jobId) {
-      const r = await post(buildBody(code, images, answers), LED.startTimeoutMs);
+      const r = await post(buildBody(code, images, answers, opts), LED.startTimeoutMs);
       if (isScene(r)) return success(r.d);   // gammel tjeneste: svarer med ferdig scene
       if (r.res.ok && r.d && r.d.ok === true && typeof r.d.job === 'string') { jobId = r.d.job; onJob?.(jobId); }
       else return failOf(r);

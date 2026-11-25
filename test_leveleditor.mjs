@@ -1,7 +1,7 @@
 // node test_leveleditor.mjs (R151): tjenesten for bildetolkning, med stub i stedet for Claude (ingen nett, ingen nøkkel).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { LE, REASONS, validateRequest, normAnswers, buildClaudeRequest, parseClaudeResponse, costOf, scrubScene, handleTolk, userText, normalizeScene, normMeasures, parseMeasure, fitToMeasures, startTolk, pollTolk, handleJobRequest, JOB } from './leveleditor_logic.js';
+import { LE, REASONS, validateRequest, normAnswers, buildClaudeRequest, parseClaudeResponse, costOf, scrubScene, handleTolk, userText, normalizeScene, normOpts, buildAnalysisRequest, buildCritiqueRequest, textOf, priceOf, PRICES, normMeasures, parseMeasure, fitToMeasures, startTolk, pollTolk, handleJobRequest, JOB } from './leveleditor_logic.js';
 import { validateScene } from './tools/validate_scene.mjs';
 import { promptText } from './tools/make_prompt.mjs';
 import { checkScene } from './tools/scene_pipeline.mjs';
@@ -148,4 +148,35 @@ assert.ok(!/create policy/i.test(sql) && !/bytea|image|data text/i.test(sql), 'i
   // diagnosen ved en scene som ikke lar seg redde: nøkkelnavn og antall ting, aldri innhold
   const d9 = mkDeps({ callClaude: async () => ({ content: [{ type: 'tool_use', id: 'n', name: 'lever_scene', input: { rom: { b: 1 }, ting: [{ x: 1 }] } }], stop_reason: 'tool_use', usage: { input_tokens: 10, output_tokens: 10 } }) });
   const o9 = await handleTolk(req(), d9); assert.equal(o9.body.ok, false); assert.deepEqual(o9.body.diag.keys, ['rom', 'ting']); assert.equal(o9.body.diag.objects, -1); }
+// R179–R181: modellvalg per kall, analyse først, kritikkrunde
+{ assert.deepEqual(normOpts({ model: 'claude-opus-5-5', mode: 'tenk' }), { model: 'claude-opus-5-5', mode: 'tenk' }); assert.deepEqual(normOpts({ model: 'gpt-5', mode: 'x' }), { model: '', mode: '' }, 'ukjente verdier ignoreres'); assert.deepEqual(normOpts(null), { model: '', mode: '' });
+  assert.equal(priceOf('claude-sonnet-5-5').outPerM, 15); assert.ok(priceOf('claude-opus-5-5').outPerM >= 15 && priceOf('ukjent').outPerM === LE.price.outPerM, 'pris per modell, ukjent gir standard'); for (const m of LE.models) assert.ok(PRICES[m], `${m} har pris`);
+  const seenReq = []; const analysisText = 'Analyse: rommet er ca. 400 x 350 cm. '.repeat(20);
+  const mk = (over = {}) => mkDeps({ callClaude: async (b) => { seenReq.push(b); if (!b.tools) return { content: [{ type: 'text', text: analysisText }], stop_reason: 'end_turn', usage: { input_tokens: 5000, output_tokens: 1200 } }; return { ...(await stubClaude()(b)), stop_reason: 'tool_use' }; }, ...over });
+  // direkte: ett kall
+  seenReq.length = 0; const od = await handleTolk(req(), mk()); assert.equal(od.body.ok, true); assert.equal(seenReq.length, 1); assert.deepEqual(od.body.usage.stages, ['scene']); assert.equal(od.body.usage.mode, 'direkte');
+  // tenk: analyse først, så scene med analysen i spørsmålet
+  seenReq.length = 0; const ot = await handleTolk(req({ opts: { mode: 'tenk' } }), mk()); assert.equal(ot.body.ok, true); assert.equal(seenReq.length, 2); assert.ok(!seenReq[0].tools, 'analysen har ingen verktøy'); assert.ok(seenReq[1].tools && seenReq[1].tool_choice, 'scenen er et tvunget verktøykall');
+  assert.ok(/<analyse>/.test(seenReq[1].messages[0].content.find((c) => c.type === 'text').text), 'scenen får analysen'); assert.deepEqual(ot.body.usage.stages, ['analyse', 'scene']);
+  assert.ok(seenReq[0].messages[0].content.filter((c) => c.type === 'image').length === 2, 'analysen får bildene');
+  // modus fra databasen (deps.mode), testerens valg vinner
+  seenReq.length = 0; await handleTolk(req(), mk({ mode: 'tenk' })); assert.equal(seenReq.length, 2, 'deps.mode brukes'); seenReq.length = 0; await handleTolk(req({ opts: { mode: 'direkte' } }), mk({ mode: 'tenk_kritikk' })); assert.equal(seenReq.length, 1, 'testerens valg vinner');
+  // tenk_kritikk: tre kall; kritikken får scenen, og den rettede scenen brukes
+  seenReq.length = 0; let k = 0; const better = JSON.parse(JSON.stringify(bad)); better.name = 'Rettet';
+  const dk = mk({ callClaude: async (b) => { seenReq.push(b); if (!b.tools) return { content: [{ type: 'text', text: analysisText }], usage: { input_tokens: 5000, output_tokens: 1200 } }; k++; return { content: [{ type: 'tool_use', id: 't' + k, name: 'lever_scene', input: k === 1 ? bad : better }], stop_reason: 'tool_use', usage: { input_tokens: 5000, output_tokens: 3000 } }; } });
+  const ok3 = await handleTolk(req({ opts: { mode: 'tenk_kritikk' } }), dk); assert.equal(ok3.body.ok, true); assert.equal(seenReq.length, 3); assert.deepEqual(ok3.body.usage.stages, ['analyse', 'scene', 'kritikk']); assert.equal(ok3.body.scene.name, 'Rettet', 'den rettede scenen brukes');
+  const ctext = seenReq[2].messages[0].content.find((c) => c.type === 'text').text; assert.ok(/<scene>/.test(ctext) && /RETTET/.test(ctext) && !/\"note\"/.test(ctext), 'kritikken får scenen (uten notater) og ber om retting');
+  assert.ok(ok3.body.usage.cost_usd > costOf({ in: 15000, out: 7000 }) * 0.9, 'alle tre kallene teller i kostnaden');
+  // kritikken er trygg: ugyldig eller for mager scene, feil eller manglende tid beholder scenen fra trinn 2
+  const critique = async (second, over = {}) => { let n = 0; const d = mk({ ...over, callClaude: async (b) => { if (!b.tools) return { content: [{ type: 'text', text: analysisText }], usage: { input_tokens: 10, output_tokens: 10 } }; n++; if (n === 2 && second === 'throw') throw new Error('claude 500'); return { content: [{ type: 'tool_use', id: 'x' + n, name: 'lever_scene', input: n === 1 ? bad : second }], stop_reason: 'tool_use', usage: { input_tokens: 10, output_tokens: 10 } }; } }); return handleTolk(req({ opts: { mode: 'tenk_kritikk' } }), d); };
+  const invalid = JSON.parse(JSON.stringify(bad)); invalid.objects[0].color = 'rød'; let r1 = await critique(invalid); assert.equal(r1.body.ok, true); assert.deepEqual(r1.body.usage.stages, ['analyse', 'scene'], 'ugyldig kritikk forkastes');
+  const thin = JSON.parse(JSON.stringify(bad)); thin.objects = thin.objects.slice(0, 5); let r2 = await critique(thin); assert.deepEqual(r2.body.usage.stages, ['analyse', 'scene'], 'for mager scene forkastes'); assert.equal(r2.body.scene.objects.length, bad.objects.length);
+  let r3 = await critique('throw'); assert.equal(r3.body.ok, true, 'feil i kritikken stopper ikke brettet'); assert.deepEqual(r3.body.usage.stages, ['analyse', 'scene']);
+  let clock = 0; let r4 = await critique(better, { now: () => (clock += 200000) }); assert.deepEqual(r4.body.usage.stages, ['analyse', 'scene'], 'ingen tid igjen: kritikken hoppes over');
+  // feil i analysen: scenen lages likevel
+  const df = mk({ callClaude: async (b) => { if (!b.tools) throw new Error('claude 500'); return { ...(await stubClaude()(b)), stop_reason: 'tool_use' }; } }); const rf = await handleTolk(req({ opts: { mode: 'tenk' } }), df); assert.equal(rf.body.ok, true); assert.deepEqual(rf.body.usage.stages, ['scene']);
+  // valgt modell brukes og vises, per-modell pris i kostnaden
+  seenReq.length = 0; const om = await handleTolk(req({ opts: { model: 'claude-opus-5-5' } }), mk()); assert.equal(seenReq[0].model, 'claude-opus-5-5'); assert.equal(om.body.usage.model, 'claude-opus-5-5');
+  const sonn = (await handleTolk(req(), mk())).body.usage.cost_usd; assert.ok(om.body.usage.cost_usd > sonn, 'Opus koster mer enn Sonnet for samme tokens');
+  assert.ok(buildAnalysisRequest({ system: 's', images: [img()], answers: {}, model: 'm' }).max_tokens === LE.analysisTokens && textOf({ content: [{ type: 'text', text: ' hei ' }, { type: 'tool_use' }] }) === 'hei'); }
 console.log('leveleditor-tjenesten ok');

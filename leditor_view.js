@@ -138,8 +138,8 @@ export function createLeditorView(ctx) {
     el.innerHTML = `<h1>${esc(T('title'))}</h1><p class="tag" id="ledStep">${esc(T('working')[0])}</p><p class="tag" id="ledEl"></p><p class="tag" style="max-width:300px">${esc(T('workingNote'))}</p><button class="mbtn sec" id="ledCancel">${esc(T('cancel'))}</button>`;
     $('ledCancel').onclick = () => abort?.abort();
     tick = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); const e = $('ledEl'); if (e) e.textContent = T('elapsed', s); const k = s < 4 ? 0 : s < 25 ? 1 : 2; if (k !== step) { step = k; const st2 = $('ledStep'); if (st2) st2.textContent = T('working')[k]; } }, 500);
-    logEv?.('leveleditor', `sender ${S.photos.length} bilder${S.answers.measures && (S.answers.measures.w || S.answers.measures.d || S.answers.measures.h) ? ' (med romtall)' : ''}`);
-    const tolk = (job) => callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers }, { signal: abort?.signal, job, onJob: (id) => { S.job = id; logEv?.('leveleditor', `jobb startet ${String(id).slice(0, 8)}`); } });
+    logEv?.('leveleditor', `sender ${S.photos.length} bilder${(() => { const o = ctx.getOpts?.() || {}; return o.model || o.mode ? ' (' + [o.model, o.mode].filter(Boolean).join(', ') + ')' : ''; })()}${S.answers.measures && (S.answers.measures.w || S.answers.measures.d || S.answers.measures.h) ? ' (med romtall)' : ''}`);
+    const tolk = (job) => callTolk({ code: ctx.getCode(), images: S.photos, answers: S.answers, opts: ctx.getOpts?.() }, { signal: abort?.signal, job, onJob: (id) => { S.job = id; logEv?.('leveleditor', `jobb startet ${String(id).slice(0, 8)}`); } });
     if (S.job) logEv?.('leveleditor', `henter jobb ${String(S.job).slice(0, 8)} på nytt (uten å sende bildene)`);
     let res = await tolk(S.job || '');
     if (!res.ok && res.reason === 'finnes_ikke' && S.job && S.photos.length) { S.job = ''; logEv?.('leveleditor', 'jobben var borte: sender bildene på nytt'); res = await tolk(''); }
@@ -152,7 +152,7 @@ export function createLeditorView(ctx) {
     // Bildene lagres aldri, bare i minnet. Ved nett- og tjenestefeil beholdes de så du slipper å velge dem på nytt (NYTT FORSØK); ellers slippes de straks.
     if (!res.ok) { const keep = KEEP_PHOTOS.includes(res.reason) && S.photos.length; if (!keep) S.photos.length = 0; logEv?.('leveleditor', `feilet: ${res.reason} · status ${res.status ?? '?'}${res.unreadable ? ' (svar kunne ikke leses)' : ''}${res.diag ? ' · ' + JSON.stringify(res.diag).slice(0, 120) : ''} (${Date.now() - t0} ms)${keep ? ' · bildene beholdt for nytt forsøk' : ''}`); failed(res.reason); return; }
     S.photos.length = 0;
-    S.scene = res.scene; S.usage = res.usage || { cost_usd: 0, ms: 0 }; S.name = defaultName(res.scene);
+    S.scene = res.scene; S.usage = res.usage || { cost_usd: 0, ms: 0 }; logEv?.('leveleditor', `tolket: ${S.usage.model || '?'} · ${S.usage.mode || '?'} · trinn ${(S.usage.stages || []).join('+') || '?'} · ${S.usage.cost_usd ?? '?'} USD · ${Math.round((S.usage.ms || 0) / 1000)} s`); S.name = defaultName(res.scene);
     const room = sceneToRoom(res.scene); S.room = room; if (room.scene) S.scene = room.scene;
     if (!room.ok) { logEv?.('leveleditor', `scene ble ikke brett: ${room.reason}${room.detail ? ' (' + room.detail + ')' : ''} · ${summarizeScene(S.scene)}`); failed(room.reason); return; }
     if (room.autoGoal) logEv?.('leveleditor', `auto-mål på ${room.autoGoal}`);

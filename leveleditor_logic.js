@@ -11,6 +11,11 @@ export const LE = {
   model: 'claude-sonnet-5-5',          // R168: nyere modell enn før (claude-sonnet-4-5). Kan overstyres i tlm_le_settings (nøkkel «model») uten ny utlegging.
   fallbackModel: 'claude-sonnet-4-5', // brukes hvis den nye modellen avvises (ukjent navn eller utilgjengelig)
   maxTokens: 16000,
+  mode: 'direkte',                      // R179–R181: 'direkte' (1 kall), 'tenk' (analyse først, 2 kall), 'tenk_kritikk' (+ kritikkrunde, 3 kall). tlm_le_settings.mode bestemmer standard i tjenesten, og testeren kan velge per kall.
+  budgetMs: 110000,                     // tjenesten stopper nye trinn når så mye tid er brukt (bakgrunnsjobber har en tidsgrense hos Supabase)
+  analysisTokens: 3500,
+  models: ['claude-sonnet-4-5', 'claude-sonnet-5-5', 'claude-opus-5-5', 'claude-fable-5-2'],   // modeller en tester kan velge (alt annet ignoreres)
+  modes: ['direkte', 'tenk', 'tenk_kritikk'],
   price: { inPerM: 3, outPerM: 15 },   // USD per million tokens (for kostnadslogg; settes om modellen byttes)
 };
 export const ANSWER_OPTS = {
@@ -79,6 +84,11 @@ export function fitToMeasures(scene, m) {
 }
 
 // Kroppen fra spillet: { code, images: [{ media_type, data(base64) }], answers }.
+// Valg per kall fra en tester (admin-innstillinger i spillet): modell og modus. Ukjente verdier ignoreres.
+export function normOpts(o) {
+  o = o && typeof o === 'object' ? o : {};
+  return { model: LE.models.includes(o.model) ? o.model : '', mode: LE.modes.includes(o.mode) ? o.mode : '' };
+}
 export function validateRequest(body) {
   if (!body || typeof body !== 'object') return { ok: false, reason: 'bilder' };
   const code = String(body.code ?? '').trim().toLowerCase();
@@ -89,10 +99,10 @@ export function validateRequest(body) {
     if (!im || !LE.mediaTypes.includes(im.media_type) || typeof im.data !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(im.data.slice(0, 200)) || im.data.length < 100) return { ok: false, reason: 'bilder' };
     if (im.data.length > LE.maxImageB64) return { ok: false, reason: 'for_stor' };
   }
-  return { ok: true, code, images: imgs.map((i) => ({ media_type: i.media_type, data: i.data })), answers: normAnswers(body.answers) };
+  return { ok: true, code, images: imgs.map((i) => ({ media_type: i.media_type, data: i.data })), answers: normAnswers(body.answers), opts: normOpts(body.opts) };
 }
 
-export function userText(answers, n, compact = false) {
+export function userText(answers, n, compact = false, analysis = '') {
   const a = normAnswers(answers);
   return [
     `Her er ${n} mobilbilder av samme sted (${a.outdoor ? 'utendørs' : 'innendørs eller utendørs: avgjør selv'}). Bilde 1–${n} har nummer 0–${n - 1} i \`photos\`.`,
@@ -101,13 +111,14 @@ export function userText(answers, n, compact = false) {
     a.foes ? 'Fiender og farer er på: bruk farer (hazards) der bildene viser dem.' : 'Ingen fiender og så få farer som mulig (ingen hazards uten at stedet krever dem).',
     a.measures ? `Spilleren har målt rommet: ${[a.measures.w ? `bredde ${a.measures.w} cm` : '', a.measures.d ? `dybde ${a.measures.d} cm` : '', a.measures.h ? `takhøyde ${a.measures.h} cm` : ''].filter(Boolean).join(', ')}. Bruk dem nøyaktig som room.width/depth/height og skaler alt annet etter dem.` : '',
     'Gjør rommet gjenkjennelig (se instruksen): skall, alle vinduer og dører, store møbler og tydelige småting med riktige mål og plassering.',
+    analysis ? `Her er analysen din av stedet (laget i et forrige trinn). Bruk den som utgangspunkt, men bildene har siste ord:\n<analyse>\n${analysis}\n</analyse>` : '',
     compact ? 'VIKTIG: forrige forsøk ble for langt og ble kuttet. Lever en KORT scene: maks 35 ting, id-er på maks 12 tegn, ingen note, ingen photos, ingen confidence, og start med units, name og room. Slå sammen like småting.' : '',
     'Ikke ta med personer, ansikter eller dyr. Svar ved å kalle verktøyet «lever_scene».',
   ].filter(Boolean).join('\n');
 }
 
 // Claude-kallet med bilder og strukturert utdata (tvunget verktøykall med scene-skjemaet).
-export function buildClaudeRequest({ system, images, answers, schema, model = LE.model, compact = false }) {
+export function buildClaudeRequest({ system, images, answers, schema, model = LE.model, compact = false, analysis = '' }) {
   const { $schema, $id, ...inputSchema } = schema || {};
   return {
     model, max_tokens: LE.maxTokens, system,
@@ -115,10 +126,38 @@ export function buildClaudeRequest({ system, images, answers, schema, model = LE
     tool_choice: { type: 'tool', name: 'lever_scene' },
     messages: [{ role: 'user', content: [
       ...images.map((im) => ({ type: 'image', source: { type: 'base64', media_type: im.media_type, data: im.data } })),
-      { type: 'text', text: userText(answers, images.length, compact) },
+      { type: 'text', text: userText(answers, images.length, compact, analysis) },
     ] }],
   };
 }
+
+// Trinn 1 («tenk først»): fri tekstanalyse av stedet, uten verktøy. Gir modellen rom til å planlegge før scenen lages.
+export function buildAnalysisRequest({ system, images, answers, model = LE.model }) {
+  const a = normAnswers(answers), n = images.length;
+  const text = [
+    `Her er ${n} mobilbilder av samme sted. Lag IKKE scenen ennå. Skriv en kort, nøktern analyse i vanlig tekst (maks ca. 900 ord), slik at scenen etterpå kan lages riktig:`,
+    '1. Rommets form og mål (bredde, dybde, høyde i cm), og hvilken vegg som er hvilken (N øverst, S mot døra). Finn skala fra kjente gjenstander (dør ≈ 200 cm, strømuttak, flis, A4-ark).',
+    '2. Vegg for vegg: farge og materiale, vinduer (plassering og størrelse), dører (plassering), lister.',
+    '3. Alle store møbler, så middels ting, så tydelige småting: type, ytre mål (b×d×h cm), plassering (x, z fra nordvestre hjørne) og høyde over gulvet på undersiden, farge, materiale. Hva står på hva.',
+    '4. Hva som er usikkert eller skjult (baksider, hjørner utenfor bildene), og hva du gjetter.',
+    a.measures ? `Spilleren har målt rommet: ${[a.measures.w ? `bredde ${a.measures.w} cm` : '', a.measures.d ? `dybde ${a.measures.d} cm` : '', a.measures.h ? `takhøyde ${a.measures.h} cm` : ''].filter(Boolean).join(', ')}. Bruk dem som fasit.` : '',
+    'Ikke ta med personer, ansikter eller dyr, og ikke gjengi hva som er avbildet på bilder eller plakater.',
+  ].filter(Boolean).join('\n');
+  return { model, max_tokens: LE.analysisTokens, system, messages: [{ role: 'user', content: [...images.map((im) => ({ type: 'image', source: { type: 'base64', media_type: im.media_type, data: im.data } })), { type: 'text', text }] }] };
+}
+// Trinn 3 («kritikkrunde»): modellen får bildene og sin egen scene og skal sammenligne og levere en rettet scene.
+export function buildCritiqueRequest({ system, images, answers, schema, model = LE.model, scene }) {
+  const base = buildClaudeRequest({ system, images, answers, schema, model });
+  const slim = JSON.stringify(scene, (k, v) => (k === 'note' || k === 'photos' ? undefined : v));
+  base.messages = [{ role: 'user', content: [...images.map((im) => ({ type: 'image', source: { type: 'base64', media_type: im.media_type, data: im.data } })), { type: 'text', text: [
+    'Dette er en scene laget fra bildene:', '<scene>', slim, '</scene>',
+    'Sammenlign scenen med bildene, ting for ting, og lever en RETTET versjon av hele scenen. Se særlig etter: ting som står på feil sted eller vegg, feil mål (spesielt høyde), ting som svever eller står i taket (y0 skal være 0 for ting på gulvet), manglende store møbler, manglende vinduer og dører, feil farger, og ting som ikke finnes på bildene (fjern dem).',
+    'Behold id-er der de passer. Lever hele scenen med name, units, room, start, goal og objects. Svar ved å kalle verktøyet «lever_scene».',
+  ].join('\n') }] }];
+  return base;
+}
+// Teksten i et svar uten verktøy
+export const textOf = (resp) => (resp && Array.isArray(resp.content) ? resp.content.filter((b) => b && b.type === 'text' && typeof b.text === 'string').map((b) => b.text).join('\n') : '').trim();
 
 export function parseClaudeResponse(resp) {
   const block = (resp && Array.isArray(resp.content) ? resp.content : []).find((b) => b && b.type === 'tool_use' && b.name === 'lever_scene');
@@ -127,6 +166,9 @@ export function parseClaudeResponse(resp) {
   if (!block || !block.input || typeof block.input !== 'object') return { ok: false, reason: 'tolkning', usage, stop };
   return { ok: true, scene: block.input, usage, stop };
 }
+// Anslåtte priser (USD per million tokens) per modell, til kostnadsloggen. Sonnet er kjent; de andre er anslag og kan avvike.
+export const PRICES = { 'claude-sonnet-4-5': { inPerM: 3, outPerM: 15 }, 'claude-sonnet-5-5': { inPerM: 3, outPerM: 15 }, 'claude-opus-5-5': { inPerM: 5, outPerM: 25 }, 'claude-fable-5-2': { inPerM: 10, outPerM: 50 } };
+export const priceOf = (model) => PRICES[model] || LE.price;
 export const costOf = (u, p = LE.price) => +(((u.in || 0) * p.inPerM + (u.out || 0) * p.outPerM) / 1e6).toFixed(4);
 
 // Personvern: fjern alt som ligner personer/dyr, og alle fritekstfelt som kan peke på bildene.
@@ -175,54 +217,68 @@ const sumUsage = (a, b) => ({ in: (a.in || 0) + (b.in || 0), out: (a.out || 0) +
 // R168: (1) oppgitte romtall er fasit (fitToMeasures), (2) selvretting: avviser validatoren scenen, får modellen feilene og ett nytt forsøk (kostnaden teller begge),
 // (3) feiler den nye modellen (ukjent navn/utilgjengelig), prøves fallbackModel én gang.
 export async function handleTolk(body, deps) {
-  const t0 = deps.now ? deps.now() : Date.now();
+  const t0 = deps.now ? deps.now() : Date.now(), el = () => (deps.now ? deps.now() : Date.now()) - t0;
   const v = validateRequest(body);
   if (!v.ok) return { status: REASONS[v.reason].status, body: { ok: false, reason: v.reason, message: REASONS[v.reason].text } };
   const rsv = rpcData(await deps.reserve(v.code, v.images.length));
   if (!rsv || !rsv.ok) { const r = reasonOf(rsv && rsv.reason); return { status: REASONS[r].status, body: { ok: false, reason: r, message: REASONS[r].text } }; }
-  const done = async (ok, extra = {}) => { try { await deps.finish({ id: rsv.id, ok, cost: 0, ms: (deps.now ? deps.now() : Date.now()) - t0, warnings: 0, bot: '', reason: '', ...extra }); } catch { /* loggfeil skal ikke stoppe svaret */ } };
-  let model = deps.model || LE.model, usedModel = model, repaired = 0;
-  const req = buildClaudeRequest({ system: deps.system, images: v.images, answers: v.answers, schema: deps.schema, model });
+  const done = async (ok, extra = {}) => { try { await deps.finish({ id: rsv.id, ok, cost: 0, ms: el(), warnings: 0, bot: '', reason: '', ...extra }); } catch { /* loggfeil skal ikke stoppe svaret */ } };
+  // valg: testerens valg per kall vinner, så tjenestens innstilling (databasen), så standard
+  const mode = v.opts.mode || (LE.modes.includes(deps.mode) ? deps.mode : LE.mode);
+  let model = v.opts.model || deps.model || LE.model, usedModel = model, repaired = 0, truncated = 0; const stages = [];
+  let usage = { in: 0, out: 0 }, cost = 0;
+  const addUsage = (u) => { usage = sumUsage(usage, u); cost = +(cost + costOf(u, priceOf(usedModel))).toFixed(4); };
   const call = async (r) => {
-    try { return await deps.callClaude(r); }
+    try { return await deps.callClaude({ ...r, model: usedModel }); }
     catch (e) {
-      if (r.model !== LE.fallbackModel && /\b(400|404)\b/.test(String(e && e.message || ''))) { usedModel = LE.fallbackModel; return await deps.callClaude({ ...r, model: LE.fallbackModel }); }   // modellen finnes ikke / avvist
+      if (usedModel !== LE.fallbackModel && /\b(400|404)\b/.test(String(e && e.message || ''))) { usedModel = LE.fallbackModel; return await deps.callClaude({ ...r, model: LE.fallbackModel }); }   // modellen finnes ikke / avvist
       throw e;
     }
   };
+  // trinn 1: analyse i vanlig tekst (bare i modus tenk og tenk_kritikk). Feiler den, lages scenen direkte.
+  let analysis = '';
+  if (mode !== 'direkte') {
+    try {
+      const ra = await call(buildAnalysisRequest({ system: deps.system, images: v.images, answers: v.answers, model: usedModel })); addUsage(parseClaudeResponse(ra).usage);
+      const txt = textOf(ra); if (txt.length > 200) { analysis = txt.slice(0, 9000); stages.push('analyse'); }
+    } catch { /* hopper over analysen */ }
+  }
+  // trinn 2: scenen (tvunget verktøykall)
+  const req = buildClaudeRequest({ system: deps.system, images: v.images, answers: v.answers, schema: deps.schema, model: usedModel, analysis });
   let resp;
   try { resp = await call(req); }
-  catch { await done(false, { reason: 'nett' }); return { status: REASONS.nett.status, body: { ok: false, reason: 'nett', message: REASONS.nett.text } }; }
-  let p = parseClaudeResponse(resp), usage = p.usage, truncated = 0;
-  // R170: kuttet svar (max_tokens): scenen er ufullstendig. Selvretting hjelper ikke; be i stedet om en KORT scene i et nytt kall (kostnaden teller begge)
+  catch { await done(false, { cost, reason: 'nett' }); return { status: REASONS.nett.status, body: { ok: false, reason: 'nett', message: REASONS.nett.text } }; }
+  let p = parseClaudeResponse(resp); addUsage(p.usage); stages.push('scene');
   const incomplete = (pp) => !pp.ok || pp.stop === 'max_tokens' || !pp.scene || typeof pp.scene !== 'object' || !pp.scene.room || pp.scene.units === undefined;
-  if (incomplete(p) && p.stop === 'max_tokens') {
+  if (incomplete(p) && p.stop === 'max_tokens') {   // kuttet svar: ett nytt, KORT kall (selvretting hjelper ikke på en ufullstendig scene)
     truncated = 1;
-    try {
-      const rc = await call(buildClaudeRequest({ system: deps.system, images: v.images, answers: v.answers, schema: deps.schema, model: usedModel, compact: true }));
-      const pc = parseClaudeResponse(rc); usage = sumUsage(usage, pc.usage); resp = rc; p = pc;
-    } catch { /* beholder det første svaret (ugyldig) */ }
+    try { const rc = await call(buildClaudeRequest({ system: deps.system, images: v.images, answers: v.answers, schema: deps.schema, model: usedModel, compact: true, analysis })); const pc = parseClaudeResponse(rc); addUsage(pc.usage); resp = rc; p = pc; } catch { /* beholder det første svaret (ugyldig) */ }
   }
   const prep = (pp) => { const sc = normalizeScene(scrubScene(pp.scene).scene); const fit = v.answers.measures ? fitToMeasures(sc, v.answers.measures) : sc; return { scene: fit, val: deps.validate(fit) }; };
   let out = p.ok ? prep(p) : null;
-  // selvretting: send feilene tilbake (bildene ligger fortsatt i forespørselen) og be om en rettet scene, én gang
-  if (p.ok && p.stop !== 'max_tokens' && out.val.errors.length) {
+  if (p.ok && p.stop !== 'max_tokens' && out.val.errors.length) {   // selvretting: send feilene tilbake og be om en rettet scene, én gang
     const block = (resp.content || []).find((b) => b && b.type === 'tool_use' && b.name === 'lever_scene');
-    const fix = { ...req, model: usedModel, messages: [...req.messages,
+    const fix = { ...req, messages: [...req.messages,
       { role: 'assistant', content: resp.content },
       { role: 'user', content: [{ type: 'tool_result', tool_use_id: block ? block.id : 'x', is_error: true, content: `Scenen ble avvist av kontrollen. Rett disse feilene og lever hele scenen på nytt:\n- ${out.val.errors.slice(0, 12).join('\n- ')}` }] }] };
-    try { const r2 = await call(fix); const p2 = parseClaudeResponse(r2); usage = sumUsage(usage, p2.usage); repaired = 1; if (p2.ok) { p = p2; out = prep(p2); } } catch { /* beholder første svar */ }
+    try { const r2 = await call(fix); const p2 = parseClaudeResponse(r2); addUsage(p2.usage); repaired = 1; if (p2.ok) { p = p2; out = prep(p2); } } catch { /* beholder første svar */ }
+  }
+  // trinn 3: kritikkrunde (bare når scenen er gyldig og det er tid igjen). Den rettede scenen brukes bare hvis den er gyldig og ikke mangler mye.
+  if (mode === 'tenk_kritikk' && out && !out.val.errors.length && p.stop !== 'max_tokens' && el() < LE.budgetMs) {
+    try {
+      const rk = await call(buildCritiqueRequest({ system: deps.system, images: v.images, answers: v.answers, schema: deps.schema, model: usedModel, scene: out.scene })); const pk = parseClaudeResponse(rk); addUsage(pk.usage);
+      if (pk.ok && pk.stop !== 'max_tokens') { const o2 = prep(pk); if (!o2.val.errors.length && o2.scene.objects.length >= Math.floor(out.scene.objects.length * 0.7)) { out = o2; p = pk; stages.push('kritikk'); } }
+    } catch { /* beholder scenen fra trinn 2 */ }
   }
   v.images.length = 0; body.images = null;   // slipp bildene straks (R151 krav 4)
-  const cost = costOf(usage);
-  if (!p.ok || !out || p.stop === 'max_tokens') { await done(false, { cost, reason: 'tolkning' }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, diag: { stop: p.stop || '', tokens_out: usage.out || 0, truncated } } }; }
+  if (!p.ok || !out || p.stop === 'max_tokens') { await done(false, { cost, reason: 'tolkning' }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, diag: { stop: p.stop || '', tokens_out: usage.out || 0, truncated, mode, stages } } }; }
   const { scene, val } = out;
-  if (val.errors.length) { await done(false, { cost, reason: 'tolkning', warnings: val.warns.length }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, errors: val.errors.slice(0, 8), diag: { stop: p.stop || '', tokens_out: usage.out || 0, truncated, repaired, keys: Object.keys(p.scene || {}).slice(0, 14), objects: Array.isArray(p.scene && p.scene.objects) ? p.scene.objects.length : -1 } } }; }
+  if (val.errors.length) { await done(false, { cost, reason: 'tolkning', warnings: val.warns.length }); return { status: REASONS.tolkning.status, body: { ok: false, reason: 'tolkning', message: REASONS.tolkning.text, errors: val.errors.slice(0, 8), diag: { stop: p.stop || '', tokens_out: usage.out || 0, truncated, repaired, mode, stages, keys: Object.keys(p.scene || {}).slice(0, 14), objects: Array.isArray(p.scene && p.scene.objects) ? p.scene.objects.length : -1 } } }; }
   let check = { ran: false };
   try { check = (await deps.check(scene)) || check; } catch { check = { ran: false, why: 'feil' }; }
-  const ms = (deps.now ? deps.now() : Date.now()) - t0, bot = check.ran ? (check.solvable ? 'vei' : 'ingen_vei') : 'ikke_kjort';
+  const ms = el(), bot = check.ran ? (check.solvable ? 'vei' : 'ingen_vei') : 'ikke_kjort';
   await done(true, { cost, ms, warnings: val.warns.length, bot });
-  return { status: 200, body: { ok: true, scene, warnings: val.warns, check, usage: { cost_usd: cost, ms, model: usedModel, repaired, truncated, tokens_out: usage.out || 0 }, left: { month: rsv.left_month, code: rsv.left_code } } };
+  return { status: 200, body: { ok: true, scene, warnings: val.warns, check, usage: { cost_usd: cost, ms, model: usedModel, repaired, truncated, tokens_out: usage.out || 0, mode, stages }, left: { month: rsv.left_month, code: rsv.left_code } } };
 }
 
 // ---------- R164: svar raskt, hent resultatet etterpå ----------
