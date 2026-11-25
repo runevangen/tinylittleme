@@ -36,10 +36,10 @@ import { SCHOOL, schoolProgress, schoolRead, schoolMark, schoolCardShould, schoo
 import { createSchoolView, schoolMenuHtml } from './byggeskole_view.js';
 import { BYGGING, buildingCards, movedNoticeShould } from './bygging_logic.js';   // R133: BYGGESKOLE og 3D-LAB ligger under VELG BRETT → BYGGING
 import { createBuildingView, buildingGroupHtml } from './bygging_view.js';
-import { isRoomId, loadRoom, loadRoomScene, roomsAvailable, roomLog } from './rooms_logic.js';   // R153: MINE BRETT og deling med kode (rooms_logic.js, rooms_view.js, rooms_text.js)
+import { isRoomId, loadRoom, loadRoomScene, saveRoomScene, listRooms, roomsAvailable, roomLog } from './rooms_logic.js';   // R153: MINE BRETT og deling med kode (rooms_logic.js, rooms_view.js, rooms_text.js)
 import { createRoomsView, roomsBtnHtml } from './rooms_view.js';
 import { rtx as roomTx } from './rooms_text.js';
-import { ledAvailable, lastRoom } from './leditor_logic.js';   // R152: LAG BRETT FRA BILDER (leditor_logic.js, leditor_view.js, leditor_text.js)
+import { ledAvailable, lastRoom, stepLight, lightLabel, sceneToRoom as ledSceneToRoom, saveRoom as ledSaveRoom } from './leditor_logic.js';   // R152: LAG BRETT FRA BILDER (leditor_logic.js, leditor_view.js, leditor_text.js)
 import { createLeditorView, ledBtnHtml } from './leditor_view.js';
 import { ltx as ledTx } from './leditor_text.js';
 import { thingName } from './kindnames.js';   // R175: navnelapper (norsk/engelsk) over ting i egne brett
@@ -1427,7 +1427,7 @@ function setMode(m) {
   if (m === 'plan') planCam.pivot.set(player.x, player.y + 4, player.z);
   if (m === 'fly' && isRoomId(levelId) && !tagsAuto) { tagsAuto = true; setTags(true, 'auto i flymodus'); }   // R175: første gang du flyr i eget brett, vises navnelappene (NAVN slår dem av)
   if (m === 'fly') { stats.flew = true; toast(T(isRoomId(levelId) ? (TOUCH ? 'toast.fly.room.touch' : 'toast.fly.room') : 'toast.fly')); }
-  $('bPlan').classList.toggle('on', m === 'plan'); $('bFly').classList.toggle('on', m === 'fly'); $('btnFly').classList.toggle('on', m === 'fly'); { const f = $('btnFly'); f.textContent = T(m === 'fly' ? 'fly.land' : 'fly.btn'); f.classList.toggle('flying', m === 'fly'); const h = $('flyHint'); h.textContent = T(TOUCH ? 'fly.hint.touch' : 'fly.hint.pc'); h.classList.toggle('hide', !(m === 'fly' && isRoomId(levelId))); }   // R176: tydelig LAND-knapp og lapp mens du flyr
+  document.body.classList.toggle('flymode', m === 'fly'); $('bPlan').classList.toggle('on', m === 'plan'); $('bFly').classList.toggle('on', m === 'fly'); $('btnFly').classList.toggle('on', m === 'fly'); { const f = $('btnFly'); f.textContent = T(m === 'fly' ? 'fly.land' : 'fly.btn'); f.classList.toggle('flying', m === 'fly'); const h = $('flyHint'); h.textContent = T(TOUCH ? 'fly.hint.touch' : 'fly.hint.pc'); h.classList.toggle('hide', !(m === 'fly' && isRoomId(levelId))); }   // R176: tydelig LAND-knapp og lapp mens du flyr
   if (m === 'plan') toast(T(TOUCH ? 'toast.plan.touch' : 'toast.plan.pc'));
 }
 
@@ -1492,6 +1492,17 @@ const updateHighlight = (now) => {
   if (now > hiUntil) { clearHi(); return; }
   hiMesh.material.opacity = 0.55 + 0.45 * Math.sin(now / 160);
 };
+// R186: lysnivå også mens du flyr rundt i eget brett: LYSERE/MØRKERE lagrer i brettet (scene.look) og virker med en gang
+function nudgeLight(dir) {
+  if (!isRoomId(levelId)) return; const sc = loadRoomScene(store, levelId); if (!sc) { toast(ledTx(lang, 'lightEnd')); return; }
+  const n = stepLight(sc, dir); if (!n) { toast(ledTx(lang, 'lightEnd')); return; }
+  const meta = listRooms(store).find((r) => r.id === levelId), room = ledSceneToRoom(n, meta ? meta.name : 'Mitt brett', { auto: false });
+  saveRoomScene(store, levelId, n); if (room.ok && meta) ledSaveRoom(store, { id: levelId, name: meta.name, level: room.level });
+  renderer.toneMappingExposure = n.look.exposure; sun.intensity = n.look.sun * (gradeMode === 'off' ? 1 : 1.05);
+  toast(ledTx(lang, 'lightNow', lightLabel(n))); logEv('leveleditor', `lys ${dir > 0 ? 'opp' : 'ned'} i flymodus: ${lightLabel(n)}`);
+}
+$('btnLightUp').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); nudgeLight(1); });
+$('btnLightDn').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); nudgeLight(-1); });
 const openThingList = () => {
   if (!tagList) tagList = buildTags();
   const body = $('thingListBody'), dist = (t) => Math.hypot(t.pos.x - player.x, t.pos.z - player.z);

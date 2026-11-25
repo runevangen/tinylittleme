@@ -101,6 +101,9 @@ export function lightOf(scene) {
 }
 export function withLight(scene) { const s = clone(scene), L = lightOf(scene); s.look = { ...(s.look || {}), exposure: +L.exposure.toFixed(2), sun: +L.sun.toFixed(2) }; return s; }
 export const lightPct = (scene) => Math.round((lightOf(scene).exposure / LIGHT.baseExp) * 100);
+// R186: trinn fra standard (0), ikke prosent: «+2» / «0» / «−1»
+export const lightStepNo = (scene) => Math.round((lightOf(scene).exposure - LIGHT.baseExp) / LIGHT.step);
+export const lightLabel = (scene) => { const n = lightStepNo(scene); return n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0'; };
 export function stepLight(scene, dir) {
   const L = lightOf(scene), e = Math.min(LIGHT.hi, Math.max(LIGHT.lo, +(L.exposure + dir * LIGHT.step).toFixed(2)));
   if (e === +L.exposure.toFixed(2)) return null;

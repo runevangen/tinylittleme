@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r186-lys-i-fly-og-liste-i-juster', version: '2.198', date: '2026-11-25', title: 'Lys kan justeres mens du flyr rundt i eget brett (LYSERE / MØRKERE), lysnivået vises i trinn, og JUSTER har en klikkbar liste over alle tingene.',
+    how: 'Åpne et eget brett og trykk FLY: knappene LYSERE og MØRKERE står over LISTE. I JUSTER: trykk et navn i lista for å velge tingen på kartet.', level: '', spot: null },
   { id: 'r185-lysniva-i-juster', version: '2.196', date: '2026-11-25', title: 'Lysnivå kan justeres i JUSTER (MØRKERE / LYSERE), og brett fra bilder er lysere som standard.',
     how: 'Åpne et brett fra bilder og trykk JUSTER. Trykk LYSERE eller MØRKERE under målknappene, trykk FERDIG og så SPILL for å se lyset.', level: '', spot: null },
   { id: 'r184-dato-paa-brett', version: '2.195', date: '2026-11-25', title: 'Egne brett viser nå når de ble laget (dato og klokkeslett), så du kan skille flere forsøk fra samme rom.',

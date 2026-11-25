@@ -1,7 +1,7 @@
 // R152: «Lag brett fra bilder» (DOM). Bruker startskjermens #start og knappestiler (.mbtn) som VELG BRETT/MINE BRETT. Logikk: leditor_logic.js, tekster: leditor_text.js.
 // Flyt: veiledning + samtykke → 2–4 bilder (nedskalert her, i minnet) → fire spørsmål → LAG BRETT (tjenesten) → forslag med SJEKK, JUSTER, SPILL, DEL, LAGRE. Bilder lagres aldri.
 import { LE } from './leveleditor_logic.js';
-import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo, moveThingsY, setThingsY, stepLight, lightPct } from './leditor_logic.js';
+import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callTolk, sceneToRoom, canPlay, checkVerdict, thingsOf, thingAt, moveThing, deleteThing, undoStack, saveRoom, defaultName, ledLog, goalCandidates, summarizeScene, interpretation, brightenData, lastRoom, setLastRoom, saveRoomScene, loadRoomScene, STEPS, stepNow, setStep, moveThings, moveThingTo, deleteThings, thingInfo, moveThingsY, setThingsY, stepLight, lightLabel } from './leditor_logic.js';
 import { shareRoom, setRoomCode, safeName, listRooms, fmtWhen } from './rooms_logic.js';
 import { thingName } from './kindnames.js';
 import { ltx, lerr, lverdict, lsub } from './leditor_text.js';
@@ -11,6 +11,7 @@ const CSS = `#start.rml{justify-content:flex-start;overflow-y:auto;-webkit-overf
 #start .ledbox ul{margin:0;padding-left:18px}#start .ledbox b{font:800 15px system-ui}
 #start .ledrow{display:flex;gap:6px;flex-wrap:wrap;width:min(340px,88vw)}#start .ledrow .mbtn{flex:1 1 40%;min-width:0;padding:12px 4px;font-size:15px}
 #start .ledrow .mbtn.on{background:#ffd9a0;color:#1a2238;border-color:#ffd9a0}
+#start .ledlist{display:flex;flex-wrap:wrap;gap:6px;width:min(340px,88vw);max-height:30vh;overflow-y:auto;-webkit-overflow-scrolling:touch}#start .ledlist button{padding:6px 10px;border-radius:14px;border:1px solid #ffffff44;background:#1d2433;color:#fff;font:600 13px system-ui}#start .ledlist button.on{background:#e8833a;color:#1d2433;border-color:#e8833a}
 #start .ledth{display:flex;gap:6px;flex-wrap:wrap;width:min(340px,88vw)}#start .ledth div{position:relative;width:76px;height:76px;border-radius:8px;overflow:hidden;background:#0b1226}
 #start .ledth img{width:100%;height:100%;object-fit:cover}#start .ledth button{position:absolute;right:2px;bottom:2px;border:0;border-radius:6px;background:#000b;color:#fff;font:700 11px system-ui;padding:6px 8px;min-height:30px}
 #start .ledmsg{min-height:20px;max-width:min(340px,88vw);font:600 14px/1.3 system-ui;color:#ffd9a0;text-align:center}
@@ -240,6 +241,7 @@ export function createLeditorView(ctx) {
     const el = root(), sc = () => S.scene;
     el.innerHTML = `<h1>${esc(T('adjH'))}</h1><p class="tag" style="max-width:320px">${esc(T('adjIntro'))}</p><canvas class="ledmap" id="ledMap"></canvas>`
       + `<p class="tag" id="ledSel">${esc(T('adjNone'))}</p>`
+      + `<p class="tag" style="margin-bottom:0">${esc(T('listH'))}</p><div class="ledlist" id="ledList"></div>`
       + `<div class="ledrow"><button class="mbtn sec" id="ledMulti">${esc(T('multiBtn'))}</button></div>`
       + `<div class="ledrow" id="ledPos"><label class="ledmeas">${esc(T('posX'))}<input class="ledin" id="ledPx" inputmode="numeric" autocomplete="off"></label><label class="ledmeas">${esc(T('posZ'))}<input class="ledin" id="ledPz" inputmode="numeric" autocomplete="off"></label><label class="ledmeas">${esc(T('posY'))}<input class="ledin" id="ledPy" inputmode="numeric" autocomplete="off"></label></div>`
       + `<div class="ledrow" id="ledHt"><button class="mbtn sec" id="ledUp">${esc(T('hUp'))}</button><button class="mbtn sec" id="ledDown">${esc(T('hDown'))}</button><button class="mbtn sec" id="ledFloor">${esc(T('hFloor'))}</button></div>`
@@ -268,7 +270,13 @@ export function createLeditorView(ctx) {
       if (s.start) ring(s.start.x, s.start.z, '#59e07a'); if (s.goal) ring(s.goal.x, s.goal.z, '#ffd24a');
       info();
     };
+    const renderList = () => {
+      const box = $('ledList'); if (!box) return;
+      box.innerHTML = thingsOf(sc()).map((t) => ({ t, n: thingName(t.kind, t.label, L()) })).sort((a, b) => a.n.localeCompare(b.n, L() === 'en' ? 'en' : 'nb')).map(({ t, n }) => `<button data-k="${esc(t.key)}" class="${S.sels.includes(t.key) ? 'on' : ''}">${esc(n)}</button>`).join('');
+      box.querySelectorAll('button').forEach((b) => { b.onclick = () => { const k = b.dataset.k; if (S.multi) { S.sels = S.sels.includes(k) ? S.sels.filter((q) => q !== k) : [...S.sels, k]; } else S.sels = [k]; draw(); $('ledMap').scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }); }; });
+    };
     const info = () => {
+      renderList();
       const one = S.sels.length === 1 ? thingInfo(sc(), S.sels[0]) : null;
       $('ledSel').textContent = S.sels.length > 1 ? T('selN', S.sels.length) : one ? T('infoOne', { ...one, name: thingName(one.kind, one.label, L()) }) : T('adjNone');
       const px = $('ledPx'), pz = $('ledPz'), py = $('ledPy'); px.disabled = pz.disabled = py.disabled = !one; px.value = one ? one.x : ''; pz.value = one ? one.z : ''; py.value = one ? one.y : '';
@@ -311,7 +319,7 @@ export function createLeditorView(ctx) {
     $('ledPx').onchange = move; $('ledPz').onchange = move;
     const moveY = (next, what) => { if (apply(next, what)) draw(); else info(); };
     $('ledPy').onchange = () => { if (S.sels.length === 1) moveY(setThingsY(sc(), S.sels, $('ledPy').value), 'høyde tall'); };
-    const lightTxt = () => { const e = $('ledLightV'); if (e) e.textContent = T('lightNow', lightPct(sc())); };
+    const lightTxt = () => { const e = $('ledLightV'); if (e) e.textContent = T('lightNow', lightLabel(sc())); };
     const light = (dir) => { const n = stepLight(sc(), dir); if (!n) { msg(T('lightEnd')); return; } if (apply(n, dir > 0 ? 'lys opp' : 'lys ned')) { lightTxt(); msg(T('lightSet')); } };
     lightTxt(); $('ledDark').onclick = () => light(-1); $('ledBright').onclick = () => light(1);
     $('ledUp').onclick = () => { if (S.sels.length) moveY(moveThingsY(sc(), S.sels, stepNow(st)), 'høyde opp'); };

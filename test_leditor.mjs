@@ -207,4 +207,13 @@ assert.doesNotMatch(view, /localStorage\.setItem\([^)]*(data|url)/, 'bilder lagr
   assert.equal(stepLight(m, -1), null, 'bunnen nådd'); assert.equal(lightPct(dim) > 0, true);
   assert.ok(s2r(m, 'Mørk').level.look.exposure < LIGHT.minExp, 'eget mørkt valg respekteres');
 }
+// R186: lysnivå i trinn, navneliste i JUSTER, lys i flymodus
+{
+  const { lightLabel, stepLight } = await import('./leditor_logic.js');
+  const base = JSON.parse(fs.readFileSync('scenes/bad.scene.json', 'utf8'));
+  assert.equal(lightLabel(base), '0'); const u2 = stepLight(stepLight(base, 1), 1); assert.equal(lightLabel(u2), '+2'); assert.equal(lightLabel(stepLight(base, -1)), '−1');
+  const v = fs.readFileSync('leditor_view.js', 'utf8'); assert.match(v, /id="ledList"/); assert.match(v, /renderList/);
+  const idx = fs.readFileSync('index.html', 'utf8'); assert.match(idx, /id="btnLightUp"/); assert.match(idx, /id="btnLightDn"/);
+  const mj = fs.readFileSync('main.js', 'utf8'); assert.match(mj, /function nudgeLight/); assert.match(mj, /classList\.toggle\('flymode'/);
+}
 console.log('test_leditor: ok');

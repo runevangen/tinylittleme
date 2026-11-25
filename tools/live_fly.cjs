@@ -31,6 +31,13 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   await pg.dispatchEvent('#btnTags', 'pointerdown'); await pg.waitForTimeout(500); const on2 = await pg.evaluate(() => [...document.querySelectorAll('#tags span')].filter((e) => e.style.display === 'block').length); check('NAVN slår lappene på igjen', on2 > 0, `${on2} synlige`);
   // R176: tydelig LAND-knapp og lapp mens du flyr
   check('mens du flyr heter knappen LAND', (await pg.textContent('#btnFly')).trim() === 'LAND'); check('lapp sier hvordan du kommer ut', await pg.locator('#flyHint').isVisible(), (await pg.textContent('#flyHint')).trim());
+  // R186: lys i flymodus: LYSERE/MØRKERE synlige i flymodus, lagres i brettet
+  check('LYSERE og MØRKERE er synlige i flymodus', (await pg.locator('#btnLightUp').isVisible()) && (await pg.locator('#btnLightDn').isVisible()));
+  const exp0 = await pg.evaluate(() => JSON.parse(localStorage.getItem('tlm.roomscene.mine-abc123')).look?.exposure ?? 0);
+  await pg.dispatchEvent('#btnLightUp', 'pointerdown'); await pg.waitForTimeout(500); const lk1 = await pg.evaluate(() => JSON.parse(localStorage.getItem('tlm.roomscene.mine-abc123')).look);
+  check('LYSERE gir lysere brett som lagres', lk1 && lk1.user === true && lk1.exposure > exp0, `${exp0} → ${lk1 && lk1.exposure}`); await pg.screenshot({ path: `${out}/fly_light.png` });
+  await pg.dispatchEvent('#btnLightDn', 'pointerdown'); await pg.waitForTimeout(400); const lk2 = await pg.evaluate(() => JSON.parse(localStorage.getItem('tlm.roomscene.mine-abc123')).look);
+  check('MØRKERE går ett trinn tilbake', Math.abs(lk2.exposure - (lk1.exposure - 0.15)) < 0.02, `${lk1.exposure} → ${lk2.exposure}`);
   // R177: LISTE over ting; trykk markerer tingen i rommet
   check('LISTE-knappen er synlig', await pg.locator('#btnList').isVisible()); await pg.dispatchEvent('#btnList', 'pointerdown'); await pg.waitForTimeout(300);
   const nList = await pg.locator('#thingListBody button').count(); check('listen viser tingene med navn og avstand', nList > 0 && (await pg.locator('#thingListBody button').first().textContent()).includes(' m'), `${nList} ting · ${(await pg.locator('#thingListBody button').first().textContent()).trim()}`);

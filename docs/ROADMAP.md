@@ -133,6 +133,12 @@ Admin-valg «modell» og «modus» (direkte / tenk / tenk_kritikk) per kall og s
 ### [x] R183 · Fra tester: Rune · Ingen tidsgrense på tolkning, asynkron jobb i bakgrunnen (v2.192)
 Kvalitet går foran ventetid. ANDRE TING lar deg gjøre annet mens tolkningen jobber; beskjed og ÅPNE FERDIG BRETT når den er ferdig; jobben huskes over omstart (HENT PÅGÅENDE TOLKNING). Gjenstår: Supabase har egen tidsgrense på bakgrunnsjobber (150 s gratis, 400 s betalt); ved lengre tolkning må det flyttes til flere kall.
 
+### [x] R186 · Fra tester: Rune · Lys i flymodus, lysnivå i trinn, navneliste i JUSTER (v2.198)
+LYSERE/MØRKERE i flymodus i eget brett (lagres i brettet), «Lysnivå (0 = standard)» i stedet for prosent, klikkbar liste over alle ting i JUSTER.
+
+### [ ] R187 · Fra tester: Rune · Direkte tilbake til skjermen du kom fra etter «Test tur»/SPILL i eget brett (meldt to ganger, v2.193 og v2.196)
+Fra eget brett skal TILBAKE gå rett til JUSTER eller resultatet du kom fra (med valg og posisjon bevart), og MINE BRETT skal være ett trykk unna. I dag går veien via menyen.
+
 ### [x] R185 · Fra tester: Rune · Lysnivå i JUSTER og lysere standard (v2.196)
 MØRKERE/LYSERE i JUSTER (lagres i `scene.look`, `look.user`), standardlyset løftes til minst exposure 1,2 og sol 3,0 for brett fra bilder, prompten ber ikke om dempet lys.
 
