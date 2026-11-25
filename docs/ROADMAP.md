@@ -136,6 +136,9 @@ Kvalitet går foran ventetid. ANDRE TING lar deg gjøre annet mens tolkningen jo
 ### [x] R186 · Fra tester: Rune · Lys i flymodus, lysnivå i trinn, navneliste i JUSTER (v2.198)
 LYSERE/MØRKERE i flymodus i eget brett (lagres i brettet), «Lysnivå (0 = standard)» i stedet for prosent, klikkbar liste over alle ting i JUSTER.
 
+### [x] R191 · Fra Rune · Sticky «brett ferdig» (v2.204)
+Banner med ÅPNE/SENERE som overlever at appen lukkes og åpnes (tilstand i `tlm.led.done`), FERDIG-merke på LAG BRETT FRA BILDER, og beskjed når en bakgrunnsjobb blir ferdig. SENERE skjuler bare i denne økta.
+
 ### [x] R190 · Backlogg · Bedre fangstprotokoll for bilder (v2.203)
 Fotosjekk med fire steg på bildeskjermen (hjørne 1, hjørne 2, gulvbilde, A4-ark/mobil på gulvet), og prompten bruker A4-ark (21 × 29,7 cm) eller mobil som sikreste målestokk og gulvbildet til å sette `y0`.
 

@@ -56,5 +56,15 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   check('MINE BRETT åpner lista med egne brett', (await pg.locator('.rmcard').count()) > 0);
   await pg.goto(`http://localhost:${port}/?level=bad&start=0`); await pg.waitForSelector('#btnFly', { state: 'attached', timeout: 180000 }); await pg.waitForTimeout(2500);
   check('vanlig brett: ingen REDIGER/MINE BRETT', !(await pg.locator('#btnLedBack').isVisible()) && !(await pg.locator('#btnLedMine').isVisible()));
+  // R191: sticky «brett ferdig»: banner til du åpner det, SENERE skjuler bare i denne økta, merke på menyknappen
+  await pg.evaluate(([sc]) => localStorage.setItem('tlm.led.done', JSON.stringify({ scene: sc, usage: { cost_usd: 0, ms: 0 }, at: Date.now() })), [fx.scene]);
+  await pg.goto(`http://localhost:${port}/?level=bad&start=0`); await pg.waitForSelector('#ledBanner', { state: 'attached', timeout: 180000 }); await pg.waitForTimeout(6000);
+  check('banneret «brett ferdig» vises', await pg.locator('#ledBanner.show').count() === 1); await pg.screenshot({ path: `${out}/led_banner.png` });
+  await pg.dispatchEvent('#ledBannerLater', 'click'); await pg.waitForTimeout(400); check('SENERE skjuler banneret', await pg.locator('#ledBanner.show').count() === 0);
+  await pg.goto(`http://localhost:${port}/?level=bad&start=0`); await pg.waitForSelector('#ledBanner', { state: 'attached', timeout: 180000 }); await pg.waitForTimeout(6000);
+  check('banneret kommer tilbake når appen åpnes igjen (sticky)', await pg.locator('#ledBanner.show').count() === 1);
+  await pg.dispatchEvent('#ledBannerOpen', 'click'); await pg.waitForSelector('#ledPlay', { timeout: 15000 }).catch(() => {});
+  check('ÅPNE viser det ferdige brettet (SPILL/JUSTER)', (await pg.locator('#ledPlay').count()) > 0 && (await pg.locator('#ledAdj').count()) > 0);
+  check('ferdig brett er fjernet når det er åpnet', (await pg.evaluate(() => localStorage.getItem('tlm.led.done'))) === 'null' || (await pg.evaluate(() => localStorage.getItem('tlm.led.done'))) === null);
   console.log(errs.length ? 'FEIL: ' + errs.slice(0, 3).join(' | ') : 'ingen konsollfeil'); await b.close(); srv.close(); process.exit(errs.length || !ok ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

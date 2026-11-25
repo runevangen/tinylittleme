@@ -80,7 +80,7 @@ export function createLeditorView(ctx) {
       + (last ? `<button class="mbtn" id="ledLast">${esc(T('lastBtn', last.name, fmtWhen(last.at)))}</button>` : '')
       + (ctx.onMine && listRooms(st).length ? `<button class="mbtn sec" id="ledMine">${esc(T('mine'))}</button>` : '')
       + `<button class="mbtn${last ? ' sec' : ''}" id="ledGo">${esc(consented() ? T('next') : T('consentBtn'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
-    if ($('ledDone')) $('ledDone').onclick = () => { const d = getK(DONE_KEY); setK(DONE_KEY, null); if (d && d.scene) { logEv?.('leveleditor', 'åpner ferdig bakgrunnsjobb'); accept({ ok: true, scene: d.scene, usage: d.usage }, Date.now()); } };
+    if ($('ledDone')) $('ledDone').onclick = () => { const d = getK(DONE_KEY); setK(DONE_KEY, null); ctx.onDone?.(); if (d && d.scene) { logEv?.('leveleditor', 'åpner ferdig bakgrunnsjobb'); accept({ ok: true, scene: d.scene, usage: d.usage }, Date.now()); } };
     if ($('ledBgGet')) $('ledBgGet').onclick = () => { const b = getK(BG_KEY); if (!b || !b.job) return; S.job = b.job; if (b.answers) S.answers = b.answers; logEv?.('leveleditor', 'henter pågående tolkning'); make(); };
     if (last) $('ledLast').onclick = () => resume(last.id);
     if ($('ledMine')) $('ledMine').onclick = () => { const el2 = $('start'); el2.classList.remove('rml'); ctx.onMine?.(); };
@@ -143,7 +143,7 @@ export function createLeditorView(ctx) {
   const setK = (k, v) => { try { st.set(k, v); } catch { /* uten lagring */ } };
   function finishDetached(run, res, t0) {
     stopTick(); busy = false; abort = null;
-    if (res.ok) { setK(DONE_KEY, { scene: res.scene, usage: res.usage || { cost_usd: 0, ms: 0 }, at: Date.now() }); setK(BG_KEY, null); logEv?.('leveleditor', `bakgrunnsjobb ferdig etter ${Math.round((Date.now() - t0) / 1000)} s`); ctx.toast?.(T('bgDone')); }
+    if (res.ok) { setK(DONE_KEY, { scene: res.scene, usage: res.usage || { cost_usd: 0, ms: 0 }, at: Date.now() }); setK(BG_KEY, null); logEv?.('leveleditor', `bakgrunnsjobb ferdig etter ${Math.round((Date.now() - t0) / 1000)} s`); ctx.toast?.(T('bgDone')); ctx.onDone?.(); }
     else { setK(BG_KEY, res.job ? { job: res.job, at: Date.now(), answers: run.answers } : null); logEv?.('leveleditor', `bakgrunnsjobb feilet: ${res.reason}`); ctx.toast?.(T('bgFail', lerr(L(), res.reason))); }
   }
   const KEEP_PHOTOS = ['nett', 'feil', 'tolkning', 'avbrutt'];
@@ -343,6 +343,11 @@ export function createLeditorView(ctx) {
     logEv?.('leveleditor', `fortsetter brett ${id}${S.room.ok ? '' : ' (' + S.room.reason + ')'}`); setLastRoom(st, id);
     root(); if (S.room.ok) result(); else failed(S.room.reason);
   }
-  return { show, resume };
+  // R191: ferdig brett fra bakgrunnsjobben åpnes direkte (fra banneret i spillet eller fra hovedmenyen)
+  function openDone() {
+    const d = getK(DONE_KEY); S = fresh(); if (!d || !d.scene) { show(); return; }
+    setK(DONE_KEY, null); ctx.onDone?.(); logEv?.('leveleditor', 'åpner ferdig bakgrunnsjobb (banner)'); root(); accept({ ok: true, scene: d.scene, usage: d.usage }, Date.now());
+  }
+  return { show, resume, openDone };
 }
-export const ledBtnHtml = (lang, last = null) => `<div class="bgrp" id="dfLed"><button class="mbtn sec" id="mLed">📷 ${esc(ltx(lang, 'btn'))}<small>${esc(ltx(lang, 'btnSub'))}</small></button>${last ? `<button class="mbtn sec" id="mLedLast">✏️ ${esc(ltx(lang, 'lastBtn', last.name))}</button>` : ''}</div>`;
+export const ledBtnHtml = (lang, last = null, done = false) => `<div class="bgrp" id="dfLed"><button class="mbtn${done ? '' : ' sec'}" id="mLed">📷 ${done ? '● ' + esc(ltx(lang, 'bgBadge')) + ' · ' : ''}${esc(ltx(lang, 'btn'))}<small>${esc(ltx(lang, 'btnSub'))}</small></button>${last ? `<button class="mbtn sec" id="mLedLast">✏️ ${esc(ltx(lang, 'lastBtn', last.name))}</button>` : ''}</div>`;

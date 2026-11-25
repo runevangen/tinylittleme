@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.204** – R191 (fra Rune): «brett ferdig» er sticky: banner øverst («Brettet fra bildene er ferdig»: ÅPNE / SENERE) som står til du åpner brettet og kommer tilbake når appen åpnes igjen, og et FERDIG-merke på knappen LAG BRETT FRA BILDER (index.html, main refreshLedBanner, leditor_view openDone/ledBtnHtml, leditor_text).
 - **2.203** – R190 (backlogg: fangstprotokoll): fotosjekk med fire steg på bildeskjermen (hjørne 1, hjørne 2, gulvbilde, A4-ark/mobil på gulvet; kan krysses av), og prompten bruker A4-ark/mobil på gulvet som sikreste målestokk og gulvbildet til å sette høyde riktig (leditor_view/text, tools/make_prompt, docs/VISJON_PROMPT).
 - **2.202** – R189 (fra Rune): rydding av gruppen «Spill» i innstillinger: ny gruppe «Bygging og Byggeskolen» med undergrupper (Byggeskjerm, Rutenett, Byggeskolen og Bygglab, 3D-lab, Visning og regler), og ca. 30 spredte innstillinger flyttet til riktig gruppe (figur, hjelp, innhold, kamera, test) (settings_util LAYOUT/GROUPS, settings_text, test_settings).
 - **2.201** – Arbeidsregel (fra Rune): foreslå neste skritt fra backlog som klikkbare valg etter hver Status (CLAUDE.md, ingen kodeendring).

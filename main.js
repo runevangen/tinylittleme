@@ -3613,12 +3613,23 @@ function openRooms() {
 }
 let ledV = null;
 const ledShow = () => ledAvailable({ on: ledOn, code: testerCode(), cinema: CINE.on });
-const getLed = () => (ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, getOpts: () => ({ model: ledModel === 'auto' ? '' : ledModel, mode: ledMode === 'auto' ? '' : ledMode }), logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms, onFly: (id) => { unlockAudio(); store.set('tlm.flystart', id); playFresh(id, difficulty); } }));
+// R191: «brett ferdig» er sticky: banneret står til du åpner brettet (SENERE skjuler det bare i denne økta), og kommer tilbake når appen åpnes igjen
+let ledBannerHidden = false;
+function refreshLedBanner() {
+  const b = $('ledBanner'); if (!b) return; const done = !!store.get('tlm.led.done', null);
+  $('ledBannerTxt').textContent = ledTx(lang, 'bannerTxt'); $('ledBannerOpen').textContent = ledTx(lang, 'bannerOpen'); $('ledBannerLater').textContent = ledTx(lang, 'bannerLater');
+  b.classList.toggle('show', done && !ledBannerHidden && !$('start').classList.contains('rml'));
+}
+$('ledBannerOpen').onclick = () => { unlockAudio(); logEv('leveleditor', 'banner: åpne ferdig brett'); saveProgress(); showStart(); getLed().openDone(); refreshLedBanner(); };
+$('ledBannerLater').onclick = () => { ledBannerHidden = true; refreshLedBanner(); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { ledBannerHidden = false; refreshLedBanner(); } });
+setTimeout(refreshLedBanner, 1200); setInterval(refreshLedBanner, 4000);
+const getLed = () => (ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, getOpts: () => ({ model: ledModel === 'auto' ? '' : ledModel, mode: ledMode === 'auto' ? '' : ledMode }), logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms, onDone: () => refreshLedBanner(), onFly: (id) => { unlockAudio(); store.set('tlm.flystart', id); playFresh(id, difficulty); } }));
 function openLeditor() { getLed().show(); }
 function openLeditorResume(id) { getLed().resume(id); }   // R167: det egne brettet åpnes på nytt i editoren (JUSTER, MÅL 1–4, VIS TOLKNING) etter spilling
 function roomsPick(b) {
   const led = ledShow(), rm = roomsShow(); if (!led && !rm) return b;
-  return { html: (b ? b.html : '') + (rm ? roomsBtnHtml(lang) : '') + (led ? ledBtnHtml(lang, lastRoom(store)) : ''), on: { ...(b ? b.on : {}), ...(rm ? { mRooms: () => { unlockAudio(); openRooms(); } } : {}), ...(led ? { mLed: () => { unlockAudio(); openLeditor(); }, mLedLast: () => { const l = lastRoom(store); unlockAudio(); if (l) openLeditorResume(l.id); else openLeditor(); } } : {}) } };
+  return { html: (b ? b.html : '') + (rm ? roomsBtnHtml(lang) : '') + (led ? ledBtnHtml(lang, lastRoom(store), !!store.get('tlm.led.done', null)) : ''), on: { ...(b ? b.on : {}), ...(rm ? { mRooms: () => { unlockAudio(); openRooms(); } } : {}), ...(led ? { mLed: () => { unlockAudio(); openLeditor(); }, mLedLast: () => { const l = lastRoom(store); unlockAudio(); if (l) openLeditorResume(l.id); else openLeditor(); } } : {}) } };
 }
 function openPicker() { dv.pickLevel({ levels: levelsShown(), st: store, cleared: store.get('tlm.cleared', {}), current: difficulty, onPlay: (id, d) => { unlockAudio(); playFresh(id, d); }, onBack: showStart, building: roomsPick(buildingPick()) }); }
 function showStart(o = {}) {

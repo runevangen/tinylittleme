@@ -222,4 +222,11 @@ assert.doesNotMatch(view, /localStorage\.setItem\([^)]*(data|url)/, 'bilder lagr
   for (const lg of ['nb', 'en']) { assert.equal(ltx(lg, 'cap').length, 4, 'fire fotosjekk-steg på ' + lg); assert.ok(ltx(lg, 'capH').length > 5 && ltx(lg, 'capTip').length > 5); }
   assert.match(fs.readFileSync('leditor_view.js', 'utf8'), /id=\"ledCap\"/); assert.match(fs.readFileSync('docs/VISJON_PROMPT.md', 'utf8'), /A4-ark \(21 × 29,7 cm\)/, 'prompten bruker A4-ark som målestokk');
 }
+// R191: sticky «brett ferdig»
+{
+  const mj = fs.readFileSync('main.js', 'utf8'), v = fs.readFileSync('leditor_view.js', 'utf8'), idx = fs.readFileSync('index.html', 'utf8');
+  assert.match(idx, /id="ledBanner"/); assert.match(mj, /function refreshLedBanner/); assert.match(mj, /visibilitychange/); assert.match(v, /function openDone/); assert.match(v, /ctx\.onDone\?\.\(\)/); assert.match(v, /bgBadge/);
+  const { ltx } = await import('./leditor_text.js'); for (const lg of ['nb', 'en']) for (const k of ['bannerTxt', 'bannerOpen', 'bannerLater', 'bgBadge']) assert.ok(ltx(lg, k).length > 2, k + ' ' + lg);
+  const { ledBtnHtml } = await import('./leditor_view.js'); assert.match(ledBtnHtml('nb', null, true), /FERDIG/); assert.doesNotMatch(ledBtnHtml('nb', null, false), /FERDIG/);
+}
 console.log('test_leditor: ok');
