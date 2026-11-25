@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.194** – R182: møbelmaler med ekte former (sofa, seng, skrivebord, bord, hylleenhet, lampe, puff, koffert) i furniture.js; modellen velger type og mål, spillet bygger formen.
 - **2.193** – Backlogg: idé fra tester (Rune) om dato og klokkeslett på egne brett (BACKLOG.md, ingen kodeendring).
 - **2.192** – R183: asynkron tolkning uten tidsgrense. Knappen ANDRE TING sender deg ut av ventingen mens tolkningen jobber videre; du får beskjed når den er ferdig, og ÅPNE FERDIG BRETT (eller HENT PÅGÅENDE TOLKNING etter omstart) henter den. Tidsgrensene er fjernet (klient 30 min, jobb 12 min før «feil», tjenestens trinnbudsjett 9 min) (leditor_view, leditor_text, leditor_logic, leveleditor_logic, tolk-bilder).
 - **2.191** – R179–R181: bildetolkning kan nå «tenke først» (analyse av stedet, så scenen), og ha en kritikkrunde mot bildene; modell og modus kan velges per kall (⚙ → Admin) og settes som standard i tlm_le_settings; kostnad per modell i loggen (leveleditor_logic, leditor_logic, leditor_view, main, migrasjon, tester).
