@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.203** – R190 (backlogg: fangstprotokoll): fotosjekk med fire steg på bildeskjermen (hjørne 1, hjørne 2, gulvbilde, A4-ark/mobil på gulvet; kan krysses av), og prompten bruker A4-ark/mobil på gulvet som sikreste målestokk og gulvbildet til å sette høyde riktig (leditor_view/text, tools/make_prompt, docs/VISJON_PROMPT).
 - **2.202** – R189 (fra Rune): rydding av gruppen «Spill» i innstillinger: ny gruppe «Bygging og Byggeskolen» med undergrupper (Byggeskjerm, Rutenett, Byggeskolen og Bygglab, 3D-lab, Visning og regler), og ca. 30 spredte innstillinger flyttet til riktig gruppe (figur, hjelp, innhold, kamera, test) (settings_util LAYOUT/GROUPS, settings_text, test_settings).
 - **2.201** – Arbeidsregel (fra Rune): foreslå neste skritt fra backlog som klikkbare valg etter hver Status (CLAUDE.md, ingen kodeendring).
 - **2.200** – R188 (fra Rune): rydding i ⚙ Innstillinger: «★ Topp 10 (mest brukt)» øverst (telles automatisk av hva du endrer, fylt opp med en fast startliste), og knappene ÅPNE ALLE / LUKK ALLE for gruppene (settings_util TOP/bumpUse/topIds, settings_text, main buildPanel, test_settings).

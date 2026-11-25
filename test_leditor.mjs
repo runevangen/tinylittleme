@@ -216,4 +216,10 @@ assert.doesNotMatch(view, /localStorage\.setItem\([^)]*(data|url)/, 'bilder lagr
   const idx = fs.readFileSync('index.html', 'utf8'); assert.match(idx, /id="btnLightUp"/); assert.match(idx, /id="btnLightDn"/);
   const mj = fs.readFileSync('main.js', 'utf8'); assert.match(mj, /function nudgeLight/); assert.match(mj, /btnLedBack/); assert.match(idx, /id="btnLedMine"/); assert.match(mj, /classList\.toggle\('flymode'/);
 }
+// R190: fangstprotokoll (fotosjekk)
+{
+  const { ltx } = await import('./leditor_text.js');
+  for (const lg of ['nb', 'en']) { assert.equal(ltx(lg, 'cap').length, 4, 'fire fotosjekk-steg på ' + lg); assert.ok(ltx(lg, 'capH').length > 5 && ltx(lg, 'capTip').length > 5); }
+  assert.match(fs.readFileSync('leditor_view.js', 'utf8'), /id=\"ledCap\"/); assert.match(fs.readFileSync('docs/VISJON_PROMPT.md', 'utf8'), /A4-ark \(21 × 29,7 cm\)/, 'prompten bruker A4-ark som målestokk');
+}
 console.log('test_leditor: ok');

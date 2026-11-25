@@ -20,6 +20,7 @@ Spilleren skal kjenne igjen sitt eget rom. Ta det på alvor: et brett som bare e
 ## Mål og koordinater
 - Alle mål i **cm**. Origo i stedets nordvestre hjørne (utendørs: avgrens stedet med usynlige vegger rundt det du ser; hekker, gjerder og murer er egne ting): x mot øst, z mot sør (mot døra), y opp fra gulvet.
 - Finn skala fra kjente gjenstander: toalettrull ≈ 10 × 10 cm, flis ≈ 20 × 20 cm, do-sete ≈ 40 cm over gulvet, dør ≈ 200 cm.
+- Ligger det et A4-ark (21 × 29,7 cm) eller en mobil (ca. 15 × 7 cm) på gulvet i et bilde, er det den sikreste målestokken: bruk den først. Et bilde tatt fra gulvhøyde viser hvor ting møter gulvet: bruk det til å sette `y0` riktig og se hva som står på noe annet.
 - Hver ting er en aksejustert boks `box: [x0, x1, y0, y1, z0, z1]` (min før maks). Bruk flere bokser for ting som ikke er firkantede (se grupper).
 - Gi hver ting `confidence` (0–1) og hvilke bilder den sees på (`photos`). Gjett heller enn å utelate, men sett lav confidence.
 

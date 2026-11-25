@@ -92,6 +92,7 @@ export function createLeditorView(ctx) {
   function photos() {
     const el = root();
     el.innerHTML = `<h1>${esc(T('title'))}</h1><p class="tag" id="ledCount">${esc(T('count', S.photos.length))}</p><div class="ledth" id="ledTh"></div>`
+      + `<p class="tag" style="margin-bottom:0">${esc(T('capH'))}</p><div class="ledlist" id="ledCap">${T('cap').map((c, i) => `<button data-c="${i}" class="${(S.cap || [])[i] ? 'on' : ''}">${(S.cap || [])[i] ? '☑' : '☐'} ${esc(c)}</button>`).join('')}</div><p class="tag" style="margin:2px 0 6px">${esc(T('capTip'))}</p>`
       + `<div class="ledrow"><button class="mbtn" id="ledTake">📷 ${esc(T('take'))}</button><button class="mbtn sec" id="ledPick">🖼 ${esc(T('pick'))}</button></div>`
       + `<input type="file" accept="image/*" capture="environment" id="ledFileCam" hidden><input type="file" accept="image/*" multiple id="ledFileSel" hidden>`
       + `<div class="ledmsg" id="ledMsg"></div><button class="mbtn" id="ledNext">${esc(T('next'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
@@ -109,6 +110,7 @@ export function createLeditorView(ctx) {
         if (p.bright && p.bright.mean >= 0) logEv?.('leveleditor', `bilde lysstyrke ${p.bright.mean}${p.bright.gamma < 1 ? ` → ${p.bright.after} (lysnet, gamma ${p.bright.gamma})` : ' (ikke lysnet)'}`);
       }
     };
+    el.querySelectorAll('#ledCap button').forEach((b) => { b.onclick = () => { S.cap = S.cap || [false, false, false, false]; const i = +b.dataset.c; S.cap[i] = !S.cap[i]; b.classList.toggle('on', S.cap[i]); b.textContent = (S.cap[i] ? '☑ ' : '☐ ') + T('cap')[i]; }; });
     $('ledTake').onclick = () => $('ledFileCam').click(); $('ledPick').onclick = () => $('ledFileSel').click();
     for (const id of ['ledFileCam', 'ledFileSel']) $(id).onchange = (e) => { const fl = e.target.files; add(fl).then(() => { e.target.value = ''; }); };
     $('ledNext').onclick = () => { if (!photoCountOk(S.photos.length)) { msg(S.photos.length < LE.photosMin ? T('needMore') : T('tooMany')); return; } questions(); };

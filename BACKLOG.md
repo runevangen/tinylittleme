@@ -99,7 +99,7 @@ Rune bestemte å **ikke** bygge dette nå (dagens oppførsel beholdes), men å l
 
 ## Foto → brett
 - [x] **Fra tester: Rune · Dato og klokkeslett på egne brett (v2.195, R184):** vis når et brett fra bilder ble laget (i MINE BRETT og ved JUSTER SISTE BRETT), så flere forsøk fra samme rom kan skilles og sammenlignes (nyttig sammen med modell- og modusvalgene i v2.191).
-- [~] Bedre fangstprotokoll (hjørnebilder, gulvhøyde, A4-referanse). Se `docs/FOTO_TIL_BRETT.md`. Gjort: veiledning i editoren om to hjørner, og målene (bredde/dybde/høyde) kan tastes inn. Gjenstår: A4-referanse og gulvhøyde som eget steg.
+- [x] Bedre fangstprotokoll (hjørnebilder, gulvhøyde, A4-referanse), v2.203 (R190): fotosjekk med fire steg og A4-målestokk i prompten. Se `docs/FOTO_TIL_BRETT.md`. Gjort: veiledning i editoren om to hjørner, og målene (bredde/dybde/høyde) kan tastes inn. Gjenstår: A4-referanse og gulvhøyde som eget steg.
 - [~] Strukturert tolkning: skjema, validator, tingliste og instruks er på plass (v0.24, `docs/VISJON_PROMPT.md`). Gjenstår selve API-kallet (bilder inn, scene ut) og at det kjøres med en nøkkel; i dag gjøres steget fortsatt for hånd i en samtale.
 - [~] Brukergjennomgang: hjelpeobjekter kan merkes og listes i ⚙ (v0.24). Gjenstår: en visning der man kan flytte/fjerne feilplasserte ting før spilling.
 - [~] Personvern: behandle på enhet eller slett umiddelbart etter tolkning. Gjort: slettes umiddelbart etter tolkning (tjenesten og telefonen). Gjenstår: tolkning helt på enheten.

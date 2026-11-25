@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r190-fotosjekk', version: '2.203', date: '2026-11-25', title: 'Bedre bilder gir bedre mål: en fotosjekk med fire steg (to hjørner, gulvbilde, A4-ark eller mobil på gulvet), og tolkningen bruker A4-arket som målestokk.',
+    how: 'Trykk LAG BRETT FRA BILDER og gå til bildene. Under «Fotosjekk» kan du krysse av de fire stegene mens du tar bildene. Ta med et A4-ark på gulvet i ett bilde.', level: '', spot: null },
   { id: 'r189-rydd-spill-innstillinger', version: '2.202', date: '2026-11-25', title: 'Gruppen «Spill» i innstillinger er ryddet: egen gruppe «Bygging og Byggeskolen» med undergrupper, og de andre innstillingene ligger der de hører hjemme.',
     how: 'Trykk ⚙ og trykk LUKK ALLE. Åpne «Bygging og Byggeskolen» og se undergruppene. «Spill» har nå bare noen få valg.', level: '', spot: null },
   { id: 'r188-topp10-innstillinger', version: '2.200', date: '2026-11-25', title: 'Innstillinger har en «Topp 10» øverst med de du bruker mest (endrer seg av seg selv), og knappene ÅPNE ALLE / LUKK ALLE.',
