@@ -202,6 +202,7 @@ export const SETTING_TEXT = {
 export const PANEL_TEXT = {
   title: ['Innstillinger', 'Settings'], search: ['Søk i innstillinger', 'Search settings'], close: ['Lukk', 'Close'], closeTop: ['✕ Lukk', '✕ Close'],
   changed1: ['innstilling endret fra standard', 'setting changed from default'], changedN: ['innstillinger endret fra standard', 'settings changed from default'], changedTag: ['endret', 'changed'],
+  'g.fav': ['★ Favoritter', '★ Favorites'], favNote: ['Trykk ☆ på en innstilling for å legge den her.', 'Tap ☆ on a setting to put it here.'], favAdd: ['Legg til som favoritt', 'Add as favorite'], favDel: ['Fjern som favoritt', 'Remove as favorite'],
   'g.top': ['★ Topp 10 (mest brukt)', '★ Top 10 (most used)'], topNote: ['Endrer seg etter hva du bruker mest.', 'Changes with what you use most.'], openAll: ['ÅPNE ALLE', 'OPEN ALL'], closeAll: ['LUKK ALLE', 'CLOSE ALL'],
   level: ['Brett', 'Level'], restart: ['Start på nytt', 'Start over'],
   'g.spill': ['Spill', 'Game'], 'g.bygging': ['Bygging og Byggeskolen', 'Building and Building School'], 'g.innhold': ['Innhold og utfordring', 'Content and challenge'], 'g.styring': ['Styring', 'Controls'], 'g.figur': ['Figuren', 'Character'], 'g.kamera': ['Kamera', 'Camera'],

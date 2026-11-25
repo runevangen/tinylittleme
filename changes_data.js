@@ -2,6 +2,8 @@
 // id: kort og stabil (≤ 40 tegn). version: versjonen den kom i (finnes i CHANGELOG.md). date: ÅÅÅÅ-MM-DD. title: én linje om hva som er nytt.
 // how: 1–3 korte trinn for å teste på mobil (nevn knappene). level: brett-id (se LEVELS i main.js) eller ''. spot: {x,y,z} eller null.
 export const CHANGES = [
+  { id: 'r193-favoritter-innstillinger', version: '2.206', date: '2026-11-25', title: 'Merk innstillinger som favoritt med en stjerne: de står øverst i ⚙, over Topp 10, så du slipper å lete fram og tilbake når du tester.',
+    how: 'Trykk ⚙. Trykk ☆ ved en innstilling: den kommer i «★ Favoritter» øverst. Trykk ★ igjen for å fjerne den.', level: '', spot: null },
   { id: 'r192-sticky-feilbanner', version: '2.205', date: '2026-11-25', title: 'Feiler en tolkning i bakgrunnen, står det et rødt banner med NYTT FORSØK til du har sett det, også etter at du har lukket og åpnet appen.',
     how: 'Start en tolkning, trykk ANDRE TING og gå til spillet. Feiler den, står det rødt banner øverst. Trykk NYTT FORSØK eller SENERE.', level: '', spot: null },
   { id: 'r191-sticky-brett-ferdig', version: '2.204', date: '2026-11-25', title: 'Beskjeden «brettet er ferdig» blir stående som et banner til du åpner brettet, også om du går ut av appen og inn igjen, og knappen LAG BRETT FRA BILDER får et FERDIG-merke.',

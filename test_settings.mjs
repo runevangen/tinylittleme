@@ -1,7 +1,7 @@
 // node test_settings.mjs: endrede innstillinger, eksport/import og testrapport
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, LAYOUT, layoutIds, applyLayout, TOP, bumpUse, topIds } from './settings_util.js';
+import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, LAYOUT, layoutIds, applyLayout, TOP, bumpUse, topIds, FAV, favIds, toggleFav } from './settings_util.js';
 
 let a = true, b = 0.5, c = 'both';
 const defs = [
@@ -57,4 +57,12 @@ console.log('innstillings-tester grønne');
   assert.equal(TOP.n, 10); assert.deepEqual(bumpUse(null, 'x'), { x: 1 });
   const src = fs.readFileSync('main.js', 'utf8'); assert.match(src, /data-g="top"/); assert.match(src, /pOpenAll/); assert.match(src, /bumpUse\(store\.get\(TOP\.key/);
   console.log('topp 10: ok');
+}
+
+{ // R193: favoritter
+  assert.deepEqual(toggleFav([], 'a'), ['a']); assert.deepEqual(toggleFav(['a', 'b'], 'a'), ['b']); assert.deepEqual(toggleFav(null, 'x'), ['x']);
+  assert.deepEqual(favIds(['b', 'zzz', 'a', 'b'], ['a', 'b', 'c']), ['b', 'a'], 'ukjente og dobbelt fjernes, rekkefølgen beholdes'); assert.deepEqual(favIds('x', ['a']), []);
+  const src = fs.readFileSync('main.js', 'utf8'); assert.match(src, /data-g="fav"/); assert.match(src, /data-fav=/); assert.match(src, /toggleFav\(store\.get\(FAV\.key/); assert.equal(FAV.key, 'tlm.setfav');
+  assert.ok(src.indexOf('${favHtml}') < src.indexOf('${topHtml}'), 'Favoritter står over Topp 10');
+  console.log('favoritter: ok');
 }

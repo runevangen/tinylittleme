@@ -129,7 +129,7 @@ import { shrinkSceneTextures, mergeStatic, mergeRigid, refsIn, movingNodes, scen
 import { GRIDOPT } from './grid_logic.js';
 import { ROLE_GAP } from './build_roles.js';   // R157
 import { normZoom, normSizePct } from './build_loupe_logic.js';   // R106   // R102
-import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout, TOP, bumpUse, topIds } from './settings_util.js';
+import { changedSettings, exportSettings, parseSettings, formatReport, GROUPS, applyLayout, TOP, bumpUse, topIds, FAV, favIds, toggleFav } from './settings_util.js';
 import { SETTING_TEXT, panelText, settingLabel as settingLabelOf } from './settings_text.js';   // R146: ⚙-etiketter på norsk og engelsk
 import { surfaceBelow, returnBody, P, PRESETS, applyPreset, newPlayer, resetPlayer, step, freeAt, inHazard, initBodies, resetBodies, drainEvents, findCarryTarget, findPlaceSpot, throwVelocity, toolHint, zipNear, findReachTarget } from './physics.js';
 
@@ -2541,7 +2541,8 @@ function buildPanel() {
     if (d.type === 'range') return `<label>${lb}<span data-v="${d.id}"></span></label><input type="range" data-s="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}">`;
     return `<label>${lb}</label><select data-s="${d.id}">${d.options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
   };
-  const row = (d) => `<div class="srow" data-q="${(settingLabel(d) + ' ' + d.label + ' ' + d.id).toLowerCase().replace(/"/g, '')}">${row0(d)}</div>`;   // innpakket så søket kan skjule enkeltrader
+  const favSet = new Set(favIds(store.get(FAV.key, []), SETTINGS.filter(visible).map((d) => d.id)));
+  const row = (d) => `<div class="srow" data-q="${(settingLabel(d) + ' ' + d.label + ' ' + d.id).toLowerCase().replace(/"/g, '')}">${row0(d)}<button type="button" class="sstar${favSet.has(d.id) ? ' on' : ''}" data-fav="${d.id}" aria-label="${PT(favSet.has(d.id) ? 'favDel' : 'favAdd')}">${favSet.has(d.id) ? '★' : '☆'}</button></div>`;   // innpakket så søket kan skjule enkeltrader
   const groupHtml = (g, title) => {
     const items = SETTINGS.filter((d) => d.group === g && visible(d));
     let extra = '';
@@ -2567,6 +2568,8 @@ function buildPanel() {
     const n = changedSettings(items).length;
     return `<details data-g="${g}" ${open[g] ? 'open' : ''}${g === 'admin' ? ' class="adm"' : ''}><summary>${title}${n ? ` <em>${n} ${PT('changedTag')}</em>` : ''}</summary>${items.filter((d) => !d.sub).map(row).join('')}${[...new Set(items.filter((d) => d.sub).map((d) => d.sub))].map((sb) => { const si = items.filter((d) => d.sub === sb), sn = changedSettings(si).length; return `<details class="sub" data-sub="${g}:${sb}"><summary>${panelText('sub.' + sb, lang, sb)}${sn ? ` <em>${sn} ${PT('changedTag')}</em>` : ''}</summary>${si.map(row).join('')}</details>`; }).join('')}${extra}</details>`;
   };
+  const favList = [...favSet].map((id) => SETTINGS.find((d) => d.id === id)).filter(Boolean);   // R193
+  const favHtml = `<details data-g="fav" ${open.fav !== false ? 'open' : ''}><summary>${PT('g.fav')}${favList.length ? ` <em>${favList.length}</em>` : ''}</summary>${favList.length ? favList.map(row).join('') : `<small>${PT('favNote')}</small>`}</details>`;
   const topList = topIds(store.get(TOP.key, {}), SETTINGS.filter((d) => visible(d) && d.group !== 'admin').map((d) => d.id)).map((id) => SETTINGS.find((d) => d.id === id)).filter(Boolean);   // R188
   const topHtml = topList.length ? `<details data-g="top" ${open.top !== false ? 'open' : ''}><summary>${PT('g.top')}</summary><small>${PT('topNote')}</small>${topList.map(row).join('')}</details>` : '';
   p.innerHTML = `<div class="phead"><button id="pCloseTop" class="pclose" aria-label="${PT('close')}">${PT('closeTop')}</button><button id="pFlag" aria-label="Meld og vurder">⚑</button><h3 id="pTitle">${PT('title')}</h3><span class="pver">v${VERSION}${adminOn ? ' · ADMIN' : ''}</span></div>
@@ -2575,6 +2578,7 @@ function buildPanel() {
     <input type="search" id="pSearch" placeholder="${PT('search')}" autocomplete="off" enterkeyhint="search">
     ${nChanged ? `<div class="pchg">${nChanged} ${PT(nChanged > 1 ? 'changedN' : 'changed1')}</div>` : ''}
     <div class="row"><button id="pOpenAll">${PT('openAll')}</button><button id="pCloseAll">${PT('closeAll')}</button></div>
+    ${favHtml}
     ${topHtml}
     ${GROUPS.filter(([g]) => g !== 'admin' || adminOn).map(([g, t]) => groupHtml(g, PT('g.' + g))).join('')}
     <div class="row"><button id="closePanel">${PT('close')}</button></div>`;
@@ -2593,6 +2597,7 @@ function buildPanel() {
       };
     });
   }
+  p.querySelectorAll('.sstar').forEach((b) => { b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); const id = b.dataset.fav, y = p.scrollTop; store.set(FAV.key, toggleFav(store.get(FAV.key, []), id)); logEv('innstilling', `favoritt ${id} ${favSet.has(id) ? 'fjernet' : 'lagt til'}`); buildPanel(); p.scrollTop = y; }; });   // R193: stjerne = favoritt
   const allOpen = (v) => { p.querySelectorAll('details[data-g]').forEach((el) => { if (el.style.display === 'none') return; el._prog = el.open !== v; el.open = v; open[el.dataset.g] = v; }); store.set('tlm.panelopen', open); };   // R188
   $('pOpenAll').onclick = () => allOpen(true); $('pCloseAll').onclick = () => allOpen(false);
   const subOpen = store.get('tlm.subopen', {});

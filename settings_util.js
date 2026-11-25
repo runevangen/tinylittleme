@@ -95,6 +95,10 @@ export function topIds(use, avail, defaults = TOP.defaults, n = TOP.n) {
   const used = Object.keys(u).filter((id) => ok.has(id) && +u[id] > 0).sort((a, b) => u[b] - u[a] || avail.indexOf(a) - avail.indexOf(b));
   return [...new Set([...used, ...defaults.filter((id) => ok.has(id))])].slice(0, n);
 }
+// R193: favoritter (stjerne på hver innstilling): egen liste øverst, over Topp 10
+export const FAV = { key: 'tlm.setfav' };
+export const favIds = (favs, avail) => { const ok = new Set(avail); return (Array.isArray(favs) ? favs : []).filter((id, i, a) => ok.has(id) && a.indexOf(id) === i); };
+export const toggleFav = (favs, id) => { const a = Array.isArray(favs) ? favs.filter((x) => typeof x === 'string') : []; return a.includes(id) ? a.filter((x) => x !== id) : [...a, id]; };
 export const GROUPS = [
   ['spill', 'Spill'], ['innhold', 'Innhold og utfordring'], ['bygging', 'Bygging og Byggeskolen'], ['styring', 'Styring'], ['figur', 'Figuren'], ['kamera', 'Kamera'],
   ['grafikk', 'Grafikk og ytelse'], ['hjelp', 'Hjelp og veiledning'], ['lyd', 'Lyd og stemme'], ['test', 'Test og tilbakemelding'], ['admin', 'Admin'],

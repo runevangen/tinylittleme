@@ -14,11 +14,10 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   pg.on('pageerror', (e) => errs.push(e.message)); pg.on('console', (m) => m.type() === 'error' && !/Failed to load resource|net::/.test(m.text()) && errs.push(m.text()));
   await pg.addInitScript(() => { try { localStorage.setItem('tlm.bygging.moved', 'true'); localStorage.setItem('tlm.cleared', JSON.stringify({ 1: 100 })); } catch (e) { /* */ } });
   await pg.goto(`http://localhost:${port}/?level=bad&start=0`); await pg.waitForSelector('#bSet', { state: 'attached', timeout: 180000 }); await pg.waitForTimeout(2500);
-  await pg.mouse.click(200, 400); await pg.waitForTimeout(1500);   // hopp over introen
   await pg.dispatchEvent('#bSet', 'click'); await pg.waitForSelector('#panel details[data-g="top"]', { timeout: 15000 }).catch(() => {});
   const ids = () => pg.evaluate(() => [...document.querySelectorAll('#panel details[data-g="top"] [data-s]')].map((e) => e.dataset.s));
-  const first = await ids(); check('Topp 10 står øverst med 10 innstillinger', first.length === 10 && (await pg.evaluate(() => document.querySelector('#panel details[data-g]').dataset.g)) === 'top', first.join(','));
-  await pg.evaluate(() => { const c = document.getElementById('c'); if (c) c.style.display = 'none'; });   // 3D-bildet bremser skjermbilder i headless
+  const first = await ids(); check('Favoritter og Topp 10 står øverst, Topp 10 har 10 innstillinger', first.length === 10 && (await pg.evaluate(() => [...document.querySelectorAll('#panel details[data-g]')].slice(0, 2).map((d) => d.dataset.g).join(','))) === 'fav,top', first.join(','));
+  await pg.evaluate(() => { const c = document.getElementById('c'); if (c) c.style.display = 'none'; const pn = document.getElementById('panel'); if (pn) pn.style.zIndex = 99999; });   // 3D-bildet bremser skjermbilder i headless
   await pg.screenshot({ path: `${out}/settings_top.png` });
   // endre en innstilling som ikke står i listen (via gruppe) og se at den kommer med
   const target = await pg.evaluate((first) => { const el = [...document.querySelectorAll('#panel details[data-g]:not([data-g="top"]):not([data-g="admin"]) input[type=checkbox][data-s]')].find((e) => !first.includes(e.dataset.s)); return el ? el.dataset.s : ''; }, first);
@@ -31,5 +30,14 @@ const srv = http.createServer((q, r) => { const f = path.join(root, decodeURICom
   check('LUKK ALLE lukker gruppene', (await pg.evaluate(() => [...document.querySelectorAll('#panel details[data-g]')].filter((d) => d.open).length)) === 0);
   await pg.evaluate(() => document.getElementById('pOpenAll').click()); await pg.waitForTimeout(300);
   check('ÅPNE ALLE åpner gruppene', (await pg.evaluate(() => [...document.querySelectorAll('#panel details[data-g]')].filter((d) => d.open).length)) >= 5);
+  // R193: favoritter
+  const favTarget = (await ids()).find((i) => i !== target) || target;
+  await pg.evaluate((t) => { const b = document.querySelector(`#panel details[data-g="top"] .sstar[data-fav="${t}"]`); b.click(); }, favTarget); await pg.waitForTimeout(500);
+  const favs = await pg.evaluate(() => JSON.parse(localStorage.getItem('tlm.setfav') || '[]')); check('stjerne gjør innstillingen til favoritt', favs.includes(favTarget), favs.join(','));
+  check('Favoritter står øverst, over Topp 10', (await pg.evaluate(() => [...document.querySelectorAll('#panel details[data-g]')].slice(0, 2).map((d) => d.dataset.g).join(','))) === 'fav,top');
+  check('favoritten står i Favoritter-lista', (await pg.evaluate((t) => !!document.querySelector(`#panel details[data-g="fav"] [data-s="${t}"]`), favTarget)));
+  await pg.evaluate(() => document.querySelector('#panel details[data-g="fav"] .sstar').click()); await pg.waitForTimeout(400);
+  check('ny trykk fjerner favoritten', (await pg.evaluate(() => JSON.parse(localStorage.getItem('tlm.setfav') || '[]'))).length === 0);
+  await pg.evaluate(() => document.querySelector('#panel details[data-g="top"] .sstar').click()); await pg.waitForTimeout(400); await pg.screenshot({ path: `${out}/settings_fav.png` });
   console.log(errs.length ? 'FEIL: ' + errs.slice(0, 3).join(' | ') : 'ingen konsollfeil'); await b.close(); srv.close(); process.exit(errs.length || !ok ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

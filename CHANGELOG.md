@@ -1,6 +1,7 @@
 # Endringslogg
 
 Versjonsnummeret (`version.js`, vises øverst til venstre i spillet) økes for hver endring som committes. Nyeste øverst.
+- **2.206** – R193 (fra Rune): favoritter i innstillinger: stjerne (☆/★) på hver innstilling; favorittene står i en egen liste «★ Favoritter» øverst, over Topp 10, og huskes (settings_util FAV/toggleFav/favIds, settings_text, main buildPanel, index.html, test_settings, tools/live_settings).
 - **2.205** – R192: sticky feilbanner når en bakgrunnstolkning feiler (rødt: «Tolkningen ble ikke ferdig: …», NYTT FORSØK / SENERE), så du ikke går glipp av feil heller (leditor_view FAIL_KEY/openFail, main refreshLedBanner, index.html, leditor_text).
 - **2.204** – R191 (fra Rune): «brett ferdig» er sticky: banner øverst («Brettet fra bildene er ferdig»: ÅPNE / SENERE) som står til du åpner brettet og kommer tilbake når appen åpnes igjen, og et FERDIG-merke på knappen LAG BRETT FRA BILDER (index.html, main refreshLedBanner, leditor_view openDone/ledBtnHtml, leditor_text).
 - **2.203** – R190 (backlogg: fangstprotokoll): fotosjekk med fire steg på bildeskjermen (hjørne 1, hjørne 2, gulvbilde, A4-ark/mobil på gulvet; kan krysses av), og prompten bruker A4-ark/mobil på gulvet som sikreste målestokk og gulvbildet til å sette høyde riktig (leditor_view/text, tools/make_prompt, docs/VISJON_PROMPT).
