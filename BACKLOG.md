@@ -14,7 +14,7 @@ Rangert etter verdi/innsats i rapporten. Kildegrunnlaget er svakt (søkesammendr
 - [~] **Bot begrenset til menneskelige evner (R32, v1.25):** `tools/bot.mjs` har streng/løs modus, klatrer og bruker verktøy, og er bevist på Kontroll og på rommene (`gate_bot.mjs` for gåter). Gjenstår: at boten viser ruten visuelt, menneskelig gjennomgang av feil på lange ruter, og å avgjøre om veggsprang skal være et tillatt verktøy eller blokkeres.
 - [~] **Hint etter 3 feil på samme sted (v0.46):** tips om neste hinder og kompasset vises. Gjenstår: ett verktøy per rom, første rom per mekanikk uten poengtap.
 - [~] **Touch:** kast med dra–slipp er på plass fra v0.46 (snap til flate gjenstår), kameraassistanse (v0.44–0.45), kontroller minst 44 pt, presets for tilgjengelighet.
-- [ ] **Personvern:** del bare geometri/objektliste, slett bilder etter generering, private brett som standard, overlay av AI-tolkningen på originalbildet før publisering.
+- [~] **Personvern:** del bare geometri/objektliste, slett bilder etter generering, private brett som standard, overlay av AI-tolkningen på originalbildet før publisering. Gjort: bildene lagres aldri (slettes etter generering), egne brett er private. Gjenstår: overlay av tolkningen på originalbildet før publisering.
 - [~] **Kombineringsmotor** (v0.40, R41 v1.45): nål + trådsnelle → taubane i `physics.js`; svamp + vann, håndkle + håndkle og papirhaug ligger i regeltabellen `combos.js`. Gjenstår: egenskapstabell for tingene (BotW/Scribblenauts-stil) slik at nye kombinasjoner kan komme uten egen kode.
 - [ ] **Verifiser** hullene i kapittel 5 av rapporten (staminatall, fallterskler, coyote-verdier, single-slot) mot primærkilder når nettilgang finnes.
 
@@ -98,11 +98,11 @@ Rune bestemte å **ikke** bygge dette nå (dagens oppførsel beholdes), men å l
 - [ ] Åpne spørsmål om motgift-biter: bæres mellom rom? antall? bonusting? (`docs/BADET.md`)
 
 ## Foto → brett
-- [ ] **Fra tester: Rune · Dato og klokkeslett på egne brett:** vis når et brett fra bilder ble laget (i MINE BRETT og ved JUSTER SISTE BRETT), så flere forsøk fra samme rom kan skilles og sammenlignes (nyttig sammen med modell- og modusvalgene i v2.191).
-- [ ] Bedre fangstprotokoll (hjørnebilder, gulvhøyde, A4-referanse). Se `docs/FOTO_TIL_BRETT.md`.
+- [x] **Fra tester: Rune · Dato og klokkeslett på egne brett (v2.195, R184):** vis når et brett fra bilder ble laget (i MINE BRETT og ved JUSTER SISTE BRETT), så flere forsøk fra samme rom kan skilles og sammenlignes (nyttig sammen med modell- og modusvalgene i v2.191).
+- [~] Bedre fangstprotokoll (hjørnebilder, gulvhøyde, A4-referanse). Se `docs/FOTO_TIL_BRETT.md`. Gjort: veiledning i editoren om to hjørner, og målene (bredde/dybde/høyde) kan tastes inn. Gjenstår: A4-referanse og gulvhøyde som eget steg.
 - [~] Strukturert tolkning: skjema, validator, tingliste og instruks er på plass (v0.24, `docs/VISJON_PROMPT.md`). Gjenstår selve API-kallet (bilder inn, scene ut) og at det kjøres med en nøkkel; i dag gjøres steget fortsatt for hånd i en samtale.
 - [~] Brukergjennomgang: hjelpeobjekter kan merkes og listes i ⚙ (v0.24). Gjenstår: en visning der man kan flytte/fjerne feilplasserte ting før spilling.
-- [ ] Personvern: behandle på enhet eller slett umiddelbart etter tolkning.
+- [~] Personvern: behandle på enhet eller slett umiddelbart etter tolkning. Gjort: slettes umiddelbart etter tolkning (tjenesten og telefonen). Gjenstår: tolkning helt på enheten.
 
 ## Teknisk
 - [x] **«Send til Claude» fra spillet (Supabase, v1.27):** ⚑-boksen og ⚙ → Test sender rapporten direkte til `tlm_feedback`, med tester-kode og RLS (kun innsetting). Se `docs/TILBAKEMELDING.md`. Svar til testere og tellere kom i v1.34 (R36). Gjenstår: daglig oppsummering av nye meldinger (planlagt oppgave), og å se meldinger per tester.
@@ -110,8 +110,8 @@ Rune bestemte å **ikke** bygge dette nå (dagens oppførsel beholdes), men å l
 - [ ] **R49b Live-vekt i verdenen** (`docs/BYGGING_INSPIRASJON.md`, R49 del 2): bygget gir etter og kan briste når du og maur går på det i verdenen (først nedbøyning + grense). Statikken (R49a1/a2) er på plass i byggeskjermen; ikke koblet til verdenen.
 - [ ] **R51 Dynamiske deler:** fjær, trinse og stempel/vindebro i `build_phys.js`, hver for seg testet (stor). Gummistrikk kom i R49a2.
 - [ ] **R52 Verksted:** fri byggemodus fra startskjermen med ubegrensede deler, lagring og lasting, og egne utfordringer. (Ikke det samme som nivå 9 Verkstedet eller Bygglab.)
-- [ ] **R68 Kinomodus** (`?cinema=1`, `docs/TRAILER.md`): ikke funnet i koden ennå; montasjeverktøyet i `tools/trailer/` er på plass (v1.88).
-- [ ] **R69 Vanskelighetsnivå** (Nybegynner/Medium/Ekspert, avslutt til meny, velg brett): åpen i `docs/ROADMAP.md`, fra tester: Rune.
+- [x] **R68 Kinomodus** (`?cinema=1`, `docs/TRAILER.md`): ikke funnet i koden ennå; montasjeverktøyet i `tools/trailer/` er på plass (v1.88). Ferdig i v1.93 (`cinema_logic.js`, `cinema_view.js`, `?cinema=1`).
+- [x] **R69 Vanskelighetsnivå** (Nybegynner/Medium/Ekspert, avslutt til meny, velg brett): åpen i `docs/ROADMAP.md`, fra tester: Rune. Ferdig i v1.92 (`difficulty.js`, `difficulty_view.js`).
 - [ ] **R27 Spilletest-runde:** venter på testrapporter fra iPhone.
 - [ ] Portere fysikk til Unity/Godot (`physics.js` er uten DOM).
 - [ ] Flerspiller (langt frem).
