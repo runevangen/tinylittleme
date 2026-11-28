@@ -5,6 +5,8 @@ import { LED, photoCountOk, fitDim, splitDataUrl, imageFits, lowerQuality, callT
 import { shareRoom, setRoomCode, safeName, listRooms, fmtWhen } from './rooms_logic.js';
 import { thingName } from './kindnames.js';
 import { ltx, lerr, lverdict, lsub } from './leditor_text.js';
+import { SCAN, scanToScene, fileCheck, withGoal, scanInfo, newScanId, scanLog } from './scan_logic.js';   // R194: skannet rom (GLB)
+import { saveGlb, parseGlbScene, extractTris } from './scan_view.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CSS = `#start.rml{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:max(26px,env(safe-area-inset-top));padding-bottom:max(18px,env(safe-area-inset-bottom))}
 #start .ledbox{width:min(340px,88vw);background:#ffffff14;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;text-align:left;font:500 14px/1.35 system-ui}
@@ -79,13 +81,66 @@ export function createLeditorView(ctx) {
       + (busy && !getK(DONE_KEY) ? `<p class="tag">${esc(T('bgRunning'))}</p>` : (getK(BG_KEY) && !getK(DONE_KEY) ? `<button class="mbtn" id="ledBgGet">${esc(T('bgGet'))}</button>` : ''))
       + (last ? `<button class="mbtn" id="ledLast">${esc(T('lastBtn', last.name, fmtWhen(last.at)))}</button>` : '')
       + (ctx.onMine && listRooms(st).length ? `<button class="mbtn sec" id="ledMine">${esc(T('mine'))}</button>` : '')
-      + `<button class="mbtn${last ? ' sec' : ''}" id="ledGo">${esc(consented() ? T('next') : T('consentBtn'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
+      + `<button class="mbtn${last ? ' sec' : ''}" id="ledGo">${esc(consented() ? T('next') : T('consentBtn'))}</button><button class="mbtn sec" id="ledScan">📦 ${esc(T('scanBtn'))}<small>${esc(T('scanBtnSub'))}</small></button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
     if ($('ledDone')) $('ledDone').onclick = () => { const d = getK(DONE_KEY); setK(DONE_KEY, null); ctx.onDone?.(); if (d && d.scene) { logEv?.('leveleditor', 'åpner ferdig bakgrunnsjobb'); accept({ ok: true, scene: d.scene, usage: d.usage }, Date.now()); } };
     if ($('ledBgGet')) $('ledBgGet').onclick = () => { const b = getK(BG_KEY); if (!b || !b.job) return; S.job = b.job; if (b.answers) S.answers = b.answers; logEv?.('leveleditor', 'henter pågående tolkning'); make(); };
     if (last) $('ledLast').onclick = () => resume(last.id);
     if ($('ledMine')) $('ledMine').onclick = () => { const el2 = $('start'); el2.classList.remove('rml'); ctx.onMine?.(); };
     $('ledGo').onclick = () => { setConsent(); photos(); };
+    $('ledScan').onclick = () => scan();
     $('ledBack').onclick = leave;
+  }
+
+  // ---- R194: skannet rom (GLB) ----
+  // Filen leses her på enheten (aldri sendt noe sted), gjøres om til grove bokser (scan_logic.js) som blir kollisjonen, og lagres i IndexedDB så GLB-en kan vises som utseende i spillet.
+  function scan(note = '') {
+    S = S || fresh(); const el = root(), cells = [5, 8, 12], want = +(ctx.getScanOpts?.().cellCm) || SCAN.cellCm; S.scanCell = cells.includes(S.scanCell) ? S.scanCell : (cells.includes(want) ? want : SCAN.cellCm);
+    el.innerHTML = `<h1>${esc(T('scanH'))}</h1><div class="ledbox"><ul>${T('scanGuide').map((g) => `<li>${esc(g)}</li>`).join('')}</ul></div>`
+      + `<p class="tag" style="margin-bottom:0">${esc(T('scanCellH'))}</p><div class="ledrow" id="scCells">${cells.map((c) => `<button class="mbtn sec${c === S.scanCell ? ' on' : ''}" data-c="${c}">${esc(T('scanCell')[c])}</button>`).join('')}</div>`
+      + `<input type="file" accept=".glb,model/gltf-binary,application/octet-stream" id="scFile" hidden><div class="ledmsg" id="ledMsg">${esc(note)}</div>`
+      + `<button class="mbtn" id="scPick">📂 ${esc(T('scanPick'))}</button><button class="mbtn sec" id="ledBack">${esc(T('back'))}</button>`;
+    el.querySelectorAll('#scCells [data-c]').forEach((b) => { b.onclick = () => { S.scanCell = +b.dataset.c; el.querySelectorAll('#scCells [data-c]').forEach((x) => x.classList.toggle('on', x === b)); }; });
+    $('scPick').onclick = () => { if (!busy) $('scFile').click(); };
+    $('scFile').onchange = async (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; if (busy) return; const chk = fileCheck(f.size); if (chk) { logEv?.('skann', scanLog('avvist', { bytes: f.size, err: chk })); msg(lerr(L(), chk)); return; } msg(T('scanReading')); runScan(await f.arrayBuffer(), f.name); };
+    $('ledBack').onclick = show;
+  }
+  const paint = () => new Promise((ok) => setTimeout(ok, 30));   // la skjermen male meldingen før tungt arbeid
+  async function runScan(buf, fname) {
+    if (busy) return; busy = true; const t0 = performance.now(), bytes = buf.byteLength, cellCm = S.scanCell || SCAN.cellCm;
+    const fail = (reason, extra = {}) => { busy = false; logEv?.('skann', scanLog('feilet', { bytes, ms: performance.now() - t0, err: reason, ...extra })); scan(lerr(L(), reason)); };
+    try {
+      const chk = fileCheck(bytes); if (chk) return fail(chk);
+      await paint(); msg(T('scanReading'));
+      let gl; try { gl = await parseGlbScene(buf); } catch (e) { return fail('ugyldig_glb', { err: 'ugyldig_glb: ' + String(e && e.message || e).slice(0, 50) }); }
+      const ex = extractTris(gl.scene); if (!ex.ok) return fail(ex.reason, { tris: ex.tris });
+      msg(T('scanBuilding')); await paint();
+      const name = safeName(String(fname || '').replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' '), 'Skannet rom');
+      const r = scanToScene(ex.mesh, { cellCm, name }); if (!r.ok) return fail(r.reason, { tris: r.tris });
+      msg(T('scanChecking')); await paint();
+      const id = newScanId(), info = scanInfo(id, r.transform, r.info.heightCm);
+      // første mål (høyest først) som gir et brett som kan vinnes uten for mange hjelpeobjekter; ellers det første som blir et brett
+      let pick = null, fallback = null;
+      for (const g of r.goals.slice(0, 6)) {
+        const sc = withGoal(r.scene, g); sc.scan = info; const room = sceneToRoom(sc, name, { auto: false });
+        if (!room.ok) continue; if (!fallback) fallback = { sc, room };
+        if (canPlay(room)) { pick = { sc, room }; break; }
+      }
+      if (!pick) pick = fallback;
+      if (!pick) { const sc = JSON.parse(JSON.stringify(r.scene)); sc.scan = info; const room = sceneToRoom(sc, name); pick = { sc: room.scene || sc, room }; }
+      const stored = await saveGlb(id, buf);
+      S = fresh(); S.name = name; S.scene = pick.sc; S.room = pick.room; S.usage = { cost_usd: 0, ms: Math.round(performance.now() - t0) }; busy = false;
+      logEv?.('skann', scanLog(`ferdig${stored ? '' : ' (GLB ikke lagret)'}${pick.room.ok ? (pick.room.solvable ? ', kan vinnes' : ', ingen vei') : ': ' + pick.room.reason}`, { bytes, tris: r.info.tris, boxes: r.info.boxes, cellCm: r.info.cellCm, ms: performance.now() - t0 }) + (r.info.truncated ? `, kuttet ${r.info.truncated}` : ''));
+      if (!pick.room.ok) { failed(pick.room.reason); return; }
+      result(stored ? T('scanDone') : T('scanNoStore'));
+    } catch (e) { fail('feil', { err: String(e && e.message || e) }); }
+  }
+  // ?scan=<sti>: en GLB som ligger i repoet (offentlig på GitHub Pages) lastes inn som om den var valgt fra Filer
+  const scanPathOk = (p) => typeof p === 'string' && /^[A-Za-z0-9_\-./]+\.glb$/i.test(p) && !p.startsWith('/') && !p.includes('..') && !p.includes('//');
+  async function scanUrl(path) {
+    S = fresh(); scan(T('scanReading'));
+    if (!scanPathOk(path)) { logEv?.('skann', scanLog('feilet', { err: 'ugyldig sti' })); msg(lerr(L(), 'ugyldig_glb')); return; }
+    try { const r = await fetch(`./${path}`); if (!r.ok) throw new Error(`status ${r.status}`); const buf = await r.arrayBuffer(); logEv?.('skann', `?scan=${path}`); runScan(buf, path.split('/').pop()); }
+    catch (e) { logEv?.('skann', scanLog('feilet', { err: String(e && e.message || e) })); msg(lerr(L(), 'ugyldig_glb')); }
   }
 
   // ---- 2. bilder ----
@@ -350,6 +405,6 @@ export function createLeditorView(ctx) {
   }
   // R192: feilet bakgrunnstolkning: banneret NYTT FORSØK åpner menyen (HENT PÅGÅENDE TOLKNING hvis jobben finnes, ellers velg bilder på nytt)
   function openFail() { setK(FAIL_KEY, null); ctx.onDone?.(); logEv?.('leveleditor', 'banner: nytt forsøk etter feilet bakgrunnsjobb'); show(); }
-  return { show, resume, openDone, openFail };
+  return { show, resume, openDone, openFail, scan, scanUrl };
 }
 export const ledBtnHtml = (lang, last = null, done = false) => `<div class="bgrp" id="dfLed"><button class="mbtn${done ? '' : ' sec'}" id="mLed">📷 ${done ? '● ' + esc(ltx(lang, 'bgBadge')) + ' · ' : ''}${esc(ltx(lang, 'btn'))}<small>${esc(ltx(lang, 'btnSub'))}</small></button>${last ? `<button class="mbtn sec" id="mLedLast">✏️ ${esc(ltx(lang, 'lastBtn', last.name))}</button>` : ''}</div>`;

@@ -41,6 +41,7 @@ import { createRoomsView, roomsBtnHtml } from './rooms_view.js';
 import { rtx as roomTx } from './rooms_text.js';
 import { ledAvailable, lastRoom, stepLight, lightLabel, sceneToRoom as ledSceneToRoom, saveRoom as ledSaveRoom } from './leditor_logic.js';   // R152: LAG BRETT FRA BILDER (leditor_logic.js, leditor_view.js, leditor_text.js)
 import { createLeditorView, ledBtnHtml } from './leditor_view.js';
+import { loadScanVisual } from './scan_view.js';   // R194: skannet rom (GLB): utseendet; logikk i scan_logic.js
 import { ltx as ledTx, lerr as ledErr } from './leditor_text.js';
 import { thingName } from './kindnames.js';   // R175: navnelapper (norsk/engelsk) over ting i egne brett
 import { createLab3dView } from './grid3d_view.js';   // R130: 3D-laben (egen skjerm: bygg fritt i tre dimensjoner)
@@ -274,6 +275,7 @@ let gatesOn = store.get('tlm.gates', true), gateCamOn = store.get('tlm.gatecam',
 let puzzlesOn = store.get('tlm.puzzles', true), puzCamOn = store.get('tlm.puzcam', true), bridgeGuide = null;   // nøkkel og lås (R7)
 let introSweepOn = store.get('tlm.introsweep', true), introMarkOn = store.get('tlm.intromark', true), introHintOn = store.get('tlm.introhint', true);   // R22: start-lesbarhet (intro.js, intro_view.js)
 let ledOn = store.get('tlm.ledon', true);
+let scanShow = store.get('tlm.scanshow', true), scanCell = store.get('tlm.scancell', 8);   // R194: skannet rom (GLB): vis GLB-en som utseende, og cellestørrelse (cm) på kollisjonsboksene
 let ledModel = store.get('tlm.ledmodel', 'auto'), ledMode = store.get('tlm.ledmode', 'auto');   // R179: bildetolkning: modell og modus per kall (admin). auto = tjenestens standard.   // R152: LAG BRETT FRA BILDER i VELG BRETT (bare med tester-kode)
 let roomsOn = store.get('tlm.roomson', true);   // R153: MINE BRETT i VELG BRETT (bare med tester-kode)
 let repliesOn = store.get('tlm.replies', true);   // svar og tellere fra Claude i ⚑-boksen (R36)
@@ -601,12 +603,16 @@ const drawn = new Set(); let hasToilet = false;
     if (members.some((m) => m.kind === 'toilet_tank')) hasToilet = true;
   }
 }
+const scanLogQ = [], scanLogEarly = (t, d) => { scanLogQ.push([t, d]); };   // logEv bruker `clock`, som ikke finnes ennå her: meldingene køes og logges senere
+const scanVis = LEVEL.scan ? await loadScanVisual({ THREE, renderer, info: LEVEL.scan, logEv: scanLogEarly, show: scanShow }) : null;   // R194: GLB-en tegnes som utseende; kollisjonsboksene (skann_*), gulvet og veggene tegnes da ikke
+if (scanVis) { scene.add(scanVis.group); scanLogEarly('skann', `${scanVis.tris} trekanter som utseende; boksene skjules`); }
 const csHolder = new THREE.Group(); scene.add(csHolder);   // kontaktskygger samles her så de kan slås sammen til noen få tegnekall (R15)
 const pressViews = [];   // R41: papirhauger som kan presses sammen (tegnes om i høyden)
 let furnitureShapes = store.get('tlm.furniture', true); setFurnitureOn(furnitureShapes);   // R182: møbelmaler (sofa, seng, …); admin-valg, gjelder fra neste brett/omlasting
 let bookN = 0; const col0 = (b) => b.color ?? 0xcccccc;
 for (const b of LEVEL.boxes) {
   if (drawn.has(b)) continue;
+  if (scanVis && (b.type === 'floor' || b.type === 'wall' || String(b.id).startsWith('skann_'))) continue;   // R194
   const sx = b.max[0] - b.min[0], sy = b.max[1] - b.min[1], sz = b.max[2] - b.min[2];
   const cx = b.min[0] + sx / 2, cy = b.min[1] + sy / 2, cz = b.min[2] + sz / 2;
   const shaped = b.kind && b.type !== 'floor' && b.type !== 'wall' && !b.dyn ? buildSingle(b.kind, [sx, sy, sz], { color: b.color, id: b.id, material: b.material, drawer: b.drawer, face: b.face }) : null;
@@ -658,18 +664,18 @@ for (const b of LEVEL.boxes) {
     ? texMat(look.panel, { color: hexNum(room.ceiling.color), roughness: 0.7 })
     : std({ color: 0xf5f1e8, roughness: 1 });
   eachMap(ceilMat, (t) => t.repeat.set(w / 9.6, d / 9.6));
-  {                                                            // mørkere inn mot veggene, der gulv og vegg møtes
+  if (!scanVis) {                                              // mørkere inn mot veggene, der gulv og vegg møtes
     const fy = Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])) + 0.02, sw = Math.min(4, Math.min(w, d) * 0.12);
     for (const [len, x, z, rz] of [[w, ox, room.z0 + sw / 2, 0], [w, ox, room.z1 - sw / 2, Math.PI], [d, room.x0 + sw / 2, oz, Math.PI / 2], [d, room.x1 - sw / 2, oz, -Math.PI / 2]]) {
       const es = look.edgeShade(len, sw); es.rotation.set(-Math.PI / 2, 0, rz); es.position.set(x, fy, z); scene.add(es);
     }
   }
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceilMat);
-  ceil.rotation.x = Math.PI / 2; ceil.position.set(ox, room.height, oz); ceil.receiveShadow = true; scene.add(ceil);
+  ceil.rotation.x = Math.PI / 2; ceil.position.set(ox, room.height, oz); ceil.receiveShadow = true; if (!scanVis) scene.add(ceil);
 
   const frameMat = std({ color: 0xf0ead8, roughness: 0.5 });
   frameMat.polygonOffset = true; frameMat.polygonOffsetFactor = 2; frameMat.polygonOffsetUnits = 2;       // v0.87: rammen ligger i samme høyde som vinduskarmen (flimret der du står); karmen vinner nå
-  for (const win of LEVEL.windows || []) {
+  for (const win of scanVis ? [] : LEVEL.windows || []) {
     const g = new THREE.Group(); g.position.set(...win.pos);
     g.rotation.y = { N: 0, S: Math.PI, E: -Math.PI / 2, W: Math.PI / 2 }[win.wall] ?? 0;
     const [ww, wh] = win.size;
@@ -1272,6 +1278,7 @@ const save = { pos: [...LEVEL.start] };
 const stats = { boss: 0, saves: 0, respawns: 0, broken: 0, resets: 0, hard: 0, hits: 0, squashed: 0, crumbs: 0, carried: 0, flew: false };
 let mode = 'play';                 // play | plan | fly
 let won = false, clock = 0;
+for (const [t, d] of scanLogQ) logEv(t, d);   // R194: køede meldinger fra skannet rom
 { const nf = furnitureCount(LEVEL.boxes); if (nf) logEv('møbler', `${nf} møbler tegnes med ekte form (${furnitureShapes ? 'på' : 'av'})`); }   // R182
 if (hasGates(LEVEL)) { const gb = gatesBudget(LEVEL); logEv('gåte', `${gateViews.count} deler, ${gb.calls} tegnekall, ${gb.tris} trekanter`); }
 let buildSndLogged = false;   // R99: logg første bygglyd
@@ -2235,6 +2242,8 @@ const SETTINGS = [
   fl('roomson', 'test', roomTx('nb', 'setting'), true, () => roomsOn, kp('tlm.roomson', (v) => { roomsOn = v; logEv('mine brett', roomLog(v ? 'på' : 'av')); })),
   sl('ledmodel', 'admin', 'Bildetolkning: modell (test)', 'auto', [['auto', 'Standard (fra databasen)'], ['claude-sonnet-4-5', 'Sonnet 4.5'], ['claude-sonnet-5-5', 'Sonnet 5.5'], ['claude-opus-5-5', 'Opus 5.5'], ['claude-fable-5-2', 'Fable 5.2']], () => ledModel, kp('tlm.ledmodel', (v) => { ledModel = v; logEv('leveleditor', `modell: ${v}`); })),
   sl('ledmode', 'admin', 'Bildetolkning: modus (test)', 'auto', [['auto', 'Standard (fra databasen)'], ['direkte', 'Direkte (ett kall, raskest)'], ['tenk', 'Tenk først (analyse, så scene)'], ['tenk_kritikk', 'Tenk først + kritikkrunde (tre kall)']], () => ledMode, kp('tlm.ledmode', (v) => { ledMode = v; logEv('leveleditor', `modus: ${v}`); })),
+  fl('scanshow', 'test', 'Skannet rom (GLB): vis skanningen som utseende (av = bare de grove kollisjonsboksene)', true, () => scanShow, kp('tlm.scanshow', (v) => { scanShow = v; logEv('skann', v ? 'utseende på' : 'utseende av'); })),
+  rg('scancell', 'admin', 'Skannet rom (GLB): rutestørrelse for kollisjonsboksene (cm). Fin 5, normal 8, grov 12; gjelder neste skanning', 8, 5, 12, 1, () => scanCell, kp('tlm.scancell', (v) => { scanCell = v; logEv('skann', `celle ${v} cm`); }), { digits: 0 }),
   fl('ledon', 'test', ledTx('nb', 'setting'), true, () => ledOn, kp('tlm.ledon', (v) => { ledOn = v; logEv('leveleditor', v ? 'på' : 'av'); })),
   fl('replies', 'test', 'Vis svar og tellere fra Claude (⚑-boksen)', true, () => repliesOn, kp('tlm.replies', (v) => { repliesOn = v; if (v) refreshInbox(false); else renderInbox(); })),
   fl('combo', 'spill', 'Kombinasjoner: svamp + vann, håndkle + håndkle, tung ting + papirhaug (TA ved siden av)', true, () => COMBO.on, kp('tlm.combo', (v) => { COMBO.on = v; logEv('kombo', v ? 'kombinasjoner på' : 'kombinasjoner av'); })),
@@ -3105,14 +3114,14 @@ const variant = makeVariant({ scene, LEVEL, renderer, sun, floorY: Math.max(0, .
 floodVar = variant;
 if (variant.active) logEv('stemning', `${variant.mood} + ${variant.twist}`);
 if (isRound2(levelId)) logEv('bygg', `runde 2: ${levelId} åpnet (${round2On ? 'valget på' : 'valget av, åpnet direkte'})`);   // R125
-const atmos = gfxLow ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
-const fdet = gfxLow ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
+const atmos = gfxLow || scanVis ? null : makeAtmos({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun: SUN, look, name: levelName || LEVEL.name || 'x' });   // R4: lysstråler, mørke hjørner, småting (atmos.js)
+const fdet = gfxLow || scanVis ? null : makeFloorDetail({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: fdDens, name: levelName || LEVEL.name || 'x' });
 if (fdet) logEv('gulvdetaljer', `${fdet.count} stk, ${fdet.beads.length} perler, ${fdet.pencils.length} blyant-/viskelærbokser`);
 const dsolid = createDecorSolid(LEVEL); logEv('dekor', `${dsolid.count} solide bokser`);   // R91: boksene legges i LEVEL.boxes av dsolid.set() hver ramme (billig når ingenting endres)
-const leke = gfxLow ? null : makeLekerom({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: legoDens });   // R31: legoknotter (2 tegnekall, ikke slått sammen)
+const leke = gfxLow || scanVis ? null : makeLekerom({ scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), quality: lowMode === 'on' ? 'mid' : 'high', density: legoDens });   // R31: legoknotter (2 tegnekall, ikke slått sammen)
 if (isStue(LEVEL)) { const ss = stueSummary(LEVEL); logEv('stue', `${ss.cushions} puter, ${ss.plates} plate, ${ss.doors} dør, ${ss.goals} delmål, ${ss.crumbs} smuler, ${ss.foes} fiender`); }
 if (leke?.count) logEv('lekerom', `${leke.count} knotter, ${leke.calls} tegnekall, ${leke.tris} trekanter`);
-const soft = gfxLow ? null : makeSoftLight({ THREE, scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun, sunDir: SUN, renderer });   // R17: myke skygger og lysbaking (softlight.js)
+const soft = gfxLow || scanVis ? null : makeSoftLight({ THREE, scene, LEVEL, floorY: Math.max(0, ...LEVEL.boxes.filter((b) => b.type === 'floor').map((b) => b.max[1])), sun, sunDir: SUN, renderer });   // R17: myke skygger og lysbaking (softlight.js)
 // ---------- R15: budsjett og lav profil (perf_budget.js) ----------
 const perfMerge = { before: 0, after: 0 };
 {
@@ -3635,7 +3644,7 @@ $('ledBannerOpen').onclick = () => { unlockAudio(); const failed = !store.get('t
 $('ledBannerLater').onclick = () => { ledBannerHidden = true; refreshLedBanner(); };
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { ledBannerHidden = false; refreshLedBanner(); } });
 setTimeout(refreshLedBanner, 1200); setInterval(refreshLedBanner, 4000);
-const getLed = () => (ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, getOpts: () => ({ model: ledModel === 'auto' ? '' : ledModel, mode: ledMode === 'auto' ? '' : ledMode }), logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms, onDone: () => refreshLedBanner(), onFly: (id) => { unlockAudio(); store.set('tlm.flystart', id); playFresh(id, difficulty); } }));
+const getLed = () => (ledV = ledV || createLeditorView({ $, st: store, lang: () => lang, getCode: testerCode, getVersion: () => VERSION, THREE, getScanOpts: () => ({ cellCm: scanCell }), getOpts: () => ({ model: ledModel === 'auto' ? '' : ledModel, mode: ledMode === 'auto' ? '' : ledMode }), logEv, toast, onPlay: (id) => { unlockAudio(); playFresh(id, difficulty); }, onBack: openPicker, onMine: openRooms, onDone: () => refreshLedBanner(), onFly: (id) => { unlockAudio(); store.set('tlm.flystart', id); playFresh(id, difficulty); } }));
 function openLeditor() { getLed().show(); }
 function openLeditorResume(id) { getLed().resume(id); }   // R167: det egne brettet åpnes på nytt i editoren (JUSTER, MÅL 1–4, VIS TOLKNING) etter spilling
 function roomsPick(b) {
@@ -3700,6 +3709,7 @@ function showStart(o = {}) {
   }
 }
 if (startWanted) showStart(); else { statsLevelStart(); showIntro(); }
+{ const sp = new URLSearchParams(location.search).get('scan'); if (sp && ledShow()) { unlockAudio(); showStart(); getLed().scanUrl(sp); } }   // R194: ?scan=<sti>.glb i repoet (offentlig på GitHub Pages) lastes inn som skannet rom
 if (!startWanted && isRoomId(levelId) && store.get('tlm.flystart', null) === levelId) { store.set('tlm.flystart', null); setTimeout(() => { if (mode === 'play') setMode('fly'); }, 1500); }   // R174: «FLY RUNDT» fra editoren åpner brettet i flymodus
 
 applyLang();

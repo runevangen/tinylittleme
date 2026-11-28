@@ -459,6 +459,7 @@ let level = {
   collectibles,
   ...(build ? { build } : {}),
   ...(required ? { required } : {}),                         // R138: påkrevd bygg (buildreq_logic.js)
+  ...(scene.scan ? { scan: scene.scan } : {}),               // R194: skannet rom: GLB-utseende (scan_view.js) og skjulte kollisjonsbokser
   ...(scene.lab ? { lab: scene.lab } : {}),                   // R67: Bygglab (prøverommet som starter i byggemodus)
   ...(puzzles.length ? { puzzles } : {}),
   ...(gates ? { gates } : {}),
